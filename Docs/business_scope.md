@@ -93,3 +93,41 @@ The platform will evolve into a **full-featured enterprise-grade engagement syst
 | MVP | • **Host:** Login → Create Session → Dashboard → Launch Q&A / MCQ → Presenter Mode → End Session → View Results<br>• **Audience:** Join via Link/Code → (Optional Name) → Participate (Q&A / Poll) → View Live Updates<br>• **Moderator:** Dashboard → Review Content → Approve / Hide / Highlight |
 | Release 1 (R1) | • **Host:** Create Session → Configure Multiple Interactions → Switch Live Interactions → View Leaderboards → Analytics<br>• **Audience:** Join → Participate (Polls / Quiz / Word Cloud) → View Results<br>• **Moderator:** Dashboard → Manage Multiple Queues → Support Live Session |
 | Full Parity | • **Host:** Create / Reuse Template → Assign Moderators → Run Integrated Session → Export Analytics<br>• **Audience:** Join via Embedded / External Platform → Participate → Complete Surveys<br>• **Moderator:** Dashboard → Enforce Policies → Review Audit Logs |
+
+---
+
+# 3. MVP Business Requirements
+
+## 3.1 MVP Objective
+Deliver a complete, production-grade end-to-end experience for live Q&A and MCQ polling, covering Host, Moderator, and Audience journeys without gaps.
+
+---
+
+## 3.2 MVP Business Requirements
+
+| Persona | User Journey Step | Capability | Capability Category | Business Requirement |
+|-------|------------------|------------|---------------------|---------------------|
+| Host | Login | Host authentication | Access control | Host can securely access their session dashboard |
+| Host | Create session | Event creation | Session management | Host can create a new interactive session with basic settings |
+| Host | Session dashboard | Session overview | Session management | Host can view and manage active session state |
+| Host | Launch Q&A | Q&A activation | Audience interaction | Host can enable live audience questions |
+| Host | Launch MCQ poll | Poll launch | Audience interaction | Host can create and launch a multiple-choice poll |
+| Moderator / Co-Host | Review questions | Content moderation | Content governance | Moderator can review submitted audience questions |
+| Moderator / Co-Host | Approve or hide | Moderation actions | Content governance | Moderator can approve, hide, or highlight questions |
+| Audience | Join session | Join flow | Session access | Audience can join session via link or code without login |
+| Audience | Submit question | Question submission | Audience interaction | Audience can submit questions in real time |
+| Audience | Vote question | Upvoting | Audience interaction | Audience can upvote visible questions |
+| Audience | Respond to poll | Poll participation | Audience interaction | Audience can submit a single poll response |
+| Audience | View updates | Live updates | Presentation | Audience sees real-time updates and results |
+| Host | Presenter mode | Live display | Presentation | Host can display live Q&A and poll results fullscreen |
+| Host | End session | Session closure | Session management | Host can end the session explicitly |
+| Host | View results | Results summary | Analytics | Host can view basic engagement and poll results |
+
+---
+
+## Governance & Quality Rules
+
+- Profanity filtering applies to all audience text input.
+- Moderation is enforced before public visibility.
+- Real-time updates must be reliable and low-latency.
+- All personas must be supported end-to-end.
