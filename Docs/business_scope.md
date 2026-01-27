@@ -125,9 +125,47 @@ Deliver a complete, production-grade end-to-end experience for live Q&A and MCQ 
 
 ---
 
-## Governance & Quality Rules
+### Governance & Quality Rules
 
 - Profanity filtering applies to all audience text input.
 - Moderation is enforced before public visibility.
 - Real-time updates must be reliable and low-latency.
 - All personas must be supported end-to-end.
+
+---
+
+# 4. MVP Non-Functional Business Requirements
+
+## 4.1 Purpose
+Define the minimum acceptable quality bar for the MVP so that it is production-ready, scalable, and credible for real usage.
+
+---
+
+## 4.2 MVP Non-Functional Requirements
+
+| Category | Requirement | Business Definition |
+|--------|-------------|---------------------|
+| Performance | Real-time responsiveness | Audience actions must reflect to all users near real time |
+| Performance | Presenter stability | Presenter mode must remain smooth during live sessions |
+| Scalability | Concurrent users | Support large concurrent audiences without degradation |
+| Reliability | Session continuity | Temporary disconnects must not break sessions |
+| Reliability | Data consistency | No loss or duplication of questions, votes, or responses |
+| Availability | Uptime | Platform must be available during scheduled sessions |
+| Usability | Join friction | Audience can join and participate within seconds |
+| Usability | Mobile readiness | Audience experience works smoothly on mobile |
+| Governance | Content safety | Unsafe content must never be publicly visible |
+| Governance | Moderation enforcement | Governance rules apply consistently |
+| Security | Access control | Only authorized roles access host/moderator features |
+| Security | Data protection | Session data is protected from unauthorized access |
+| Observability | Error visibility | Failures are detectable and diagnosable |
+| Extensibility | Future expansion | MVP supports adding new interaction types without rework |
+
+---
+
+### MVP Acceptance Standard
+
+The MVP is acceptable only if:
+- All supported user journeys work end-to-end
+- Performance is stable under load
+- Governance rules are enforced
+- No feature is temporary or prototype-grade
