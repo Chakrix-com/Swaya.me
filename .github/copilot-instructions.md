@@ -30,7 +30,7 @@ All code must follow this strict layering (see [Docs/logical_architecture.md](..
 ## Technology Stack (Use Exactly)
 
 **Backend:** FastAPI + Pydantic + SQLAlchemy 2.0 + JWT auth  
-**Database:** MySQL (AWS RDS) for persistence, Redis (local) for live state  
+**Database:** MySQL (OCI VM) for persistence, Redis (local) for live state  
 **Frontend:** React + Ant Design + Redux Toolkit  
 **Deployment:** Docker + Docker Compose + Nginx on OCI VM (Ubuntu 24.04)  
 

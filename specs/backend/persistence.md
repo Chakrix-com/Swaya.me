@@ -7,8 +7,7 @@ This document defines the database schema, tables, relationships, and migration 
 ## Database Technology
 
 - **RDBMS**: MySQL 8.0+
-- **Hosting**: AWS RDS Free Tier
-- **Connection**: production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com
+- **Hosting**: OCI VM (local installation)
 - **ORM**: SQLAlchemy 2.0
 - **Migrations**: Alembic
 
@@ -354,7 +353,7 @@ VALUES
 
 **Environment Variables**:
 ```bash
-DB_HOST=production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com
+DB_HOST=<mysql-host-endpoint>
 DB_PORT=3306
 DB_NAME=swaya_db
 DB_USER=admin
@@ -372,6 +371,6 @@ DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 
 ## Backup & Recovery
 
-- **Automated Backups**: Enabled via AWS RDS (7-day retention)
+- **Automated Backups**: Scheduled via cron jobs (7-day retention)
 - **Manual Snapshots**: Before major schema changes
-- **Point-in-Time Recovery**: Supported via RDS
+- **Point-in-Time Recovery**: Via binary logs and incremental backups

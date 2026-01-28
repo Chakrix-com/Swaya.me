@@ -38,7 +38,7 @@ This document describes the DevOps, infrastructure, and deployment technologies 
 
 | Component | Provider | Configuration | Purpose |
 |---|---|---|---|
-| **MySQL** | AWS RDS Free Tier | production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com | Persistent relational data storage |
+| **MySQL** | OCI VM (local) | MySQL 8.0+ instance on same OCI VM | Persistent relational data storage |
 | **Redis** | OCI VM (local) | In-memory cache service on same OCI instance | Session storage, real-time counters, rate limiting |
 
 ---

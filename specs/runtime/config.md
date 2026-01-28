@@ -8,9 +8,9 @@ This document defines all configuration settings and environment variables for t
 
 ### Backend Configuration
 
-#### Database (MySQL on AWS RDS)
+#### Database (MySQL on OCI VM)
 ```bash
-DB_HOST=production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com
+DB_HOST=<mysql-host-endpoint>
 DB_PORT=3306
 DB_NAME=swaya_db
 DB_USER=admin

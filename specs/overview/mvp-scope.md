@@ -39,7 +39,7 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 
 ### Technical Scope
 - **Backend**: FastAPI + SQLAlchemy 2.0 + Pydantic
-- **Database**: MySQL (AWS RDS) for persistence, Redis (local) for live state
+- **Database**: MySQL (OCI VM) for persistence, Redis (local) for live state
 - **Frontend**: React + Ant Design + Redux Toolkit
 - **Deployment**: Docker + Docker Compose + Nginx on OCI VM (Ubuntu 24.04)
 - **Authentication**: JWT-based for hosts, anonymous for audience
@@ -50,7 +50,7 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 - **3-layer architecture** — Services, Platform Kernel, Features
 - **Single-tenant MVP** — tenant structure present but not enforced
 - **Single VM deployment** — OCI Free Tier instance
-- **MySQL on AWS RDS** — production database
+- **MySQL on OCI VM** — production database
 - **Redis on local VM** — ephemeral live state
 
 ---

@@ -15,7 +15,7 @@ This document provides step-by-step instructions for setting up, running, and ma
 
 ### Access Requirements
 - OCI VM SSH access
-- AWS RDS credentials
+- MySQL root/admin credentials
 - Gitea repository access
 - Domain DNS control (for SSL setup)
 
@@ -87,7 +87,7 @@ nano .env
 
 **Required Values**:
 ```bash
-DB_HOST=production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com
+DB_HOST=<mysql-host-endpoint>
 DB_PORT=3306
 DB_NAME=swaya_db
 DB_USER=admin
@@ -218,18 +218,18 @@ docker-compose run backend alembic revision -m "Custom migration"
 ### Connect to MySQL
 
 ```bash
-mysql -h production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com -u admin -p swaya_db
+mysql -h <mysql-host-endpoint> -u admin -p swaya_db
 ```
 
 ### Backup Database
 
 ```bash
 # Create backup
-mysqldump -h production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com \
+mysqldump -h <mysql-host-endpoint> \
   -u admin -p swaya_db > backup_$(date +%Y%m%d).sql
 
 # Restore backup
-mysql -h production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com \
+mysql -h <mysql-host-endpoint> \
   -u admin -p swaya_db < backup_20260127.sql
 ```
 
@@ -357,8 +357,10 @@ docker-compose logs backend | grep ERROR
 mysql -h $DB_HOST -u $DB_USER -p -e "SELECT 1;"
 ```
 
-**Check firewall rules**:
-- Ensure OCI VM can reach AWS RDS (security group rules)
+**Check MySQL service**:
+```bash
+sudo systemctl status mysql
+```
 
 **Verify credentials**:
 ```bash

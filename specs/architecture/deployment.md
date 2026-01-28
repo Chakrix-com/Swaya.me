@@ -6,8 +6,8 @@ This document describes the deployment architecture for the MVP phase.
 
 The MVP runs on:
 - A single Oracle Cloud Infrastructure (OCI) Free Tier VM
-- No managed cloud services (except AWS RDS for MySQL)
-- No vendor-specific dependencies
+- All services hosted on the same VM (MySQL, Redis, application)
+- No external managed cloud services
 - Modular monolith deployment model
 
 ---
@@ -45,7 +45,7 @@ This minimizes:
 
 | Component | Provider | Configuration | Purpose |
 |-----------|----------|---------------|---------|
-| **MySQL** | AWS RDS Free Tier | production-agalabs-mysql.ce36pt8nq91i.ap-south-1.rds.amazonaws.com | Persistent relational data |
+| **MySQL** | OCI VM (local) | MySQL 8.0+ instance on same VM | Persistent relational data |
 | **Redis** | OCI VM (local) | In-memory cache on same VM | Session storage, live state, rate limiting |
 
 ### Source Code Management
@@ -76,7 +76,7 @@ flowchart TB
     Frontend["React Frontend<br/>(Docker Container)"]
     Backend["FastAPI Backend<br/>(Docker Container)"]
     Redis["Redis Cache<br/>(Local)"]
-    MySQL["MySQL Database<br/>(AWS RDS)"]
+    MySQL["MySQL Database<br/>(Local)"]
 
     Internet --> Nginx
     Nginx --> Frontend
@@ -89,9 +89,6 @@ flowchart TB
         Frontend
         Backend
         Redis
-    end
-
-    subgraph AWS["AWS RDS Free Tier"]
         MySQL
     end
 ```
@@ -129,7 +126,7 @@ flowchart TB
 
 ## Persistence & Runtime State
 
-### MySQL (AWS RDS)
+### MySQL (Local VM)
 - Users
 - Quiz definitions
 - Quiz sessions
@@ -180,12 +177,12 @@ flowchart TB
 
 1. Provision OCI VM (Ubuntu 24.04, 4 OCPU, 24 GB RAM)
 2. Install Docker and Docker Compose
-3. Clone repository from Gitea
-4. Configure environment variables (DB connection, JWT secret, Redis host)
-5. Build Docker images for frontend and backend
-6. Start services via Docker Compose
-7. Configure Nginx reverse proxy
-8. Verify connectivity to MySQL (AWS RDS)
+3. Install and configure MySQL 8.0+
+4. Clone repository from Gitea
+5. Configure environment variables (DB connection, JWT secret, Redis host)
+6. Build Docker images for frontend and backend
+7. Start services via Docker Compose
+8. Configure Nginx reverse proxy
 9. Run database migrations (Alembic)
 10. Start application and validate health checks
 
