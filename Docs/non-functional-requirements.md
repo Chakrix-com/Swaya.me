@@ -4,6 +4,15 @@
 
 This document defines the non-functional requirements for the Interactive Audience Engagement Platform MVP, specifically the Quiz feature. These requirements are scoped for the initial pilot deployment on OCI Free Tier infrastructure.
 
+**Technology Commitment:** All software components are 100% open source and free (GPL, MIT, Apache, BSD, or similar permissive licenses). This ensures:
+- Zero licensing costs at any scale
+- Full transparency and auditability
+- No vendor lock-in
+- Community-driven improvements
+- Portability across cloud providers and on-premises infrastructure
+
+**Exception:** Oracle Cloud Infrastructure (OCI) is used for cost-effective hosting (generous free tier), but the application stack remains fully portable to any Linux environment (AWS, GCP, Azure, DigitalOcean, bare metal, etc.).
+
 ---
 
 ## Infrastructure Constraints

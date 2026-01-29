@@ -2,6 +2,13 @@
 
 This document defines the authentication and authorization mechanisms for the Swaya.me platform.
 
+**Technology:** 100% open source authentication using:
+- **PyJWT** (MIT License) - JWT token generation and validation
+- **bcrypt** (Apache 2.0 License) - Password hashing
+- **FastAPI Security** (MIT License) - Built-in authentication utilities
+
+All authentication components are open source with zero licensing costs.
+
 ---
 
 ## Overview

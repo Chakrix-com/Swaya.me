@@ -4,14 +4,19 @@ This document defines all screens, components, fields, and validation rules for 
 
 ---
 
-## Technology Stack
+## Technology Stack (All Open Source)
 
-- **Framework**: React 18+
-- **UI Library**: Ant Design (AntD)
-- **State Management**: Redux Toolkit (RTK)
-- **Routing**: React Router v6
-- **HTTP Client**: Axios
-- **Real-time**: Polling (2s interval) or WebSocket (TBD)
+- **Framework**: React 18+ (MIT License)
+- **UI Library**: Ant Design (AntD) (MIT License)
+- **State Management**: Redux Toolkit (RTK) (MIT License)
+- **Form Management**: React Hook Form + Yup (MIT License)
+- **Icons**: Font Awesome Free (MIT/CC BY 4.0)
+- **Date Utilities**: date-fns (MIT License)
+- **Routing**: React Router v6 (MIT License)
+- **HTTP Client**: Axios (MIT License)
+- **Real-time**: Polling (2s interval) or WebSocket (Open Standard)
+
+All frontend technologies are 100% open source with zero licensing costs.
 
 ---
 

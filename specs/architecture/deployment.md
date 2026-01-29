@@ -4,11 +4,15 @@
 
 This document describes the deployment architecture for the MVP phase.
 
+**Technology Commitment:** 100% open source software stack with zero licensing costs.
+
 The MVP runs on:
 - A single Oracle Cloud Infrastructure (OCI) Free Tier VM
 - All services hosted on the same VM (MySQL, Redis, application)
-- No external managed cloud services
+- **No proprietary or paid software components**
+- **No external managed cloud services** (avoids vendor lock-in)
 - Modular monolith deployment model
+- **Fully portable** to any Linux environment
 
 ---
 
@@ -35,35 +39,37 @@ This minimizes:
 
 ### Compute Instance
 
-| Component | Provider | Configuration | Purpose |
-|-----------|----------|---------------|---------|
-| **VM Instance** | Oracle Cloud Infrastructure (OCI) Free Tier | AMD/ARM-based, Ubuntu 24.04 LTS | Hosts all application services |
-| **Resources** | OCI | 4 OCPU, 24 GB RAM, 97 GB SSD | Sufficient for MVP pilot |
-| **Region** | OCI | ap-south-1 (or equivalent) | Primary deployment region |
+| Component | Provider | License/Cost | Configuration | Purpose |
+|-----------|----------|--------------|---------------|---------|  
+| **VM Instance** | OCI Free Tier | Free Tier (Proprietary cloud) | AMD/ARM-based, Ubuntu 24.04 LTS (Open Source) | Hosts all application services |
+| **Resources** | OCI | Free Tier | 4 OCPU, 24 GB RAM, 97 GB SSD | Sufficient for MVP pilot |
+| **Region** | OCI | Free Tier | ap-south-1 (or equivalent) | Primary deployment region |
 
 ### Database Hosting
 
-| Component | Provider | Configuration | Purpose |
-|-----------|----------|---------------|---------|
-| **MySQL** | OCI VM (local) | MySQL 8.0+ instance on same VM | Persistent relational data |
-| **Redis** | OCI VM (local) | In-memory cache on same VM | Session storage, live state, rate limiting |
+| Component | Provider | License | Configuration | Purpose |
+|-----------|----------|---------|---------------|---------|  
+| **MySQL** | OCI VM (local) | GPL v2 (Open Source) | MySQL 8.0+ instance on same VM | Persistent relational data |
+| **Redis** | OCI VM (local) | BSD 3-Clause (Open Source) | In-memory cache on same VM | Session storage, live state, rate limiting |
 
 ### Source Code Management
 
-| Component | Tool | Configuration | Purpose |
-|-----------|------|---------------|---------|
-| **Git Server** | Gitea | Self-hosted on separate OCI instance (AMD, Ubuntu 24.04) | Centralized source code repository |
-| **Access** | SSH/HTTPS | Team collaboration | Version control and CI/CD integration |
+| Component | Tool | License | Configuration | Purpose |
+|-----------|------|---------|---------------|---------|  
+| **Git Server** | Gitea | MIT (Open Source) | Self-hosted on separate OCI instance (AMD, Ubuntu 24.04) | Centralized source code repository |
+| **Access** | SSH/HTTPS | Open Standards | Team collaboration | Version control and CI/CD integration |
 
 ---
 
 ## Container & Orchestration
 
-| Component | Technology | Usage |
-|-----------|-----------|--------|
-| **Container Runtime** | Docker | Package application and dependencies |
-| **Orchestration** | Docker Compose | Manage multi-container deployments |
-| **Reverse Proxy** | Nginx | Route traffic to frontend and backend |
+| Component | Technology | License | Usage |
+|-----------|-----------|---------|--------|  
+| **Container Runtime** | Docker | Apache 2.0 (Open Source) | Package application and dependencies |
+| **Orchestration** | Docker Compose | Apache 2.0 (Open Source) | Manage multi-container deployments |
+| **Reverse Proxy** | Nginx | BSD 2-Clause (Open Source) | Route traffic, SSL termination, edge rate limiting |
+| **Rate Limiting** | Slowapi | MIT (Open Source) | Application-level context-aware rate limiting |
+| **Logging** | python-json-logger | BSD 2-Clause (Open Source) | Structured JSON logging for analytics |
 
 ---
 
@@ -72,10 +78,10 @@ This minimizes:
 ```mermaid
 flowchart TB
     Internet["Internet"]
-    Nginx["Nginx Reverse Proxy"]
+    Nginx["Nginx Reverse Proxy<br/>(Tier 1: Edge Rate Limiting)"]
     Frontend["React Frontend<br/>(Docker Container)"]
-    Backend["FastAPI Backend<br/>(Docker Container)"]
-    Redis["Redis Cache<br/>(Local)"]
+    Backend["FastAPI Backend<br/>(Tier 2: Policy Enforcement)<br/>Slowapi + python-json-logger"]
+    Redis["Redis Cache<br/>(Tier 3: Rate Limit State)<br/>(Local)"]
     MySQL["MySQL Database<br/>(Local)"]
 
     Internet --> Nginx

@@ -2,6 +2,12 @@
 
 This document defines the realtime communication strategy for the Swaya.me MVP.
 
+**All realtime technologies are 100% open source and free:**
+- **WebSocket**: Built into browsers (W3C standard, free)
+- **HTTP/2**: Open standard protocol (RFC 7540, free)
+- **Server-Sent Events (SSE)**: Open browser standard (free)
+- **FastAPI WebSocket**: Built-in support (MIT License, open source)
+
 ---
 
 ## Decision: Polling vs WebSocket

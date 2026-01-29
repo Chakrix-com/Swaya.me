@@ -2,6 +2,8 @@
 
 This document defines all API endpoints, request/response schemas, and error codes for the Swaya.me MVP.
 
+**Implementation:** Built using **FastAPI** (MIT License) and **Pydantic** (MIT License) - 100% open source, zero licensing costs.
+
 ---
 
 ## Base URL
@@ -17,6 +19,61 @@ This document defines all API endpoints, request/response schemas, and error cod
 - **Prefix**: `/api/v1`
 
 All endpoints below are prefixed with `/api/v1`.
+
+---
+
+## Rate Limiting & Headers
+
+### Rate Limiting Strategy
+
+**Implementation**: 3-tier approach using Nginx (edge) + Slowapi (application) + Redis (state)
+
+All endpoints are rate limited to prevent abuse and ensure fair usage.
+
+### Rate Limit Policies (MVP)
+
+| Endpoint | Limit | Key | Enforcement |
+|---------|-------|-----|-------------|
+| `POST /auth/login` | 5/minute | IP address | Nginx + Slowapi |
+| `POST /sessions/*/join` | 10/minute | IP address | Nginx + Slowapi |
+| `POST /answers/submit` | 100/minute | Participant ID | Slowapi |
+| `POST /quizzes` | 20/hour | User ID | Slowapi |
+| `GET *` (general) | 1000/minute | IP address | Nginx |
+
+### Standard Request Headers
+
+```http
+Authorization: Bearer <jwt_token>  # For authenticated endpoints
+X-Request-ID: <uuid>  # Optional, auto-generated if missing
+Content-Type: application/json
+```
+
+### Standard Response Headers
+
+```http
+X-Request-ID: <uuid>  # Request tracking ID
+X-RateLimit-Limit: 100  # Total requests allowed in window
+X-RateLimit-Remaining: 87  # Remaining requests in current window
+X-RateLimit-Reset: 1643234567  # Unix timestamp when limit resets
+```
+
+### Rate Limit Exceeded Response (429)
+
+When rate limit is exceeded:
+
+**Headers**:
+```http
+Retry-After: 60  # Seconds until retry is allowed
+```
+
+**Response Body**:
+```json
+{
+  "error_code": "RATE_LIMIT_EXCEEDED",
+  "message": "Too many requests. Please try again later.",
+  "retry_after": 60
+}
+```
 
 ---
 
@@ -662,8 +719,10 @@ All errors follow this format:
 | 403 | Forbidden | Insufficient permissions |
 | 404 | Not Found | Resource not found |
 | 409 | Conflict | Resource conflict (e.g., duplicate session) |
-| 429 | Too Many Requests | Rate limit exceeded |
+| 429 | Too Many Requests | Rate limit exceeded (see `Retry-After` header) |
 | 500 | Internal Server Error | Unexpected server error |
+
+**Rate Limiting**: All `429` responses include `Retry-After` header indicating seconds to wait before retrying.
 
 ---
 

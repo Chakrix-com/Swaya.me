@@ -6,6 +6,8 @@ Define the minimum set of features required to deliver an end-to-end, usable **I
 
 This MVP is intentionally narrow and focuses on **value delivery**, not feature completeness.
 
+**Technology Commitment:** 100% open source and free software. No proprietary or paid components. Full portability across cloud providers and on-premises infrastructure.
+
 ---
 
 ## What's In Scope (MVP)
@@ -37,13 +39,13 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 - Audience views correct answer after question closes
 - Audience can see final results when quiz ends
 
-### Technical Scope
-- **Backend**: FastAPI + SQLAlchemy 2.0 + Pydantic
-- **Database**: MySQL (OCI VM) for persistence, Redis (local) for live state
-- **Frontend**: React + Ant Design + Redux Toolkit
-- **Deployment**: Docker + Docker Compose + Nginx on OCI VM (Ubuntu 24.04)
-- **Authentication**: JWT-based for hosts, anonymous for audience
-- **Realtime**: WebSocket or polling (to be finalized in api-contracts.md)
+### Technical Scope (All Open Source)
+- **Backend**: FastAPI (MIT) + SQLAlchemy 2.0 (MIT) + Pydantic (MIT)
+- **Database**: MySQL 8.0+ (GPL v2) on OCI VM for persistence, Redis (BSD) local for live state
+- **Frontend**: React (MIT) + Ant Design (MIT) + Redux Toolkit (MIT)
+- **Deployment**: Docker (Apache 2.0) + Docker Compose (Apache 2.0) + Nginx (BSD) on OCI VM (Ubuntu 24.04 LTS)
+- **Authentication**: JWT-based (PyJWT - MIT) for hosts, anonymous for audience, bcrypt (Apache 2.0) for passwords
+- **Realtime**: WebSocket (open standard) or polling (to be finalized in api-contracts.md)
 
 ### Architecture Decisions (Locked)
 - **Modular monolith** — single deployable application
@@ -76,8 +78,10 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 
 ### Technical Exclusions
 - Microservices architecture
-- Kubernetes orchestration
-- Managed cloud services (beyond RDS)
+- Kubernetes orchestration (using Docker Compose instead)
+- Managed cloud services (self-hosted MySQL/Redis on OCI VM)
+- **Proprietary or paid software dependencies**
+- **Vendor-specific APIs** (maintaining portability)
 - Message brokers (Kafka, RabbitMQ)
 - AI in core execution paths
 - SSO / OAuth (MVP uses simple email+password)

@@ -2,14 +2,18 @@
 
 This document defines the database schema, tables, relationships, and migration strategy for the Swaya.me MVP.
 
+**All database and ORM technologies are 100% open source and free.**
+
 ---
 
-## Database Technology
+## Database Technology (All Open Source)
 
-- **RDBMS**: MySQL 8.0+
-- **Hosting**: OCI VM (local installation)
-- **ORM**: SQLAlchemy 2.0
-- **Migrations**: Alembic
+- **RDBMS**: MySQL 8.0+ (GPL v2 License)
+- **Hosting**: OCI VM (local installation on open source Ubuntu Linux)
+- **ORM**: SQLAlchemy 2.0 (MIT License)
+- **Migrations**: Alembic (MIT License)
+- **Database Driver**: PyMySQL (MIT License) or mysqlclient (GPL)
+- **Connection Pooling**: Built-in SQLAlchemy pooling (open source)
 
 ---
 

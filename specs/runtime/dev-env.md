@@ -2,30 +2,33 @@
 
 This document describes how to set up a local development environment for Swaya.me.
 
+**All development tools and dependencies are 100% open source and free.**
+
 ---
 
 ## Prerequisites
 
-### Required Software
+### Required Software (All Open Source)
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Python** | 3.11+ | Backend development |
-| **Node.js** | 18+ | Frontend development |
-| **Docker** | 24.0+ | Local services (Redis, MySQL) |
-| **Docker Compose** | 2.20+ | Multi-container orchestration |
-| **Git** | 2.40+ | Version control |
-| **VS Code** | Latest | Recommended IDE |
+| Tool | Version | License | Purpose |
+|------|---------|---------|---------|  
+| **Python** | 3.11+ | PSF License (Open Source) | Backend development |
+| **Node.js** | 18+ | MIT (Open Source) | Frontend development |
+| **npm/yarn** | Latest | Artistic 2.0 / BSD (Open Source) | Package management |
+| **Docker** | 24.0+ | Apache 2.0 (Open Source) | Local services (Redis, MySQL) |
+| **Docker Compose** | 2.20+ | Apache 2.0 (Open Source) | Multi-container orchestration |
+| **Git** | 2.40+ | GPL v2 (Open Source) | Version control |
+| **VS Code** | Latest | MIT (Open Source) | Recommended IDE |
 
-### Recommended VS Code Extensions
+### Recommended VS Code Extensions (All Free/Open Source)
 
-- Python (Microsoft)
-- Pylance
-- ESLint
-- Prettier
-- Docker
-- GitLens
-- Thunder Client (API testing)
+- **Python** (Microsoft) - Python language support
+- **Pylance** (Microsoft) - Python type checking
+- **ESLint** (Open Source) - JavaScript/TypeScript linting
+- **Prettier** (Open Source) - Code formatting
+- **Docker** (Microsoft) - Docker container management
+- **GitLens** (Open Source) - Git visualization
+- **REST Client** (Open Source) or **Thunder Client** (Free) - API testing
 
 ---
 

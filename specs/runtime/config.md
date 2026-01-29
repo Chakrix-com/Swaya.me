@@ -2,6 +2,8 @@
 
 This document defines all configuration settings and environment variables for the Swaya.me MVP.
 
+**Technology Stack:** 100% open source software with zero licensing costs.
+
 ---
 
 ## Environment Variables
@@ -29,12 +31,12 @@ REDIS_DB=0
 REDIS_MAX_CONNECTIONS=50
 ```
 
-#### Authentication
+#### Authentication (Using PyJWT - MIT License, Open Source)
 ```bash
 JWT_SECRET=<random_256_bit_secret>
 JWT_ALGORITHM=HS256
 JWT_EXPIRATION_HOURS=24
-PASSWORD_SALT_ROUNDS=12  # bcrypt cost factor
+PASSWORD_SALT_ROUNDS=12  # bcrypt cost factor (bcrypt is Apache 2.0 licensed, open source)
 ```
 
 #### Server
@@ -54,9 +56,11 @@ LOG_FILE=/var/log/swaya/backend.log
 
 #### Rate Limiting
 ```bash
-RATE_LIMIT_LOGIN=5  # Max login attempts per minute per IP
-RATE_LIMIT_JOIN=10  # Max join attempts per minute per IP
-RATE_LIMIT_SUBMIT=100  # Max answer submissions per minute per participant
+# Slowapi format: "count/period" (period: second, minute, hour, day)
+RATE_LIMIT_LOGIN=5/minute  # Max login attempts per minute per IP
+RATE_LIMIT_JOIN=10/minute  # Max join attempts per minute per IP
+RATE_LIMIT_SUBMIT=100/minute  # Max answer submissions per minute per participant
+RATE_LIMIT_DEFAULT=1000/minute  # Global fallback for unspecified endpoints
 ```
 
 ---
@@ -85,6 +89,8 @@ REACT_APP_DEBUG=false  # Enable Redux DevTools and console logging
 ## Configuration Files
 
 ### Backend: config.py
+
+**Uses Pydantic (MIT License, Open Source) for configuration management**
 
 ```python
 import os
@@ -125,10 +131,11 @@ class Settings(BaseSettings):
     log_format: str = os.getenv("LOG_FORMAT", "json")
     log_file: str = os.getenv("LOG_FILE", "/var/log/swaya/backend.log")
     
-    # Rate Limiting
-    rate_limit_login: int = int(os.getenv("RATE_LIMIT_LOGIN", 5))
-    rate_limit_join: int = int(os.getenv("RATE_LIMIT_JOIN", 10))
-    rate_limit_submit: int = int(os.getenv("RATE_LIMIT_SUBMIT", 100))
+    # Rate Limiting (Slowapi format: "count/period")
+    rate_limit_login: str = os.getenv("RATE_LIMIT_LOGIN", "5/minute")
+    rate_limit_join: str = os.getenv("RATE_LIMIT_JOIN", "10/minute")
+    rate_limit_submit: str = os.getenv("RATE_LIMIT_SUBMIT", "100/minute")
+    rate_limit_default: str = os.getenv("RATE_LIMIT_DEFAULT", "1000/minute")
     
     @property
     def database_url(self) -> str:

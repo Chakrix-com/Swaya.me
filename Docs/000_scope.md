@@ -56,17 +56,28 @@ Rules:
 
 ## Technology Stack (Use exactly)
 
+**All technologies are 100% open source and free** (GPL, MIT, Apache, BSD licenses).
+
 ### Backend
-- FastAPI
-- Pydantic
-- SQLAlchemy 2.0
-- SQLite (instead of MySQL, for prototype)
-- JWT-based authentication (simple)
+- FastAPI (MIT License)
+- Pydantic (MIT License)
+- SQLAlchemy 2.0 (MIT License)
+- SQLite (Public Domain) [instead of MySQL, for prototype]
+- JWT-based authentication (PyJWT - MIT License)
+- bcrypt for password hashing (Apache 2.0 License)
 
 ### Frontend
-- React
-- Ant Design (basic components only)
+- React (MIT License)
+- Ant Design (MIT License) [basic components only]
 - Local component state (Redux NOT required for prototype)
+
+### Deployment & Infrastructure (All Open Source)
+- Docker (Apache 2.0 License)
+- Nginx (BSD 2-Clause License)
+- Ubuntu Linux (Free, Open Source)
+- OCI Free Tier for hosting (proprietary cloud, but app is portable)
+
+**Note:** While OCI is used for cost-effective hosting, the entire application stack uses only open source software and can run on any Linux environment.
 
 ---
 

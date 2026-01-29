@@ -2,6 +2,10 @@
 
 This directory contains the complete, AI-oriented specifications for the Swaya.me interactive quiz platform MVP.
 
+**Technology Commitment:** 100% open source and free software stack (MIT, Apache 2.0, BSD, GPL licenses). Zero licensing costs. Full portability. No vendor lock-in.
+
+📖 **See [TECHNOLOGY_REFERENCE.md](./TECHNOLOGY_REFERENCE.md) for complete technology stack details.**
+
 ---
 
 ## Directory Structure
@@ -49,6 +53,7 @@ API specifications, domain models, and backend design.
 | File | Purpose |
 |------|---------|
 | [api-contracts.md](./backend/api-contracts.md) | REST API endpoints, payloads, errors (11 endpoints including quiz builder) |
+| [api-layer-strategy.md](./backend/api-layer-strategy.md) | Rate limiting, logging, profanity filtering, analytics (3-tier: Nginx + Slowapi + Redis) |
 | [domain-model.md](./backend/domain-model.md) | Entities, relationships, business rules |
 | [persistence.md](./backend/persistence.md) | Database schema, tables, migrations (MySQL) |
 | [auth.md](./backend/auth.md) | JWT authentication, authorization model |

@@ -6,10 +6,13 @@ This document defines the **high-level logical architecture** for **Swaya.me** u
 2. **Broker Layer** – communication, policy enforcement, and orchestration
 3. **Features Layer** – independently deployable product capabilities (Quiz, Q&A, Polls, etc.)
 
+**Technology Commitment:** All architectural components implemented using 100% open source and free software (MIT, Apache 2.0, BSD, GPL licenses).
+
 The architecture is designed to:
 - Keep **Core stable and reusable**
 - Centralize **policy enforcement** (auth, rate limits, profanity, security)
 - Allow **Features to evolve independently** without coupling to platform concerns
+- Maintain **full portability** across deployment environments
 
 ---
 
@@ -95,9 +98,19 @@ The architecture is designed to:
 All requests pass through policy checks before reaching features:
 - Authentication & authorization
 - Role validation
-- Rate limiting
+- **Rate limiting** (3-tier: Nginx edge + Slowapi application + Redis state)
 - Anti-spam rules
 - **Profanity detection & enforcement** (post-MVP)
+
+**Rate Limiting Implementation (MVP)**:
+- **Tier 1 (Nginx)**: Edge-level protection, DDoS mitigation, basic IP rate limits
+- **Tier 2 (Slowapi)**: Context-aware application rate limiting
+  - Per-IP: Login (5/min), Join session (10/min)
+  - Per-participant: Answer submission (100/min)
+  - Per-role: Host vs Audience differentiation
+- **Tier 3 (Redis)**: Distributed rate limit counters and state management
+- **HTTP 429 Response**: Rate limit exceeded with Retry-After header
+- **Structured Logging**: All violations logged for analytics and abuse detection
 
 **Profanity Rules (Post-MVP)**:
 - Applied to all user-generated text (questions, poll options, quiz answers, word cloud, display names)

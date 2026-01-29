@@ -2,6 +2,8 @@
 
 This document defines the Redux Toolkit state structure, slices, and API bindings for the Swaya.me MVP.
 
+**Implementation:** Built using **Redux Toolkit** (MIT License) and **React** (MIT License) - 100% open source, zero licensing costs.
+
 ---
 
 ## State Architecture

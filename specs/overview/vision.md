@@ -6,6 +6,8 @@ Build a **Slido-like interactive quiz platform** that enables real-time audience
 
 The platform provides live quizzes, Q&A, polling, and analytics to transform one-way presentations into two-way, measurable engagement across in-person, remote, and hybrid environments.
 
+**Technology Philosophy:** Built entirely on **100% open source and free software** with zero licensing costs. No proprietary dependencies. Full portability across cloud providers and on-premises infrastructure.
+
 ## Success Criteria
 
 ### MVP Success Criteria
