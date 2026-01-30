@@ -18,6 +18,8 @@ The architecture is intentionally designed to:
 - **Separation of Concerns**: Core never depends on Features; Features never talk directly to clients.
 - **Single Ingress**: All client traffic flows through the Broker.
 - **Policy First**: Security, rate limits, profanity, and moderation are enforced before business logic.
+- **Multi-Tenant by Design**: All data and policies are tenant-scoped; tenant context resolved once per request.
+- **Tier-Based Access**: Feature access and usage limits enforced by tier entitlements.
 - **Realtime Safe by Design**: Nothing unapproved is ever broadcast.
 - **Future-Proof**: Features can be deployed independently or split later without redesign.
 
@@ -86,6 +88,20 @@ Provide shared, cross-cutting capabilities used by every feature without duplica
 - Per-session throttles
 - IP/device fingerprint support
 
+#### 3.8 Tenant Management
+- Tenant identification and registration
+- Tenant context resolution (once per request)
+- Data isolation enforcement
+- Cross-tenant access prevention
+
+#### 3.9 Subscription & Tier Management
+- Subscription state tracking (active/trial/suspended/cancelled)
+- Tier entitlement resolution (feature access)
+- Usage quota tracking and enforcement
+- Billing period management
+- Configurable tier definitions (Free, Basic, Pro, Enterprise)
+- Feature gate resolution per tenant tier
+
 ---
 
 ## 4. Broker Layer (Communication & Orchestration)
@@ -109,6 +125,9 @@ All requests pass through policy checks before reaching features.
 
 Policies include:
 - Authentication & authorization
+- **Tenant context resolution** (extracted once, propagated internally)
+- **Tier-based feature gates** (feature access per subscription tier)
+- **Usage quota enforcement** (participant limits, event limits, storage limits)
 - Role validation
 - Rate limiting
 - Anti-spam rules
@@ -140,6 +159,7 @@ Policies include:
 
 #### 4.4 Command Routing & Orchestration
 - Routes validated commands to the appropriate feature component
+- Validates tier entitlements before routing
 - Decouples client intent from feature implementation
 - Enforces feature boundaries
 
@@ -162,8 +182,10 @@ Deliver end-user functionality as **modular, independently deployable components
 - No direct client access
 - No direct auth or policy logic
 - No direct broadcasting
+- **No tier or quota logic** (enforced by Broker and Core)
 - Communicate only through the Broker
 - Own only their domain logic
+- Remain tenant-agnostic (tenant context provided by Platform)
 
 ### Feature Components
 

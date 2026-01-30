@@ -12,6 +12,14 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 
 ## What's In Scope (MVP)
 
+### Multi-Tenant SaaS Foundation
+- **Tenant isolation** at database and application layers
+- **Tier-based feature gates** (Free, Basic, Pro, Enterprise - Slido model)
+- **Configurable subscription tiers** stored in database
+- **Usage quota tracking** per tenant (participants, questions, concurrent events)
+- **Policy enforcement** in Broker layer before feature execution
+- **Two initial tiers for MVP:** Free (50 participants, 10 questions) and Pro (1,000 participants, 100 questions)
+
 ### Quiz Builder Flow (Host Authoring)
 - Host can create new quiz (DRAFT status)
 - Host can edit quiz title and description
@@ -32,7 +40,7 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 - Platform aggregates answers per question (read-only in MVP)
 
 ### Audience Participation Flow
-- Audience can join via code/link (anonymous, no login)
+- Audience can join via code/link (anonymous, no login, tenant-scoped session)
 - Audience can view active question in real-time
 - Audience can submit answer (one submission per question, no changes)
 - Audience sees confirmation after submission
@@ -50,7 +58,7 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 ### Architecture Decisions (Locked)
 - **Modular monolith** — single deployable application
 - **3-layer architecture** — Services, Platform Kernel, Features
-- **Single-tenant MVP** — tenant structure present but not enforced
+- **Multi-tenant foundation** — all data scoped by tenant_id, tier enforcement in Broker
 - **Single VM deployment** — OCI Free Tier instance
 - **MySQL on OCI VM** — production database
 - **Redis on local VM** — ephemeral live state

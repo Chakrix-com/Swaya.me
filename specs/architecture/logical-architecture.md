@@ -101,6 +101,16 @@ All requests pass through policy checks before reaching features:
 - **Rate limiting** (3-tier: Nginx edge + Slowapi application + Redis state)
 - Anti-spam rules
 - **Profanity detection & enforcement** (post-MVP)
+- **Tenant context resolution** (extracted once, propagated internally)
+- **Tier-based feature gates** (feature access per subscription tier)
+- **Usage quota enforcement** (participant limits, event limits, storage limits)
+
+**Tier Enforcement (MVP)**:
+- **Tenant Context Middleware**: Resolve tenant once per request, attach to request state
+- **Feature Gate Checks**: Verify feature enabled for tenant's subscription tier
+- **Quota Checks**: Verify quota available before allowing action
+- **Error Responses**: Return 403 (tier restriction) or 429 (quota exceeded) with upgrade CTA
+- See [Docs/pricing-tiers.md](../../Docs/pricing-tiers.md) for complete tier definitions
 
 **Rate Limiting Implementation (MVP)**:
 - **Tier 1 (Nginx)**: Edge-level protection, DDoS mitigation, basic IP rate limits
@@ -126,6 +136,7 @@ All requests pass through policy checks before reaching features:
 
 #### Command Routing & Orchestration
 - Routes validated commands to appropriate feature component
+- **Validates tier entitlements before routing**
 - Decouples client intent from feature implementation
 - Enforces feature boundaries
 

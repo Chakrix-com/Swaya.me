@@ -17,6 +17,8 @@ The MVP enables:
 - A host to create and run a live quiz
 - An audience to join and participate in real time
 - A visible outcome (results) that demonstrates engagement value
+- **Multi-tenant SaaS deployment** with configurable tier-based limits
+- **Basic tier enforcement** (Free and Pro tiers)
 
 Anything not directly supporting this outcome is **out of scope**.
 
@@ -42,7 +44,9 @@ Anything not directly supporting this outcome is **out of scope**.
 | Live Results | Host | View response summary | View live answer distribution | Bar / count | Live counts | Advanced analytics |
 | Realtime | Platform | Broadcast question | Push question to participants | Live push | Near real-time | Offline sync |
 | Realtime | Platform | Broadcast results | Push result updates | Live update | Near real-time | Guaranteed ordering |
-| Tenant Context | Platform | Resolve tenant | Resolve runtime tenant context | Single tenant | Single-tenant | Tenant admin |
+| Tenant Context | Platform | Resolve tenant | Resolve runtime tenant context | Multi-tenant scoping | Multi-tenant aware | Advanced tenant admin |
+| Tier Management | Platform | Enforce tier limits | Apply subscription tier limits | Participant/question limits | Configurable tiers | Dynamic overrides |
+| Tier Management | Platform | Feature gates | Control feature access by tier | Basic feature gates | Free + Pro tiers | Custom tiers |
 | Security | Platform | Protect host actions | Restrict host-only operations | Auth required | Simple auth | SSO, MFA |
 | Security | Platform | Scope audience access | Restrict access to session | Session-bound | Session scope | Roles |
 | Observability | Platform | Track interactions | Count submissions/events | Metric count | Conceptual metrics | Billing |

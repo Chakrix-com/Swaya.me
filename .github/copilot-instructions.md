@@ -17,15 +17,30 @@ All code must follow this strict layering (see [Docs/logical_architecture.md](..
 ### 2. Platform Kernel
 - Orchestration and policy enforcement layer
 - Resolves tenant context once per request and propagates internally
+- Enforces tier-based feature gates and usage quotas
 - Controls quiz session lifecycle and feature orchestration
 - **Rule:** Platform invokes features but contains NO feature-specific logic
 
 ### 3. Features Layer (Quiz Feature)
 - Business capabilities that can evolve independently
 - Quiz feature owns: definition, state, validation, aggregation
-- **Rule:** Features never communicate directly with services or resolve tenant context
+- **Rule:** Features never communicate directly with services, resolve tenant context, or check tier limits
 
-**Critical:** API does NOT contain business logic. Platform does NOT contain feature logic. Features do NOT manage auth or transport.
+**Critical:** API does NOT contain business logic. Platform does NOT contain feature logic. Features do NOT manage auth, transport, tenant context, or tier enforcement.
+
+## Multi-Tenant SaaS Architecture
+
+**Tenant Isolation:** All data is scoped by `tenant_id`. Every domain table includes tenant_id foreign key.
+
+**Tier-Based Limits:** Subscription tiers (Free, Basic, Pro, Enterprise) with configurable limits:
+- Participants per event
+- Questions per quiz
+- Concurrent events
+- Feature access gates
+
+**Policy Enforcement:** Platform Kernel enforces tier restrictions and quota limits BEFORE routing to features.
+
+See [Docs/pricing-tiers.md](../Docs/pricing-tiers.md) for complete tier matrix and [Docs/multi-tenant-migration.md](../Docs/multi-tenant-migration.md) for data model.
 
 ## Technology Stack (Use Exactly)
 

@@ -29,28 +29,31 @@ Focus on:
 - Leaderboards
 - Scheduling
 - Analytics
-- Multi-tenant logic
+- **Multi-tenant architecture with tier-based limits**
+- **Configurable subscription tiers (Free, Pro)**
 - Production-grade security
 ---
 
 ## Architecture Constraints
 
-To be Decided:
 Follow a **modular monolith** approach:
 
 - Single backend application
 - Clear internal boundaries
 - No microservices
+- **Multi-tenant data isolation**
 
 Logical layers:
 - API layer (request handling only)
-- Platform kernel (orchestration only)
-- Application features (business logic only)
+- Platform kernel (orchestration + tenant resolution + tier enforcement)
+- Application features (business logic only, tenant-agnostic)
 
 Rules:
 - API does NOT contain business logic
 - Platform does NOT contain feature logic
-- Feature does NOT manage auth or transport
+- Feature does NOT manage auth, transport, or tier logic
+- **All data is tenant-scoped**
+- **Tier limits enforced before feature execution**
 
 ---
 

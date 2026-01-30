@@ -31,6 +31,7 @@ High-level vision, scope, and user personas.
 | [vision.md](./overview/vision.md) | Product vision, goals, and success criteria |
 | [mvp-scope.md](./overview/mvp-scope.md) | Single source of truth for MVP scope and decisions |
 | [personas.md](./overview/personas.md) | User roles (Host, Audience) and capabilities |
+| [multi-tenant-saas-architecture.md](./overview/multi-tenant-saas-architecture.md) | Multi-tenant tier system overview and design |
 
 ---
 
@@ -54,11 +55,14 @@ API specifications, domain models, and backend design.
 |------|---------|
 | [api-contracts.md](./backend/api-contracts.md) | REST API endpoints, payloads, errors (11 endpoints including quiz builder) |
 | [api-layer-strategy.md](./backend/api-layer-strategy.md) | Rate limiting, logging, profanity filtering, analytics (3-tier: Nginx + Slowapi + Redis) |
-| [domain-model.md](./backend/domain-model.md) | Entities, relationships, business rules |
+| [domain-model.md](./backend/domain-model.md) | Entities, relationships, business rules (with tenant scoping) |
 | [persistence.md](./backend/persistence.md) | Database schema, tables, migrations (MySQL) |
 | [auth.md](./backend/auth.md) | JWT authentication, authorization model |
 | [realtime.md](./backend/realtime.md) | Polling vs WebSocket strategy |
 | [quiz-builder.md](./backend/quiz-builder.md) | Quiz builder feature, autosave, validation, publishing |
+| [tier-management.md](./backend/tier-management.md) | Tier enforcement, quota tracking, entitlements (Core + Broker integration) |
+| [multi-tenant-isolation.md](./backend/multi-tenant-isolation.md) | Data isolation strategy, query scoping, cross-tenant prevention |
+| [tier-configuration.md](./backend/tier-configuration.md) | Tier definitions, feature matrix, quota types, enforcement points |
 
 ---
 

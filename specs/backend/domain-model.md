@@ -1,10 +1,140 @@
 # Domain Model (Quiz Feature)
 
-This document defines the core domain entities, relationships, and invariants for the Quiz feature.
+This document defines the core domain entities, relationships, and invariants for the Quiz feature in a **multi-tenant SaaS architecture** with tier-based limits.
+
+---
+
+## Multi-Tenant Foundation
+
+### Tenant
+
+Represents an organization/account in the SaaS platform.
+
+**Properties**:
+- `tenant_id` (UUID, primary key)
+- `name` (string, required)
+- `slug` (string, unique, required) - URL-safe identifier
+- `subscription_tier` (enum: FREE, BASIC, PRO, ENTERPRISE)
+- `subscription_status` (enum: ACTIVE, TRIAL, SUSPENDED, CANCELLED)
+- `subscription_start` (timestamp)
+- `subscription_end` (timestamp, nullable)
+- `billing_cycle` (enum: MONTHLY, ANNUAL, CUSTOM)
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+**Relationships**:
+- Has many Users
+- Has many Quizzes
+- Has many Quiz Sessions
+- Has one TierConfig (via subscription_tier)
+- Has many UsageQuotas
+
+**Invariants**:
+- Tenant slug must be globally unique
+- Active subscription required for quiz operations
+- All domain entities must belong to exactly one tenant
+
+---
+
+### TierConfig
+
+Defines configurable limits and features for a subscription tier.
+
+**Properties**:
+- `tier_id` (string, primary key: FREE, BASIC, PRO, ENTERPRISE)
+- `name` (string, required)
+- `limits` (JSON, required) - quota definitions
+- `features` (JSON, required) - feature gates
+- `is_active` (boolean, default: true)
+- `effective_from` (timestamp)
+- `updated_at` (timestamp)
+
+**Example limits JSON**:
+```json
+{
+  "max_participants_per_event": 1000,
+  "max_questions_per_quiz": 100,
+  "max_concurrent_events": 10,
+  "max_team_members": 10,
+  "event_history_days": 365,
+  "storage_mb": 5000,
+  "api_calls_per_hour": 10000,
+  "exports_per_day": 50
+}
+```
+
+**Example features JSON**:
+```json
+{
+  "quiz_types": ["mcq", "poll", "word_cloud"],
+  "custom_branding": true,
+  "branding_removal": true,
+  "moderation_queue": true,
+  "data_export": true,
+  "api_access": "readonly",
+  "sso_enabled": false,
+  "profanity_mode": "configurable"
+}
+```
+
+**Invariants**:
+- Tier configs are globally defined (not per-tenant)
+- Limits must be positive integers or unlimited (-1)
+- Features must be boolean or enum values
+
+---
+
+### UsageQuota
+
+Tracks tenant consumption against tier limits.
+
+**Properties**:
+- `quota_id` (UUID, primary key)
+- `tenant_id` (UUID, foreign key to Tenant)
+- `quota_type` (enum: PARTICIPANTS, QUESTIONS, EVENTS, API_CALLS, STORAGE, EXPORTS)
+- `period_start` (timestamp)
+- `period_end` (timestamp)
+- `limit` (integer)
+- `consumed` (integer, default: 0)
+- `last_updated` (timestamp)
+
+**Relationships**:
+- Belongs to one Tenant
+
+**Invariants**:
+- consumed <= limit (enforced at application layer)
+- Quotas reset based on period boundaries
+- Historical quota records are retained for analytics
 
 ---
 
 ## Core Entities
+
+### User
+
+Represents a host/admin user within a tenant.
+
+**Properties**:
+- `user_id` (UUID, primary key)
+- `tenant_id` (UUID, foreign key to Tenant) **[NEW]**
+- `email` (string, unique per tenant, required)
+- `password_hash` (string, required)
+- `display_name` (string, required)
+- `role` (enum: OWNER, ADMIN, MEMBER)
+- `is_active` (boolean, default: true)
+- `created_at` (timestamp)
+- `last_login_at` (timestamp, nullable)
+
+**Relationships**:
+- Belongs to one Tenant
+- Has many Quizzes (as creator)
+
+**Invariants**:
+- Email must be unique within tenant (not globally)
+- At least one OWNER per tenant
+- Inactive users cannot create or manage quizzes
+
+---
 
 ### Quiz Definition
 
@@ -12,6 +142,7 @@ A reusable description of a quiz that defines questions and correct answers inde
 
 **Properties**:
 - `quiz_id` (UUID, primary key)
+- `tenant_id` (UUID, foreign key to Tenant) **[NEW]**
 - `title` (string, required)
 - `description` (string, optional)
 - `host_id` (UUID, foreign key to User)
@@ -20,6 +151,7 @@ A reusable description of a quiz that defines questions and correct answers inde
 - `status` (enum: DRAFT, READY, ARCHIVED)
 
 **Relationships**:
+- Belongs to one Tenant
 - Has many Questions
 - Belongs to one Host (User)
 
@@ -27,6 +159,8 @@ A reusable description of a quiz that defines questions and correct answers inde
 - Quiz must have at least one question to transition from DRAFT to READY
 - Quiz cannot be modified during live session
 - Quiz title is required and non-empty
+- Quiz and Host must belong to same tenant
+- Question count must not exceed tenant's max_questions_per_quiz limit
 
 ---
 
@@ -83,6 +217,7 @@ A live runtime instance of a quiz being played.
 
 **Properties**:
 - `session_id` (UUID, primary key)
+- `tenant_id` (UUID, foreign key to Tenant) **[NEW]**
 - `quiz_id` (UUID, foreign key to Quiz)
 - `host_id` (UUID, foreign key to User)
 - `join_code` (string, unique, 6 characters)
@@ -93,6 +228,7 @@ A live runtime instance of a quiz being played.
 - `created_at` (timestamp)
 
 **Relationships**:
+- Belongs to one Tenant
 - References one Quiz
 - Belongs to one Host (User)
 - Has many Participants
@@ -104,6 +240,8 @@ A live runtime instance of a quiz being played.
 - Session cannot transition backward (e.g., ENDED → ACTIVE)
 - Current question index must be within valid range
 - Only one question active at a time
+- Participant count must not exceed tenant's max_participants_per_event limit
+- Tenant cannot exceed max_concurrent_events limit
 
 **State Transitions**:
 ```
@@ -187,6 +325,12 @@ A registered user who creates and manages quizzes.
 
 ```mermaid
 erDiagram
+    Tenant ||--o{ User : "has members"
+    Tenant ||--o{ Quiz : "owns"
+    Tenant ||--o{ QuizSession : "hosts"
+    Tenant ||--o{ UsageQuota : "tracks consumption"
+    Tenant }o--|| TierConfig : "subscribes to"
+    
     User ||--o{ Quiz : creates
     User ||--o{ QuizSession : hosts
     Quiz ||--o{ Question : contains
@@ -199,17 +343,55 @@ erDiagram
     Question ||--o{ Submission : receives
     Option ||--o{ Submission : selected
 
-    User {
-        uuid user_id PK
-        string email UK
-        string password_hash
-        string full_name
+    Tenant {
+        uuid tenant_id PK
+        string name
+        string slug UK
+        enum subscription_tier
+        enum subscription_status
+        timestamp subscription_start
+        timestamp subscription_end
+        enum billing_cycle
         timestamp created_at
         timestamp updated_at
     }
 
+    TierConfig {
+        string tier_id PK
+        string name
+        json limits
+        json features
+        boolean is_active
+        timestamp effective_from
+        timestamp updated_at
+    }
+
+    UsageQuota {
+        uuid quota_id PK
+        uuid tenant_id FK
+        enum quota_type
+        timestamp period_start
+        timestamp period_end
+        int limit
+        int consumed
+        timestamp last_updated
+    }
+
+    User {
+        uuid user_id PK
+        uuid tenant_id FK
+        string email
+        string password_hash
+        string display_name
+        enum role
+        boolean is_active
+        timestamp created_at
+        timestamp last_login_at
+    }
+
     Quiz {
         uuid quiz_id PK
+        uuid tenant_id FK
         uuid host_id FK
         string title
         string description
@@ -238,6 +420,7 @@ erDiagram
 
     QuizSession {
         uuid session_id PK
+        uuid tenant_id FK
         uuid quiz_id FK
         uuid host_id FK
         string join_code UK
