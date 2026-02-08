@@ -1,0 +1,62 @@
+"""
+Pydantic schemas for authentication
+"""
+from pydantic import BaseModel, EmailStr, Field, validator
+from typing import Optional
+
+
+class UserRegisterRequest(BaseModel):
+    """User registration request"""
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=100)
+    full_name: Optional[str] = Field(None, max_length=255)
+    tenant_name: str = Field(..., min_length=2, max_length=255)
+    
+    @validator('password')
+    def validate_password(cls, v):
+        """Validate password complexity"""
+        if not any(char.isdigit() for char in v):
+            raise ValueError('Password must contain at least one digit')
+        if not any(char.isupper() for char in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        return v
+
+
+class UserLoginRequest(BaseModel):
+    """User login request"""
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    """Token response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: "UserResponse"
+
+
+class UserResponse(BaseModel):
+    """User response"""
+    id: int
+    email: str
+    full_name: Optional[str]
+    tenant_id: int
+    tenant_name: str
+    tier: str
+    is_active: bool
+    
+    class Config:
+        from_attributes = True
+
+
+class TenantResponse(BaseModel):
+    """Tenant response"""
+    id: int
+    name: str
+    slug: str
+    tier: str
+    is_active: bool
+    
+    class Config:
+        from_attributes = True

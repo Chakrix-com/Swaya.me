@@ -32,7 +32,6 @@ limits==3.7.0  # MIT License
 
 # Logging & Monitoring
 python-json-logger==2.0.7  # BSD License
-structlog==23.2.0  # MIT/Apache 2.0
 
 # WebSocket
 websockets==12.0  # BSD License
@@ -42,9 +41,6 @@ python-socketio==5.10.0  # MIT License
 python-dateutil==2.8.2  # Apache 2.0/BSD
 pytz==2023.3.post1  # MIT License
 tenacity==8.2.3  # Apache 2.0 (retry logic)
-
-# CORS
-python-cors==1.0.0  # MIT License (if needed, FastAPI has built-in)
 
 # Profanity Filter (optional, can be custom)
 better-profanity==0.7.0  # MIT License

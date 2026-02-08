@@ -8,6 +8,8 @@ from contextlib import asynccontextmanager
 
 from core.config.settings import settings
 from broker.api.routes import api_router
+from shared.utils.redis_client import redis_client
+from broker.policies.tenant_isolation import tenant_isolation_middleware
 
 
 @asynccontextmanager
@@ -19,16 +21,18 @@ async def lifespan(app: FastAPI):
     print(f"   Database: {settings.db.host}:{settings.db.port}/{settings.db.name}")
     print(f"   Redis: {settings.redis.host}:{settings.redis.port}")
     
-    # TODO: Initialize database connection pool
-    # TODO: Initialize Redis connection pool
+    # Initialize Redis connection
+    await redis_client.connect()
+    print("✓  Redis connected")
+    
     # TODO: Run database migrations check
     
     yield
     
     # Shutdown
     print("🛑 Shutting down Swaya.me backend...")
-    # TODO: Close database connections
-    # TODO: Close Redis connections
+    await redis_client.disconnect()
+    print("✓  Redis disconnected")
 
 
 def create_application() -> FastAPI:
@@ -59,6 +63,9 @@ def create_application() -> FastAPI:
             TrustedHostMiddleware,
             allowed_hosts=["*.swaya.me", "localhost"]
         )
+    
+    # Tenant isolation middleware
+    app.middleware("http")(tenant_isolation_middleware)
 
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")

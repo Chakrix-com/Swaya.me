@@ -2,6 +2,7 @@
 API Router - Central routing for all API endpoints
 """
 from fastapi import APIRouter
+from broker.api.auth import router as auth_router
 
 api_router = APIRouter()
 
@@ -16,7 +17,9 @@ async def root():
     }
 
 
-# TODO: Include auth routes
+# Include routers
+api_router.include_router(auth_router)
+
 # TODO: Include quiz routes
 # TODO: Include session routes
 # TODO: Include answer routes
