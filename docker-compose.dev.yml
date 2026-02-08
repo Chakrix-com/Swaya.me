@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # MySQL Database (GPL v2 License)
+  mysql:
+    image: mysql:8.0
+    container_name: swaya-dev-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: localpass
+      MYSQL_DATABASE: swaya_dev
+      MYSQL_USER: swaya
+      MYSQL_PASSWORD: swaya_pass
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-plocalpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (BSD License)
+  redis:
+    image: redis:7-alpine
+    container_name: swaya-dev-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend API (Development mode)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: swaya-dev-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: swaya_dev
+      DB_USER: swaya
+      DB_PASSWORD: swaya_pass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: dev_secret_key_change_in_production
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+    volumes:
+      - ./backend:/app
+      - backend-venv:/app/.venv
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (Development mode)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: swaya-dev-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_WS_URL: ws://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  mysql-dev-data:
+    name: swaya-mysql-dev
+  redis-dev-data:
+    name: swaya-redis-dev
+  backend-venv:
+    name: swaya-backend-venv
+  frontend-node-modules:
+    name: swaya-frontend-node-modules
+
+networks:
+  default:
+    name: swaya-dev-network

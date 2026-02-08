@@ -1,0 +1,50 @@
+# Swaya.me Backend Dependencies (100% Open Source)
+
+# Web Framework
+fastapi==0.104.1  # MIT License
+uvicorn[standard]==0.24.0  # BSD License
+python-multipart==0.0.6  # Apache 2.0
+
+# Database & ORM
+sqlalchemy==2.0.23  # MIT License
+alembic==1.12.1  # MIT License
+pymysql==1.1.0  # MIT License
+cryptography==41.0.7  # Apache 2.0/BSD (for MySQL async)
+
+# Redis
+redis==5.0.1  # MIT License
+hiredis==2.2.3  # BSD License (performance boost)
+
+# Authentication & Security
+pyjwt==2.8.0  # MIT License
+passlib==1.7.4  # BSD License
+bcrypt==4.1.1  # Apache 2.0
+python-jose[cryptography]==3.3.0  # MIT License
+
+# Validation & Serialization
+pydantic==2.5.0  # MIT License
+pydantic-settings==2.1.0  # MIT License
+email-validator==2.1.0  # CC0 1.0 (Public Domain)
+
+# Rate Limiting
+slowapi==0.1.9  # MIT License
+limits==3.7.0  # MIT License
+
+# Logging & Monitoring
+python-json-logger==2.0.7  # BSD License
+structlog==23.2.0  # MIT/Apache 2.0
+
+# WebSocket
+websockets==12.0  # BSD License
+python-socketio==5.10.0  # MIT License
+
+# Utilities
+python-dateutil==2.8.2  # Apache 2.0/BSD
+pytz==2023.3.post1  # MIT License
+tenacity==8.2.3  # Apache 2.0 (retry logic)
+
+# CORS
+python-cors==1.0.0  # MIT License (if needed, FastAPI has built-in)
+
+# Profanity Filter (optional, can be custom)
+better-profanity==0.7.0  # MIT License
