@@ -10,7 +10,7 @@ from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question,
     QuizStatus, QuizSessionStatus, QuestionStatus
 )
-from persistence.models.core import Event
+from persistence.models.core import Event, Tenant
 from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse
 )
@@ -151,20 +151,25 @@ class SessionService:
         if not event:
             raise SessionNotFoundError("Invalid join code")
         
-        # Find active session
+        # Find active session - get the LATEST one, not the first
         session = db.query(QuizSession).join(Quiz).filter(
             Quiz.event_id == event.id,
             QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
-        ).first()
+        ).order_by(QuizSession.id.desc()).first()
         
         if not session:
             raise SessionNotFoundError("No active session found")
+        
+        # Get tenant to check tier
+        tenant = db.query(Tenant).filter(Tenant.id == session.tenant_id).first()
+        if not tenant:
+            raise SessionNotFoundError("Tenant not found")
         
         # Check participant limit
         can_join = await self.tier_service.check_participant_limit(
             session.tenant_id,
             session.id,
-            session.quiz.tenant.tier
+            tenant.tier
         )
         
         if not can_join:
@@ -248,7 +253,7 @@ class SessionService:
             expire=86400
         )
         
-        return self._to_session_response(db, session)
+        return await self._to_session_response(db, session)
     
     async def end_session(
         self,
@@ -278,7 +283,7 @@ class SessionService:
             expire=86400
         )
         
-        return self._to_session_response(db, session)
+        return await self._to_session_response(db, session)
     
     async def _to_session_response(self, db: Session, session: QuizSession) -> SessionResponse:
         """Convert session to response"""

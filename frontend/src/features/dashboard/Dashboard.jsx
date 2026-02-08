@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { Layout, Card, Button, List, Tag, Space, Typography } from 'antd'
+import { Layout, Card, Button, List, Tag, Space, Typography, Popconfirm, message } from 'antd'
 import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -34,6 +34,15 @@ function Dashboard() {
     navigate('/login')
   }
 
+  const handleDeleteQuiz = async (quizId) => {
+    try {
+      await quizAPI.delete(quizId)
+      loadQuizzes()
+    } catch (error) {
+      console.error('Failed to delete quiz:', error)
+    }
+  }
+
   const getStatusColor = (status) => {
     const colors = {
       draft: 'default',
@@ -60,7 +69,7 @@ function Dashboard() {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => navigate('/quiz/builder')}
+                onClick={() => navigate('/quiz/new')}
               >
                 Create Quiz
               </Button>
@@ -71,23 +80,35 @@ function Dashboard() {
               renderItem={(quiz) => (
                 <List.Item
                   actions={[
-                    quiz.status === 'draft' && (
-                      <Button
-                        icon={<EditOutlined />}
-                        onClick={() => navigate(`/quiz/builder/${quiz.id}`)}
-                      >
-                        Edit
-                      </Button>
-                    ),
+                    <Button
+                      icon={<EditOutlined />}
+                      onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
+                    >
+                      Edit
+                    </Button>,
                     quiz.status === 'ready' && (
                       <Button
                         type="primary"
                         icon={<PlayCircleOutlined />}
-                        onClick={() => {/* Start session */}}
+                        onClick={() => navigate(`/quiz/${quiz.id}/control`)}
                       >
                         Start
                       </Button>
                     ),
+                    <Popconfirm
+                      title="Delete this quiz?"
+                      description="This action cannot be undone."
+                      onConfirm={() => handleDeleteQuiz(quiz.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                      >
+                        Delete
+                      </Button>
+                    </Popconfirm>
                   ].filter(Boolean)}
                 >
                   <List.Item.Meta
@@ -95,7 +116,7 @@ function Dashboard() {
                     description={
                       <Space>
                         <Tag color={getStatusColor(quiz.status)}>{quiz.status}</Tag>
-                        <span>{quiz.question_count} questions</span>
+                        <span>{quiz.question_count || 0} questions</span>
                       </Space>
                     }
                   />

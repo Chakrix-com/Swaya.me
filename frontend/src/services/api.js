@@ -27,9 +27,9 @@ export const authAPI = {
 
 // Quiz API
 export const quizAPI = {
-  list: (eventId) => api.get('/quizzes', { params: { event_id: eventId } }),
+  list: (eventId) => api.get('/quizzes/', { params: { event_id: eventId } }),
   get: (id) => api.get(`/quizzes/${id}`),
-  create: (data) => api.post('/quizzes', data),
+  create: (data) => api.post('/quizzes/', data),
   update: (id, data) => api.put(`/quizzes/${id}`, data),
   delete: (id) => api.delete(`/quizzes/${id}`),
   publish: (id) => api.post(`/quizzes/${id}/publish`),

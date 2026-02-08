@@ -1,0 +1,24 @@
+FROM seleniarm/standalone-firefox:latest
+
+# Switch to root to install Python
+USER root
+
+# Install Python and pip
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+RUN pip3 install --no-cache-dir selenium --break-system-packages
+
+# Set working directory
+WORKDIR /tests
+
+# Copy test script
+COPY test_e2e_selenium.py /tests/
+
+# Switch back to seluser
+USER seluser
+
+CMD ["python3", "test_e2e_selenium.py"]

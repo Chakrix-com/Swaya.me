@@ -278,6 +278,6 @@ async def get_session_results(
 ):
     """Get session results"""
     try:
-        return service.get_session_results(db, session_id, session_token)
+        return await service.get_session_results(db, session_id, session_token)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

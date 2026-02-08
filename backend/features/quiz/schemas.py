@@ -180,6 +180,11 @@ class SessionResultsResponse(BaseModel):
     session_id: int
     quiz_title: str
     total_questions: int
+    total_participants: int = 0
     participant_score: Optional[int] = None
     participant_correct: Optional[int] = None
     question_results: List[QuestionResultsResponse]
+    # Session state for audience
+    status: str
+    current_question_index: int
+    current_question: Optional[dict] = None  # Mixed format for host view

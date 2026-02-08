@@ -4,6 +4,7 @@ Answer Service - Submit and aggregate answers
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
+import json
 
 from persistence.models.quiz import (
     QuizSession, Participant, Answer, Question,
@@ -179,7 +180,7 @@ class AnswerService:
             participant_answer=participant_answer
         )
     
-    def get_session_results(
+    async def get_session_results(
         self,
         db: Session,
         session_id: int,
@@ -232,7 +233,7 @@ class AnswerService:
         question_results = []
         for question in questions:
             try:
-                results = self.get_question_results(
+                results = await self.get_question_results(
                     db,
                     session_id,
                     question.id,
@@ -242,13 +243,56 @@ class AnswerService:
             except Exception:
                 pass
         
+        # Get current question if session is active
+        current_question = None
+        if session.current_question_index >= 0 and session.current_question_index < len(questions):
+            try:
+                question_result = await self.get_question_results(
+                    db,
+                    session_id,
+                    questions[session.current_question_index].id,
+                    participant_token
+                )
+                # Transform to format expected by host frontend
+                question_obj = questions[session.current_question_index]
+                options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
+                correct_letter = chr(65 + question_obj.correct_answer_index)  # 0->A, 1->B, etc.
+                
+                current_question = {
+                    "id": question_obj.id,
+                    "text": question_obj.text,
+                    "option_a": options[0] if len(options) > 0 else "",
+                    "option_b": options[1] if len(options) > 1 else "",
+                    "option_c": options[2] if len(options) > 2 else "",
+                    "option_d": options[3] if len(options) > 3 else "",
+                    "correct_answer": correct_letter,
+                    "question_id": question_result.question_id,
+                    "question_text": question_result.question_text,
+                    "options": question_result.options,
+                    "correct_answer_index": question_result.correct_answer_index,
+                    "answer_distribution": question_result.answer_distribution,
+                    "total_answers": question_result.total_answers
+                }
+            except Exception as e:
+                print(f"Error loading current question: {e}")
+                pass
+        
+        # Count total participants in session
+        total_participants = db.query(Participant).filter(
+            Participant.session_id == session_id
+        ).count()
+        
         return SessionResultsResponse(
             session_id=session.id,
             quiz_title=session.quiz.title,
             total_questions=len(questions),
+            total_participants=total_participants,
             participant_score=participant_score,
             participant_correct=participant_correct,
-            question_results=question_results
+            question_results=question_results,
+            status=session.status.value,
+            current_question_index=session.current_question_index,
+            current_question=current_question
         )
     
     async def _update_aggregation(

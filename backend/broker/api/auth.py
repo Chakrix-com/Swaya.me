@@ -5,8 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from persistence.database import get_db
-from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse
+from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
 from core.auth.service import register_user, login_user
+from core.auth.dependencies import get_current_user
 from shared.exceptions.auth import InvalidCredentialsError, DuplicateUserError, TenantNotFoundError
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -53,7 +54,7 @@ async def login(
         )
 
 
-@router.get("/me", response_model=TokenResponse)
+@router.get("/me", response_model=UserResponse)
 async def get_me(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -61,16 +62,12 @@ async def get_me(
     """
     Get current authenticated user information
     """
-    from core.auth.dependencies import get_current_user
-    
-    return {
-        "user": {
-            "id": current_user.user.id,
-            "email": current_user.user.email,
-            "full_name": current_user.user.full_name,
-            "tenant_id": current_user.tenant.id,
-            "tenant_name": current_user.tenant.name,
-            "tier": current_user.tenant.tier.value,
-            "is_active": current_user.user.is_active
-        }
-    }
+    return UserResponse(
+        id=current_user.user.id,
+        email=current_user.user.email,
+        full_name=current_user.user.full_name,
+        tenant_id=current_user.tenant.id,
+        tenant_name=current_user.tenant.name,
+        tier=current_user.tenant.tier.value,
+        is_active=current_user.user.is_active
+    )

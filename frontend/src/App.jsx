@@ -17,9 +17,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/quiz/builder/:id?" element={<QuizBuilder />} />
-          <Route path="/quiz/control/:sessionId" element={<QuizControl />} />
+          <Route path="/quiz/new" element={<QuizBuilder />} />
+          <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
+          <Route path="/quiz/:id/control" element={<QuizControl />} />
           <Route path="/join" element={<AudienceJoin />} />
+          <Route path="/join/:joinCode" element={<AudienceJoin />} />
           <Route path="/session/:sessionId" element={<AudienceSession />} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>

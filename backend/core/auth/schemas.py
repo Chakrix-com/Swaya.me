@@ -28,14 +28,6 @@ class UserLoginRequest(BaseModel):
     password: str
 
 
-class TokenResponse(BaseModel):
-    """Token response"""
-    access_token: str
-    token_type: str = "bearer"
-    expires_in: int
-    user: "UserResponse"
-
-
 class UserResponse(BaseModel):
     """User response"""
     id: int
@@ -48,6 +40,14 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    """Token response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
 
 
 class TenantResponse(BaseModel):

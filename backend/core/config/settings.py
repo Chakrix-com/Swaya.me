@@ -17,6 +17,12 @@ class DatabaseSettings(BaseSettings):
     pool_size: int = Field(default=10, alias="DB_POOL_SIZE")
     max_overflow: int = Field(default=20, alias="DB_MAX_OVERFLOW")
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
     @property
     def url(self) -> str:
         """Generate database URL"""
@@ -31,6 +37,12 @@ class RedisSettings(BaseSettings):
     db: int = Field(default=0, alias="REDIS_DB")
     pool_size: int = Field(default=10, alias="REDIS_POOL_SIZE")
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
     @property
     def url(self) -> str:
         """Generate Redis URL"""
@@ -43,6 +55,12 @@ class JWTSettings(BaseSettings):
     secret: str = Field(alias="JWT_SECRET")
     algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     expiration_hours: int = Field(default=24, alias="JWT_EXPIRATION_HOURS")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 
 class AppSettings(BaseSettings):

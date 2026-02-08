@@ -18,6 +18,12 @@ async def root():
     }
 
 
+@api_router.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {"status": "ok"}
+
+
 # Include routers
 api_router.include_router(auth_router)
 api_router.include_router(quiz_router)
