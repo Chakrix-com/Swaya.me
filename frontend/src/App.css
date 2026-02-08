@@ -1,0 +1,63 @@
+.App {
+  text-align: center;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-form {
+  max-width: 400px;
+  width: 100%;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-builder {
+  padding: 24px;
+}
+
+.question-list {
+  margin-top: 24px;
+}
+
+.question-item {
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.audience-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.question-display {
+  max-width: 800px;
+  width: 100%;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.option-button {
+  width: 100%;
+  height: 60px;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.results-chart {
+  margin-top: 32px;
+}

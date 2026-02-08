@@ -1,0 +1,283 @@
+"""
+Quiz API Endpoints
+"""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List, Optional
+
+from persistence.database import get_db
+from core.auth.dependencies import get_current_user, CurrentUser
+from features.quiz.schemas import (
+    QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
+    QuestionCreate, QuestionUpdate, QuestionResponse,
+    SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
+    AnswerSubmitRequest, AnswerSubmitResponse,
+    QuestionResultsResponse, SessionResultsResponse
+)
+from features.quiz.quiz_service import QuizBuilderService
+from features.quiz.question_service import QuestionService
+from features.quiz.session_service import SessionService
+from features.quiz.answer_service import AnswerService
+from shared.exceptions.quiz import (
+    QuizNotFoundError, QuestionNotFoundError, SessionNotFoundError,
+    ParticipantNotFoundError, QuizValidationError, InvalidQuizStatusError,
+    InvalidSessionStatusError, DuplicateAnswerError, QuestionNotOpenError,
+    TierLimitExceededError
+)
+from shared.utils.redis_client import get_redis, RedisClient
+from core.config.tier_service import TierService
+
+router = APIRouter(prefix="/quizzes", tags=["Quiz"])
+
+
+# Dependency to get services
+async def get_quiz_service(redis: RedisClient = Depends(get_redis)) -> QuizBuilderService:
+    tier_service = TierService(redis)
+    return QuizBuilderService(tier_service)
+
+
+async def get_question_service(redis: RedisClient = Depends(get_redis)) -> QuestionService:
+    tier_service = TierService(redis)
+    return QuestionService(tier_service)
+
+
+async def get_session_service(redis: RedisClient = Depends(get_redis)) -> SessionService:
+    tier_service = TierService(redis)
+    return SessionService(redis, tier_service)
+
+
+async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerService:
+    return AnswerService(redis)
+
+
+# Quiz CRUD Endpoints
+@router.post("/", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+async def create_quiz(
+    request: QuizCreate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Create new quiz"""
+    try:
+        return service.create_quiz(db, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/{quiz_id}", response_model=QuizResponse)
+async def get_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Get quiz by ID"""
+    try:
+        return service.get_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/", response_model=List[QuizListResponse])
+async def list_quizzes(
+    event_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """List quizzes for tenant"""
+    return service.list_quizzes(db, current_user, event_id)
+
+
+@router.put("/{quiz_id}", response_model=QuizResponse)
+async def update_quiz(
+    quiz_id: int,
+    request: QuizUpdate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Update quiz"""
+    try:
+        return service.update_quiz(db, quiz_id, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/{quiz_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Delete quiz"""
+    try:
+        service.delete_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/{quiz_id}/publish", response_model=QuizResponse)
+async def publish_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Publish quiz (validate and mark as READY)"""
+    try:
+        return service.publish_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (InvalidQuizStatusError, QuizValidationError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# Question Management Endpoints
+@router.post("/{quiz_id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
+async def add_question(
+    quiz_id: int,
+    request: QuestionCreate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuestionService = Depends(get_question_service)
+):
+    """Add question to quiz"""
+    try:
+        return await service.add_question(db, quiz_id, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (InvalidQuizStatusError, TierLimitExceededError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/questions/{question_id}", response_model=QuestionResponse)
+async def update_question(
+    question_id: int,
+    request: QuestionUpdate,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuestionService = Depends(get_question_service)
+):
+    """Update question"""
+    try:
+        return service.update_question(db, question_id, request, current_user)
+    except QuestionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuestionService = Depends(get_question_service)
+):
+    """Delete question"""
+    try:
+        service.delete_question(db, question_id, current_user)
+    except QuestionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# Session Management Endpoints
+@router.post("/sessions/start", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+async def start_session(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionService = Depends(get_session_service)
+):
+    """Start quiz session"""
+    try:
+        return await service.start_session(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (InvalidQuizStatusError, TierLimitExceededError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/join", response_model=SessionJoinResponse)
+async def join_session(
+    request: SessionJoinRequest,
+    db: Session = Depends(get_db),
+    service: SessionService = Depends(get_session_service)
+):
+    """Join session as participant (anonymous)"""
+    try:
+        return await service.join_session(db, request)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except TierLimitExceededError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/{session_id}/advance", response_model=SessionResponse)
+async def advance_question(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionService = Depends(get_session_service)
+):
+    """Advance to next question"""
+    try:
+        return await service.advance_question(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidSessionStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/{session_id}/end", response_model=SessionResponse)
+async def end_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionService = Depends(get_session_service)
+):
+    """End session"""
+    try:
+        return await service.end_session(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# Answer Submission Endpoints
+@router.post("/sessions/submit-answer", response_model=AnswerSubmitResponse)
+async def submit_answer(
+    request: AnswerSubmitRequest,
+    session_token: str,
+    db: Session = Depends(get_db),
+    service: AnswerService = Depends(get_answer_service)
+):
+    """Submit answer (participant)"""
+    try:
+        return await service.submit_answer(db, session_token, request)
+    except ParticipantNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except (QuestionNotOpenError, DuplicateAnswerError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/results", response_model=SessionResultsResponse)
+async def get_session_results(
+    session_id: int,
+    session_token: Optional[str] = None,
+    db: Session = Depends(get_db),
+    service: AnswerService = Depends(get_answer_service)
+):
+    """Get session results"""
+    try:
+        return service.get_session_results(db, session_id, session_token)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
