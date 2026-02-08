@@ -1,15 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { Form, Input, Button, Card, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
+import { loginStart, loginSuccess, loginFailure, logout } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 
 function Login() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading } = useSelector((state) => state.auth)
+  const { loading, isAuthenticated, token } = useSelector((state) => state.auth)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+      return
+    }
+
+    if (token) {
+      const hydrateUser = async () => {
+        try {
+          const response = await authAPI.getMe()
+          dispatch(loginSuccess({ access_token: token, user: response.data }))
+          navigate('/dashboard', { replace: true })
+        } catch (error) {
+          dispatch(logout())
+        }
+      }
+
+      hydrateUser()
+    }
+  }, [dispatch, isAuthenticated, navigate, token])
 
   const onFinish = async (values) => {
     dispatch(loginStart())

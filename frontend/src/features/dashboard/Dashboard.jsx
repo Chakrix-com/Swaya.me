@@ -62,7 +62,7 @@ function Dashboard() {
         </Space>
       </Header>
       <Content style={{ padding: '24px', minHeight: 280 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ width: '100%' }}>
           <Card
             title="My Quizzes"
             extra={
