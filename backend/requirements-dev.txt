@@ -1,0 +1,19 @@
+# Development Dependencies (100% Open Source)
+
+# Testing
+pytest==7.4.3  # MIT License
+pytest-asyncio==0.21.1  # Apache 2.0
+pytest-cov==4.1.0  # MIT License
+httpx==0.25.2  # BSD License (async HTTP client for testing)
+
+# Code Quality
+black==23.11.0  # MIT License
+flake8==6.1.0  # MIT License
+isort==5.12.0  # MIT License
+mypy==1.7.1  # MIT License
+
+# Development Server
+watchfiles==0.21.0  # MIT License (hot reload)
+
+# Database Testing
+faker==20.1.0  # MIT License (test data generation)
