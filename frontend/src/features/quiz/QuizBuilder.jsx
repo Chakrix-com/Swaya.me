@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { 
+  Layout,
   Card, 
   Form, 
   Input, 
@@ -26,6 +27,7 @@ import {
 import { quizAPI, questionAPI } from '../../services/api'
 
 const { Title, Text } = Typography
+const { Content } = Layout
 const { TextArea } = Input
 
 export default function QuizBuilder() {
@@ -174,7 +176,7 @@ export default function QuizBuilder() {
     }, [question])
 
     return (
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16, width: '100%' }}>
         <Form
           form={questionForm}
           layout="vertical"
@@ -259,7 +261,9 @@ export default function QuizBuilder() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+    <Layout style={{ width: '100%' }}>
+      <Content style={{ padding: '24px', minHeight: 280, width: '100%' }}>
+        <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
         <Button 
           icon={<LeftOutlined />} 
@@ -279,7 +283,7 @@ export default function QuizBuilder() {
         )}
       </Space>
 
-      <Card title={id ? "Edit Quiz" : "Create New Quiz"} style={{ marginBottom: 24 }}>
+      <Card title={id ? "Edit Quiz" : "Create New Quiz"} style={{ marginBottom: 24, width: '100%' }}>
         {quiz && (
           <Space style={{ marginBottom: 16 }}>
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
@@ -355,7 +359,7 @@ export default function QuizBuilder() {
               ) : (
                 <Card
                   key={question.id}
-                  style={{ marginBottom: 16 }}
+                  style={{ marginBottom: 16, width: '100%' }}
                   title={
                     <Space>
                       <Tag color="blue">Q{index + 1}</Tag>
@@ -409,6 +413,8 @@ export default function QuizBuilder() {
           />
         </>
       )}
-    </div>
+        </div>
+      </Content>
+    </Layout>
   )
 }

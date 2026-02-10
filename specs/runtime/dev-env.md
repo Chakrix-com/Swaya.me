@@ -212,7 +212,32 @@ npm run dev
 
 ### Step 5: Verify Frontend
 
-Open browser and navigate to: `http://localhost:3000`
+Open browser and navigate to: `http://localhost:3000`.
+
+If you develop by SSH-ing into the server:
+
+- For hot-reload, port-forward the dev server and use `http://localhost:3000` on your machine.
+- For production build testing, run `npm run build` and verify at https://www.swaya.me.
+
+---
+
+## Frontend Static Hosting (aaPanel + Nginx)
+
+When testing the production build on the server, the frontend is served by **Nginx managed via aaPanel** from:
+
+```
+/home/vinay/Swaya.me/frontend/dist
+```
+
+Hosted URL:
+
+- https://www.swaya.me
+
+Notes:
+
+- Run `npm run build` in `frontend/` to refresh the `dist` output.
+- Nginx serves only the files already in `dist`; source changes do not appear until a rebuild.
+- Cache-busting applied in `index.html` is included in `dist` only after rebuild.
 
 ---
 

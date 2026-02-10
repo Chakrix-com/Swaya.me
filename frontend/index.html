@@ -11,6 +11,18 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var cacheBuster = Date.now().toString()
+        var links = document.querySelectorAll('link[rel="stylesheet"]')
+        links.forEach(function (link) {
+          var href = link.getAttribute('href')
+          if (!href) return
+          var separator = href.indexOf('?') === -1 ? '?' : '&'
+          link.setAttribute('href', href + separator + 'v=' + cacheBuster)
+        })
+      })()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
