@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { Layout, Card, Button, List, Tag, Space, Typography, Popconfirm, message } from 'antd'
-import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined, LogoutOutlined } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
 import { quizAPI } from '../../services/api'
@@ -58,7 +58,7 @@ function Dashboard() {
         <Title level={3} style={{ margin: 0 }}>Swaya.me Dashboard</Title>
         <Space>
           <span>Welcome, {user?.full_name || user?.email}</span>
-          <Button onClick={handleLogout}>Logout</Button>
+          <Button icon={<LogoutOutlined />} onClick={handleLogout}>Logout</Button>
         </Space>
       </Header>
       <Content style={{ padding: '24px', minHeight: 280 }}>

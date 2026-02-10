@@ -22,7 +22,9 @@ import {
   ArrowUpOutlined, 
   ArrowDownOutlined,
   RocketOutlined,
-  LeftOutlined
+  LeftOutlined,
+  EditOutlined,
+  CloseOutlined
 } from '@ant-design/icons'
 import { quizAPI, questionAPI } from '../../services/api'
 
@@ -250,10 +252,15 @@ export default function QuizBuilder() {
           </Form.Item>
 
           <Space>
-            <Button type="primary" htmlType="submit" loading={loading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              icon={question ? <SaveOutlined /> : <PlusOutlined />}
+            >
               {question ? 'Update' : 'Add'} Question
             </Button>
-            <Button onClick={onCancel}>Cancel</Button>
+            <Button icon={<CloseOutlined />} onClick={onCancel}>Cancel</Button>
           </Space>
         </Form>
       </Card>
@@ -370,6 +377,7 @@ export default function QuizBuilder() {
                     <Space>
                       <Button
                         size="small"
+                        icon={<EditOutlined />}
                         onClick={() => setEditingQuestion(question.id)}
                       >
                         Edit

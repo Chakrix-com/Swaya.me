@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 
@@ -74,7 +74,7 @@ function Register() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <Button type="primary" htmlType="submit" loading={loading} block icon={<UserAddOutlined />}>
               Register
             </Button>
           </Form.Item>

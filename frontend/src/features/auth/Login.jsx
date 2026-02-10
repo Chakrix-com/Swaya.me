@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure, logout } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 
@@ -74,7 +74,7 @@ function Login() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <Button type="primary" htmlType="submit" loading={loading} block icon={<LoginOutlined />}>
               Log in
             </Button>
           </Form.Item>

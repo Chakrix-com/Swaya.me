@@ -388,6 +388,7 @@ export default function QuizControl() {
                 <Text>All questions have been answered.</Text>
                 <Button
                   type="primary"
+                  icon={<LeftOutlined />}
                   onClick={() => navigate('/dashboard')}
                 >
                   Back to Dashboard

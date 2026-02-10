@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Input, Button, Card, message } from 'antd'
+import { LoginOutlined } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
 import { useDispatch } from 'react-redux'
 import { setSession } from '../../store/sessionSlice'
@@ -69,7 +70,7 @@ function AudienceJoin() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block size="large">
+            <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<LoginOutlined />}>
               Join Quiz
             </Button>
           </Form.Item>
