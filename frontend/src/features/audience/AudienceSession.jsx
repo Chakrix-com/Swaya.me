@@ -15,7 +15,9 @@ import {
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
-  LoadingOutlined
+  LoadingOutlined,
+  LoginOutlined,
+  SendOutlined
 } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
 
@@ -118,7 +120,7 @@ export default function AudienceSession() {
           title="No Session Found"
           subTitle="Please join a session first"
           extra={
-            <Button type="primary" onClick={() => navigate('/join')}>
+            <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')}>
               Go to Join Page
             </Button>
           }
@@ -231,6 +233,7 @@ export default function AudienceSession() {
               type="primary"
               size="large"
               block
+              icon={<SendOutlined />}
               disabled={!selectedAnswer}
               onClick={handleSubmitAnswer}
               loading={loading}
