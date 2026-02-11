@@ -50,7 +50,7 @@ This MVP is intentionally narrow and focuses on **value delivery**, not feature 
 ### Technical Scope (All Open Source)
 - **Backend**: FastAPI (MIT) + SQLAlchemy 2.0 (MIT) + Pydantic (MIT)
 - **Database**: MySQL 8.0+ (GPL v2) on OCI VM for persistence, Redis (BSD) local for live state
-- **Frontend**: React (MIT) + Ant Design (MIT) + Redux Toolkit (MIT)
+- **Frontend**: React (MIT) + Ant Design (MIT) + Ant Design Pro (MIT) + Redux Toolkit (MIT)
 - **Deployment**: Docker (Apache 2.0) + Docker Compose (Apache 2.0) + Nginx (BSD) on OCI VM (Ubuntu 24.04 LTS)
 - **Authentication**: JWT-based (PyJWT - MIT) for hosts, anonymous for audience, bcrypt (Apache 2.0) for passwords
 - **Realtime**: WebSocket (open standard) or polling (to be finalized in api-contracts.md)

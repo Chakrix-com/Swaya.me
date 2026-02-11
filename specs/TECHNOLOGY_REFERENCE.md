@@ -121,6 +121,11 @@ Component Library:
     License: MIT
     Version: 5+
     Purpose: Pre-built UI components
+    
+  Ant Design Pro:
+    License: MIT
+    Version: 7+ (ProLayout, ProComponents)
+    Purpose: Enterprise-grade layout and advanced components
 
 State Management:
   Redux Toolkit:
@@ -139,22 +144,14 @@ HTTP Client:
     Purpose: API communication
 
 Form Management:
-  React Hook Form:
-    License: MIT
-    Version: 7.50.0+
-    Purpose: Performant form state management with validation
+  Ant Design Form:
+    License: MIT (part of Ant Design)
+    Purpose: Form state management with validation
     Scope: Login form, quiz builder, all user input forms
-    
-  Yup:
-    License: MIT
-    Version: 1.3.0+
-    Purpose: Schema-based validation for forms
-    Integration: Works with React Hook Form for declarative validation
 
 Icons:
-  Font Awesome:
-    License: MIT (Code) / CC BY 4.0 (Icons)
-    Version: 6.5.0+ (Free version)
+  Ant Design Icons:
+    License: MIT
     Purpose: Consistent icon set across application
     Scope: UI actions, status indicators, navigation
 

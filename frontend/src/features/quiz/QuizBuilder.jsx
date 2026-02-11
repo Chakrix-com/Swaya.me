@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { ProCard } from '@ant-design/pro-components'
 import { 
-  Layout,
   Card, 
   Form, 
   Input, 
@@ -29,12 +30,12 @@ import {
 import { quizAPI, questionAPI } from '../../services/api'
 
 const { Title, Text } = Typography
-const { Content } = Layout
 const { TextArea } = Input
 
 export default function QuizBuilder() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [quiz, setQuiz] = useState(null)
@@ -68,7 +69,7 @@ export default function QuizBuilder() {
         description: response.data.description
       })
     } catch (error) {
-      message.error('Failed to load quiz')
+      message.error(t('quiz.loadError'))
       console.error(error)
     }
   }
@@ -78,15 +79,15 @@ export default function QuizBuilder() {
     try {
       if (id) {
         await quizAPI.update(id, values)
-        message.success('Quiz updated successfully')
+        message.success(t('quiz.saveSuccess'))
         loadQuiz()
       } else {
         const response = await quizAPI.create({ ...values, event_id: 1 })
-        message.success('Quiz created successfully')
+        message.success(t('quiz.createSuccess'))
         navigate(`/quiz/${response.data.id}/edit`)
       }
     } catch (error) {
-      message.error('Failed to save quiz')
+      message.error(t('quiz.saveError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -95,7 +96,7 @@ export default function QuizBuilder() {
 
   const handleAddQuestion = async (values) => {
     if (!id) {
-      message.warning('Please save the quiz first')
+      message.warning(t('quiz.saveQuizFirst'))
       return
     }
     
@@ -108,11 +109,11 @@ export default function QuizBuilder() {
         correct_answer_index: ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
       }
       await questionAPI.add(id, questionData)
-      message.success('Question added successfully')
+      message.success(t('quiz.addQuestionSuccess'))
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {
-      message.error('Failed to add question')
+      message.error(t('quiz.addQuestionError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -129,11 +130,11 @@ export default function QuizBuilder() {
         correct_answer_index: ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
       }
       await questionAPI.update(questionId, questionData)
-      message.success('Question updated successfully')
+      message.success(t('quiz.updateQuestionSuccess'))
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {
-      message.error('Failed to update question')
+      message.error(t('quiz.updateQuestionError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -144,10 +145,10 @@ export default function QuizBuilder() {
     setLoading(true)
     try {
       await questionAPI.delete(questionId)
-      message.success('Question deleted successfully')
+      message.success(t('quiz.deleteQuestionSuccess'))
       loadQuiz()
     } catch (error) {
-      message.error('Failed to delete question')
+      message.error(t('quiz.deleteQuestionError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -158,10 +159,10 @@ export default function QuizBuilder() {
     setLoading(true)
     try {
       await quizAPI.publish(id)
-      message.success('Quiz published successfully!')
+      message.success(t('quiz.publishSuccess'))
       loadQuiz()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to publish quiz')
+      message.error(error.response?.data?.detail || t('quiz.publishError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -190,57 +191,57 @@ export default function QuizBuilder() {
         >
           <Form.Item
             name="text"
-            label="Question"
-            rules={[{ required: true, message: 'Please enter question text' }]}
+            label={t('quiz.question')}
+            rules={[{ required: true, message: t('quiz.questionRequired') }]}
           >
-            <TextArea rows={2} placeholder="Enter your question" />
+            <TextArea rows={2} placeholder={t('quiz.enterQuestion')} />
           </Form.Item>
 
           <Form.Item
             name="type"
-            label="Question Type"
+            label={t('quiz.questionType')}
             rules={[{ required: true }]}
           >
             <Radio.Group>
-              <Radio value="multiple_choice">Multiple Choice</Radio>
+              <Radio value="multiple_choice">{t('quiz.multipleChoice')}</Radio>
             </Radio.Group>
           </Form.Item>
 
           <Form.Item
             name="option_a"
-            label="Option A"
-            rules={[{ required: true, message: 'Please enter option A' }]}
+            label={t('quiz.optionA')}
+            rules={[{ required: true, message: t('quiz.optionARequired') }]}
           >
-            <Input placeholder="Option A" />
+            <Input placeholder={t('quiz.optionAPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="option_b"
-            label="Option B"
-            rules={[{ required: true, message: 'Please enter option B' }]}
+            label={t('quiz.optionB')}
+            rules={[{ required: true, message: t('quiz.optionBRequired') }]}
           >
-            <Input placeholder="Option B" />
+            <Input placeholder={t('quiz.optionBPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="option_c"
-            label="Option C"
-            rules={[{ required: true, message: 'Please enter option C' }]}
+            label={t('quiz.optionC')}
+            rules={[{ required: true, message: t('quiz.optionCRequired') }]}
           >
-            <Input placeholder="Option C" />
+            <Input placeholder={t('quiz.optionCPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="option_d"
-            label="Option D"
-            rules={[{ required: true, message: 'Please enter option D' }]}
+            label={t('quiz.optionD')}
+            rules={[{ required: true, message: t('quiz.optionDRequired') }]}
           >
-            <Input placeholder="Option D" />
+            <Input placeholder={t('quiz.optionDPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="correct_answer"
-            label="Correct Answer"
+            label={t('quiz.correctAnswer')}
             rules={[{ required: true }]}
           >
             <Radio.Group>
@@ -258,9 +259,9 @@ export default function QuizBuilder() {
               loading={loading}
               icon={question ? <SaveOutlined /> : <PlusOutlined />}
             >
-              {question ? 'Update' : 'Add'} Question
+              {question ? t('quiz.updateQuestion') : t('quiz.addQuestion')}
             </Button>
-            <Button icon={<CloseOutlined />} onClick={onCancel}>Cancel</Button>
+            <Button icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
           </Space>
         </Form>
       </Card>
@@ -268,15 +269,13 @@ export default function QuizBuilder() {
   }
 
   return (
-    <Layout style={{ width: '100%' }}>
-      <Content style={{ padding: '24px', minHeight: 280, width: '100%' }}>
-        <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
         <Button 
           icon={<LeftOutlined />} 
           onClick={() => navigate('/dashboard')}
         >
-          Back to Dashboard
+          {t('quiz.backDashboard')}
         </Button>
         {quiz && quiz.status === 'draft' && questions.length >= 1 && (
           <Button 
@@ -285,19 +284,19 @@ export default function QuizBuilder() {
             onClick={handlePublish}
             loading={loading}
           >
-            Publish Quiz
+            {t('quiz.publishQuiz')}
           </Button>
         )}
       </Space>
 
-      <Card title={id ? "Edit Quiz" : "Create New Quiz"} style={{ marginBottom: 24, width: '100%' }}>
+      <Card title={id ? t('quiz.editQuiz') : t('quiz.createNewQuiz')} style={{ marginBottom: 24, width: '100%' }}>
         {quiz && (
           <Space style={{ marginBottom: 16 }}>
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
               {quiz.status.toUpperCase()}
             </Tag>
             <Text type="secondary">
-              {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+              {questions.length} {questions.length === 1 ? t('quiz.question') : t('quiz.questions')}
             </Text>
           </Space>
         )}
@@ -309,17 +308,17 @@ export default function QuizBuilder() {
         >
           <Form.Item
             name="title"
-            label="Quiz Title"
-            rules={[{ required: true, message: 'Please enter quiz title' }]}
+            label={t('quiz.quizTitle')}
+            rules={[{ required: true, message: t('quiz.quizTitleRequired') }]}
           >
-            <Input placeholder="Enter quiz title" size="large" />
+            <Input placeholder={t('quiz.enterQuizTitle')} size="large" />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="Description"
+            label={t('quiz.quizDescription')}
           >
-            <TextArea rows={3} placeholder="Enter quiz description (optional)" />
+            <TextArea rows={3} placeholder={t('quiz.enterQuizDescription')} />
           </Form.Item>
 
           <Button 
@@ -328,14 +327,14 @@ export default function QuizBuilder() {
             icon={<SaveOutlined />}
             loading={loading}
           >
-            {id ? 'Update' : 'Create'} Quiz
+            {id ? t('quiz.editQuiz') : t('quiz.createQuiz')}
           </Button>
         </Form>
       </Card>
 
       {id && (
         <>
-          <Divider>Questions</Divider>
+          <Divider>{t('quiz.questions')}</Divider>
 
           {editingQuestion === 'new' ? (
             <QuestionForm
@@ -350,7 +349,7 @@ export default function QuizBuilder() {
               style={{ marginBottom: 16, width: '100%' }}
               size="large"
             >
-              Add Question
+              {t('quiz.addQuestion')}
             </Button>
           )}
 
@@ -380,13 +379,13 @@ export default function QuizBuilder() {
                         icon={<EditOutlined />}
                         onClick={() => setEditingQuestion(question.id)}
                       >
-                        Edit
+                        {t('common.edit')}
                       </Button>
                       <Popconfirm
-                        title="Delete this question?"
+                        title={t('quiz.deleteQuestionConfirm')}
                         onConfirm={() => handleDeleteQuestion(question.id)}
-                        okText="Yes"
-                        cancelText="No"
+                        okText={t('common.submit')}
+                        cancelText={t('common.cancel')}
                       >
                         <Button
                           size="small"
@@ -400,19 +399,19 @@ export default function QuizBuilder() {
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <div>
                       <Text>A: {question.option_a}</Text>
-                      {question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>Correct</Tag>}
+                      {question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                     </div>
                     <div>
                       <Text>B: {question.option_b}</Text>
-                      {question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>Correct</Tag>}
+                      {question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                     </div>
                     <div>
                       <Text>C: {question.option_c}</Text>
-                      {question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>Correct</Tag>}
+                      {question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                     </div>
                     <div>
                       <Text>D: {question.option_d}</Text>
-                      {question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>Correct</Tag>}
+                      {question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                     </div>
                   </Space>
                 </Card>
@@ -421,8 +420,6 @@ export default function QuizBuilder() {
           />
         </>
       )}
-        </div>
-      </Content>
-    </Layout>
+    </div>
   )
 }

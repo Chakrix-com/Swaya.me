@@ -1,0 +1,22 @@
+.public-page-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.language-switcher-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.public-page-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+

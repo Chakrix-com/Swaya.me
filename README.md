@@ -150,6 +150,18 @@ swaya.me/
 - [API Contracts](/specs/backend/api-contracts.md) - REST API endpoints
 - [Data Model](/specs/backend/domain-model.md) - Database schema
 - [Development Plan](/Plan.md) - Implementation roadmap
+- [Contributing Guide](/CONTRIBUTING.md) - Development workflow and guidelines
+
+## Internationalization (i18n)
+
+Swaya.me supports **7 languages** with English as default:
+- 🇬🇧 English (en)
+- 🇮🇳 Hindi (hi), Tamil (ta), Telugu (te), Kannada (ka), Bengali (bn), Gujarati (gu)
+
+**Important for developers**: When adding or modifying UI text, you must update all 7 language translation files. See:
+- [Translation Maintenance Guide](/Docs/TRANSLATION_MAINTENANCE.md) - Complete walkthrough
+- [Translation Checklist](/TRANSLATION_CHECKLIST.md) - Quick reference
+- [Contributing Guide](/CONTRIBUTING.md#ui-elements--internationalization-i18n) - Development requirements
 
 ## License
 
@@ -157,4 +169,9 @@ MIT License - see LICENSE file for details
 
 ## Contributing
 
-This is a planning/development project. Contributions welcome following the architectural guidelines in `/Docs/`.
+Contributions welcome! Please read the [Contributing Guide](/CONTRIBUTING.md) which covers:
+- Development workflow
+- Code style and standards
+- UI/Translation requirements (7 languages)
+- Pull request process
+- Architecture guidelines

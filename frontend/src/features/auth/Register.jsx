@@ -1,11 +1,14 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Form, Input, Button, Card, message } from 'antd'
 import { UserOutlined, LockOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
+import PublicPageLayout from '../../components/PublicPageLayout'
 
 function Register() {
+  const { t } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { loading } = useSelector((state) => state.auth)
@@ -15,76 +18,78 @@ function Register() {
     try {
       const response = await authAPI.register(values)
       dispatch(loginSuccess(response.data))
-      message.success('Registration successful!')
+      message.success(t('auth.registerSuccess'))
       navigate('/dashboard')
     } catch (error) {
       dispatch(loginFailure(error.response?.data?.detail || 'Registration failed'))
-      message.error(error.response?.data?.detail || 'Registration failed')
+      message.error(error.response?.data?.detail || t('auth.invalidCredentials'))
     }
   }
 
   return (
-    <div className="login-container">
-      <Card className="login-form" title="Create Account">
-        <Form
-          name="register"
-          onFinish={onFinish}
-          autoComplete="off"
-          layout="vertical"
-        >
-          <Form.Item
-            label="Organization Name"
-            name="tenant_name"
-            rules={[{ required: true, message: 'Please input your organization name!' }]}
+    <PublicPageLayout>
+      <div className="login-container">
+        <Card className="login-form" title={t('auth.register')}>
+          <Form
+            name="register"
+            onFinish={onFinish}
+            autoComplete="off"
+            layout="vertical"
           >
-            <Input prefix={<TeamOutlined />} placeholder="Organization Name" />
-          </Form.Item>
+            <Form.Item
+              label={t('auth.tenantName')}
+              name="tenant_name"
+              rules={[{ required: true, message: `${t('auth.tenantName')} is required` }]}
+            >
+              <Input prefix={<TeamOutlined />} placeholder={t('auth.tenantName')} />
+            </Form.Item>
 
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Please enter a valid email!' },
-            ]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Email" />
-          </Form.Item>
+            <Form.Item
+              label={t('auth.email')}
+              name="email"
+              rules={[
+                { required: true, message: `${t('auth.email')} is required` },
+                { type: 'email', message: `${t('auth.email')} is invalid` },
+              ]}
+            >
+              <Input prefix={<UserOutlined />} placeholder={t('auth.email')} />
+            </Form.Item>
 
-          <Form.Item
-            label="Full Name"
-            name="full_name"
-          >
-            <Input prefix={<UserOutlined />} placeholder="Full Name (Optional)" />
-          </Form.Item>
+            <Form.Item
+              label={t('auth.fullName')}
+              name="full_name"
+            >
+              <Input prefix={<UserOutlined />} placeholder={`${t('auth.fullName')} (Optional)`} />
+            </Form.Item>
 
-          <Form.Item
-            label="Password"
-            name="password"
-            rules={[
-              { required: true, message: 'Please input your password!' },
-              { min: 8, message: 'Password must be at least 8 characters!' },
-              {
-                pattern: /^(?=.*[A-Z])(?=.*\d)/,
-                message: 'Password must contain uppercase and number!',
-              },
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-          </Form.Item>
+            <Form.Item
+              label={t('auth.password')}
+              name="password"
+              rules={[
+                { required: true, message: `${t('auth.password')} is required` },
+                { min: 8, message: 'Password must be at least 8 characters!' },
+                {
+                  pattern: /^(?=.*[A-Z])(?=.*\d)/,
+                  message: 'Password must contain uppercase and number!',
+                },
+              ]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} />
+            </Form.Item>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block icon={<UserAddOutlined />}>
-              Register
-            </Button>
-          </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={loading} block icon={<UserAddOutlined />}>
+                {t('auth.registerButton')}
+              </Button>
+            </Form.Item>
 
-          <div style={{ textAlign: 'center' }}>
-            Already have an account? <Link to="/login">Login here</Link>
-          </div>
-        </Form>
-      </Card>
-    </div>
+            <div style={{ textAlign: 'center' }}>
+              {t('auth.haveAccount')} <Link to="/login">{t('auth.login')}</Link>
+            </div>
+          </Form>
+        </Card>
+      </div>
+    </PublicPageLayout>
   )
 }
 

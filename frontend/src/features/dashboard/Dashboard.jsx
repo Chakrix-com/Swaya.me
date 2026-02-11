@@ -1,19 +1,18 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
-import { Layout, Card, Button, List, Tag, Space, Typography, Popconfirm, message } from 'antd'
-import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined, LogoutOutlined } from '@ant-design/icons'
+import { ProCard } from '@ant-design/pro-components'
+import { Button, List, Tag, Space, Popconfirm, message } from 'antd'
+import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
 import { quizAPI } from '../../services/api'
 
-const { Header, Content } = Layout
-const { Title } = Typography
-
 function Dashboard() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
   const { quizzes } = useSelector((state) => state.quiz)
 
   useEffect(() => {
@@ -27,11 +26,6 @@ function Dashboard() {
     } catch (error) {
       console.error('Failed to load quizzes:', error)
     }
-  }
-
-  const handleLogout = () => {
-    dispatch(logout())
-    navigate('/login')
   }
 
   const handleDeleteQuiz = async (quizId) => {
@@ -53,80 +47,67 @@ function Dashboard() {
   }
 
   return (
-    <Layout>
-      <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={3} style={{ margin: 0 }}>Swaya.me Dashboard</Title>
-        <Space>
-          <span>Welcome, {user?.full_name || user?.email}</span>
-          <Button icon={<LogoutOutlined />} onClick={handleLogout}>Logout</Button>
-        </Space>
-      </Header>
-      <Content style={{ padding: '24px', minHeight: 280 }}>
-        <div style={{ width: '100%' }}>
-          <Card
-            title="My Quizzes"
-            extra={
+    <ProCard
+      title={t('quiz.myQuizzes')}
+      extra={
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/quiz/new')}
+        >
+          {t('quiz.createQuiz')}
+        </Button>
+      }
+    >
+      <List
+        dataSource={quizzes}
+        renderItem={(quiz) => (
+          <List.Item
+            actions={[
               <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate('/quiz/new')}
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
               >
-                Create Quiz
-              </Button>
-            }
-          >
-            <List
-              dataSource={quizzes}
-              renderItem={(quiz) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      icon={<EditOutlined />}
-                      onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
-                    >
-                      Edit
-                    </Button>,
-                    quiz.status === 'ready' && (
-                      <Button
-                        type="primary"
-                        icon={<PlayCircleOutlined />}
-                        onClick={() => navigate(`/quiz/${quiz.id}/control`)}
-                      >
-                        Start
-                      </Button>
-                    ),
-                    <Popconfirm
-                      title="Delete this quiz?"
-                      description="This action cannot be undone."
-                      onConfirm={() => handleDeleteQuiz(quiz.id)}
-                      okText="Yes"
-                      cancelText="No"
-                    >
-                      <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                      >
-                        Delete
-                      </Button>
-                    </Popconfirm>
-                  ].filter(Boolean)}
+                {t('common.edit')}
+              </Button>,
+              quiz.status === 'ready' && (
+                <Button
+                  type="primary"
+                  icon={<PlayCircleOutlined />}
+                  onClick={() => navigate(`/quiz/${quiz.id}/control`)}
                 >
-                  <List.Item.Meta
-                    title={quiz.title}
-                    description={
-                      <Space>
-                        <Tag color={getStatusColor(quiz.status)}>{quiz.status}</Tag>
-                        <span>{quiz.question_count || 0} questions</span>
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
+                  {t('quiz.startQuiz')}
+                </Button>
+              ),
+              <Popconfirm
+                title={t('quiz.deleteConfirm')}
+                description={t('quiz.deleteWarning')}
+                onConfirm={() => handleDeleteQuiz(quiz.id)}
+                okText={t('common.submit')}
+                cancelText={t('common.cancel')}
+              >
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                >
+                  {t('common.delete')}
+                </Button>
+              </Popconfirm>
+            ].filter(Boolean)}
+          >
+            <List.Item.Meta
+              title={quiz.title}
+              description={
+                <Space>
+                  <Tag color={getStatusColor(quiz.status)}>{quiz.status}</Tag>
+                  <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
+                </Space>
+              }
             />
-          </Card>
-        </div>
-      </Content>
-    </Layout>
+          </List.Item>
+        )}
+      />
+    </ProCard>
   )
 }
 

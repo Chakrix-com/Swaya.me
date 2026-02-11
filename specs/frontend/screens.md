@@ -7,16 +7,125 @@ This document defines all screens, components, fields, and validation rules for 
 ## Technology Stack (All Open Source)
 
 - **Framework**: React 18+ (MIT License)
-- **UI Library**: Ant Design (AntD) (MIT License)
+- **UI Library**: Ant Design (AntD) 5+ (MIT License)
+- **Layout & Advanced Components**: Ant Design Pro (MIT License)
 - **State Management**: Redux Toolkit (RTK) (MIT License)
-- **Form Management**: React Hook Form + Yup (MIT License)
-- **Icons**: Font Awesome Free (MIT/CC BY 4.0)
+- **Form Management**: Ant Design Form (MIT License, part of AntD)
+- **Icons**: Ant Design Icons (MIT License)
 - **Date Utilities**: date-fns (MIT License)
 - **Routing**: React Router v6 (MIT License)
 - **HTTP Client**: Axios (MIT License)
 - **Real-time**: Polling (2s interval) or WebSocket (Open Standard)
 
 All frontend technologies are 100% open source with zero licensing costs.
+
+---
+
+## Internationalization (i18n) - Translation Maintenance
+
+**IMPORTANT**: Every time a UI element with user-facing text is added or modified, the translation table **MUST** be updated. This ensures all 7 supported languages remain in sync.
+
+### Supported Languages
+1. English (en) - Default
+2. Hindi (hi)
+3. Tamil (ta)
+4. Telugu (te)
+5. Kannada (ka)
+6. Bengali (bn)
+7. Gujarati (gu)
+
+### Translation Files Location
+```
+frontend/src/locales/
+├── en/translation.json
+├── hi/translation.json
+├── ta/translation.json
+├── te/translation.json
+├── ka/translation.json
+├── bn/translation.json
+└── gu/translation.json
+```
+
+### Checklist: Adding or Modifying UI Elements
+
+When adding or modifying any user-facing text in a screen or component:
+
+1. **Identify the text**: List all new or changed strings that appear in the UI
+2. **Determine the section**: Decide which category the text belongs to:
+   - `common`: General buttons, labels (Save, Delete, Cancel, etc.)
+   - `auth`: Authentication screens (Login, Register)
+   - `quiz`: Quiz creation and management
+   - `audience`: Audience/participant interactions
+   - `navigation`: Menu items and navigation
+3. **Add to English first**: Add the new key and English text to `en/translation.json`
+4. **Add to all 7 languages**: Copy the same key structure to all language files and provide translations
+5. **Update component**: Use the `useTranslation()` hook in the component:
+   ```jsx
+   import { useTranslation } from 'react-i18next'
+   
+   function MyComponent() {
+     const { t } = useTranslation()
+     return <button>{t('section.key')}</button>
+   }
+   ```
+6. **Verify**: Test language switching in the app to ensure keys work across all languages
+
+### Example: Adding a New Button
+
+If adding an "Archive Quiz" button:
+
+1. **English** (`en/translation.json`):
+   ```json
+   {
+     "quiz": {
+       "archiveQuiz": "Archive Quiz"
+     }
+   }
+   ```
+
+2. **Hindi** (`hi/translation.json`):
+   ```json
+   {
+     "quiz": {
+       "archiveQuiz": "क्विज़ को अभिलेख में रखें"
+     }
+   }
+   ```
+
+3. **All other language files**: Follow the same structure with translations
+
+4. **Component Usage**:
+   ```jsx
+   <Button>{t('quiz.archiveQuiz')}</Button>
+   ```
+
+### Key Naming Convention
+- Use camelCase for keys
+- Organize hierarchically by section
+- Be descriptive: `submitAnswer` not `submit`
+- Use `Button`, `Label`, `Title`, etc. suffixes only if disambiguating (rarely needed)
+
+### Validation Checklist Before Commit
+
+- [ ] New strings added to `en/translation.json`
+- [ ] Same keys added to all 6 other language files
+- [ ] Translations are contextually accurate (not just machine-translated)
+- [ ] Component uses `t('section.key')` syntax
+- [ ] All 7 languages tested in the browser
+- [ ] No hardcoded English strings remain in component
+
+### Common Mistakes to Avoid
+
+❌ Adding text to English file but forgetting other languages  
+❌ Using hardcoded strings instead of `t()` hook  
+❌ Inconsistent key naming across files  
+❌ Missing translation files updated  
+✅ Always update all 7 files together  
+✅ Use i18n keys consistently across components  
+✅ Test language switching before pushing code  
+
+### Reference Documentation
+For complete i18n setup details, see [I18N_IMPLEMENTATION.md](../../frontend/docs/I18N_IMPLEMENTATION.md)
 
 ---
 

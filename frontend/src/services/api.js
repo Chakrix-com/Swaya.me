@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { store } from '../store/store'
+import { logout } from '../store/authSlice'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
@@ -17,6 +19,21 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Handle expired token responses
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Token expired or invalid - clear auth state
+      localStorage.removeItem('token')
+      store.dispatch(logout())
+      // Redirect to login
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
 // Auth API
 export const authAPI = {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   Button,
@@ -31,6 +32,7 @@ const { Title, Text } = Typography
 export default function QuizControl() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [quiz, setQuiz] = useState(null)
   const [session, setSession] = useState(null)
   const [results, setResults] = useState(null)
@@ -166,7 +168,7 @@ export default function QuizControl() {
           icon={<LeftOutlined />}
           onClick={() => navigate('/dashboard')}
         >
-          Back to Dashboard
+          {t('quiz.backDashboard')}
         </Button>
         {session && session.status === 'active' && (
           <Button
@@ -391,7 +393,7 @@ export default function QuizControl() {
                   icon={<LeftOutlined />}
                   onClick={() => navigate('/dashboard')}
                 >
-                  Back to Dashboard
+                  {t('quiz.backDashboard')}
                 </Button>
               </Space>
             </Card>

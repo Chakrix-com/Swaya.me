@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Form, Input, Button, Card, message } from 'antd'
 import { LoginOutlined } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
 import { useDispatch } from 'react-redux'
 import { setSession } from '../../store/sessionSlice'
+import PublicPageLayout from '../../components/PublicPageLayout'
 
 function AudienceJoin() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { joinCode } = useParams()
@@ -25,7 +28,7 @@ function AudienceJoin() {
     try {
       const response = await sessionAPI.join(values)
       dispatch(setSession(response.data))
-      message.success('Joined successfully!')
+      message.success(t('audience.joinSuccess') || 'Joined successfully!')
       // Pass session data via navigate state
       navigate(`/session/${response.data.session_id}`, {
         state: {
@@ -35,48 +38,50 @@ function AudienceJoin() {
         }
       })
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to join session')
+      message.error(error.response?.data?.detail || t('common.error'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="audience-container">
-      <Card title="Join Quiz" style={{ width: 400 }}>
-        <Form
-          form={form}
-          name="join"
-          onFinish={onFinish}
-          layout="vertical"
-        >
-          <Form.Item
-            label="Join Code"
-            name="join_code"
-            rules={[{ required: true, message: 'Please enter the join code!' }]}
+    <PublicPageLayout>
+      <div className="audience-container">
+        <Card title={t('audience.joinQuiz')} style={{ width: 400 }}>
+          <Form
+            form={form}
+            name="join"
+            onFinish={onFinish}
+            layout="vertical"
           >
-            <Input
-              placeholder="Enter 6-digit code"
-              maxLength={6}
-              style={{ fontSize: 24, textAlign: 'center', textTransform: 'uppercase' }}
-            />
-          </Form.Item>
+            <Form.Item
+              label={t('audience.sessionCode')}
+              name="join_code"
+              rules={[{ required: true, message: `${t('audience.sessionCode')} is required` }]}
+            >
+              <Input
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                style={{ fontSize: 24, textAlign: 'center', textTransform: 'uppercase' }}
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="Display Name (Optional)"
-            name="display_name"
-          >
-            <Input placeholder="Your name" />
-          </Form.Item>
+            <Form.Item
+              label={t('audience.displayName')}
+              name="display_name"
+            >
+              <Input placeholder={`${t('audience.displayName')} (Optional)`} />
+            </Form.Item>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<LoginOutlined />}>
-              Join Quiz
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
-    </div>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={loading} block size="large" icon={<LoginOutlined />}>
+                {t('audience.join')}
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      </div>
+    </PublicPageLayout>
   )
 }
 
