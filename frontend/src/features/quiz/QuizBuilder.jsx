@@ -69,8 +69,9 @@ export default function QuizBuilder() {
         description: response.data.description
       })
     } catch (error) {
-      message.error(t('quiz.loadError'))
-      console.error(error)
+      const errorMsg = error.response?.data?.detail || t('quiz.loadError')
+      message.error(errorMsg)
+      console.error('Load quiz error:', error.response?.data || error)
     }
   }
 
@@ -87,8 +88,9 @@ export default function QuizBuilder() {
         navigate(`/quiz/${response.data.id}/edit`)
       }
     } catch (error) {
-      message.error(t('quiz.saveError'))
-      console.error(error)
+      const errorMsg = error.response?.data?.detail || t('quiz.saveError')
+      message.error(errorMsg)
+      console.error('Save quiz error:', error.response?.data || error)
     } finally {
       setLoading(false)
     }
@@ -113,8 +115,9 @@ export default function QuizBuilder() {
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {
-      message.error(t('quiz.addQuestionError'))
-      console.error(error)
+      const errorMsg = error.response?.data?.detail || t('quiz.addQuestionError')
+      message.error(errorMsg)
+      console.error('Add question error:', error.response?.data || error)
     } finally {
       setLoading(false)
     }
@@ -134,8 +137,9 @@ export default function QuizBuilder() {
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {
-      message.error(t('quiz.updateQuestionError'))
-      console.error(error)
+      const errorMsg = error.response?.data?.detail || t('quiz.updateQuestionError')
+      message.error(errorMsg)
+      console.error('Update question error:', error.response?.data || error)
     } finally {
       setLoading(false)
     }
@@ -148,8 +152,9 @@ export default function QuizBuilder() {
       message.success(t('quiz.deleteQuestionSuccess'))
       loadQuiz()
     } catch (error) {
-      message.error(t('quiz.deleteQuestionError'))
-      console.error(error)
+      const errorMsg = error.response?.data?.detail || t('quiz.deleteQuestionError')
+      message.error(errorMsg)
+      console.error('Delete question error:', error.response?.data || error)
     } finally {
       setLoading(false)
     }
@@ -163,6 +168,20 @@ export default function QuizBuilder() {
       loadQuiz()
     } catch (error) {
       message.error(error.response?.data?.detail || t('quiz.publishError'))
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUnpublish = async () => {
+    setLoading(true)
+    try {
+      await quizAPI.unpublish(id)
+      message.success(t('quiz.unpublishSuccess'))
+      loadQuiz()
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('quiz.unpublishError'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -267,7 +286,14 @@ export default function QuizBuilder() {
       </Card>
     )
   }
-
+  const getQuizStatusTranslation = (status) => {
+    const statusMap = {
+      draft: 'statusDraft',
+      ready: 'statusReady',
+      archived: 'statusArchived'
+    }
+    return t(`quiz.${statusMap[status] || 'statusDraft'}`)
+  }
   return (
     <div style={{ padding: 24 }}>
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
@@ -287,14 +313,28 @@ export default function QuizBuilder() {
             {t('quiz.publishQuiz')}
           </Button>
         )}
+        {quiz && quiz.status === 'ready' && (
+          <Button 
+            type="default" 
+            onClick={handleUnpublish}
+            loading={loading}
+          >
+            {t('quiz.unpublishQuiz')}
+          </Button>
+        )}
       </Space>
 
       <Card title={id ? t('quiz.editQuiz') : t('quiz.createNewQuiz')} style={{ marginBottom: 24, width: '100%' }}>
         {quiz && (
           <Space style={{ marginBottom: 16 }}>
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
-              {quiz.status.toUpperCase()}
+              {getQuizStatusTranslation(quiz.status)}
             </Tag>
+            {quiz.status === 'ready' && (
+              <Tag color="red">
+                {t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit'}
+              </Tag>
+            )}
             <Text type="secondary">
               {questions.length} {questions.length === 1 ? t('quiz.question') : t('quiz.questions')}
             </Text>

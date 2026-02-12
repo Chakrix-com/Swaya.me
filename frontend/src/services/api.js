@@ -50,6 +50,7 @@ export const quizAPI = {
   update: (id, data) => api.put(`/quizzes/${id}`, data),
   delete: (id) => api.delete(`/quizzes/${id}`),
   publish: (id) => api.post(`/quizzes/${id}/publish`),
+  unpublish: (id) => api.post(`/quizzes/${id}/unpublish`),
 }
 
 // Question API

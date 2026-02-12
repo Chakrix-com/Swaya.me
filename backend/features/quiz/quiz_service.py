@@ -191,6 +191,31 @@ class QuizBuilderService:
         
         return self._to_quiz_response(quiz)
     
+    def unpublish_quiz(
+        self,
+        db: Session,
+        quiz_id: int,
+        current_user: CurrentUser
+    ) -> QuizResponse:
+        """Unpublish quiz (revert status to DRAFT for editing)"""
+        quiz = db.query(Quiz).filter(
+            Quiz.id == quiz_id,
+            Quiz.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+        
+        if quiz.status == QuizStatus.DRAFT:
+            raise InvalidQuizStatusError("Quiz is already in DRAFT status")
+        
+        # Change status back to DRAFT
+        quiz.status = QuizStatus.DRAFT
+        db.commit()
+        db.refresh(quiz)
+        
+        return self._to_quiz_response(quiz)
+    
     def _validate_quiz(self, quiz: Quiz):
         """Validate quiz before publishing"""
         if not quiz.questions:

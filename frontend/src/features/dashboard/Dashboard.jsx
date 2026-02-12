@@ -46,6 +46,15 @@ function Dashboard() {
     return colors[status] || 'default'
   }
 
+  const getStatusTranslation = (status) => {
+    const statusMap = {
+      draft: 'statusDraft',
+      ready: 'statusReady',
+      archived: 'statusArchived'
+    }
+    return t(`quiz.${statusMap[status] || 'statusDraft'}`)
+  }
+
   return (
     <ProCard
       title={t('quiz.myQuizzes')}
@@ -99,7 +108,7 @@ function Dashboard() {
               title={quiz.title}
               description={
                 <Space>
-                  <Tag color={getStatusColor(quiz.status)}>{quiz.status}</Tag>
+                  <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
                   <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
                 </Space>
               }

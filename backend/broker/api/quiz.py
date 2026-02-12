@@ -139,6 +139,22 @@ async def publish_quiz(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.post("/{quiz_id}/unpublish", response_model=QuizResponse)
+async def unpublish_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderService = Depends(get_quiz_service)
+):
+    """Unpublish quiz (revert to DRAFT status for editing)"""
+    try:
+        return service.unpublish_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 # Question Management Endpoints
 @router.post("/{quiz_id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
 async def add_question(

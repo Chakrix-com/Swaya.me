@@ -56,7 +56,7 @@ export default function QuizControl() {
       const response = await quizAPI.get(id)
       setQuiz(response.data)
     } catch (error) {
-      message.error('Failed to load quiz')
+      message.error(t('quiz.failedToLoadQuiz'))
       console.error(error)
     }
   }
@@ -67,7 +67,7 @@ export default function QuizControl() {
       const response = await sessionAPI.getResults(session.id, session.session_token)
       setResults(response.data)
     } catch (error) {
-      console.error('Failed to load results', error)
+      console.error(t('quiz.failedToLoadResults'), error)
     }
   }
 
@@ -76,9 +76,9 @@ export default function QuizControl() {
     try {
       const response = await sessionAPI.start(id)
       setSession(response.data)
-      message.success('Session started! Share the join code with participants.')
+      message.success(t('quiz.sessionStarted'))
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to start session')
+      message.error(error.response?.data?.detail || t('quiz.failedToStart'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -89,10 +89,10 @@ export default function QuizControl() {
     setLoading(true)
     try {
       await sessionAPI.advance(session.id)
-      message.success('Moved to next question')
+      message.success(t('quiz.movedToNextQuestion'))
       loadResults()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to advance question')
+      message.error(error.response?.data?.detail || t('quiz.failedToAdvance'))
       console.error(error)
     } finally {
       setLoading(false)
@@ -103,20 +103,26 @@ export default function QuizControl() {
     setLoading(true)
     try {
       await sessionAPI.end(session.id)
-      message.success('Session ended')
+      message.success(t('quiz.sessionEnded'))
       navigate('/dashboard')
     } catch (error) {
-      message.error('Failed to end session')
+      message.error(t('quiz.failedToEnd'))
       console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
+  const getStatusTranslation = (status) => {
+    if (!status) return t('quiz.ready')
+    const statusKey = status.toLowerCase()
+    return t(`quiz.${statusKey}`)
+  }
+
   const copyJoinLink = () => {
     const inputElement = document.getElementById('join-url-input')
     if (!inputElement || !inputElement.value) {
-      message.error('No URL to copy')
+      message.error(t('quiz.noUrlToCopy'))
       return
     }
 
@@ -144,19 +150,19 @@ export default function QuizControl() {
       document.body.removeChild(textarea)
       
       if (successful) {
-        message.success('Link copied to clipboard!')
+        message.success(t('quiz.linkCopied'))
       } else {
-        message.error('Please copy manually')
+        message.error(t('quiz.copyManually'))
       }
     } catch (err) {
       console.error('Copy failed:', err)
       document.body.removeChild(textarea)
-      message.error('Please copy manually')
+      message.error(t('quiz.copyManually'))
     }
   }
 
   if (!quiz) {
-    return <div style={{ padding: 24 }}>Loading...</div>
+    return <div style={{ padding: 24 }}>{t('common.loading')}</div>
   }
 
   const currentQuestion = results?.current_question
@@ -177,13 +183,13 @@ export default function QuizControl() {
             onClick={handleEndSession}
             loading={loading}
           >
-            End Session
+            {t('quiz.endSession')}
           </Button>
         )}
       </Space>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={24} md={24} lg={16} xl={16}>
+        <Col xs={24} sm={24} md={24} lg={14} xl={14}>
           <Card>
             <Title level={2} style={{ marginBottom: 8 }}>{quiz.title}</Title>
             {quiz.description && <Text type="secondary">{quiz.description}</Text>}
@@ -191,24 +197,26 @@ export default function QuizControl() {
         </Col>
         <Col xs={12} sm={12} md={12} lg={4} xl={4}>
           <Card style={{ height: '100%' }}>
-            <Statistic
-              title="Participants"
-              value={results?.total_participants || 0}
-              prefix={<TeamOutlined />}
-              valueStyle={{ fontSize: 28 }}
-            />
+            <div style={{ textAlign: 'center' }}>
+              <Statistic
+                title={t('quiz.participants')}
+                value={results?.total_participants || 0}
+                prefix={<TeamOutlined />}
+                valueStyle={{ fontSize: 28 }}
+              />
+            </div>
           </Card>
         </Col>
-        <Col xs={12} sm={12} md={12} lg={4} xl={4}>
+        <Col xs={12} sm={12} md={12} lg={6} xl={6}>
           <Card style={{ height: '100%', minHeight: 100 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 14, color: '#00000073', marginBottom: 8 }}>Status</div>
+              <div style={{ fontSize: 14, color: '#00000073', marginBottom: 8 }}>{t('quiz.status')}</div>
               <div style={{ fontSize: 24, fontWeight: 600, color: session?.status === 'active' ? '#52c41a' : '#faad14' }}>
-                {session?.status ? session.status.toUpperCase() : 'READY'}
+                {getStatusTranslation(session?.status)}
               </div>
               {session && (
                 <Tag color={session.status === 'active' ? 'green' : 'orange'} style={{ marginTop: 8 }}>
-                  {session.status === 'active' ? 'LIVE' : 'ENDED'}
+                  {session.status === 'active' ? t('quiz.live') : t('quiz.ended')}
                 </Tag>
               )}
             </div>
@@ -219,8 +227,8 @@ export default function QuizControl() {
       {!session ? (
         <Card>
           <Space direction="vertical" align="center" style={{ width: '100%' }}>
-            <Title level={3}>Ready to Start?</Title>
-            <Text>Start the session to allow participants to join.</Text>
+            <Title level={3}>{t('quiz.readyToStart')}</Title>
+            <Text>{t('quiz.startSessionDesc')}</Text>
             <Button
               type="primary"
               size="large"
@@ -228,7 +236,7 @@ export default function QuizControl() {
               onClick={handleStartSession}
               loading={loading}
             >
-              Start Session
+              {t('quiz.startSession')}
             </Button>
           </Space>
         </Card>
@@ -236,7 +244,7 @@ export default function QuizControl() {
         <>
           <Row gutter={16} style={{ marginBottom: 24 }}>
             <Col xs={24} lg={24}>
-              <Card title="Join Information">
+              <Card title={t('quiz.joinInformation')}>
                 <Row gutter={16}>
                   <Col xs={24} md={8} style={{ textAlign: 'center' }}>
                     <QRCodeCanvas
@@ -250,7 +258,7 @@ export default function QuizControl() {
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">
                       <div>
                         <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-                          Join URL:
+                          {t('quiz.joinUrl')}
                         </Text>
                         <Input
                           id="join-url-input"
@@ -265,7 +273,7 @@ export default function QuizControl() {
                           onClick={copyJoinLink}
                           block
                         >
-                          Copy Join Link
+                          {t('quiz.copyJoinLink')}
                         </Button>
                       </div>
                     </Space>
@@ -273,11 +281,11 @@ export default function QuizControl() {
                   <Col xs={24} md={8}>
                     <div style={{ textAlign: 'center' }}>
                       <Statistic
-                        title="Join Code"
+                        title={t('quiz.joinCode')}
                         value={session.join_code}
                         valueStyle={{ color: '#3f8600', fontSize: 32, fontWeight: 'bold' }}
                       />
-                      <Text type="secondary" style={{ fontSize: 12 }}>Enter this code at /join</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>{t('quiz.enterCodeAt')}</Text>
                     </div>
                   </Col>
                 </Row>
@@ -289,7 +297,7 @@ export default function QuizControl() {
             <Card
               title={
                 <Space>
-                  <Tag color="blue">Question {results.current_question_index + 1} of {quiz.questions?.length}</Tag>
+                  <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
                   <Text strong>{currentQuestion.text}</Text>
                 </Space>
               }
@@ -301,14 +309,14 @@ export default function QuizControl() {
                     onClick={handleAdvanceQuestion}
                     loading={loading}
                   >
-                    {results.current_question_index < (quiz.questions?.length - 1) ? 'Next Question' : 'Finish'}
+                    {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
                   </Button>
                 )
               }
               style={{ marginBottom: 24 }}
             >
               <Alert
-                message={`${currentQuestion.total_answers || 0} responses received`}
+                message={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
@@ -318,7 +326,7 @@ export default function QuizControl() {
                 <div>
                   <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
                     <Text strong>A: {currentQuestion.option_a}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[0] || 0} responses ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    <Text>{currentQuestion.answer_distribution?.[0] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                   </Space>
                   <Progress
                     percent={((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0)}
@@ -329,7 +337,7 @@ export default function QuizControl() {
                 <div>
                   <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
                     <Text strong>B: {currentQuestion.option_b}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[1] || 0} responses ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    <Text>{currentQuestion.answer_distribution?.[1] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                   </Space>
                   <Progress
                     percent={((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0)}
@@ -340,7 +348,7 @@ export default function QuizControl() {
                 <div>
                   <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
                     <Text strong>C: {currentQuestion.option_c}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[2] || 0} responses ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    <Text>{currentQuestion.answer_distribution?.[2] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                   </Space>
                   <Progress
                     percent={((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0)}
@@ -351,7 +359,7 @@ export default function QuizControl() {
                 <div>
                   <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
                     <Text strong>D: {currentQuestion.option_d}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[3] || 0} responses ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    <Text>{currentQuestion.answer_distribution?.[3] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                   </Space>
                   <Progress
                     percent={((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0)}
@@ -360,7 +368,7 @@ export default function QuizControl() {
                 </div>
 
                 <Alert
-                  message={`Correct Answer: ${currentQuestion.correct_answer}`}
+                  message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
                   description={`${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}`}
                   type="success"
                   showIcon
@@ -370,8 +378,8 @@ export default function QuizControl() {
           ) : session && results && results.current_question_index === -1 ? (
             <Card>
               <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                <Title level={4}>Ready to Start!</Title>
-                <Text>Click "Advance Question" to show the first question to participants.</Text>
+                <Title level={4}>{t('quiz.readyToStartFirst')}</Title>
+                <Text>{t('quiz.clickAdvanceToStart')}</Text>
                 <Button
                   type="primary"
                   size="large"
@@ -379,15 +387,15 @@ export default function QuizControl() {
                   onClick={handleAdvanceQuestion}
                   loading={loading}
                 >
-                  Start First Question
+                  {t('quiz.startFirstQuestion')}
                 </Button>
               </Space>
             </Card>
           ) : (
             <Card>
               <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                <Title level={4}>Session Complete!</Title>
-                <Text>All questions have been answered.</Text>
+                <Title level={4}>{t('quiz.sessionComplete')}</Title>
+                <Text>{t('quiz.allQuestionsAnswered')}</Text>
                 <Button
                   type="primary"
                   icon={<LeftOutlined />}
