@@ -45,19 +45,35 @@ class QuizBuilderService:
         Raises:
             QuizNotFoundError: If event not found
         """
-        # Verify event exists and belongs to tenant
-        event = db.query(Event).filter(
-            Event.id == request.event_id,
-            Event.tenant_id == current_user.tenant_id
-        ).first()
+        # Auto-create event if not provided
+        event_id = request.event_id
         
-        if not event:
-            raise QuizNotFoundError("Event not found")
+        if not event_id:
+            # Create a default event for this quiz
+            event = Event(
+                tenant_id=current_user.tenant_id,
+                creator_id=current_user.user_id,
+                title=f"Quiz Session - {request.title}",
+                description=None,
+                join_code=None
+            )
+            db.add(event)
+            db.flush()
+            event_id = event.id
+        else:
+            # Verify event exists and belongs to tenant
+            event = db.query(Event).filter(
+                Event.id == event_id,
+                Event.tenant_id == current_user.tenant_id
+            ).first()
+            
+            if not event:
+                raise QuizNotFoundError("Event not found")
         
         # Create quiz
         quiz = Quiz(
             tenant_id=current_user.tenant_id,
-            event_id=request.event_id,
+            event_id=event_id,
             title=request.title,
             description=request.description,
             status=QuizStatus.DRAFT

@@ -65,6 +65,7 @@ export const sessionAPI = {
   start: (quizId) => api.post('/quizzes/sessions/start', null, { params: { quiz_id: quizId } }),
   join: (data) => api.post('/quizzes/sessions/join', data),
   advance: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/advance`),
+  back: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/back`),
   end: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/end`),
   submitAnswer: (sessionToken, data) => 
     api.post('/quizzes/sessions/submit-answer', data, { 

@@ -52,6 +52,7 @@ export default function QuizBuilder() {
     try {
       const response = await quizAPI.get(id)
       setQuiz(response.data)
+      console.log('Quiz loaded from API:', response.data)
       
       // Transform backend format to frontend format
       const transformedQuestions = (response.data.questions || []).map(q => ({
@@ -62,6 +63,7 @@ export default function QuizBuilder() {
         option_d: q.options[3],
         correct_answer: ['A', 'B', 'C', 'D'][q.correct_answer_index]
       }))
+      console.log('Transformed questions:', transformedQuestions)
       setQuestions(transformedQuestions)
       
       form.setFieldsValue({
@@ -83,7 +85,7 @@ export default function QuizBuilder() {
         message.success(t('quiz.saveSuccess'))
         loadQuiz()
       } else {
-        const response = await quizAPI.create({ ...values, event_id: 1 })
+        const response = await quizAPI.create(values)
         message.success(t('quiz.createSuccess'))
         navigate(`/quiz/${response.data.id}/edit`)
       }
@@ -110,8 +112,11 @@ export default function QuizBuilder() {
         options: [values.option_a, values.option_b, values.option_c, values.option_d],
         correct_answer_index: ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
       }
-      await questionAPI.add(id, questionData)
+      console.log('Adding question with data:', questionData)
+      const response = await questionAPI.add(id, questionData)
+      console.log('Question added, response:', response)
       message.success(t('quiz.addQuestionSuccess'))
+      console.log('Reloading quiz...')
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {

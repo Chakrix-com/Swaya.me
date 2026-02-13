@@ -114,24 +114,32 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
         
     Raises:
         InvalidCredentialsError: If credentials are invalid
+        TenantNotFoundError: If tenant not found or inactive
     """
     # Find user by email
     user = db.query(User).filter(User.email == request.email).first()
     if not user:
+        # Generic error for security - don't reveal if user exists
         raise InvalidCredentialsError("Invalid email or password")
     
     # Verify password
     if not verify_password(request.password, user.hashed_password):
         raise InvalidCredentialsError("Invalid email or password")
     
-    # Check if user is active
+    # Check if user is active - specific error for user feedback
     if not user.is_active:
-        raise InvalidCredentialsError("Account is disabled")
+        raise InvalidCredentialsError("Your account has been disabled. Please contact support.")
     
-    # Get tenant
+    # Get tenant - should always exist due to FK constraint
     tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
-    if not tenant or not tenant.is_active:
-        raise TenantNotFoundError("Tenant not found or inactive")
+    if not tenant:
+        # This should never happen due to database FK constraint
+        # If it does, it indicates database corruption
+        raise TenantNotFoundError(f"User's tenant not found. Contact support (tenant_id: {user.tenant_id})")
+    
+    # Check tenant is active - specific error for tenant admin feedback
+    if not tenant.is_active:
+        raise TenantNotFoundError("Your organization account has been suspended. Please contact your administrator.")
     
     # Generate access token
     access_token = create_access_token(

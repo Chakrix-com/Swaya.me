@@ -101,10 +101,10 @@ class TierService:
         config = self._get_default_limits(tier)
         max_concurrent = config["max_concurrent_events"]
         
-        # Count active events for tenant
+        # Count only ACTIVE events (events with a join_code indicate a running session)
         active_count = db.query(Event).filter(
-            Event.tenant_id == tenant_id
-            # TODO: Add status filter when Event model has status
+            Event.tenant_id == tenant_id,
+            Event.join_code.isnot(None)
         ).count()
         
         return active_count < max_concurrent

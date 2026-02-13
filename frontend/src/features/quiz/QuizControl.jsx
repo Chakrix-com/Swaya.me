@@ -99,6 +99,20 @@ export default function QuizControl() {
     }
   }
 
+  const handleBackQuestion = async () => {
+    setLoading(true)
+    try {
+      await sessionAPI.back(session.id)
+      message.success(t('quiz.movedToPreviousQuestion'))
+      loadResults()
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('quiz.failedToGoBack'))
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleEndSession = async () => {
     setLoading(true)
     try {
@@ -301,18 +315,6 @@ export default function QuizControl() {
                   <Text strong>{currentQuestion.text}</Text>
                 </Space>
               }
-              extra={
-                session.status === 'active' && (
-                  <Button
-                    type="primary"
-                    icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
-                    onClick={handleAdvanceQuestion}
-                    loading={loading}
-                  >
-                    {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
-                  </Button>
-                )
-              }
               style={{ marginBottom: 24 }}
             >
               <Alert
@@ -374,6 +376,28 @@ export default function QuizControl() {
                   showIcon
                 />
               </Space>
+
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
+                <Button
+                  type="default"
+                  size="large"
+                  icon={<LeftOutlined />}
+                  onClick={handleBackQuestion}
+                  loading={loading}
+                  disabled={results.current_question_index === 0}
+                >
+                  {t('quiz.previousQuestion')}
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
+                  onClick={handleAdvanceQuestion}
+                  loading={loading}
+                >
+                  {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
+                </Button>
+              </div>
             </Card>
           ) : session && results && results.current_question_index === -1 ? (
             <Card>

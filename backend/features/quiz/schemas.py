@@ -76,7 +76,7 @@ class QuizCreate(BaseModel):
     """Create quiz request"""
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
-    event_id: int
+    event_id: Optional[int] = Field(None, description="Event ID (auto-created if not provided)")
 
 
 class QuizUpdate(BaseModel):

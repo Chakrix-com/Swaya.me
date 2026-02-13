@@ -254,6 +254,22 @@ async def advance_question(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.post("/sessions/{session_id}/back", response_model=SessionResponse)
+async def back_question(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionService = Depends(get_session_service)
+):
+    """Go back to previous question"""
+    try:
+        return await service.back_question(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidSessionStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.post("/sessions/{session_id}/end", response_model=SessionResponse)
 async def end_session(
     session_id: int,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import {
@@ -40,6 +40,7 @@ export default function AudienceSession() {
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
+  const lastQuestionIdRef = useRef(null)
 
   useEffect(() => {
     if (sessionToken && sessionId) {
@@ -59,24 +60,17 @@ export default function AudienceSession() {
       const response = await sessionAPI.getResults(sessionId, sessionToken)
       console.log('Results received:', response.data)
       
-      // Get question IDs for comparison BEFORE updating state
-      const newQuestionId = response.data.current_question?.id
-      const oldQuestionId = currentQuestion?.id
+      const newQuestionId = response.data.current_question?.question_id
       
-      console.log('Question IDs:', { newQuestionId, oldQuestionId, selectedAnswer, submitted })
-      
-      // Only reset if:
-      // 1. We have a new question ID
-      // 2. We had an old question ID (not first load)
-      // 3. They are different
-      if (oldQuestionId && newQuestionId && newQuestionId !== oldQuestionId) {
-        console.log('Question changed from', oldQuestionId, 'to', newQuestionId, '- resetting state')
+      // If question ID changed, reset answer state
+      if (lastQuestionIdRef.current && newQuestionId && newQuestionId !== lastQuestionIdRef.current) {
+        console.log('Question changed from', lastQuestionIdRef.current, 'to', newQuestionId, '- resetting answer state')
         setSubmitted(false)
         setSelectedAnswer(null)
-      } else {
-        console.log('Question unchanged or first load - keeping state')
       }
       
+      // Always update tracking
+      lastQuestionIdRef.current = newQuestionId
       setResults(response.data)
       setCurrentQuestion(response.data.current_question)
     } catch (error) {
@@ -95,10 +89,10 @@ export default function AudienceSession() {
     try {
       // Convert answer letter (A,B,C,D) to index (0,1,2,3)
       const answerIndex = selectedAnswer.charCodeAt(0) - 65 // A=0, B=1, C=2, D=3
-      console.log('Submitting answer:', { selectedAnswer, answerIndex, question_id: currentQuestion.id })
+      console.log('Submitting answer:', { selectedAnswer, answerIndex, question_id: currentQuestion.question_id })
       
       await sessionAPI.submitAnswer(sessionToken, {
-        question_id: currentQuestion.id,
+        question_id: currentQuestion.question_id,
         selected_option_index: answerIndex
       })
       console.log('Answer submitted successfully')

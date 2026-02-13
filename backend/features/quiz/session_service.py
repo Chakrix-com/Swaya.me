@@ -255,6 +255,59 @@ class SessionService:
         
         return await self._to_session_response(db, session)
     
+    async def back_question(
+        self,
+        db: Session,
+        session_id: int,
+        current_user: CurrentUser
+    ) -> SessionResponse:
+        """
+        Go back to previous question
+        
+        Closes current question and reopens previous one for answers
+        """
+        session = db.query(QuizSession).filter(
+            QuizSession.id == session_id,
+            QuizSession.tenant_id == current_user.tenant_id
+        ).first()
+        
+        if not session:
+            raise SessionNotFoundError("Session not found")
+        
+        if session.status == QuizSessionStatus.ENDED:
+            raise InvalidSessionStatusError("Session has ended")
+        
+        # Can't go back before first question
+        if session.current_question_index <= 0:
+            raise InvalidSessionStatusError("Already at first question")
+        
+        # Close current question if open
+        if session.current_question_status == QuestionStatus.OPEN:
+            session.current_question_status = QuestionStatus.CLOSED
+        
+        # Go back to previous
+        session.current_question_index -= 1
+        
+        # Reopen previous question
+        session.status = QuizSessionStatus.ACTIVE
+        session.current_question_status = QuestionStatus.OPEN
+        
+        db.commit()
+        db.refresh(session)
+        
+        # Update Redis cache
+        await self.redis.set_json(
+            f"session:{session.id}:info",
+            {
+                "status": session.status.value,
+                "current_question_index": session.current_question_index,
+                "current_question_status": session.current_question_status.value if session.current_question_status else None
+            },
+            expire=86400
+        )
+        
+        return await self._to_session_response(db, session)
+    
     async def end_session(
         self,
         db: Session,
