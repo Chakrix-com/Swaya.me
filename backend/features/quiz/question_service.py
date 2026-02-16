@@ -4,7 +4,7 @@ Question Management Service - Add, edit, delete, reorder questions
 from sqlalchemy.orm import Session
 from typing import List
 
-from persistence.models.quiz import Quiz, Question, QuizStatus
+from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
 from features.quiz.schemas import QuestionCreate, QuestionUpdate, QuestionResponse
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, InvalidQuizStatusError,
@@ -79,6 +79,7 @@ class QuestionService:
         # Create question
         question = Question(
             quiz_id=quiz_id,
+            question_type=request.question_type,
             text=request.text,
             options=request.options,
             correct_answer_index=request.correct_answer_index,
@@ -111,6 +112,8 @@ class QuestionService:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
         
         # Update fields
+        if request.question_type is not None:
+            question.question_type = request.question_type
         if request.text is not None:
             question.text = request.text
         if request.options is not None:
@@ -199,6 +202,7 @@ class QuestionService:
         """Convert question to response model"""
         return QuestionResponse(
             id=question.id,
+            question_type=question.question_type,
             text=question.text,
             options=question.options,
             order=question.order,

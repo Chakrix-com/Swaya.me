@@ -53,17 +53,32 @@ export default function QuizBuilder() {
       const response = await quizAPI.get(id)
       setQuiz(response.data)
       console.log('Quiz loaded from API:', response.data)
+      console.log('Raw questions from API:', JSON.stringify(response.data.questions, null, 2))
       
       // Transform backend format to frontend format
-      const transformedQuestions = (response.data.questions || []).map(q => ({
-        ...q,
-        option_a: q.options[0],
-        option_b: q.options[1],
-        option_c: q.options[2],
-        option_d: q.options[3],
-        correct_answer: ['A', 'B', 'C', 'D'][q.correct_answer_index]
-      }))
+      const transformedQuestions = (response.data.questions || []).map(q => {
+        console.log('Transforming question:', q.id, 'Type:', q.question_type)
+        const baseQuestion = {
+          ...q,
+          question_type: q.question_type || 'mcq'
+        }
+        
+        // Only transform options for MCQ questions
+        if (q.question_type === 'mcq' && q.options) {
+          return {
+            ...baseQuestion,
+            option_a: q.options[0],
+            option_b: q.options[1],
+            option_c: q.options[2],
+            option_d: q.options[3],
+            correct_answer: ['A', 'B', 'C', 'D'][q.correct_answer_index]
+          }
+        }
+        
+        return baseQuestion
+      })
       console.log('Transformed questions:', transformedQuestions)
+      console.log('Total questions after transform:', transformedQuestions.length)
       setQuestions(transformedQuestions)
       
       form.setFieldsValue({
@@ -108,16 +123,24 @@ export default function QuizBuilder() {
     try {
       // Transform frontend format to backend format
       const questionData = {
-        text: values.text,
-        options: [values.option_a, values.option_b, values.option_c, values.option_d],
-        correct_answer_index: ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        question_type: values.question_type || 'mcq',
+        text: values.text
       }
+      
+      // Only add options and correct_answer for MCQ
+      if (values.question_type === 'mcq') {
+        questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
+        questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+      }
+      
       console.log('Adding question with data:', questionData)
       const response = await questionAPI.add(id, questionData)
       console.log('Question added, response:', response)
+      console.log('Question added - Full response data:', JSON.stringify(response.data, null, 2))
       message.success(t('quiz.addQuestionSuccess'))
       console.log('Reloading quiz...')
-      loadQuiz()
+      await loadQuiz()
+      console.log('Quiz reloaded successfully')
       setEditingQuestion(null)
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.addQuestionError')
@@ -133,10 +156,16 @@ export default function QuizBuilder() {
     try {
       // Transform frontend format to backend format
       const questionData = {
-        text: values.text,
-        options: [values.option_a, values.option_b, values.option_c, values.option_d],
-        correct_answer_index: ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        question_type: values.question_type || 'mcq',
+        text: values.text
       }
+      
+      // Only add options and correct_answer for MCQ
+      if (values.question_type === 'mcq') {
+        questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
+        questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+      }
+      
       await questionAPI.update(questionId, questionData)
       message.success(t('quiz.updateQuestionSuccess'))
       loadQuiz()
@@ -195,12 +224,32 @@ export default function QuizBuilder() {
 
   const QuestionForm = ({ question, onSave, onCancel }) => {
     const [questionForm] = Form.useForm()
+    const [questionType, setQuestionType] = useState('mcq')
 
     useEffect(() => {
       if (question) {
         questionForm.setFieldsValue(question)
+        setQuestionType(question.question_type || 'mcq')
+      } else {
+        // Reset form for new question
+        questionForm.resetFields()
+        setQuestionType('mcq')
       }
-    }, [question])
+    }, [question, questionForm])
+
+    const handleTypeChange = (e) => {
+      setQuestionType(e.target.value)
+      // Clear option fields when switching to word cloud
+      if (e.target.value === 'word_cloud') {
+        questionForm.setFieldsValue({
+          option_a: undefined,
+          option_b: undefined,
+          option_c: undefined,
+          option_d: undefined,
+          correct_answer: undefined
+        })
+      }
+    }
 
     return (
       <Card style={{ marginBottom: 16, width: '100%' }}>
@@ -209,10 +258,21 @@ export default function QuizBuilder() {
           layout="vertical"
           onFinish={onSave}
           initialValues={{
-            type: 'multiple_choice',
+            question_type: 'mcq',
             correct_answer: 'A'
           }}
         >
+          <Form.Item
+            name="question_type"
+            label={t('quiz.questionType')}
+            rules={[{ required: true }]}
+          >
+            <Radio.Group onChange={handleTypeChange}>
+              <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
+              <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>
+            </Radio.Group>
+          </Form.Item>
+
           <Form.Item
             name="text"
             label={t('quiz.question')}
@@ -221,60 +281,60 @@ export default function QuizBuilder() {
             <TextArea rows={2} placeholder={t('quiz.enterQuestion')} />
           </Form.Item>
 
-          <Form.Item
-            name="type"
-            label={t('quiz.questionType')}
-            rules={[{ required: true }]}
-          >
-            <Radio.Group>
-              <Radio value="multiple_choice">{t('quiz.multipleChoice')}</Radio>
-            </Radio.Group>
-          </Form.Item>
+          {questionType === 'mcq' && (
+            <>
+              <Form.Item
+                name="option_a"
+                label={t('quiz.optionA')}
+                rules={[{ required: true, message: t('quiz.optionARequired') }]}
+              >
+                <Input placeholder={t('quiz.optionAPlaceholder')} />
+              </Form.Item>
 
-          <Form.Item
-            name="option_a"
-            label={t('quiz.optionA')}
-            rules={[{ required: true, message: t('quiz.optionARequired') }]}
-          >
-            <Input placeholder={t('quiz.optionAPlaceholder')} />
-          </Form.Item>
+              <Form.Item
+                name="option_b"
+                label={t('quiz.optionB')}
+                rules={[{ required: true, message: t('quiz.optionBRequired') }]}
+              >
+                <Input placeholder={t('quiz.optionBPlaceholder')} />
+              </Form.Item>
 
-          <Form.Item
-            name="option_b"
-            label={t('quiz.optionB')}
-            rules={[{ required: true, message: t('quiz.optionBRequired') }]}
-          >
-            <Input placeholder={t('quiz.optionBPlaceholder')} />
-          </Form.Item>
+              <Form.Item
+                name="option_c"
+                label={t('quiz.optionC')}
+                rules={[{ required: true, message: t('quiz.optionCRequired') }]}
+              >
+                <Input placeholder={t('quiz.optionCPlaceholder')} />
+              </Form.Item>
 
-          <Form.Item
-            name="option_c"
-            label={t('quiz.optionC')}
-            rules={[{ required: true, message: t('quiz.optionCRequired') }]}
-          >
-            <Input placeholder={t('quiz.optionCPlaceholder')} />
-          </Form.Item>
+              <Form.Item
+                name="option_d"
+                label={t('quiz.optionD')}
+                rules={[{ required: true, message: t('quiz.optionDRequired') }]}
+              >
+                <Input placeholder={t('quiz.optionDPlaceholder')} />
+              </Form.Item>
 
-          <Form.Item
-            name="option_d"
-            label={t('quiz.optionD')}
-            rules={[{ required: true, message: t('quiz.optionDRequired') }]}
-          >
-            <Input placeholder={t('quiz.optionDPlaceholder')} />
-          </Form.Item>
+              <Form.Item
+                name="correct_answer"
+                label={t('quiz.correctAnswer')}
+                rules={[{ required: true }]}
+              >
+                <Radio.Group>
+                  <Radio value="A">A</Radio>
+                  <Radio value="B">B</Radio>
+                  <Radio value="C">C</Radio>
+                  <Radio value="D">D</Radio>
+                </Radio.Group>
+              </Form.Item>
+            </>
+          )}
 
-          <Form.Item
-            name="correct_answer"
-            label={t('quiz.correctAnswer')}
-            rules={[{ required: true }]}
-          >
-            <Radio.Group>
-              <Radio value="A">A</Radio>
-              <Radio value="B">B</Radio>
-              <Radio value="C">C</Radio>
-              <Radio value="D">D</Radio>
-            </Radio.Group>
-          </Form.Item>
+          {questionType === 'word_cloud' && (
+            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+              {t('quiz.wordCloudDescription')}
+            </Text>
+          )}
 
           <Space>
             <Button
@@ -414,6 +474,9 @@ export default function QuizBuilder() {
                   title={
                     <Space>
                       <Tag color="blue">Q{index + 1}</Tag>
+                      <Tag color={question.question_type === 'word_cloud' ? 'purple' : 'cyan'}>
+                        {question.question_type === 'word_cloud' ? t('quiz.wordCloud') : 'MCQ'}
+                      </Tag>
                       <Text strong>{question.text}</Text>
                     </Space>
                   }
@@ -441,24 +504,32 @@ export default function QuizBuilder() {
                     </Space>
                   }
                 >
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <div>
-                      <Text>A: {question.option_a}</Text>
-                      {question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                    </div>
-                    <div>
-                      <Text>B: {question.option_b}</Text>
-                      {question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                    </div>
-                    <div>
-                      <Text>C: {question.option_c}</Text>
-                      {question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                    </div>
-                    <div>
-                      <Text>D: {question.option_d}</Text>
-                      {question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                    </div>
-                  </Space>
+                  {question.question_type === 'word_cloud' ? (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Text type="secondary" italic>
+                        {t('quiz.wordCloudQuestionDescription')}
+                      </Text>
+                    </Space>
+                  ) : (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <div>
+                        <Text>A: {question.option_a}</Text>
+                        {question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                      </div>
+                      <div>
+                        <Text>B: {question.option_b}</Text>
+                        {question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                      </div>
+                      <div>
+                        <Text>C: {question.option_c}</Text>
+                        {question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                      </div>
+                      <div>
+                        <Text>D: {question.option_d}</Text>
+                        {question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                      </div>
+                    </Space>
+                  )}
                 </Card>
               )
             )}

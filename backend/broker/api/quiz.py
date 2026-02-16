@@ -12,7 +12,8 @@ from features.quiz.schemas import (
     QuestionCreate, QuestionUpdate, QuestionResponse,
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     AnswerSubmitRequest, AnswerSubmitResponse,
-    QuestionResultsResponse, SessionResultsResponse
+    QuestionResultsResponse, SessionResultsResponse,
+    WordCloudAnswerSubmitRequest, WordCloudResultsResponse
 )
 from features.quiz.quiz_service import QuizBuilderService
 from features.quiz.question_service import QuestionService
@@ -292,13 +293,43 @@ async def submit_answer(
     db: Session = Depends(get_db),
     service: AnswerService = Depends(get_answer_service)
 ):
-    """Submit answer (participant)"""
+    """Submit MCQ answer (participant)"""
     try:
         return await service.submit_answer(db, session_token, request)
     except ParticipantNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except (QuestionNotOpenError, DuplicateAnswerError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/submit-word-cloud", response_model=AnswerSubmitResponse)
+async def submit_word_cloud_answer(
+    request: WordCloudAnswerSubmitRequest,
+    session_token: str,
+    db: Session = Depends(get_db),
+    service: AnswerService = Depends(get_answer_service)
+):
+    """Submit word cloud answer (participant - unlimited submissions)"""
+    try:
+        return await service.submit_word_cloud_answer(db, session_token, request)
+    except ParticipantNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except QuestionNotOpenError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/questions/{question_id}/word-cloud-results", response_model=WordCloudResultsResponse)
+async def get_word_cloud_results(
+    question_id: int,
+    session_id: int,
+    db: Session = Depends(get_db),
+    service: AnswerService = Depends(get_answer_service)
+):
+    """Get word cloud results for a question"""
+    try:
+        return await service.get_word_cloud_results(db, session_id, question_id)
+    except QuestionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.get("/sessions/{session_id}/results", response_model=SessionResultsResponse)

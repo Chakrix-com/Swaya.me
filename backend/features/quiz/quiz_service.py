@@ -242,14 +242,26 @@ class QuizBuilderService:
         
         # Validate each question
         for question in quiz.questions:
+            # Debug logging
+            print(f"DEBUG: Validating question {question.id}")
+            print(f"  question_type: {question.question_type} (type: {type(question.question_type)})")
+            print(f"  question_type == QuestionType.MCQ: {question.question_type == QuestionType.MCQ}")
+            print(f"  question_type == QuestionType.WORD_CLOUD: {question.question_type == QuestionType.WORD_CLOUD}")
+            
             if not question.text or not question.text.strip():
                 raise QuizValidationError("All questions must have text")
             
-            if not question.options or len(question.options) != 4:
-                raise QuizValidationError("All questions must have exactly 4 options")
-            
-            if question.correct_answer_index < 0 or question.correct_answer_index > 3:
-                raise QuizValidationError("Invalid correct answer index")
+            # Validate based on question type
+            if question.question_type == QuestionType.MCQ:
+                if not question.options or len(question.options) != 4:
+                    raise QuizValidationError("MCQ questions must have exactly 4 options")
+                
+                if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 3:
+                    raise QuizValidationError("MCQ questions must have valid correct answer index")
+            elif question.question_type == QuestionType.WORD_CLOUD:
+                # Word cloud questions don't need options or correct answer
+                print(f"DEBUG: Word cloud question validated successfully")
+                pass
     
     def _to_quiz_response(self, quiz: Quiz) -> QuizResponse:
         """Convert quiz to response model"""
@@ -262,6 +274,7 @@ class QuizBuilderService:
             questions=[
                 QuestionResponse(
                     id=q.id,
+                    question_type=q.question_type,
                     text=q.text,
                     options=q.options,
                     order=q.order,

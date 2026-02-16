@@ -30,6 +30,12 @@ class QuestionStatus(str, enum.Enum):
     CLOSED = "closed"
 
 
+class QuestionType(str, enum.Enum):
+    """Question type"""
+    MCQ = "mcq"
+    WORD_CLOUD = "word_cloud"
+
+
 class Quiz(Base, TimestampMixin, TenantMixin):
     """
     Quiz definition - the authored content
@@ -55,10 +61,11 @@ class Question(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False)
+    question_type = Column(SQLEnum(QuestionType, values_callable=lambda obj: [e.value for e in obj]), default=QuestionType.MCQ, nullable=False)
     text = Column(Text, nullable=False)
     order = Column(Integer, nullable=False)
-    options = Column(JSON, nullable=False)  # List of 4 options
-    correct_answer_index = Column(Integer, nullable=False)  # 0-3
+    options = Column(JSON, nullable=True)  # List of 4 options for MCQ, null for word_cloud
+    correct_answer_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
     
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
@@ -110,8 +117,9 @@ class Answer(Base, TimestampMixin):
     session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=False)
     participant_id = Column(Integer, ForeignKey('participants.id'), nullable=False)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False)
-    selected_option_index = Column(Integer, nullable=False)  # 0-3
-    is_correct = Column(Boolean, nullable=False)
+    selected_option_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
+    text_answer = Column(String(100), nullable=True)  # For word_cloud questions
+    is_correct = Column(Boolean, nullable=True)  # For MCQ only, null for word_cloud
     
     # Relationships
     session = relationship("QuizSession", back_populates="answers")

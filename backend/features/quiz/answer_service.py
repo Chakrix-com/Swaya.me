@@ -8,11 +8,12 @@ import json
 
 from persistence.models.quiz import (
     QuizSession, Participant, Answer, Question,
-    QuizSessionStatus, QuestionStatus
+    QuizSessionStatus, QuestionStatus, QuestionType
 )
 from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
-    QuestionResultsResponse, SessionResultsResponse
+    QuestionResultsResponse, SessionResultsResponse,
+    WordCloudAnswerSubmitRequest, WordCloudResultsResponse
 )
 from shared.exceptions.quiz import (
     SessionNotFoundError, ParticipantNotFoundError, QuestionNotFoundError,
@@ -74,7 +75,11 @@ class AnswerService:
         if current_question.id != request.question_id:
             raise QuestionNotOpenError("Question is not currently active")
         
-        # Check if already answered
+        # Verify this is an MCQ question
+        if current_question.question_type != QuestionType.MCQ:
+            raise ValueError("This endpoint is for MCQ questions only")
+        
+        # Check if already answered (MCQ only - one answer per participant)
         existing = db.query(Answer).filter(
             Answer.session_id == session.id,
             Answer.participant_id == participant.id,
@@ -110,6 +115,138 @@ class AnswerService:
             success=True,
             message="Answer submitted successfully",
             is_correct=None  # Don't reveal until question closes
+        )
+    
+    async def submit_word_cloud_answer(
+        self,
+        db: Session,
+        session_token: str,
+        request: WordCloudAnswerSubmitRequest
+    ) -> AnswerSubmitResponse:
+        """
+        Submit word cloud answer (unlimited submissions allowed)
+        
+        Args:
+            db: Database session
+            session_token: Participant session token
+            request: Word cloud answer data
+            
+        Returns:
+            Submission confirmation
+            
+        Raises:
+            ParticipantNotFoundError: If token invalid
+            QuestionNotOpenError: If question not accepting answers
+        """
+        # Get participant
+        participant = db.query(Participant).filter(
+            Participant.session_token == session_token
+        ).first()
+        
+        if not participant:
+            raise ParticipantNotFoundError("Invalid session token")
+        
+        session = participant.session
+        
+        # Check if question is open
+        if session.current_question_status != QuestionStatus.OPEN:
+            raise QuestionNotOpenError("Question is not open for answers")
+        
+        # Get current question
+        questions = sorted(session.quiz.questions, key=lambda q: q.order)
+        if session.current_question_index >= len(questions):
+            raise QuestionNotOpenError("No active question")
+        
+        current_question = questions[session.current_question_index]
+        
+        # Validate question_id matches current question
+        if current_question.id != request.question_id:
+            raise QuestionNotOpenError("Question is not currently active")
+        
+        # Verify this is a word cloud question
+        if current_question.question_type != QuestionType.WORD_CLOUD:
+            raise ValueError("This endpoint is for word cloud questions only")
+        
+        # NO duplicate check - unlimited submissions allowed for word cloud
+        
+        # Create answer
+        answer = Answer(
+            session_id=session.id,
+            participant_id=participant.id,
+            question_id=request.question_id,
+            text_answer=request.text_answer.strip(),
+            selected_option_index=None,
+            is_correct=None
+        )
+        
+        db.add(answer)
+        db.commit()
+        
+        # Update word cloud aggregation in Redis
+        await self._update_word_cloud_aggregation(
+            session.id,
+            request.question_id,
+            request.text_answer.strip()
+        )
+        
+        return AnswerSubmitResponse(
+            success=True,
+            message="Word submitted successfully",
+            is_correct=None
+        )
+    
+    async def get_word_cloud_results(
+        self,
+        db: Session,
+        session_id: int,
+        question_id: int
+    ) -> WordCloudResultsResponse:
+        """
+        Get aggregated word cloud results
+        
+        Args:
+            db: Database session
+            session_id: Session ID
+            question_id: Question ID
+            
+        Returns:
+            Word frequencies and statistics
+        """
+        # Get question
+        question = db.query(Question).filter(Question.id == question_id).first()
+        if not question:
+            raise QuestionNotFoundError("Question not found")
+        
+        if question.question_type != QuestionType.WORD_CLOUD:
+            raise ValueError("Not a word cloud question")
+        
+        # Get all text answers
+        answers = db.query(Answer).filter(
+            Answer.session_id == session_id,
+            Answer.question_id == question_id
+        ).all()
+        
+        # Aggregate word frequencies (case-insensitive)
+        word_frequencies = {}
+        for answer in answers:
+            if answer.text_answer:
+                # Normalize: lowercase and strip
+                word = answer.text_answer.lower().strip()
+                word_frequencies[word] = word_frequencies.get(word, 0) + 1
+        
+        # Sort by frequency (descending)
+        sorted_words = dict(sorted(
+            word_frequencies.items(),
+            key=lambda x: x[1],
+            reverse=True
+        ))
+        
+        return WordCloudResultsResponse(
+            question_id=question.id,
+            question_text=question.text,
+            word_frequencies=sorted_words,
+            total_submissions=len(answers),
+            unique_words=len(word_frequencies)
         )
     
     async def get_question_results(
@@ -303,5 +440,18 @@ class AnswerService:
     ):
         """Update answer aggregation in Redis for live updates"""
         key = f"session:{session_id}:question:{question_id}:option:{selected_option}"
+        await self.redis.increment(key)
+        await self.redis.expire(key, 86400)  # 24 hours
+    
+    async def _update_word_cloud_aggregation(
+        self,
+        session_id: int,
+        question_id: int,
+        word: str
+    ):
+        """Update word cloud aggregation in Redis for live updates"""
+        # Normalize word (case-insensitive)
+        normalized_word = word.lower().strip()
+        key = f"session:{session_id}:question:{question_id}:wordcloud:{normalized_word}"
         await self.redis.increment(key)
         await self.redis.expire(key, 86400)  # 24 hours

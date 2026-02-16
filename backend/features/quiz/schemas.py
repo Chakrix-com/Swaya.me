@@ -1,7 +1,7 @@
 """
 Pydantic schemas for Quiz feature
 """
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, model_validator
 from typing import List, Optional
 from enum import Enum
 
@@ -27,6 +27,12 @@ class QuestionStatusEnum(str, Enum):
     CLOSED = "closed"
 
 
+class QuestionTypeEnum(str, Enum):
+    """Question type"""
+    MCQ = "mcq"
+    WORD_CLOUD = "word_cloud"
+
+
 # Question Schemas
 class QuestionOptionCreate(BaseModel):
     """Question option"""
@@ -35,20 +41,34 @@ class QuestionOptionCreate(BaseModel):
 
 class QuestionCreate(BaseModel):
     """Create question request"""
+    question_type: QuestionTypeEnum = Field(default=QuestionTypeEnum.MCQ)
     text: str = Field(..., min_length=1, max_length=1000)
-    options: List[str] = Field(..., min_items=4, max_items=4)
-    correct_answer_index: int = Field(..., ge=0, le=3)
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
     
-    @validator('options')
-    def validate_options(cls, v):
-        """Ensure all options are non-empty"""
-        if any(not opt.strip() for opt in v):
-            raise ValueError('All options must be non-empty')
-        return v
+    @model_validator(mode='after')
+    def validate_question_fields(self):
+        """Validate fields based on question type"""
+        if self.question_type == QuestionTypeEnum.MCQ:
+            # MCQ must have options and correct answer
+            if not self.options or len(self.options) != 4:
+                raise ValueError('MCQ questions must have exactly 4 options')
+            if any(not opt.strip() for opt in self.options):
+                raise ValueError('All options must be non-empty')
+            if self.correct_answer_index is None:
+                raise ValueError('MCQ questions must have a correct answer')
+        elif self.question_type == QuestionTypeEnum.WORD_CLOUD:
+            # Word cloud must NOT have options or correct answer
+            if self.options is not None:
+                raise ValueError('Word cloud questions should not have options')
+            if self.correct_answer_index is not None:
+                raise ValueError('Word cloud questions should not have a correct answer')
+        return self
 
 
 class QuestionUpdate(BaseModel):
     """Update question request"""
+    question_type: Optional[QuestionTypeEnum] = None
     text: Optional[str] = Field(None, min_length=1, max_length=1000)
     options: Optional[List[str]] = Field(None, min_items=4, max_items=4)
     correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
@@ -57,8 +77,9 @@ class QuestionUpdate(BaseModel):
 class QuestionResponse(BaseModel):
     """Question response"""
     id: int
+    question_type: QuestionTypeEnum
     text: str
-    options: List[str]
+    options: Optional[List[str]] = None
     order: int
     correct_answer_index: Optional[int] = None  # Hidden during active session
     
@@ -152,9 +173,15 @@ class SessionJoinResponse(BaseModel):
 
 # Answer Schemas
 class AnswerSubmitRequest(BaseModel):
-    """Submit answer request"""
+    """Submit answer request for MCQ"""
     question_id: int
     selected_option_index: int = Field(..., ge=0, le=3)
+
+
+class WordCloudAnswerSubmitRequest(BaseModel):
+    """Submit answer request for word cloud"""
+    question_id: int
+    text_answer: str = Field(..., min_length=1, max_length=100)
 
 
 class AnswerSubmitResponse(BaseModel):
@@ -188,3 +215,12 @@ class SessionResultsResponse(BaseModel):
     status: str
     current_question_index: int
     current_question: Optional[dict] = None  # Mixed format for host view
+
+
+class WordCloudResultsResponse(BaseModel):
+    """Word cloud question results"""
+    question_id: int
+    question_text: str
+    word_frequencies: dict[str, int]  # {word: count}
+    total_submissions: int
+    unique_words: int
