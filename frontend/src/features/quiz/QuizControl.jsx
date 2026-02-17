@@ -25,7 +25,8 @@ import {
   CopyOutlined
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
-import { sessionAPI, quizAPI } from '../../services/api'
+import ReactWordcloud from 'react-wordcloud'
+import { sessionAPI, quizAPI, questionAPI } from '../../services/api'
 
 const { Title, Text } = Typography
 
@@ -37,6 +38,7 @@ export default function QuizControl() {
   const [session, setSession] = useState(null)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [wordCloudData, setWordCloudData] = useState([])
 
   useEffect(() => {
     if (id) {
@@ -66,8 +68,28 @@ export default function QuizControl() {
     try {
       const response = await sessionAPI.getResults(session.id, session.session_token)
       setResults(response.data)
+      
+      // If current question is word cloud, fetch word cloud data
+      if (response.data.current_question?.question_type === 'word_cloud') {
+        loadWordCloudData(response.data.current_question.id)
+      }
     } catch (error) {
       console.error(t('quiz.failedToLoadResults'), error)
+    }
+  }
+
+  const loadWordCloudData = async (questionId) => {
+    if (!session) return
+    try {
+      const response = await questionAPI.getWordCloudResults(questionId, session.id)
+      // Transform dict {word: count} to array [{text, value}] for react-wordcloud
+      const words = Object.entries(response.data.word_frequencies).map(([word, count]) => ({
+        text: word,
+        value: count
+      }))
+      setWordCloudData(words)
+    } catch (error) {
+      console.error('Failed to load word cloud data:', error)
     }
   }
 
@@ -330,10 +352,41 @@ export default function QuizControl() {
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <Alert
                     message="Word Cloud Question"
-                    description="Participants can submit text answers. Results will be displayed as a word cloud."
+                    description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
                     type="info"
                     showIcon
                   />
+                  
+                  {wordCloudData.length > 0 ? (
+                    <div style={{ 
+                      width: '100%', 
+                      height: '400px', 
+                      border: '1px solid #d9d9d9',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      backgroundColor: '#fafafa'
+                    }}>
+                      <ReactWordcloud
+                        words={wordCloudData}
+                        options={{
+                          rotations: 2,
+                          rotationAngles: [0, 90],
+                          fontSizes: [20, 80],
+                          padding: 5,
+                          enableTooltip: true,
+                          deterministic: true,
+                          fontFamily: 'Arial',
+                          colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <Alert
+                      message="No responses yet"
+                      description="Word cloud will appear once participants start submitting answers."
+                      type="warning"
+                    />
+                  )}
                 </Space>
               ) : (
                 // MCQ Question View

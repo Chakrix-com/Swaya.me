@@ -58,6 +58,10 @@ export const questionAPI = {
   add: (quizId, data) => api.post(`/quizzes/${quizId}/questions`, data),
   update: (id, data) => api.put(`/quizzes/questions/${id}`, data),
   delete: (id) => api.delete(`/quizzes/questions/${id}`),
+  getWordCloudResults: (questionId, sessionId) => 
+    api.get(`/quizzes/questions/${questionId}/word-cloud-results`, {
+      params: { session_id: sessionId }
+    }),
 }
 
 // Session API
