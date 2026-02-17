@@ -383,35 +383,59 @@ class AnswerService:
         # Get current question if session is active
         current_question = None
         if session.current_question_index >= 0 and session.current_question_index < len(questions):
+            question_obj = questions[session.current_question_index]
+            
             try:
-                question_result = await self.get_question_results(
-                    db,
-                    session_id,
-                    questions[session.current_question_index].id,
-                    participant_token
-                )
-                # Transform to format expected by host frontend
-                question_obj = questions[session.current_question_index]
-                options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
-                correct_letter = chr(65 + question_obj.correct_answer_index)  # 0->A, 1->B, etc.
-                
-                current_question = {
-                    "id": question_obj.id,
-                    "text": question_obj.text,
-                    "option_a": options[0] if len(options) > 0 else "",
-                    "option_b": options[1] if len(options) > 1 else "",
-                    "option_c": options[2] if len(options) > 2 else "",
-                    "option_d": options[3] if len(options) > 3 else "",
-                    "correct_answer": correct_letter,
-                    "question_id": question_result.question_id,
-                    "question_text": question_result.question_text,
-                    "options": question_result.options,
-                    "correct_answer_index": question_result.correct_answer_index,
-                    "answer_distribution": question_result.answer_distribution,
-                    "total_answers": question_result.total_answers
-                }
+                # Handle based on question type
+                if question_obj.question_type.value == 'mcq':
+                    # For MCQ, get full results with distribution
+                    question_result = await self.get_question_results(
+                        db,
+                        session_id,
+                        question_obj.id,
+                        participant_token
+                    )
+                    
+                    # Transform to format expected by host frontend
+                    options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
+                    correct_letter = chr(65 + question_obj.correct_answer_index) if question_obj.correct_answer_index is not None else None
+                    
+                    current_question = {
+                        "id": question_obj.id,
+                        "text": question_obj.text,
+                        "question_type": question_obj.question_type.value,
+                        "option_a": options[0] if options and len(options) > 0 else "",
+                        "option_b": options[1] if options and len(options) > 1 else "",
+                        "option_c": options[2] if options and len(options) > 2 else "",
+                        "option_d": options[3] if options and len(options) > 3 else "",
+                        "correct_answer": correct_letter,
+                        "question_id": question_result.question_id,
+                        "question_text": question_result.question_text,
+                        "options": question_result.options,
+                        "correct_answer_index": question_result.correct_answer_index,
+                        "answer_distribution": question_result.answer_distribution,
+                        "total_answers": question_result.total_answers
+                    }
+                else:
+                    # Word Cloud question - no need for get_question_results
+                    # Just count total text answers
+                    total_answers = db.query(Answer).filter(
+                        Answer.session_id == session_id,
+                        Answer.question_id == question_obj.id
+                    ).count()
+                    
+                    current_question = {
+                        "id": question_obj.id,
+                        "text": question_obj.text,
+                        "question_type": question_obj.question_type.value,
+                        "question_id": question_obj.id,
+                        "question_text": question_obj.text,
+                        "total_answers": total_answers
+                    }
             except Exception as e:
                 print(f"Error loading current question: {e}")
+                import traceback
+                traceback.print_exc()
                 pass
         
         # Count total participants in session

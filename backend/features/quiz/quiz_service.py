@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 
-from persistence.models.quiz import Quiz, Question, QuizStatus
+from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
 from persistence.models.core import Event
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -242,12 +242,6 @@ class QuizBuilderService:
         
         # Validate each question
         for question in quiz.questions:
-            # Debug logging
-            print(f"DEBUG: Validating question {question.id}")
-            print(f"  question_type: {question.question_type} (type: {type(question.question_type)})")
-            print(f"  question_type == QuestionType.MCQ: {question.question_type == QuestionType.MCQ}")
-            print(f"  question_type == QuestionType.WORD_CLOUD: {question.question_type == QuestionType.WORD_CLOUD}")
-            
             if not question.text or not question.text.strip():
                 raise QuizValidationError("All questions must have text")
             
@@ -260,7 +254,6 @@ class QuizBuilderService:
                     raise QuizValidationError("MCQ questions must have valid correct answer index")
             elif question.question_type == QuestionType.WORD_CLOUD:
                 # Word cloud questions don't need options or correct answer
-                print(f"DEBUG: Word cloud question validated successfully")
                 pass
     
     def _to_quiz_response(self, quiz: Quiz) -> QuizResponse:

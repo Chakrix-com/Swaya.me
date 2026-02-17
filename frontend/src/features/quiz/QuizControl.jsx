@@ -312,6 +312,7 @@ export default function QuizControl() {
               title={
                 <Space>
                   <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
+                  {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">Word Cloud</Tag>}
                   <Text strong>{currentQuestion.text}</Text>
                 </Space>
               }
@@ -324,58 +325,71 @@ export default function QuizControl() {
                 style={{ marginBottom: 16 }}
               />
 
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                <div>
-                  <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text strong>A: {currentQuestion.option_a}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[0] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                  </Space>
-                  <Progress
-                    percent={((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0)}
-                    strokeColor={currentQuestion.correct_answer === 'A' ? '#52c41a' : '#1890ff'}
+              {currentQuestion.question_type === 'word_cloud' ? (
+                // Word Cloud Question View
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  <Alert
+                    message="Word Cloud Question"
+                    description="Participants can submit text answers. Results will be displayed as a word cloud."
+                    type="info"
+                    showIcon
                   />
-                </div>
+                </Space>
+              ) : (
+                // MCQ Question View
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  <div>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text strong>A: {currentQuestion.option_a}</Text>
+                      <Text>{currentQuestion.answer_distribution?.[0] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    </Space>
+                    <Progress
+                      percent={((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0)}
+                      strokeColor={currentQuestion.correct_answer === 'A' ? '#52c41a' : '#1890ff'}
+                    />
+                  </div>
 
-                <div>
-                  <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text strong>B: {currentQuestion.option_b}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[1] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                  </Space>
-                  <Progress
-                    percent={((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0)}
-                    strokeColor={currentQuestion.correct_answer === 'B' ? '#52c41a' : '#1890ff'}
+                  <div>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text strong>B: {currentQuestion.option_b}</Text>
+                      <Text>{currentQuestion.answer_distribution?.[1] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    </Space>
+                    <Progress
+                      percent={((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0)}
+                      strokeColor={currentQuestion.correct_answer === 'B' ? '#52c41a' : '#1890ff'}
+                    />
+                  </div>
+
+                  <div>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text strong>C: {currentQuestion.option_c}</Text>
+                      <Text>{currentQuestion.answer_distribution?.[2] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    </Space>
+                    <Progress
+                      percent={((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0)}
+                      strokeColor={currentQuestion.correct_answer === 'C' ? '#52c41a' : '#1890ff'}
+                    />
+                  </div>
+
+                  <div>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text strong>D: {currentQuestion.option_d}</Text>
+                      <Text>{currentQuestion.answer_distribution?.[3] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
+                    </Space>
+                    <Progress
+                      percent={((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0)}
+                      strokeColor={currentQuestion.correct_answer === 'D' ? '#52c41a' : '#1890ff'}
+                    />
+                  </div>
+
+                  <Alert
+                    message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
+                    description={`${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}`}
+                    type="success"
+                    showIcon
                   />
-                </div>
-
-                <div>
-                  <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text strong>C: {currentQuestion.option_c}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[2] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                  </Space>
-                  <Progress
-                    percent={((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0)}
-                    strokeColor={currentQuestion.correct_answer === 'C' ? '#52c41a' : '#1890ff'}
-                  />
-                </div>
-
-                <div>
-                  <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text strong>D: {currentQuestion.option_d}</Text>
-                    <Text>{currentQuestion.answer_distribution?.[3] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                  </Space>
-                  <Progress
-                    percent={((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0)}
-                    strokeColor={currentQuestion.correct_answer === 'D' ? '#52c41a' : '#1890ff'}
-                  />
-                </div>
-
-                <Alert
-                  message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
-                  description={`${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}`}
-                  type="success"
-                  showIcon
-                />
-              </Space>
+                </Space>
+              )}
 
               <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
                 <Button

@@ -71,6 +71,10 @@ export const sessionAPI = {
     api.post('/quizzes/sessions/submit-answer', data, { 
       params: { session_token: sessionToken } 
     }),
+  submitWordCloudAnswer: (sessionToken, data) => 
+    api.post('/quizzes/sessions/submit-word-cloud', data, { 
+      params: { session_token: sessionToken } 
+    }),
   getResults: (sessionId, sessionToken) => 
     api.get(`/quizzes/sessions/${sessionId}/results`, { 
       params: { session_token: sessionToken } 
