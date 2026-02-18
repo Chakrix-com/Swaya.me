@@ -20,7 +20,8 @@ import {
   LoginOutlined,
   SendOutlined
 } from '@ant-design/icons'
-import { sessionAPI } from '../../services/api'
+import ReactWordcloud from 'react-wordcloud'
+import { sessionAPI, questionAPI } from '../../services/api'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -40,6 +41,7 @@ export default function AudienceSession() {
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [wordCloudAnswer, setWordCloudAnswer] = useState('')
+  const [wordCloudData, setWordCloudData] = useState([])
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -71,14 +73,34 @@ export default function AudienceSession() {
         setSubmitted(false)
         setSelectedAnswer(null)
         setWordCloudAnswer('')
+        setWordCloudData([])
       }
       
       // Always update tracking
       lastQuestionIdRef.current = newQuestionId
       setResults(response.data)
       setCurrentQuestion(response.data.current_question)
+      
+      // If current question is word cloud, load word cloud data
+      if (response.data.current_question?.question_type === 'word_cloud') {
+        loadWordCloudData(response.data.current_question.question_id)
+      }
     } catch (error) {
       console.error('Failed to load results', error)
+    }
+  }
+
+  const loadWordCloudData = async (questionId) => {
+    if (!sessionId) return
+    try {
+      const response = await questionAPI.getWordCloudResults(questionId, sessionId)
+      const words = Object.entries(response.data.word_frequencies).map(([word, count]) => ({
+        text: word,
+        value: count
+      }))
+      setWordCloudData(words)
+    } catch (error) {
+      console.error('Failed to load word cloud data:', error)
     }
   }
 
@@ -109,6 +131,12 @@ export default function AudienceSession() {
           text_answer: wordCloudAnswer.trim()
         })
         console.log('Word cloud answer submitted successfully')
+        
+        // Clear input for next submission but don't set submitted=true
+        setWordCloudAnswer('')
+        
+        // Reload word cloud immediately to show new word
+        setTimeout(() => loadWordCloudData(currentQuestion.question_id), 500)
       } else {
         // Convert answer letter (A,B,C,D) to index (0,1,2,3)
         const answerIndex = selectedAnswer.charCodeAt(0) - 65 // A=0, B=1, C=2, D=3
@@ -119,12 +147,14 @@ export default function AudienceSession() {
           selected_option_index: answerIndex
         })
         console.log('Answer submitted successfully')
+        setSubmitted(true)
       }
-      setSubmitted(true)
     } catch (error) {
       console.error('Failed to submit answer', error)
-      // Continue anyway as the error might be "already submitted"
-      setSubmitted(true)
+      // For MCQ, continue anyway as the error might be "already submitted"
+      if (!isWordCloud) {
+        setSubmitted(true)
+      }
     } finally {
       setLoading(false)
     }
@@ -184,36 +214,77 @@ export default function AudienceSession() {
           </Title>
         }
       >
-        {!submitted ? (
+        {isWordCloud ? (
+          // Word Cloud: Always show input + visualization
           <>
-            {isWordCloud ? (
-              // Word Cloud Question UI
+            <TextArea
+              rows={3}
+              placeholder="Enter your answer (max 100 characters)"
+              maxLength={100}
+              value={wordCloudAnswer}
+              onChange={(e) => setWordCloudAnswer(e.target.value)}
+              showCount
+              style={{ marginBottom: 16 }}
+            />
+            <Button
+              type="primary"
+              size="large"
+              block
+              icon={<SendOutlined />}
+              disabled={!wordCloudAnswer.trim()}
+              onClick={handleSubmitAnswer}
+              loading={loading}
+              style={{ marginBottom: 24 }}
+            >
+              Submit Answer
+            </Button>
+            
+            {/* Word Cloud Visualization */}
+            {wordCloudData.length > 0 ? (
               <>
-                <TextArea
-                  rows={3}
-                  placeholder="Enter your answer (max 100 characters)"
-                  maxLength={100}
-                  value={wordCloudAnswer}
-                  onChange={(e) => setWordCloudAnswer(e.target.value)}
-                  showCount
+                <Alert
+                  message="Live Word Cloud"
+                  description={`${wordCloudData.reduce((sum, w) => sum + w.value, 0)} responses submitted`}
+                  type="info"
+                  showIcon
                   style={{ marginBottom: 16 }}
                 />
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<SendOutlined />}
-                  disabled={!wordCloudAnswer.trim()}
-                  onClick={handleSubmitAnswer}
-                  loading={loading}
-                >
-                  Submit Answer
-                </Button>
+                <div style={{
+                  width: '100%',
+                  height: '350px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: '#fafafa'
+                }}>
+                  <ReactWordcloud
+                    words={wordCloudData}
+                    options={{
+                      rotations: 2,
+                      rotationAngles: [0, 90],
+                      fontSizes: [16, 60],
+                      padding: 4,
+                      enableTooltip: true,
+                      deterministic: true,
+                      fontFamily: 'Arial',
+                      colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
+                    }}
+                  />
+                </div>
               </>
             ) : (
-              // MCQ Question UI
-              <>
-                <Radio.Group
+              <Alert
+                message="Be the first to respond!"
+                description="Submit your answer and watch the word cloud grow."
+                type="info"
+                showIcon
+              />
+            )}
+          </>
+        ) : !submitted ? (
+          // MCQ Question UI
+          <>
+            <Radio.Group
                   onChange={(e) => {
                     console.log('Radio changed:', e.target.value)
                     setSelectedAnswer(e.target.value)
@@ -289,34 +360,13 @@ export default function AudienceSession() {
                   Submit Answer
                 </Button>
               </>
-            )}
-          </>
         ) : (
+          // MCQ Results (after submission)
           <>
-            {isWordCloud ? (
-              // Word Cloud Results (after submission)
-              <>
-                <Alert
-                  message="Answer Submitted!"
-                  description={`You answered: "${wordCloudAnswer}"`}
-                  type="success"
-                  icon={<CheckCircleOutlined />}
-                  showIcon
-                  style={{ marginBottom: 24 }}
-                />
-                <Alert
-                  message="Waiting for next question..."
-                  type="info"
-                  showIcon
-                />
-              </>
-            ) : (
-              // MCQ Results (after submission)
-              <>
-                <Alert
-                  message={isCorrect ? "Correct!" : "Incorrect"}
-                  description={
-                    <>
+            <Alert
+              message={isCorrect ? "Correct!" : "Incorrect"}
+              description={
+                <>
                       <Text>Your answer: <Text strong>{selectedAnswer}</Text></Text>
                       <br />
                       <Text>Correct answer: <Text strong>{currentQuestion.correct_answer}</Text></Text>
@@ -376,15 +426,13 @@ export default function AudienceSession() {
                   </div>
                 </Space>
 
-                <Alert
-                  message="Waiting for next question..."
-                  type="info"
-                  showIcon
-                  style={{ marginTop: 24 }}
-                />
-              </>
-            )}
-          </>
+              <Alert
+                message="Waiting for next question..."
+                type="info"
+                showIcon
+                style={{ marginTop: 24 }}
+              />
+            </>
         )}
       </Card>
     </div>

@@ -169,12 +169,16 @@ class AnswerService:
         
         # NO duplicate check - unlimited submissions allowed for word cloud
         
+        # Normalize text: replace one or more newlines with a single space
+        import re
+        normalized_text = re.sub(r'\n+', ' ', request.text_answer.strip())
+        
         # Create answer
         answer = Answer(
             session_id=session.id,
             participant_id=participant.id,
             question_id=request.question_id,
-            text_answer=request.text_answer.strip(),
+            text_answer=normalized_text,
             selected_option_index=None,
             is_correct=None
         )
