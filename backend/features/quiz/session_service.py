@@ -82,6 +82,23 @@ class SessionService:
         if not can_create:
             raise TierLimitExceededError("Concurrent events limit reached")
         
+        # Invalidate participants from previous sessions of this quiz
+        # This forces them to rejoin when a new session starts
+        previous_sessions = db.query(QuizSession.id).filter(
+            QuizSession.quiz_id == quiz_id,
+            QuizSession.tenant_id == current_user.tenant_id
+        ).all()
+        
+        if previous_sessions:
+            session_ids = [s.id for s in previous_sessions]
+            db.query(Participant).filter(
+                Participant.session_id.in_(session_ids)
+            ).update(
+                {"is_active": False},
+                synchronize_session=False
+            )
+            db.commit()
+        
         # Generate unique join code
         join_code = self._generate_join_code()
         while db.query(Event).filter(Event.join_code == join_code).first():

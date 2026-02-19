@@ -341,6 +341,19 @@ async def get_session_results(
 ):
     """Get session results"""
     try:
+        # Check if participant token is still active
+        if session_token:
+            from persistence.models.quiz import Participant
+            participant = db.query(Participant).filter(
+                Participant.session_token == session_token
+            ).first()
+            
+            if participant and not participant.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Session has been restarted. Please rejoin with the new code."
+                )
+        
         return await service.get_session_results(db, session_id, session_token)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

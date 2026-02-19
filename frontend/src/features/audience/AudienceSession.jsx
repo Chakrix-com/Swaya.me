@@ -11,7 +11,8 @@ import {
   Alert,
   Result,
   Progress,
-  Input
+  Input,
+  message
 } from 'antd'
 import {
   CheckCircleOutlined,
@@ -45,13 +46,20 @@ export default function AudienceSession() {
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [sessionStatus, setSessionStatus] = useState(null) // 'created', 'active', 'ended'
+  const [sessionInvalidated, setSessionInvalidated] = useState(false)
   const lastQuestionIdRef = useRef(null)
+  const pollingIntervalRef = useRef(null)
 
   useEffect(() => {
     if (sessionToken && sessionId) {
-      const interval = setInterval(loadResults, 2000) // Poll every 2 seconds
+      pollingIntervalRef.current = setInterval(loadResults, 2000) // Poll every 2 seconds
       loadResults()
-      return () => clearInterval(interval)
+      return () => {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current)
+        }
+      }
     }
   }, [sessionToken, sessionId])
 
@@ -66,6 +74,22 @@ export default function AudienceSession() {
       console.log('Results received:', response.data)
       
       const newQuestionId = response.data.current_question?.question_id
+      const newStatus = response.data.status
+      
+      // Track session status changes and show notifications
+      if (sessionStatus && sessionStatus !== newStatus) {
+        if (newStatus === 'ended') {
+          message.success('Quiz has ended! Thank you for participating!')
+          // Stop polling when quiz ends
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current)
+            pollingIntervalRef.current = null
+          }
+        } else if (newStatus === 'active' && sessionStatus === 'created') {
+          message.info('Quiz is starting!')
+        }
+      }
+      setSessionStatus(newStatus)
       
       // If question ID changed, reset answer state
       if (lastQuestionIdRef.current && newQuestionId && newQuestionId !== lastQuestionIdRef.current) {
@@ -87,6 +111,17 @@ export default function AudienceSession() {
       }
     } catch (error) {
       console.error('Failed to load results', error)
+      
+      // Check if session was invalidated (403)
+      if (error.response?.status === 403) {
+        setSessionInvalidated(true)
+        // Stop polling
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current)
+          pollingIntervalRef.current = null
+        }
+        message.warning('Session has been restarted. Please rejoin with the new code.')
+      }
     }
   }
 
@@ -177,14 +212,74 @@ export default function AudienceSession() {
     )
   }
 
-  if (!currentQuestion) {
+  // Session Invalidated - Host restarted quiz
+  if (sessionInvalidated) {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+        <Card>
+          <Result
+            status="warning"
+            icon={<CloseCircleOutlined style={{ color: '#faad14' }} />}
+            title="Session Restarted"
+            subTitle="The host has started a new quiz session"
+            extra={
+              <Button
+                type="primary"
+                icon={<LoginOutlined />}
+                onClick={() => navigate('/join')}
+                size="large"
+              >
+                Rejoin Quiz
+              </Button>
+            }
+          />
+        </Card>
+      </div>
+    )
+  }
+
+  // Quiz Completed - Show final score
+  if (sessionStatus === 'ended' && !currentQuestion) {
+    return (
+      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+        <Card>
+          <Result
+            status="success"
+            icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+            title="Quiz Completed!"
+            subTitle={
+              <Space direction="vertical" align="center" style={{ marginTop: 16 }}>
+                <Title level={4} style={{ margin: 0 }}>
+                  Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
+                </Title>
+                <Text type="secondary">
+                  You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
+                </Text>
+                <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
+              </Space>
+            }
+            extra={
+              <Text type="secondary">Thank you for participating!</Text>
+            }
+          />
+        </Card>
+      </div>
+    )
+  }
+
+  // Waiting for host/question
+  if (!currentQuestion && sessionStatus !== 'ended') {
     return (
       <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
         <Card>
           <Space direction="vertical" align="center" style={{ width: '100%' }}>
             <LoadingOutlined style={{ fontSize: 48 }} />
-            <Title level={3}>Waiting for host...</Title>
-            <Text type="secondary">The quiz will start soon</Text>
+            <Title level={3}>
+              {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
+            </Title>
+            <Text type="secondary">
+              {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
+            </Text>
             <Tag color="blue">Joined as: {displayName}</Tag>
           </Space>
         </Card>

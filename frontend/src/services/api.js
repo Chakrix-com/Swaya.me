@@ -24,12 +24,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only redirect to login for auth failures with tokens (host requests)
+    // Let 403 pass through for participant session invalidation
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Token expired or invalid - clear auth state
-      localStorage.removeItem('token')
-      store.dispatch(logout())
-      // Redirect to login
-      window.location.href = '/login'
+      // Check if this was an authenticated request (has token)
+      const hasAuthToken = error.config?.headers?.Authorization
+      
+      if (hasAuthToken) {
+        // Host authentication failed - redirect to login
+        localStorage.removeItem('token')
+        store.dispatch(logout())
+        window.location.href = '/login'
+      }
+      // If no token, let the error propagate to component (participant 403)
     }
     return Promise.reject(error)
   }
