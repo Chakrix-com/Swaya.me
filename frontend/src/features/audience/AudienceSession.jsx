@@ -197,7 +197,7 @@ export default function AudienceSession() {
 
   if (!sessionToken) {
     return (
-      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
         <Result
           status="error"
           title="No Session Found"
@@ -215,7 +215,7 @@ export default function AudienceSession() {
   // Session Invalidated - Host restarted quiz
   if (sessionInvalidated) {
     return (
-      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
         <Card>
           <Result
             status="warning"
@@ -241,7 +241,7 @@ export default function AudienceSession() {
   // Quiz Completed - Show final score
   if (sessionStatus === 'ended' && !currentQuestion) {
     return (
-      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
         <Card>
           <Result
             status="success"
@@ -270,7 +270,7 @@ export default function AudienceSession() {
   // Waiting for host/question
   if (!currentQuestion && sessionStatus !== 'ended') {
     return (
-      <div style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
         <Card>
           <Space direction="vertical" align="center" style={{ width: '100%' }}>
             <LoadingOutlined style={{ fontSize: 48 }} />
@@ -291,7 +291,11 @@ export default function AudienceSession() {
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion.correct_answer
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ 
+      padding: 16,  // Reduced from 24 for better mobile fit
+      maxWidth: 800, 
+      margin: '0 auto' 
+    }}>
       <Card style={{ marginBottom: 16 }}>
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Tag color="blue">
@@ -304,7 +308,15 @@ export default function AudienceSession() {
 
       <Card
         title={
-          <Title level={3} style={{ margin: 0 }}>
+          <Title 
+            level={3} 
+            style={{ 
+              margin: 0,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              whiteSpace: 'normal'
+            }}
+          >
             {currentQuestion.text}
           </Title>
         }
@@ -395,7 +407,10 @@ export default function AudienceSession() {
                         padding: '16px',
                         border: '2px solid #d9d9d9',
                         borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'A' ? '#e6f7ff' : 'white'
+                        backgroundColor: selectedAnswer === 'A' ? '#e6f7ff' : 'white',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
                     >
                       <Text strong>A:</Text> {currentQuestion.option_a}
@@ -408,7 +423,10 @@ export default function AudienceSession() {
                         padding: '16px',
                         border: '2px solid #d9d9d9',
                         borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'B' ? '#e6f7ff' : 'white'
+                        backgroundColor: selectedAnswer === 'B' ? '#e6f7ff' : 'white',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
                     >
                       <Text strong>B:</Text> {currentQuestion.option_b}
@@ -421,7 +439,10 @@ export default function AudienceSession() {
                         padding: '16px',
                         border: '2px solid #d9d9d9',
                         borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'C' ? '#e6f7ff' : 'white'
+                        backgroundColor: selectedAnswer === 'C' ? '#e6f7ff' : 'white',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
                     >
                       <Text strong>C:</Text> {currentQuestion.option_c}
@@ -434,7 +455,10 @@ export default function AudienceSession() {
                         padding: '16px',
                         border: '2px solid #d9d9d9',
                         borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'D' ? '#e6f7ff' : 'white'
+                        backgroundColor: selectedAnswer === 'D' ? '#e6f7ff' : 'white',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
                     >
                       <Text strong>D:</Text> {currentQuestion.option_d}
@@ -462,11 +486,17 @@ export default function AudienceSession() {
               message={isCorrect ? "Correct!" : "Incorrect"}
               description={
                 <>
-                      <Text>Your answer: <Text strong>{selectedAnswer}</Text></Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        Your answer: <Text strong>{selectedAnswer}</Text>
+                      </Text>
                       <br />
-                      <Text>Correct answer: <Text strong>{currentQuestion.correct_answer}</Text></Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        Correct answer: <Text strong>{currentQuestion.correct_answer}</Text>
+                      </Text>
                       <br />
-                      <Text>{currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}</Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        {currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}
+                      </Text>
                     </>
                   }
                   type={isCorrect ? "success" : "error"}
@@ -478,8 +508,12 @@ export default function AudienceSession() {
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <div>
                     <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text>A: {currentQuestion.option_a}</Text>
-                      <Text>{results.answer_distribution?.A || 0} ({results.answer_distribution_percentage?.A?.toFixed(1) || 0}%)</Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
+                        A: {currentQuestion.option_a}
+                      </Text>
+                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
+                        {results.answer_distribution?.A || 0} ({results.answer_distribution_percentage?.A?.toFixed(1) || 0}%)
+                      </Text>
                     </Space>
                     <Progress
                       percent={results.answer_distribution_percentage?.A || 0}
@@ -489,8 +523,12 @@ export default function AudienceSession() {
 
                   <div>
                     <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text>B: {currentQuestion.option_b}</Text>
-                      <Text>{results.answer_distribution?.B || 0} ({results.answer_distribution_percentage?.B?.toFixed(1) || 0}%)</Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
+                        B: {currentQuestion.option_b}
+                      </Text>
+                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
+                        {results.answer_distribution?.B || 0} ({results.answer_distribution_percentage?.B?.toFixed(1) || 0}%)
+                      </Text>
                     </Space>
                     <Progress
                       percent={results.answer_distribution_percentage?.B || 0}
@@ -500,8 +538,12 @@ export default function AudienceSession() {
 
                   <div>
                     <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text>C: {currentQuestion.option_c}</Text>
-                      <Text>{results.answer_distribution?.C || 0} ({results.answer_distribution_percentage?.C?.toFixed(1) || 0}%)</Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
+                        C: {currentQuestion.option_c}
+                      </Text>
+                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
+                        {results.answer_distribution?.C || 0} ({results.answer_distribution_percentage?.C?.toFixed(1) || 0}%)
+                      </Text>
                     </Space>
                     <Progress
                       percent={results.answer_distribution_percentage?.C || 0}
@@ -511,8 +553,12 @@ export default function AudienceSession() {
 
                   <div>
                     <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text>D: {currentQuestion.option_d}</Text>
-                      <Text>{results.answer_distribution?.D || 0} ({results.answer_distribution_percentage?.D?.toFixed(1) || 0}%)</Text>
+                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
+                        D: {currentQuestion.option_d}
+                      </Text>
+                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
+                        {results.answer_distribution?.D || 0} ({results.answer_distribution_percentage?.D?.toFixed(1) || 0}%)
+                      </Text>
                     </Space>
                     <Progress
                       percent={results.answer_distribution_percentage?.D || 0}
