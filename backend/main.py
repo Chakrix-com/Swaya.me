@@ -4,7 +4,9 @@ Main FastAPI application entry point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from core.config.settings import settings
 from broker.api.routes import api_router
@@ -24,6 +26,22 @@ async def lifespan(app: FastAPI):
     # Initialize Redis connection
     await redis_client.connect()
     print("✓  Redis connected")
+    
+    # Ensure uploads directory exists
+    uploads_dir = Path("/home/vinay/Swaya.me/backend/uploads/images")
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    print(f"✓  Uploads directory ready: {uploads_dir}")
+    
+    # Ensure temp directory exists
+    temp_dir = Path("/home/vinay/Swaya.me/backend/uploads/temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    print(f"✓  Temp directory ready: {temp_dir}")
+    
+    # Cleanup old temp files
+    from core.storage import ImageService
+    deleted = ImageService.cleanup_old_temp_files(max_age_hours=2)
+    if deleted > 0:
+        print(f"✓  Cleaned up {deleted} old temp files")
     
     # TODO: Run database migrations check
     
@@ -69,6 +87,11 @@ def create_application() -> FastAPI:
 
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
+    
+    # Mount static files for uploads (must be after API routes)
+    uploads_path = Path("/home/vinay/Swaya.me/backend/uploads")
+    if uploads_path.exists():
+        app.mount("/api/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
 
     # Root health check
     @app.get("/health")

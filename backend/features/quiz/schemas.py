@@ -45,6 +45,8 @@ class QuestionCreate(BaseModel):
     text: str = Field(..., min_length=1, max_length=1000)
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
+    question_image_url: Optional[str] = Field(None, max_length=500)
+    option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     
     @model_validator(mode='after')
     def validate_question_fields(self):
@@ -72,6 +74,8 @@ class QuestionUpdate(BaseModel):
     text: Optional[str] = Field(None, min_length=1, max_length=1000)
     options: Optional[List[str]] = Field(None, min_items=4, max_items=4)
     correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
+    question_image_url: Optional[str] = Field(None, max_length=500)
+    option_images: Optional[dict[str, str]] = None
 
 
 class QuestionResponse(BaseModel):
@@ -82,6 +86,8 @@ class QuestionResponse(BaseModel):
     options: Optional[List[str]] = None
     order: int
     correct_answer_index: Optional[int] = None  # Hidden during active session
+    question_image_url: Optional[str] = None
+    option_images: Optional[dict[str, str]] = None
     
     class Config:
         from_attributes = True

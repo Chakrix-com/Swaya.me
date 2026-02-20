@@ -69,6 +69,31 @@ export const questionAPI = {
     api.get(`/quizzes/questions/${questionId}/word-cloud-results`, {
       params: { session_id: sessionId }
     }),
+  uploadImage: (quizId, questionId, file, imageType) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('image_type', imageType)
+    if (questionId) {
+      formData.append('question_id', questionId)
+    }
+    return api.post(`/quizzes/${quizId}/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+  moveTempImages: (quizId, questionId, tempImages) =>
+    api.post(`/quizzes/${quizId}/questions/${questionId}/move-temp-images`, tempImages),
+  deleteImage: (quizId, questionId, imageType, tempKey) => {
+    const params = { image_type: imageType }
+    if (tempKey) {
+      params.temp_key = tempKey
+    }
+    if (questionId) {
+      params.question_id = questionId
+    }
+    return api.delete(`/quizzes/${quizId}/image`, { params })
+  },
 }
 
 // Session API

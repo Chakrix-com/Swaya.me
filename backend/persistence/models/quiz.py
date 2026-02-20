@@ -66,6 +66,8 @@ class Question(Base, TimestampMixin):
     order = Column(Integer, nullable=False)
     options = Column(JSON, nullable=True)  # List of 4 options for MCQ, null for word_cloud
     correct_answer_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
+    question_image_url = Column(String(500), nullable=True)  # Optional image for question text
+    option_images = Column(JSON, nullable=True)  # Optional images for MCQ options: {"A": "path", "B": "path", ...}
     
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")

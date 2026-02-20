@@ -4,6 +4,7 @@ Quiz Builder Service - Business logic for quiz CRUD operations
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+import os
 
 from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
 from persistence.models.core import Event
@@ -17,6 +18,7 @@ from shared.exceptions.quiz import (
 )
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
+from core.storage import ImageService
 
 
 class QuizBuilderService:
@@ -258,6 +260,9 @@ class QuizBuilderService:
     
     def _to_quiz_response(self, quiz: Quiz) -> QuizResponse:
         """Convert quiz to response model"""
+        # Get base URL from environment
+        base_url = os.getenv('BASE_URL', 'http://localhost:8000')
+        
         return QuizResponse(
             id=quiz.id,
             event_id=quiz.event_id,
@@ -271,7 +276,14 @@ class QuizBuilderService:
                     text=q.text,
                     options=q.options,
                     order=q.order,
-                    correct_answer_index=q.correct_answer_index
+                    correct_answer_index=q.correct_answer_index,
+                    question_image_url=ImageService.to_absolute_url(
+                        q.question_image_url, base_url
+                    ),
+                    option_images={
+                        key: ImageService.to_absolute_url(path, base_url)
+                        for key, path in (q.option_images or {}).items()
+                    } if q.option_images else None
                 )
                 for q in sorted(quiz.questions, key=lambda x: x.order)
             ],

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 import json
+import os
 
 from persistence.models.quiz import (
     QuizSession, Participant, Answer, Question,
@@ -20,6 +21,7 @@ from shared.exceptions.quiz import (
     DuplicateAnswerError, QuestionNotOpenError
 )
 from shared.utils.redis_client import RedisClient
+from core.storage import ImageService
 
 
 class AnswerService:
@@ -401,6 +403,7 @@ class AnswerService:
                     )
                     
                     # Transform to format expected by host frontend
+                    base_url = os.getenv('BASE_URL', 'http://localhost:8000')
                     options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
                     correct_letter = chr(65 + question_obj.correct_answer_index) if question_obj.correct_answer_index is not None else None
                     
@@ -418,11 +421,19 @@ class AnswerService:
                         "options": question_result.options,
                         "correct_answer_index": question_result.correct_answer_index,
                         "answer_distribution": question_result.answer_distribution,
-                        "total_answers": question_result.total_answers
+                        "total_answers": question_result.total_answers,
+                        "question_image_url": ImageService.to_absolute_url(
+                            question_obj.question_image_url, base_url
+                        ),
+                        "option_images": {
+                            key: ImageService.to_absolute_url(path, base_url)
+                            for key, path in (question_obj.option_images or {}).items()
+                        } if question_obj.option_images else None
                     }
                 else:
                     # Word Cloud question - no need for get_question_results
                     # Just count total text answers
+                    base_url = os.getenv('BASE_URL', 'http://localhost:8000')
                     total_answers = db.query(Answer).filter(
                         Answer.session_id == session_id,
                         Answer.question_id == question_obj.id
@@ -434,7 +445,10 @@ class AnswerService:
                         "question_type": question_obj.question_type.value,
                         "question_id": question_obj.id,
                         "question_text": question_obj.text,
-                        "total_answers": total_answers
+                        "total_answers": total_answers,
+                        "question_image_url": ImageService.to_absolute_url(
+                            question_obj.question_image_url, base_url
+                        )
                     }
             except Exception as e:
                 print(f"Error loading current question: {e}")

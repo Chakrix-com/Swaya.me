@@ -308,17 +308,31 @@ export default function AudienceSession() {
 
       <Card
         title={
-          <Title 
-            level={3} 
-            style={{ 
-              margin: 0,
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
-              whiteSpace: 'normal'
-            }}
-          >
-            {currentQuestion.text}
-          </Title>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            {currentQuestion.question_image_url && (
+              <img 
+                src={currentQuestion.question_image_url} 
+                alt="Question" 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: window.innerWidth < 768 ? '200px' : '300px',
+                  borderRadius: '8px',
+                  display: 'block'
+                }} 
+              />
+            )}
+            <Title 
+              level={3} 
+              style={{ 
+                margin: currentQuestion.question_image_url ? '8px 0 0 0' : 0,
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'normal'
+              }}
+            >
+              {currentQuestion.text}
+            </Title>
+          </Space>
         }
       >
         {isWordCloud ? (
@@ -413,7 +427,23 @@ export default function AudienceSession() {
                         whiteSpace: 'normal'
                       }}
                     >
-                      <Text strong>A:</Text> {currentQuestion.option_a}
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div>
+                          <Text strong>A:</Text> {currentQuestion.option_a}
+                        </div>
+                        {currentQuestion.option_images?.A && (
+                          <img 
+                            src={currentQuestion.option_images.A} 
+                            alt="Option A" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
+                              borderRadius: '4px', 
+                              marginTop: '8px' 
+                            }} 
+                          />
+                        )}
+                      </Space>
                     </Radio>
 
                     <Radio
@@ -429,7 +459,23 @@ export default function AudienceSession() {
                         whiteSpace: 'normal'
                       }}
                     >
-                      <Text strong>B:</Text> {currentQuestion.option_b}
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div>
+                          <Text strong>B:</Text> {currentQuestion.option_b}
+                        </div>
+                        {currentQuestion.option_images?.B && (
+                          <img 
+                            src={currentQuestion.option_images.B} 
+                            alt="Option B" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
+                              borderRadius: '4px', 
+                              marginTop: '8px' 
+                            }} 
+                          />
+                        )}
+                      </Space>
                     </Radio>
 
                     <Radio
@@ -445,7 +491,23 @@ export default function AudienceSession() {
                         whiteSpace: 'normal'
                       }}
                     >
-                      <Text strong>C:</Text> {currentQuestion.option_c}
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div>
+                          <Text strong>C:</Text> {currentQuestion.option_c}
+                        </div>
+                        {currentQuestion.option_images?.C && (
+                          <img 
+                            src={currentQuestion.option_images.C} 
+                            alt="Option C" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
+                              borderRadius: '4px', 
+                              marginTop: '8px' 
+                            }} 
+                          />
+                        )}
+                      </Space>
                     </Radio>
 
                     <Radio
@@ -461,7 +523,23 @@ export default function AudienceSession() {
                         whiteSpace: 'normal'
                       }}
                     >
-                      <Text strong>D:</Text> {currentQuestion.option_d}
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div>
+                          <Text strong>D:</Text> {currentQuestion.option_d}
+                        </div>
+                        {currentQuestion.option_images?.D && (
+                          <img 
+                            src={currentQuestion.option_images.D} 
+                            alt="Option D" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
+                              borderRadius: '4px', 
+                              marginTop: '8px' 
+                            }} 
+                          />
+                        )}
+                      </Space>
                     </Radio>
                   </Space>
                 </Radio.Group>

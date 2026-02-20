@@ -332,10 +332,27 @@ export default function QuizControl() {
           {currentQuestion ? (
             <Card
               title={
-                <Space>
-                  <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
-                  {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">Word Cloud</Tag>}
-                  <Text strong>{currentQuestion.text}</Text>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space>
+                    <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
+                    {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">Word Cloud</Tag>}
+                  </Space>
+                  {currentQuestion.question_image_url && (
+                    <img 
+                      src={currentQuestion.question_image_url} 
+                      alt="Question" 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '300px', 
+                        borderRadius: '8px',
+                        marginTop: '8px',
+                        display: 'block'
+                      }} 
+                    />
+                  )}
+                  <Text strong style={{ display: 'block', marginTop: currentQuestion.question_image_url ? '8px' : '0' }}>
+                    {currentQuestion.text}
+                  </Text>
                 </Space>
               }
               style={{ marginBottom: 24 }}
@@ -392,8 +409,17 @@ export default function QuizControl() {
                 // MCQ Question View
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text strong>A: {currentQuestion.option_a}</Text>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
+                      <Space direction="vertical">
+                        <Text strong>A: {currentQuestion.option_a}</Text>
+                        {currentQuestion.option_images?.A && (
+                          <img 
+                            src={currentQuestion.option_images.A} 
+                            alt="Option A" 
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
+                          />
+                        )}
+                      </Space>
                       <Text>{currentQuestion.answer_distribution?.[0] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                     </Space>
                     <Progress
@@ -403,8 +429,17 @@ export default function QuizControl() {
                   </div>
 
                   <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text strong>B: {currentQuestion.option_b}</Text>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
+                      <Space direction="vertical">
+                        <Text strong>B: {currentQuestion.option_b}</Text>
+                        {currentQuestion.option_images?.B && (
+                          <img 
+                            src={currentQuestion.option_images.B} 
+                            alt="Option B" 
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
+                          />
+                        )}
+                      </Space>
                       <Text>{currentQuestion.answer_distribution?.[1] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                     </Space>
                     <Progress
@@ -414,8 +449,17 @@ export default function QuizControl() {
                   </div>
 
                   <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text strong>C: {currentQuestion.option_c}</Text>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
+                      <Space direction="vertical">
+                        <Text strong>C: {currentQuestion.option_c}</Text>
+                        {currentQuestion.option_images?.C && (
+                          <img 
+                            src={currentQuestion.option_images.C} 
+                            alt="Option C" 
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
+                          />
+                        )}
+                      </Space>
                       <Text>{currentQuestion.answer_distribution?.[2] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                     </Space>
                     <Progress
@@ -425,8 +469,17 @@ export default function QuizControl() {
                   </div>
 
                   <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text strong>D: {currentQuestion.option_d}</Text>
+                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
+                      <Space direction="vertical">
+                        <Text strong>D: {currentQuestion.option_d}</Text>
+                        {currentQuestion.option_images?.D && (
+                          <img 
+                            src={currentQuestion.option_images.D} 
+                            alt="Option D" 
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
+                          />
+                        )}
+                      </Space>
                       <Text>{currentQuestion.answer_distribution?.[3] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
                     </Space>
                     <Progress

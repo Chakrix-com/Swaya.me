@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
@@ -28,9 +28,304 @@ import {
   CloseOutlined
 } from '@ant-design/icons'
 import { quizAPI, questionAPI } from '../../services/api'
+import ImageUpload from './components/ImageUpload'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
+
+// QuestionForm component - extracted to prevent recreation on parent re-renders
+const QuestionForm = ({ 
+  question, 
+  onSave, 
+  onCancel,
+  quizId,
+  questionImageUrl,
+  setQuestionImageUrl,
+  optionImages,
+  setOptionImages,
+  tempImages,
+  setTempImages,
+  loading,
+  movingImages,
+  t
+}) => {
+  const [questionForm] = Form.useForm()
+  const [questionType, setQuestionType] = useState('mcq')
+  
+  // Debug: Log when component renders
+  console.log('[QuestionForm] Rendering. Question ID:', question?.id || 'NEW')
+
+  useEffect(() => {
+    console.log('[QuestionForm] useEffect triggered')
+    if (question) {
+      questionForm.setFieldsValue(question)
+      setQuestionType(question.question_type || 'mcq')
+      
+      // Set image URLs from question data
+      setQuestionImageUrl(question.question_image_url || null)
+      setOptionImages({
+        A: question.option_images?.A || null,
+        B: question.option_images?.B || null,
+        C: question.option_images?.C || null,
+        D: question.option_images?.D || null
+      })
+    } else {
+      // Reset form for new question
+      questionForm.resetFields()
+      setQuestionType('mcq')
+      
+      // Reset image state for new question
+      setQuestionImageUrl(null)
+      setOptionImages({
+        A: null,
+        B: null,
+        C: null,
+        D: null
+      })
+    }
+  }, [question])  // Removed setQuestionImageUrl, setOptionImages - they're stable
+
+  const handleTypeChange = (e) => {
+    setQuestionType(e.target.value)
+    // Clear option fields when switching to word cloud
+    if (e.target.value === 'word_cloud') {
+      questionForm.setFieldsValue({
+        option_a: undefined,
+        option_b: undefined,
+        option_c: undefined,
+        option_d: undefined,
+        correct_answer: undefined
+      })
+    }
+  }
+
+  return (
+    <Card style={{ marginBottom: 16, width: '100%' }}>
+      <Form
+        form={questionForm}
+        layout="vertical"
+        onFinish={onSave}
+        initialValues={{
+          question_type: 'mcq',
+          correct_answer: 'A'
+        }}
+      >
+        <Form.Item
+          name="question_type"
+          label={t('quiz.questionType')}
+          rules={[{ required: true }]}
+        >
+          <Radio.Group onChange={handleTypeChange}>
+            <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
+            <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>
+          </Radio.Group>
+        </Form.Item>
+
+        <Form.Item
+          name="text"
+          label={t('quiz.question')}
+          rules={[{ required: true, message: t('quiz.questionRequired') }]}
+        >
+          <TextArea rows={2} placeholder={t('quiz.enterQuestion')} />
+        </Form.Item>
+
+        {/* Question Image Upload */}
+        <div style={{ marginBottom: 16 }}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
+            Question Image (optional)
+          </Text>
+          <ImageUpload
+            quizId={parseInt(quizId)}
+            questionId={question?.id}
+            imageType="question"
+            currentImageUrl={questionImageUrl}
+            tempData={tempImages.question}
+            onImageChange={(url, tempKey) => {
+              if (tempKey) {
+                // Temp upload
+                setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
+              } else {
+                // Permanent upload or deletion
+                setQuestionImageUrl(url)
+                setTempImages(prev => ({ ...prev, question: null }))
+              }
+            }}
+          />
+        </div>
+
+        {questionType === 'mcq' && (
+          <>
+            <Form.Item
+              name="option_a"
+              label={t('quiz.optionA')}
+              rules={[{ required: true, message: t('quiz.optionARequired') }]}
+            >
+              <Input placeholder={t('quiz.optionAPlaceholder')} />
+            </Form.Item>
+            
+            {/* Option A Image Upload */}
+            <ImageUpload
+              quizId={parseInt(quizId)}
+              questionId={question?.id}
+              imageType="option_a"
+              currentImageUrl={optionImages.A}
+              tempData={tempImages.optionA}
+              onImageChange={(url, tempKey) => {
+                if (tempKey) {
+                  setTempImages(prev => ({ ...prev, optionA: { url, tempKey } }))
+                } else {
+                  setOptionImages(prev => ({ ...prev, A: url }))
+                  setTempImages(prev => ({ ...prev, optionA: null }))
+                }
+              }}
+            />
+
+            <Form.Item
+              name="option_b"
+              label={t('quiz.optionB')}
+              rules={[{ required: true, message: t('quiz.optionBRequired') }]}
+            >
+              <Input placeholder={t('quiz.optionBPlaceholder')} />
+            </Form.Item>
+            
+            {/* Option B Image Upload */}
+            <ImageUpload
+              quizId={parseInt(quizId)}
+              questionId={question?.id}
+              imageType="option_b"
+              currentImageUrl={optionImages.B}
+              tempData={tempImages.optionB}
+              onImageChange={(url, tempKey) => {
+                if (tempKey) {
+                  setTempImages(prev => ({ ...prev, optionB: { url, tempKey } }))
+                } else {
+                  setOptionImages(prev => ({ ...prev, B: url }))
+                  setTempImages(prev => ({ ...prev, optionB: null }))
+                }
+              }}
+            />
+
+            <Form.Item
+              name="option_c"
+              label={t('quiz.optionC')}
+              rules={[{ required: true, message: t('quiz.optionCRequired') }]}
+            >
+              <Input placeholder={t('quiz.optionCPlaceholder')} />
+            </Form.Item>
+            
+            {/* Option C Image Upload */}
+            <ImageUpload
+              quizId={parseInt(quizId)}
+              questionId={question?.id}
+              imageType="option_c"
+              currentImageUrl={optionImages.C}
+              tempData={tempImages.optionC}
+              onImageChange={(url, tempKey) => {
+                if (tempKey) {
+                  setTempImages(prev => ({ ...prev, optionC: { url, tempKey } }))
+                } else {
+                  setOptionImages(prev => ({ ...prev, C: url }))
+                  setTempImages(prev => ({ ...prev, optionC: null }))
+                }
+              }}
+            />
+
+            <Form.Item
+              name="option_d"
+              label={t('quiz.optionD')}
+              rules={[{ required: true, message: t('quiz.optionDRequired') }]}
+            >
+              <Input placeholder={t('quiz.optionDPlaceholder')} />
+            </Form.Item>
+            
+            {/* Option D Image Upload */}
+            <ImageUpload
+              quizId={parseInt(quizId)}
+              questionId={question?.id}
+              imageType="option_d"
+              currentImageUrl={optionImages.D}
+              tempData={tempImages.optionD}
+              onImageChange={(url, tempKey) => {
+                if (tempKey) {
+                  setTempImages(prev => ({ ...prev, optionD: { url, tempKey } }))
+                } else {
+                  setOptionImages(prev => ({ ...prev, D: url }))
+                  setTempImages(prev => ({ ...prev, optionD: null }))
+                }
+              }}
+            />
+
+            <Form.Item
+              name="correct_answer"
+              label={t('quiz.correctAnswer')}
+              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+            >
+              <Radio.Group>
+                <Radio value="A">A</Radio>
+                <Radio value="B">B</Radio>
+                <Radio value="C">C</Radio>
+                <Radio value="D">D</Radio>
+              </Radio.Group>
+            </Form.Item>
+          </>
+        )}
+
+        {questionType === 'word_cloud' && (
+          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+            {t('quiz.wordCloudDescription')}
+          </Text>
+        )}
+
+        <Space>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading || movingImages}
+            icon={question ? <SaveOutlined /> : <PlusOutlined />}
+          >
+            {movingImages ? 'Moving images...' : (question ? t('quiz.updateQuestion') : t('quiz.addQuestion'))}
+          </Button>
+          <Button icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
+        </Space>
+      </Form>
+    </Card>
+  )
+}
+
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps, nextProps) => {
+  const changed = []
+  
+  // Check each prop
+  if (prevProps.question?.id !== nextProps.question?.id) changed.push('question.id')
+  if (prevProps.quizId !== nextProps.quizId) changed.push('quizId')
+  if (prevProps.questionImageUrl !== nextProps.questionImageUrl) changed.push('questionImageUrl')
+  if (prevProps.loading !== nextProps.loading) changed.push('loading')
+  if (prevProps.movingImages !== nextProps.movingImages) changed.push('movingImages')
+  if (prevProps.onSave !== nextProps.onSave) changed.push('onSave')
+  if (prevProps.onCancel !== nextProps.onCancel) changed.push('onCancel')
+  
+  // Check optionImages
+  if (JSON.stringify(prevProps.optionImages) !== JSON.stringify(nextProps.optionImages)) {
+    changed.push('optionImages')
+  }
+  
+  // Check tempImages
+  if (JSON.stringify(prevProps.tempImages) !== JSON.stringify(nextProps.tempImages)) {
+    changed.push('tempImages')
+  }
+  
+  if (changed.length > 0) {
+    console.log('[QuestionForm] Props changed:', changed.join(', '))
+    return false // Re-render
+  }
+  
+  console.log('[QuestionForm] Props unchanged, skipping render')
+  return true // Skip render
+}
+
+// Memoize QuestionForm to prevent unnecessary re-renders
+const MemoizedQuestionForm = memo(QuestionForm, arePropsEqual)
 
 export default function QuizBuilder() {
   const { id } = useParams()
@@ -41,6 +336,27 @@ export default function QuizBuilder() {
   const [quiz, setQuiz] = useState(null)
   const [questions, setQuestions] = useState([])
   const [editingQuestion, setEditingQuestion] = useState(null)
+  
+  // Image state for question being edited/created
+  const [questionImageUrl, setQuestionImageUrl] = useState(null)
+  const [optionImages, setOptionImages] = useState({
+    A: null,
+    B: null,
+    C: null,
+    D: null
+  })
+  
+  // Temp image state (for new questions without ID)
+  const [tempImages, setTempImages] = useState({
+    question: null,  // {url, tempKey}
+    optionA: null,
+    optionB: null,
+    optionC: null,
+    optionD: null
+  })
+  
+  // Loading state for moving temp images
+  const [movingImages, setMovingImages] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -48,7 +364,7 @@ export default function QuizBuilder() {
     }
   }, [id])
 
-  const loadQuiz = async () => {
+  const loadQuiz = useCallback(async () => {
     try {
       const response = await quizAPI.get(id)
       setQuiz(response.data)
@@ -90,7 +406,7 @@ export default function QuizBuilder() {
       message.error(errorMsg)
       console.error('Load quiz error:', error.response?.data || error)
     }
-  }
+  }, [id])
 
   const handleSaveQuiz = async (values) => {
     setLoading(true)
@@ -113,7 +429,7 @@ export default function QuizBuilder() {
     }
   }
 
-  const handleAddQuestion = async (values) => {
+  const handleAddQuestion = useCallback(async (values) => {
     if (!id) {
       message.warning(t('quiz.saveQuizFirst'))
       return
@@ -135,8 +451,76 @@ export default function QuizBuilder() {
       
       console.log('Adding question with data:', questionData)
       const response = await questionAPI.add(id, questionData)
-      console.log('Question added, response:', response)
-      console.log('Question added - Full response data:', JSON.stringify(response.data, null, 2))
+      const newQuestion = response.data
+      console.log('Question added, response:', newQuestion)
+      
+      // Check if we have temp images to move
+      const hasTempImages = Object.values(tempImages).some(img => img !== null)
+      
+      if (hasTempImages) {
+        console.log('Moving temp images to permanent location...')
+        setMovingImages(true)
+        
+        try {
+          // Build temp images array
+          const tempImageList = []
+          
+          if (tempImages.question) {
+            tempImageList.push({
+              temp_key: tempImages.question.tempKey,
+              image_type: 'question'
+            })
+          }
+          
+          if (tempImages.optionA) {
+            tempImageList.push({
+              temp_key: tempImages.optionA.tempKey,
+              image_type: 'option_a'
+            })
+          }
+          
+          if (tempImages.optionB) {
+            tempImageList.push({
+              temp_key: tempImages.optionB.tempKey,
+              image_type: 'option_b'
+            })
+          }
+          
+          if (tempImages.optionC) {
+            tempImageList.push({
+              temp_key: tempImages.optionC.tempKey,
+              image_type: 'option_c'
+            })
+          }
+          
+          if (tempImages.optionD) {
+            tempImageList.push({
+              temp_key: tempImages.optionD.tempKey,
+              image_type: 'option_d'
+            })
+          }
+          
+          // Move temp images
+          await questionAPI.moveTempImages(id, newQuestion.id, tempImageList)
+          console.log('Temp images moved successfully')
+          
+          // Clear temp state
+          setTempImages({
+            question: null,
+            optionA: null,
+            optionB: null,
+            optionC: null,
+            optionD: null
+          })
+          
+        } catch (moveError) {
+          console.error('Failed to move temp images:', moveError)
+          message.error('Question saved but failed to move images. Please re-upload.')
+        } finally {
+          setMovingImages(false)
+        }
+      }
+      
       message.success(t('quiz.addQuestionSuccess'))
       console.log('Reloading quiz...')
       await loadQuiz()
@@ -149,9 +533,45 @@ export default function QuizBuilder() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, t, tempImages, loadQuiz])
+  
+  const handleCancelQuestion = useCallback(async () => {
+    // Clean up temp images if any
+    const hasTempImages = Object.values(tempImages).some(img => img !== null)
+    
+    if (hasTempImages) {
+      try {
+        // Delete each temp image
+        for (const [key, imgData] of Object.entries(tempImages)) {
+          if (imgData) {
+            const imageType = key === 'question' ? 'question' : 
+                            key === 'optionA' ? 'option_a' :
+                            key === 'optionB' ? 'option_b' :
+                            key === 'optionC' ? 'option_c' : 'option_d'
+            
+            await questionAPI.deleteImage(id, null, imageType, imgData.tempKey)
+          }
+        }
+        
+        // Clear temp state
+        setTempImages({
+          question: null,
+          optionA: null,
+          optionB: null,
+          optionC: null,
+          optionD: null
+        })
+      } catch (error) {
+        console.error('Failed to cleanup temp images:', error)
+        // Continue anyway
+      }
+    }
+    
+    // Close editing
+    setEditingQuestion(null)
+  }, [tempImages, id])
 
-  const handleUpdateQuestion = async (questionId, values) => {
+  const handleUpdateQuestion = useCallback(async (questionId, values) => {
     setLoading(true)
     try {
       // Transform frontend format to backend format
@@ -177,7 +597,7 @@ export default function QuizBuilder() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t, loadQuiz])
 
   const handleDeleteQuestion = async (questionId) => {
     setLoading(true)
@@ -221,136 +641,7 @@ export default function QuizBuilder() {
       setLoading(false)
     }
   }
-
-  const QuestionForm = ({ question, onSave, onCancel }) => {
-    const [questionForm] = Form.useForm()
-    const [questionType, setQuestionType] = useState('mcq')
-
-    useEffect(() => {
-      if (question) {
-        questionForm.setFieldsValue(question)
-        setQuestionType(question.question_type || 'mcq')
-      } else {
-        // Reset form for new question
-        questionForm.resetFields()
-        setQuestionType('mcq')
-      }
-    }, [question, questionForm])
-
-    const handleTypeChange = (e) => {
-      setQuestionType(e.target.value)
-      // Clear option fields when switching to word cloud
-      if (e.target.value === 'word_cloud') {
-        questionForm.setFieldsValue({
-          option_a: undefined,
-          option_b: undefined,
-          option_c: undefined,
-          option_d: undefined,
-          correct_answer: undefined
-        })
-      }
-    }
-
-    return (
-      <Card style={{ marginBottom: 16, width: '100%' }}>
-        <Form
-          form={questionForm}
-          layout="vertical"
-          onFinish={onSave}
-          initialValues={{
-            question_type: 'mcq',
-            correct_answer: 'A'
-          }}
-        >
-          <Form.Item
-            name="question_type"
-            label={t('quiz.questionType')}
-            rules={[{ required: true }]}
-          >
-            <Radio.Group onChange={handleTypeChange}>
-              <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
-              <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>
-            </Radio.Group>
-          </Form.Item>
-
-          <Form.Item
-            name="text"
-            label={t('quiz.question')}
-            rules={[{ required: true, message: t('quiz.questionRequired') }]}
-          >
-            <TextArea rows={2} placeholder={t('quiz.enterQuestion')} />
-          </Form.Item>
-
-          {questionType === 'mcq' && (
-            <>
-              <Form.Item
-                name="option_a"
-                label={t('quiz.optionA')}
-                rules={[{ required: true, message: t('quiz.optionARequired') }]}
-              >
-                <Input placeholder={t('quiz.optionAPlaceholder')} />
-              </Form.Item>
-
-              <Form.Item
-                name="option_b"
-                label={t('quiz.optionB')}
-                rules={[{ required: true, message: t('quiz.optionBRequired') }]}
-              >
-                <Input placeholder={t('quiz.optionBPlaceholder')} />
-              </Form.Item>
-
-              <Form.Item
-                name="option_c"
-                label={t('quiz.optionC')}
-                rules={[{ required: true, message: t('quiz.optionCRequired') }]}
-              >
-                <Input placeholder={t('quiz.optionCPlaceholder')} />
-              </Form.Item>
-
-              <Form.Item
-                name="option_d"
-                label={t('quiz.optionD')}
-                rules={[{ required: true, message: t('quiz.optionDRequired') }]}
-              >
-                <Input placeholder={t('quiz.optionDPlaceholder')} />
-              </Form.Item>
-
-              <Form.Item
-                name="correct_answer"
-                label={t('quiz.correctAnswer')}
-                rules={[{ required: true }]}
-              >
-                <Radio.Group>
-                  <Radio value="A">A</Radio>
-                  <Radio value="B">B</Radio>
-                  <Radio value="C">C</Radio>
-                  <Radio value="D">D</Radio>
-                </Radio.Group>
-              </Form.Item>
-            </>
-          )}
-
-          {questionType === 'word_cloud' && (
-            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-              {t('quiz.wordCloudDescription')}
-            </Text>
-          )}
-
-          <Space>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              icon={question ? <SaveOutlined /> : <PlusOutlined />}
-            >
-              {question ? t('quiz.updateQuestion') : t('quiz.addQuestion')}
-            </Button>
-            <Button icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
-          </Space>
-        </Form>
-      </Card>
-    )
-  }
+  
   const getQuizStatusTranslation = (status) => {
     const statusMap = {
       draft: 'statusDraft',
@@ -442,9 +733,20 @@ export default function QuizBuilder() {
           <Divider>{t('quiz.questions')}</Divider>
 
           {editingQuestion === 'new' ? (
-            <QuestionForm
+            <MemoizedQuestionForm
+              key="new-question"
               onSave={handleAddQuestion}
-              onCancel={() => setEditingQuestion(null)}
+              onCancel={handleCancelQuestion}
+              quizId={id}
+              questionImageUrl={questionImageUrl}
+              setQuestionImageUrl={setQuestionImageUrl}
+              optionImages={optionImages}
+              setOptionImages={setOptionImages}
+              tempImages={tempImages}
+              setTempImages={setTempImages}
+              loading={loading}
+              movingImages={movingImages}
+              t={t}
             />
           ) : (
             <Button
@@ -462,10 +764,21 @@ export default function QuizBuilder() {
             dataSource={questions}
             renderItem={(question, index) => (
               editingQuestion === question.id ? (
-                <QuestionForm
+                <MemoizedQuestionForm
+                  key={`edit-question-${question.id}`}
                   question={question}
                   onSave={(values) => handleUpdateQuestion(question.id, values)}
-                  onCancel={() => setEditingQuestion(null)}
+                  onCancel={handleCancelQuestion}
+                  quizId={id}
+                  questionImageUrl={questionImageUrl}
+                  setQuestionImageUrl={setQuestionImageUrl}
+                  optionImages={optionImages}
+                  setOptionImages={setOptionImages}
+                  tempImages={tempImages}
+                  setTempImages={setTempImages}
+                  loading={loading}
+                  movingImages={movingImages}
+                  t={t}
                 />
               ) : (
                 <Card
