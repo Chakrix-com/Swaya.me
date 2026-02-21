@@ -69,3 +69,14 @@ frontend/.turbo
 .dmypy.json
 dmypy.json
 .ruff_cache/
+
+# Load test results (generated files)
+load_test_*_users.html
+load_test_*_users.log
+load_test_report.html
+*_test_output.log
+incremental_test_output.log
+high_load_test_output.log
+
+# Session state files (temporary)
+.copilot/
