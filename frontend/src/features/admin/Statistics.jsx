@@ -571,7 +571,7 @@ function Statistics() {
                             cx="50%"
                             cy="50%"
                             outerRadius={100}
-                            label={(entry) => `${entry.language}: ${entry.total_events}`}
+                            label={(entry) => `${t(`languages.${entry.language}`)}: ${entry.total_events}`}
                           >
                             {languageStats.event_stats.map((entry, index) => (
                               <Cell 
@@ -580,8 +580,8 @@ function Statistics() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip />
-                          <Legend />
+                          <Tooltip formatter={(value, name, props) => [value, t(`languages.${props.payload.language}`)]} />
+                          <Legend formatter={(value) => t(`languages.${value}`)} />
                         </PieChart>
                       </ResponsiveContainer>
                     ) : (
@@ -597,9 +597,14 @@ function Statistics() {
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={languageStats.event_stats}>
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="language" />
+                          <XAxis 
+                            dataKey="language" 
+                            tickFormatter={(value) => t(`languages.${value}`)}
+                          />
                           <YAxis />
-                          <Tooltip />
+                          <Tooltip 
+                            labelFormatter={(value) => t(`languages.${value}`)}
+                          />
                           <Legend />
                           <Bar dataKey="total_events" fill="#1890ff" name={t('admin.languageStats.events')} />
                           <Bar dataKey="unique_users" fill="#52c41a" name={t('admin.languageStats.users')} />
