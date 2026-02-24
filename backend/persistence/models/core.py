@@ -1,7 +1,7 @@
 """
 Core domain models for multi-tenant architecture
 """
-from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, DateTime, JSON
 from sqlalchemy.orm import relationship
 import enum
 
@@ -15,6 +15,14 @@ class TierEnum(str, enum.Enum):
     BASIC = "basic"
     PRO = "pro"
     ENTERPRISE = "enterprise"
+
+
+class UserRole(str, enum.Enum):
+    """User roles for access control"""
+    super_admin = "super_admin"  # Platform-level admin (tenant_id=1)
+    admin = "admin"              # Tenant-level admin
+    user = "user"                # Regular user (can create quizzes)
+    viewer = "viewer"            # Read-only access
 
 
 class Tenant(Base, TimestampMixin):
@@ -48,10 +56,16 @@ class User(Base, TimestampMixin):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user, server_default="user")
+    
+    # Activity tracking
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    login_count = Column(Integer, nullable=False, default=0, server_default="0")
     
     # Relationships
     tenant = relationship("Tenant", back_populates="users")
     events = relationship("Event", back_populates="creator")
+    activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")
 
 
 class Event(Base, TimestampMixin):
@@ -71,6 +85,28 @@ class Event(Base, TimestampMixin):
     # Relationships
     tenant = relationship("Tenant", back_populates="events")
     creator = relationship("User", back_populates="events")
+
+
+class UserActivity(Base):
+    """
+    User activity log for audit trail
+    Tracks user actions across the platform
+    """
+    __tablename__ = "user_activities"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    tenant_id = Column(Integer, ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=True)
+    resource_id = Column(Integer, nullable=True)
+    details = Column(JSON, nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default="CURRENT_TIMESTAMP", nullable=False, index=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="activities")
 
 
 class TierConfiguration(Base, TimestampMixin):

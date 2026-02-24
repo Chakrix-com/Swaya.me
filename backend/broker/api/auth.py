@@ -69,5 +69,6 @@ async def get_me(
         tenant_id=current_user.tenant.id,
         tenant_name=current_user.tenant.name,
         tier=current_user.tenant.tier.value,
-        is_active=current_user.user.is_active
+        is_active=current_user.user.is_active,
+        role=current_user.user.role.value
     )

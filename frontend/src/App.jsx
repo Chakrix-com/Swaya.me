@@ -7,7 +7,8 @@ import {
   DashboardOutlined, 
   PlusOutlined, 
   LogoutOutlined,
-  QuestionCircleOutlined 
+  QuestionCircleOutlined,
+  TeamOutlined
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -19,6 +20,7 @@ import QuizBuilder from './features/quiz/QuizBuilder'
 import QuizControl from './features/quiz/QuizControl'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
+import UserManagement from './features/admin/components/UserManagement'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import './App.css'
 
@@ -78,6 +80,11 @@ function AuthenticatedLayout({ children }) {
             icon: <QuestionCircleOutlined />,
             hideInMenu: true,
           },
+          ...(user?.role === 'admin' || user?.role === 'super_admin' ? [{
+            path: '/admin/users',
+            name: 'User Management',
+            icon: <TeamOutlined />,
+          }] : []),
         ],
       }}
       menuItemRender={(item, dom) => (
@@ -148,6 +155,7 @@ function AppRoutes() {
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />
+        <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>

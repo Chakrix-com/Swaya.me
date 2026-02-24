@@ -81,7 +81,8 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
             "sub": str(user.id),
             "email": user.email,
             "tenant_id": tenant.id,
-            "tier": tenant.tier.value
+            "tier": tenant.tier.value,
+            "role": user.role.value
         }
     )
     
@@ -96,7 +97,8 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
             tenant_id=tenant.id,
             tenant_name=tenant.name,
             tier=tenant.tier.value,
-            is_active=user.is_active
+            is_active=user.is_active,
+            role=user.role.value
         )
     )
 
@@ -141,13 +143,20 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
     if not tenant.is_active:
         raise TenantNotFoundError("Your organization account has been suspended. Please contact your administrator.")
     
+    # Update login tracking
+    from datetime import datetime, timezone
+    user.last_login_at = datetime.now(timezone.utc)
+    user.login_count += 1
+    db.commit()
+    
     # Generate access token
     access_token = create_access_token(
         data={
             "sub": str(user.id),
             "email": user.email,
             "tenant_id": tenant.id,
-            "tier": tenant.tier.value
+            "tier": tenant.tier.value,
+            "role": user.role.value
         }
     )
     
@@ -162,7 +171,8 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
             tenant_id=tenant.id,
             tenant_name=tenant.name,
             tier=tenant.tier.value,
-            is_active=user.is_active
+            is_active=user.is_active,
+            role=user.role.value
         )
     )
 

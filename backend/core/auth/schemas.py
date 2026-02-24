@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     tenant_name: str
     tier: str
     is_active: bool
+    role: Optional[str] = "user"  # Add role field
     
     class Config:
         from_attributes = True
