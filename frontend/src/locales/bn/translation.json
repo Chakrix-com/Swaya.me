@@ -161,9 +161,9 @@
     "profile": "প্রোফাইল"
   },
   "admin": {
-    "statistics": "Statistics",
-    "userManagement": "User Management",
-    "organizations": "Organizations",
+    "statistics": "পরিসংখ্যান",
+    "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
+    "organizations": "সংস্থা",
     "stats": {
       "dashboard": "পরিসংখ্যান ড্যাশবোর্ড",
       "platformWide": "প্ল্যাটফর্ম-ব্যাপী পরিসংখ্যান",
