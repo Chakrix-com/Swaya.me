@@ -117,4 +117,43 @@ export const sessionAPI = {
     }),
 }
 
+// Stats API
+export const statsAPI = {
+  get: () => api.get('/admin/stats'),
+  getHistory: (params) => api.get('/admin/stats/history', { params }),
+  captureSnapshot: (granularity) => api.post(`/admin/stats/capture?granularity=${granularity}`),
+}
+
+// Organization API
+export const organizationAPI = {
+  listOrganizations: (params) => api.get('/admin/organizations', { params }),
+  createOrganization: (data) => api.post('/admin/organizations', data),
+  getOrganization: (id) => api.get(`/admin/organizations/${id}`),
+  updateOrganization: (id, data) => api.patch(`/admin/organizations/${id}`, data),
+  listAdmins: (orgId) => api.get(`/admin/organizations/${orgId}/admins`),
+  createAdmin: (data) => api.post('/admin/admin-users', data),
+  updateAdminQuota: (adminId, quota) => api.patch(`/admin/admin-users/${adminId}/quota`, { user_quota: quota }),
+  getAdminUsage: (adminId) => api.get(`/admin/admin-users/${adminId}/usage`),
+}
+
+// Language Tracking API
+export const languageTrackingAPI = {
+  // Update authenticated user's language preference
+  updatePreference: (data) => api.post('/user/language-preference', data),
+  
+  // Log anonymous language change event
+  logEvent: (data) => api.post('/language-tracking/event', data),
+  
+  // Get language usage statistics (admin only)
+  getStats: (params) => api.get('/admin/language-stats', { params }),
+  
+  // Export language stats as CSV (admin only)
+  exportStats: (params) => {
+    return api.get('/admin/language-stats/export', { 
+      params,
+      responseType: 'blob'
+    })
+  },
+}
+
 export default api

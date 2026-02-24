@@ -62,10 +62,18 @@ class User(Base, TimestampMixin):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     login_count = Column(Integer, nullable=False, default=0, server_default="0")
     
+    # Admin quota system (for admin role only)
+    user_quota = Column(Integer, nullable=True)  # Max users this admin can create
+    managed_by_admin_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)  # Which admin owns this user
+    
+    # Language preference
+    language_preference = Column(String(10), nullable=False, default='en', server_default='en')
+    
     # Relationships
     tenant = relationship("Tenant", back_populates="users")
     events = relationship("Event", back_populates="creator")
     activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")
+    managed_by_admin = relationship("User", remote_side=[id], foreign_keys=[managed_by_admin_id])
 
 
 class Event(Base, TimestampMixin):
@@ -121,3 +129,32 @@ class TierConfiguration(Base, TimestampMixin):
     max_questions = Column(Integer, nullable=False)
     max_concurrent_events = Column(Integer, nullable=False)
     features = Column(Text, nullable=True)  # JSON string of enabled features
+
+
+class EventTypeEnum(str, enum.Enum):
+    """Language event types"""
+    INITIAL = "initial"
+    CHANGE = "change"
+
+
+class LanguageUsageEvent(Base):
+    """
+    Language usage tracking - logs all language selection events
+    Tracks both authenticated and anonymous users
+    """
+    __tablename__ = "language_usage_events"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)
+    session_id = Column(String(100), nullable=True, index=True)
+    language = Column(String(10), nullable=False, index=True)
+    previous_language = Column(String(10), nullable=True)
+    event_type = Column(SQLEnum(EventTypeEnum, values_callable=lambda x: [e.value for e in x]), nullable=False, default=EventTypeEnum.CHANGE, server_default='change')
+    created_at = Column(DateTime(timezone=True), server_default="CURRENT_TIMESTAMP", nullable=False, index=True)
+    user_agent = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    tenant_id = Column(Integer, ForeignKey('tenants.id', ondelete='SET NULL'), nullable=True, index=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id])
+    tenant = relationship("Tenant", foreign_keys=[tenant_id])

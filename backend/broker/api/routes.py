@@ -7,6 +7,10 @@ from broker.api.quiz import router as quiz_router
 from broker.api.uploads import router as uploads_router
 from broker.api.user_management import router as user_management_router
 from broker.api.tenant_management import router as tenant_management_router
+from broker.api.stats import router as stats_router
+from broker.api.stats_history import router as stats_history_router
+from broker.api.organization_management import router as organization_router, admin_router
+from broker.api.language_tracking import router as language_tracking_router
 
 api_router = APIRouter()
 
@@ -33,5 +37,10 @@ api_router.include_router(quiz_router)
 api_router.include_router(uploads_router)
 api_router.include_router(user_management_router)
 api_router.include_router(tenant_management_router)
+api_router.include_router(stats_router, prefix="/admin", tags=["admin"])
+api_router.include_router(stats_history_router, tags=["admin"])
+api_router.include_router(organization_router, prefix="/admin", tags=["admin"])
+api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
+api_router.include_router(language_tracking_router)
 
 # TODO: Include realtime routes
