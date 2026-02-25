@@ -3,7 +3,7 @@ Session Management Service - Start, control, and end quiz sessions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload, joinedload, contains_eager
 from typing import Optional
 import secrets
 import string
@@ -182,10 +182,14 @@ class SessionServiceAsync:
         
         # Find active session - get the LATEST one, not the first
         result = await db.execute(
-            select(QuizSession).join(Quiz).filter(
+            select(QuizSession)
+            .join(Quiz)
+            .filter(
                 Quiz.event_id == event.id,
                 QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
-            ).order_by(QuizSession.id.desc())
+            )
+            .options(contains_eager(QuizSession.quiz))
+            .order_by(QuizSession.id.desc())
         )
         session = result.scalar_one_or_none()
         
