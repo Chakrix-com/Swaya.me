@@ -3,10 +3,11 @@ Authentication dependencies for FastAPI
 """
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
 
-from persistence.database import get_db
+from persistence.database_async import get_async_db
 from persistence.models.core import User, Tenant
 from core.security.jwt import decode_access_token
 from shared.exceptions.auth import InvalidTokenError, ExpiredTokenError
@@ -29,14 +30,14 @@ class CurrentUser:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ) -> CurrentUser:
     """
     Dependency to get current authenticated user from JWT token
     
     Args:
         credentials: HTTP Bearer credentials
-        db: Database session
+        db: Async database session
         
     Returns:
         CurrentUser with user and tenant context
@@ -59,7 +60,8 @@ async def get_current_user(
             )
         
         # Get user from database
-        user = db.query(User).filter(User.id == user_id).first()
+        result = await db.execute(select(User).filter(User.id == user_id))
+        user = result.scalar_one_or_none()
         if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,7 +69,8 @@ async def get_current_user(
             )
         
         # Get tenant
-        tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        result = await db.execute(select(Tenant).filter(Tenant.id == tenant_id))
+        tenant = result.scalar_one_or_none()
         if not tenant or not tenant.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
