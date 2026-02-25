@@ -3,6 +3,7 @@ Session Management Service - Start, control, and end quiz sessions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload, joinedload
 from typing import Optional
 import secrets
 import string
@@ -245,10 +246,12 @@ class SessionServiceAsync:
         Opens next question for answers
         """
         result = await db.execute(
-            select(QuizSession).filter(
+            select(QuizSession)
+            .filter(
                 QuizSession.id == session_id,
                 QuizSession.tenant_id == current_user.tenant_id
             )
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
         )
         session = result.scalar_one_or_none()
         
@@ -303,10 +306,12 @@ class SessionServiceAsync:
         Closes current question and reopens previous one for answers
         """
         result = await db.execute(
-            select(QuizSession).filter(
+            select(QuizSession)
+            .filter(
                 QuizSession.id == session_id,
                 QuizSession.tenant_id == current_user.tenant_id
             )
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
         )
         session = result.scalar_one_or_none()
         

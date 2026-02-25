@@ -3,12 +3,13 @@ Answer Service - Submit and aggregate answers (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
 import json
 import os
 
 from persistence.models.quiz import (
-    QuizSession, Participant, Answer, Question,
+    Quiz, QuizSession, Participant, Answer, Question,
     QuizSessionStatus, QuestionStatus, QuestionType
 )
 from features.quiz.schemas import (
@@ -52,9 +53,15 @@ class AnswerServiceAsync:
             QuestionNotOpenError: If question not accepting answers
             DuplicateAnswerError: If already answered
         """
-        # Get participant
+        # Get participant with session and quiz relationships
         result = await db.execute(
-            select(Participant).filter(Participant.session_token == session_token)
+            select(Participant)
+            .filter(Participant.session_token == session_token)
+            .options(
+                joinedload(Participant.session)
+                .joinedload(QuizSession.quiz)
+                .selectinload(Quiz.questions)
+            )
         )
         participant = result.scalar_one_or_none()
         
@@ -144,9 +151,15 @@ class AnswerServiceAsync:
             ParticipantNotFoundError: If token invalid
             QuestionNotOpenError: If question not accepting answers
         """
-        # Get participant
+        # Get participant with session and quiz relationships
         result = await db.execute(
-            select(Participant).filter(Participant.session_token == session_token)
+            select(Participant)
+            .filter(Participant.session_token == session_token)
+            .options(
+                joinedload(Participant.session)
+                .joinedload(QuizSession.quiz)
+                .selectinload(Quiz.questions)
+            )
         )
         participant = result.scalar_one_or_none()
         

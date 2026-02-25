@@ -3,6 +3,7 @@ Quiz Builder Service - Business logic for quiz CRUD operations (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
 import os
@@ -99,10 +100,12 @@ class QuizBuilderServiceAsync:
     ) -> QuizResponse:
         """Get quiz by ID"""
         result = await db.execute(
-            select(Quiz).filter(
+            select(Quiz)
+            .filter(
                 Quiz.id == quiz_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
+            .options(selectinload(Quiz.questions))
         )
         quiz = result.scalar_one_or_none()
         
@@ -123,6 +126,8 @@ class QuizBuilderServiceAsync:
         if event_id:
             query = query.filter(Quiz.event_id == event_id)
         
+        # Eagerly load questions to avoid lazy loading in async context
+        query = query.options(selectinload(Quiz.questions))
         query = query.order_by(Quiz.created_at.desc())
         result = await db.execute(query)
         quizzes = result.scalars().all()
@@ -204,10 +209,12 @@ class QuizBuilderServiceAsync:
     ) -> QuizResponse:
         """Publish quiz (validate and change status to READY)"""
         result = await db.execute(
-            select(Quiz).filter(
+            select(Quiz)
+            .filter(
                 Quiz.id == quiz_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
+            .options(selectinload(Quiz.questions))
         )
         quiz = result.scalar_one_or_none()
         
