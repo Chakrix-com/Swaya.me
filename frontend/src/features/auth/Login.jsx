@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
+import { UserOutlined, LockOutlined, LoginOutlined, RocketOutlined, HomeOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure, logout } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
+
+const { Title, Text } = Typography
 
 function Login() {
   const { t } = useTranslation()
@@ -51,7 +53,24 @@ function Login() {
   return (
     <PublicPageLayout>
       <div className="login-container">
-        <Card className="login-form" title={t('auth.login')}>
+        <Card className="login-form">
+          {/* Logo/Branding Header */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Space direction="vertical" size={4}>
+                <RocketOutlined style={{ fontSize: '48px', color: '#667eea' }} />
+                <Title level={2} style={{ margin: 0, color: '#667eea' }}>
+                  Swaya.me
+                </Title>
+                <Text type="secondary">Interactive Quiz Platform</Text>
+              </Space>
+            </Link>
+          </div>
+
+          <Title level={3} style={{ textAlign: 'center', marginBottom: '24px' }}>
+            {t('auth.login')}
+          </Title>
+
           <Form
             name="login"
             onFinish={onFinish}
@@ -66,7 +85,7 @@ function Login() {
                 { type: 'email', message: `${t('auth.email')} is invalid` },
               ]}
             >
-              <Input prefix={<UserOutlined />} placeholder={t('auth.email')} />
+              <Input prefix={<UserOutlined />} placeholder={t('auth.email')} size="large" />
             </Form.Item>
 
             <Form.Item
@@ -74,17 +93,32 @@ function Login() {
               name="password"
               rules={[{ required: true, message: `${t('auth.password')} is required` }]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} />
+              <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} size="large" />
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block icon={<LoginOutlined />}>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                loading={loading} 
+                block 
+                icon={<LoginOutlined />}
+                size="large"
+              >
                 {t('auth.loginButton')}
               </Button>
             </Form.Item>
 
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
               {t('auth.noAccount')} <Link to="/register">{t('auth.registerButton')}</Link>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
+              <Link to="/">
+                <Button type="link" icon={<HomeOutlined />}>
+                  Back to Home
+                </Button>
+              </Link>
             </div>
           </Form>
         </Card>
