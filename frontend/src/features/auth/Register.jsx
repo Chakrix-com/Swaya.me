@@ -40,7 +40,7 @@ function Register() {
                 <Title level={2} style={{ margin: 0, color: '#667eea' }}>
                   Swaya.me
                 </Title>
-                <Text type="secondary">Interactive Quiz Platform</Text>
+                <Text type="secondary">{t('auth.platformSubtitle')}</Text>
               </Space>
             </Link>
           </div>
@@ -108,7 +108,7 @@ function Register() {
             <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
               <Link to="/">
                 <Button type="link" icon={<HomeOutlined />}>
-                  Back to Home
+                  {t('auth.backToHome')}
                 </Button>
               </Link>
             </div>

@@ -29,7 +29,9 @@
     "invalidCredentials": "Invalid email or password",
     "userExists": "User already exists",
     "registerSuccess": "Registration successful! Please log in.",
-    "loginSuccess": "Welcome back!"
+    "loginSuccess": "Welcome back!",
+    "platformSubtitle": "Interactive Quiz Platform",
+    "backToHome": "Back to Home"
   },
   "quiz": {
     "myQuizzes": "My Quizzes",
