@@ -16,6 +16,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { logout } from './store/authSlice'
+import Home from './features/home/Home'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
 import Dashboard from './features/dashboard/Dashboard'
@@ -158,20 +159,20 @@ function AppRoutes() {
   const location = useLocation()
 
   // Public routes (no ProLayout)
-  const publicRoutes = ['/login', '/register', '/join', '/session']
-  const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route))
+  const publicRoutes = ['/', '/login', '/register', '/join', '/session']
+  const isPublicRoute = publicRoutes.some(route => location.pathname === '/' || location.pathname.startsWith(route))
 
-  if (isPublicRoute || !isAuthenticated) {
+  if (isPublicRoute && !isAuthenticated) {
     return (
       <PublicLayout>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/join" element={<AudienceJoin />} />
           <Route path="/join/:joinCode" element={<AudienceJoin />} />
           <Route path="/session/:sessionId" element={<AudienceSession />} />
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>
     )

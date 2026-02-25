@@ -372,5 +372,40 @@
     "ka": "Kannada",
     "bn": "Bengali",
     "gu": "Gujarati"
+  },
+  "home": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "hero": {
+      "title": "Interactive Quizzes Made Simple",
+      "subtitle": "Create engaging quizzes, collect real-time responses, and visualize results instantly. Perfect for classrooms, meetings, and events."
+    },
+    "quickJoin": {
+      "title": "Have a join code?",
+      "placeholder": "Enter join code (e.g., ABC123)",
+      "button": "Join Quiz",
+      "or": "OR",
+      "createAccount": "Create Free Account",
+      "existingUser": "I'm Already a User"
+    },
+    "features": {
+      "title": "Why Choose Swaya.me?",
+      "createQuizzes": "Create Quizzes",
+      "createQuizzesDesc": "Build multiple-choice and word cloud questions in minutes. No technical skills required.",
+      "liveParticipation": "Live Participation",
+      "liveParticipationDesc": "Participants join instantly with a simple code. No login required for audience members.",
+      "realTimeResults": "Real-Time Results",
+      "realTimeResultsDesc": "See responses as they come in. Perfect for instant feedback and engagement.",
+      "wordClouds": "Word Clouds",
+      "wordCloudsDesc": "Collect open-ended responses and visualize them as beautiful word clouds."
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of educators, trainers, and presenters using Swaya.me to make their sessions more interactive.",
+      "button": "Get Started Free"
+    },
+    "footer": {
+      "rights": "All rights reserved."
+    }
   }
 }
