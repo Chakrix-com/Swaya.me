@@ -2,10 +2,10 @@
 Quiz API Endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
-from persistence.database import get_db
+from persistence.database_async import get_async_db
 from core.auth.dependencies import get_current_user, CurrentUser
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -15,10 +15,10 @@ from features.quiz.schemas import (
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse
 )
-from features.quiz.quiz_service import QuizBuilderService
-from features.quiz.question_service import QuestionService
-from features.quiz.session_service import SessionService
-from features.quiz.answer_service import AnswerService
+from features.quiz.quiz_service_async import QuizBuilderServiceAsync
+from features.quiz.question_service_async import QuestionServiceAsync
+from features.quiz.session_service_async import SessionServiceAsync
+from features.quiz.answer_service_async import AnswerServiceAsync
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, SessionNotFoundError,
     ParticipantNotFoundError, QuizValidationError, InvalidQuizStatusError,
@@ -32,36 +32,36 @@ router = APIRouter(prefix="/quizzes", tags=["Quiz"])
 
 
 # Dependency to get services
-async def get_quiz_service(redis: RedisClient = Depends(get_redis)) -> QuizBuilderService:
+async def get_quiz_service(redis: RedisClient = Depends(get_redis)) -> QuizBuilderServiceAsync:
     tier_service = TierService(redis)
-    return QuizBuilderService(tier_service)
+    return QuizBuilderServiceAsync(tier_service)
 
 
-async def get_question_service(redis: RedisClient = Depends(get_redis)) -> QuestionService:
+async def get_question_service(redis: RedisClient = Depends(get_redis)) -> QuestionServiceAsync:
     tier_service = TierService(redis)
-    return QuestionService(tier_service)
+    return QuestionServiceAsync(tier_service)
 
 
-async def get_session_service(redis: RedisClient = Depends(get_redis)) -> SessionService:
+async def get_session_service(redis: RedisClient = Depends(get_redis)) -> SessionServiceAsync:
     tier_service = TierService(redis)
-    return SessionService(redis, tier_service)
+    return SessionServiceAsync(redis, tier_service)
 
 
-async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerService:
-    return AnswerService(redis)
+async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerServiceAsync:
+    return AnswerServiceAsync(redis)
 
 
 # Quiz CRUD Endpoints
 @router.post("/", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
 async def create_quiz(
     request: QuizCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Create new quiz"""
     try:
-        return service.create_quiz(db, request, current_user)
+        return await service.create_quiz(db, request, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -69,13 +69,13 @@ async def create_quiz(
 @router.get("/{quiz_id}", response_model=QuizResponse)
 async def get_quiz(
     quiz_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Get quiz by ID"""
     try:
-        return service.get_quiz(db, quiz_id, current_user)
+        return await service.get_quiz(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -83,25 +83,25 @@ async def get_quiz(
 @router.get("/", response_model=List[QuizListResponse])
 async def list_quizzes(
     event_id: Optional[int] = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """List quizzes for tenant"""
-    return service.list_quizzes(db, current_user, event_id)
+    return await service.list_quizzes(db, current_user, event_id)
 
 
 @router.put("/{quiz_id}", response_model=QuizResponse)
 async def update_quiz(
     quiz_id: int,
     request: QuizUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Update quiz"""
     try:
-        return service.update_quiz(db, quiz_id, request, current_user)
+        return await service.update_quiz(db, quiz_id, request, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
@@ -111,13 +111,13 @@ async def update_quiz(
 @router.delete("/{quiz_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_quiz(
     quiz_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Delete quiz"""
     try:
-        service.delete_quiz(db, quiz_id, current_user)
+        await service.delete_quiz(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
@@ -127,13 +127,13 @@ async def delete_quiz(
 @router.post("/{quiz_id}/publish", response_model=QuizResponse)
 async def publish_quiz(
     quiz_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Publish quiz (validate and mark as READY)"""
     try:
-        return service.publish_quiz(db, quiz_id, current_user)
+        return await service.publish_quiz(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except (InvalidQuizStatusError, QuizValidationError) as e:
@@ -143,13 +143,13 @@ async def publish_quiz(
 @router.post("/{quiz_id}/unpublish", response_model=QuizResponse)
 async def unpublish_quiz(
     quiz_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuizBuilderService = Depends(get_quiz_service)
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """Unpublish quiz (revert to DRAFT status for editing)"""
     try:
-        return service.unpublish_quiz(db, quiz_id, current_user)
+        return await service.unpublish_quiz(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
@@ -161,9 +161,9 @@ async def unpublish_quiz(
 async def add_question(
     quiz_id: int,
     request: QuestionCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuestionService = Depends(get_question_service)
+    service: QuestionServiceAsync = Depends(get_question_service)
 ):
     """Add question to quiz"""
     try:
@@ -178,13 +178,13 @@ async def add_question(
 async def update_question(
     question_id: int,
     request: QuestionUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuestionService = Depends(get_question_service)
+    service: QuestionServiceAsync = Depends(get_question_service)
 ):
     """Update question"""
     try:
-        return service.update_question(db, question_id, request, current_user)
+        return await service.update_question(db, question_id, request, current_user)
     except QuestionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
@@ -194,13 +194,13 @@ async def update_question(
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_question(
     question_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: QuestionService = Depends(get_question_service)
+    service: QuestionServiceAsync = Depends(get_question_service)
 ):
     """Delete question"""
     try:
-        service.delete_question(db, question_id, current_user)
+        await service.delete_question(db, question_id, current_user)
     except QuestionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
@@ -211,9 +211,9 @@ async def delete_question(
 @router.post("/sessions/start", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def start_session(
     quiz_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: SessionService = Depends(get_session_service)
+    service: SessionServiceAsync = Depends(get_session_service)
 ):
     """Start quiz session"""
     try:
@@ -227,8 +227,8 @@ async def start_session(
 @router.post("/sessions/join", response_model=SessionJoinResponse)
 async def join_session(
     request: SessionJoinRequest,
-    db: Session = Depends(get_db),
-    service: SessionService = Depends(get_session_service)
+    db: AsyncSession = Depends(get_async_db),
+    service: SessionServiceAsync = Depends(get_session_service)
 ):
     """Join session as participant (anonymous)"""
     try:
@@ -242,9 +242,9 @@ async def join_session(
 @router.post("/sessions/{session_id}/advance", response_model=SessionResponse)
 async def advance_question(
     session_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: SessionService = Depends(get_session_service)
+    service: SessionServiceAsync = Depends(get_session_service)
 ):
     """Advance to next question"""
     try:
@@ -258,9 +258,9 @@ async def advance_question(
 @router.post("/sessions/{session_id}/back", response_model=SessionResponse)
 async def back_question(
     session_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: SessionService = Depends(get_session_service)
+    service: SessionServiceAsync = Depends(get_session_service)
 ):
     """Go back to previous question"""
     try:
@@ -274,9 +274,9 @@ async def back_question(
 @router.post("/sessions/{session_id}/end", response_model=SessionResponse)
 async def end_session(
     session_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: SessionService = Depends(get_session_service)
+    service: SessionServiceAsync = Depends(get_session_service)
 ):
     """End session"""
     try:
@@ -290,8 +290,8 @@ async def end_session(
 async def submit_answer(
     request: AnswerSubmitRequest,
     session_token: str,
-    db: Session = Depends(get_db),
-    service: AnswerService = Depends(get_answer_service)
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Submit MCQ answer (participant)"""
     try:
@@ -306,8 +306,8 @@ async def submit_answer(
 async def submit_word_cloud_answer(
     request: WordCloudAnswerSubmitRequest,
     session_token: str,
-    db: Session = Depends(get_db),
-    service: AnswerService = Depends(get_answer_service)
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Submit word cloud answer (participant - unlimited submissions)"""
     try:
@@ -322,8 +322,8 @@ async def submit_word_cloud_answer(
 async def get_word_cloud_results(
     question_id: int,
     session_id: int,
-    db: Session = Depends(get_db),
-    service: AnswerService = Depends(get_answer_service)
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Get word cloud results for a question"""
     try:
@@ -336,17 +336,21 @@ async def get_word_cloud_results(
 async def get_session_results(
     session_id: int,
     session_token: Optional[str] = None,
-    db: Session = Depends(get_db),
-    service: AnswerService = Depends(get_answer_service)
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Get session results"""
     try:
         # Check if participant token is still active
         if session_token:
             from persistence.models.quiz import Participant
-            participant = db.query(Participant).filter(
-                Participant.session_token == session_token
-            ).first()
+            from sqlalchemy import select
+            result = await db.execute(
+                select(Participant).filter(
+                    Participant.session_token == session_token
+                )
+            )
+            participant = result.scalar_one_or_none()
             
             if participant and not participant.is_active:
                 raise HTTPException(

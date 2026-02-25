@@ -2,11 +2,11 @@
 Authentication API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from persistence.database import get_db
+from persistence.database_async import get_async_db
 from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
-from core.auth.service import register_user, login_user
+from core.auth.service_async import register_user, login_user
 from core.auth.dependencies import get_current_user
 from shared.exceptions.auth import InvalidCredentialsError, DuplicateUserError, TenantNotFoundError
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: UserRegisterRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Register new user and create tenant
@@ -26,7 +26,7 @@ async def register(
     - Returns JWT access token
     """
     try:
-        return register_user(db, request)
+        return await register_user(db, request)
     except DuplicateUserError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -37,7 +37,7 @@ async def register(
 @router.post("/login", response_model=TokenResponse)
 async def login(
     request: UserLoginRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Authenticate user and get access token
@@ -46,7 +46,7 @@ async def login(
     - Returns JWT access token valid for 24 hours
     """
     try:
-        return login_user(db, request)
+        return await login_user(db, request)
     except (InvalidCredentialsError, TenantNotFoundError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,7 +56,7 @@ async def login(
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user = Depends(get_current_user)
 ):
     """

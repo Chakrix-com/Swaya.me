@@ -1,9 +1,9 @@
 """
-User Management Service
+User Management Service - Async Version
 Business logic for user CRUD, activity logging, and statistics
 """
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, func, desc, select
 from typing import Optional, List, Tuple
 from datetime import datetime
 from fastapi import HTTPException, status
@@ -18,13 +18,13 @@ from core.user_management.authorization import AuthorizationService
 from core.security.password import hash_password, verify_password
 
 
-class UserManagementService:
-    """Service for managing users"""
+class UserManagementServiceAsync:
+    """Async service for managing users"""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
     
-    def create_user(
+    async def create_user(
         self,
         user_create: UserCreate,
         current_user: User
@@ -54,12 +54,15 @@ class UserManagementService:
             # Check if admin has quota set
             if current_user.user_quota is not None:
                 # Count active users managed by this admin
-                current_usage = self.db.query(func.count(User.id)).filter(
-                    and_(
-                        User.managed_by_admin_id == current_user.id,
-                        User.is_active == True
+                result = await self.db.execute(
+                    select(func.count(User.id)).filter(
+                        and_(
+                            User.managed_by_admin_id == current_user.id,
+                            User.is_active == True
+                        )
                     )
-                ).scalar() or 0
+                )
+                current_usage = result.scalar() or 0
                 
                 if current_usage >= current_user.user_quota:
                     raise HTTPException(
@@ -68,7 +71,10 @@ class UserManagementService:
                     )
         
         # Check if email already exists
-        existing_user = self.db.query(User).filter(User.email == user_create.email).first()
+        result = await self.db.execute(
+            select(User).filter(User.email == user_create.email)
+        )
+        existing_user = result.scalar_one_or_none()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -76,7 +82,10 @@ class UserManagementService:
             )
         
         # Verify tenant exists
-        tenant = self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        result = await self.db.execute(
+            select(Tenant).filter(Tenant.id == tenant_id)
+        )
+        tenant = result.scalar_one_or_none()
         if not tenant:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -93,13 +102,16 @@ class UserManagementService:
         elif current_user.role == UserRole.super_admin and user_create.tenant_id:
             # Super admin creating user in specific tenant
             # Try to find first admin in that tenant
-            first_admin = self.db.query(User).filter(
-                and_(
-                    User.tenant_id == tenant_id,
-                    User.role == UserRole.admin,
-                    User.is_active == True
+            result = await self.db.execute(
+                select(User).filter(
+                    and_(
+                        User.tenant_id == tenant_id,
+                        User.role == UserRole.admin,
+                        User.is_active == True
+                    )
                 )
-            ).first()
+            )
+            first_admin = result.scalar_one_or_none()
             managed_by_admin_id = first_admin.id if first_admin else None
         else:
             # Super admin creating in own tenant or no specific admin
@@ -117,11 +129,11 @@ class UserManagementService:
         )
         
         self.db.add(new_user)
-        self.db.commit()
-        self.db.refresh(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
         
         # Log activity
-        self._log_activity(
+        await self._log_activity(
             user_id=current_user.id,
             tenant_id=current_user.tenant_id,
             action="user_created",
@@ -132,9 +144,12 @@ class UserManagementService:
         
         return UserResponse.model_validate(new_user)
     
-    def get_user(self, user_id: int, current_user: User) -> UserResponse:
+    async def get_user(self, user_id: int, current_user: User) -> UserResponse:
         """Get user by ID"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -151,7 +166,7 @@ class UserManagementService:
         
         return UserResponse.model_validate(user)
     
-    def list_users(
+    async def list_users(
         self,
         current_user: User,
         page: int = 1,
@@ -168,20 +183,20 @@ class UserManagementService:
         AuthorizationService.enforce_user_management_access(current_user)
         
         # Base query
-        query = self.db.query(User)
+        stmt = select(User)
         
         # Tenant filtering
         if AuthorizationService.is_super_admin(current_user):
             if tenant_id:
-                query = query.filter(User.tenant_id == tenant_id)
+                stmt = stmt.filter(User.tenant_id == tenant_id)
         else:
             # Admin can only see their tenant
-            query = query.filter(User.tenant_id == current_user.tenant_id)
+            stmt = stmt.filter(User.tenant_id == current_user.tenant_id)
         
         # Search filter
         if search:
             search_pattern = f"%{search}%"
-            query = query.filter(
+            stmt = stmt.filter(
                 or_(
                     User.email.ilike(search_pattern),
                     User.full_name.ilike(search_pattern)
@@ -190,18 +205,23 @@ class UserManagementService:
         
         # Role filter
         if role:
-            query = query.filter(User.role == role)
+            stmt = stmt.filter(User.role == role)
         
         # Active filter
         if is_active is not None:
-            query = query.filter(User.is_active == is_active)
+            stmt = stmt.filter(User.is_active == is_active)
         
         # Get total count
-        total = query.count()
+        count_result = await self.db.execute(
+            select(func.count()).select_from(stmt.subquery())
+        )
+        total = count_result.scalar() or 0
         
         # Pagination
         offset = (page - 1) * per_page
-        users = query.order_by(desc(User.created_at)).offset(offset).limit(per_page).all()
+        stmt = stmt.order_by(desc(User.created_at)).offset(offset).limit(per_page)
+        result = await self.db.execute(stmt)
+        users = result.scalars().all()
         
         return UserListResponse(
             users=[UserResponse.model_validate(u) for u in users],
@@ -211,14 +231,17 @@ class UserManagementService:
             pages=(total + per_page - 1) // per_page
         )
     
-    def update_user(
+    async def update_user(
         self,
         user_id: int,
         user_update: UserUpdate,
         current_user: User
     ) -> UserResponse:
         """Update user details"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -248,11 +271,11 @@ class UserManagementService:
         if user_update.role is not None:
             user.role = user_update.role
         
-        self.db.commit()
-        self.db.refresh(user)
+        await self.db.commit()
+        await self.db.refresh(user)
         
         # Log activity
-        self._log_activity(
+        await self._log_activity(
             user_id=current_user.id,
             tenant_id=current_user.tenant_id,
             action="user_updated",
@@ -263,9 +286,12 @@ class UserManagementService:
         
         return UserResponse.model_validate(user)
     
-    def delete_user(self, user_id: int, current_user: User) -> dict:
+    async def delete_user(self, user_id: int, current_user: User) -> dict:
         """Delete user (soft delete by setting is_active=False)"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -284,13 +310,16 @@ class UserManagementService:
         
         # Check if user is last admin in tenant
         if user.role == UserRole.admin:
-            admin_count = self.db.query(User).filter(
-                and_(
-                    User.tenant_id == user.tenant_id,
-                    User.role == UserRole.admin,
-                    User.is_active == True
+            count_result = await self.db.execute(
+                select(func.count(User.id)).filter(
+                    and_(
+                        User.tenant_id == user.tenant_id,
+                        User.role == UserRole.admin,
+                        User.is_active == True
+                    )
                 )
-            ).count()
+            )
+            admin_count = count_result.scalar() or 0
             if admin_count == 1:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -299,10 +328,10 @@ class UserManagementService:
         
         # Soft delete
         user.is_active = False
-        self.db.commit()
+        await self.db.commit()
         
         # Log activity
-        self._log_activity(
+        await self._log_activity(
             user_id=current_user.id,
             tenant_id=current_user.tenant_id,
             action="user_deleted",
@@ -313,9 +342,12 @@ class UserManagementService:
         
         return {"message": "User deleted successfully"}
     
-    def get_user_stats(self, user_id: int, current_user: User) -> UserStats:
+    async def get_user_stats(self, user_id: int, current_user: User) -> UserStats:
         """Get user statistics"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -331,7 +363,10 @@ class UserManagementService:
                 )
         
         # Get quiz count
-        quiz_count = self.db.query(Quiz).filter(Quiz.created_by == user_id).count()
+        count_result = await self.db.execute(
+            select(func.count(Quiz.id)).filter(Quiz.created_by == user_id)
+        )
+        quiz_count = count_result.scalar() or 0
         
         # Get total participants (sum from all quizzes)
         # This would require session/participant data - placeholder for now
@@ -344,7 +379,7 @@ class UserManagementService:
             total_participants=total_participants
         )
     
-    def get_user_activities(
+    async def get_user_activities(
         self,
         user_id: int,
         current_user: User,
@@ -352,7 +387,10 @@ class UserManagementService:
         per_page: int = 50
     ) -> ActivityLogListResponse:
         """Get user activity log"""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -367,11 +405,16 @@ class UserManagementService:
                     detail="Cannot access user activities"
                 )
         
-        query = self.db.query(UserActivity).filter(UserActivity.user_id == user_id)
-        total = query.count()
+        stmt = select(UserActivity).filter(UserActivity.user_id == user_id)
+        count_result = await self.db.execute(
+            select(func.count()).select_from(stmt.subquery())
+        )
+        total = count_result.scalar() or 0
         
         offset = (page - 1) * per_page
-        activities = query.order_by(desc(UserActivity.created_at)).offset(offset).limit(per_page).all()
+        stmt = stmt.order_by(desc(UserActivity.created_at)).offset(offset).limit(per_page)
+        result = await self.db.execute(stmt)
+        activities = result.scalars().all()
         
         return ActivityLogListResponse(
             activities=[ActivityLogResponse.model_validate(a) for a in activities],
@@ -380,7 +423,7 @@ class UserManagementService:
             per_page=per_page
         )
     
-    def update_password(
+    async def update_password(
         self,
         user_id: int,
         current_password: str,
@@ -395,7 +438,10 @@ class UserManagementService:
                 detail="Can only change your own password"
             )
         
-        user = self.db.query(User).filter(User.id == user_id).first()
+        result = await self.db.execute(
+            select(User).filter(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -411,10 +457,10 @@ class UserManagementService:
         
         # Update password
         user.hashed_password = hash_password(new_password)
-        self.db.commit()
+        await self.db.commit()
         
         # Log activity
-        self._log_activity(
+        await self._log_activity(
             user_id=user.id,
             tenant_id=user.tenant_id,
             action="password_changed",
@@ -424,7 +470,7 @@ class UserManagementService:
         
         return {"message": "Password updated successfully"}
     
-    def _log_activity(
+    async def _log_activity(
         self,
         user_id: int,
         tenant_id: int,
@@ -447,4 +493,4 @@ class UserManagementService:
             user_agent=user_agent
         )
         self.db.add(activity)
-        self.db.commit()
+        await self.db.commit()

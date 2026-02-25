@@ -2,14 +2,14 @@
 API endpoints for language tracking and analytics
 """
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from datetime import datetime, timedelta
 import logging
 
-from persistence.database import get_db
+from persistence.database_async import get_async_db
 from core.auth.dependencies import get_current_user, CurrentUser
-from core.language_tracking.service import LanguageTrackingService
+from core.language_tracking.service_async import LanguageTrackingServiceAsync
 from core.language_tracking.schemas import (
     LanguagePreferenceUpdate,
     LanguageEventCreate,
@@ -28,23 +28,23 @@ async def update_language_preference(
     request_data: LanguagePreferenceUpdate,
     request: Request,
     current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Update authenticated user's language preference and log event
     """
     try:
-        service = LanguageTrackingService(db)
+        service = LanguageTrackingServiceAsync(db)
         
         # Update user preference
-        service.update_user_language_preference(current_user.user_id, request_data.language)
+        await service.update_user_language_preference(current_user.user_id, request_data.language)
         
         # Log the event
         user_agent = request.headers.get("user-agent")
         ip_address = request.client.host if request.client else None
         session_id = request.headers.get("x-session-id", f"user_{current_user.user_id}")
         
-        result = service.log_language_event(
+        result = await service.log_language_event(
             user_id=current_user.user_id,
             session_id=session_id,
             language=request_data.language,
@@ -65,20 +65,20 @@ async def update_language_preference(
 async def log_language_event(
     request_data: LanguageEventCreate,
     request: Request,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Log a language change event (for anonymous users)
     No authentication required
     """
     try:
-        service = LanguageTrackingService(db)
+        service = LanguageTrackingServiceAsync(db)
         
         # Get IP address from request
         ip_address = request.client.host if request.client else None
         
         # Log the event (no user_id for anonymous)
-        result = service.log_language_event(
+        result = await service.log_language_event(
             user_id=None,
             session_id=request_data.session_id,
             language=request_data.language,
@@ -105,7 +105,7 @@ async def get_language_stats(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Get comprehensive language usage statistics
@@ -116,7 +116,7 @@ async def get_language_stats(
         raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
-        service = LanguageTrackingService(db)
+        service = LanguageTrackingServiceAsync(db)
         
         # Parse date range if provided
         start = None
@@ -134,7 +134,7 @@ async def get_language_stats(
                 raise HTTPException(status_code=400, detail="Invalid end_date format")
         
         # Get comprehensive stats (ignore date filters for now, use trend_days)
-        stats = service.get_language_stats_summary(
+        stats = await service.get_language_stats_summary(
             include_trends=True,
             trend_days=30
         )
@@ -181,7 +181,7 @@ async def export_language_stats(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Export language usage data as CSV
@@ -196,14 +196,14 @@ async def export_language_stats(
         import io
         import csv
         
-        service = LanguageTrackingService(db)
+        service = LanguageTrackingServiceAsync(db)
         
         # Parse dates
         start = datetime.fromisoformat(start_date.replace('Z', '+00:00')) if start_date else None
         end = datetime.fromisoformat(end_date.replace('Z', '+00:00')) if end_date else None
         
         # Get trends data
-        trends = service.get_language_trends(start_date=start, end_date=end)
+        trends = await service.get_language_trends(start_date=start, end_date=end)
         
         # Create CSV in memory
         output = io.StringIO()

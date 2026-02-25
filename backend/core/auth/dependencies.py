@@ -105,3 +105,30 @@ async def get_optional_user(
     if not credentials:
         return None
     return await get_current_user(credentials, db)
+
+
+async def require_super_admin(
+    current_user: CurrentUser = Depends(get_current_user)
+) -> User:
+    """
+    Dependency to require super_admin role
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        User object if super_admin
+        
+    Raises:
+        HTTPException: If user is not super_admin
+    """
+    from persistence.models.core import UserRole
+    
+    if current_user.user.role != UserRole.super_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin access required"
+        )
+    
+    return current_user.user
+

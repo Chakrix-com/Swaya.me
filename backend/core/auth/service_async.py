@@ -1,7 +1,8 @@
 """
-Authentication service - business logic for user auth
+Authentication service - async business logic for user auth
 """
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
 import re
 
@@ -24,12 +25,12 @@ def create_tenant_slug(name: str) -> str:
     return slug.strip('-')
 
 
-def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
+async def register_user(db: AsyncSession, request: UserRegisterRequest) -> TokenResponse:
     """
     Register new user with tenant creation
     
     Args:
-        db: Database session
+        db: Async database session
         request: Registration request data
         
     Returns:
@@ -39,7 +40,9 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
         DuplicateUserError: If email already exists
     """
     # Check if user already exists
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    stmt = select(User).where(User.email == request.email)
+    result = await db.execute(stmt)
+    existing_user = result.scalar_one_or_none()
     if existing_user:
         raise DuplicateUserError(f"User with email {request.email} already exists")
     
@@ -47,7 +50,9 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
     NO_ORG_TENANT_ID = 1
     
     # Get NO-ORG tenant to include in response
-    tenant = db.query(Tenant).filter(Tenant.id == NO_ORG_TENANT_ID).first()
+    stmt = select(Tenant).where(Tenant.id == NO_ORG_TENANT_ID)
+    result = await db.execute(stmt)
+    tenant = result.scalar_one_or_none()
     if not tenant:
         raise Exception("NO-ORG tenant not found. Database migration may have failed.")
     
@@ -65,8 +70,8 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
         last_login_at=datetime.now(timezone.utc)
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     
     # Generate access token
     access_token = create_access_token(
@@ -96,12 +101,12 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
     )
 
 
-def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
+async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenResponse:
     """
     Authenticate user and generate access token
     
     Args:
-        db: Database session
+        db: Async database session
         request: Login request data
         
     Returns:
@@ -112,7 +117,9 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
         TenantNotFoundError: If tenant not found or inactive
     """
     # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
+    stmt = select(User).where(User.email == request.email)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
     if not user:
         # Generic error for security - don't reveal if user exists
         raise InvalidCredentialsError("Invalid email or password")
@@ -126,7 +133,9 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
         raise InvalidCredentialsError("Your account has been disabled. Please contact support.")
     
     # Get tenant - should always exist due to FK constraint
-    tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
+    stmt = select(Tenant).where(Tenant.id == user.tenant_id)
+    result = await db.execute(stmt)
+    tenant = result.scalar_one_or_none()
     if not tenant:
         # This should never happen due to database FK constraint
         # If it does, it indicates database corruption
@@ -140,7 +149,7 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
     from datetime import datetime, timezone
     user.last_login_at = datetime.now(timezone.utc)
     user.login_count += 1
-    db.commit()
+    await db.commit()
     
     # Generate access token
     access_token = create_access_token(
@@ -170,6 +179,8 @@ def login_user(db: Session, request: UserLoginRequest) -> TokenResponse:
     )
 
 
-def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
+async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
     """Get user by ID"""
-    return db.query(User).filter(User.id == user_id).first()
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()

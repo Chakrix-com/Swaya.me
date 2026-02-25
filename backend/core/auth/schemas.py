@@ -10,7 +10,7 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     full_name: Optional[str] = Field(None, max_length=255)
-    tenant_name: str = Field(..., min_length=2, max_length=255)
+    # tenant_name removed - all new users go to NO-ORG tenant
     
     @validator('password')
     def validate_password(cls, v):
