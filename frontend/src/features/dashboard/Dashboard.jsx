@@ -1,10 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, List, Tag, Space, Popconfirm, message } from 'antd'
-import { PlusOutlined, PlayCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Button, List, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic } from 'antd'
+import { 
+  PlusOutlined, 
+  PlayCircleOutlined, 
+  EditOutlined, 
+  DeleteOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  EditFilled,
+  RocketOutlined
+} from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
 import { quizAPI } from '../../services/api'
@@ -55,8 +64,80 @@ function Dashboard() {
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
 
+  // Calculate quiz statistics
+  const statistics = useMemo(() => {
+    const stats = {
+      total: quizzes.length,
+      byStatus: {
+        draft: 0,
+        ready: 0,
+        archived: 0
+      },
+      totalQuestions: 0
+    }
+
+    quizzes.forEach(quiz => {
+      // Count by status
+      if (quiz.status in stats.byStatus) {
+        stats.byStatus[quiz.status]++
+      }
+      // Count total questions
+      if (quiz.question_count) {
+        stats.totalQuestions += quiz.question_count
+      }
+    })
+
+    return stats
+  }, [quizzes])
+
   return (
-    <ProCard
+    <div style={{ padding: 24 }}>
+      {/* Statistics Cards */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Total Quizzes"
+              value={statistics.total}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Ready to Launch"
+              value={statistics.byStatus.ready}
+              prefix={<RocketOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Drafts"
+              value={statistics.byStatus.draft}
+              prefix={<EditFilled />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Total Questions"
+              value={statistics.totalQuestions}
+              prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Quiz List */}
+      <ProCard
       title={t('quiz.myQuizzes')}
       extra={
         <Button
@@ -117,6 +198,7 @@ function Dashboard() {
         )}
       />
     </ProCard>
+    </div>
   )
 }
 

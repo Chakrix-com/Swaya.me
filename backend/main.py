@@ -12,6 +12,7 @@ from core.config.settings import settings
 from broker.api.routes import api_router
 from shared.utils.redis_client import redis_client
 from broker.policies.tenant_isolation import tenant_isolation_middleware
+from core.stats.scheduler import start_scheduler, stop_scheduler
 
 
 @asynccontextmanager
@@ -43,12 +44,21 @@ async def lifespan(app: FastAPI):
     if deleted > 0:
         print(f"✓  Cleaned up {deleted} old temp files")
     
+    # Start statistics snapshot scheduler
+    start_scheduler()
+    print("✓  Statistics scheduler started")
+    
     # TODO: Run database migrations check
     
     yield
     
     # Shutdown
     print("🛑 Shutting down Swaya.me backend...")
+    
+    # Stop statistics scheduler
+    stop_scheduler()
+    print("✓  Statistics scheduler stopped")
+    
     await redis_client.disconnect()
     print("✓  Redis disconnected")
 

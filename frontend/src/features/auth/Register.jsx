@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, UserAddOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
@@ -18,7 +18,7 @@ function Register() {
     try {
       const response = await authAPI.register(values)
       dispatch(loginSuccess(response.data))
-      message.success(t('auth.registerSuccess'))
+      message.success('Registration successful! An admin will assign you to an organization.')
       navigate('/dashboard')
     } catch (error) {
       dispatch(loginFailure(error.response?.data?.detail || 'Registration failed'))
@@ -36,14 +36,6 @@ function Register() {
             autoComplete="off"
             layout="vertical"
           >
-            <Form.Item
-              label={t('auth.tenantName')}
-              name="tenant_name"
-              rules={[{ required: true, message: `${t('auth.tenantName')} is required` }]}
-            >
-              <Input prefix={<TeamOutlined />} placeholder={t('auth.tenantName')} />
-            </Form.Item>
-
             <Form.Item
               label={t('auth.email')}
               name="email"

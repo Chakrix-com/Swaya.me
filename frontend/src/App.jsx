@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
 import { ConfigProvider } from 'antd'
@@ -8,7 +9,9 @@ import {
   PlusOutlined, 
   LogoutOutlined,
   QuestionCircleOutlined,
-  TeamOutlined
+  TeamOutlined,
+  BarChartOutlined,
+  ApartmentOutlined
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +24,10 @@ import QuizControl from './features/quiz/QuizControl'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
 import UserManagement from './features/admin/components/UserManagement'
+import Statistics from './features/admin/Statistics'
+import OrganizationManagement from './features/admin/OrganizationManagement'
 import LanguageSwitcher from './components/LanguageSwitcher'
+import StatsPanel from './components/StatsPanel'
 import './App.css'
 
 // Map i18n language codes to Ant Design locales
@@ -42,11 +48,15 @@ function AuthenticatedLayout({ children }) {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
   const { t } = useTranslation()
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleLogout = () => {
     dispatch(logout())
     navigate('/login')
   }
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
+  const isSuperAdmin = user?.role === 'super_admin'
 
   return (
     <ProLayout
@@ -57,6 +67,8 @@ function AuthenticatedLayout({ children }) {
       contentWidth="Fluid"
       fixedHeader
       fixSiderbar
+      collapsed={collapsed}
+      onCollapse={setCollapsed}
       location={{
         pathname: location.pathname,
       }}
@@ -80,11 +92,23 @@ function AuthenticatedLayout({ children }) {
             icon: <QuestionCircleOutlined />,
             hideInMenu: true,
           },
-          ...(user?.role === 'admin' || user?.role === 'super_admin' ? [{
-            path: '/admin/users',
-            name: 'User Management',
-            icon: <TeamOutlined />,
-          }] : []),
+          ...(isAdmin ? [
+            {
+              path: '/admin/statistics',
+              name: t('admin.statistics'),
+              icon: <BarChartOutlined />,
+            },
+            {
+              path: '/admin/users',
+              name: t('admin.userManagement'),
+              icon: <TeamOutlined />,
+            },
+            ...(isSuperAdmin ? [{
+              path: '/admin/organizations',
+              name: t('admin.organizations'),
+              icon: <ApartmentOutlined />,
+            }] : [])
+          ] : []),
         ],
       }}
       menuItemRender={(item, dom) => (
@@ -92,6 +116,12 @@ function AuthenticatedLayout({ children }) {
           {dom}
         </div>
       )}
+      menuFooterRender={() => {
+        if (isAdmin && !collapsed) {
+          return <StatsPanel userRole={user?.role} />
+        }
+        return null
+      }}
       avatarProps={{
         src: null,
         title: user?.full_name || user?.email || t('common.user'),
@@ -155,7 +185,9 @@ function AppRoutes() {
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />
+        <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />
+        <Route path="/admin/organizations" element={<OrganizationManagement />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
