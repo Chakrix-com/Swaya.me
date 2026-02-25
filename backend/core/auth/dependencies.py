@@ -100,7 +100,7 @@ async def get_current_user(
 
 async def get_optional_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_async_db)
 ) -> Optional[CurrentUser]:
     """
     Optional authentication - returns None if no token provided

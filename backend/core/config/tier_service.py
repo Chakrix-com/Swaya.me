@@ -1,7 +1,8 @@
 """
 Tier management service - quota tracking and enforcement
 """
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 from typing import Dict, Any
 from datetime import datetime, timedelta
 
@@ -15,11 +16,12 @@ class TierService:
     def __init__(self, redis: RedisClient):
         self.redis = redis
     
-    async def get_tier_config(self, db: Session, tier: TierEnum) -> Dict[str, Any]:
+    async def get_tier_config(self, db: AsyncSession, tier: TierEnum) -> Dict[str, Any]:
         """Get tier configuration"""
-        config = db.query(TierConfiguration).filter(
-            TierConfiguration.tier == tier
-        ).first()
+        result = await db.execute(
+            select(TierConfiguration).filter(TierConfiguration.tier == tier)
+        )
+        config = result.scalar_one_or_none()
         
         if not config:
             # Return default limits if not configured
@@ -91,7 +93,7 @@ class TierService:
     
     async def check_concurrent_events_limit(
         self,
-        db: Session,
+        db: AsyncSession,
         tenant_id: int,
         tier: TierEnum
     ) -> bool:
@@ -102,10 +104,13 @@ class TierService:
         max_concurrent = config["max_concurrent_events"]
         
         # Count only ACTIVE events (events with a join_code indicate a running session)
-        active_count = db.query(Event).filter(
-            Event.tenant_id == tenant_id,
-            Event.join_code.isnot(None)
-        ).count()
+        result = await db.execute(
+            select(func.count(Event.id)).filter(
+                Event.tenant_id == tenant_id,
+                Event.join_code.isnot(None)
+            )
+        )
+        active_count = result.scalar()
         
         return active_count < max_concurrent
     
@@ -123,8 +128,10 @@ class TierService:
             await self.redis.client.decr(key)
 
 
-async def seed_tier_configurations(db: Session):
+async def seed_tier_configurations(db: AsyncSession):
     """Seed default tier configurations"""
+    from sqlalchemy.ext.asyncio import AsyncSession
+    
     tiers = [
         TierConfiguration(
             tier=TierEnum.FREE,
@@ -150,11 +157,14 @@ async def seed_tier_configurations(db: Session):
     ]
     
     for tier_config in tiers:
-        existing = db.query(TierConfiguration).filter(
-            TierConfiguration.tier == tier_config.tier
-        ).first()
+        result = await db.execute(
+            select(TierConfiguration).filter(
+                TierConfiguration.tier == tier_config.tier
+            )
+        )
+        existing = result.scalar_one_or_none()
         
         if not existing:
             db.add(tier_config)
     
-    db.commit()
+    await db.commit()
