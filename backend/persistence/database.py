@@ -13,6 +13,7 @@ engine = create_engine(
     poolclass=QueuePool,
     pool_size=settings.db.pool_size,
     max_overflow=settings.db.max_overflow,
+    pool_recycle=settings.db.pool_recycle,  # Recycle connections every hour
     pool_pre_ping=True,  # Verify connections before using
     echo=settings.app.debug,  # Log SQL queries in debug mode
 )

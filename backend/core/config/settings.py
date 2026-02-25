@@ -14,8 +14,9 @@ class DatabaseSettings(BaseSettings):
     name: str = Field(default="swaya_dev", alias="DB_NAME")
     user: str = Field(default="root", alias="DB_USER")
     password: str = Field(default="", alias="DB_PASSWORD")
-    pool_size: int = Field(default=10, alias="DB_POOL_SIZE")
-    max_overflow: int = Field(default=20, alias="DB_MAX_OVERFLOW")
+    pool_size: int = Field(default=50, alias="DB_POOL_SIZE")
+    max_overflow: int = Field(default=100, alias="DB_MAX_OVERFLOW")
+    pool_recycle: int = Field(default=3600, alias="DB_POOL_RECYCLE")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -25,8 +26,13 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        """Generate database URL"""
+        """Generate database URL (sync)"""
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+    
+    @property
+    def async_url(self) -> str:
+        """Generate async database URL"""
+        return f"mysql+asyncmy://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
 class RedisSettings(BaseSettings):
