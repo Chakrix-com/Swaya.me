@@ -364,10 +364,12 @@ class SessionServiceAsync:
     ) -> SessionResponse:
         """End session manually"""
         result = await db.execute(
-            select(QuizSession).filter(
+            select(QuizSession)
+            .filter(
                 QuizSession.id == session_id,
                 QuizSession.tenant_id == current_user.tenant_id
             )
+            .options(joinedload(QuizSession.quiz))
         )
         session = result.scalar_one_or_none()
         

@@ -3,7 +3,7 @@ Question Management Service - Add, edit, delete, reorder questions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, contains_eager
 from typing import List
 
 from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
@@ -144,10 +144,13 @@ class QuestionServiceAsync:
     ):
         """Delete question"""
         result = await db.execute(
-            select(Question).join(Quiz).filter(
+            select(Question)
+            .join(Quiz)
+            .filter(
                 Question.id == question_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
+            .options(contains_eager(Question.quiz))
         )
         question = result.scalar_one_or_none()
         

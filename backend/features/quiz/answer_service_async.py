@@ -372,8 +372,12 @@ class AnswerServiceAsync:
         Returns:
             Complete session results
         """
-        # Get session
-        result = await db.execute(select(QuizSession).filter(QuizSession.id == session_id))
+        # Get session with quiz and questions
+        result = await db.execute(
+            select(QuizSession)
+            .filter(QuizSession.id == session_id)
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
+        )
         session = result.scalar_one_or_none()
         
         if not session:
