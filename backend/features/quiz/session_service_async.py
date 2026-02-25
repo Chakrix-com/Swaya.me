@@ -173,70 +173,79 @@ class SessionServiceAsync:
             SessionNotFoundError: If join code invalid
             TierLimitExceededError: If participant limit reached
         """
-        # Find event by join code
-        result = await db.execute(select(Event).filter(Event.join_code == request.join_code))
-        event = result.scalar_one_or_none()
-        
-        if not event:
-            raise SessionNotFoundError("Invalid join code")
-        
-        # Find active session - get the LATEST one, not the first
-        result = await db.execute(
-            select(QuizSession)
-            .join(Quiz)
-            .filter(
-                Quiz.event_id == event.id,
-                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
+        try:
+            # Find event by join code
+            result = await db.execute(select(Event).filter(Event.join_code == request.join_code))
+            event = result.scalar_one_or_none()
+            
+            if not event:
+                raise SessionNotFoundError("Invalid join code")
+            
+            # Find active session - get the LATEST one (in case multiple exist)
+            result = await db.execute(
+                select(QuizSession)
+                .join(Quiz)
+                .filter(
+                    Quiz.event_id == event.id,
+                    QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
+                )
+                .options(contains_eager(QuizSession.quiz))
+                .order_by(QuizSession.id.desc())
             )
-            .options(contains_eager(QuizSession.quiz))
-            .order_by(QuizSession.id.desc())
-        )
-        session = result.scalar_one_or_none()
-        
-        if not session:
-            raise SessionNotFoundError("No active session found")
-        
-        # Get tenant to check tier
-        result = await db.execute(select(Tenant).filter(Tenant.id == session.tenant_id))
-        tenant = result.scalar_one_or_none()
-        
-        if not tenant:
-            raise SessionNotFoundError("Tenant not found")
-        
-        # Check participant limit
-        can_join = await self.tier_service.check_participant_limit(
-            session.tenant_id,
-            session.id,
-            tenant.tier
-        )
-        
-        if not can_join:
-            raise TierLimitExceededError("Participant limit reached")
-        
-        # Create participant
-        session_token = self._generate_session_token()
-        
-        participant = Participant(
-            session_id=session.id,
-            display_name=request.display_name,
-            session_token=session_token,
-            is_active=True
-        )
-        
-        db.add(participant)
-        await db.commit()
-        await db.refresh(participant)
-        
-        # Increment participant count in Redis
-        await self.tier_service.increment_participant_count(session.id)
-        
-        return SessionJoinResponse(
-            session_id=session.id,
-            session_token=session_token,
-            participant_id=participant.id,
-            quiz_title=session.quiz.title,
-            status=session.status
-        )
+            session = result.scalars().first()
+            
+            if not session:
+                raise SessionNotFoundError("No active session found")
+            
+            # Get tenant to check tier
+            result = await db.execute(select(Tenant).filter(Tenant.id == session.tenant_id))
+            tenant = result.scalar_one_or_none()
+            
+            if not tenant:
+                raise SessionNotFoundError("Tenant not found")
+            
+            # Check participant limit
+            can_join = await self.tier_service.check_participant_limit(
+                session.tenant_id,
+                session.id,
+                tenant.tier
+            )
+            
+            if not can_join:
+                raise TierLimitExceededError("Participant limit reached")
+            
+            # Create participant
+            session_token = self._generate_session_token()
+            
+            participant = Participant(
+                session_id=session.id,
+                display_name=request.display_name,
+                session_token=session_token,
+                is_active=True
+            )
+            
+            db.add(participant)
+            await db.commit()
+            await db.refresh(participant)
+            
+            # Increment participant count in Redis
+            await self.tier_service.increment_participant_count(session.id)
+            
+            # Build response
+            response = SessionJoinResponse(
+                session_id=session.id,
+                session_token=session_token,
+                participant_id=participant.id,
+                quiz_title=session.quiz.title,
+                status=session.status
+            )
+            
+            return response
+            
+        except (SessionNotFoundError, TierLimitExceededError):
+            raise
+        except Exception as e:
+            raise
     
     async def advance_question(
         self,
