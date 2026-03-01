@@ -2,6 +2,7 @@
 Quiz feature domain models
 """
 from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime
+from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
 from sqlalchemy.orm import relationship
 import enum
 
@@ -141,8 +142,8 @@ class SessionQuestionTiming(Base):
     session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False)
     question_index = Column(Integer, nullable=False)
-    opened_at = Column(DateTime, nullable=False)
-    closed_at = Column(DateTime, nullable=True)
+    opened_at = Column(MYSQL_DATETIME(fsp=6), nullable=False)
+    closed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
 
     session = relationship("QuizSession", back_populates="question_timings")
     question = relationship("Question")
