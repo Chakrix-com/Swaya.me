@@ -143,7 +143,12 @@
     "failedToLoadResults": "முடிவுகள் ஏற்ற முடியவில்லை",
     "statusDraft": "வரைவு",
     "statusReady": "தயார்",
-    "statusArchived": "காப்பகம்"
+    "statusArchived": "காப்பகம்",
+    "history": "வரலாறு",
+    "sessionHistory": "அமர்வு வரலாறு",
+    "noSessionsYet": "இன்னும் அமர்வுகள் இல்லை. உங்கள் முதல் வினாடி வினா அமர்வை தொடங்குங்கள்!",
+    "questionResults": "கேள்வி முடிவுகள்",
+    "wordCloudQuestion": "வார்த்தை மேகம் கேள்வி"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",

@@ -25,6 +25,7 @@ import Register from './features/auth/Register'
 import Dashboard from './features/dashboard/Dashboard'
 import QuizBuilder from './features/quiz/QuizBuilder'
 import QuizControl from './features/quiz/QuizControl'
+import QuizHistory from './features/quiz/QuizHistory'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
 import UserManagement from './features/admin/components/UserManagement'
@@ -225,6 +226,7 @@ function AppRoutes() {
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />
+        <Route path="/quiz/:id/history" element={<QuizHistory />} />
         <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/admin/organizations" element={<OrganizationManagement />} />

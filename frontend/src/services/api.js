@@ -98,6 +98,7 @@ export const questionAPI = {
 
 // Session API
 export const sessionAPI = {
+  listSessions: (quizId) => api.get(`/quizzes/${quizId}/sessions`),
   start: (quizId) => api.post('/quizzes/sessions/start', null, { params: { quiz_id: quizId } }),
   join: (data) => api.post('/quizzes/sessions/join', data),
   advance: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/advance`),

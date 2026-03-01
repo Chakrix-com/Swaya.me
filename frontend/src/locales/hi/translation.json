@@ -143,7 +143,12 @@
     "failedToLoadResults": "परिणाम लोड करने में विफल",
     "statusDraft": "ड्राफ्ट",
     "statusReady": "तैयार",
-    "statusArchived": "संग्रहीत"
+    "statusArchived": "संग्रहीत",
+    "history": "इतिहास",
+    "sessionHistory": "सत्र इतिहास",
+    "noSessionsYet": "अभी तक कोई सत्र नहीं। अपना पहला क्विज़ सत्र शुरू करें!",
+    "questionResults": "प्रश्न परिणाम",
+    "wordCloudQuestion": "वर्ड क्लाउड प्रश्न"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",

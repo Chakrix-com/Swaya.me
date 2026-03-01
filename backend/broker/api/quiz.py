@@ -14,7 +14,8 @@ from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
-    FeedbackSubmitRequest, LeaderboardResponse
+    FeedbackSubmitRequest, LeaderboardResponse,
+    SessionListResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.question_service_async import QuestionServiceAsync
@@ -160,6 +161,20 @@ async def unpublish_quiz(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/{quiz_id}/sessions", response_model=SessionListResponse)
+async def list_quiz_sessions(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """List all sessions for a quiz with participant and response counts"""
+    try:
+        return await service.list_sessions(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 # Question Management Endpoints

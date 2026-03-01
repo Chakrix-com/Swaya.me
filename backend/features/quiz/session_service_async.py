@@ -2,19 +2,20 @@
 Session Management Service - Start, control, and end quiz sessions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func, and_
 from sqlalchemy.orm import selectinload, joinedload, contains_eager
 from typing import Optional
 import secrets
 import string
 
 from persistence.models.quiz import (
-    Quiz, QuizSession, Participant, Question,
+    Quiz, QuizSession, Participant, Question, Answer,
     QuizStatus, QuizSessionStatus, QuestionStatus
 )
 from persistence.models.core import Event, Tenant
 from features.quiz.schemas import (
-    SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse
+    SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
+    SessionListItemResponse, SessionListResponse, SessionStatusEnum
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, SessionNotFoundError, ParticipantNotFoundError,
@@ -401,6 +402,60 @@ class SessionServiceAsync:
         
         return await self._to_session_response(db, session)
     
+    async def list_sessions(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        current_user: CurrentUser
+    ) -> SessionListResponse:
+        """List all past sessions for a quiz with participant and response counts"""
+        # Verify quiz belongs to this tenant
+        quiz_result = await db.execute(
+            select(Quiz).filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+        )
+        quiz = quiz_result.scalar_one_or_none()
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+
+        # Single query: sessions joined with participant and answer counts
+        rows = (await db.execute(
+            select(
+                QuizSession.id,
+                QuizSession.status,
+                QuizSession.created_at,
+                QuizSession.updated_at,
+                func.count(func.distinct(Participant.id)).label('participant_count'),
+                func.count(Answer.id).label('total_responses'),
+            )
+            .outerjoin(Participant, Participant.session_id == QuizSession.id)
+            .outerjoin(Answer, Answer.session_id == QuizSession.id)
+            .filter(
+                QuizSession.quiz_id == quiz_id,
+                QuizSession.tenant_id == current_user.tenant_id,
+            )
+            .group_by(QuizSession.id, QuizSession.status, QuizSession.created_at, QuizSession.updated_at)
+            .order_by(QuizSession.created_at.desc())
+        )).all()
+
+        sessions = [
+            SessionListItemResponse(
+                id=row.id,
+                status=SessionStatusEnum(row.status.value),
+                created_at=row.created_at,
+                ended_at=row.updated_at if row.status == QuizSessionStatus.ENDED else None,
+                participant_count=row.participant_count,
+                total_responses=row.total_responses,
+            )
+            for row in rows
+        ]
+
+        return SessionListResponse(
+            quiz_id=quiz_id,
+            quiz_title=quiz.title,
+            sessions=sessions,
+            total=len(sessions),
+        )
+
     async def _to_session_response(self, db: AsyncSession, session: QuizSession) -> SessionResponse:
         """Convert session to response"""
         # Get participant count from Redis

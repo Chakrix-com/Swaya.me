@@ -143,7 +143,12 @@
     "failedToLoadResults": "ಫಲಿತಾಂಶಗಳನ್ನು ಲೋಡ್ ಮಾಡುವುದು ವಿಫಲವಾಗಿದೆ",
     "statusDraft": "ಕೃತಜ್ಞತೆ",
     "statusReady": "ಸಿದ್ಧ",
-    "statusArchived": "ಆರ್ಕೈವ್ ಮಾಡಿದೆ"
+    "statusArchived": "ಆರ್ಕೈವ್ ಮಾಡಿದೆ",
+    "history": "ಇತಿಹಾಸ",
+    "sessionHistory": "ಸೆಷನ್ ಇತಿಹಾಸ",
+    "noSessionsYet": "ಇನ್ನೂ ಯಾವುದೇ ಸೆಷನ್ ಇಲ್ಲ. ನಿಮ್ಮ ಮೊದಲ ಕ್ವಿಜ್ ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಿ!",
+    "questionResults": "ಪ್ರಶ್ನೆ ಫಲಿತಾಂಶಗಳು",
+    "wordCloudQuestion": "ವರ್ಡ್ ಕ್ಲೌಡ್ ಪ್ರಶ್ನೆ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",

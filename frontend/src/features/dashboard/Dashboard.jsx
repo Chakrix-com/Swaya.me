@@ -4,15 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
 import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic } from 'antd'
-import { 
-  PlusOutlined, 
-  PlayCircleOutlined, 
-  EditOutlined, 
+import {
+  PlusOutlined,
+  PlayCircleOutlined,
+  EditOutlined,
   DeleteOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
   EditFilled,
-  RocketOutlined
+  RocketOutlined,
+  HistoryOutlined
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -184,6 +185,12 @@ function Dashboard() {
                 onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
               >
                 {t('common.edit')}
+              </Button>
+              <Button
+                icon={<HistoryOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/history`)}
+              >
+                {t('quiz.history')}
               </Button>
               {quiz.status === 'ready' && (
                 <Button

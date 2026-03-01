@@ -143,7 +143,12 @@
     "failedToLoadResults": "ফলাফল লোড করতে ব্যর্থ",
     "statusDraft": "খসড়া",
     "statusReady": "প্রস্তুত",
-    "statusArchived": "সংরক্ষিত"
+    "statusArchived": "সংরক্ষিত",
+    "history": "ইতিহাস",
+    "sessionHistory": "সেশন ইতিহাস",
+    "noSessionsYet": "এখনো কোনো সেশন নেই। আপনার প্রথম কুইজ সেশন শুরু করুন!",
+    "questionResults": "প্রশ্নের ফলাফল",
+    "wordCloudQuestion": "ওয়ার্ড ক্লাউড প্রশ্ন"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",

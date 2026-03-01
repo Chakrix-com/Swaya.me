@@ -148,7 +148,12 @@
     "failedToLoadResults": "Failed to load results",
     "statusDraft": "Draft",
     "statusReady": "Ready",
-    "statusArchived": "Archived"
+    "statusArchived": "Archived",
+    "history": "History",
+    "sessionHistory": "Session History",
+    "noSessionsYet": "No sessions yet. Start your first quiz session!",
+    "questionResults": "Question Results",
+    "wordCloudQuestion": "Word Cloud Question"
   },
   "audience": {
     "joinQuiz": "Join Quiz",

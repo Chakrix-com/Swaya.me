@@ -267,6 +267,24 @@ class FeedbackListResponse(BaseModel):
     offset: int
 
 
+class SessionListItemResponse(BaseModel):
+    """Summary of a single past session"""
+    id: int
+    status: SessionStatusEnum
+    created_at: datetime
+    ended_at: Optional[datetime] = None
+    participant_count: int
+    total_responses: int
+
+
+class SessionListResponse(BaseModel):
+    """List of sessions for a quiz"""
+    quiz_id: int
+    quiz_title: str
+    sessions: list
+    total: int
+
+
 class LeaderboardEntry(BaseModel):
     """Single leaderboard entry"""
     rank: int
