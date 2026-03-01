@@ -13,12 +13,14 @@ from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
-    WordCloudAnswerSubmitRequest, WordCloudResultsResponse
+    WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
+    FeedbackSubmitRequest
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.question_service_async import QuestionServiceAsync
 from features.quiz.session_service_async import SessionServiceAsync
 from features.quiz.answer_service_async import AnswerServiceAsync
+from features.quiz.feedback_service_async import FeedbackServiceAsync
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, SessionNotFoundError,
     ParticipantNotFoundError, QuizValidationError, InvalidQuizStatusError,
@@ -49,6 +51,10 @@ async def get_session_service(redis: RedisClient = Depends(get_redis)) -> Sessio
 
 async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerServiceAsync:
     return AnswerServiceAsync(redis)
+
+
+async def get_feedback_service() -> FeedbackServiceAsync:
+    return FeedbackServiceAsync()
 
 
 # Quiz CRUD Endpoints
@@ -316,6 +322,36 @@ async def submit_word_cloud_answer(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except QuestionNotOpenError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/feedback")
+async def submit_participant_feedback(
+    request: FeedbackSubmitRequest,
+    session_token: str,
+    db: AsyncSession = Depends(get_async_db),
+    service: FeedbackServiceAsync = Depends(get_feedback_service)
+):
+    """Submit feedback as a participant"""
+    try:
+        return await service.submit_participant_feedback(db, session_token, request)
+    except ParticipantNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except (SessionNotFoundError, QuizNotFoundError) as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/feedback")
+async def submit_user_feedback(
+    request: FeedbackSubmitRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: FeedbackServiceAsync = Depends(get_feedback_service)
+):
+    """Submit feedback as an authenticated user"""
+    try:
+        return await service.submit_user_feedback(db, current_user, request)
+    except (SessionNotFoundError, QuizNotFoundError) as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.get("/questions/{question_id}/word-cloud-results", response_model=WordCloudResultsResponse)

@@ -39,6 +39,7 @@ import {
   clearError
 } from '../../../store/slices/userManagementSlice';
 import UserForm from './UserForm';
+import '../Admin.css';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -357,7 +358,7 @@ const UserManagement = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="admin-page" style={{ padding: 24 }}>
       {/* Statistics Cards */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
@@ -448,19 +449,21 @@ const UserManagement = () => {
 
       {/* Main Table Card */}
       <Card>
-        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-          <Col flex="auto">
-            <Space size="middle">
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }} className="admin-action-row">
+          <Col xs={24} md="auto" flex="auto">
+            <Space size="middle" wrap>
               <Search
                 placeholder={t('admin.users.searchByEmailOrName')}
                 allowClear
                 enterButton={<SearchOutlined />}
                 onSearch={handleSearch}
+                className="admin-control"
                 style={{ width: 300 }}
               />
               <Select
                 placeholder={t('admin.users.filterByRole')}
                 allowClear
+                className="admin-control"
                 style={{ width: 150 }}
                 onChange={handleRoleFilterChange}
               >
@@ -472,6 +475,7 @@ const UserManagement = () => {
               <Select
                 placeholder={t('admin.users.filterByStatus')}
                 allowClear
+                className="admin-control"
                 style={{ width: 150 }}
                 onChange={handleStatusFilterChange}
               >
@@ -480,11 +484,12 @@ const UserManagement = () => {
               </Select>
             </Space>
           </Col>
-          <Col>
-            <Space>
+          <Col xs={24} md="auto">
+            <Space wrap>
               <Button
                 icon={<DownloadOutlined />}
                 onClick={handleExportToExcel}
+                className="admin-control"
               >
                 {t('admin.users.exportToExcel')}
               </Button>
@@ -492,6 +497,7 @@ const UserManagement = () => {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleCreateUser}
+                className="admin-control"
               >
                 {t('admin.users.createUser')}
               </Button>
@@ -512,6 +518,7 @@ const UserManagement = () => {
             showSizeChanger: false,
             showTotal: (total) => t('admin.users.totalCount', { total }),
           }}
+          scroll={{ x: true }}
         />
       </Card>
 

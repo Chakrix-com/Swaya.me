@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons'
 import { quizAPI, questionAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
+import './QuizBuilder.css'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -651,8 +652,8 @@ export default function QuizBuilder() {
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
   return (
-    <div style={{ padding: 24 }}>
-      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+    <div className="quiz-builder-page" style={{ padding: 24 }}>
+      <Space wrap className="quiz-builder-topbar">
         <Button 
           icon={<LeftOutlined />} 
           onClick={() => navigate('/dashboard')}

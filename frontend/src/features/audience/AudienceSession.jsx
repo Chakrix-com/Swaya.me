@@ -12,7 +12,8 @@ import {
   Result,
   Progress,
   Input,
-  message
+  message,
+  Rate
 } from 'antd'
 import {
   CheckCircleOutlined,
@@ -22,7 +23,7 @@ import {
   SendOutlined
 } from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
-import { sessionAPI, questionAPI } from '../../services/api'
+import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -48,6 +49,10 @@ export default function AudienceSession() {
   const [loading, setLoading] = useState(false)
   const [sessionStatus, setSessionStatus] = useState(null) // 'created', 'active', 'ended'
   const [sessionInvalidated, setSessionInvalidated] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackRating, setFeedbackRating] = useState(0)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const lastQuestionIdRef = useRef(null)
   const pollingIntervalRef = useRef(null)
 
@@ -195,6 +200,24 @@ export default function AudienceSession() {
     }
   }
 
+  const handleSubmitFeedback = async () => {
+    if (!feedbackText.trim()) return
+    setFeedbackSubmitting(true)
+    try {
+      await feedbackAPI.submitParticipant(sessionToken, {
+        feedback_text: feedbackText.trim(),
+        rating: feedbackRating || undefined,
+        display_name: displayName,
+      })
+      setFeedbackSubmitted(true)
+      message.success('Thank you for your feedback')
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Failed to submit feedback')
+    } finally {
+      setFeedbackSubmitting(false)
+    }
+  }
+
   if (!sessionToken) {
     return (
       <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
@@ -256,6 +279,29 @@ export default function AudienceSession() {
                   You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
                 </Text>
                 <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
+                <Card size="small" style={{ width: '100%', maxWidth: 520, marginTop: 16 }}>
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text strong>Share Feedback</Text>
+                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
+                    <TextArea
+                      rows={3}
+                      maxLength={500}
+                      showCount
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      placeholder="Tell us what worked well or what can improve"
+                      disabled={feedbackSubmitted}
+                    />
+                    <Button
+                      type="primary"
+                      onClick={handleSubmitFeedback}
+                      loading={feedbackSubmitting}
+                      disabled={feedbackSubmitted || !feedbackText.trim()}
+                    >
+                      {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                    </Button>
+                  </Space>
+                </Card>
               </Space>
             }
             extra={

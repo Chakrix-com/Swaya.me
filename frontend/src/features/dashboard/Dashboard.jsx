@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, List, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic } from 'antd'
+import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic } from 'antd'
 import { 
   PlusOutlined, 
   PlayCircleOutlined, 
@@ -17,6 +17,7 @@ import {
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
 import { quizAPI } from '../../services/api'
+import './Dashboard.css'
 
 function Dashboard() {
   const { t } = useTranslation()
@@ -26,6 +27,13 @@ function Dashboard() {
 
   useEffect(() => {
     loadQuizzes()
+  }, [])
+
+  useEffect(() => {
+    document.body.classList.add('dashboard-scroll-active')
+    return () => {
+      document.body.classList.remove('dashboard-scroll-active')
+    }
   }, [])
 
   const loadQuizzes = async () => {
@@ -91,9 +99,10 @@ function Dashboard() {
   }, [quizzes])
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="dashboard-scroll">
+      <div className="dashboard-page" style={{ padding: 24, overflowX: 'hidden' }}>
       {/* Statistics Cards */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row gutter={[8, 8]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
@@ -138,29 +147,45 @@ function Dashboard() {
 
       {/* Quiz List */}
       <ProCard
-      title={t('quiz.myQuizzes')}
-      extra={
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/quiz/new')}
-        >
-          {t('quiz.createQuiz')}
-        </Button>
-      }
-    >
-      <List
-        dataSource={quizzes}
-        renderItem={(quiz) => (
-          <List.Item
-            actions={[
+        title={t('quiz.myQuizzes')}
+        style={{ overflowX: 'hidden' }}
+        extra={
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/quiz/new')}
+          >
+            {t('quiz.createQuiz')}
+          </Button>
+        }
+      >
+      <div style={{ width: '100%', overflow: 'hidden' }}>
+        {quizzes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
+            {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
+          </div>
+        ) : quizzes.map((quiz, index) => (
+          <div
+            key={quiz.id}
+            className="quiz-item"
+          >
+            <div className="quiz-item-meta">
+              <div style={{ marginBottom: 4 }}>
+                <strong>{quiz.title}</strong>
+              </div>
+              <Space>
+                <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
+                <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
+              </Space>
+            </div>
+            <div className="quiz-item-actions">
               <Button
                 icon={<EditOutlined />}
                 onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
               >
                 {t('common.edit')}
-              </Button>,
-              quiz.status === 'ready' && (
+              </Button>
+              {quiz.status === 'ready' && (
                 <Button
                   type="primary"
                   icon={<PlayCircleOutlined />}
@@ -168,7 +193,7 @@ function Dashboard() {
                 >
                   {t('quiz.startQuiz')}
                 </Button>
-              ),
+              )}
               <Popconfirm
                 title={t('quiz.deleteConfirm')}
                 description={t('quiz.deleteWarning')}
@@ -176,28 +201,16 @@ function Dashboard() {
                 okText={t('common.submit')}
                 cancelText={t('common.cancel')}
               >
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                >
+                <Button danger icon={<DeleteOutlined />}>
                   {t('common.delete')}
                 </Button>
               </Popconfirm>
-            ].filter(Boolean)}
-          >
-            <List.Item.Meta
-              title={quiz.title}
-              description={
-                <Space>
-                  <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
-                  <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
-                </Space>
-              }
-            />
-          </List.Item>
-        )}
-      />
+            </div>
+          </div>
+        ))}
+      </div>
     </ProCard>
+      </div>
     </div>
   )
 }

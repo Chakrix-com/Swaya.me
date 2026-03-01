@@ -1,0 +1,45 @@
+.admin-page .admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-page .admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-page .admin-action-row {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .admin-page .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-page .admin-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-page .admin-control {
+    width: 100% !important;
+  }
+
+  .admin-page .admin-action-row {
+    flex-direction: column;
+  }
+
+  .admin-page .admin-action-row .ant-space {
+    width: 100%;
+  }
+
+  .admin-page .ant-card-head-title {
+    white-space: normal;
+  }
+}

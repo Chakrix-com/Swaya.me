@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { organizationAPI } from '../../services/api'
+import './Admin.css'
 
 const { Option } = Select
 
@@ -258,15 +259,15 @@ function OrganizationManagement() {
   const activeOrgs = organizations.filter(org => org.is_active).length
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="admin-page" style={{ padding: 24 }}>
       <div style={{ marginBottom: 24 }}>
         <h1>{t('admin.orgs.orgManagement')}</h1>
         <p style={{ color: '#666' }}>{t('admin.orgs.orgManagementDesc')}</p>
       </div>
 
       {/* Summary Cards */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title={t('admin.orgs.totalOrganizations')}
@@ -275,7 +276,7 @@ function OrganizationManagement() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title={t('admin.orgs.activeOrganizations')}
@@ -284,7 +285,7 @@ function OrganizationManagement() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title={t('admin.orgs.totalAdmins')}
@@ -293,7 +294,7 @@ function OrganizationManagement() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title={t('admin.orgs.totalUsers')}
@@ -312,6 +313,7 @@ function OrganizationManagement() {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setCreateModalVisible(true)}
+            className="admin-control"
           >
             {t('admin.orgs.createOrg')}
           </Button>
@@ -323,6 +325,7 @@ function OrganizationManagement() {
           loading={loading}
           rowKey="id"
           pagination={{ pageSize: 10 }}
+          scroll={{ x: true }}
         />
       </Card>
 
@@ -410,8 +413,8 @@ function OrganizationManagement() {
             layout="vertical"
             onFinish={handleCreateAdmin}
           >
-            <Row gutter={16}>
-              <Col span={12}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="email"
                   label={t('admin.orgs.email')}
@@ -423,7 +426,7 @@ function OrganizationManagement() {
                   <Input />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="full_name"
                   label={t('admin.orgs.fullName')}
@@ -433,8 +436,8 @@ function OrganizationManagement() {
               </Col>
             </Row>
 
-            <Row gutter={16}>
-              <Col span={12}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="password"
                   label={t('admin.orgs.password')}
@@ -446,7 +449,7 @@ function OrganizationManagement() {
                   <Input.Password />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   name="user_quota"
                   label={t('admin.orgs.userQuota')}
@@ -471,6 +474,7 @@ function OrganizationManagement() {
           dataSource={admins}
           rowKey="id"
           pagination={false}
+          scroll={{ x: true }}
         />
       </Modal>
     </div>

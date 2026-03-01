@@ -61,6 +61,7 @@ class QuestionService:
         tier = current_user.tenant.tier
         
         can_add = await self.tier_service.check_question_limit(
+            db,
             current_user.tenant_id,
             quiz_id,
             tier,

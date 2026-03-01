@@ -127,3 +127,20 @@ class Answer(Base, TimestampMixin):
     session = relationship("QuizSession", back_populates="answers")
     participant = relationship("Participant", back_populates="answers")
     question = relationship("Question", back_populates="answers")
+
+
+class QuizFeedback(Base, TimestampMixin, TenantMixin):
+    """
+    Feedback submitted by participants or authenticated users for a quiz/session
+    """
+    __tablename__ = "quiz_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True, index=True)
+    participant_id = Column(Integer, ForeignKey('participants.id'), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    source_type = Column(String(20), nullable=False)  # participant | user
+    display_name = Column(String(100), nullable=True)
+    rating = Column(Integer, nullable=True)
+    feedback_text = Column(Text, nullable=False)

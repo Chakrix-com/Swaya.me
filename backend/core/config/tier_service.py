@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Dict, Any
 from datetime import datetime, timedelta
+import json
 
 from persistence.models.core import Tenant, TierConfiguration, TierEnum
 from shared.utils.redis_client import RedisClient
@@ -27,12 +28,19 @@ class TierService:
             # Return default limits if not configured
             return self._get_default_limits(tier)
         
+        features = None
+        if config.features:
+            try:
+                features = json.loads(config.features)
+            except Exception:
+                features = config.features
+
         return {
             "tier": config.tier.value,
             "max_participants": config.max_participants,
             "max_questions": config.max_questions,
             "max_concurrent_events": config.max_concurrent_events,
-            "features": config.features
+            "features": features
         }
     
     def _get_default_limits(self, tier: TierEnum) -> Dict[str, Any]:
@@ -42,6 +50,11 @@ class TierService:
                 "max_participants": 50,
                 "max_questions": 10,
                 "max_concurrent_events": 1
+            },
+            TierEnum.BASIC: {
+                "max_participants": 200,
+                "max_questions": 30,
+                "max_concurrent_events": 2
             },
             TierEnum.PRO: {
                 "max_participants": 1000,
@@ -60,15 +73,20 @@ class TierService:
             **limits.get(tier, limits[TierEnum.FREE]),
             "features": None
         }
+
+    async def _resolve_limits(self, db: AsyncSession, tier: TierEnum) -> Dict[str, Any]:
+        """Resolve effective limits from DB config with fallback defaults."""
+        return await self.get_tier_config(db, tier)
     
     async def check_participant_limit(
         self,
+        db: AsyncSession,
         tenant_id: int,
         session_id: int,
         tier: TierEnum
     ) -> bool:
         """Check if tenant can add more participants to session"""
-        config = self._get_default_limits(tier)
+        config = await self._resolve_limits(db, tier)
         max_participants = config["max_participants"]
         
         # Get current participant count from Redis
@@ -80,13 +98,14 @@ class TierService:
     
     async def check_question_limit(
         self,
+        db: AsyncSession,
         tenant_id: int,
         quiz_id: int,
         tier: TierEnum,
         question_count: int
     ) -> bool:
         """Check if quiz can have more questions"""
-        config = self._get_default_limits(tier)
+        config = await self._resolve_limits(db, tier)
         max_questions = config["max_questions"]
         
         return question_count < max_questions
@@ -100,7 +119,7 @@ class TierService:
         """Check if tenant can create more concurrent events"""
         from persistence.models.core import Event
         
-        config = self._get_default_limits(tier)
+        config = await self._resolve_limits(db, tier)
         max_concurrent = config["max_concurrent_events"]
         
         # Count only ACTIVE events (events with a join_code indicate a running session)
@@ -138,6 +157,13 @@ async def seed_tier_configurations(db: AsyncSession):
             max_participants=50,
             max_questions=10,
             max_concurrent_events=1,
+            features=None
+        ),
+        TierConfiguration(
+            tier=TierEnum.BASIC,
+            max_participants=200,
+            max_questions=30,
+            max_concurrent_events=2,
             features=None
         ),
         TierConfiguration(

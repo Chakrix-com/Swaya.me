@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import re
 
-from persistence.models.core import User, Tenant, TierEnum, UserRole
+from persistence.models.core import User, Tenant, TierEnum, UserRole, Event
+from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
 from core.security.password import hash_password, verify_password
 from core.security.jwt import create_access_token
 from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
@@ -43,18 +44,30 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
     if existing_user:
         raise DuplicateUserError(f"User with email {request.email} already exists")
     
-    # Assign to NO-ORG tenant (id=1) - all self-registered users go here
-    NO_ORG_TENANT_ID = 1
-    
-    # Get NO-ORG tenant to include in response
-    tenant = db.query(Tenant).filter(Tenant.id == NO_ORG_TENANT_ID).first()
-    if not tenant:
-        raise Exception("NO-ORG tenant not found. Database migration may have failed.")
+    # Create isolated tenant for this self-registered user
+    email_local = request.email.split("@")[0]
+    base_name = (request.full_name or email_local).strip()
+    tenant_name = f"{base_name}'s Workspace"
+    base_slug = create_tenant_slug(base_name) or "workspace"
+    slug = base_slug
+    suffix = 1
+    while db.query(Tenant).filter(Tenant.slug == slug).first():
+        suffix += 1
+        slug = f"{base_slug}-{suffix}"
+
+    tenant = Tenant(
+        name=tenant_name,
+        slug=slug,
+        tier=TierEnum.FREE,
+        is_active=True,
+    )
+    db.add(tenant)
+    db.flush()
     
     # Create user
     from datetime import datetime, timezone
     user = User(
-        tenant_id=NO_ORG_TENANT_ID,
+        tenant_id=tenant.id,
         email=request.email,
         hashed_password=hash_password(request.password),
         full_name=request.full_name,
@@ -65,6 +78,54 @@ def register_user(db: Session, request: UserRegisterRequest) -> TokenResponse:
         last_login_at=datetime.now(timezone.utc)
     )
     db.add(user)
+    db.flush()
+
+    # Seed a starter demo quiz for each newly registered user.
+    demo_event = Event(
+        tenant_id=tenant.id,
+        creator_id=user.id,
+        title="Demo Quiz Event",
+        description="Auto-generated event for starter demo quiz",
+        join_code=None,
+    )
+    db.add(demo_event)
+    db.flush()
+
+    demo_quiz = Quiz(
+        tenant_id=tenant.id,
+        event_id=demo_event.id,
+        title="Welcome Demo Quiz",
+        description="A short starter quiz to help you explore Swaya.me",
+        status=QuizStatus.READY,
+    )
+    db.add(demo_quiz)
+    db.flush()
+
+    demo_questions = [
+        Question(
+            quiz_id=demo_quiz.id,
+            question_type=QuestionType.MCQ,
+            text="What is the main purpose of this demo quiz?",
+            order=1,
+            options=[
+                "To test your knowledge only",
+                "To show how quiz flow works",
+                "To configure billing settings",
+                "To invite super admins",
+            ],
+            correct_answer_index=1,
+        ),
+        Question(
+            quiz_id=demo_quiz.id,
+            question_type=QuestionType.WORD_CLOUD,
+            text="In one word, what do you want from your quizzes?",
+            order=2,
+            options=None,
+            correct_answer_index=None,
+        ),
+    ]
+    db.add_all(demo_questions)
+
     db.commit()
     db.refresh(user)
     

@@ -184,6 +184,7 @@ class SessionService:
         
         # Check participant limit
         can_join = await self.tier_service.check_participant_limit(
+            db,
             session.tenant_id,
             session.id,
             tenant.tier

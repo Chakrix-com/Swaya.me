@@ -122,6 +122,22 @@ export const statsAPI = {
   get: () => api.get('/admin/stats'),
   getHistory: (params) => api.get('/admin/stats/history', { params }),
   captureSnapshot: (granularity) => api.post(`/admin/stats/capture?granularity=${granularity}`),
+  getFeedback: (params) => api.get('/admin/feedback', { params }),
+}
+
+export const platformQuizAPI = {
+  list: (params) => api.get('/admin/quizzes', { params }),
+}
+
+export const tierConfigAPI = {
+  list: () => api.get('/admin/tier-configs'),
+  update: (tier, data) => api.put(`/admin/tier-configs/${tier}`, data),
+}
+
+export const feedbackAPI = {
+  submitParticipant: (sessionToken, data) =>
+    api.post('/quizzes/sessions/feedback', data, { params: { session_token: sessionToken } }),
+  submitUser: (data) => api.post('/quizzes/feedback', data),
 }
 
 // Organization API

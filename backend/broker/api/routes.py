@@ -11,6 +11,8 @@ from broker.api.stats import router as stats_router
 from broker.api.stats_history import router as stats_history_router
 from broker.api.organization_management import router as organization_router, admin_router
 from broker.api.language_tracking import router as language_tracking_router
+from broker.api.quiz_admin import router as quiz_admin_router
+from broker.api.tier_management import router as tier_management_router
 
 api_router = APIRouter()
 
@@ -42,5 +44,7 @@ api_router.include_router(stats_history_router, tags=["admin"])
 api_router.include_router(organization_router, prefix="/admin", tags=["admin"])
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 api_router.include_router(language_tracking_router)
+api_router.include_router(quiz_admin_router, prefix="/admin", tags=["admin"])
+api_router.include_router(tier_management_router, prefix="/admin", tags=["admin"])
 
 # TODO: Include realtime routes

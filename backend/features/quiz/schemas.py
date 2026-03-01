@@ -3,6 +3,7 @@ Pydantic schemas for Quiz feature
 """
 from pydantic import BaseModel, Field, validator, model_validator
 from typing import List, Optional
+from datetime import datetime
 from enum import Enum
 
 
@@ -230,3 +231,58 @@ class WordCloudResultsResponse(BaseModel):
     word_frequencies: dict[str, int]  # {word: count}
     total_submissions: int
     unique_words: int
+
+
+class FeedbackSubmitRequest(BaseModel):
+    """Submit feedback request"""
+    feedback_text: str = Field(..., min_length=2, max_length=2000)
+    rating: Optional[int] = Field(None, ge=1, le=5)
+    quiz_id: Optional[int] = None
+    session_id: Optional[int] = None
+    display_name: Optional[str] = Field(None, max_length=100)
+
+
+class FeedbackResponse(BaseModel):
+    """Feedback response payload"""
+    id: int
+    quiz_id: int
+    quiz_title: str
+    tenant_id: int
+    session_id: Optional[int] = None
+    participant_id: Optional[int] = None
+    user_id: Optional[int] = None
+    source_type: str
+    display_name: Optional[str] = None
+    user_email: Optional[str] = None
+    rating: Optional[int] = None
+    feedback_text: str
+    created_at: datetime
+
+
+class FeedbackListResponse(BaseModel):
+    """Paginated feedback list response"""
+    items: List[FeedbackResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class PlatformQuizListItemResponse(BaseModel):
+    """Platform-wide quiz list item for super admin"""
+    id: int
+    event_id: int
+    tenant_id: int
+    tenant_name: str
+    title: str
+    status: QuizStatusEnum
+    question_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class PlatformQuizListResponse(BaseModel):
+    """Paginated platform quiz list response"""
+    items: List[PlatformQuizListItemResponse]
+    total: int
+    limit: int
+    offset: int

@@ -47,7 +47,7 @@ function AudienceJoin() {
   return (
     <PublicPageLayout>
       <div className="audience-container">
-        <Card title={t('audience.joinQuiz')} style={{ width: 400 }}>
+        <Card title={t('audience.joinQuiz')} style={{ width: '100%', maxWidth: 400 }}>
           <Form
             form={form}
             name="join"

@@ -11,7 +11,10 @@ import {
   QuestionCircleOutlined,
   TeamOutlined,
   BarChartOutlined,
-  ApartmentOutlined
+  ApartmentOutlined,
+  MessageOutlined,
+  AppstoreOutlined,
+  SlidersOutlined
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -27,6 +30,9 @@ import AudienceSession from './features/audience/AudienceSession'
 import UserManagement from './features/admin/components/UserManagement'
 import Statistics from './features/admin/Statistics'
 import OrganizationManagement from './features/admin/OrganizationManagement'
+import FeedbackManagement from './features/admin/FeedbackManagement'
+import PlatformQuizzes from './features/admin/PlatformQuizzes'
+import TierManagement from './features/admin/TierManagement'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import StatsPanel from './components/StatsPanel'
 import './App.css'
@@ -70,6 +76,16 @@ function AuthenticatedLayout({ children }) {
       fixSiderbar
       collapsed={collapsed}
       onCollapse={setCollapsed}
+      contentStyle={{ overflowX: 'hidden' }}
+      token={{
+        layout: {
+          header: {
+            colorBgHeader: '#ffffff',
+            colorBgScrollHeader: '#ffffff',
+          },
+          bgLayout: '#f5f5f5',
+        },
+      }}
       location={{
         pathname: location.pathname,
       }}
@@ -108,6 +124,21 @@ function AuthenticatedLayout({ children }) {
               path: '/admin/organizations',
               name: t('admin.organizations'),
               icon: <ApartmentOutlined />,
+            },
+            {
+              path: '/admin/platform-quizzes',
+              name: 'Platform Quizzes',
+              icon: <AppstoreOutlined />,
+            },
+            {
+              path: '/admin/tier-management',
+              name: 'Tier Management',
+              icon: <SlidersOutlined />,
+            },
+            {
+              path: '/admin/feedback',
+              name: 'Feedback',
+              icon: <MessageOutlined />,
             }] : [])
           ] : []),
         ],
@@ -189,6 +220,9 @@ function AppRoutes() {
         <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/admin/organizations" element={<OrganizationManagement />} />
+        <Route path="/admin/platform-quizzes" element={<PlatformQuizzes />} />
+        <Route path="/admin/tier-management" element={<TierManagement />} />
+        <Route path="/admin/feedback" element={<FeedbackManagement />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>

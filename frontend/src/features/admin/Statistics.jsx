@@ -15,6 +15,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { statsAPI, languageTrackingAPI } from '../../services/api'
+import './Admin.css'
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
@@ -197,15 +198,15 @@ function Statistics() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="admin-page" style={{ padding: 24 }}>
+      <div className="admin-header" style={{ marginBottom: 16 }}>
         <div>
           <Title level={2} style={{ margin: 0 }}>{t('admin.stats.dashboard')}</Title>
           <Text type="secondary">
             {stats.scope === 'platform' ? t('admin.stats.platformWide') : t('admin.stats.forTenant', { tenantName: stats.tenant_name })}
           </Text>
         </div>
-        <Space>
+        <Space className="admin-header-actions" wrap>
           <Text type="secondary">
             {t('admin.stats.lastUpdated', { time: lastUpdate ? dayjs(lastUpdate).format('HH:mm:ss') : '-' })}
           </Text>
@@ -339,38 +340,40 @@ function Statistics() {
         
         <Card>
           <Space direction="vertical" style={{ width: '100%' }} size="large">
-            <Row gutter={16} align="middle">
-              <Col>
+            <Row gutter={[16, 16]} align="middle" className="admin-action-row">
+              <Col xs={24} sm="auto">
                 <Text strong>{t('admin.stats.dateRange')}</Text>
               </Col>
-              <Col>
+              <Col xs={24} sm="auto">
                 <RangePicker
+                  className="admin-control"
                   value={dateRange}
                   onChange={setDateRange}
                   format="YYYY-MM-DD"
                   maxDate={dayjs()}
                 />
               </Col>
-              <Col>
+              <Col xs={24} sm="auto">
                 <Text strong>{t('admin.stats.granularity')}</Text>
               </Col>
-              <Col>
+              <Col xs={24} sm="auto">
                 <Select
                   value={granularity}
                   onChange={setGranularity}
-                  style={{ width: 120 }}
+                  className="admin-control"
                   options={[
                     { label: t('admin.stats.hourly'), value: 'hourly' },
                     { label: t('admin.stats.daily'), value: 'daily' },
                   ]}
                 />
               </Col>
-              <Col>
+              <Col xs={24} sm="auto">
                 <Button
                   type="primary"
                   icon={<ReloadOutlined />}
                   onClick={fetchHistory}
                   loading={historyLoading}
+                  className="admin-control"
                 >
                   {t('admin.stats.loadHistory')}
                 </Button>
@@ -699,6 +702,7 @@ function Statistics() {
           />
         )}
       </div>
+
     </div>
   )
 }

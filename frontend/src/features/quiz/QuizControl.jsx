@@ -13,7 +13,8 @@ import {
   Progress,
   message,
   Alert,
-  Input
+  Input,
+  Rate
 } from 'antd'
 import {
   PlayCircleOutlined,
@@ -26,9 +27,11 @@ import {
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
-import { sessionAPI, quizAPI, questionAPI } from '../../services/api'
+import { sessionAPI, quizAPI, questionAPI, feedbackAPI } from '../../services/api'
+import './QuizControl.css'
 
 const { Title, Text } = Typography
+const { TextArea } = Input
 
 export default function QuizControl() {
   const { id } = useParams()
@@ -39,6 +42,10 @@ export default function QuizControl() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [wordCloudData, setWordCloudData] = useState([])
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackRating, setFeedbackRating] = useState(0)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -197,6 +204,25 @@ export default function QuizControl() {
     }
   }
 
+  const handleSubmitFeedback = async () => {
+    if (!feedbackText.trim()) return
+    setFeedbackSubmitting(true)
+    try {
+      await feedbackAPI.submitUser({
+        quiz_id: Number(id),
+        session_id: session?.id,
+        rating: feedbackRating || undefined,
+        feedback_text: feedbackText.trim(),
+      })
+      setFeedbackSubmitted(true)
+      message.success('Feedback submitted')
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Failed to submit feedback')
+    } finally {
+      setFeedbackSubmitting(false)
+    }
+  }
+
   if (!quiz) {
     return <div style={{ padding: 24 }}>{t('common.loading')}</div>
   }
@@ -204,8 +230,8 @@ export default function QuizControl() {
   const currentQuestion = results?.current_question
 
   return (
-    <div style={{ padding: 24 }}>
-      <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
+    <div className="quiz-control-page" style={{ padding: 24 }}>
+      <Space wrap className="quiz-control-topbar">
         <Button
           icon={<LeftOutlined />}
           onClick={() => navigate('/dashboard')}
@@ -537,9 +563,32 @@ export default function QuizControl() {
             </Card>
           ) : (
             <Card>
-              <Space direction="vertical" align="center" style={{ width: '100%' }}>
+              <Space direction="vertical" align="center" style={{ width: '100%' }} size="large">
                 <Title level={4}>{t('quiz.sessionComplete')}</Title>
                 <Text>{t('quiz.allQuestionsAnswered')}</Text>
+                <Card size="small" style={{ width: '100%', maxWidth: 620 }}>
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text strong>Share Feedback</Text>
+                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
+                    <TextArea
+                      rows={4}
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      maxLength={500}
+                      showCount
+                      disabled={feedbackSubmitted}
+                      placeholder="Share your experience running this quiz"
+                    />
+                    <Button
+                      type="primary"
+                      onClick={handleSubmitFeedback}
+                      loading={feedbackSubmitting}
+                      disabled={feedbackSubmitted || !feedbackText.trim()}
+                    >
+                      {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                    </Button>
+                  </Space>
+                </Card>
                 <Button
                   type="primary"
                   icon={<LeftOutlined />}

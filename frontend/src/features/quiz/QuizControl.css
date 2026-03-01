@@ -1,0 +1,24 @@
+.quiz-control-page .quiz-control-topbar {
+  margin-bottom: 24px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .quiz-control-page {
+    padding: 12px !important;
+  }
+
+  .quiz-control-page .quiz-control-topbar {
+    justify-content: flex-start;
+    row-gap: 8px;
+  }
+
+  .quiz-control-page .quiz-control-topbar .ant-space-item {
+    width: 100%;
+  }
+
+  .quiz-control-page .quiz-control-topbar .ant-btn {
+    width: 100%;
+  }
+}
