@@ -412,6 +412,14 @@ export default function QuizControl() {
                         dataIndex: 'score',
                         width: 100,
                         render: (score) => <Tag color="green">{score}</Tag>
+                      },
+                      {
+                        title: t('leaderboard.timeTaken'),
+                        dataIndex: 'time_taken_seconds',
+                        width: 90,
+                        render: (secs) => secs != null
+                          ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text>
+                          : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
                       }
                     ]}
                   />

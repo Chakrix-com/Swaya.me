@@ -377,7 +377,8 @@
     "score": "மதிப்பெண்",
     "yourRank": "உங்கள் தரவரிசை: #{{rank}}",
     "noData": "இன்னும் மதிப்பெண்கள் இல்லை",
-    "mcqOnly": "MCQ கேள்விகள் மட்டும்"
+    "mcqOnly": "MCQ கேள்விகள் மட்டும்",
+    "timeTaken": "Time"
   },
   "home": {
     "login": "Login",

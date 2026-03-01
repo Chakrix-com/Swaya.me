@@ -257,6 +257,14 @@ export default function AudienceSession() {
       render: (score, record) => (
         <Tag color={record.is_current_participant ? 'blue' : 'green'}>{score}</Tag>
       )
+    },
+    {
+      title: t('leaderboard.timeTaken'),
+      dataIndex: 'time_taken_seconds',
+      width: 80,
+      render: (secs) => secs != null
+        ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text>
+        : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
     }
   ]
 

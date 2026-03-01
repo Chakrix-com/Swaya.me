@@ -382,7 +382,8 @@
     "score": "Score",
     "yourRank": "Your Rank: #{{rank}}",
     "noData": "No scores yet",
-    "mcqOnly": "MCQ questions only"
+    "mcqOnly": "MCQ questions only",
+    "timeTaken": "Time"
   },
   "home": {
     "login": "Login",

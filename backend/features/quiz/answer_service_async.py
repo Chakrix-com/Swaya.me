@@ -533,7 +533,7 @@ class AnswerServiceAsync:
         """
         Get ranked leaderboard for a session.
         Score = number of correct MCQ answers per participant.
-        Tiebreaker: lower participant.id (joined first) ranks higher.
+        Tiebreaker: earlier last-correct-answer time (faster responder ranks higher).
         """
         # Get session with quiz questions (to count MCQ questions)
         result = await db.execute(
@@ -560,10 +560,11 @@ class AnswerServiceAsync:
             if p:
                 current_participant_id = p.id
 
-        # Aggregate: participants + their correct-answer counts
+        # Aggregate: participants + their correct-answer counts and last answer time
         score_col = func.count(Answer.id).label('score')
+        last_answer_col = func.max(Answer.created_at).label('last_answer_time')
         result = await db.execute(
-            select(Participant.id, Participant.display_name, score_col)
+            select(Participant.id, Participant.display_name, Participant.created_at, score_col, last_answer_col)
             .outerjoin(
                 Answer,
                 and_(
@@ -576,26 +577,31 @@ class AnswerServiceAsync:
                 Participant.session_id == session_id,
                 Participant.is_active == True
             )
-            .group_by(Participant.id, Participant.display_name)
-            .order_by(score_col.desc(), Participant.id.asc())
+            .group_by(Participant.id, Participant.display_name, Participant.created_at)
+            .order_by(score_col.desc(), func.isnull(last_answer_col).asc(), last_answer_col.asc(), Participant.id.asc())
         )
         rows = result.all()
 
-        # Assign ranks (tied scores share the same rank)
+        # Assign ranks: tied when score AND last_answer_time are both equal
         entries = []
         current_rank = 1
-        prev_score = None
+        prev_key = None
         for i, row in enumerate(rows):
-            if prev_score is not None and row.score < prev_score:
+            current_key = (row.score, row.last_answer_time)
+            if prev_key is not None and current_key != prev_key:
                 current_rank = i + 1
+            time_taken = None
+            if row.last_answer_time is not None:
+                time_taken = (row.last_answer_time - row.created_at).total_seconds()
             entries.append(LeaderboardEntry(
                 rank=current_rank,
                 participant_id=row.id,
                 display_name=row.display_name or 'Guest',
                 score=row.score,
-                is_current_participant=(row.id == current_participant_id)
+                is_current_participant=(row.id == current_participant_id),
+                time_taken_seconds=time_taken
             ))
-            prev_score = row.score
+            prev_key = current_key
 
         current_participant_rank = None
         for entry in entries:

@@ -377,7 +377,8 @@
     "score": "స్కోర్",
     "yourRank": "మీ ర్యాంక్: #{{rank}}",
     "noData": "ఇంకా స్కోర్లు లేవు",
-    "mcqOnly": "MCQ ప్రశ్నలు మాత్రమే"
+    "mcqOnly": "MCQ ప్రశ్నలు మాత్రమే",
+    "timeTaken": "Time"
   },
   "home": {
     "login": "Login",

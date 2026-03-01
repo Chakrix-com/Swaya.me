@@ -274,6 +274,7 @@ class LeaderboardEntry(BaseModel):
     display_name: str
     score: int  # number of correct MCQ answers
     is_current_participant: bool = False
+    time_taken_seconds: Optional[float] = None  # Time from join to last correct answer
 
 
 class LeaderboardResponse(BaseModel):

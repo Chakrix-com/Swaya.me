@@ -377,7 +377,8 @@
     "score": "স্কোর",
     "yourRank": "আপনার র‌্যাংক: #{{rank}}",
     "noData": "এখনো কোন স্কোর নেই",
-    "mcqOnly": "শুধুমাত্র MCQ প্রশ্ন"
+    "mcqOnly": "শুধুমাত্র MCQ প্রশ্ন",
+    "timeTaken": "Time"
   },
   "home": {
     "login": "Login",
