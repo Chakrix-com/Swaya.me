@@ -14,7 +14,7 @@ from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
-    FeedbackSubmitRequest
+    FeedbackSubmitRequest, LeaderboardResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.question_service_async import QuestionServiceAsync
@@ -322,6 +322,20 @@ async def submit_word_cloud_answer(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except QuestionNotOpenError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard(
+    session_id: int,
+    session_token: Optional[str] = None,
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
+):
+    """Get leaderboard for a session (ranked by correct MCQ answers)"""
+    try:
+        return await service.get_leaderboard(db, session_id, session_token)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.post("/sessions/feedback")

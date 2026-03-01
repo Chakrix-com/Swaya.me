@@ -14,7 +14,8 @@ import {
   message,
   Alert,
   Input,
-  Rate
+  Rate,
+  Table
 } from 'antd'
 import {
   PlayCircleOutlined,
@@ -23,7 +24,8 @@ import {
   LeftOutlined,
   TeamOutlined,
   CheckCircleOutlined,
-  CopyOutlined
+  CopyOutlined,
+  TrophyOutlined
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -42,6 +44,7 @@ export default function QuizControl() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [wordCloudData, setWordCloudData] = useState([])
+  const [leaderboard, setLeaderboard] = useState(null)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
@@ -55,6 +58,7 @@ export default function QuizControl() {
 
   useEffect(() => {
     if (session) {
+      loadResults() // Immediate first load
       const interval = setInterval(loadResults, 3000) // Refresh every 3 seconds
       return () => clearInterval(interval)
     }
@@ -75,7 +79,7 @@ export default function QuizControl() {
     try {
       const response = await sessionAPI.getResults(session.id, session.session_token)
       setResults(response.data)
-      
+
       // If current question is word cloud, fetch word cloud data
       if (response.data.current_question?.question_type === 'word_cloud') {
         loadWordCloudData(response.data.current_question.id)
@@ -83,6 +87,10 @@ export default function QuizControl() {
     } catch (error) {
       console.error(t('quiz.failedToLoadResults'), error)
     }
+    // Leaderboard is non-critical — fetch independently so it never blocks results
+    sessionAPI.getLeaderboard(session.id, null)
+      .then(res => setLeaderboard(res.data))
+      .catch(() => {})
   }
 
   const loadWordCloudData = async (questionId) => {
@@ -119,7 +127,7 @@ export default function QuizControl() {
     try {
       await sessionAPI.advance(session.id)
       message.success(t('quiz.movedToNextQuestion'))
-      loadResults()
+      await loadResults()
     } catch (error) {
       message.error(error.response?.data?.detail || t('quiz.failedToAdvance'))
       console.error(error)
@@ -133,7 +141,7 @@ export default function QuizControl() {
     try {
       await sessionAPI.back(session.id)
       message.success(t('quiz.movedToPreviousQuestion'))
-      loadResults()
+      await loadResults()
     } catch (error) {
       message.error(error.response?.data?.detail || t('quiz.failedToGoBack'))
       console.error(error)
@@ -355,6 +363,68 @@ export default function QuizControl() {
             </Col>
           </Row>
 
+          {leaderboard && (
+            <Card
+              title={
+                <Space>
+                  <TrophyOutlined style={{ color: '#faad14' }} />
+                  <span>{t('leaderboard.title')}</span>
+                  {leaderboard.total_participants > 0 && (
+                    <Tag color="blue">{leaderboard.total_participants} {t('quiz.participants')}</Tag>
+                  )}
+                  {leaderboard.mcq_question_count > 0 && (
+                    <Tag color="default">{t('leaderboard.mcqOnly')}</Tag>
+                  )}
+                </Space>
+              }
+              style={{ marginBottom: 24 }}
+            >
+              {leaderboard.entries.length === 0 ? (
+                <Text type="secondary">{t('leaderboard.noData')}</Text>
+              ) : (
+                <>
+                  <Table
+                    dataSource={leaderboard.entries.slice(0, 10)}
+                    rowKey="participant_id"
+                    pagination={false}
+                    size="small"
+                    columns={[
+                      {
+                        title: t('leaderboard.rank'),
+                        dataIndex: 'rank',
+                        width: 60,
+                        render: (rank) => {
+                          const colors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
+                          return (
+                            <Tag color={colors[rank] ? undefined : 'default'} style={colors[rank] ? { backgroundColor: colors[rank], color: '#000', borderColor: colors[rank] } : {}}>
+                              {rank}
+                            </Tag>
+                          )
+                        }
+                      },
+                      {
+                        title: t('leaderboard.participant'),
+                        dataIndex: 'display_name',
+                        ellipsis: true,
+                      },
+                      {
+                        title: `${t('leaderboard.score')} / ${leaderboard.mcq_question_count}`,
+                        dataIndex: 'score',
+                        width: 100,
+                        render: (score) => <Tag color="green">{score}</Tag>
+                      }
+                    ]}
+                  />
+                  {leaderboard.entries.length > 10 && (
+                    <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
+                      +{leaderboard.entries.length - 10} more participants
+                    </div>
+                  )}
+                </>
+              )}
+            </Card>
+          )}
+
           {currentQuestion ? (
             <Card
               title={
@@ -545,7 +615,7 @@ export default function QuizControl() {
                 </Button>
               </div>
             </Card>
-          ) : session && results && results.current_question_index === -1 ? (
+          ) : !results || results.current_question_index === -1 ? (
             <Card>
               <Space direction="vertical" align="center" style={{ width: '100%' }}>
                 <Title level={4}>{t('quiz.readyToStartFirst')}</Title>

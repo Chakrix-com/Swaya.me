@@ -370,6 +370,15 @@
     "bn": "বাংলা",
     "gu": "ગુજરાતી"
   },
+  "leaderboard": {
+    "title": "లీడర్‌బోర్డ్",
+    "rank": "#",
+    "participant": "పాల్గొనేవారు",
+    "score": "స్కోర్",
+    "yourRank": "మీ ర్యాంక్: #{{rank}}",
+    "noData": "ఇంకా స్కోర్లు లేవు",
+    "mcqOnly": "MCQ ప్రశ్నలు మాత్రమే"
+  },
   "home": {
     "login": "Login",
     "signup": "Sign Up",

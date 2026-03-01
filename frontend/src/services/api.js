@@ -111,9 +111,13 @@ export const sessionAPI = {
     api.post('/quizzes/sessions/submit-word-cloud', data, { 
       params: { session_token: sessionToken } 
     }),
-  getResults: (sessionId, sessionToken) => 
-    api.get(`/quizzes/sessions/${sessionId}/results`, { 
-      params: { session_token: sessionToken } 
+  getResults: (sessionId, sessionToken) =>
+    api.get(`/quizzes/sessions/${sessionId}/results`, {
+      params: { session_token: sessionToken }
+    }),
+  getLeaderboard: (sessionId, sessionToken) =>
+    api.get(`/quizzes/sessions/${sessionId}/leaderboard`, {
+      params: sessionToken ? { session_token: sessionToken } : {}
     }),
 }
 

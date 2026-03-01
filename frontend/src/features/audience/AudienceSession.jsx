@@ -13,17 +13,20 @@ import {
   Progress,
   Input,
   message,
-  Rate
+  Rate,
+  Table
 } from 'antd'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   LoadingOutlined,
   LoginOutlined,
-  SendOutlined
+  SendOutlined,
+  TrophyOutlined
 } from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
+import { useTranslation } from 'react-i18next'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -31,6 +34,7 @@ const { TextArea } = Input
 export default function AudienceSession() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const reduxSession = useSelector((state) => state.session.session)
   
   // Try to get session from location.state first, then fall back to Redux
@@ -49,6 +53,7 @@ export default function AudienceSession() {
   const [loading, setLoading] = useState(false)
   const [sessionStatus, setSessionStatus] = useState(null) // 'created', 'active', 'ended'
   const [sessionInvalidated, setSessionInvalidated] = useState(false)
+  const [leaderboard, setLeaderboard] = useState(null)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
@@ -77,10 +82,10 @@ export default function AudienceSession() {
     try {
       const response = await sessionAPI.getResults(sessionId, sessionToken)
       console.log('Results received:', response.data)
-      
+
       const newQuestionId = response.data.current_question?.question_id
       const newStatus = response.data.status
-      
+
       // Track session status changes and show notifications
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
@@ -95,7 +100,7 @@ export default function AudienceSession() {
         }
       }
       setSessionStatus(newStatus)
-      
+
       // If question ID changed, reset answer state
       if (lastQuestionIdRef.current && newQuestionId && newQuestionId !== lastQuestionIdRef.current) {
         console.log('Question changed from', lastQuestionIdRef.current, 'to', newQuestionId, '- resetting answer state')
@@ -104,19 +109,19 @@ export default function AudienceSession() {
         setWordCloudAnswer('')
         setWordCloudData([])
       }
-      
+
       // Always update tracking
       lastQuestionIdRef.current = newQuestionId
       setResults(response.data)
       setCurrentQuestion(response.data.current_question)
-      
+
       // If current question is word cloud, load word cloud data
       if (response.data.current_question?.question_type === 'word_cloud') {
         loadWordCloudData(response.data.current_question.question_id)
       }
     } catch (error) {
       console.error('Failed to load results', error)
-      
+
       // Check if session was invalidated (403)
       if (error.response?.status === 403) {
         setSessionInvalidated(true)
@@ -128,6 +133,10 @@ export default function AudienceSession() {
         message.warning('Session has been restarted. Please rejoin with the new code.')
       }
     }
+    // Leaderboard is non-critical — fetch independently so it never blocks results
+    sessionAPI.getLeaderboard(sessionId, sessionToken)
+      .then(res => setLeaderboard(res.data))
+      .catch(() => {})
   }
 
   const loadWordCloudData = async (questionId) => {
@@ -218,6 +227,78 @@ export default function AudienceSession() {
     }
   }
 
+  const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
+
+  const leaderboardColumns = [
+    {
+      title: t('leaderboard.rank'),
+      dataIndex: 'rank',
+      width: 55,
+      render: (rank) => (
+        <Tag style={rankColors[rank] ? { backgroundColor: rankColors[rank], color: '#000', borderColor: rankColors[rank] } : {}}>
+          {rank}
+        </Tag>
+      )
+    },
+    {
+      title: t('leaderboard.participant'),
+      dataIndex: 'display_name',
+      ellipsis: true,
+      render: (name, record) => (
+        <span style={record.is_current_participant ? { fontWeight: 700, color: '#1890ff' } : {}}>
+          {name}{record.is_current_participant ? ' (You)' : ''}
+        </span>
+      )
+    },
+    {
+      title: `${t('leaderboard.score')}${leaderboard ? ` / ${leaderboard.mcq_question_count}` : ''}`,
+      dataIndex: 'score',
+      width: 80,
+      render: (score, record) => (
+        <Tag color={record.is_current_participant ? 'blue' : 'green'}>{score}</Tag>
+      )
+    }
+  ]
+
+  const LeaderboardTable = () => {
+    if (!leaderboard) return null
+    return (
+      <Card
+        size="small"
+        title={
+          <Space>
+            <TrophyOutlined style={{ color: '#faad14' }} />
+            <span>{t('leaderboard.title')}</span>
+            {leaderboard.current_participant_rank && (
+              <Tag color="blue">{t('leaderboard.yourRank', { rank: leaderboard.current_participant_rank })}</Tag>
+            )}
+          </Space>
+        }
+        style={{ marginTop: 16 }}
+      >
+        {leaderboard.entries.length === 0 ? (
+          <Text type="secondary">{t('leaderboard.noData')}</Text>
+        ) : (
+          <>
+            <Table
+              dataSource={leaderboard.entries.slice(0, 10)}
+              rowKey="participant_id"
+              columns={leaderboardColumns}
+              pagination={false}
+              size="small"
+              rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
+            />
+            {leaderboard.entries.length > 10 && (
+              <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
+                +{leaderboard.entries.length - 10} more participants
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+    )
+  }
+
   if (!sessionToken) {
     return (
       <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
@@ -264,14 +345,14 @@ export default function AudienceSession() {
   // Quiz Completed - Show final score
   if (sessionStatus === 'ended' && !currentQuestion) {
     return (
-      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: 16, maxWidth: 640, margin: '0 auto' }}>
         <Card>
           <Result
             status="success"
             icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
             title="Quiz Completed!"
             subTitle={
-              <Space direction="vertical" align="center" style={{ marginTop: 16 }}>
+              <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
                 <Title level={4} style={{ margin: 0 }}>
                   Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
                 </Title>
@@ -279,6 +360,7 @@ export default function AudienceSession() {
                   You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
                 </Text>
                 <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
+                <LeaderboardTable />
                 <Card size="small" style={{ width: '100%', maxWidth: 520, marginTop: 16 }}>
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Text strong>Share Feedback</Text>
@@ -697,6 +779,7 @@ export default function AudienceSession() {
                 showIcon
                 style={{ marginTop: 24 }}
               />
+              <LeaderboardTable />
             </>
         )}
       </Card>

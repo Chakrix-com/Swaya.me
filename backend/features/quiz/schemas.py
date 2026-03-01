@@ -267,6 +267,24 @@ class FeedbackListResponse(BaseModel):
     offset: int
 
 
+class LeaderboardEntry(BaseModel):
+    """Single leaderboard entry"""
+    rank: int
+    participant_id: int
+    display_name: str
+    score: int  # number of correct MCQ answers
+    is_current_participant: bool = False
+
+
+class LeaderboardResponse(BaseModel):
+    """Leaderboard for a session"""
+    session_id: int
+    entries: List[LeaderboardEntry]
+    total_participants: int
+    current_participant_rank: Optional[int] = None
+    mcq_question_count: int = 0
+
+
 class PlatformQuizListItemResponse(BaseModel):
     """Platform-wide quiz list item for super admin"""
     id: int

@@ -2,7 +2,7 @@
 Answer Service - Submit and aggregate answers (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
 import json
@@ -15,7 +15,8 @@ from persistence.models.quiz import (
 from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
-    WordCloudAnswerSubmitRequest, WordCloudResultsResponse
+    WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
+    LeaderboardEntry, LeaderboardResponse
 )
 from shared.exceptions.quiz import (
     SessionNotFoundError, ParticipantNotFoundError, QuestionNotFoundError,
@@ -523,6 +524,93 @@ class AnswerServiceAsync:
             current_question=current_question
         )
     
+    async def get_leaderboard(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        session_token: Optional[str] = None
+    ) -> LeaderboardResponse:
+        """
+        Get ranked leaderboard for a session.
+        Score = number of correct MCQ answers per participant.
+        Tiebreaker: lower participant.id (joined first) ranks higher.
+        """
+        # Get session with quiz questions (to count MCQ questions)
+        result = await db.execute(
+            select(QuizSession)
+            .filter(QuizSession.id == session_id)
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            raise SessionNotFoundError("Session not found")
+
+        mcq_count = sum(
+            1 for q in session.quiz.questions
+            if q.question_type == QuestionType.MCQ
+        )
+
+        # Resolve current participant
+        current_participant_id = None
+        if session_token:
+            result = await db.execute(
+                select(Participant).filter(Participant.session_token == session_token)
+            )
+            p = result.scalar_one_or_none()
+            if p:
+                current_participant_id = p.id
+
+        # Aggregate: participants + their correct-answer counts
+        score_col = func.count(Answer.id).label('score')
+        result = await db.execute(
+            select(Participant.id, Participant.display_name, score_col)
+            .outerjoin(
+                Answer,
+                and_(
+                    Answer.participant_id == Participant.id,
+                    Answer.session_id == session_id,
+                    Answer.is_correct == True
+                )
+            )
+            .filter(
+                Participant.session_id == session_id,
+                Participant.is_active == True
+            )
+            .group_by(Participant.id, Participant.display_name)
+            .order_by(score_col.desc(), Participant.id.asc())
+        )
+        rows = result.all()
+
+        # Assign ranks (tied scores share the same rank)
+        entries = []
+        current_rank = 1
+        prev_score = None
+        for i, row in enumerate(rows):
+            if prev_score is not None and row.score < prev_score:
+                current_rank = i + 1
+            entries.append(LeaderboardEntry(
+                rank=current_rank,
+                participant_id=row.id,
+                display_name=row.display_name or 'Guest',
+                score=row.score,
+                is_current_participant=(row.id == current_participant_id)
+            ))
+            prev_score = row.score
+
+        current_participant_rank = None
+        for entry in entries:
+            if entry.is_current_participant:
+                current_participant_rank = entry.rank
+                break
+
+        return LeaderboardResponse(
+            session_id=session_id,
+            entries=entries,
+            total_participants=len(entries),
+            current_participant_rank=current_participant_rank,
+            mcq_question_count=mcq_count
+        )
+
     async def _update_aggregation(
         self,
         session_id: int,

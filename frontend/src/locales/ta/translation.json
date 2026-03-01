@@ -370,6 +370,15 @@
     "bn": "বাংলা",
     "gu": "ગુજરાતી"
   },
+  "leaderboard": {
+    "title": "லீடர்போர்டு",
+    "rank": "#",
+    "participant": "பங்கேற்பாளர்",
+    "score": "மதிப்பெண்",
+    "yourRank": "உங்கள் தரவரிசை: #{{rank}}",
+    "noData": "இன்னும் மதிப்பெண்கள் இல்லை",
+    "mcqOnly": "MCQ கேள்விகள் மட்டும்"
+  },
   "home": {
     "login": "Login",
     "signup": "Sign Up",

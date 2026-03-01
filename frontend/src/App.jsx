@@ -189,20 +189,28 @@ function AppRoutes() {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const location = useLocation()
 
-  // Public routes (no ProLayout)
-  const publicRoutes = ['/', '/login', '/register', '/join', '/session']
-  const isPublicRoute = publicRoutes.some(route => location.pathname === '/' || location.pathname.startsWith(route))
+  // Join and session routes are always public — accessible whether logged in or not
+  if (location.pathname.startsWith('/join') || location.pathname.startsWith('/session')) {
+    return (
+      <PublicLayout>
+        <Routes>
+          <Route path="/join" element={<AudienceJoin />} />
+          <Route path="/join/:joinCode" element={<AudienceJoin />} />
+          <Route path="/session/:sessionId" element={<AudienceSession />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </PublicLayout>
+    )
+  }
 
-  if (isPublicRoute && !isAuthenticated) {
+  // Other public routes — only when not authenticated
+  if (!isAuthenticated) {
     return (
       <PublicLayout>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/join" element={<AudienceJoin />} />
-          <Route path="/join/:joinCode" element={<AudienceJoin />} />
-          <Route path="/session/:sessionId" element={<AudienceSession />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>

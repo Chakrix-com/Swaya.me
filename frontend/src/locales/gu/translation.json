@@ -370,6 +370,15 @@
     "bn": "বাংলা",
     "gu": "ગુજરાતી"
   },
+  "leaderboard": {
+    "title": "લીડરબોર્ડ",
+    "rank": "#",
+    "participant": "સહભાગી",
+    "score": "સ્કોર",
+    "yourRank": "તમારો ક્રમ: #{{rank}}",
+    "noData": "હજી સ્કોર નથી",
+    "mcqOnly": "ફક્ત MCQ પ્રશ્નો"
+  },
   "home": {
     "login": "Login",
     "signup": "Sign Up",

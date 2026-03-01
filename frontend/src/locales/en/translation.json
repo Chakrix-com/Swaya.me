@@ -375,6 +375,15 @@
     "bn": "Bengali",
     "gu": "Gujarati"
   },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "rank": "#",
+    "participant": "Participant",
+    "score": "Score",
+    "yourRank": "Your Rank: #{{rank}}",
+    "noData": "No scores yet",
+    "mcqOnly": "MCQ questions only"
+  },
   "home": {
     "login": "Login",
     "signup": "Sign Up",
