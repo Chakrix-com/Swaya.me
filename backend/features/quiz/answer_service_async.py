@@ -9,7 +9,7 @@ import json
 import os
 
 from persistence.models.quiz import (
-    Quiz, QuizSession, Participant, Answer, Question,
+    Quiz, QuizSession, Participant, Answer, Question, SessionQuestionTiming,
     QuizSessionStatus, QuestionStatus, QuestionType
 )
 from features.quiz.schemas import (
@@ -560,46 +560,107 @@ class AnswerServiceAsync:
             if p:
                 current_participant_id = p.id
 
-        # Aggregate: participants + their correct-answer counts and last answer time
-        score_col = func.count(Answer.id).label('score')
-        last_answer_col = func.max(Answer.created_at).label('last_answer_time')
-        result = await db.execute(
-            select(Participant.id, Participant.display_name, Participant.created_at, score_col, last_answer_col)
-            .outerjoin(
-                Answer,
-                and_(
-                    Answer.participant_id == Participant.id,
-                    Answer.session_id == session_id,
-                    Answer.is_correct == True
-                )
-            )
+        # Load all closed MCQ question timings for this session
+        timings_result = await db.execute(
+            select(SessionQuestionTiming)
+            .join(Question, Question.id == SessionQuestionTiming.question_id)
             .filter(
-                Participant.session_id == session_id,
-                Participant.is_active == True
+                SessionQuestionTiming.session_id == session_id,
+                SessionQuestionTiming.closed_at != None,
+                Question.question_type == QuestionType.MCQ,
             )
-            .group_by(Participant.id, Participant.display_name, Participant.created_at)
-            .order_by(score_col.desc(), func.isnull(last_answer_col).asc(), last_answer_col.asc(), Participant.id.asc())
+            .order_by(SessionQuestionTiming.question_id, SessionQuestionTiming.opened_at)
         )
-        rows = result.all()
+        timings = timings_result.scalars().all()
 
-        # Assign ranks: tied when score AND last_answer_time are both equal
+        # Group timings by question_id — keep all windows (host may go back)
+        from collections import defaultdict
+        timings_by_question = defaultdict(list)
+        for t in timings:
+            timings_by_question[t.question_id].append(t)
+
+        # Load all active participants
+        participants_result = await db.execute(
+            select(Participant)
+            .filter(Participant.session_id == session_id, Participant.is_active == True)
+            .order_by(Participant.id)
+        )
+        participants = participants_result.scalars().all()
+
+        # Load all MCQ answers for this session (correct ones for score, all for timing)
+        answers_result = await db.execute(
+            select(Answer)
+            .join(Question, Question.id == Answer.question_id)
+            .filter(
+                Answer.session_id == session_id,
+                Question.question_type == QuestionType.MCQ,
+            )
+        )
+        all_answers = answers_result.scalars().all()
+
+        # Index answers by (participant_id, question_id)
+        answer_map: dict = {}
+        for a in all_answers:
+            answer_map[(a.participant_id, a.question_id)] = a
+
+        def compute_time(participant_id: int) -> Optional[float]:
+            """
+            Sum of per-question deltas:
+              - answered: answer_time - question opened_at (using the timing window that
+                contains the answer, or the latest timing if none match)
+              - not answered: closed_at - opened_at for the LAST timing window
+            Returns None if no timings recorded yet (session still in progress).
+            """
+            if not timings_by_question:
+                return None
+            total = 0.0
+            for qid, windows in timings_by_question.items():
+                answer = answer_map.get((participant_id, qid))
+                if answer:
+                    # Find the timing window that contains the answer time
+                    matched = next(
+                        (w for w in windows if w.opened_at <= answer.created_at <= w.closed_at),
+                        windows[-1]  # fallback to latest window
+                    )
+                    delta = (answer.created_at - matched.opened_at).total_seconds()
+                    # Clamp to window duration to avoid negative or inflated values
+                    window_dur = (matched.closed_at - matched.opened_at).total_seconds()
+                    total += max(0.0, min(delta, window_dur))
+                else:
+                    # Not answered — charge full duration of the last window
+                    last = windows[-1]
+                    total += (last.closed_at - last.opened_at).total_seconds()
+            return total
+
+        def count_correct(participant_id: int) -> int:
+            return sum(
+                1 for a in all_answers
+                if a.participant_id == participant_id and a.is_correct
+            )
+
+        # Build scored + timed entries, then sort
+        scored = [
+            (p, count_correct(p.id), compute_time(p.id))
+            for p in participants
+        ]
+        # Sort: score DESC, time ASC (None → treated as infinity so they sort last), id ASC
+        scored.sort(key=lambda x: (-x[1], x[2] if x[2] is not None else float('inf'), x[0].id))
+
+        # Assign ranks (tied when score AND time are equal)
         entries = []
         current_rank = 1
         prev_key = None
-        for i, row in enumerate(rows):
-            current_key = (row.score, row.last_answer_time)
+        for i, (p, score, time_taken) in enumerate(scored):
+            current_key = (score, round(time_taken, 3) if time_taken is not None else None)
             if prev_key is not None and current_key != prev_key:
                 current_rank = i + 1
-            time_taken = None
-            if row.last_answer_time is not None:
-                time_taken = (row.last_answer_time - row.created_at).total_seconds()
             entries.append(LeaderboardEntry(
                 rank=current_rank,
-                participant_id=row.id,
-                display_name=row.display_name or 'Guest',
-                score=row.score,
-                is_current_participant=(row.id == current_participant_id),
-                time_taken_seconds=time_taken
+                participant_id=p.id,
+                display_name=p.display_name or 'Guest',
+                score=score,
+                is_current_participant=(p.id == current_participant_id),
+                time_taken_seconds=round(time_taken, 1) if time_taken is not None else None,
             ))
             prev_key = current_key
 

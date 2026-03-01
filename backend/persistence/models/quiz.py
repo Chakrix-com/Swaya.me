@@ -1,7 +1,7 @@
 """
 Quiz feature domain models
 """
-from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON
+from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime
 from sqlalchemy.orm import relationship
 import enum
 
@@ -90,6 +90,7 @@ class QuizSession(Base, TimestampMixin, TenantMixin):
     quiz = relationship("Quiz", back_populates="sessions")
     participants = relationship("Participant", back_populates="session")
     answers = relationship("Answer", back_populates="session")
+    question_timings = relationship("SessionQuestionTiming", back_populates="session", cascade="all, delete-orphan")
 
 
 class Participant(Base, TimestampMixin):
@@ -127,6 +128,24 @@ class Answer(Base, TimestampMixin):
     session = relationship("QuizSession", back_populates="answers")
     participant = relationship("Participant", back_populates="answers")
     question = relationship("Question", back_populates="answers")
+
+
+class SessionQuestionTiming(Base):
+    """
+    Tracks when each question was displayed and closed during a session.
+    Multiple rows per question are allowed (host may go back and re-show a question).
+    """
+    __tablename__ = "session_question_timings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id'), nullable=False)
+    question_index = Column(Integer, nullable=False)
+    opened_at = Column(DateTime, nullable=False)
+    closed_at = Column(DateTime, nullable=True)
+
+    session = relationship("QuizSession", back_populates="question_timings")
+    question = relationship("Question")
 
 
 class QuizFeedback(Base, TimestampMixin, TenantMixin):

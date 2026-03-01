@@ -8,9 +8,10 @@ from typing import Optional
 import secrets
 import string
 
+from datetime import datetime
 from persistence.models.quiz import (
-    Quiz, QuizSession, Participant, Question, Answer,
-    QuizStatus, QuizSessionStatus, QuestionStatus
+    Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
+    QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType
 )
 from persistence.models.core import Event, Tenant
 from features.quiz.schemas import (
@@ -276,23 +277,41 @@ class SessionServiceAsync:
         if session.status == QuizSessionStatus.ENDED:
             raise InvalidSessionStatusError("Session has ended")
         
-        # Close current question if open
-        if session.current_question_status == QuestionStatus.OPEN:
+        now = datetime.utcnow()
+        questions = sorted(session.quiz.questions, key=lambda q: q.order)
+
+        # Close timing for current question
+        if session.current_question_index >= 0 and session.current_question_status == QuestionStatus.OPEN:
             session.current_question_status = QuestionStatus.CLOSED
-        
+            await db.execute(
+                update(SessionQuestionTiming)
+                .where(
+                    SessionQuestionTiming.session_id == session_id,
+                    SessionQuestionTiming.question_index == session.current_question_index,
+                    SessionQuestionTiming.closed_at == None,
+                )
+                .values(closed_at=now)
+            )
+
         # Advance to next
         session.current_question_index += 1
-        
+
         # Check if more questions available
-        if session.current_question_index >= len(session.quiz.questions):
+        if session.current_question_index >= len(questions):
             # No more questions, end session
             session.status = QuizSessionStatus.ENDED
             session.current_question_status = None
         else:
-            # Open new question
+            # Open new question and record timing
             session.status = QuizSessionStatus.ACTIVE
             session.current_question_status = QuestionStatus.OPEN
-        
+            db.add(SessionQuestionTiming(
+                session_id=session_id,
+                question_id=questions[session.current_question_index].id,
+                question_index=session.current_question_index,
+                opened_at=now,
+            ))
+
         await db.commit()
         await db.refresh(session)
         
@@ -340,17 +359,35 @@ class SessionServiceAsync:
         if session.current_question_index <= 0:
             raise InvalidSessionStatusError("Already at first question")
         
-        # Close current question if open
+        now = datetime.utcnow()
+        questions = sorted(session.quiz.questions, key=lambda q: q.order)
+
+        # Close timing for current question
         if session.current_question_status == QuestionStatus.OPEN:
             session.current_question_status = QuestionStatus.CLOSED
-        
+            await db.execute(
+                update(SessionQuestionTiming)
+                .where(
+                    SessionQuestionTiming.session_id == session_id,
+                    SessionQuestionTiming.question_index == session.current_question_index,
+                    SessionQuestionTiming.closed_at == None,
+                )
+                .values(closed_at=now)
+            )
+
         # Go back to previous
         session.current_question_index -= 1
-        
-        # Reopen previous question
+
+        # Reopen previous question with a fresh timing entry
         session.status = QuizSessionStatus.ACTIVE
         session.current_question_status = QuestionStatus.OPEN
-        
+        db.add(SessionQuestionTiming(
+            session_id=session_id,
+            question_id=questions[session.current_question_index].id,
+            question_index=session.current_question_index,
+            opened_at=now,
+        ))
+
         await db.commit()
         await db.refresh(session)
         
@@ -387,12 +424,25 @@ class SessionServiceAsync:
         if not session:
             raise SessionNotFoundError("Session not found")
         
+        now = datetime.utcnow()
+
+        # Close timing for current question if still open
+        if session.current_question_index >= 0:
+            await db.execute(
+                update(SessionQuestionTiming)
+                .where(
+                    SessionQuestionTiming.session_id == session_id,
+                    SessionQuestionTiming.closed_at == None,
+                )
+                .values(closed_at=now)
+            )
+
         session.status = QuizSessionStatus.ENDED
         session.current_question_status = None
-        
+
         await db.commit()
         await db.refresh(session)
-        
+
         # Update Redis
         await self.redis.set_json(
             f"session:{session.id}:info",
