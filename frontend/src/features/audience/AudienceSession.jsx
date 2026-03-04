@@ -307,9 +307,12 @@ export default function AudienceSession() {
     )
   }
 
-  if (!sessionToken) {
-    return (
-      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
+  const isWordCloud = currentQuestion?.question_type === 'word_cloud'
+  const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
+
+  const renderContent = () => {
+    if (!sessionToken) {
+      return (
         <Result
           status="error"
           title="No Session Found"
@@ -320,14 +323,11 @@ export default function AudienceSession() {
             </Button>
           }
         />
-      </div>
-    )
-  }
+      )
+    }
 
-  // Session Invalidated - Host restarted quiz
-  if (sessionInvalidated) {
-    return (
-      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
+    if (sessionInvalidated) {
+      return (
         <Card>
           <Result
             status="warning"
@@ -335,25 +335,17 @@ export default function AudienceSession() {
             title="Session Restarted"
             subTitle="The host has started a new quiz session"
             extra={
-              <Button
-                type="primary"
-                icon={<LoginOutlined />}
-                onClick={() => navigate('/join')}
-                size="large"
-              >
+              <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')} size="large">
                 Rejoin Quiz
               </Button>
             }
           />
         </Card>
-      </div>
-    )
-  }
+      )
+    }
 
-  // Quiz Completed - Show final score
-  if (sessionStatus === 'ended' && !currentQuestion) {
-    return (
-      <div style={{ padding: 16, maxWidth: 640, margin: '0 auto' }}>
+    if (sessionStatus === 'ended' && !currentQuestion) {
+      return (
         <Card>
           <Result
             status="success"
@@ -369,7 +361,7 @@ export default function AudienceSession() {
                 </Text>
                 <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
                 <LeaderboardTable />
-                <Card size="small" style={{ width: '100%', maxWidth: 520, marginTop: 16 }}>
+                <Card size="small" style={{ width: '100%', marginTop: 16 }}>
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Text strong>Share Feedback</Text>
                     <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
@@ -394,19 +386,14 @@ export default function AudienceSession() {
                 </Card>
               </Space>
             }
-            extra={
-              <Text type="secondary">Thank you for participating!</Text>
-            }
+            extra={<Text type="secondary">Thank you for participating!</Text>}
           />
         </Card>
-      </div>
-    )
-  }
+      )
+    }
 
-  // Waiting for host/question
-  if (!currentQuestion && sessionStatus !== 'ended') {
-    return (
-      <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
+    if (!currentQuestion && sessionStatus !== 'ended') {
+      return (
         <Card>
           <Space direction="vertical" align="center" style={{ width: '100%' }}>
             <LoadingOutlined style={{ fontSize: 48 }} />
@@ -419,21 +406,19 @@ export default function AudienceSession() {
             <Tag color="blue">Joined as: {displayName}</Tag>
           </Space>
         </Card>
-      </div>
-    )
+      )
+    }
+
+    return null  // falls through to main question UI below
   }
 
-  const isWordCloud = currentQuestion?.question_type === 'word_cloud'
-  const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion.correct_answer
+  const stateContent = renderContent()
 
   return (
-    <div style={{
-      padding: 16,
-      maxWidth: 800,
-      width: '100%',
-      margin: '0 auto',
-      boxSizing: 'border-box',
-    }}>
+    <div className="container py-3">
+      <div className="row justify-content-center">
+        <div className="col-12 col-sm-10 col-md-8 col-lg-7">
+          {stateContent !== null ? stateContent : (<>
       <Card style={{ marginBottom: 16 }}>
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Tag color="blue">
@@ -775,6 +760,9 @@ export default function AudienceSession() {
           </>
         )}
       </Card>
+          </>)}
+        </div>
+      </div>
     </div>
   )
 }

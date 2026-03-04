@@ -6,6 +6,8 @@ import enUS from 'antd/locale/en_US'
 import App from './App.jsx'
 import { store } from './store/store'
 import './locales/i18n'
+import 'bootstrap/dist/css/bootstrap-grid.min.css'
+import 'bootstrap/dist/css/bootstrap-utilities.min.css'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
