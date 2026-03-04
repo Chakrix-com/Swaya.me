@@ -45,7 +45,7 @@ function AudienceJoin() {
   return (
     <div
       className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', position: 'relative' }}
+      style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', position: 'relative' }}
     >
       <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
         <LanguageSwitcher />
