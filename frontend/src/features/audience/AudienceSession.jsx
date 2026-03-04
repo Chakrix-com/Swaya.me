@@ -36,14 +36,12 @@ export default function AudienceSession() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const reduxSession = useSelector((state) => state.session.session)
-  
-  // Try to get session from location.state first, then fall back to Redux
+
   const locationState = location.state || {}
   const sessionToken = locationState.sessionToken || reduxSession?.session_token
   const sessionId = locationState.sessionId || reduxSession?.session_id
   const displayName = locationState.displayName || reduxSession?.display_name || 'Guest'
 
-  const [session, setSession] = useState(null)
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [wordCloudAnswer, setWordCloudAnswer] = useState('')
@@ -51,7 +49,7 @@ export default function AudienceSession() {
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [sessionStatus, setSessionStatus] = useState(null) // 'created', 'active', 'ended'
+  const [sessionStatus, setSessionStatus] = useState(null)
   const [sessionInvalidated, setSessionInvalidated] = useState(false)
   const [leaderboard, setLeaderboard] = useState(null)
   const [feedbackText, setFeedbackText] = useState('')
@@ -63,34 +61,24 @@ export default function AudienceSession() {
 
   useEffect(() => {
     if (sessionToken && sessionId) {
-      pollingIntervalRef.current = setInterval(loadResults, 2000) // Poll every 2 seconds
+      pollingIntervalRef.current = setInterval(loadResults, 2000)
       loadResults()
       return () => {
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current)
-        }
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
       }
     }
   }, [sessionToken, sessionId])
 
   const loadResults = async () => {
-    if (!sessionToken || !sessionId) {
-      console.log('Missing sessionToken or sessionId:', { sessionToken, sessionId })
-      return
-    }
-    console.log('Loading results for session:', sessionId, 'with token:', sessionToken)
+    if (!sessionToken || !sessionId) return
     try {
       const response = await sessionAPI.getResults(sessionId, sessionToken)
-      console.log('Results received:', response.data)
-
       const newQuestionId = response.data.current_question?.question_id
       const newStatus = response.data.status
 
-      // Track session status changes and show notifications
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
           message.success('Quiz has ended! Thank you for participating!')
-          // Stop polling when quiz ends
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current)
             pollingIntervalRef.current = null
@@ -101,31 +89,23 @@ export default function AudienceSession() {
       }
       setSessionStatus(newStatus)
 
-      // If question ID changed, reset answer state
       if (lastQuestionIdRef.current && newQuestionId && newQuestionId !== lastQuestionIdRef.current) {
-        console.log('Question changed from', lastQuestionIdRef.current, 'to', newQuestionId, '- resetting answer state')
         setSubmitted(false)
         setSelectedAnswer(null)
         setWordCloudAnswer('')
         setWordCloudData([])
       }
 
-      // Always update tracking
       lastQuestionIdRef.current = newQuestionId
       setResults(response.data)
       setCurrentQuestion(response.data.current_question)
 
-      // If current question is word cloud, load word cloud data
       if (response.data.current_question?.question_type === 'word_cloud') {
         loadWordCloudData(response.data.current_question.question_id)
       }
     } catch (error) {
-      console.error('Failed to load results', error)
-
-      // Check if session was invalidated (403)
       if (error.response?.status === 403) {
         setSessionInvalidated(true)
-        // Stop polling
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current)
           pollingIntervalRef.current = null
@@ -133,7 +113,6 @@ export default function AudienceSession() {
         message.warning('Session has been restarted. Please rejoin with the new code.')
       }
     }
-    // Leaderboard is non-critical — fetch independently so it never blocks results
     sessionAPI.getLeaderboard(sessionId, sessionToken)
       .then(res => setLeaderboard(res.data))
       .catch(() => {})
@@ -144,8 +123,7 @@ export default function AudienceSession() {
     try {
       const response = await questionAPI.getWordCloudResults(questionId, sessionId)
       const words = Object.entries(response.data.word_frequencies).map(([word, count]) => ({
-        text: word,
-        value: count
+        text: word, value: count
       }))
       setWordCloudData(words)
     } catch (error) {
@@ -154,56 +132,28 @@ export default function AudienceSession() {
   }
 
   const handleSubmitAnswer = async () => {
-    console.log('handleSubmitAnswer called, selectedAnswer:', selectedAnswer, 'wordCloudAnswer:', wordCloudAnswer)
-    
     const isWordCloud = currentQuestion?.question_type === 'word_cloud'
-    
-    if (isWordCloud) {
-      if (!wordCloudAnswer || !wordCloudAnswer.trim()) {
-        console.log('No word cloud answer entered, returning')
-        return
-      }
-    } else {
-      if (!selectedAnswer) {
-        console.log('No answer selected, returning')
-        return
-      }
-    }
+    if (isWordCloud ? !wordCloudAnswer?.trim() : !selectedAnswer) return
 
     setLoading(true)
     try {
       if (isWordCloud) {
-        console.log('Submitting word cloud answer:', { text_answer: wordCloudAnswer.trim(), question_id: currentQuestion.question_id })
-        
         await sessionAPI.submitWordCloudAnswer(sessionToken, {
           question_id: currentQuestion.question_id,
           text_answer: wordCloudAnswer.trim()
         })
-        console.log('Word cloud answer submitted successfully')
-        
-        // Clear input for next submission but don't set submitted=true
         setWordCloudAnswer('')
-        
-        // Reload word cloud immediately to show new word
         setTimeout(() => loadWordCloudData(currentQuestion.question_id), 500)
       } else {
-        // Convert answer letter (A,B,C,D) to index (0,1,2,3)
-        const answerIndex = selectedAnswer.charCodeAt(0) - 65 // A=0, B=1, C=2, D=3
-        console.log('Submitting answer:', { selectedAnswer, answerIndex, question_id: currentQuestion.question_id })
-        
+        const answerIndex = selectedAnswer.charCodeAt(0) - 65
         await sessionAPI.submitAnswer(sessionToken, {
           question_id: currentQuestion.question_id,
           selected_option_index: answerIndex
         })
-        console.log('Answer submitted successfully')
         setSubmitted(true)
       }
     } catch (error) {
-      console.error('Failed to submit answer', error)
-      // For MCQ, continue anyway as the error might be "already submitted"
-      if (!isWordCloud) {
-        setSubmitted(true)
-      }
+      if (!isWordCloud) setSubmitted(true)
     } finally {
       setLoading(false)
     }
@@ -282,7 +232,7 @@ export default function AudienceSession() {
             )}
           </Space>
         }
-        style={{ marginTop: 16, width: '100%' }}
+        style={{ marginTop: 16 }}
       >
         {leaderboard.entries.length === 0 ? (
           <Text type="secondary">{t('leaderboard.noData')}</Text>
@@ -310,457 +260,322 @@ export default function AudienceSession() {
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
 
-  const renderContent = () => {
-    if (!sessionToken) {
-      return (
-        <Result
-          status="error"
-          title="No Session Found"
-          subTitle="Please join a session first"
-          extra={
-            <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')}>
-              Go to Join Page
-            </Button>
-          }
-        />
-      )
-    }
+  // ── Single wrapper — Bootstrap centres the column, overflow-x: hidden clips any Ant Design excess
+  return (
+    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
+      <div className="container-fluid">
+        <div className="row justify-content-center g-0">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-7" style={{ padding: '16px' }}>
 
-    if (sessionInvalidated) {
-      return (
-        <Card>
-          <Result
-            status="warning"
-            icon={<CloseCircleOutlined style={{ color: '#faad14' }} />}
-            title="Session Restarted"
-            subTitle="The host has started a new quiz session"
-            extra={
-              <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')} size="large">
-                Rejoin Quiz
-              </Button>
-            }
-          />
-        </Card>
-      )
-    }
+            {/* ── No session token ── */}
+            {!sessionToken && (
+              <Result
+                status="error"
+                title="No Session Found"
+                subTitle="Please join a session first"
+                extra={
+                  <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')}>
+                    Go to Join Page
+                  </Button>
+                }
+              />
+            )}
 
-    if (sessionStatus === 'ended' && !currentQuestion) {
-      return (
-        <Card>
-          <Result
-            status="success"
-            icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-            title="Quiz Completed!"
-            subTitle={
-              <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
-                <Title level={4} style={{ margin: 0 }}>
-                  Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
-                </Title>
-                <Text type="secondary">
-                  You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
-                </Text>
-                <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
-                <LeaderboardTable />
-                <Card size="small" style={{ width: '100%', marginTop: 16 }}>
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text strong>Share Feedback</Text>
-                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
-                    <TextArea
-                      rows={3}
-                      maxLength={500}
-                      showCount
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
-                      placeholder="Tell us what worked well or what can improve"
-                      disabled={feedbackSubmitted}
-                    />
-                    <Button
-                      type="primary"
-                      onClick={handleSubmitFeedback}
-                      loading={feedbackSubmitting}
-                      disabled={feedbackSubmitted || !feedbackText.trim()}
-                    >
-                      {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+            {/* ── Session invalidated ── */}
+            {sessionToken && sessionInvalidated && (
+              <Card>
+                <Result
+                  status="warning"
+                  icon={<CloseCircleOutlined style={{ color: '#faad14' }} />}
+                  title="Session Restarted"
+                  subTitle="The host has started a new quiz session"
+                  extra={
+                    <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')} size="large">
+                      Rejoin Quiz
                     </Button>
+                  }
+                />
+              </Card>
+            )}
+
+            {/* ── Quiz ended ── */}
+            {sessionToken && !sessionInvalidated && sessionStatus === 'ended' && !currentQuestion && (
+              <Card>
+                <Result
+                  status="success"
+                  icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                  title="Quiz Completed!"
+                  subTitle={
+                    <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
+                      <Title level={4} style={{ margin: 0 }}>
+                        Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
+                      </Title>
+                      <Text type="secondary">
+                        You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
+                      </Text>
+                      <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
+                      <LeaderboardTable />
+                      <Card size="small" style={{ width: '100%', marginTop: 16 }}>
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          <Text strong>Share Feedback</Text>
+                          <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
+                          <TextArea
+                            rows={3}
+                            maxLength={500}
+                            showCount
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="Tell us what worked well or what can improve"
+                            disabled={feedbackSubmitted}
+                          />
+                          <Button
+                            type="primary"
+                            onClick={handleSubmitFeedback}
+                            loading={feedbackSubmitting}
+                            disabled={feedbackSubmitted || !feedbackText.trim()}
+                          >
+                            {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                          </Button>
+                        </Space>
+                      </Card>
+                    </Space>
+                  }
+                  extra={<Text type="secondary">Thank you for participating!</Text>}
+                />
+              </Card>
+            )}
+
+            {/* ── Waiting for host / next question ── */}
+            {sessionToken && !sessionInvalidated && !currentQuestion && sessionStatus !== 'ended' && (
+              <Card>
+                <Space direction="vertical" align="center" style={{ width: '100%' }}>
+                  <LoadingOutlined style={{ fontSize: 48 }} />
+                  <Title level={3}>
+                    {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
+                  </Title>
+                  <Text type="secondary">
+                    {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
+                  </Text>
+                  <Tag color="blue">Joined as: {displayName}</Tag>
+                </Space>
+              </Card>
+            )}
+
+            {/* ── Active question ── */}
+            {sessionToken && !sessionInvalidated && currentQuestion && (
+              <>
+                <Card style={{ marginBottom: 16 }}>
+                  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                    <Tag color="blue">Question {results.current_question_index + 1}</Tag>
+                    {isWordCloud && <Tag color="purple">Word Cloud</Tag>}
+                    <Text strong>{displayName}</Text>
                   </Space>
                 </Card>
-              </Space>
-            }
-            extra={<Text type="secondary">Thank you for participating!</Text>}
-          />
-        </Card>
-      )
-    }
 
-    if (!currentQuestion && sessionStatus !== 'ended') {
-      return (
-        <Card>
-          <Space direction="vertical" align="center" style={{ width: '100%' }}>
-            <LoadingOutlined style={{ fontSize: 48 }} />
-            <Title level={3}>
-              {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
-            </Title>
-            <Text type="secondary">
-              {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
-            </Text>
-            <Tag color="blue">Joined as: {displayName}</Tag>
-          </Space>
-        </Card>
-      )
-    }
-
-    return null  // falls through to main question UI below
-  }
-
-  const stateContent = renderContent()
-
-  return (
-    <div className="container py-3">
-      <div className="row justify-content-center">
-        <div className="col-12 col-sm-10 col-md-8 col-lg-7">
-          {stateContent !== null ? stateContent : (<>
-      <Card style={{ marginBottom: 16 }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-          <Tag color="blue">
-            Question {results.current_question_index + 1}
-          </Tag>
-          {isWordCloud && <Tag color="purple">Word Cloud</Tag>}
-          <Text strong>{displayName}</Text>
-        </Space>
-      </Card>
-
-      <Card
-        title={
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {currentQuestion.question_image_url && (
-              <img 
-                src={currentQuestion.question_image_url} 
-                alt="Question" 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: window.innerWidth < 768 ? '200px' : '300px',
-                  borderRadius: '8px',
-                  display: 'block'
-                }} 
-              />
-            )}
-            <Title 
-              level={3} 
-              style={{ 
-                margin: currentQuestion.question_image_url ? '8px 0 0 0' : 0,
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'normal'
-              }}
-            >
-              {currentQuestion.text}
-            </Title>
-          </Space>
-        }
-      >
-        {isWordCloud ? (
-          // Word Cloud: Always show input + visualization
-          <>
-            <TextArea
-              rows={3}
-              placeholder="Enter your answer (max 100 characters)"
-              maxLength={100}
-              value={wordCloudAnswer}
-              onChange={(e) => setWordCloudAnswer(e.target.value)}
-              showCount
-              style={{ marginBottom: 16 }}
-            />
-            <Button
-              type="primary"
-              size="large"
-              block
-              icon={<SendOutlined />}
-              disabled={!wordCloudAnswer.trim()}
-              onClick={handleSubmitAnswer}
-              loading={loading}
-              style={{ marginBottom: 24 }}
-            >
-              Submit Answer
-            </Button>
-            
-            {/* Word Cloud Visualization */}
-            {wordCloudData.length > 0 ? (
-              <>
-                <Alert
-                  message="Live Word Cloud"
-                  description={`${wordCloudData.reduce((sum, w) => sum + w.value, 0)} responses submitted`}
-                  type="info"
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
-                <div style={{
-                  width: '100%',
-                  height: '350px',
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  backgroundColor: '#fafafa'
-                }}>
-                  <ReactWordcloud
-                    words={wordCloudData}
-                    options={{
-                      rotations: 2,
-                      rotationAngles: [0, 90],
-                      fontSizes: [16, 60],
-                      padding: 4,
-                      enableTooltip: true,
-                      deterministic: true,
-                      fontFamily: 'Arial',
-                      colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
-                    }}
-                  />
-                </div>
-              </>
-            ) : (
-              <Alert
-                message="Be the first to respond!"
-                description="Submit your answer and watch the word cloud grow."
-                type="info"
-                showIcon
-              />
-            )}
-          </>
-        ) : !submitted ? (
-          // MCQ Question UI
-          <>
-            <Radio.Group
-                  onChange={(e) => {
-                    console.log('Radio changed:', e.target.value)
-                    setSelectedAnswer(e.target.value)
-                  }}
-                  value={selectedAnswer}
-                  style={{ width: '100%' }}
-                >
-                  <Space direction="vertical" style={{ width: '100%' }} size="large">
-                    <Radio
-                      value="A"
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        border: '2px solid #d9d9d9',
-                        borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'A' ? '#e6f7ff' : 'white',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
-                        whiteSpace: 'normal'
-                      }}
-                    >
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <div>
-                          <Text strong>A:</Text> {currentQuestion.option_a}
-                        </div>
-                        {currentQuestion.option_images?.A && (
-                          <img 
-                            src={currentQuestion.option_images.A} 
-                            alt="Option A" 
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
-                              borderRadius: '4px', 
-                              marginTop: '8px' 
-                            }} 
-                          />
-                        )}
-                      </Space>
-                    </Radio>
-
-                    <Radio
-                      value="B"
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        border: '2px solid #d9d9d9',
-                        borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'B' ? '#e6f7ff' : 'white',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
-                        whiteSpace: 'normal'
-                      }}
-                    >
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <div>
-                          <Text strong>B:</Text> {currentQuestion.option_b}
-                        </div>
-                        {currentQuestion.option_images?.B && (
-                          <img 
-                            src={currentQuestion.option_images.B} 
-                            alt="Option B" 
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
-                              borderRadius: '4px', 
-                              marginTop: '8px' 
-                            }} 
-                          />
-                        )}
-                      </Space>
-                    </Radio>
-
-                    <Radio
-                      value="C"
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        border: '2px solid #d9d9d9',
-                        borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'C' ? '#e6f7ff' : 'white',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
-                        whiteSpace: 'normal'
-                      }}
-                    >
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <div>
-                          <Text strong>C:</Text> {currentQuestion.option_c}
-                        </div>
-                        {currentQuestion.option_images?.C && (
-                          <img 
-                            src={currentQuestion.option_images.C} 
-                            alt="Option C" 
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
-                              borderRadius: '4px', 
-                              marginTop: '8px' 
-                            }} 
-                          />
-                        )}
-                      </Space>
-                    </Radio>
-
-                    <Radio
-                      value="D"
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        border: '2px solid #d9d9d9',
-                        borderRadius: '8px',
-                        backgroundColor: selectedAnswer === 'D' ? '#e6f7ff' : 'white',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
-                        whiteSpace: 'normal'
-                      }}
-                    >
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <div>
-                          <Text strong>D:</Text> {currentQuestion.option_d}
-                        </div>
-                        {currentQuestion.option_images?.D && (
-                          <img 
-                            src={currentQuestion.option_images.D} 
-                            alt="Option D" 
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: window.innerWidth < 768 ? '150px' : '200px',
-                              borderRadius: '4px', 
-                              marginTop: '8px' 
-                            }} 
-                          />
-                        )}
-                      </Space>
-                    </Radio>
-                  </Space>
-                </Radio.Group>
-
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<SendOutlined />}
-                  disabled={!selectedAnswer}
-                  onClick={handleSubmitAnswer}
-                  loading={loading}
-                  style={{ marginTop: 24 }}
-                >
-                  Submit Answer
-                </Button>
-              </>
-        ) : (
-          // MCQ Results (after submission) — option cards with visual correct/wrong cues
-          <>
-            {(() => {
-              const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
-              const totalAns = currentQuestion.total_answers || 0
-              const opts = [
-                { key: 'A', label: currentQuestion.option_a, idx: 0 },
-                { key: 'B', label: currentQuestion.option_b, idx: 1 },
-                { key: 'C', label: currentQuestion.option_c, idx: 2 },
-                { key: 'D', label: currentQuestion.option_d, idx: 3 },
-              ]
-              return (
-                <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                  {opts.map(({ key, label, idx }) => {
-                    const correct = currentQuestion.correct_answer === key
-                    const selected = selectedAnswer === key
-                    const count = dist[idx] || 0
-                    const pct = totalAns > 0 ? (count / totalAns * 100) : 0
-
-                    const borderColor = correct ? '#52c41a' : selected ? '#ff4d4f' : '#d9d9d9'
-                    const bgColor    = correct ? '#f6ffed' : selected ? '#fff1f0' : '#fafafa'
-                    const badgeBg    = correct ? '#52c41a' : selected ? '#ff4d4f' : '#bfbfbf'
-                    const badgeIcon  = correct ? <CheckCircleOutlined /> : selected ? <CloseCircleOutlined /> : key
-
-                    return (
-                      <div key={key} style={{
-                        border: `2px solid ${borderColor}`,
-                        borderRadius: 8,
-                        padding: '12px 16px',
-                        background: bgColor,
-                        opacity: (!correct && !selected) ? 0.55 : 1,
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                          <span style={{
-                            width: 30, height: 30, borderRadius: '50%',
-                            background: badgeBg, color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 14, fontWeight: 700, flexShrink: 0,
-                          }}>
-                            {badgeIcon}
-                          </span>
-                          <Text style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400 }}>
-                            {label}
-                          </Text>
-                          <Text type="secondary" style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
-                            {count} ({pct.toFixed(1)}%)
-                          </Text>
-                        </div>
-                        {currentQuestion.option_images?.[key] && (
-                          <img
-                            src={currentQuestion.option_images[key]}
-                            alt={`Option ${key}`}
-                            style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 4, marginBottom: 8 }}
-                          />
-                        )}
-                        <Progress
-                          percent={parseFloat(pct.toFixed(1))}
-                          strokeColor={correct ? '#52c41a' : '#1890ff'}
-                          showInfo={false}
-                          size="small"
+                <Card
+                  title={
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {currentQuestion.question_image_url && (
+                        <img
+                          src={currentQuestion.question_image_url}
+                          alt="Question"
+                          style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, display: 'block' }}
                         />
-                      </div>
-                    )
-                  })}
-                </Space>
-              )
-            })()}
+                      )}
+                      <Title
+                        level={3}
+                        style={{
+                          margin: currentQuestion.question_image_url ? '8px 0 0 0' : 0,
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'normal'
+                        }}
+                      >
+                        {currentQuestion.text}
+                      </Title>
+                    </Space>
+                  }
+                >
+                  {isWordCloud ? (
+                    <>
+                      <TextArea
+                        rows={3}
+                        placeholder="Enter your answer (max 100 characters)"
+                        maxLength={100}
+                        value={wordCloudAnswer}
+                        onChange={(e) => setWordCloudAnswer(e.target.value)}
+                        showCount
+                        style={{ marginBottom: 16 }}
+                      />
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        icon={<SendOutlined />}
+                        disabled={!wordCloudAnswer.trim()}
+                        onClick={handleSubmitAnswer}
+                        loading={loading}
+                        style={{ marginBottom: 24 }}
+                      >
+                        Submit Answer
+                      </Button>
+                      {wordCloudData.length > 0 ? (
+                        <>
+                          <Alert
+                            message="Live Word Cloud"
+                            description={`${wordCloudData.reduce((sum, w) => sum + w.value, 0)} responses submitted`}
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                          />
+                          <div style={{
+                            width: '100%', height: 300,
+                            border: '1px solid #d9d9d9', borderRadius: 8,
+                            padding: 16, backgroundColor: '#fafafa'
+                          }}>
+                            <ReactWordcloud
+                              words={wordCloudData}
+                              options={{
+                                rotations: 2, rotationAngles: [0, 90],
+                                fontSizes: [16, 60], padding: 4,
+                                enableTooltip: true, deterministic: true, fontFamily: 'Arial',
+                                colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
+                              }}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <Alert
+                          message="Be the first to respond!"
+                          description="Submit your answer and watch the word cloud grow."
+                          type="info"
+                          showIcon
+                        />
+                      )}
+                    </>
+                  ) : !submitted ? (
+                    <>
+                      <Radio.Group
+                        onChange={(e) => setSelectedAnswer(e.target.value)}
+                        value={selectedAnswer}
+                        style={{ width: '100%' }}
+                      >
+                        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                          {['A', 'B', 'C', 'D'].map((key) => {
+                            const label = currentQuestion[`option_${key.toLowerCase()}`]
+                            return (
+                              <Radio
+                                key={key}
+                                value={key}
+                                style={{
+                                  width: '100%',
+                                  padding: '12px 16px',
+                                  border: `2px solid ${selectedAnswer === key ? '#1890ff' : '#d9d9d9'}`,
+                                  borderRadius: 8,
+                                  backgroundColor: selectedAnswer === key ? '#e6f7ff' : 'white',
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  whiteSpace: 'normal'
+                                }}
+                              >
+                                <Space direction="vertical" style={{ width: '100%' }}>
+                                  <div><Text strong>{key}:</Text> {label}</div>
+                                  {currentQuestion.option_images?.[key] && (
+                                    <img
+                                      src={currentQuestion.option_images[key]}
+                                      alt={`Option ${key}`}
+                                      style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 4 }}
+                                    />
+                                  )}
+                                </Space>
+                              </Radio>
+                            )
+                          })}
+                        </Space>
+                      </Radio.Group>
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        icon={<SendOutlined />}
+                        disabled={!selectedAnswer}
+                        onClick={handleSubmitAnswer}
+                        loading={loading}
+                        style={{ marginTop: 24 }}
+                      >
+                        Submit Answer
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                        {['A', 'B', 'C', 'D'].map((key) => {
+                          const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          const idx = key.charCodeAt(0) - 65
+                          const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
+                          const totalAns = currentQuestion.total_answers || 0
+                          const count = dist[idx] || 0
+                          const pct = totalAns > 0 ? (count / totalAns * 100) : 0
+                          const correct = currentQuestion.correct_answer === key
+                          const selected = selectedAnswer === key
+                          const borderColor = correct ? '#52c41a' : selected ? '#ff4d4f' : '#d9d9d9'
+                          const bgColor = correct ? '#f6ffed' : selected ? '#fff1f0' : '#fafafa'
+                          const badgeBg = correct ? '#52c41a' : selected ? '#ff4d4f' : '#bfbfbf'
+                          const badgeIcon = correct ? <CheckCircleOutlined /> : selected ? <CloseCircleOutlined /> : key
+                          return (
+                            <div key={key} style={{
+                              border: `2px solid ${borderColor}`, borderRadius: 8,
+                              padding: '12px 16px', background: bgColor,
+                              opacity: (!correct && !selected) ? 0.55 : 1,
+                              transition: 'all 0.3s ease',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                                <span style={{
+                                  width: 30, height: 30, borderRadius: '50%',
+                                  background: badgeBg, color: '#fff',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 14, fontWeight: 700, flexShrink: 0,
+                                }}>
+                                  {badgeIcon}
+                                </span>
+                                <Text style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400 }}>
+                                  {label}
+                                </Text>
+                                <Text type="secondary" style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
+                                  {count} ({pct.toFixed(1)}%)
+                                </Text>
+                              </div>
+                              {currentQuestion.option_images?.[key] && (
+                                <img
+                                  src={currentQuestion.option_images[key]}
+                                  alt={`Option ${key}`}
+                                  style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 4, marginBottom: 8 }}
+                                />
+                              )}
+                              <Progress
+                                percent={parseFloat(pct.toFixed(1))}
+                                strokeColor={correct ? '#52c41a' : '#1890ff'}
+                                showInfo={false}
+                                size="small"
+                              />
+                            </div>
+                          )
+                        })}
+                      </Space>
+                      <Alert
+                        message="Waiting for next question..."
+                        type="info"
+                        showIcon
+                        style={{ marginTop: 16 }}
+                      />
+                      <LeaderboardTable />
+                    </>
+                  )}
+                </Card>
+              </>
+            )}
 
-            <Alert
-              message="Waiting for next question..."
-              type="info"
-              showIcon
-              style={{ marginTop: 16 }}
-            />
-            <LeaderboardTable />
-          </>
-        )}
-      </Card>
-          </>)}
+          </div>
         </div>
       </div>
     </div>
