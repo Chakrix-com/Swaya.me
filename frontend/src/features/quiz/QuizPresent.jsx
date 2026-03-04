@@ -216,10 +216,11 @@ function EndedView({ leaderboard }) {
               : vi === 0 && raw3.length === 2 ? 1 : 0
             const color = PODIUM_COLORS[actualIdx]
             const isFirst = actualIdx === 0
+            const isSecond = actualIdx === 1
             return (
               <div
                 key={entry.participant_id}
-                className={`pv-podium-card${isFirst ? ' pv-podium-card-first' : ''}`}
+                className={`pv-podium-card${isFirst ? ' pv-podium-card-first' : isSecond ? ' pv-podium-card-second' : ''}`}
                 style={{ borderColor: color }}
               >
                 <span className="pv-podium-medal">{MEDALS[actualIdx]}</span>

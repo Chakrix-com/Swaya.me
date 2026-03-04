@@ -364,6 +364,10 @@
   min-width: 150px;
 }
 
+.pv-podium-card-second {
+  transform: translateY(-7px);
+}
+
 .pv-podium-medal {
   font-size: 34px;
   line-height: 1;
@@ -1107,6 +1111,10 @@
   .pv-podium-card-first {
     transform: translateY(-10px);
     min-width: 110px;
+  }
+
+  .pv-podium-card-second {
+    transform: translateY(-5px);
   }
 
   .pv-podium-score {
