@@ -294,7 +294,6 @@ export default function AudienceSession() {
               columns={leaderboardColumns}
               pagination={false}
               size="small"
-              scroll={{ x: 400 }}
               rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
             />
             {leaderboard.entries.length > 10 && (
@@ -428,10 +427,12 @@ export default function AudienceSession() {
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion.correct_answer
 
   return (
-    <div style={{ 
-      padding: 16,  // Reduced from 24 for better mobile fit
-      maxWidth: 800, 
-      margin: '0 auto' 
+    <div style={{
+      padding: 16,
+      maxWidth: 800,
+      width: '100%',
+      margin: '0 auto',
+      boxSizing: 'border-box',
     }}>
       <Card style={{ marginBottom: 16 }}>
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
