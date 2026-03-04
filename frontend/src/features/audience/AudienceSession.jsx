@@ -251,7 +251,7 @@ export default function AudienceSession() {
       )
     },
     {
-      title: `${t('leaderboard.score')}${leaderboard ? ` / ${leaderboard.mcq_question_count}` : ''}`,
+      title: `${t('leaderboard.score')}${leaderboard && leaderboard.mcq_question_count > 1 ? ` / ${leaderboard.mcq_question_count}` : ''}`,
       dataIndex: 'score',
       width: 80,
       render: (score, record) => (
@@ -269,7 +269,7 @@ export default function AudienceSession() {
   ]
 
   const LeaderboardTable = () => {
-    if (!leaderboard) return null
+    if (!leaderboard || results?.leaderboard_visible === false) return null
     return (
       <Card
         size="small"
@@ -282,7 +282,7 @@ export default function AudienceSession() {
             )}
           </Space>
         }
-        style={{ marginTop: 16 }}
+        style={{ marginTop: 16, width: '100%' }}
       >
         {leaderboard.entries.length === 0 ? (
           <Text type="secondary">{t('leaderboard.noData')}</Text>
@@ -294,6 +294,7 @@ export default function AudienceSession() {
               columns={leaderboardColumns}
               pagination={false}
               size="small"
+              scroll={{ x: 400 }}
               rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
             />
             {leaderboard.entries.length > 10 && (
@@ -694,101 +695,83 @@ export default function AudienceSession() {
                 </Button>
               </>
         ) : (
-          // MCQ Results (after submission)
+          // MCQ Results (after submission) — option cards with visual correct/wrong cues
           <>
-            <Alert
-              message={isCorrect ? "Correct!" : "Incorrect"}
-              description={
-                <>
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                        Your answer: <Text strong>{selectedAnswer}</Text>
-                      </Text>
-                      <br />
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                        Correct answer: <Text strong>{currentQuestion.correct_answer}</Text>
-                      </Text>
-                      <br />
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                        {currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}
-                      </Text>
-                    </>
-                  }
-                  type={isCorrect ? "success" : "error"}
-                  icon={isCorrect ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-                  showIcon
-                  style={{ marginBottom: 24 }}
-                />
+            {(() => {
+              const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
+              const totalAns = currentQuestion.total_answers || 0
+              const opts = [
+                { key: 'A', label: currentQuestion.option_a, idx: 0 },
+                { key: 'B', label: currentQuestion.option_b, idx: 1 },
+                { key: 'C', label: currentQuestion.option_c, idx: 2 },
+                { key: 'D', label: currentQuestion.option_d, idx: 3 },
+              ]
+              return (
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  {opts.map(({ key, label, idx }) => {
+                    const correct = currentQuestion.correct_answer === key
+                    const selected = selectedAnswer === key
+                    const count = dist[idx] || 0
+                    const pct = totalAns > 0 ? (count / totalAns * 100) : 0
 
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
-                        A: {currentQuestion.option_a}
-                      </Text>
-                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {results.answer_distribution?.A || 0} ({results.answer_distribution_percentage?.A?.toFixed(1) || 0}%)
-                      </Text>
-                    </Space>
-                    <Progress
-                      percent={results.answer_distribution_percentage?.A || 0}
-                      strokeColor={currentQuestion.correct_answer === 'A' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
+                    const borderColor = correct ? '#52c41a' : selected ? '#ff4d4f' : '#d9d9d9'
+                    const bgColor    = correct ? '#f6ffed' : selected ? '#fff1f0' : '#fafafa'
+                    const badgeBg    = correct ? '#52c41a' : selected ? '#ff4d4f' : '#bfbfbf'
+                    const badgeIcon  = correct ? <CheckCircleOutlined /> : selected ? <CloseCircleOutlined /> : key
 
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
-                        B: {currentQuestion.option_b}
-                      </Text>
-                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {results.answer_distribution?.B || 0} ({results.answer_distribution_percentage?.B?.toFixed(1) || 0}%)
-                      </Text>
-                    </Space>
-                    <Progress
-                      percent={results.answer_distribution_percentage?.B || 0}
-                      strokeColor={currentQuestion.correct_answer === 'B' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
-                        C: {currentQuestion.option_c}
-                      </Text>
-                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {results.answer_distribution?.C || 0} ({results.answer_distribution_percentage?.C?.toFixed(1) || 0}%)
-                      </Text>
-                    </Space>
-                    <Progress
-                      percent={results.answer_distribution_percentage?.C || 0}
-                      strokeColor={currentQuestion.correct_answer === 'C' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={{ wordBreak: 'break-word', overflowWrap: 'break-word', flex: 1 }}>
-                        D: {currentQuestion.option_d}
-                      </Text>
-                      <Text style={{ whiteSpace: 'nowrap', marginLeft: 8 }}>
-                        {results.answer_distribution?.D || 0} ({results.answer_distribution_percentage?.D?.toFixed(1) || 0}%)
-                      </Text>
-                    </Space>
-                    <Progress
-                      percent={results.answer_distribution_percentage?.D || 0}
-                      strokeColor={currentQuestion.correct_answer === 'D' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
+                    return (
+                      <div key={key} style={{
+                        border: `2px solid ${borderColor}`,
+                        borderRadius: 8,
+                        padding: '12px 16px',
+                        background: bgColor,
+                        opacity: (!correct && !selected) ? 0.55 : 1,
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                          <span style={{
+                            width: 30, height: 30, borderRadius: '50%',
+                            background: badgeBg, color: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 14, fontWeight: 700, flexShrink: 0,
+                          }}>
+                            {badgeIcon}
+                          </span>
+                          <Text style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400 }}>
+                            {label}
+                          </Text>
+                          <Text type="secondary" style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
+                            {count} ({pct.toFixed(1)}%)
+                          </Text>
+                        </div>
+                        {currentQuestion.option_images?.[key] && (
+                          <img
+                            src={currentQuestion.option_images[key]}
+                            alt={`Option ${key}`}
+                            style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 4, marginBottom: 8 }}
+                          />
+                        )}
+                        <Progress
+                          percent={parseFloat(pct.toFixed(1))}
+                          strokeColor={correct ? '#52c41a' : '#1890ff'}
+                          showInfo={false}
+                          size="small"
+                        />
+                      </div>
+                    )
+                  })}
                 </Space>
+              )
+            })()}
 
-              <Alert
-                message="Waiting for next question..."
-                type="info"
-                showIcon
-                style={{ marginTop: 24 }}
-              />
-              <LeaderboardTable />
-            </>
+            <Alert
+              message="Waiting for next question..."
+              type="info"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+            <LeaderboardTable />
+          </>
         )}
       </Card>
     </div>

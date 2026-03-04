@@ -28,6 +28,7 @@ import QuizControl from './features/quiz/QuizControl'
 import QuizHistory from './features/quiz/QuizHistory'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
+import QuizPresent from './features/quiz/QuizPresent'
 import UserManagement from './features/admin/components/UserManagement'
 import Statistics from './features/admin/Statistics'
 import OrganizationManagement from './features/admin/OrganizationManagement'
@@ -190,14 +191,19 @@ function AppRoutes() {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const location = useLocation()
 
-  // Join and session routes are always public — accessible whether logged in or not
-  if (location.pathname.startsWith('/join') || location.pathname.startsWith('/session')) {
+  // Join, session, and present routes are always public — accessible whether logged in or not
+  if (
+    location.pathname.startsWith('/join') ||
+    location.pathname.startsWith('/session') ||
+    location.pathname.startsWith('/present')
+  ) {
     return (
       <PublicLayout>
         <Routes>
           <Route path="/join" element={<AudienceJoin />} />
           <Route path="/join/:joinCode" element={<AudienceJoin />} />
           <Route path="/session/:sessionId" element={<AudienceSession />} />
+          <Route path="/present/:sessionId" element={<QuizPresent />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>

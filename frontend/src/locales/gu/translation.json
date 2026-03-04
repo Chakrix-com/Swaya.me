@@ -105,7 +105,11 @@
     "unpublishSuccess": "ક્વિઝ સફળતાપૂર્વક ડ્રાફ્ટમાં ફેરવાયો!",
     "unpublishError": "ક્વિઝ અપ્રકાશિત કરવામાં નિષ્ફળ",
     "saveQuizFirst": "પહેલાં ક્વિઝ સાચવો",
-    "endSession": "સત્ર સમાપ્ત કરો",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "સ્થિતિ",
     "ready": "તૈયાર",
     "created": "બનાવ્યું",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "શરૂ કરવા તૈયાર!",
     "clickAdvanceToStart": "સહભાગીઓને પ્રથમ પ્રશ્ન બતાવવા માટે \"આગલો પ્રશ્ન\" ક્લિક કરો.",
     "startFirstQuestion": "પ્રથમ પ્રશ્ન શરૂ કરો",
+    "presentView": "રજૂ કરો",
     "sessionComplete": "સત્ર પૂર્ણ!",
     "allQuestionsAnswered": "બધા પ્રશ્નોના જવાબ આપવામાં આવ્યા છે.",
     "linkCopied": "લિંક ક્લિપબોર્ડ પર કૉપિ થઈ ગઈ!",
@@ -383,7 +388,10 @@
     "yourRank": "તમારો ક્રમ: #{{rank}}",
     "noData": "હજી સ્કોર નથી",
     "mcqOnly": "ફક્ત MCQ પ્રશ્નો",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "ભાગ લેનારાઓ પાસેથી છુપાવો",
+    "showToParticipants": "ભાગ લેનારાઓને બતાવો",
+    "toggleFailed": "લીડરબોર્ડ દૃશ્યતા બદલવામાં નિષ્ફળ"
   },
   "home": {
     "login": "Login",

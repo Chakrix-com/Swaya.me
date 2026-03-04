@@ -105,7 +105,11 @@
     "unpublishSuccess": "வினாடி வினா வெற்றிகரமாக வரைவுக்கு மாற்றப்பட்டது!",
     "unpublishError": "வினாடி வினா வெளியீட்டை நீக்க முடியவில்லை",
     "saveQuizFirst": "முதலில் வினாடி வினாவை சேமிக்கவும்",
-    "endSession": "அமர்வை முடிக்கவும்",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "நிலை",
     "ready": "தயார்",
     "created": "உருவாக்கப்பட்டது",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "தொடங்க தயார்!",
     "clickAdvanceToStart": "பங்கேற்பாளர்களுக்கு முதல் கேள்வியைக் காட்ட \"அடுத்த கேள்வி\" கிளிக் செய்யவும்.",
     "startFirstQuestion": "முதல் கேள்வியைத் தொடங்கவும்",
+    "presentView": "திரையில் காட்டு",
     "sessionComplete": "அமர்வு முடிந்தது!",
     "allQuestionsAnswered": "அனைத்து கேள்விகளுக்கும் பதிலளிக்கப்பட்டது.",
     "linkCopied": "இணைப்பு கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது!",
@@ -383,7 +388,10 @@
     "yourRank": "உங்கள் தரவரிசை: #{{rank}}",
     "noData": "இன்னும் மதிப்பெண்கள் இல்லை",
     "mcqOnly": "MCQ கேள்விகள் மட்டும்",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "பங்கேற்பாளர்களிடம் மறைக்கவும்",
+    "showToParticipants": "பங்கேற்பாளர்களுக்கு காட்டவும்",
+    "toggleFailed": "லீடர்போர்டு தெரிவுநிலையை மாற்ற முடியவில்லை"
   },
   "home": {
     "login": "Login",

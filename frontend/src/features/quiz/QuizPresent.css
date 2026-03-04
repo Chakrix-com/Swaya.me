@@ -1,0 +1,1165 @@
+/* ─── QuizPresent.css ────────────────────────────────────────────────── */
+
+/* Root: side-by-side on desktop, stacked on mobile */
+.pv-root {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(145deg, #0f0c29 0%, #302b63 55%, #1a1a3e 100%);
+  color: #fff;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────────── */
+
+.pv-sidebar {
+  width: 320px;
+  min-width: 320px;
+  box-sizing: content-box; /* padding adds to width — keeps ctrl-bar aligned */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 16px;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.38);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pv-sidebar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.pv-sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.pv-qr-wrap {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pv-qr-label {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.pv-join-code-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.pv-join-code-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.pv-join-code {
+  font-size: 34px;
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.1;
+}
+
+.pv-join-host {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.pv-participants {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pv-participants-icon {
+  font-size: 20px;
+  color: #52c41a;
+}
+
+.pv-participants-count {
+  font-size: 38px;
+  font-weight: 800;
+  color: #52c41a;
+  line-height: 1.05;
+}
+
+.pv-participants-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── MAIN AREA ───────────────────────────────────────────────────────── */
+
+.pv-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.pv-center-fill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 32px;
+  min-height: 300px;
+}
+
+/* ── WAITING VIEW ────────────────────────────────────────────────────── */
+
+.pv-waiting-emoji {
+  font-size: 72px;
+  animation: pv-float 3s ease-in-out infinite;
+  display: block;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+@keyframes pv-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.pv-waiting-title {
+  color: #fff !important;
+  font-size: 28px !important;
+  text-align: center;
+  margin-bottom: 8px !important;
+}
+
+.pv-waiting-sub {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  text-align: center;
+}
+
+/* ── QUESTION VIEW ───────────────────────────────────────────────────── */
+
+.pv-question-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px 20px;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.pv-question-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pv-question-img-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.pv-question-img {
+  max-height: 240px;
+  max-width: 100%;
+  border-radius: 12px;
+  object-fit: contain;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.pv-question-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* 2-column grid for MCQ options */
+.pv-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pv-option-card {
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pv-option-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pv-option-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.pv-option-text {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.4;
+  word-break: break-word;
+  padding-top: 4px;
+}
+
+.pv-option-pct {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  padding-top: 5px;
+}
+
+.pv-option-img {
+  max-height: 90px;
+  max-width: 100%;
+  border-radius: 6px;
+  object-fit: contain;
+  align-self: center;
+}
+
+.pv-bar-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pv-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 3px;
+}
+
+/* ── Answer reveal states ────────────────────────────── */
+
+.pv-option-card {
+  transition: background 0.35s ease, border-color 0.35s ease, opacity 0.35s ease;
+}
+
+.pv-option-correct {
+  animation: pv-correct-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.35), 0 4px 20px rgba(82, 196, 26, 0.2);
+}
+
+@keyframes pv-correct-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+
+.pv-option-wrong {
+  opacity: 0.45;
+}
+
+/* ── WORD CLOUD VIEW ─────────────────────────────────────────────────── */
+
+.pv-wordcloud-container {
+  flex: 1;
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── ENDED VIEW ──────────────────────────────────────────────────────── */
+
+.pv-ended-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 24px;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.pv-ended-header {
+  text-align: center;
+}
+
+.pv-ended-icon {
+  font-size: 52px;
+  color: #ffd700;
+}
+
+.pv-ended-title {
+  color: #fff !important;
+  margin: 8px 0 0 !important;
+  font-size: 26px !important;
+}
+
+/* Podium: 2nd | 1st | 3rd */
+.pv-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 640px;
+}
+
+.pv-podium-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid;
+  border-radius: 16px;
+  padding: 18px 20px;
+  min-width: 130px;
+  text-align: center;
+}
+
+.pv-podium-card-first {
+  transform: translateY(-14px);
+  min-width: 150px;
+}
+
+.pv-podium-medal {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.pv-podium-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-word;
+  max-width: 130px;
+}
+
+.pv-podium-score {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.pv-podium-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Rows for 4th place onward */
+.pv-lb-rest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.pv-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 9px 16px;
+}
+
+.pv-lb-rank {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.pv-lb-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.pv-lb-score {
+  font-size: 16px;
+  font-weight: 700;
+  color: #52c41a;
+  width: 36px;
+  text-align: right;
+}
+
+.pv-lb-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  width: 48px;
+  text-align: right;
+}
+
+/* ── COMPACT LEADERBOARD (sidebar) ──────────────────────────────────── */
+
+.pv-clb-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pv-clb-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 4px;
+}
+
+.pv-clb-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pv-clb-rank {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 36px;
+  line-height: 1;
+}
+
+.pv-clb-medal {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.pv-clb-rank-num {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.pv-clb-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.pv-clb-score {
+  font-size: 13px;
+  font-weight: 700;
+  color: #52c41a;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pv-clb-icon {
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+/* Expand icon in header */
+.pv-clb-expand-icon {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.pv-clb-expand-icon:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* "View all N participants" button */
+.pv-clb-view-all {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.18s, color 0.18s;
+}
+
+.pv-clb-view-all:hover {
+  background: rgba(255, 255, 255, 0.11);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── FULL LEADERBOARD LIGHTBOX ───────────────────────────────────────── */
+
+.pv-lb-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: pv-fade-in 0.18s ease;
+}
+
+@keyframes pv-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pv-lb-panel {
+  background: rgba(12, 10, 38, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.75);
+  animation: pv-slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pv-slide-up {
+  from { transform: translateY(18px); opacity: 0.4; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.pv-lb-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.pv-lb-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pv-lb-panel-meta {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.38);
+  padding-left: 4px;
+}
+
+.pv-lb-panel-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.pv-lb-panel-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.pv-lb-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+}
+
+.pv-lb-empty {
+  color: rgba(255, 255, 255, 0.38);
+  text-align: center;
+  padding: 40px 24px;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Table */
+.pv-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.pv-lb-table thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.38);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: sticky;
+  top: 0;
+  background: rgba(12, 10, 38, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.pv-lbt-icon {
+  margin-right: 5px;
+  opacity: 0.7;
+}
+
+/* Score and Time headers must match their data cell alignment */
+.pv-lb-table thead th.pv-lbt-score,
+.pv-lb-table thead th.pv-lbt-time {
+  text-align: right;
+}
+
+.pv-lb-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.14s;
+}
+
+.pv-lb-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pv-lbt-top {
+  background: rgba(255, 215, 0, 0.04);
+}
+
+.pv-lbt-rank {
+  padding: 11px 16px;
+  width: 64px;
+  text-align: center;
+}
+
+.pv-lbt-rank-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pv-lbt-rank-num {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.pv-lbt-name {
+  padding: 11px 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-lbt-score {
+  padding: 11px 16px;
+  width: 90px;
+  font-weight: 700;
+  color: #52c41a;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pv-lbt-time {
+  padding: 11px 16px;
+  width: 96px;
+  color: rgba(255, 255, 255, 0.38);
+  text-align: right;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.pv-lb-panel-footer {
+  padding: 10px 20px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.pv-lb-panel-footer kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile: full-screen modal */
+@media (max-width: 600px) {
+  .pv-lb-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .pv-lb-panel {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    animation: pv-slide-up-mobile 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  @keyframes pv-slide-up-mobile {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+}
+
+/* ── HOST CONTROL BAR ────────────────────────────────────────────────── */
+
+/* Fixed to the bottom of the sidebar column on desktop */
+.pv-ctrl-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 320px; /* matches .pv-sidebar width */
+  box-sizing: content-box; /* padding adds to width — matches sidebar sizing */
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 200;
+}
+
+.pv-ctrl-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+  white-space: nowrap;
+}
+
+.pv-ctrl-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pv-ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pv-ctrl-primary {
+  background: rgba(64, 150, 255, 0.28);
+  border-color: rgba(64, 150, 255, 0.55);
+  color: #fff;
+}
+
+.pv-ctrl-primary:hover:not(:disabled) {
+  background: rgba(64, 150, 255, 0.45);
+}
+
+.pv-ctrl-continue {
+  background: rgba(82, 196, 26, 0.22) !important;
+  border-color: rgba(82, 196, 26, 0.6) !important;
+  color: #52c41a !important;
+}
+
+.pv-ctrl-continue:hover:not(:disabled) {
+  background: rgba(82, 196, 26, 0.38) !important;
+}
+
+.pv-ctrl-stop {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  background: rgba(245, 34, 45, 0.14);
+  border-color: rgba(245, 34, 45, 0.4);
+  color: rgba(255, 100, 100, 0.85);
+}
+
+.pv-ctrl-stop:hover:not(:disabled) {
+  background: rgba(245, 34, 45, 0.28);
+  color: #fff;
+}
+
+.pv-ctrl-stop-confirm {
+  background: rgba(245, 34, 45, 0.55);
+  border-color: rgba(245, 34, 45, 0.9);
+  color: #fff;
+}
+
+.pv-ctrl-stop-confirm:hover:not(:disabled) {
+  background: rgba(245, 34, 45, 0.75);
+}
+
+/* Sidebar needs bottom padding so scrollable content isn't hidden by control bar */
+.pv-sidebar {
+  padding-bottom: 60px;
+}
+
+/* ── KBD HINTS (inside control bar buttons) ─────────────────────────── */
+
+.pv-kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  margin-left: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.55);
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* Help toggle button */
+.pv-ctrl-help {
+  flex: 0 0 auto;
+  width: 32px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.pv-ctrl-help:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* ── KEYBOARD SHORTCUTS HELP PANEL ──────────────────────────────────── */
+
+.pv-help-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: pv-fade-in 0.15s ease;
+}
+
+.pv-help-panel {
+  background: rgba(14, 12, 40, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 24px 28px 20px;
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  animation: pv-slide-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pv-help-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+.pv-help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.pv-help-table td {
+  padding: 7px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pv-help-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pv-help-table td:first-child {
+  white-space: nowrap;
+  padding-right: 20px;
+}
+
+.pv-help-table td:last-child {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pv-help-table kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 5px;
+  font-size: 11px;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+}
+
+.pv-help-close {
+  margin-top: 18px;
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pv-help-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+/* ── MOBILE (≤ 767px) ────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .pv-root {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  /* Sidebar becomes a compact top bar */
+  .pv-sidebar {
+    width: 100%;
+    min-width: unset;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: auto;
+  }
+
+  /* Hide items that don't fit in the compact top bar */
+  .pv-sidebar-title { display: none; }
+  .pv-sidebar-divider { display: none; }
+  .pv-qr-wrap { display: none; }
+  .pv-join-code-label { display: none; }
+  .pv-join-host { display: none; }
+
+  .pv-join-code-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pv-join-code {
+    font-size: 22px;
+    letter-spacing: 4px;
+  }
+
+  .pv-participants-count {
+    font-size: 24px;
+  }
+
+  .pv-participants-icon {
+    font-size: 16px;
+  }
+
+  .pv-participants-label {
+    font-size: 11px;
+  }
+
+  .pv-main {
+    overflow-y: unset;
+  }
+
+  /* Question area */
+  .pv-question-wrap {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .pv-question-text {
+    font-size: 18px;
+  }
+
+  /* Single-column options on mobile */
+  .pv-options-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pv-question-img {
+    max-height: 180px;
+  }
+
+  /* Waiting screen */
+  .pv-waiting-emoji {
+    font-size: 52px;
+  }
+
+  .pv-waiting-title {
+    font-size: 20px !important;
+  }
+
+  /* Ended view */
+  .pv-ended-wrap {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .pv-podium {
+    gap: 8px;
+  }
+
+  .pv-podium-card {
+    min-width: 100px;
+    padding: 12px 14px;
+  }
+
+  .pv-podium-card-first {
+    transform: translateY(-10px);
+    min-width: 110px;
+  }
+
+  .pv-podium-score {
+    font-size: 20px;
+  }
+
+  /* Control bar spans bottom of screen on mobile */
+  .pv-ctrl-bar {
+    width: 100%;
+    border-right: none;
+    border-radius: 0;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  /* No extra bottom padding on the top bar */
+  .pv-sidebar {
+    padding-bottom: 10px;
+  }
+
+  /* Hide sidebar-only items in the compact top bar */
+  .pv-clb-wrap {
+    display: none;
+  }
+
+  /* Give main content breathing room above the fixed bar */
+  .pv-main {
+    padding-bottom: 58px;
+  }
+}
+
+/* ── TABLET (768px – 1023px) ─────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pv-sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+
+  .pv-ctrl-bar {
+    width: 280px; /* match tablet sidebar */
+  }
+
+  .pv-join-code {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .pv-question-text {
+    font-size: 20px;
+  }
+
+  .pv-options-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

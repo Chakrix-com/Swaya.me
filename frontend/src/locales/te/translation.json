@@ -105,7 +105,11 @@
     "unpublishSuccess": "క్విజ్ విజయవంతంగా చిత్తకోశంకు మార్చబడింది!",
     "unpublishError": "క్విజ్ ప్రచారం రద్దు చేయడం విఫలమైంది",
     "saveQuizFirst": "మొదట క్విజ్ సేవ్ చేయండి",
-    "endSession": "సెషన్ ముగించు",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "స్థితి",
     "ready": "సిద్ధం",
     "created": "సృష్టించబడింది",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "ప్రారంభించడానికి సిద్ధంగా ఉంది!",
     "clickAdvanceToStart": "ప్రతిభాగులకు మొదటి ప్రశ్నను చూపించడానికి \"తరువాత ప్రశ్న\" క్లిక్ చేయండి.",
     "startFirstQuestion": "మొదటి ప్రశ్న ప్రారంభించు",
+    "presentView": "ప్రదర్శించు",
     "sessionComplete": "సెషన్ పూర్తయింది!",
     "allQuestionsAnswered": "అన్ని ప్రశ్నలకు సమాధానం ఇవ్వబడింది.",
     "linkCopied": "లింక్ క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది!",
@@ -383,7 +388,10 @@
     "yourRank": "మీ ర్యాంక్: #{{rank}}",
     "noData": "ఇంకా స్కోర్లు లేవు",
     "mcqOnly": "MCQ ప్రశ్నలు మాత్రమే",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "పాల్గొనే వారి నుండి దాచు",
+    "showToParticipants": "పాల్గొనే వారికి చూపించు",
+    "toggleFailed": "లీడర్‌బోర్డ్ దృశ్యమానతను మార్చడం విఫలమైంది"
   },
   "home": {
     "login": "Login",

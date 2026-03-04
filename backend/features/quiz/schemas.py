@@ -222,6 +222,7 @@ class SessionResultsResponse(BaseModel):
     status: str
     current_question_index: int
     current_question: Optional[dict] = None  # Mixed format for host view
+    leaderboard_visible: bool = True
 
 
 class WordCloudResultsResponse(BaseModel):

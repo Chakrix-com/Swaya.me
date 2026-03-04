@@ -292,6 +292,20 @@ async def back_question(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.post("/sessions/{session_id}/toggle-leaderboard", response_model=SessionResponse)
+async def toggle_leaderboard(
+    session_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Toggle leaderboard visibility for participants"""
+    try:
+        return await service.toggle_leaderboard(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 @router.post("/sessions/{session_id}/end", response_model=SessionResponse)
 async def end_session(
     session_id: int,
@@ -351,6 +365,8 @@ async def get_leaderboard(
         return await service.get_leaderboard(db, session_id, session_token)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/sessions/feedback")

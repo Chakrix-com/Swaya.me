@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
+from datetime import datetime
 import json
 import os
 
@@ -566,7 +567,6 @@ class AnswerServiceAsync:
             .join(Question, Question.id == SessionQuestionTiming.question_id)
             .filter(
                 SessionQuestionTiming.session_id == session_id,
-                SessionQuestionTiming.closed_at != None,
                 Question.question_type == QuestionType.MCQ,
             )
             .order_by(SessionQuestionTiming.question_id, SessionQuestionTiming.opened_at)
@@ -605,32 +605,35 @@ class AnswerServiceAsync:
 
         def compute_time(participant_id: int) -> Optional[float]:
             """
-            Sum of per-question deltas:
-              - answered: answer_time - question opened_at (using the timing window that
-                contains the answer, or the latest timing if none match)
-              - not answered: closed_at - opened_at for the LAST timing window
-            Returns None if no timings recorded yet (session still in progress).
+            Sum of per-question response times:
+              - Answered (right or wrong): answer_time - question opened_at, clamped to window
+              - Not answered + window closed: full window duration (penalised for no response)
+              - Not answered + window open: skipped (current question still in progress)
+            Returns None only if no question windows exist yet.
             """
             if not timings_by_question:
                 return None
+            now = datetime.utcnow()
             total = 0.0
             for qid, windows in timings_by_question.items():
                 answer = answer_map.get((participant_id, qid))
                 if answer:
-                    # Find the timing window that contains the answer time
+                    # Find the timing window active when the participant answered
                     matched = next(
-                        (w for w in windows if w.opened_at <= answer.created_at <= w.closed_at),
+                        (w for w in windows
+                         if w.opened_at <= answer.created_at <= (w.closed_at or now)),
                         windows[-1]  # fallback to latest window
                     )
+                    effective_close = matched.closed_at or now
                     delta = (answer.created_at - matched.opened_at).total_seconds()
-                    # Clamp to window duration to avoid negative or inflated values
-                    window_dur = (matched.closed_at - matched.opened_at).total_seconds()
+                    window_dur = (effective_close - matched.opened_at).total_seconds()
                     total += max(0.0, min(delta, window_dur))
                 else:
-                    # Not answered — charge full duration of the last window
+                    # Not answered: charge up to closed_at if closed, or now if still open
                     last = windows[-1]
-                    total += (last.closed_at - last.opened_at).total_seconds()
-            return total
+                    effective_close = last.closed_at or now
+                    total += (effective_close - last.opened_at).total_seconds()
+            return round(total, 1)
 
         def count_correct(participant_id: int) -> int:
             return sum(

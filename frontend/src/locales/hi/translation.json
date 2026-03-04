@@ -105,7 +105,11 @@
     "unpublishSuccess": "क्विज़ सफलतापूर्वक ड्राफ्ट में वापस लाया गया!",
     "unpublishError": "क्विज़ अप्रकाशित करने में विफल",
     "saveQuizFirst": "पहले क्विज़ सहेजें",
-    "endSession": "सत्र समाप्त करें",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "स्थिति",
     "ready": "तैयार",
     "created": "बनाया गया",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "शुरू करने के लिए तैयार!",
     "clickAdvanceToStart": "प्रतिभागियों को पहला प्रश्न दिखाने के लिए \"अगला प्रश्न\" पर क्लिक करें।",
     "startFirstQuestion": "पहला प्रश्न शुरू करें",
+    "presentView": "प्रस्तुत करें",
     "sessionComplete": "सत्र पूर्ण!",
     "allQuestionsAnswered": "सभी प्रश्नों का उत्तर दिया गया है।",
     "linkCopied": "लिंक क्लिपबोर्ड पर कॉपी किया गया!",
@@ -383,7 +388,10 @@
     "yourRank": "आपकी रैंक: #{{rank}}",
     "noData": "अभी तक कोई स्कोर नहीं",
     "mcqOnly": "केवल MCQ प्रश्न",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "प्रतिभागियों से छुपाएं",
+    "showToParticipants": "प्रतिभागियों को दिखाएं",
+    "toggleFailed": "लीडरबोर्ड दृश्यता बदलने में विफल"
   },
   "home": {
     "login": "लॉगिन",

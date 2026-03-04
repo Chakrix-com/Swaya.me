@@ -452,6 +452,32 @@ class SessionServiceAsync:
         
         return await self._to_session_response(db, session)
     
+    async def toggle_leaderboard(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        current_user: CurrentUser
+    ) -> SessionResponse:
+        """Toggle leaderboard visibility for participants"""
+        result = await db.execute(
+            select(QuizSession)
+            .filter(
+                QuizSession.id == session_id,
+                QuizSession.tenant_id == current_user.tenant_id
+            )
+            .options(joinedload(QuizSession.quiz))
+        )
+        session = result.scalar_one_or_none()
+
+        if not session:
+            raise SessionNotFoundError("Session not found")
+
+        session.leaderboard_visible = not session.leaderboard_visible
+        await db.commit()
+        await db.refresh(session)
+
+        return await self._to_session_response(db, session)
+
     async def list_sessions(
         self,
         db: AsyncSession,

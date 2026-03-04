@@ -105,7 +105,11 @@
     "unpublishSuccess": "ಪ್ರಶ್ನೋತ್ತರಿ ಯಶಸ್ವಿಯಾಗಿ ಕೃತಜ್ಞತೆಗೆ ಮಾರ್ಪಡಿಸಲಾಗಿದೆ!",
     "unpublishError": "ಪ್ರಶ್ನೋತ್ತರಿ ಪ್ರಕಟಣೆ ರದ್ದುಮಾಡುವುದು ವಿಫಲವಾಗಿದೆ",
     "saveQuizFirst": "ಮೊದಲು ಪ್ರಶ್ನೋತ್ತರಿ ಉಳಿಸಿ",
-    "endSession": "ಅವಧಿ ಮುಕ್ತಾಯ ಮಾಡಿ",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "ಸ್ಥಿತಿ",
     "ready": "ಸಿದ್ಧ",
     "created": "ರಚಿಸಲಾಗಿದೆ",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "ಪ್ರಾರಂಭಿಸಲು ಸಿದ್ಧ!",
     "clickAdvanceToStart": "ಭಾಗವಹಿಸುವವರಿಗೆ ಮೊದಲ ಪ್ರಶ್ನೆಯನ್ನು ತೋರಿಸಲು \"ಮುಂದಿನ ಪ್ರಶ್ನೆ\" ಕ್ಲಿಕ್ ಮಾಡಿ.",
     "startFirstQuestion": "ಮೊದಲ ಪ್ರಶ್ನೆ ಪ್ರಾರಂಭಿಸಿ",
+    "presentView": "ಪ್ರದರ್ಶಿಸಿ",
     "sessionComplete": "ಅವಧಿ ಪೂರ್ತಿಯಾಯಿತು!",
     "allQuestionsAnswered": "ಎಲ್ಲಾ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಲಾಗಿದೆ.",
     "linkCopied": "ಲಿಂಕ್ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ಕಾಪಿ ಮಾಡಲಾಗಿದೆ!",
@@ -383,7 +388,10 @@
     "yourRank": "ನಿಮ್ಮ ಶ್ರೇಣಿ: #{{rank}}",
     "noData": "ಇನ್ನೂ ಸ್ಕೋರ್‌ಗಳಿಲ್ಲ",
     "mcqOnly": "MCQ ಪ್ರಶ್ನೆಗಳು ಮಾತ್ರ",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "ಭಾಗವಹಿಸುವವರಿಂದ ಮರೆಮಾಡಿ",
+    "showToParticipants": "ಭಾಗವಹಿಸುವವರಿಗೆ ತೋರಿಸಿ",
+    "toggleFailed": "ಲೀಡರ್‌ಬೋರ್ಡ್ ಗೋಚರತೆ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ"
   },
   "home": {
     "login": "Login",

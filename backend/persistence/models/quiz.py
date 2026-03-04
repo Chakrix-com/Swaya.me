@@ -86,6 +86,7 @@ class QuizSession(Base, TimestampMixin, TenantMixin):
     status = Column(SQLEnum(QuizSessionStatus), default=QuizSessionStatus.CREATED, nullable=False)
     current_question_index = Column(Integer, default=-1, nullable=False)
     current_question_status = Column(SQLEnum(QuestionStatus), default=QuestionStatus.PENDING, nullable=True)
+    leaderboard_visible = Column(Boolean, default=True, nullable=False)
     
     # Relationships
     quiz = relationship("Quiz", back_populates="sessions")

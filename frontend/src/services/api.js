@@ -1,6 +1,4 @@
 import axios from 'axios'
-import { store } from '../store/store'
-import { logout } from '../store/authSlice'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
@@ -32,8 +30,9 @@ api.interceptors.response.use(
       
       if (hasAuthToken) {
         // Host authentication failed - redirect to login
+        // Clear localStorage; full-page redirect rebuilds Redux store from scratch
         localStorage.removeItem('token')
-        store.dispatch(logout())
+        localStorage.removeItem('user')
         window.location.href = '/login'
       }
       // If no token, let the error propagate to component (participant 403)
@@ -104,6 +103,7 @@ export const sessionAPI = {
   advance: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/advance`),
   back: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/back`),
   end: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/end`),
+  toggleLeaderboard: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/toggle-leaderboard`),
   submitAnswer: (sessionToken, data) => 
     api.post('/quizzes/sessions/submit-answer', data, { 
       params: { session_token: sessionToken } 

@@ -109,6 +109,10 @@
     "unpublishError": "Failed to unpublish quiz",
     "saveQuizFirst": "Please save the quiz first",
     "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "Status",
     "ready": "READY",
     "created": "CREATED",
@@ -131,6 +135,7 @@
     "readyToStartFirst": "Ready to Start!",
     "clickAdvanceToStart": "Click \"Advance Question\" to show the first question to participants.",
     "startFirstQuestion": "Start First Question",
+    "presentView": "Present",
     "sessionComplete": "Session Complete!",
     "allQuestionsAnswered": "All questions have been answered.",
     "linkCopied": "Link copied to clipboard!",
@@ -388,7 +393,10 @@
     "yourRank": "Your Rank: #{{rank}}",
     "noData": "No scores yet",
     "mcqOnly": "MCQ questions only",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "Hide from participants",
+    "showToParticipants": "Show to participants",
+    "toggleFailed": "Failed to toggle leaderboard visibility"
   },
   "home": {
     "login": "Login",

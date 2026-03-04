@@ -105,7 +105,11 @@
     "unpublishSuccess": "প্রশ্নোত্তর সফলভাবে খসড়ায় ফিরিয়ে এনেছে!",
     "unpublishError": "প্রশ্নোত্তর অপ্রকাশিত করতে ব্যর্থ",
     "saveQuizFirst": "প্রথমে প্রশ্নোত্তর সংরক্ষণ করুন",
-    "endSession": "সেশন শেষ করুন",
+    "endSession": "End Session",
+    "stopQuiz": "Stop Quiz",
+    "stopQuizTitle": "Stop the quiz?",
+    "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
+    "stopQuizOk": "Yes, stop it",
     "status": "অবস্থা",
     "ready": "প্রস্তুত",
     "created": "তৈরি",
@@ -128,6 +132,7 @@
     "readyToStartFirst": "শুরু করতে প্রস্তুত!",
     "clickAdvanceToStart": "প্রতিভাগীদের প্রথম প্রশ্ন দেখাতে \"পরবর্তী প্রশ্ন\" ক্লিক করুন।",
     "startFirstQuestion": "প্রথম প্রশ্ন শুরু করুন",
+    "presentView": "উপস্থাপন করুন",
     "sessionComplete": "সেশন সম্পূর্ণ!",
     "allQuestionsAnswered": "সমস্ত প্রশ্নের উত্তর দেওয়া হয়েছে।",
     "linkCopied": "লিঙ্ক ক্লিপবোর্ডে কপি করা হয়েছে!",
@@ -383,7 +388,10 @@
     "yourRank": "আপনার র‌্যাংক: #{{rank}}",
     "noData": "এখনো কোন স্কোর নেই",
     "mcqOnly": "শুধুমাত্র MCQ প্রশ্ন",
-    "timeTaken": "Time"
+    "timeTaken": "Time",
+    "hideFromParticipants": "অংশগ্রহণকারীদের থেকে লুকান",
+    "showToParticipants": "অংশগ্রহণকারীদের দেখান",
+    "toggleFailed": "লিডারবোর্ড দৃশ্যমানতা পরিবর্তন করতে ব্যর্থ"
   },
   "home": {
     "login": "Login",

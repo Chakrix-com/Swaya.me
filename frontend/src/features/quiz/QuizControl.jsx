@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -15,7 +15,8 @@ import {
   Alert,
   Input,
   Rate,
-  Table
+  Table,
+  Popconfirm
 } from 'antd'
 import {
   PlayCircleOutlined,
@@ -25,7 +26,10 @@ import {
   TeamOutlined,
   CheckCircleOutlined,
   CopyOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  DesktopOutlined
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -63,6 +67,30 @@ export default function QuizControl() {
       return () => clearInterval(interval)
     }
   }, [session])
+
+  // Keyboard shortcuts mirror the present screen — ref initialised here, populated below
+  const kbRef = useRef({})
+  useEffect(() => {
+    const onKey = (e) => {
+      const { session, results, loading, handleAdvanceQuestion, handleBackQuestion } = kbRef.current
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+      if (session?.status !== 'active') return
+      if (loading) return
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
+        // Don't intercept Enter/Space when a Popconfirm button is focused
+        if (e.target.closest?.('.ant-popover')) return
+        e.preventDefault()
+        handleAdvanceQuestion()
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'Backspace' || e.key === 'PageUp') {
+        if (results?.current_question_index > 0) {
+          e.preventDefault()
+          handleBackQuestion()
+        }
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const loadQuiz = async () => {
     try {
@@ -147,6 +175,28 @@ export default function QuizControl() {
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Populate the keyboard-shortcut ref here, AFTER all const functions are defined
+  kbRef.current = { session, results, loading, handleAdvanceQuestion, handleBackQuestion }
+
+  const handleOpenPresent = () => {
+    if (!session) return
+    window.open(
+      `/present/${session.id}?code=${session.join_code}`,
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
+  const handleToggleLeaderboard = async () => {
+    try {
+      await sessionAPI.toggleLeaderboard(session.id)
+      await loadResults()
+    } catch (error) {
+      message.error(t('leaderboard.toggleFailed'))
+      console.error(error)
     }
   }
 
@@ -246,15 +296,31 @@ export default function QuizControl() {
         >
           {t('quiz.backDashboard')}
         </Button>
-        {session && session.status === 'active' && (
+        {session && (
           <Button
-            danger
-            icon={<CloseCircleOutlined />}
-            onClick={handleEndSession}
-            loading={loading}
+            icon={<DesktopOutlined />}
+            onClick={handleOpenPresent}
           >
-            {t('quiz.endSession')}
+            {t('quiz.presentView')}
           </Button>
+        )}
+        {session && session.status === 'active' && (
+          <Popconfirm
+            title={t('quiz.stopQuizTitle')}
+            description={t('quiz.stopQuizConfirm')}
+            onConfirm={handleEndSession}
+            okText={t('quiz.stopQuizOk')}
+            cancelText={t('common.cancel')}
+            okButtonProps={{ danger: true }}
+          >
+            <Button
+              danger
+              icon={<CloseCircleOutlined />}
+              loading={loading}
+            >
+              {t('quiz.stopQuiz')}
+            </Button>
+          </Popconfirm>
         )}
       </Space>
 
@@ -377,6 +443,15 @@ export default function QuizControl() {
                   )}
                 </Space>
               }
+              extra={
+                <Button
+                  size="small"
+                  icon={results?.leaderboard_visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                  onClick={handleToggleLeaderboard}
+                >
+                  {results?.leaderboard_visible ? t('leaderboard.hideFromParticipants') : t('leaderboard.showToParticipants')}
+                </Button>
+              }
               style={{ marginBottom: 24 }}
             >
               {leaderboard.entries.length === 0 ? (
@@ -408,7 +483,7 @@ export default function QuizControl() {
                         ellipsis: true,
                       },
                       {
-                        title: `${t('leaderboard.score')} / ${leaderboard.mcq_question_count}`,
+                        title: leaderboard.mcq_question_count > 1 ? `${t('leaderboard.score')} / ${leaderboard.mcq_question_count}` : t('leaderboard.score'),
                         dataIndex: 'score',
                         width: 100,
                         render: (score) => <Tag color="green">{score}</Tag>
@@ -601,7 +676,7 @@ export default function QuizControl() {
                 </Space>
               )}
 
-              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <Button
                   type="default"
                   size="large"
@@ -610,7 +685,7 @@ export default function QuizControl() {
                   loading={loading}
                   disabled={results.current_question_index === 0}
                 >
-                  {t('quiz.previousQuestion')}
+                  {t('quiz.previousQuestion')} <kbd className="qc-kbd">←</kbd>
                 </Button>
                 <Button
                   type="primary"
@@ -620,7 +695,25 @@ export default function QuizControl() {
                   loading={loading}
                 >
                   {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
+                  {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
                 </Button>
+                <Popconfirm
+                  title={t('quiz.stopQuizTitle')}
+                  description={t('quiz.stopQuizConfirm')}
+                  onConfirm={handleEndSession}
+                  okText={t('quiz.stopQuizOk')}
+                  cancelText={t('common.cancel')}
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    danger
+                    size="large"
+                    icon={<CloseCircleOutlined />}
+                    loading={loading}
+                  >
+                    {t('quiz.stopQuiz')}
+                  </Button>
+                </Popconfirm>
               </div>
             </Card>
           ) : !results || results.current_question_index === -1 ? (
@@ -628,15 +721,24 @@ export default function QuizControl() {
               <Space direction="vertical" align="center" style={{ width: '100%' }}>
                 <Title level={4}>{t('quiz.readyToStartFirst')}</Title>
                 <Text>{t('quiz.clickAdvanceToStart')}</Text>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<ArrowRightOutlined />}
-                  onClick={handleAdvanceQuestion}
-                  loading={loading}
-                >
-                  {t('quiz.startFirstQuestion')}
-                </Button>
+                <Space wrap style={{ justifyContent: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<ArrowRightOutlined />}
+                    onClick={handleAdvanceQuestion}
+                    loading={loading}
+                  >
+                    {t('quiz.startFirstQuestion')} <kbd className="qc-kbd">Space</kbd>
+                  </Button>
+                  <Button
+                    size="large"
+                    icon={<DesktopOutlined />}
+                    onClick={handleOpenPresent}
+                  >
+                    {t('quiz.presentView')}
+                  </Button>
+                </Space>
               </Space>
             </Card>
           ) : (
