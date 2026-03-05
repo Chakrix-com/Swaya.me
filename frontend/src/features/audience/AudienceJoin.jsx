@@ -51,8 +51,8 @@ function AudienceJoin() {
         <LanguageSwitcher />
       </div>
 
-      <div className="container py-4">
-        <div className="row justify-content-center g-0">
+      <div className="container overflow-hidden py-4">
+        <div className="row justify-content-center">
           <div className="col-12 col-sm-8 col-md-6 col-lg-4">
             <Card title={t('audience.joinQuiz')}>
               <Form form={form} name="join" onFinish={onFinish} layout="vertical">

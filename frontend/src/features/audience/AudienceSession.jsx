@@ -238,14 +238,16 @@ export default function AudienceSession() {
           <Text type="secondary">{t('leaderboard.noData')}</Text>
         ) : (
           <>
-            <Table
-              dataSource={leaderboard.entries.slice(0, 10)}
-              rowKey="participant_id"
-              columns={leaderboardColumns}
-              pagination={false}
-              size="small"
-              rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
-            />
+            <div className="table-responsive">
+              <Table
+                dataSource={leaderboard.entries.slice(0, 10)}
+                rowKey="participant_id"
+                columns={leaderboardColumns}
+                pagination={false}
+                size="small"
+                rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
+              />
+            </div>
             {leaderboard.entries.length > 10 && (
               <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
                 +{leaderboard.entries.length - 10} more participants
@@ -260,12 +262,10 @@ export default function AudienceSession() {
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
 
-  // ── Single wrapper — Bootstrap centres the column, overflow-x: hidden clips any Ant Design excess
   return (
-    <div style={{ overflowX: 'hidden', minHeight: '100vh' }}>
-      <div className="container-fluid">
-        <div className="row justify-content-center g-0">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-7" style={{ padding: '16px' }}>
+    <div className="container overflow-hidden py-3">
+      <div className="row justify-content-center">
+        <div className="col-12 col-sm-10 col-md-8 col-lg-7">
 
             {/* ── No session token ── */}
             {!sessionToken && (
@@ -578,6 +578,5 @@ export default function AudienceSession() {
           </div>
         </div>
       </div>
-    </div>
   )
 }
