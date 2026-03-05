@@ -263,9 +263,10 @@ export default function AudienceSession() {
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
 
   return (
-    <div className="container overflow-hidden py-3">
-      <div className="row justify-content-center">
-        <div className="col-12 col-sm-10 col-md-8 col-lg-7">
+    <div className="min-vh-100 d-flex flex-column">
+      <div className="container overflow-hidden py-3">
+        <div className="row justify-content-center">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-7">
 
             {/* ── No session token ── */}
             {!sessionToken && (
@@ -578,5 +579,6 @@ export default function AudienceSession() {
           </div>
         </div>
       </div>
+    </div>
   )
 }
