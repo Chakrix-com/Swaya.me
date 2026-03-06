@@ -419,6 +419,7 @@ export default function QuizControl() {
                       <Statistic
                         title={t('quiz.joinCode')}
                         value={session.join_code}
+                        formatter={(value) => String(value).replace(/,/g, '')}
                         valueStyle={{ color: '#3f8600', fontSize: 32, fontWeight: 'bold' }}
                       />
                       <Text type="secondary" style={{ fontSize: 12 }}>{t('quiz.enterCodeAt')}</Text>

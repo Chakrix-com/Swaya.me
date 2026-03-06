@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import {
   Card,
-  Radio,
   Button,
   Space,
   Typography,
@@ -193,17 +192,17 @@ export default function AudienceSession() {
     {
       title: t('leaderboard.participant'),
       dataIndex: 'display_name',
-      ellipsis: true,
+      ellipsis: false,
       render: (name, record) => (
-        <span style={record.is_current_participant ? { fontWeight: 700, color: '#1890ff' } : {}}>
+        <span style={{ ...(record.is_current_participant ? { fontWeight: 700, color: '#1890ff' } : {}), whiteSpace: 'normal', wordBreak: 'break-word' }}>
           {name}{record.is_current_participant ? ' (You)' : ''}
         </span>
       )
     },
     {
-      title: `${t('leaderboard.score')}${leaderboard && leaderboard.mcq_question_count > 1 ? ` / ${leaderboard.mcq_question_count}` : ''}`,
+      title: t('leaderboard.score'),
       dataIndex: 'score',
-      width: 80,
+      width: 72,
       render: (score, record) => (
         <Tag color={record.is_current_participant ? 'blue' : 'green'}>{score}</Tag>
       )
@@ -211,7 +210,8 @@ export default function AudienceSession() {
     {
       title: t('leaderboard.timeTaken'),
       dataIndex: 'time_taken_seconds',
-      width: 80,
+      width: 78,
+      responsive: ['sm'],
       render: (secs) => secs != null
         ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text>
         : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
@@ -224,7 +224,7 @@ export default function AudienceSession() {
       <Card
         size="small"
         title={
-          <Space>
+          <Space wrap>
             <TrophyOutlined style={{ color: '#faad14' }} />
             <span>{t('leaderboard.title')}</span>
             {leaderboard.current_participant_rank && (
@@ -245,6 +245,7 @@ export default function AudienceSession() {
                 columns={leaderboardColumns}
                 pagination={false}
                 size="small"
+                scroll={{ x: 420 }}
                 rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
               />
             </div>
@@ -263,10 +264,10 @@ export default function AudienceSession() {
   const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
 
   return (
-    <div className="min-vh-100 d-flex flex-column">
+    <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
       <div className="container overflow-hidden py-3">
         <div className="row justify-content-center">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-7">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-7" style={{ position: 'relative', overflowX: 'hidden', minWidth: 0 }}>
 
             {/* ── No session token ── */}
             {!sessionToken && (
@@ -314,7 +315,12 @@ export default function AudienceSession() {
                       <Text type="secondary">
                         You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
                       </Text>
-                      <Tag color="blue" style={{ marginTop: 8 }}>Joined as: {displayName}</Tag>
+                      <Tag
+                        color="blue"
+                        style={{ marginTop: 8, maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}
+                      >
+                        Joined as: {displayName}
+                      </Tag>
                       <LeaderboardTable />
                       <Card size="small" style={{ width: '100%', marginTop: 16 }}>
                         <Space direction="vertical" style={{ width: '100%' }}>
@@ -349,27 +355,29 @@ export default function AudienceSession() {
             {/* ── Waiting for host / next question ── */}
             {sessionToken && !sessionInvalidated && !currentQuestion && sessionStatus !== 'ended' && (
               <Card>
-                <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                  <LoadingOutlined style={{ fontSize: 48 }} />
-                  <Title level={3}>
-                    {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
-                  </Title>
-                  <Text type="secondary">
-                    {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
-                  </Text>
-                  <Tag color="blue">Joined as: {displayName}</Tag>
-                </Space>
-              </Card>
-            )}
+                  <Space direction="vertical" align="center" style={{ width: '100%' }}>
+                    <LoadingOutlined style={{ fontSize: 48 }} />
+                    <Title level={3}>
+                      {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
+                    </Title>
+                    <Text type="secondary">
+                      {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
+                    </Text>
+                    <Tag color="blue" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                      Joined as: {displayName}
+                    </Tag>
+                  </Space>
+                </Card>
+              )}
 
             {/* ── Active question ── */}
             {sessionToken && !sessionInvalidated && currentQuestion && (
               <>
                 <Card style={{ marginBottom: 16 }}>
-                  <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
                     <Tag color="blue">Question {results.current_question_index + 1}</Tag>
                     {isWordCloud && <Tag color="purple">Word Cloud</Tag>}
-                    <Text strong>{displayName}</Text>
+                    <Text strong style={{ wordBreak: 'break-word' }}>{displayName}</Text>
                   </Space>
                 </Card>
 
@@ -456,44 +464,43 @@ export default function AudienceSession() {
                     </>
                   ) : !submitted ? (
                     <>
-                      <Radio.Group
-                        onChange={(e) => setSelectedAnswer(e.target.value)}
-                        value={selectedAnswer}
-                        style={{ width: '100%' }}
-                      >
-                        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                          {['A', 'B', 'C', 'D'].map((key) => {
-                            const label = currentQuestion[`option_${key.toLowerCase()}`]
-                            return (
-                              <Radio
-                                key={key}
-                                value={key}
-                                style={{
-                                  width: '100%',
-                                  padding: '12px 16px',
-                                  border: `2px solid ${selectedAnswer === key ? '#1890ff' : '#d9d9d9'}`,
-                                  borderRadius: 8,
-                                  backgroundColor: selectedAnswer === key ? '#e6f7ff' : 'white',
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'break-word',
-                                  whiteSpace: 'normal'
-                                }}
-                              >
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                  <div><Text strong>{key}:</Text> {label}</div>
-                                  {currentQuestion.option_images?.[key] && (
-                                    <img
-                                      src={currentQuestion.option_images[key]}
-                                      alt={`Option ${key}`}
-                                      style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 4 }}
-                                    />
-                                  )}
-                                </Space>
-                              </Radio>
-                            )
-                          })}
-                        </Space>
-                      </Radio.Group>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+                        {['A', 'B', 'C', 'D'].map((key) => {
+                          const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          const isSelected = selectedAnswer === key
+                          return (
+                            <div
+                              key={key}
+                              onClick={() => setSelectedAnswer(key)}
+                              style={{
+                                display: 'block',
+                                width: '100%',
+                                padding: '12px 16px',
+                                border: `2px solid ${isSelected ? '#1890ff' : '#d9d9d9'}`,
+                                borderRadius: 8,
+                                backgroundColor: isSelected ? '#e6f7ff' : 'white',
+                                cursor: 'pointer',
+                                boxSizing: 'border-box',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                                color: '#1f1f1f',
+                              }}
+                            >
+                              <div>
+                                <span style={{ color: '#1f1f1f', fontWeight: 700 }}>{key}:</span>{' '}
+                                <span style={{ color: '#1f1f1f' }}>{label}</span>
+                              </div>
+                              {currentQuestion.option_images?.[key] && (
+                                <img
+                                  src={currentQuestion.option_images[key]}
+                                  alt={`Option ${key}`}
+                                  style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 4, marginTop: 8 }}
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
                       <Button
                         type="primary"
                         size="large"
@@ -529,6 +536,7 @@ export default function AudienceSession() {
                               padding: '12px 16px', background: bgColor,
                               opacity: (!correct && !selected) ? 0.55 : 1,
                               transition: 'all 0.3s ease',
+                              color: '#1f1f1f',
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                                 <span style={{
@@ -539,12 +547,12 @@ export default function AudienceSession() {
                                 }}>
                                   {badgeIcon}
                                 </span>
-                                <Text style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400 }}>
+                                <span style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: '#1f1f1f' }}>
                                   {label}
-                                </Text>
-                                <Text type="secondary" style={{ whiteSpace: 'nowrap', fontSize: 13 }}>
+                                </span>
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: '#595959' }}>
                                   {count} ({pct.toFixed(1)}%)
-                                </Text>
+                                </span>
                               </div>
                               {currentQuestion.option_images?.[key] && (
                                 <img

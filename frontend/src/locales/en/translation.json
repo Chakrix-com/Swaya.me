@@ -407,7 +407,7 @@
     },
     "quickJoin": {
       "title": "Have a join code?",
-      "placeholder": "Enter join code (e.g., ABC123)",
+      "placeholder": "Enter join code (e.g., 123456)",
       "button": "Join Quiz",
       "or": "OR",
       "createAccount": "Create Free Account",

@@ -25,7 +25,7 @@ const Home = () => {
 
   const handleJoinQuiz = () => {
     if (joinCode.trim()) {
-      navigate(`/join/${joinCode.trim().toUpperCase()}`);
+      navigate(`/join/${joinCode.trim()}`);
     }
   };
 
@@ -106,7 +106,7 @@ const Home = () => {
                         placeholder={t('home.quickJoin.placeholder')}
                         enterButton={t('home.quickJoin.button')}
                         value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                        onChange={(e) => setJoinCode(e.target.value.replace(/\\D/g, '').slice(0, 6))}
                         onSearch={handleJoinQuiz}
                         style={{ maxWidth: '500px' }}
                       />

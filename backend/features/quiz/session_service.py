@@ -32,7 +32,7 @@ class SessionService:
     
     def _generate_join_code(self) -> str:
         """Generate unique 6-character join code"""
-        return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
     
     def _generate_session_token(self) -> str:
         """Generate unique session token for participant"""

@@ -18,7 +18,7 @@ function AudienceJoin() {
 
   useEffect(() => {
     if (joinCode) {
-      form.setFieldsValue({ join_code: joinCode.toUpperCase() })
+      form.setFieldsValue({ join_code: joinCode.replace(/\D/g, '').slice(0, 6) })
     }
   }, [joinCode, form])
 
@@ -44,10 +44,10 @@ function AudienceJoin() {
 
   return (
     <div
-      className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', position: 'relative' }}
+      className="audience-join min-vh-100 d-flex align-items-center justify-content-center"
+      style={{ background: 'linear-gradient(145deg, #0f0c29 0%, #302b63 55%, #1a1a3e 100%)', position: 'relative' }}
     >
-      <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 100 }}>
         <LanguageSwitcher />
       </div>
 
@@ -60,11 +60,14 @@ function AudienceJoin() {
                   label={t('audience.sessionCode')}
                   name="join_code"
                   rules={[{ required: true, message: `${t('audience.sessionCode')} is required` }]}
+                  getValueFromEvent={(e) => e.target.value.replace(/\D/g, '').slice(0, 6)}
                 >
                   <Input
                     placeholder="Enter 6-digit code"
                     maxLength={6}
-                    style={{ fontSize: 24, textAlign: 'center', textTransform: 'uppercase' }}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    style={{ fontSize: 24, textAlign: 'center' }}
                   />
                 </Form.Item>
 
