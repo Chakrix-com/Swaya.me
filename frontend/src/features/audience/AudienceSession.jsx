@@ -132,17 +132,29 @@ export default function AudienceSession() {
 
   const handleSubmitAnswer = async () => {
     const isWordCloud = currentQuestion?.question_type === 'word_cloud'
-    if (isWordCloud ? !wordCloudAnswer?.trim() : !selectedAnswer) return
+    const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
+    const isScaleQuestion = currentQuestion?.question_type === 'scale'
+    if (isTextQuestion ? !wordCloudAnswer?.trim() : selectedAnswer === null) return
 
     setLoading(true)
     try {
-      if (isWordCloud) {
+      if (isTextQuestion) {
         await sessionAPI.submitWordCloudAnswer(sessionToken, {
           question_id: currentQuestion.question_id,
           text_answer: wordCloudAnswer.trim()
         })
         setWordCloudAnswer('')
-        setTimeout(() => loadWordCloudData(currentQuestion.question_id), 500)
+        if (isWordCloud) {
+          setTimeout(() => loadWordCloudData(currentQuestion.question_id), 500)
+        } else {
+          setSubmitted(true)
+        }
+      } else if (isScaleQuestion) {
+        await sessionAPI.submitAnswer(sessionToken, {
+          question_id: currentQuestion.question_id,
+          selected_option_index: Number(selectedAnswer)
+        })
+        setSubmitted(true)
       } else {
         const answerIndex = selectedAnswer.charCodeAt(0) - 65
         await sessionAPI.submitAnswer(sessionToken, {
@@ -261,7 +273,8 @@ export default function AudienceSession() {
   }
 
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
-  const isCorrect = submitted && !isWordCloud && selectedAnswer === currentQuestion?.correct_answer
+  const isScaleQuestion = currentQuestion?.question_type === 'scale'
+  const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
 
   return (
     <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
@@ -377,6 +390,9 @@ export default function AudienceSession() {
                   <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
                     <Tag color="blue">Question {results.current_question_index + 1}</Tag>
                     {isWordCloud && <Tag color="purple">Word Cloud</Tag>}
+                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">Single Line</Tag>}
+                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">Paragraph</Tag>}
+                    {isScaleQuestion && <Tag color="gold">Scale 1-5</Tag>}
                     <Text strong style={{ wordBreak: 'break-word' }}>{displayName}</Text>
                   </Space>
                 </Card>
@@ -405,12 +421,24 @@ export default function AudienceSession() {
                     </Space>
                   }
                 >
-                  {isWordCloud ? (
+                  {isTextQuestion ? (
                     <>
                       <TextArea
-                        rows={3}
-                        placeholder="Enter your answer (max 100 characters)"
-                        maxLength={100}
+                        rows={currentQuestion.question_type === 'paragraph' ? 5 : 3}
+                        placeholder={
+                          currentQuestion.question_type === 'word_cloud'
+                            ? 'Enter your answer (max 100 characters)'
+                            : currentQuestion.question_type === 'single_line'
+                              ? 'Enter a short answer'
+                              : 'Enter your paragraph answer'
+                        }
+                        maxLength={
+                          currentQuestion.question_type === 'word_cloud'
+                            ? 100
+                            : currentQuestion.question_type === 'single_line'
+                              ? 255
+                              : 2000
+                        }
                         value={wordCloudAnswer}
                         onChange={(e) => setWordCloudAnswer(e.target.value)}
                         showCount
@@ -428,7 +456,7 @@ export default function AudienceSession() {
                       >
                         Submit Answer
                       </Button>
-                      {wordCloudData.length > 0 ? (
+                      {isWordCloud && wordCloudData.length > 0 ? (
                         <>
                           <Alert
                             message="Live Word Cloud"
@@ -453,19 +481,56 @@ export default function AudienceSession() {
                             />
                           </div>
                         </>
-                      ) : (
+                      ) : isWordCloud ? (
                         <Alert
                           message="Be the first to respond!"
                           description="Submit your answer and watch the word cloud grow."
                           type="info"
                           showIcon
                         />
+                      ) : (
+                        <Alert
+                          message="Response submitted"
+                          description="Waiting for the host to move to the next question."
+                          type="success"
+                          showIcon
+                        />
                       )}
                     </>
                   ) : !submitted ? (
                     <>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-                        {['A', 'B', 'C', 'D'].map((key) => {
+                      {isScaleQuestion ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+                          {(currentQuestion.options || ['1', '2', '3', '4', '5']).map((label, idx) => {
+                            const key = String(idx)
+                            const isSelected = selectedAnswer === key
+                            return (
+                              <div
+                                key={key}
+                                onClick={() => setSelectedAnswer(key)}
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                  padding: '12px 16px',
+                                  border: `2px solid ${isSelected ? '#1890ff' : '#d9d9d9'}`,
+                                  borderRadius: 8,
+                                  backgroundColor: isSelected ? '#e6f7ff' : 'white',
+                                  cursor: 'pointer',
+                                  boxSizing: 'border-box',
+                                  wordBreak: 'break-word',
+                                  color: 'var(--aud-input-text)',
+                                  textAlign: 'center',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {label}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+                          {['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
                           const isSelected = selectedAnswer === key
                           return (
@@ -499,8 +564,9 @@ export default function AudienceSession() {
                               )}
                             </div>
                           )
-                        })}
-                      </div>
+                          })}
+                        </div>
+                      )}
                       <Button
                         type="primary"
                         size="large"
@@ -517,7 +583,30 @@ export default function AudienceSession() {
                   ) : (
                     <>
                       <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                        {['A', 'B', 'C', 'D'].map((key) => {
+                        {isScaleQuestion ? (currentQuestion.options || ['1', '2', '3', '4', '5']).map((label, idx) => {
+                          const dist = currentQuestion.answer_distribution || []
+                          const totalAns = currentQuestion.total_answers || 0
+                          const count = dist[idx] || 0
+                          const pct = totalAns > 0 ? (count / totalAns * 100) : 0
+                          const selected = selectedAnswer === String(idx)
+                          return (
+                            <div key={idx} style={{
+                              border: `2px solid ${selected ? '#1890ff' : '#d9d9d9'}`,
+                              borderRadius: 8,
+                              padding: '12px 16px',
+                              background: selected ? '#e6f7ff' : '#fafafa',
+                              color: 'var(--aud-input-text)',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <span style={{ fontWeight: 600 }}>{label}</span>
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
+                                  {count} ({pct.toFixed(1)}%)
+                                </span>
+                              </div>
+                              <Progress percent={parseFloat(pct.toFixed(1))} strokeColor="#1890ff" showInfo={false} size="small" />
+                            </div>
+                          )
+                        }) : ['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
                           const idx = key.charCodeAt(0) - 65
                           const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]

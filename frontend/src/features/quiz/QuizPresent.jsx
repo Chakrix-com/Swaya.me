@@ -7,20 +7,22 @@ import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI } from '../../services/api'
 import './QuizPresent.css'
 
-const OPTION_LETTERS = ['A', 'B', 'C', 'D']
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E']
 const OPTION_BG = [
   'rgba(64,150,255,0.14)',
   'rgba(82,196,26,0.14)',
   'rgba(250,173,20,0.14)',
   'rgba(245,34,45,0.14)',
+  'rgba(114,46,209,0.14)',
 ]
 const OPTION_BORDER = [
   'rgba(64,150,255,0.45)',
   'rgba(82,196,26,0.45)',
   'rgba(250,173,20,0.45)',
   'rgba(245,34,45,0.45)',
+  'rgba(114,46,209,0.45)',
 ]
-const OPTION_ACCENT = ['#4096ff', '#52c41a', '#faad14', '#f5222d']
+const OPTION_ACCENT = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1']
 const WORDCLOUD_COLORS = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2']
 
 /* ── Waiting ─────────────────────────────────────────── */
@@ -77,13 +79,14 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
 
 /* ── MCQ Question ────────────────────────────────────── */
 function MCQView({ question, questionNumber, totalQuestions, revealed }) {
-  const opts = question.options || [
+  const fallbackOptions = [
     question.option_a,
     question.option_b,
     question.option_c,
     question.option_d,
   ]
-  const dist = question.answer_distribution || [0, 0, 0, 0]
+  const opts = (question.options && question.options.length > 0 ? question.options : fallbackOptions).filter(Boolean)
+  const dist = question.answer_distribution || new Array(opts.length).fill(0)
   const total = question.total_answers || 0
   const images = question.option_images || {}
   const correctIndex = question.correct_answer_index ?? -1
@@ -128,6 +131,33 @@ function MCQView({ question, questionNumber, totalQuestions, revealed }) {
             isCorrect={i === correctIndex}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+function TextResponseView({ question, questionNumber, totalQuestions }) {
+  const total = question.total_answers || 0
+  const questionTypeLabel = question.question_type === 'single_line' ? 'Single Line' : 'Paragraph'
+  return (
+    <div className="pv-question-wrap">
+      <div className="pv-question-meta">
+        <Tag color="geekblue" style={{ fontSize: 13, padding: '2px 10px' }}>
+          Question {questionNumber} of {totalQuestions}
+        </Tag>
+        <Tag color="geekblue">{questionTypeLabel}</Tag>
+        <Tag color="default">{total} response{total !== 1 ? 's' : ''}</Tag>
+      </div>
+      {question.question_image_url && (
+        <div className="pv-question-img-wrap">
+          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+        </div>
+      )}
+      <p className="pv-question-text">{question.text || question.question_text}</p>
+      <div className="pv-center-fill">
+        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 16, margin: 0 }}>
+          {total} response{total !== 1 ? 's received' : ' received'}.
+        </p>
       </div>
     </div>
   )
@@ -516,9 +546,11 @@ export default function QuizPresent() {
 
   const handleAdvance = async () => {
     const notStarted = (results?.current_question_index ?? -1) === -1
-    const isWordCloud = results?.current_question?.question_type === 'word_cloud'
-    // First press on an MCQ: reveal answer, don't advance yet
-    if (!notStarted && !revealed && !isWordCloud) {
+    const isRevealQuestion = ['mcq', 'scale'].includes(results?.current_question?.question_type)
+      && results?.current_question?.correct_answer_index !== null
+      && results?.current_question?.correct_answer_index !== undefined
+    // First press on option questions: reveal answer, don't advance yet
+    if (!notStarted && !revealed && isRevealQuestion) {
       setRevealed(true)
       return
     }
@@ -671,6 +703,8 @@ export default function QuizPresent() {
             questionNumber={qNumber}
             totalQuestions={totalQ}
           />
+        ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
+          <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} />
         ) : (
           <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} />
         )}

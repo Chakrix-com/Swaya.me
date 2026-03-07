@@ -32,6 +32,9 @@ class QuestionTypeEnum(str, Enum):
     """Question type"""
     MCQ = "mcq"
     WORD_CLOUD = "word_cloud"
+    SINGLE_LINE = "single_line"
+    SCALE = "scale"
+    PARAGRAPH = "paragraph"
 
 
 class TemplateScopeEnum(str, Enum):
@@ -51,7 +54,7 @@ class QuestionCreate(BaseModel):
     question_type: QuestionTypeEnum = Field(default=QuestionTypeEnum.MCQ)
     text: str = Field(..., min_length=1, max_length=1000)
     options: Optional[List[str]] = None
-    correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
+    correct_answer_index: Optional[int] = Field(None, ge=0, le=4)
     question_image_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     
@@ -72,6 +75,21 @@ class QuestionCreate(BaseModel):
                 raise ValueError('Word cloud questions should not have options')
             if self.correct_answer_index is not None:
                 raise ValueError('Word cloud questions should not have a correct answer')
+        elif self.question_type == QuestionTypeEnum.SINGLE_LINE:
+            if not self.options or len(self.options) != 1:
+                raise ValueError('Single-line questions must have one expected answer')
+            if self.correct_answer_index is not None:
+                raise ValueError('Single-line questions should not have a correct answer')
+        elif self.question_type == QuestionTypeEnum.PARAGRAPH:
+            if not self.options or len(self.options) != 1:
+                raise ValueError('Paragraph questions must have one expected answer')
+            if self.correct_answer_index is not None:
+                raise ValueError('Paragraph questions should not have a correct answer')
+        elif self.question_type == QuestionTypeEnum.SCALE:
+            if not self.options or len(self.options) != 5:
+                raise ValueError('Scale questions must have exactly 5 options')
+            if self.correct_answer_index is None or self.correct_answer_index < 0 or self.correct_answer_index > 4:
+                raise ValueError('Scale questions must have a correct answer between 1 and 5')
         return self
 
 
@@ -79,8 +97,8 @@ class QuestionUpdate(BaseModel):
     """Update question request"""
     question_type: Optional[QuestionTypeEnum] = None
     text: Optional[str] = Field(None, min_length=1, max_length=1000)
-    options: Optional[List[str]] = Field(None, min_items=4, max_items=4)
-    correct_answer_index: Optional[int] = Field(None, ge=0, le=3)
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None
 
@@ -192,13 +210,13 @@ class SessionJoinResponse(BaseModel):
 class AnswerSubmitRequest(BaseModel):
     """Submit answer request for MCQ"""
     question_id: int
-    selected_option_index: int = Field(..., ge=0, le=3)
+    selected_option_index: int = Field(..., ge=0)
 
 
 class WordCloudAnswerSubmitRequest(BaseModel):
     """Submit answer request for word cloud"""
     question_id: int
-    text_answer: str = Field(..., min_length=1, max_length=100)
+    text_answer: str = Field(..., min_length=1, max_length=2000)
 
 
 class AnswerSubmitResponse(BaseModel):
@@ -212,8 +230,8 @@ class QuestionResultsResponse(BaseModel):
     """Question results after closing"""
     question_id: int
     question_text: str
-    options: List[str]
-    correct_answer_index: int
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = None
     answer_distribution: List[int]  # Count per option
     total_answers: int
     participant_answer: Optional[int] = None  # What this participant answered

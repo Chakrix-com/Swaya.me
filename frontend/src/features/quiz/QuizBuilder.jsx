@@ -33,6 +33,13 @@ import './QuizBuilder.css'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
+const QUESTION_TYPE_LABELS = {
+  mcq: 'MCQ',
+  word_cloud: 'Word Cloud',
+  single_line: 'Single Line',
+  scale: 'Scale (1-5)',
+  paragraph: 'Paragraph',
+}
 
 // QuestionForm component - extracted to prevent recreation on parent re-renders
 const QuestionForm = ({ 
@@ -87,16 +94,27 @@ const QuestionForm = ({
   }, [question])  // Removed setQuestionImageUrl, setOptionImages - they're stable
 
   const handleTypeChange = (e) => {
-    setQuestionType(e.target.value)
-    // Clear option fields when switching to word cloud
-    if (e.target.value === 'word_cloud') {
+    const nextType = e.target.value
+    setQuestionType(nextType)
+    if (nextType === 'word_cloud' || nextType === 'single_line' || nextType === 'paragraph') {
       questionForm.setFieldsValue({
         option_a: undefined,
         option_b: undefined,
         option_c: undefined,
         option_d: undefined,
-        correct_answer: undefined
+        correct_answer: undefined,
+        expected_answer: undefined,
       })
+    }
+    if (nextType === 'scale') {
+        questionForm.setFieldsValue({
+          option_a: '1',
+          option_b: '2',
+          option_c: '3',
+          option_d: '4',
+          option_e: '5',
+          correct_answer: '2'
+        })
     }
   }
 
@@ -119,6 +137,9 @@ const QuestionForm = ({
           <Radio.Group onChange={handleTypeChange}>
             <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
             <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>
+            <Radio value="single_line">Single Line</Radio>
+            <Radio value="scale">Scale (1-5)</Radio>
+            <Radio value="paragraph">Paragraph</Radio>
           </Radio.Group>
         </Form.Item>
 
@@ -277,6 +298,57 @@ const QuestionForm = ({
           </Text>
         )}
 
+        {questionType === 'single_line' && (
+          <>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+              Participants submit one short text response.
+            </Text>
+            <Form.Item
+              name="expected_answer"
+              label={t('quiz.correctAnswer')}
+              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+            >
+              <Input placeholder="Enter expected answer" />
+            </Form.Item>
+          </>
+        )}
+
+        {questionType === 'paragraph' && (
+          <>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+              Participants submit a longer free-text response.
+            </Text>
+            <Form.Item
+              name="expected_answer"
+              label={t('quiz.correctAnswer')}
+              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+            >
+              <TextArea rows={3} placeholder="Enter expected answer guidance" />
+            </Form.Item>
+          </>
+        )}
+
+        {questionType === 'scale' && (
+          <>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+              Participants choose a rating from 1 to 5.
+            </Text>
+            <Form.Item
+              name="correct_answer"
+              label={t('quiz.correctAnswer')}
+              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+            >
+              <Radio.Group>
+                <Radio value="0">1</Radio>
+                <Radio value="1">2</Radio>
+                <Radio value="2">3</Radio>
+                <Radio value="3">4</Radio>
+                <Radio value="4">5</Radio>
+              </Radio.Group>
+            </Form.Item>
+          </>
+        )}
+
         <Space>
           <Button
             type="primary"
@@ -381,14 +453,23 @@ export default function QuizBuilder() {
         }
         
         // Only transform options for MCQ questions
-        if (q.question_type === 'mcq' && q.options) {
+        if ((q.question_type === 'mcq' || q.question_type === 'scale') && q.options) {
           return {
             ...baseQuestion,
             option_a: q.options[0],
             option_b: q.options[1],
             option_c: q.options[2],
             option_d: q.options[3],
-            correct_answer: ['A', 'B', 'C', 'D'][q.correct_answer_index]
+            option_e: q.options[4],
+            correct_answer: q.question_type === 'mcq'
+              ? ['A', 'B', 'C', 'D'][q.correct_answer_index]
+              : String(q.correct_answer_index ?? 0)
+          }
+        }
+        if ((q.question_type === 'single_line' || q.question_type === 'paragraph') && q.options) {
+          return {
+            ...baseQuestion,
+            expected_answer: q.options[0] || ''
           }
         }
         
@@ -444,10 +525,19 @@ export default function QuizBuilder() {
         text: values.text
       }
       
-      // Only add options and correct_answer for MCQ
+      // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
         questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+      } else if (values.question_type === 'scale') {
+        questionData.options = ['1', '2', '3', '4', '5']
+        questionData.correct_answer_index = Number(values.correct_answer)
+      } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
+        questionData.options = [values.expected_answer]
+        questionData.correct_answer_index = null
+      } else {
+        questionData.options = null
+        questionData.correct_answer_index = null
       }
       
       console.log('Adding question with data:', questionData)
@@ -581,10 +671,19 @@ export default function QuizBuilder() {
         text: values.text
       }
       
-      // Only add options and correct_answer for MCQ
+      // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
         questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+      } else if (values.question_type === 'scale') {
+        questionData.options = ['1', '2', '3', '4', '5']
+        questionData.correct_answer_index = Number(values.correct_answer)
+      } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
+        questionData.options = [values.expected_answer]
+        questionData.correct_answer_index = null
+      } else {
+        questionData.options = null
+        questionData.correct_answer_index = null
       }
       
       await questionAPI.update(questionId, questionData)
@@ -788,8 +887,8 @@ export default function QuizBuilder() {
                   title={
                     <Space>
                       <Tag color="blue">Q{index + 1}</Tag>
-                      <Tag color={question.question_type === 'word_cloud' ? 'purple' : 'cyan'}>
-                        {question.question_type === 'word_cloud' ? t('quiz.wordCloud') : 'MCQ'}
+                      <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
+                        {QUESTION_TYPE_LABELS[question.question_type] || 'MCQ'}
                       </Tag>
                       <Text strong>{question.text}</Text>
                     </Space>
@@ -823,6 +922,18 @@ export default function QuizBuilder() {
                       <Text type="secondary" italic>
                         {t('quiz.wordCloudQuestionDescription')}
                       </Text>
+                    </Space>
+                  ) : question.question_type === 'single_line' || question.question_type === 'paragraph' ? (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Text type="secondary" italic>
+                        Participants provide a text response.
+                      </Text>
+                      <Text><strong>Expected answer:</strong> {question.expected_answer || question.options?.[0] || '—'}</Text>
+                    </Space>
+                  ) : question.question_type === 'scale' ? (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Text>Scale options: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
+                      <Text><strong>Expected answer:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || '—'}</Text>
                     </Space>
                   ) : (
                     <Space direction="vertical" style={{ width: '100%' }}>
