@@ -10,16 +10,28 @@
   width: 100%;
   min-height: 100vh;
   padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--visitor-login-bg);
 }
 
 .login-form {
   max-width: 450px;
   width: 100%;
   padding: 48px 40px;
-  background: white;
+  background: var(--visitor-panel-bg);
+  border: 1px solid var(--visitor-panel-border);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--visitor-card-shadow);
+  color: var(--visitor-text-primary);
+}
+
+.login-form a,
+.login-form .ant-btn-link {
+  color: var(--visitor-accent);
+}
+
+.login-form .ant-typography.ant-typography-secondary,
+.login-form .ant-form-item-label > label {
+  color: var(--visitor-text-secondary) !important;
 }
 
 @media (max-width: 480px) {
@@ -58,14 +70,14 @@
 
 .audience-join,
 .audience-session {
-  --aud-bg: linear-gradient(145deg, #0f0c29 0%, #302b63 55%, #1a1a3e 100%);
-  --aud-surface: rgba(0, 0, 0, 0.38);
-  --aud-border: rgba(255, 255, 255, 0.14);
-  --aud-text-primary: rgba(255, 255, 255, 0.92);
-  --aud-text-secondary: rgba(255, 255, 255, 0.65);
-  --aud-input-bg: #ffffff;
-  --aud-input-text: #1f1f1f;
-  --aud-input-placeholder: #8c8c8c;
+  --aud-bg: var(--visitor-aud-bg);
+  --aud-surface: var(--visitor-aud-surface);
+  --aud-border: var(--visitor-aud-border);
+  --aud-text-primary: var(--visitor-aud-text-primary);
+  --aud-text-secondary: var(--visitor-aud-text-secondary);
+  --aud-input-bg: var(--visitor-aud-input-bg);
+  --aud-input-text: var(--visitor-aud-input-text);
+  --aud-input-placeholder: var(--visitor-aud-input-placeholder);
   --aud-primary-btn-bg: #1677ff;
   --aud-primary-btn-text: #ffffff;
   --aud-disabled-bg: #f5f5f5;
@@ -76,7 +88,7 @@
   overflow-x: hidden;
   background: var(--aud-bg);
   color: var(--aud-text-primary);
-  color-scheme: dark;
+  color-scheme: var(--visitor-color-scheme);
 }
 
 .audience-join .ant-card,
@@ -133,7 +145,7 @@
 .audience-session .ant-alert-description,
 .audience-join .ant-alert-message,
 .audience-join .ant-alert-description {
-  color: #1f1f1f !important;
+  color: var(--aud-input-text) !important;
 }
 
 .audience-join .ant-btn,
@@ -161,7 +173,7 @@
 
 .audience-join .ant-input-show-count-suffix,
 .audience-session .ant-input-show-count-suffix {
-  color: #8c8c8c !important;
+  color: var(--aud-input-placeholder) !important;
 }
 
 .audience-session .ant-table,

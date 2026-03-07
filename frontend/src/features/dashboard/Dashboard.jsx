@@ -1,19 +1,21 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic } from 'antd'
+import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table } from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
   EditOutlined,
   DeleteOutlined,
+  CopyOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
   EditFilled,
   RocketOutlined,
-  HistoryOutlined
+  HistoryOutlined,
+  StarOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -21,10 +23,15 @@ import { quizAPI } from '../../services/api'
 import './Dashboard.css'
 
 function Dashboard() {
+  const TEMPLATE_CACHE_KEY = 'templateQuizIds'
   const { t } = useTranslation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { quizzes } = useSelector((state) => state.quiz)
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [templates, setTemplates] = useState([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [usingTemplateId, setUsingTemplateId] = useState(null)
 
   useEffect(() => {
     loadQuizzes()
@@ -52,6 +59,144 @@ function Dashboard() {
       loadQuizzes()
     } catch (error) {
       console.error('Failed to delete quiz:', error)
+    }
+  }
+
+  const handleDuplicateQuiz = async (quizId) => {
+    const extractErrorDetail = (err) => {
+      const detail = err?.response?.data?.detail
+      if (typeof detail === 'string') return detail
+      if (Array.isArray(detail) && detail.length > 0) {
+        return detail[0]?.msg || null
+      }
+      return null
+    }
+
+    try {
+      const response = await quizAPI.duplicate(quizId)
+      message.success(t('quiz.duplicateSuccess', { defaultValue: 'Quiz duplicated successfully' }))
+      loadQuizzes()
+      navigate(`/quiz/${response.data.id}/edit`)
+    } catch (error) {
+      console.error('Failed to duplicate quiz:', error)
+      const detail = extractErrorDetail(error)
+      message.error(
+        detail ||
+        t('quiz.duplicateFailed', { defaultValue: 'Failed to duplicate quiz' })
+      )
+    }
+  }
+
+  const handleToggleTemplate = async (quiz) => {
+    const nextTemplateState = !quiz.is_template
+    try {
+      const response = await quizAPI.setTemplate(quiz.id, { is_template: nextTemplateState })
+      const updatedQuiz = response.data
+      const normalizedQuiz = {
+        ...quiz,
+        ...updatedQuiz,
+        is_template: typeof updatedQuiz?.is_template === 'boolean' ? updatedQuiz.is_template : nextTemplateState,
+      }
+      const nextQuizzes = (quizzes || []).map((q) => (q.id === normalizedQuiz.id ? { ...q, ...normalizedQuiz } : q))
+      dispatch(setQuizzes(nextQuizzes))
+      const cachedIds = new Set(
+        JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
+      )
+      if (normalizedQuiz.is_template) cachedIds.add(normalizedQuiz.id)
+      else cachedIds.delete(normalizedQuiz.id)
+      localStorage.setItem(TEMPLATE_CACHE_KEY, JSON.stringify(Array.from(cachedIds)))
+      setTemplates((prev) => {
+        const withoutCurrent = (prev || []).filter((tq) => tq.id !== normalizedQuiz.id)
+        if (!normalizedQuiz.is_template) return withoutCurrent
+        return [
+          {
+            id: normalizedQuiz.id,
+            title: normalizedQuiz.title,
+            template_scope: normalizedQuiz.template_scope || 'tenant',
+            question_count: normalizedQuiz.question_count || 0,
+            tenant_id: normalizedQuiz.tenant_id,
+          },
+          ...withoutCurrent,
+        ]
+      })
+      message.success(
+        quiz.is_template
+          ? t('quiz.templateUnsetSuccess', { defaultValue: 'Template removed' })
+          : t('quiz.templateSetSuccess', { defaultValue: 'Template set successfully' })
+      )
+      loadQuizzes()
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('quiz.templateSetFailed', { defaultValue: 'Failed to update template status' }))
+    }
+  }
+
+  const openTemplateModal = async () => {
+    setTemplateModalOpen(true)
+    setTemplatesLoading(true)
+    const cachedTemplateIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
+    let myTemplates = (quizzes || []).filter((q) => q.is_template || cachedTemplateIds.includes(q.id))
+    setTemplates(
+      myTemplates.map((q) => ({
+        id: q.id,
+        title: q.title,
+        template_scope: q.template_scope || 'tenant',
+        question_count: q.question_count || 0,
+        tenant_id: q.tenant_id,
+      }))
+    )
+    try {
+      try {
+        const quizListResponse = await quizAPI.list()
+        const latestQuizzes = quizListResponse.data || []
+        dispatch(setQuizzes(latestQuizzes))
+        myTemplates = latestQuizzes.filter((q) => q.is_template || cachedTemplateIds.includes(q.id))
+      } catch (refreshError) {
+        // Keep existing local state as fallback.
+      }
+
+      let templateItems = []
+      try {
+        const response = await quizAPI.listTemplates()
+        templateItems = response.data || []
+      } catch (primaryError) {
+        const legacyResponse = await quizAPI.listTemplatesLegacy()
+        templateItems = legacyResponse.data || []
+      }
+
+      if (templateItems.length > 0) {
+        setTemplates(templateItems)
+      } else {
+        setTemplates(myTemplates)
+      }
+    } catch (error) {
+      if (myTemplates.length > 0) {
+        setTemplates(myTemplates)
+      } else {
+        message.error(error.response?.data?.detail || t('quiz.templateLoadFailed', { defaultValue: 'Failed to load templates' }))
+        setTemplates([])
+      }
+    } finally {
+      setTemplatesLoading(false)
+    }
+  }
+
+  const handleUseTemplate = async (templateId) => {
+    setUsingTemplateId(templateId)
+    try {
+      let response
+      try {
+        response = await quizAPI.useTemplate(templateId)
+      } catch (primaryError) {
+        response = await quizAPI.useTemplateLegacy(templateId)
+      }
+      message.success(t('quiz.templateUseSuccess', { defaultValue: 'Template quiz created' }))
+      setTemplateModalOpen(false)
+      loadQuizzes()
+      navigate(`/quiz/${response.data.id}/edit`)
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('quiz.templateUseFailed', { defaultValue: 'Failed to use template' }))
+    } finally {
+      setUsingTemplateId(null)
     }
   }
 
@@ -98,6 +243,21 @@ function Dashboard() {
 
     return stats
   }, [quizzes])
+
+  const visibleTemplateData = (templates && templates.length > 0
+    ? templates
+    : (quizzes || [])
+        .filter((q) => {
+          const cachedTemplateIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
+          return q.is_template || cachedTemplateIds.includes(q.id)
+        })
+        .map((q) => ({
+          id: q.id,
+          title: q.title,
+          template_scope: q.template_scope || 'tenant',
+          question_count: q.question_count || 0,
+          tenant_id: q.tenant_id,
+        })))
 
   return (
     <div className="dashboard-scroll">
@@ -151,13 +311,18 @@ function Dashboard() {
         title={t('quiz.myQuizzes')}
         style={{ overflowX: 'hidden' }}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/quiz/new')}
-          >
-            {t('quiz.createQuiz')}
-          </Button>
+          <Space>
+            <Button icon={<StarOutlined />} onClick={openTemplateModal}>
+              {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/quiz/new')}
+            >
+              {t('quiz.createQuiz')}
+            </Button>
+          </Space>
         }
       >
       <div style={{ width: '100%', overflow: 'hidden' }}>
@@ -176,10 +341,31 @@ function Dashboard() {
               </div>
               <Space>
                 <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
+                {quiz.is_template && (
+                  <Tag color={quiz.template_scope === 'global' ? 'purple' : 'blue'}>
+                    {quiz.template_scope === 'global'
+                      ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
+                      : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
+                  </Tag>
+                )}
                 <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
               </Space>
             </div>
             <div className="quiz-item-actions">
+              <Button
+                icon={<StarOutlined />}
+                onClick={() => handleToggleTemplate(quiz)}
+              >
+                {quiz.is_template
+                  ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
+                  : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
+              </Button>
+              <Button
+                icon={<CopyOutlined />}
+                onClick={() => handleDuplicateQuiz(quiz.id)}
+              >
+                {t('quiz.duplicate', { defaultValue: 'Duplicate' })}
+              </Button>
               <Button
                 icon={<EditOutlined />}
                 onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
@@ -217,6 +403,56 @@ function Dashboard() {
         ))}
       </div>
     </ProCard>
+      <Modal
+        title={t('quiz.templateLibrary', { defaultValue: 'Template Library' })}
+        open={templateModalOpen}
+        onCancel={() => setTemplateModalOpen(false)}
+        footer={null}
+        width={900}
+      >
+        <Table
+          rowKey="id"
+          loading={templatesLoading}
+          dataSource={visibleTemplateData}
+          pagination={{ pageSize: 8 }}
+          columns={[
+            {
+              title: t('quiz.title', { defaultValue: 'Title' }),
+              dataIndex: 'title',
+            },
+            {
+              title: t('quiz.scope', { defaultValue: 'Scope' }),
+              dataIndex: 'template_scope',
+              width: 160,
+              render: (value) => (
+                <Tag color={value === 'global' ? 'purple' : 'blue'}>
+                  {value === 'global'
+                    ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
+                    : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
+                </Tag>
+              ),
+            },
+            {
+              title: t('quiz.questions', { defaultValue: 'Questions' }),
+              dataIndex: 'question_count',
+              width: 120,
+            },
+            {
+              title: t('common.actions', { defaultValue: 'Actions' }),
+              width: 180,
+              render: (_, record) => (
+                <Button
+                  type="primary"
+                  loading={usingTemplateId === record.id}
+                  onClick={() => handleUseTemplate(record.id)}
+                >
+                  {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
+                </Button>
+              ),
+            },
+          ]}
+        />
+      </Modal>
       </div>
     </div>
   )

@@ -57,6 +57,12 @@ export const quizAPI = {
   delete: (id) => api.delete(`/quizzes/${id}`),
   publish: (id) => api.post(`/quizzes/${id}/publish`),
   unpublish: (id) => api.post(`/quizzes/${id}/unpublish`),
+  duplicate: (id) => api.post(`/quizzes/${id}/duplicate`),
+  setTemplate: (id, data) => api.post(`/quizzes/${id}/template`, data),
+  listTemplates: () => api.get('/quizzes/template-library'),
+  listTemplatesLegacy: () => api.get('/quizzes/templates'),
+  useTemplate: (templateQuizId) => api.post(`/quizzes/template-library/${templateQuizId}/use`),
+  useTemplateLegacy: (templateQuizId) => api.post(`/quizzes/templates/${templateQuizId}/use`),
 }
 
 // Question API

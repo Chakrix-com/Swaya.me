@@ -58,8 +58,8 @@ function Login() {
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               <Space direction="vertical" size={4}>
-                <RocketOutlined style={{ fontSize: '48px', color: '#667eea' }} />
-                <Title level={2} style={{ margin: 0, color: '#667eea' }}>
+                <RocketOutlined style={{ fontSize: '48px', color: 'var(--visitor-accent)' }} />
+                <Title level={2} style={{ margin: 0, color: 'var(--visitor-accent)' }}>
                   Swaya.me
                 </Title>
                 <Text type="secondary">{t('auth.platformSubtitle')}</Text>
@@ -109,11 +109,11 @@ function Login() {
               </Button>
             </Form.Item>
 
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <div style={{ textAlign: 'center', marginTop: '16px', color: 'var(--visitor-text-secondary)' }}>
               {t('auth.noAccount')} <Link to="/register">{t('auth.registerButton')}</Link>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
+            <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--visitor-panel-border)' }}>
               <Link to="/">
                 <Button type="link" icon={<HomeOutlined />}>
                   {t('auth.backToHome')}
