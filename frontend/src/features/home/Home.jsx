@@ -57,16 +57,16 @@ const Home = () => {
       <Header className="home-header">
         <div className="home-header-content">
           <div className="home-logo">
-            <RocketOutlined style={{ fontSize: '32px', marginRight: '12px' }} />
-            <Title level={2} style={{ margin: 0, color: 'white' }}>Swaya.me</Title>
+            <RocketOutlined style={{ fontSize: '32px', marginRight: '12px', color: 'var(--visitor-accent)' }} />
+            <Title level={2} style={{ margin: 0, color: 'var(--visitor-text-primary)' }}>Swaya.me</Title>
           </div>
-          <Space size="middle">
+          <Space size="middle" className="home-header-actions">
             <LanguageSwitcher />
             <Button 
               type="text" 
               icon={<LoginOutlined />}
               onClick={() => navigate('/login')}
-              style={{ color: 'white' }}
+              style={{ color: 'var(--visitor-text-primary)' }}
             >
               {t('home.login')}
             </Button>
@@ -170,7 +170,7 @@ const Home = () => {
           <Row justify="center">
             <Col xs={24} sm={20} md={16} lg={12}>
               <Card className="cta-card" bordered={false}>
-                <Title level={2} style={{ textAlign: 'center', color: 'white' }}>
+                <Title level={2} style={{ textAlign: 'center', color: '#ffffff' }}>
                   {t('home.cta.title')}
                 </Title>
                 <Paragraph style={{ textAlign: 'center', color: 'rgba(255,255,255,0.85)', fontSize: '16px' }}>
@@ -185,8 +185,8 @@ const Home = () => {
                     style={{ 
                       height: '48px', 
                       fontSize: '16px',
-                      background: 'white',
-                      color: '#1890ff',
+                      background: '#ffffff',
+                      color: 'var(--visitor-accent-strong)',
                       border: 'none'
                     }}
                   >

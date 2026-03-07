@@ -184,7 +184,7 @@ export default function AudienceSession() {
       dataIndex: 'rank',
       width: 55,
       render: (rank) => (
-        <Tag style={rankColors[rank] ? { backgroundColor: rankColors[rank], color: '#000', borderColor: rankColors[rank] } : {}}>
+        <Tag style={rankColors[rank] ? { backgroundColor: rankColors[rank], color: 'var(--aud-input-text)', borderColor: rankColors[rank] } : {}}>
           {rank}
         </Tag>
       )
@@ -250,7 +250,7 @@ export default function AudienceSession() {
               />
             </div>
             {leaderboard.entries.length > 10 && (
-              <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--aud-text-secondary)', fontSize: 12 }}>
                 +{leaderboard.entries.length - 10} more participants
               </div>
             )}
@@ -483,12 +483,12 @@ export default function AudienceSession() {
                                 boxSizing: 'border-box',
                                 wordBreak: 'break-word',
                                 overflowWrap: 'break-word',
-                                color: '#1f1f1f',
+                                color: 'var(--aud-input-text)',
                               }}
                             >
                               <div>
-                                <span style={{ color: '#1f1f1f', fontWeight: 700 }}>{key}:</span>{' '}
-                                <span style={{ color: '#1f1f1f' }}>{label}</span>
+                                <span style={{ color: 'var(--aud-input-text)', fontWeight: 700 }}>{key}:</span>{' '}
+                                <span style={{ color: 'var(--aud-input-text)' }}>{label}</span>
                               </div>
                               {currentQuestion.option_images?.[key] && (
                                 <img
@@ -536,7 +536,7 @@ export default function AudienceSession() {
                               padding: '12px 16px', background: bgColor,
                               opacity: (!correct && !selected) ? 0.55 : 1,
                               transition: 'all 0.3s ease',
-                              color: '#1f1f1f',
+                              color: 'var(--aud-input-text)',
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                                 <span style={{
@@ -547,10 +547,10 @@ export default function AudienceSession() {
                                 }}>
                                   {badgeIcon}
                                 </span>
-                                <span style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: '#1f1f1f' }}>
+                                <span style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: 'var(--aud-input-text)' }}>
                                   {label}
                                 </span>
-                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: '#595959' }}>
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
                                   {count} ({pct.toFixed(1)}%)
                                 </span>
                               </div>

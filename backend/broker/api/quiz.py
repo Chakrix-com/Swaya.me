@@ -15,7 +15,7 @@ from features.quiz.schemas import (
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
     FeedbackSubmitRequest, LeaderboardResponse,
-    SessionListResponse
+    SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.question_service_async import QuestionServiceAsync
@@ -73,7 +73,7 @@ async def create_quiz(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@router.get("/{quiz_id}", response_model=QuizResponse)
+@router.get("/{quiz_id:int}", response_model=QuizResponse)
 async def get_quiz(
     quiz_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -98,7 +98,59 @@ async def list_quizzes(
     return await service.list_quizzes(db, current_user, event_id)
 
 
-@router.put("/{quiz_id}", response_model=QuizResponse)
+@router.get("/templates", response_model=List[TemplateQuizListItemResponse])
+async def list_templates(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """List template quizzes visible to current user"""
+    return await service.list_available_templates(db, current_user)
+
+
+@router.get("/template-library", response_model=List[TemplateQuizListItemResponse])
+async def list_template_library(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """List template quizzes visible to current user (stable path)"""
+    return await service.list_available_templates(db, current_user)
+
+
+@router.post("/templates/{template_quiz_id}/use", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+async def use_template_quiz(
+    template_quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Create a new draft quiz from a visible template"""
+    try:
+        return await service.create_quiz_from_template(db, template_quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except TierLimitExceededError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/template-library/{template_quiz_id}/use", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+async def use_template_from_library(
+    template_quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Create a new draft quiz from a visible template (stable path)"""
+    try:
+        return await service.create_quiz_from_template(db, template_quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except TierLimitExceededError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/{quiz_id:int}", response_model=QuizResponse)
 async def update_quiz(
     quiz_id: int,
     request: QuizUpdate,
@@ -115,7 +167,22 @@ async def update_quiz(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.delete("/{quiz_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/{quiz_id:int}/template", response_model=QuizResponse)
+async def set_template_status(
+    quiz_id: int,
+    request: TemplateDesignationRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Mark or unmark a quiz as template"""
+    try:
+        return await service.set_template_status(db, quiz_id, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.delete("/{quiz_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_quiz(
     quiz_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -131,7 +198,7 @@ async def delete_quiz(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post("/{quiz_id}/publish", response_model=QuizResponse)
+@router.post("/{quiz_id:int}/publish", response_model=QuizResponse)
 async def publish_quiz(
     quiz_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -147,7 +214,7 @@ async def publish_quiz(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post("/{quiz_id}/unpublish", response_model=QuizResponse)
+@router.post("/{quiz_id:int}/unpublish", response_model=QuizResponse)
 async def unpublish_quiz(
     quiz_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -163,7 +230,23 @@ async def unpublish_quiz(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/{quiz_id}/sessions", response_model=SessionListResponse)
+@router.post("/{quiz_id:int}/duplicate", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+async def duplicate_quiz(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Duplicate quiz as a new DRAFT quiz"""
+    try:
+        return await service.duplicate_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/{quiz_id:int}/sessions", response_model=SessionListResponse)
 async def list_quiz_sessions(
     quiz_id: int,
     db: AsyncSession = Depends(get_async_db),
@@ -178,7 +261,7 @@ async def list_quiz_sessions(
 
 
 # Question Management Endpoints
-@router.post("/{quiz_id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{quiz_id:int}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
 async def add_question(
     quiz_id: int,
     request: QuestionCreate,

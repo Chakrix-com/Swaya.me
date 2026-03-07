@@ -368,35 +368,37 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
 
   return (
     <div className="pv-ctrl-bar">
-      <button className="pv-ctrl-btn" onClick={onBack} disabled={prevDisabled} title="Previous question">
-        <LeftOutlined /> <kbd className="pv-kbd">←</kbd>
-      </button>
-      <button
-        className={`pv-ctrl-btn pv-ctrl-primary${revealed ? ' pv-ctrl-continue' : ''}`}
-        onClick={onAdvance}
-        disabled={loading}
-        title={advanceTitle}
-      >
-        {advanceLabel}
-        {' '}<kbd className="pv-kbd">{notStarted ? 'Space' : '→'}</kbd>
-      </button>
       {confirmStop ? (
         <>
-          <button className="pv-ctrl-btn pv-ctrl-stop-confirm" onClick={onStop} disabled={loading}>
+          <button className="pv-ctrl-btn pv-ctrl-stop-confirm pv-ctrl-confirm-wide" onClick={onStop} disabled={loading}>
             Confirm Stop
           </button>
-          <button className="pv-ctrl-btn" onClick={() => setConfirmStop(false)}>
+          <button className="pv-ctrl-btn pv-ctrl-cancel" onClick={() => setConfirmStop(false)}>
             Cancel
           </button>
         </>
       ) : (
-        <button className="pv-ctrl-btn pv-ctrl-stop" onClick={() => setConfirmStop(true)}>
-          ■ Stop
-        </button>
+        <>
+          <button className="pv-ctrl-btn" onClick={onBack} disabled={prevDisabled} title="Previous question">
+            <LeftOutlined />
+          </button>
+          <button
+            className={`pv-ctrl-btn pv-ctrl-primary${revealed ? ' pv-ctrl-continue' : ''}`}
+            onClick={onAdvance}
+            disabled={loading}
+            title={advanceTitle}
+          >
+            {advanceLabel}
+            {' '}<kbd className="pv-kbd">→ / Space</kbd>
+          </button>
+          <button className="pv-ctrl-btn pv-ctrl-stop" onClick={() => setConfirmStop(true)}>
+            ■ Stop
+          </button>
+          <button className="pv-ctrl-btn pv-ctrl-help" onClick={onToggleHelp} title="Keyboard shortcuts">
+            ?
+          </button>
+        </>
       )}
-      <button className="pv-ctrl-btn pv-ctrl-help" onClick={onToggleHelp} title="Keyboard shortcuts">
-        ?
-      </button>
     </div>
   )
 }
@@ -675,16 +677,18 @@ export default function QuizPresent() {
       </main>
 
       {isHost && !isEnded && (
-        <ControlBar
-          currentQIdx={results?.current_question_index ?? -1}
-          totalQ={totalQ}
-          loading={ctrlLoading}
-          onAdvance={handleAdvance}
-          onBack={handleBack}
-          onStop={handleEnd}
-          onToggleHelp={() => setShowHelp(v => !v)}
-          revealed={revealed}
-        />
+        <div className="pv-ctrl-footer">
+          <ControlBar
+            currentQIdx={results?.current_question_index ?? -1}
+            totalQ={totalQ}
+            loading={ctrlLoading}
+            onAdvance={handleAdvance}
+            onBack={handleBack}
+            onStop={handleEnd}
+            onToggleHelp={() => setShowHelp(v => !v)}
+            revealed={revealed}
+          />
+        </div>
       )}
 
       {showLbModal && (
@@ -700,10 +704,8 @@ export default function QuizPresent() {
             <div className="pv-help-title">Keyboard Shortcuts</div>
             <table className="pv-help-table">
               <tbody>
-                <tr><td><kbd>→</kbd> <kbd>Space</kbd> <kbd>Enter</kbd></td><td>Next question</td></tr>
-                <tr><td><kbd>←</kbd> <kbd>Backspace</kbd></td><td>Previous question</td></tr>
-                <tr><td><kbd>PageDown</kbd></td><td>Next question</td></tr>
-                <tr><td><kbd>PageUp</kbd></td><td>Previous question</td></tr>
+                <tr><td><kbd>→</kbd> or <kbd>Space</kbd> or <kbd>Enter</kbd> or <kbd>PageDown</kbd></td><td>Next question (press any one key)</td></tr>
+                <tr><td><kbd>←</kbd> or <kbd>Backspace</kbd> or <kbd>PageUp</kbd></td><td>Previous question (press any one key)</td></tr>
                 <tr><td><kbd>L</kbd></td><td>Toggle leaderboard</td></tr>
                 <tr><td><kbd>F</kbd></td><td>Toggle fullscreen</td></tr>
                 <tr><td><kbd>?</kbd></td><td>Show / hide this panel</td></tr>

@@ -37,6 +37,12 @@ class QuestionType(str, enum.Enum):
     WORD_CLOUD = "word_cloud"
 
 
+class TemplateScope(str, enum.Enum):
+    """Template visibility scope"""
+    TENANT = "tenant"
+    GLOBAL = "global"
+
+
 class Quiz(Base, TimestampMixin, TenantMixin):
     """
     Quiz definition - the authored content
@@ -48,6 +54,13 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(SQLEnum(QuizStatus), default=QuizStatus.DRAFT, nullable=False)
+    is_template = Column(Boolean, default=False, nullable=False, server_default="0")
+    template_scope = Column(
+        SQLEnum(TemplateScope, values_callable=lambda obj: [e.value for e in obj]),
+        default=TemplateScope.TENANT,
+        nullable=False,
+        server_default=TemplateScope.TENANT.value,
+    )
     
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { ConfigProvider } from 'antd'
+import { Button, ConfigProvider } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import { 
@@ -14,7 +14,9 @@ import {
   ApartmentOutlined,
   MessageOutlined,
   AppstoreOutlined,
-  SlidersOutlined
+  SlidersOutlined,
+  MoonOutlined,
+  SunOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -48,6 +50,16 @@ const localeMap = {
   ka: enUS,
   bn: enUS,
   gu: enUS,
+}
+
+const THEME_STORAGE_KEY = 'visitor-theme-preference'
+
+const getInitialVisitorTheme = () => {
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+  if (storedTheme === 'dark' || storedTheme === 'light') {
+    return storedTheme
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 // Layout wrapper for authenticated routes
@@ -179,15 +191,25 @@ function AuthenticatedLayout({ children }) {
 }
 
 // Simple layout for public routes
-function PublicLayout({ children }) {
+function PublicLayout({ children, visitorTheme, onToggleVisitorTheme, hideVisitorThemeToggle = false }) {
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div className={`visitor-theme visitor-theme--${visitorTheme}`}>
+      {!hideVisitorThemeToggle && (
+        <div className="visitor-theme-toggle">
+          <Button
+            type="text"
+            icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+            onClick={onToggleVisitorTheme}
+            aria-label={`Switch to ${visitorTheme === 'dark' ? 'light' : 'dark'} mode`}
+          />
+        </div>
+      )}
       {children}
     </div>
   )
 }
 
-function AppRoutes() {
+function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const location = useLocation()
 
@@ -198,7 +220,11 @@ function AppRoutes() {
     location.pathname.startsWith('/present')
   ) {
     return (
-      <PublicLayout>
+      <PublicLayout
+        visitorTheme={visitorTheme}
+        onToggleVisitorTheme={onToggleVisitorTheme}
+        hideVisitorThemeToggle={location.pathname.startsWith('/present')}
+      >
         <Routes>
           <Route path="/join" element={<AudienceJoin />} />
           <Route path="/join/:joinCode" element={<AudienceJoin />} />
@@ -213,7 +239,7 @@ function AppRoutes() {
   // Other public routes — only when not authenticated
   if (!isAuthenticated) {
     return (
-      <PublicLayout>
+      <PublicLayout visitorTheme={visitorTheme} onToggleVisitorTheme={onToggleVisitorTheme}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -249,11 +275,20 @@ function AppRoutes() {
 function App() {
   const { i18n } = useTranslation()
   const locale = localeMap[i18n.language] || enUS
+  const [visitorTheme, setVisitorTheme] = useState(getInitialVisitorTheme)
+
+  const handleToggleVisitorTheme = () => {
+    setVisitorTheme((currentTheme) => {
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+      return nextTheme
+    })
+  }
 
   return (
     <ConfigProvider locale={locale}>
       <Router>
-        <AppRoutes />
+        <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
       </Router>
     </ConfigProvider>
   )

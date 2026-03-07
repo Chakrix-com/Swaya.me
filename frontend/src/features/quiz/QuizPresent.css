@@ -791,26 +791,40 @@
 
 /* ── HOST CONTROL BAR ────────────────────────────────────────────────── */
 
-/* Fixed to the bottom of the sidebar column on desktop */
-.pv-ctrl-bar {
+/* Full-width footer with centered control box */
+.pv-ctrl-footer {
   position: fixed;
-  bottom: 0;
   left: 0;
-  width: 320px; /* matches .pv-sidebar width */
-  box-sizing: content-box; /* padding adds to width — matches sidebar sizing */
+  right: 0;
+  bottom: 0;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 5, 15, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 210;
+  display: flex;
+  justify-content: center;
+}
+
+.pv-ctrl-bar {
+  position: static;
+  width: min(680px, calc(100vw - 24px));
+  box-sizing: border-box;
   display: flex;
   gap: 8px;
   padding: 12px 14px;
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 200;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .pv-ctrl-btn {
   flex: 1;
+  min-width: 0;
   padding: 9px 10px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
@@ -821,6 +835,11 @@
   cursor: pointer;
   transition: background 0.18s, opacity 0.18s;
   white-space: nowrap;
+}
+
+.pv-ctrl-bar > .pv-ctrl-btn:first-child {
+  flex: 0 0 40px;
+  padding: 9px 0;
 }
 
 .pv-ctrl-btn:hover:not(:disabled) {
@@ -870,14 +889,20 @@
   border-color: rgba(245, 34, 45, 0.9);
   color: #fff;
 }
+.pv-ctrl-confirm-wide { flex: 1 1 auto; }
+.pv-ctrl-cancel { flex: 0 0 auto; min-width: 74px; }
 
 .pv-ctrl-stop-confirm:hover:not(:disabled) {
   background: rgba(245, 34, 45, 0.75);
 }
 
-/* Sidebar needs bottom padding so scrollable content isn't hidden by control bar */
+/* Keep content visible above fixed footer */
 .pv-sidebar {
-  padding-bottom: 60px;
+  padding-bottom: 88px;
+}
+
+.pv-main {
+  padding-bottom: 88px;
 }
 
 /* ── KBD HINTS (inside control bar buttons) ─────────────────────────── */
@@ -1123,9 +1148,7 @@
 
   /* Control bar spans bottom of screen on mobile */
   .pv-ctrl-bar {
-    width: 100%;
-    border-right: none;
-    border-radius: 0;
+    width: calc(100vw - 24px);
     padding: 10px 16px;
     gap: 10px;
   }
@@ -1142,7 +1165,7 @@
 
   /* Give main content breathing room above the fixed bar */
   .pv-main {
-    padding-bottom: 58px;
+    padding-bottom: 86px;
   }
 }
 
@@ -1152,10 +1175,6 @@
   .pv-sidebar {
     width: 280px;
     min-width: 280px;
-  }
-
-  .pv-ctrl-bar {
-    width: 280px; /* match tablet sidebar */
   }
 
   .pv-join-code {

@@ -34,6 +34,12 @@ class QuestionTypeEnum(str, Enum):
     WORD_CLOUD = "word_cloud"
 
 
+class TemplateScopeEnum(str, Enum):
+    """Template visibility scope"""
+    TENANT = "tenant"
+    GLOBAL = "global"
+
+
 # Question Schemas
 class QuestionOptionCreate(BaseModel):
     """Question option"""
@@ -120,6 +126,8 @@ class QuizResponse(BaseModel):
     title: str
     description: Optional[str]
     status: QuizStatusEnum
+    is_template: bool = False
+    template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     questions: List[QuestionResponse] = []
     question_count: int = 0
     created_at: str
@@ -135,6 +143,8 @@ class QuizListResponse(BaseModel):
     event_id: int
     title: str
     status: QuizStatusEnum
+    is_template: bool = False
+    template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     question_count: int
     created_at: str
     
@@ -313,6 +323,8 @@ class PlatformQuizListItemResponse(BaseModel):
     tenant_name: str
     title: str
     status: QuizStatusEnum
+    is_template: bool = False
+    template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     question_count: int
     created_at: datetime
     updated_at: datetime
@@ -324,3 +336,20 @@ class PlatformQuizListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class TemplateDesignationRequest(BaseModel):
+    """Mark or unmark a quiz as template"""
+    is_template: bool
+
+
+class TemplateQuizListItemResponse(BaseModel):
+    """Template quiz visible to a user"""
+    id: int
+    title: str
+    description: Optional[str] = None
+    status: QuizStatusEnum
+    question_count: int
+    template_scope: TemplateScopeEnum
+    tenant_id: int
+    created_at: datetime
