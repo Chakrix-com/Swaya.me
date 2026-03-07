@@ -17,6 +17,12 @@ class QuizStatus(str, enum.Enum):
     ARCHIVED = "archived"
 
 
+class QuizType(str, enum.Enum):
+    """Quiz experience type"""
+    QUIZ = "quiz"
+    POLL = "poll"
+
+
 class QuizSessionStatus(str, enum.Enum):
     """Quiz session status"""
     CREATED = "created"
@@ -56,6 +62,12 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    quiz_type = Column(
+        SQLEnum(QuizType, values_callable=lambda obj: [e.value for e in obj]),
+        default=QuizType.QUIZ,
+        nullable=False,
+        server_default=QuizType.QUIZ.value,
+    )
     status = Column(SQLEnum(QuizStatus), default=QuizStatus.DRAFT, nullable=False)
     is_template = Column(Boolean, default=False, nullable=False, server_default="0")
     template_scope = Column(

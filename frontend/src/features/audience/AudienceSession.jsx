@@ -70,8 +70,10 @@ export default function AudienceSession() {
 
   const loadResults = async () => {
     if (!sessionToken || !sessionId) return
+    let latestResults = null
     try {
       const response = await sessionAPI.getResults(sessionId, sessionToken)
+      latestResults = response.data
       const newQuestionId = response.data.current_question?.question_id
       const newStatus = response.data.status
 
@@ -112,9 +114,13 @@ export default function AudienceSession() {
         message.warning('Session has been restarted. Please rejoin with the new code.')
       }
     }
-    sessionAPI.getLeaderboard(sessionId, sessionToken)
-      .then(res => setLeaderboard(res.data))
-      .catch(() => {})
+    if (latestResults?.quiz_type !== 'poll') {
+      sessionAPI.getLeaderboard(sessionId, sessionToken)
+        .then(res => setLeaderboard(res.data))
+        .catch(() => {})
+    } else {
+      setLeaderboard(null)
+    }
   }
 
   const loadWordCloudData = async (questionId) => {
@@ -188,6 +194,7 @@ export default function AudienceSession() {
     }
   }
 
+  const isPollSession = results?.quiz_type === 'poll'
   const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
 
   const leaderboardColumns = [
@@ -231,7 +238,7 @@ export default function AudienceSession() {
   ]
 
   const LeaderboardTable = () => {
-    if (!leaderboard || results?.leaderboard_visible === false) return null
+    if (isPollSession || !leaderboard || results?.leaderboard_visible === false) return null
     return (
       <Card
         size="small"
@@ -275,6 +282,7 @@ export default function AudienceSession() {
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
   const isScaleQuestion = currentQuestion?.question_type === 'scale'
   const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
+  const isPoll = results?.quiz_type === 'poll'
 
   return (
     <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
@@ -322,12 +330,20 @@ export default function AudienceSession() {
                   title="Quiz Completed!"
                   subTitle={
                     <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
-                      <Title level={4} style={{ margin: 0 }}>
-                        Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
-                      </Title>
-                      <Text type="secondary">
-                        You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
-                      </Text>
+                      {isPoll ? (
+                        <Title level={4} style={{ margin: 0 }}>
+                          Poll completed
+                        </Title>
+                      ) : (
+                        <>
+                          <Title level={4} style={{ margin: 0 }}>
+                            Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
+                          </Title>
+                          <Text type="secondary">
+                            You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
+                          </Text>
+                        </>
+                      )}
                       <Tag
                         color="blue"
                         style={{ marginTop: 8, maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}
@@ -604,6 +620,39 @@ export default function AudienceSession() {
                                 </span>
                               </div>
                               <Progress percent={parseFloat(pct.toFixed(1))} strokeColor="#1890ff" showInfo={false} size="small" />
+                            </div>
+                          )
+                        }) : isPoll ? ['A', 'B', 'C', 'D'].map((key) => {
+                          const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          const idx = key.charCodeAt(0) - 65
+                          const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
+                          const totalAns = currentQuestion.total_answers || 0
+                          const count = dist[idx] || 0
+                          const pct = totalAns > 0 ? (count / totalAns * 100) : 0
+                          const selected = selectedAnswer === key
+                          return (
+                            <div key={key} style={{
+                              border: `2px solid ${selected ? '#1890ff' : '#d9d9d9'}`,
+                              borderRadius: 8,
+                              padding: '12px 16px',
+                              background: selected ? '#e6f7ff' : '#fafafa',
+                              color: 'var(--aud-input-text)',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                                <span style={{ fontWeight: 700 }}>{key}:</span>
+                                <span style={{ flex: 1, wordBreak: 'break-word' }}>
+                                  {label}
+                                </span>
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
+                                  {count} ({pct.toFixed(1)}%)
+                                </span>
+                              </div>
+                              <Progress
+                                percent={parseFloat(pct.toFixed(1))}
+                                strokeColor="#1890ff"
+                                showInfo={false}
+                                size="small"
+                              />
                             </div>
                           )
                         }) : ['A', 'B', 'C', 'D'].map((key) => {

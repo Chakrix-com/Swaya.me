@@ -11,7 +11,7 @@ import string
 from datetime import datetime
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
-    QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType
+    QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType
 )
 from persistence.models.core import Event, Tenant, UserRole
 from features.quiz.schemas import (
@@ -126,7 +126,8 @@ class SessionServiceAsync:
             quiz_id=quiz_id,
             status=QuizSessionStatus.CREATED,
             current_question_index=-1,
-            current_question_status=QuestionStatus.PENDING
+            current_question_status=QuestionStatus.PENDING,
+            leaderboard_visible=(quiz.quiz_type != QuizType.POLL),
         )
         
         db.add(session)
@@ -471,6 +472,13 @@ class SessionServiceAsync:
 
         if not session:
             raise SessionNotFoundError("Session not found")
+
+        if session.quiz.quiz_type == QuizType.POLL:
+            if session.leaderboard_visible:
+                session.leaderboard_visible = False
+                await db.commit()
+                await db.refresh(session)
+            return await self._to_session_response(db, session)
 
         session.leaderboard_visible = not session.leaderboard_visible
         await db.commit()

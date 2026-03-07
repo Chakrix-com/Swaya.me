@@ -11,7 +11,7 @@ import os
 
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Answer, Question, SessionQuestionTiming,
-    QuizSessionStatus, QuestionStatus, QuestionType
+    QuizSessionStatus, QuestionStatus, QuestionType, QuizType
 )
 from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
@@ -114,7 +114,10 @@ class AnswerServiceAsync:
         # Option-based correctness (leaderboard still counts MCQ only)
         is_correct = (
             request.selected_option_index == current_question.correct_answer_index
-            if current_question.question_type in (QuestionType.MCQ, QuestionType.SCALE)
+            if (
+                current_question.question_type in (QuestionType.MCQ, QuestionType.SCALE)
+                and current_question.correct_answer_index is not None
+            )
             else None
         )
         
@@ -420,12 +423,13 @@ class AnswerServiceAsync:
         # Get all questions
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
         question_by_id = {q.id: q for q in questions}
+        is_poll = session.quiz.quiz_type == QuizType.POLL
         
         # Calculate participant score if token provided
         participant_score = None
         participant_correct = None
         
-        if participant_token:
+        if participant_token and not is_poll:
             result = await db.execute(
                 select(Participant).filter(Participant.session_token == participant_token)
             )
@@ -492,7 +496,12 @@ class AnswerServiceAsync:
                     # Transform to format expected by host frontend
                     base_url = os.getenv('BASE_URL', 'http://localhost:8000')
                     options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
-                    if question_obj.correct_answer_index is not None and options and 0 <= question_obj.correct_answer_index < len(options):
+                    if (
+                        not is_poll
+                        and question_obj.correct_answer_index is not None
+                        and options
+                        and 0 <= question_obj.correct_answer_index < len(options)
+                    ):
                         correct_display = (
                             chr(65 + question_obj.correct_answer_index)
                             if question_obj.question_type.value == 'mcq'
@@ -513,7 +522,7 @@ class AnswerServiceAsync:
                         "question_id": question_result.question_id,
                         "question_text": question_result.question_text,
                         "options": question_result.options,
-                        "correct_answer_index": question_result.correct_answer_index,
+                        "correct_answer_index": None if is_poll else question_result.correct_answer_index,
                         "answer_distribution": question_result.answer_distribution,
                         "total_answers": question_result.total_answers,
                         "question_image_url": ImageService.to_absolute_url(
@@ -580,6 +589,8 @@ class AnswerServiceAsync:
         return SessionResultsResponse(
             session_id=session.id,
             quiz_title=session.quiz.title,
+            quiz_type=session.quiz.quiz_type,
+            scoring_enabled=not is_poll,
             total_questions=len(questions),
             total_participants=total_participants,
             participant_score=participant_score,
@@ -587,7 +598,8 @@ class AnswerServiceAsync:
             question_results=question_results,
             status=session.status.value,
             current_question_index=session.current_question_index,
-            current_question=current_question
+            current_question=current_question,
+            leaderboard_visible=(False if is_poll else session.leaderboard_visible),
         )
     
     async def get_leaderboard(
@@ -610,6 +622,19 @@ class AnswerServiceAsync:
         session = result.scalar_one_or_none()
         if not session:
             raise SessionNotFoundError("Session not found")
+        if session.quiz.quiz_type == QuizType.POLL:
+            participants_result = await db.execute(
+                select(func.count(Participant.id))
+                .filter(Participant.session_id == session_id, Participant.is_active == True)
+            )
+            participant_count = participants_result.scalar() or 0
+            return LeaderboardResponse(
+                session_id=session_id,
+                entries=[],
+                total_participants=participant_count,
+                current_participant_rank=None,
+                mcq_question_count=0,
+            )
 
         scored_question_count = sum(
             1 for q in session.quiz.questions

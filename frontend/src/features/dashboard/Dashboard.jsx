@@ -112,6 +112,7 @@ function Dashboard() {
           {
             id: normalizedQuiz.id,
             title: normalizedQuiz.title,
+            quiz_type: normalizedQuiz.quiz_type || 'quiz',
             template_scope: normalizedQuiz.template_scope || 'tenant',
             question_count: normalizedQuiz.question_count || 0,
             tenant_id: normalizedQuiz.tenant_id,
@@ -139,6 +140,7 @@ function Dashboard() {
       myTemplates.map((q) => ({
         id: q.id,
         title: q.title,
+        quiz_type: q.quiz_type || 'quiz',
         template_scope: q.template_scope || 'tenant',
         question_count: q.question_count || 0,
         tenant_id: q.tenant_id,
@@ -218,6 +220,9 @@ function Dashboard() {
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
 
+  const getQuizTypeColor = (quizType) => (quizType === 'poll' ? 'purple' : 'blue')
+  const getQuizTypeLabel = (quizType) => (quizType === 'poll' ? 'Poll' : 'Quiz')
+
   // Calculate quiz statistics
   const statistics = useMemo(() => {
     const stats = {
@@ -254,6 +259,7 @@ function Dashboard() {
         .map((q) => ({
           id: q.id,
           title: q.title,
+          quiz_type: q.quiz_type || 'quiz',
           template_scope: q.template_scope || 'tenant',
           question_count: q.question_count || 0,
           tenant_id: q.tenant_id,
@@ -340,6 +346,9 @@ function Dashboard() {
                 <strong>{quiz.title}</strong>
               </div>
               <Space>
+                <Tag color={getQuizTypeColor(quiz.quiz_type)}>
+                  {getQuizTypeLabel(quiz.quiz_type)}
+                </Tag>
                 <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
                 {quiz.is_template && (
                   <Tag color={quiz.template_scope === 'global' ? 'purple' : 'blue'}>
@@ -419,6 +428,16 @@ function Dashboard() {
             {
               title: t('quiz.title', { defaultValue: 'Title' }),
               dataIndex: 'title',
+            },
+            {
+              title: 'Type',
+              dataIndex: 'quiz_type',
+              width: 110,
+              render: (value) => (
+                <Tag color={getQuizTypeColor(value)}>
+                  {getQuizTypeLabel(value)}
+                </Tag>
+              ),
             },
             {
               title: t('quiz.scope', { defaultValue: 'Scope' }),
