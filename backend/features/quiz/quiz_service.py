@@ -6,7 +6,7 @@ from typing import List, Optional
 from datetime import datetime
 import os
 
-from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
+from persistence.models.quiz import Quiz, Question, QuizStatus, QuizType, QuestionType
 from persistence.models.core import Event
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -78,6 +78,7 @@ class QuizBuilderService:
             event_id=event_id,
             title=request.title,
             description=request.description,
+            quiz_type=QuizType(request.quiz_type.value),
             status=QuizStatus.DRAFT
         )
         
@@ -123,6 +124,7 @@ class QuizBuilderService:
                 id=q.id,
                 event_id=q.event_id,
                 title=q.title,
+                quiz_type=q.quiz_type,
                 status=q.status,
                 question_count=len(q.questions),
                 created_at=q.created_at.isoformat()
@@ -154,6 +156,8 @@ class QuizBuilderService:
             quiz.title = request.title
         if request.description is not None:
             quiz.description = request.description
+        if request.quiz_type is not None:
+            quiz.quiz_type = QuizType(request.quiz_type.value)
         
         db.commit()
         db.refresh(quiz)
@@ -251,9 +255,13 @@ class QuizBuilderService:
             if question.question_type == QuestionType.MCQ:
                 if not question.options or len(question.options) != 4:
                     raise QuizValidationError("MCQ questions must have exactly 4 options")
-                
-                if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 3:
+                if (
+                    question.correct_answer_index is not None
+                    and (question.correct_answer_index < 0 or question.correct_answer_index > 3)
+                ):
                     raise QuizValidationError("MCQ questions must have valid correct answer index")
+                if quiz.quiz_type != QuizType.POLL and question.correct_answer_index is None:
+                    raise QuizValidationError("MCQ questions must have a correct answer for quiz mode")
             elif question.question_type == QuestionType.WORD_CLOUD:
                 # Word cloud questions don't need options or correct answer
                 pass
@@ -268,6 +276,7 @@ class QuizBuilderService:
             event_id=quiz.event_id,
             title=quiz.title,
             description=quiz.description,
+            quiz_type=quiz.quiz_type,
             status=quiz.status,
             questions=[
                 QuestionResponse(

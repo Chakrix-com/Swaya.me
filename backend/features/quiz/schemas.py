@@ -14,6 +14,12 @@ class QuizStatusEnum(str, Enum):
     ARCHIVED = "archived"
 
 
+class QuizTypeEnum(str, Enum):
+    """Quiz experience type"""
+    QUIZ = "quiz"
+    POLL = "poll"
+
+
 class SessionStatusEnum(str, Enum):
     """Session status"""
     CREATED = "created"
@@ -67,8 +73,8 @@ class QuestionCreate(BaseModel):
                 raise ValueError('MCQ questions must have exactly 4 options')
             if any(not opt.strip() for opt in self.options):
                 raise ValueError('All options must be non-empty')
-            if self.correct_answer_index is None:
-                raise ValueError('MCQ questions must have a correct answer')
+            if self.correct_answer_index is not None and (self.correct_answer_index < 0 or self.correct_answer_index > 3):
+                raise ValueError('MCQ correct answer must be between A and D')
         elif self.question_type == QuestionTypeEnum.WORD_CLOUD:
             # Word cloud must NOT have options or correct answer
             if self.options is not None:
@@ -88,8 +94,8 @@ class QuestionCreate(BaseModel):
         elif self.question_type == QuestionTypeEnum.SCALE:
             if not self.options or len(self.options) != 5:
                 raise ValueError('Scale questions must have exactly 5 options')
-            if self.correct_answer_index is None or self.correct_answer_index < 0 or self.correct_answer_index > 4:
-                raise ValueError('Scale questions must have a correct answer between 1 and 5')
+            if self.correct_answer_index is not None and (self.correct_answer_index < 0 or self.correct_answer_index > 4):
+                raise ValueError('Scale correct answer must be between 1 and 5')
         return self
 
 
@@ -129,12 +135,14 @@ class QuizCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
     event_id: Optional[int] = Field(None, description="Event ID (auto-created if not provided)")
+    quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
 
 
 class QuizUpdate(BaseModel):
     """Update quiz request"""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
+    quiz_type: Optional[QuizTypeEnum] = None
 
 
 class QuizResponse(BaseModel):
@@ -143,6 +151,7 @@ class QuizResponse(BaseModel):
     event_id: int
     title: str
     description: Optional[str]
+    quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
     status: QuizStatusEnum
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
@@ -160,6 +169,7 @@ class QuizListResponse(BaseModel):
     id: int
     event_id: int
     title: str
+    quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
     status: QuizStatusEnum
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
@@ -241,6 +251,8 @@ class SessionResultsResponse(BaseModel):
     """Final session results"""
     session_id: int
     quiz_title: str
+    quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
+    scoring_enabled: bool = True
     total_questions: int
     total_participants: int = 0
     participant_score: Optional[int] = None
@@ -366,6 +378,7 @@ class TemplateQuizListItemResponse(BaseModel):
     id: int
     title: str
     description: Optional[str] = None
+    quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
     status: QuizStatusEnum
     question_count: int
     template_scope: TemplateScopeEnum

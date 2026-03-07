@@ -104,8 +104,10 @@ export default function QuizControl() {
 
   const loadResults = async () => {
     if (!session) return
+    let latestResults = null
     try {
       const response = await sessionAPI.getResults(session.id, session.session_token)
+      latestResults = response.data
       setResults(response.data)
 
       // If current question is word cloud, fetch word cloud data
@@ -115,10 +117,14 @@ export default function QuizControl() {
     } catch (error) {
       console.error(t('quiz.failedToLoadResults'), error)
     }
-    // Leaderboard is non-critical — fetch independently so it never blocks results
-    sessionAPI.getLeaderboard(session.id, null)
-      .then(res => setLeaderboard(res.data))
-      .catch(() => {})
+    if (latestResults?.quiz_type !== 'poll' && quiz?.quiz_type !== 'poll') {
+      // Leaderboard is non-critical — fetch independently so it never blocks results
+      sessionAPI.getLeaderboard(session.id, null)
+        .then(res => setLeaderboard(res.data))
+        .catch(() => {})
+    } else {
+      setLeaderboard(null)
+    }
   }
 
   const loadWordCloudData = async (questionId) => {
@@ -286,6 +292,7 @@ export default function QuizControl() {
   }
 
   const currentQuestion = results?.current_question
+  const isPoll = (results?.quiz_type || quiz?.quiz_type) === 'poll'
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
@@ -330,7 +337,12 @@ export default function QuizControl() {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={24} md={24} lg={14} xl={14}>
           <Card>
-            <Title level={2} style={{ marginBottom: 8 }}>{quiz.title}</Title>
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Tag color={isPoll ? 'purple' : 'blue'} style={{ width: 'fit-content' }}>
+                {isPoll ? 'Poll' : 'Quiz'}
+              </Tag>
+              <Title level={2} style={{ marginBottom: 0 }}>{quiz.title}</Title>
+            </Space>
             {quiz.description && <Text type="secondary">{quiz.description}</Text>}
           </Card>
         </Col>
@@ -433,7 +445,7 @@ export default function QuizControl() {
             </Col>
           </Row>
 
-          {leaderboard && (
+          {leaderboard && !isPoll && (
             <Card
               title={
                 <Space>
@@ -636,9 +648,9 @@ export default function QuizControl() {
                     )
                   })}
 
-                  {(currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'scale') && currentQuestion.correct_answer && (
-                    <Alert
-                      message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
+              {!isPoll && (currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'scale') && currentQuestion.correct_answer && (
+                <Alert
+                  message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
                       description={
                         currentQuestion.question_type === 'mcq'
                           ? `${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || ''}`

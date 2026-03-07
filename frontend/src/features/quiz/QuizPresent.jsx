@@ -41,7 +41,7 @@ function WaitingView({ participantCount }) {
 }
 
 /* ── Single MCQ option card ──────────────────────────── */
-function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isCorrect }) {
+function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isCorrect, showStats }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0
 
   const bg     = revealed ? (isCorrect ? 'rgba(82,196,26,0.18)' : 'rgba(255,255,255,0.03)') : OPTION_BG[index]
@@ -60,7 +60,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
         <span className="pv-option-text" style={revealed && !isCorrect ? { opacity: 0.4 } : {}}>
           {text}
         </span>
-        {total > 0 && (
+        {showStats && total > 0 && (
           <span className="pv-option-pct" style={revealed && !isCorrect ? { opacity: 0.35 } : {}}>
             {pct}%
           </span>
@@ -70,7 +70,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
       <div className="pv-bar-track">
         <div
           className="pv-bar-fill"
-          style={{ width: pct > 0 ? `${pct}%` : '0%', background: accent }}
+          style={{ width: showStats && pct > 0 ? `${pct}%` : '0%', background: accent }}
         />
       </div>
     </div>
@@ -78,7 +78,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
 }
 
 /* ── MCQ Question ────────────────────────────────────── */
-function MCQView({ question, questionNumber, totalQuestions, revealed }) {
+function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll }) {
   const fallbackOptions = [
     question.option_a,
     question.option_b,
@@ -90,6 +90,9 @@ function MCQView({ question, questionNumber, totalQuestions, revealed }) {
   const total = question.total_answers || 0
   const images = question.option_images || {}
   const correctIndex = question.correct_answer_index ?? -1
+  const showStats = !isPoll || revealed
+  const revealCorrectness = !isPoll && correctIndex >= 0
+  const effectiveRevealed = revealed && revealCorrectness
 
   return (
     <div className="pv-question-wrap">
@@ -102,9 +105,14 @@ function MCQView({ question, questionNumber, totalQuestions, revealed }) {
             {total} response{total !== 1 ? 's' : ''}
           </Tag>
         )}
-        {revealed && (
+        {effectiveRevealed && (
           <Tag color="success" style={{ fontSize: 12 }}>
             <CheckOutlined /> Answer revealed
+          </Tag>
+        )}
+        {isPoll && revealed && (
+          <Tag color="geekblue" style={{ fontSize: 12 }}>
+            Statistics shown
           </Tag>
         )}
       </div>
@@ -127,8 +135,9 @@ function MCQView({ question, questionNumber, totalQuestions, revealed }) {
             imageUrl={images[OPTION_LETTERS[i]]}
             count={dist[i] || 0}
             total={total}
-            revealed={revealed}
+            revealed={effectiveRevealed}
             isCorrect={i === correctIndex}
+            showStats={showStats}
           />
         ))}
       </div>
@@ -375,7 +384,7 @@ function LeaderboardModal({ leaderboard, onClose }) {
 }
 
 /* ── Host Control Bar ───────────────────────────────── */
-function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, onToggleHelp, revealed }) {
+function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, onToggleHelp, revealed, isPoll }) {
   const notStarted = currentQIdx === -1
   const isLastQ = !notStarted && currentQIdx >= totalQ - 1
   const prevDisabled = loading || notStarted || currentQIdx <= 0
@@ -392,8 +401,8 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
     advanceLabel = isLastQ ? <>End <CheckOutlined /></> : <>Continue <RightOutlined /></>
     advanceTitle = isLastQ ? 'End session' : 'Next question'
   } else {
-    advanceLabel = isLastQ ? 'Finish ✓' : <RightOutlined />
-    advanceTitle = isLastQ ? 'Reveal answer' : 'Reveal answer'
+    advanceLabel = isLastQ ? 'Finish ✓' : (isPoll ? 'Show stats' : <RightOutlined />)
+    advanceTitle = isPoll ? 'Show stats' : 'Reveal answer'
   }
 
   return (
@@ -470,7 +479,7 @@ function CompactLeaderboard({ entries, total, onExpand }) {
 }
 
 /* ── Sidebar ─────────────────────────────────────────── */
-function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard }) {
+function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll }) {
   return (
     <aside className="pv-sidebar">
       <div className="pv-sidebar-title">{quizTitle}</div>
@@ -498,7 +507,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
         <span className="pv-participants-label">Participants</span>
       </div>
 
-      {leaderboard?.entries?.some(e => e.score > 0) && (
+      {!isPoll && leaderboard?.entries?.some(e => e.score > 0) && (
         <>
           <div className="pv-sidebar-divider" />
           <CompactLeaderboard
@@ -529,6 +538,7 @@ export default function QuizPresent() {
 
   // Host controls are shown only when a JWT token is present in this browser
   const isHost = !!localStorage.getItem('token')
+  const isPoll = results?.quiz_type === 'poll'
 
   const joinUrl = joinCode ? `${window.location.origin}/join/${joinCode}` : ''
 
@@ -538,18 +548,24 @@ export default function QuizPresent() {
       setResults(res.data)
       prevQIdx.current = res.data.current_question_index
     } catch (_) {}
-    try {
-      const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
-      setLeaderboard(lb.data)
-    } catch (_) {}
+    if (!isPoll) {
+      try {
+        const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
+        setLeaderboard(lb.data)
+      } catch (_) {}
+    } else {
+      setLeaderboard(null)
+    }
   }
 
   const handleAdvance = async () => {
     const notStarted = (results?.current_question_index ?? -1) === -1
-    const isRevealQuestion = ['mcq', 'scale'].includes(results?.current_question?.question_type)
-      && results?.current_question?.correct_answer_index !== null
+    const isOptionQuestion = ['mcq', 'scale'].includes(results?.current_question?.question_type)
+    const hasCorrectAnswer =
+      results?.current_question?.correct_answer_index !== null
       && results?.current_question?.correct_answer_index !== undefined
-    // First press on option questions: reveal answer, don't advance yet
+    const isRevealQuestion = isOptionQuestion && (isPoll || hasCorrectAnswer)
+    // First press on option questions: reveal answer (quiz) or show stats (poll), don't advance yet
     if (!notStarted && !revealed && isRevealQuestion) {
       setRevealed(true)
       return
@@ -638,10 +654,14 @@ export default function QuizPresent() {
         const data = res.data
         setResults(data)
 
-        try {
-          const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
-          setLeaderboard(lb.data)
-        } catch (_) {}
+        if (!data.quiz_type || data.quiz_type !== 'poll') {
+          try {
+            const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
+            setLeaderboard(lb.data)
+          } catch (_) {}
+        } else {
+          setLeaderboard(null)
+        }
 
         if (data.current_question?.question_type === 'word_cloud') {
           if (prevQIdx.current !== data.current_question_index) {
@@ -685,6 +705,7 @@ export default function QuizPresent() {
         participantCount={participantCount}
         leaderboard={leaderboard}
         onExpandLeaderboard={() => setShowLbModal(true)}
+        isPoll={isPoll}
       />
 
       <main className="pv-main">
@@ -693,7 +714,14 @@ export default function QuizPresent() {
             <Spin size="large" />
           </div>
         ) : isEnded ? (
-          <EndedView leaderboard={leaderboard} />
+          isPoll ? (
+            <div className="pv-center-fill">
+              <h2 className="pv-waiting-title">Poll completed</h2>
+              <p className="pv-waiting-sub">Thanks for participating.</p>
+            </div>
+          ) : (
+            <EndedView leaderboard={leaderboard} />
+          )
         ) : isWaiting ? (
           <WaitingView participantCount={participantCount} />
         ) : currentQ?.question_type === 'word_cloud' ? (
@@ -706,7 +734,7 @@ export default function QuizPresent() {
         ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
           <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} />
         ) : (
-          <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} />
+          <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} />
         )}
       </main>
 
@@ -721,11 +749,12 @@ export default function QuizPresent() {
             onStop={handleEnd}
             onToggleHelp={() => setShowHelp(v => !v)}
             revealed={revealed}
+            isPoll={isPoll}
           />
         </div>
       )}
 
-      {showLbModal && (
+      {showLbModal && !isPoll && (
         <LeaderboardModal
           leaderboard={leaderboard}
           onClose={() => setShowLbModal(false)}
@@ -740,7 +769,7 @@ export default function QuizPresent() {
               <tbody>
                 <tr><td><kbd>→</kbd> or <kbd>Space</kbd> or <kbd>Enter</kbd> or <kbd>PageDown</kbd></td><td>Next question (press any one key)</td></tr>
                 <tr><td><kbd>←</kbd> or <kbd>Backspace</kbd> or <kbd>PageUp</kbd></td><td>Previous question (press any one key)</td></tr>
-                <tr><td><kbd>L</kbd></td><td>Toggle leaderboard</td></tr>
+                {!isPoll && <tr><td><kbd>L</kbd></td><td>Toggle leaderboard</td></tr>}
                 <tr><td><kbd>F</kbd></td><td>Toggle fullscreen</td></tr>
                 <tr><td><kbd>?</kbd></td><td>Show / hide this panel</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>Close overlays</td></tr>

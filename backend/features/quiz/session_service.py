@@ -8,7 +8,7 @@ import string
 
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question,
-    QuizStatus, QuizSessionStatus, QuestionStatus
+    QuizStatus, QuizSessionStatus, QuestionStatus, QuizType
 )
 from persistence.models.core import Event, Tenant
 from features.quiz.schemas import (
@@ -114,7 +114,8 @@ class SessionService:
             quiz_id=quiz_id,
             status=QuizSessionStatus.CREATED,
             current_question_index=-1,
-            current_question_status=QuestionStatus.PENDING
+            current_question_status=QuestionStatus.PENDING,
+            leaderboard_visible=(quiz.quiz_type != QuizType.POLL),
         )
         
         db.add(session)

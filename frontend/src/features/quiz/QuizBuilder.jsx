@@ -55,6 +55,7 @@ const QuestionForm = ({
   setTempImages,
   loading,
   movingImages,
+  isPoll,
   t
 }) => {
   const [questionForm] = Form.useForm()
@@ -113,7 +114,7 @@ const QuestionForm = ({
           option_c: '3',
           option_d: '4',
           option_e: '5',
-          correct_answer: '2'
+          correct_answer: isPoll ? undefined : '2'
         })
     }
   }
@@ -126,7 +127,7 @@ const QuestionForm = ({
         onFinish={onSave}
         initialValues={{
           question_type: 'mcq',
-          correct_answer: 'A'
+          correct_answer: isPoll ? undefined : 'A'
         }}
       >
         <Form.Item
@@ -277,18 +278,20 @@ const QuestionForm = ({
               }}
             />
 
-            <Form.Item
-              name="correct_answer"
-              label={t('quiz.correctAnswer')}
-              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
-            >
-              <Radio.Group>
-                <Radio value="A">A</Radio>
-                <Radio value="B">B</Radio>
-                <Radio value="C">C</Radio>
-                <Radio value="D">D</Radio>
-              </Radio.Group>
-            </Form.Item>
+            {!isPoll && (
+              <Form.Item
+                name="correct_answer"
+                label={t('quiz.correctAnswer')}
+                rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+              >
+                <Radio.Group>
+                  <Radio value="A">A</Radio>
+                  <Radio value="B">B</Radio>
+                  <Radio value="C">C</Radio>
+                  <Radio value="D">D</Radio>
+                </Radio.Group>
+              </Form.Item>
+            )}
           </>
         )}
 
@@ -333,23 +336,25 @@ const QuestionForm = ({
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
               Participants choose a rating from 1 to 5.
             </Text>
-            <Form.Item
-              name="correct_answer"
-              label={t('quiz.correctAnswer')}
-              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
-            >
-              <Radio.Group>
-                <Radio value="0">1</Radio>
-                <Radio value="1">2</Radio>
-                <Radio value="2">3</Radio>
-                <Radio value="3">4</Radio>
-                <Radio value="4">5</Radio>
-              </Radio.Group>
-            </Form.Item>
+            {!isPoll && (
+              <Form.Item
+                name="correct_answer"
+                label={t('quiz.correctAnswer')}
+                rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+              >
+                <Radio.Group>
+                  <Radio value="0">1</Radio>
+                  <Radio value="1">2</Radio>
+                  <Radio value="2">3</Radio>
+                  <Radio value="3">4</Radio>
+                  <Radio value="4">5</Radio>
+                </Radio.Group>
+              </Form.Item>
+            )}
           </>
         )}
 
-        <Space>
+        <Space style={{ marginTop: 28 }}>
           <Button
             type="primary"
             htmlType="submit"
@@ -375,6 +380,7 @@ const arePropsEqual = (prevProps, nextProps) => {
   if (prevProps.questionImageUrl !== nextProps.questionImageUrl) changed.push('questionImageUrl')
   if (prevProps.loading !== nextProps.loading) changed.push('loading')
   if (prevProps.movingImages !== nextProps.movingImages) changed.push('movingImages')
+  if (prevProps.isPoll !== nextProps.isPoll) changed.push('isPoll')
   if (prevProps.onSave !== nextProps.onSave) changed.push('onSave')
   if (prevProps.onCancel !== nextProps.onCancel) changed.push('onCancel')
   
@@ -430,6 +436,7 @@ export default function QuizBuilder() {
   
   // Loading state for moving temp images
   const [movingImages, setMovingImages] = useState(false)
+  const isPoll = quiz?.quiz_type === 'poll'
 
   useEffect(() => {
     if (id) {
@@ -481,7 +488,8 @@ export default function QuizBuilder() {
       
       form.setFieldsValue({
         title: response.data.title,
-        description: response.data.description
+        description: response.data.description,
+        quiz_type: response.data.quiz_type || 'quiz',
       })
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
@@ -528,10 +536,10 @@ export default function QuizBuilder() {
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
-        questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
-        questionData.correct_answer_index = Number(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
         questionData.options = [values.expected_answer]
         questionData.correct_answer_index = null
@@ -624,7 +632,7 @@ export default function QuizBuilder() {
     } finally {
       setLoading(false)
     }
-  }, [id, t, tempImages, loadQuiz])
+  }, [id, t, tempImages, loadQuiz, isPoll])
   
   const handleCancelQuestion = useCallback(async () => {
     // Clean up temp images if any
@@ -674,10 +682,10 @@ export default function QuizBuilder() {
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
-        questionData.correct_answer_index = ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
-        questionData.correct_answer_index = Number(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
         questionData.options = [values.expected_answer]
         questionData.correct_answer_index = null
@@ -697,7 +705,7 @@ export default function QuizBuilder() {
     } finally {
       setLoading(false)
     }
-  }, [t, loadQuiz])
+  }, [t, loadQuiz, isPoll])
 
   const handleDeleteQuestion = async (questionId) => {
     setLoading(true)
@@ -786,6 +794,9 @@ export default function QuizBuilder() {
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
               {getQuizStatusTranslation(quiz.status)}
             </Tag>
+            <Tag color={quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
+              {quiz.quiz_type === 'poll' ? 'Poll' : 'Quiz'}
+            </Tag>
             {quiz.status === 'ready' && (
               <Tag color="red">
                 {t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit'}
@@ -817,6 +828,17 @@ export default function QuizBuilder() {
             <TextArea rows={3} placeholder={t('quiz.enterQuizDescription')} />
           </Form.Item>
 
+          <Form.Item
+            name="quiz_type"
+            label="Mode"
+            initialValue="quiz"
+          >
+            <Radio.Group>
+              <Radio value="quiz">Quiz (with score/leaderboard)</Radio>
+              <Radio value="poll">Poll (no score/leaderboard)</Radio>
+            </Radio.Group>
+          </Form.Item>
+
           <Button 
             type="primary" 
             htmlType="submit" 
@@ -838,6 +860,7 @@ export default function QuizBuilder() {
               onSave={handleAddQuestion}
               onCancel={handleCancelQuestion}
               quizId={id}
+              isPoll={isPoll}
               questionImageUrl={questionImageUrl}
               setQuestionImageUrl={setQuestionImageUrl}
               optionImages={optionImages}
@@ -853,7 +876,7 @@ export default function QuizBuilder() {
               type="dashed"
               icon={<PlusOutlined />}
               onClick={() => setEditingQuestion('new')}
-              style={{ marginBottom: 16, width: '100%' }}
+              style={{ marginTop: 12, marginBottom: 16, width: '100%' }}
               size="large"
             >
               {t('quiz.addQuestion')}
@@ -870,6 +893,7 @@ export default function QuizBuilder() {
                   onSave={(values) => handleUpdateQuestion(question.id, values)}
                   onCancel={handleCancelQuestion}
                   quizId={id}
+                  isPoll={isPoll}
                   questionImageUrl={questionImageUrl}
                   setQuestionImageUrl={setQuestionImageUrl}
                   optionImages={optionImages}
@@ -933,25 +957,27 @@ export default function QuizBuilder() {
                   ) : question.question_type === 'scale' ? (
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <Text>Scale options: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
-                      <Text><strong>Expected answer:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || '—'}</Text>
+                      {!isPoll && (
+                        <Text><strong>Expected answer:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || '—'}</Text>
+                      )}
                     </Space>
                   ) : (
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <div>
                         <Text>A: {question.option_a}</Text>
-                        {question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        {!isPoll && question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                       </div>
                       <div>
                         <Text>B: {question.option_b}</Text>
-                        {question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        {!isPoll && question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                       </div>
                       <div>
                         <Text>C: {question.option_c}</Text>
-                        {question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        {!isPoll && question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                       </div>
                       <div>
                         <Text>D: {question.option_d}</Text>
-                        {question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        {!isPoll && question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
                       </div>
                     </Space>
                   )}

@@ -225,6 +225,7 @@ export default function QuizHistory() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const [quizTitle, setQuizTitle] = useState('')
+  const [quizType, setQuizType] = useState('quiz')
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -232,9 +233,13 @@ export default function QuizHistory() {
     async function load() {
       setLoading(true)
       try {
-        const resp = await sessionAPI.listSessions(id)
-        setQuizTitle(resp.data.quiz_title)
-        setSessions(resp.data.sessions)
+        const [sessionResp, quizResp] = await Promise.all([
+          sessionAPI.listSessions(id),
+          quizAPI.get(id),
+        ])
+        setQuizTitle(sessionResp.data.quiz_title)
+        setSessions(sessionResp.data.sessions)
+        setQuizType(quizResp.data.quiz_type || 'quiz')
       } catch (e) {
         console.error('Failed to load session history:', e)
       } finally {
@@ -255,7 +260,12 @@ export default function QuizHistory() {
         </Button>
       </Space>
 
-      <Title level={3} style={{ marginBottom: 4 }}>{quizTitle}</Title>
+      <Space direction="vertical" size={4} style={{ marginBottom: 4 }}>
+        <Tag color={quizType === 'poll' ? 'purple' : 'blue'} style={{ width: 'fit-content' }}>
+          {quizType === 'poll' ? 'Poll' : 'Quiz'}
+        </Tag>
+        <Title level={3} style={{ marginBottom: 0 }}>{quizTitle}</Title>
+      </Space>
       <Text type="secondary" style={{ display: 'block', marginBottom: 20 }}>
         {t('quiz.sessionHistory')}
       </Text>

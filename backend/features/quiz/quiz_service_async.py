@@ -8,7 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 import os
 
-from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType, TemplateScope
+from persistence.models.quiz import Quiz, Question, QuizStatus, QuizType, QuestionType, TemplateScope
 from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -84,6 +84,7 @@ class QuizBuilderServiceAsync:
             event_id=event_id,
             title=request.title,
             description=request.description,
+            quiz_type=QuizType(request.quiz_type.value),
             status=QuizStatus.DRAFT
         )
         
@@ -138,6 +139,7 @@ class QuizBuilderServiceAsync:
                 id=q.id,
                 event_id=q.event_id,
                 title=q.title,
+                quiz_type=q.quiz_type,
                 status=q.status,
                 is_template=q.is_template,
                 template_scope=q.template_scope,
@@ -206,6 +208,7 @@ class QuizBuilderServiceAsync:
                 id=q.id,
                 title=q.title,
                 description=q.description,
+                quiz_type=q.quiz_type,
                 status=q.status,
                 question_count=len(q.questions),
                 template_scope=q.template_scope,
@@ -258,6 +261,7 @@ class QuizBuilderServiceAsync:
             event_id=event.id,
             title=copy_title,
             description=template_quiz.description,
+            quiz_type=template_quiz.quiz_type,
             status=QuizStatus.DRAFT,
             is_template=False,
             template_scope=TemplateScope.TENANT,
@@ -319,6 +323,8 @@ class QuizBuilderServiceAsync:
             quiz.title = request.title
         if request.description is not None:
             quiz.description = request.description
+        if request.quiz_type is not None:
+            quiz.quiz_type = QuizType(request.quiz_type.value)
         
         await db.commit()
         await db.refresh(quiz)
@@ -412,6 +418,7 @@ class QuizBuilderServiceAsync:
                 event_id=source_quiz.event_id,
                 title=duplicate_title,
                 description=source_quiz.description,
+                quiz_type=source_quiz.quiz_type,
                 status=QuizStatus.DRAFT
             )
             db.add(duplicated_quiz)
@@ -495,14 +502,23 @@ class QuizBuilderServiceAsync:
             if question.question_type == QuestionType.MCQ:
                 if not question.options or len(question.options) != 4:
                     raise QuizValidationError("MCQ questions must have exactly 4 options")
-                
-                if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 3:
+                if (
+                    question.correct_answer_index is not None
+                    and (question.correct_answer_index < 0 or question.correct_answer_index > 3)
+                ):
                     raise QuizValidationError("MCQ questions must have valid correct answer index")
+                if quiz.quiz_type != QuizType.POLL and question.correct_answer_index is None:
+                    raise QuizValidationError("MCQ questions must have a correct answer for quiz mode")
             elif question.question_type == QuestionType.SCALE:
                 if not question.options or len(question.options) != 5:
                     raise QuizValidationError("Scale questions must have exactly 5 options")
-                if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 4:
+                if (
+                    question.correct_answer_index is not None
+                    and (question.correct_answer_index < 0 or question.correct_answer_index > 4)
+                ):
                     raise QuizValidationError("Scale questions must have a valid correct answer index")
+                if quiz.quiz_type != QuizType.POLL and question.correct_answer_index is None:
+                    raise QuizValidationError("Scale questions must have a correct answer for quiz mode")
             elif question.question_type == QuestionType.WORD_CLOUD:
                 # Word cloud questions don't need options or correct answer
                 pass
@@ -523,6 +539,7 @@ class QuizBuilderServiceAsync:
             event_id=quiz.event_id,
             title=quiz.title,
             description=quiz.description,
+            quiz_type=quiz.quiz_type,
             status=quiz.status,
             is_template=quiz.is_template,
             template_scope=quiz.template_scope,
