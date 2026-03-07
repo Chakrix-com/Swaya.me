@@ -427,12 +427,12 @@ async def submit_word_cloud_answer(
     db: AsyncSession = Depends(get_async_db),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
-    """Submit word cloud answer (participant - unlimited submissions)"""
+    """Submit text answer (word cloud unlimited; other text types single submission)"""
     try:
         return await service.submit_word_cloud_answer(db, session_token, request)
     except ParticipantNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-    except QuestionNotOpenError as e:
+    except (QuestionNotOpenError, DuplicateAnswerError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 

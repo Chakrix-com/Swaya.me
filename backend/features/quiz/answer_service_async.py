@@ -87,11 +87,11 @@ class AnswerServiceAsync:
         if current_question.id != request.question_id:
             raise QuestionNotOpenError("Question is not currently active")
         
-        # Verify this is an MCQ question
-        if current_question.question_type != QuestionType.MCQ:
-            raise ValueError("This endpoint is for MCQ questions only")
+        # Verify this is an option-based question
+        if current_question.question_type not in (QuestionType.MCQ, QuestionType.SCALE):
+            raise ValueError("This endpoint is for option-based questions only")
         
-        # Check if already answered (MCQ only - one answer per participant)
+        # Check if already answered (one answer per participant)
         result = await db.execute(
             select(Answer).filter(
                 Answer.session_id == session.id,
@@ -104,12 +104,19 @@ class AnswerServiceAsync:
         if existing:
             raise DuplicateAnswerError("You have already answered this question")
         
-        # Validate option index
-        if request.selected_option_index < 0 or request.selected_option_index > 3:
+        # Validate option index against the current option count
+        option_count = len(current_question.options or [])
+        if option_count == 0:
+            raise ValueError("Question has no options configured")
+        if request.selected_option_index < 0 or request.selected_option_index >= option_count:
             raise ValueError("Invalid option index")
         
-        # Check if answer is correct
-        is_correct = request.selected_option_index == current_question.correct_answer_index
+        # Option-based correctness (leaderboard still counts MCQ only)
+        is_correct = (
+            request.selected_option_index == current_question.correct_answer_index
+            if current_question.question_type in (QuestionType.MCQ, QuestionType.SCALE)
+            else None
+        )
         
         # Create answer
         answer = Answer(
@@ -185,15 +192,39 @@ class AnswerServiceAsync:
         if current_question.id != request.question_id:
             raise QuestionNotOpenError("Question is not currently active")
         
-        # Verify this is a word cloud question
+        if current_question.question_type not in (
+            QuestionType.WORD_CLOUD,
+            QuestionType.SINGLE_LINE,
+            QuestionType.PARAGRAPH,
+        ):
+            raise ValueError("This endpoint is for text-based questions only")
+
+        # Only word cloud allows unlimited submissions
         if current_question.question_type != QuestionType.WORD_CLOUD:
-            raise ValueError("This endpoint is for word cloud questions only")
-        
-        # NO duplicate check - unlimited submissions allowed for word cloud
+            result = await db.execute(
+                select(Answer).filter(
+                    Answer.session_id == session.id,
+                    Answer.participant_id == participant.id,
+                    Answer.question_id == request.question_id
+                )
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                raise DuplicateAnswerError("You have already answered this question")
         
         # Normalize text: replace one or more newlines with a single space
         import re
-        normalized_text = re.sub(r'\n+', ' ', request.text_answer.strip())
+        if current_question.question_type == QuestionType.PARAGRAPH:
+            normalized_text = request.text_answer.strip()
+        else:
+            normalized_text = re.sub(r'\s+', ' ', request.text_answer.strip())
+        expected_answer = (current_question.options or [None])[0]
+        is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
+        is_correct = (
+            bool(expected_answer) and normalized_text.lower() == str(expected_answer).strip().lower()
+            if is_text_scored
+            else None
+        )
         
         # Create answer
         answer = Answer(
@@ -202,7 +233,7 @@ class AnswerServiceAsync:
             question_id=request.question_id,
             text_answer=normalized_text,
             selected_option_index=None,
-            is_correct=None
+            is_correct=is_correct
         )
         
         db.add(answer)
@@ -217,7 +248,7 @@ class AnswerServiceAsync:
         
         return AnswerSubmitResponse(
             success=True,
-            message="Word submitted successfully",
+            message="Response submitted successfully",
             is_correct=None
         )
     
@@ -318,13 +349,14 @@ class AnswerServiceAsync:
         )
         answers = result.all()
         
-        # Build distribution array [count_option_0, count_option_1, count_option_2, count_option_3]
-        distribution = [0, 0, 0, 0]
+        option_count = len(question.options or [])
+        distribution = [0] * option_count
         total_answers = 0
         
         for option_idx, count in answers:
-            distribution[option_idx] = count
-            total_answers += count
+            if option_idx is not None and 0 <= option_idx < option_count:
+                distribution[option_idx] = count
+                total_answers += count
         
         # Get participant's answer if token provided
         participant_answer = None
@@ -387,6 +419,7 @@ class AnswerServiceAsync:
         
         # Get all questions
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
+        question_by_id = {q.id: q for q in questions}
         
         # Calculate participant score if token provided
         participant_score = None
@@ -400,21 +433,28 @@ class AnswerServiceAsync:
             
             if participant:
                 result = await db.execute(
-                    select(func.count(Answer.id)).filter(
-                        Answer.session_id == session_id,
-                        Answer.participant_id == participant.id,
-                        Answer.is_correct == True
-                    )
-                )
-                correct_answers = result.scalar()
-                
-                result = await db.execute(
-                    select(func.count(Answer.id)).filter(
+                    select(Answer).filter(
                         Answer.session_id == session_id,
                         Answer.participant_id == participant.id
                     )
                 )
-                total_answered = result.scalar()
+                participant_answers = result.scalars().all()
+                total_answered = len(participant_answers)
+                import re
+                correct_answers = 0
+                for ans in participant_answers:
+                    if ans.is_correct is True:
+                        correct_answers += 1
+                        continue
+                    q = question_by_id.get(ans.question_id)
+                    if not q or q.question_type not in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
+                        continue
+                    expected = (q.options or [None])[0]
+                    if not expected or not ans.text_answer:
+                        continue
+                    normalized = ans.text_answer.strip() if q.question_type == QuestionType.PARAGRAPH else re.sub(r'\s+', ' ', ans.text_answer.strip())
+                    if normalized.lower() == str(expected).strip().lower():
+                        correct_answers += 1
                 
                 participant_correct = correct_answers
                 participant_score = total_answered
@@ -440,7 +480,7 @@ class AnswerServiceAsync:
             
             try:
                 # Handle based on question type
-                if question_obj.question_type.value == 'mcq':
+                if question_obj.question_type.value in ('mcq', 'scale'):
                     # For MCQ, get full results with distribution
                     question_result = await self.get_question_results(
                         db,
@@ -452,7 +492,14 @@ class AnswerServiceAsync:
                     # Transform to format expected by host frontend
                     base_url = os.getenv('BASE_URL', 'http://localhost:8000')
                     options = json.loads(question_obj.options) if isinstance(question_obj.options, str) else question_obj.options
-                    correct_letter = chr(65 + question_obj.correct_answer_index) if question_obj.correct_answer_index is not None else None
+                    if question_obj.correct_answer_index is not None and options and 0 <= question_obj.correct_answer_index < len(options):
+                        correct_display = (
+                            chr(65 + question_obj.correct_answer_index)
+                            if question_obj.question_type.value == 'mcq'
+                            else options[question_obj.correct_answer_index]
+                        )
+                    else:
+                        correct_display = None
                     
                     current_question = {
                         "id": question_obj.id,
@@ -462,7 +509,7 @@ class AnswerServiceAsync:
                         "option_b": options[1] if options and len(options) > 1 else "",
                         "option_c": options[2] if options and len(options) > 2 else "",
                         "option_d": options[3] if options and len(options) > 3 else "",
-                        "correct_answer": correct_letter,
+                        "correct_answer": correct_display,
                         "question_id": question_result.question_id,
                         "question_text": question_result.question_text,
                         "options": question_result.options,
@@ -478,8 +525,7 @@ class AnswerServiceAsync:
                         } if question_obj.option_images else None
                     }
                 else:
-                    # Word Cloud question - no need for get_question_results
-                    # Just count total text answers
+                    # Text-based question: expose live response count
                     base_url = os.getenv('BASE_URL', 'http://localhost:8000')
                     result = await db.execute(
                         select(func.count(Answer.id)).filter(
@@ -488,6 +534,24 @@ class AnswerServiceAsync:
                         )
                     )
                     total_answers = result.scalar()
+                    text_responses = []
+                    if question_obj.question_type.value in ('single_line', 'paragraph'):
+                        responses_result = await db.execute(
+                            select(Answer.text_answer, Participant.display_name)
+                            .join(Participant, Participant.id == Answer.participant_id)
+                            .filter(
+                                Answer.session_id == session_id,
+                                Answer.question_id == question_obj.id,
+                                Answer.text_answer.isnot(None),
+                            )
+                            .order_by(Answer.created_at.desc())
+                            .limit(50)
+                        )
+                        text_responses = [
+                            {"text": text, "participant_name": name or "Guest"}
+                            for text, name in responses_result.all()
+                            if text
+                        ]
                     
                     current_question = {
                         "id": question_obj.id,
@@ -496,6 +560,7 @@ class AnswerServiceAsync:
                         "question_id": question_obj.id,
                         "question_text": question_obj.text,
                         "total_answers": total_answers,
+                        "text_responses": text_responses,
                         "question_image_url": ImageService.to_absolute_url(
                             question_obj.question_image_url, base_url
                         )
@@ -533,10 +598,10 @@ class AnswerServiceAsync:
     ) -> LeaderboardResponse:
         """
         Get ranked leaderboard for a session.
-        Score = number of correct MCQ answers per participant.
+        Score = number of correct scored answers (MCQ + Scale + text with expected answer) per participant.
         Tiebreaker: earlier last-correct-answer time (faster responder ranks higher).
         """
-        # Get session with quiz questions (to count MCQ questions)
+        # Get session with quiz questions (to count scored questions)
         result = await db.execute(
             select(QuizSession)
             .filter(QuizSession.id == session_id)
@@ -546,10 +611,11 @@ class AnswerServiceAsync:
         if not session:
             raise SessionNotFoundError("Session not found")
 
-        mcq_count = sum(
+        scored_question_count = sum(
             1 for q in session.quiz.questions
-            if q.question_type == QuestionType.MCQ
+            if q.question_type in (QuestionType.MCQ, QuestionType.SCALE, QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
         )
+        question_by_id = {q.id: q for q in session.quiz.questions}
 
         # Resolve current participant
         current_participant_id = None
@@ -561,13 +627,13 @@ class AnswerServiceAsync:
             if p:
                 current_participant_id = p.id
 
-        # Load all closed MCQ question timings for this session
+        # Load all closed scored-question timings for this session
         timings_result = await db.execute(
             select(SessionQuestionTiming)
             .join(Question, Question.id == SessionQuestionTiming.question_id)
             .filter(
                 SessionQuestionTiming.session_id == session_id,
-                Question.question_type == QuestionType.MCQ,
+                Question.question_type.in_([QuestionType.MCQ, QuestionType.SCALE, QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH]),
             )
             .order_by(SessionQuestionTiming.question_id, SessionQuestionTiming.opened_at)
         )
@@ -587,13 +653,13 @@ class AnswerServiceAsync:
         )
         participants = participants_result.scalars().all()
 
-        # Load all MCQ answers for this session (correct ones for score, all for timing)
+        # Load all scored-question answers for this session (correct ones for score, all for timing)
         answers_result = await db.execute(
             select(Answer)
             .join(Question, Question.id == Answer.question_id)
             .filter(
                 Answer.session_id == session_id,
-                Question.question_type == QuestionType.MCQ,
+                Question.question_type.in_([QuestionType.MCQ, QuestionType.SCALE, QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH]),
             )
         )
         all_answers = answers_result.scalars().all()
@@ -636,10 +702,24 @@ class AnswerServiceAsync:
             return round(total, 1)
 
         def count_correct(participant_id: int) -> int:
-            return sum(
-                1 for a in all_answers
-                if a.participant_id == participant_id and a.is_correct
-            )
+            import re
+            total = 0
+            for a in all_answers:
+                if a.participant_id != participant_id:
+                    continue
+                if a.is_correct is True:
+                    total += 1
+                    continue
+                q = question_by_id.get(a.question_id)
+                if not q or q.question_type not in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
+                    continue
+                expected = (q.options or [None])[0]
+                if not expected or not a.text_answer:
+                    continue
+                normalized = a.text_answer.strip() if q.question_type == QuestionType.PARAGRAPH else re.sub(r'\s+', ' ', a.text_answer.strip())
+                if normalized.lower() == str(expected).strip().lower():
+                    total += 1
+            return total
 
         # Build scored + timed entries, then sort
         scored = [
@@ -678,7 +758,7 @@ class AnswerServiceAsync:
             entries=entries,
             total_participants=len(entries),
             current_participant_rank=current_participant_rank,
-            mcq_question_count=mcq_count
+            mcq_question_count=scored_question_count
         )
 
     async def _update_aggregation(

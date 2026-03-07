@@ -498,14 +498,25 @@ class QuizBuilderServiceAsync:
                 
                 if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 3:
                     raise QuizValidationError("MCQ questions must have valid correct answer index")
+            elif question.question_type == QuestionType.SCALE:
+                if not question.options or len(question.options) != 5:
+                    raise QuizValidationError("Scale questions must have exactly 5 options")
+                if question.correct_answer_index is None or question.correct_answer_index < 0 or question.correct_answer_index > 4:
+                    raise QuizValidationError("Scale questions must have a valid correct answer index")
             elif question.question_type == QuestionType.WORD_CLOUD:
                 # Word cloud questions don't need options or correct answer
                 pass
+            elif question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
+                if not question.options or len(question.options) != 1:
+                    raise QuizValidationError("Text questions must include one expected answer")
+                if question.correct_answer_index is not None:
+                    raise QuizValidationError("Text questions cannot have a correct answer index")
     
     def _to_quiz_response(self, quiz: Quiz) -> QuizResponse:
         """Convert quiz to response model"""
         # Get base URL from environment
         base_url = os.getenv('BASE_URL', 'http://localhost:8000')
+        loaded_questions = quiz.__dict__.get("questions") or []
         
         return QuizResponse(
             id=quiz.id,
@@ -531,9 +542,9 @@ class QuizBuilderServiceAsync:
                         for key, path in (q.option_images or {}).items()
                     } if q.option_images else None
                 )
-                for q in sorted(quiz.questions, key=lambda x: x.order)
+                for q in sorted(loaded_questions, key=lambda x: x.order)
             ],
-            question_count=len(quiz.questions),
+            question_count=len(loaded_questions),
             created_at=quiz.created_at.isoformat(),
             updated_at=quiz.updated_at.isoformat()
         )

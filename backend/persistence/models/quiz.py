@@ -35,6 +35,9 @@ class QuestionType(str, enum.Enum):
     """Question type"""
     MCQ = "mcq"
     WORD_CLOUD = "word_cloud"
+    SINGLE_LINE = "single_line"
+    SCALE = "scale"
+    PARAGRAPH = "paragraph"
 
 
 class TemplateScope(str, enum.Enum):
@@ -136,7 +139,7 @@ class Answer(Base, TimestampMixin):
     participant_id = Column(Integer, ForeignKey('participants.id'), nullable=False)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False)
     selected_option_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
-    text_answer = Column(String(100), nullable=True)  # For word_cloud questions
+    text_answer = Column(Text, nullable=True)  # For text-based questions
     is_correct = Column(Boolean, nullable=True)  # For MCQ only, null for word_cloud
     
     # Relationships

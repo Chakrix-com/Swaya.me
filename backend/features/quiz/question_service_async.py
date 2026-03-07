@@ -91,6 +91,8 @@ class QuestionServiceAsync:
             text=request.text,
             options=request.options,
             correct_answer_index=request.correct_answer_index,
+            question_image_url=request.question_image_url,
+            option_images=request.option_images,
             order=next_order
         )
         
@@ -123,14 +125,18 @@ class QuestionServiceAsync:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
         
         # Update fields
-        if request.question_type is not None:
+        if "question_type" in request.model_fields_set:
             question.question_type = request.question_type
-        if request.text is not None:
+        if "text" in request.model_fields_set:
             question.text = request.text
-        if request.options is not None:
+        if "options" in request.model_fields_set:
             question.options = request.options
-        if request.correct_answer_index is not None:
+        if "correct_answer_index" in request.model_fields_set:
             question.correct_answer_index = request.correct_answer_index
+        if "question_image_url" in request.model_fields_set:
+            question.question_image_url = request.question_image_url
+        if "option_images" in request.model_fields_set:
+            question.option_images = request.option_images
         
         await db.commit()
         await db.refresh(question)
@@ -232,5 +238,7 @@ class QuestionServiceAsync:
             text=question.text,
             options=question.options,
             order=question.order,
-            correct_answer_index=question.correct_answer_index
+            correct_answer_index=question.correct_answer_index,
+            question_image_url=question.question_image_url,
+            option_images=question.option_images
         )

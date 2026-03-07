@@ -286,6 +286,9 @@ export default function QuizControl() {
   }
 
   const currentQuestion = results?.current_question
+  const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
+  const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
+  const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
 
   return (
     <div className="quiz-control-page" style={{ padding: 24 }}>
@@ -515,7 +518,10 @@ export default function QuizControl() {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Space>
                     <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
-                    {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">Word Cloud</Tag>}
+                    {isWordCloudQuestion && <Tag color="purple">Word Cloud</Tag>}
+                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">Single Line</Tag>}
+                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">Paragraph</Tag>}
+                    {currentQuestion.question_type === 'scale' && <Tag color="gold">Scale (1-5)</Tag>}
                   </Space>
                   {currentQuestion.question_image_url && (
                     <img 
@@ -544,7 +550,7 @@ export default function QuizControl() {
                 style={{ marginBottom: 16 }}
               />
 
-              {currentQuestion.question_type === 'word_cloud' ? (
+              {isWordCloudQuestion ? (
                 // Word Cloud Question View
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <Alert
@@ -585,95 +591,63 @@ export default function QuizControl() {
                     />
                   )}
                 </Space>
-              ) : (
-                // MCQ Question View
+              ) : isTextQuestion ? (
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
-                      <Space direction="vertical">
-                        <Text strong>A: {currentQuestion.option_a}</Text>
-                        {currentQuestion.option_images?.A && (
-                          <img 
-                            src={currentQuestion.option_images.A} 
-                            alt="Option A" 
-                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
-                          />
-                        )}
-                      </Space>
-                      <Text>{currentQuestion.answer_distribution?.[0] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                    </Space>
-                    <Progress
-                      percent={((currentQuestion.answer_distribution?.[0] / currentQuestion.total_answers * 100) || 0)}
-                      strokeColor={currentQuestion.correct_answer === 'A' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
-                      <Space direction="vertical">
-                        <Text strong>B: {currentQuestion.option_b}</Text>
-                        {currentQuestion.option_images?.B && (
-                          <img 
-                            src={currentQuestion.option_images.B} 
-                            alt="Option B" 
-                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
-                          />
-                        )}
-                      </Space>
-                      <Text>{currentQuestion.answer_distribution?.[1] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                    </Space>
-                    <Progress
-                      percent={((currentQuestion.answer_distribution?.[1] / currentQuestion.total_answers * 100) || 0)}
-                      strokeColor={currentQuestion.correct_answer === 'B' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
-                      <Space direction="vertical">
-                        <Text strong>C: {currentQuestion.option_c}</Text>
-                        {currentQuestion.option_images?.C && (
-                          <img 
-                            src={currentQuestion.option_images.C} 
-                            alt="Option C" 
-                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
-                          />
-                        )}
-                      </Space>
-                      <Text>{currentQuestion.answer_distribution?.[2] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                    </Space>
-                    <Progress
-                      percent={((currentQuestion.answer_distribution?.[2] / currentQuestion.total_answers * 100) || 0)}
-                      strokeColor={currentQuestion.correct_answer === 'C' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
-                  <div>
-                    <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
-                      <Space direction="vertical">
-                        <Text strong>D: {currentQuestion.option_d}</Text>
-                        {currentQuestion.option_images?.D && (
-                          <img 
-                            src={currentQuestion.option_images.D} 
-                            alt="Option D" 
-                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px', marginTop: '4px' }} 
-                          />
-                        )}
-                      </Space>
-                      <Text>{currentQuestion.answer_distribution?.[3] || 0} {t('quiz.responses')} ({((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0).toFixed(1)}%)</Text>
-                    </Space>
-                    <Progress
-                      percent={((currentQuestion.answer_distribution?.[3] / currentQuestion.total_answers * 100) || 0)}
-                      strokeColor={currentQuestion.correct_answer === 'D' ? '#52c41a' : '#1890ff'}
-                    />
-                  </div>
-
                   <Alert
-                    message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
-                    description={`${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`]}`}
-                    type="success"
+                    message="Text Response Question"
+                    description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
+                    type="info"
                     showIcon
                   />
+                  {(currentQuestion.text_responses || []).length > 0 ? (
+                    <Card size="small" title="Latest responses">
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        {currentQuestion.text_responses.map((entry, idx) => (
+                          <div key={idx} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
+                            <Text strong>{entry.participant_name}</Text>
+                            <div><Text>{entry.text}</Text></div>
+                          </div>
+                        ))}
+                      </Space>
+                    </Card>
+                  ) : (
+                    <Text type="secondary">No text responses yet.</Text>
+                  )}
+                </Space>
+              ) : (
+                // Option-based Question View (MCQ/Scale)
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  {(currentQuestion.options || []).map((opt, idx) => {
+                    const total = currentQuestion.total_answers || 0
+                    const count = currentQuestion.answer_distribution?.[idx] || 0
+                    const pct = ((count / total * 100) || 0)
+                    const letter = String.fromCharCode(65 + idx)
+                    const isCorrect = currentQuestion.correct_answer === letter
+                    return (
+                      <div key={idx}>
+                        <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
+                          <Space direction="vertical">
+                            <Text strong>{isOptionQuestion && currentQuestion.question_type === 'mcq' ? `${letter}: ${opt}` : opt}</Text>
+                          </Space>
+                          <Text>{count} {t('quiz.responses')} ({pct.toFixed(1)}%)</Text>
+                        </Space>
+                        <Progress percent={pct} strokeColor={isCorrect ? '#52c41a' : '#1890ff'} />
+                      </div>
+                    )
+                  })}
+
+                  {(currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'scale') && currentQuestion.correct_answer && (
+                    <Alert
+                      message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
+                      description={
+                        currentQuestion.question_type === 'mcq'
+                          ? `${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || ''}`
+                          : ''
+                      }
+                      type="success"
+                      showIcon
+                    />
+                  )}
                 </Space>
               )}
 
