@@ -16,6 +16,7 @@ import {
   RocketOutlined,
   HistoryOutlined,
   StarOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -324,9 +325,17 @@ function Dashboard() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate('/quiz/new')}
+              onClick={() => navigate('/quiz/new?type=quiz')}
             >
               {t('quiz.createQuiz')}
+            </Button>
+            <Button
+              type="primary"
+              icon={<BarChartOutlined />}
+              onClick={() => navigate('/quiz/new?type=poll')}
+              style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
+            >
+              Create Poll
             </Button>
           </Space>
         }

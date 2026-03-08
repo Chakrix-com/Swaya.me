@@ -11,10 +11,10 @@ import {
   Row,
   Col,
   Progress,
+  Rate,
   message,
   Alert,
   Input,
-  Rate,
   Table,
   Popconfirm
 } from 'antd'
@@ -629,7 +629,23 @@ export default function QuizControl() {
               ) : (
                 // Option-based Question View (MCQ/Scale)
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  {(currentQuestion.options || []).map((opt, idx) => {
+                  {currentQuestion.question_type === 'scale' ? (() => {
+                    const dist = currentQuestion.answer_distribution || []
+                    const totalAns = currentQuestion.total_answers || 0
+                    let sum = 0
+                    dist.forEach((count, idx) => { sum += count * (idx + 1) })
+                    const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: 16 }}>
+                         <Text style={{ fontSize: 18 }}>Average Rating of {totalAns} Response{totalAns !== 1 ? 's' : ''}</Text>
+                         <Space align="baseline">
+                           <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
+                           <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
+                         </Space>
+                         <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 32, color: '#faad14' }} />
+                      </div>
+                    )
+                  })() : (currentQuestion.options || []).map((opt, idx) => {
                     const total = currentQuestion.total_answers || 0
                     const count = currentQuestion.answer_distribution?.[idx] || 0
                     const pct = ((count / total * 100) || 0)

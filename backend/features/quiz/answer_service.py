@@ -393,7 +393,7 @@ class AnswerService:
             
             try:
                 # Handle based on question type
-                if question_obj.question_type.value == 'mcq':
+                if question_obj.question_type.value in ('mcq', 'scale'):
                     # For MCQ, get full results with distribution
                     question_result = await self.get_question_results(
                         db,
@@ -431,13 +431,31 @@ class AnswerService:
                         } if question_obj.option_images else None
                     }
                 else:
-                    # Word Cloud question - no need for get_question_results
-                    # Just count total text answers
+                    # Text-based question: expose live response count
                     base_url = os.getenv('BASE_URL', 'http://localhost:8000')
-                    total_answers = db.query(Answer).filter(
+                    total_answers = db.query(func.count(Answer.id)).filter(
                         Answer.session_id == session_id,
                         Answer.question_id == question_obj.id
-                    ).count()
+                    ).scalar()
+                    
+                    text_responses = []
+                    if question_obj.question_type.value in ('single_line', 'paragraph'):
+                        # Fetch text responses for host view
+                        responses = db.query(Answer.text_answer, Participant.display_name)\
+                            .join(Participant, Participant.id == Answer.participant_id)\
+                            .filter(
+                                Answer.session_id == session_id,
+                                Answer.question_id == question_obj.id,
+                                Answer.text_answer.isnot(None)
+                            )\
+                            .order_by(Answer.created_at.desc())\
+                            .limit(50).all()
+                            
+                        text_responses = [
+                            {"text": text, "participant_name": name or "Guest"}
+                            for text, name in responses
+                            if text
+                        ]
                     
                     current_question = {
                         "id": question_obj.id,
@@ -446,6 +464,7 @@ class AnswerService:
                         "question_id": question_obj.id,
                         "question_text": question_obj.text,
                         "total_answers": total_answers,
+                        "text_responses": text_responses,
                         "question_image_url": ImageService.to_absolute_url(
                             question_obj.question_image_url, base_url
                         )

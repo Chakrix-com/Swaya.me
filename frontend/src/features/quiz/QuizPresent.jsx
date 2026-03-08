@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { Spin, Tag } from 'antd'
+import { Spin, Tag, Rate } from 'antd'
 import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -141,6 +141,60 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll })
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+/* ── Scale Question ──────────────────────────────────── */
+function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
+  const total = question.total_answers || 0
+  const dist = question.answer_distribution || []
+  let sum = 0
+  dist.forEach((count, idx) => { sum += count * (idx + 1) })
+  const avg = total > 0 ? (sum / total).toFixed(1) : 0
+
+  return (
+    <div className="pv-question-wrap">
+      <div className="pv-question-meta">
+        <Tag color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
+          Question {questionNumber} of {totalQuestions}
+        </Tag>
+        {total > 0 && (
+          <Tag color="geekblue" style={{ fontSize: 12 }}>
+            {total} response{total !== 1 ? 's' : ''}
+          </Tag>
+        )}
+        {revealed && (
+          <Tag color="geekblue" style={{ fontSize: 12 }}>
+            Statistics shown
+          </Tag>
+        )}
+      </div>
+
+      {question.question_image_url && (
+        <div className="pv-question-img-wrap">
+          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+        </div>
+      )}
+
+      <p className="pv-question-text">{question.text || question.question_text}</p>
+
+      {revealed ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 0', gap: 24 }}>
+          <div style={{ fontSize: 24, color: 'rgba(255,255,255,0.85)' }}>Average Rating</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+            <span style={{ fontSize: 84, fontWeight: 700, color: '#faad14', lineHeight: 1 }}>{avg}</span>
+            <span style={{ fontSize: 32, color: 'rgba(255,255,255,0.45)' }}>/ 5</span>
+          </div>
+          <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 56, color: '#faad14' }} />
+        </div>
+      ) : (
+        <div className="pv-center-fill" style={{ minHeight: 300 }}>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 20 }}>
+             Waiting to reveal average rating...
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -733,6 +787,8 @@ export default function QuizPresent() {
           />
         ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
           <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} />
+        ) : currentQ?.question_type === 'scale' ? (
+          <ScaleView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} />
         ) : (
           <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} />
         )}
