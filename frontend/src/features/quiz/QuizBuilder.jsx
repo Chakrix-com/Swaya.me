@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
 import { 
@@ -425,7 +425,12 @@ export default function QuizBuilder() {
     D: null
   })
   
-  // Temp image state (for new questions without ID)
+  const location = useLocation()
+  
+  // Extract query params for initial creation (e.g. ?type=poll)
+  const searchParams = new URLSearchParams(location.search)
+  const initialQuizType = searchParams.get('type') === 'poll' ? 'poll' : 'quiz'
+
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
     optionA: null,
@@ -436,13 +441,18 @@ export default function QuizBuilder() {
   
   // Loading state for moving temp images
   const [movingImages, setMovingImages] = useState(false)
-  const isPoll = quiz?.quiz_type === 'poll'
+  const isPoll = quiz?.quiz_type === 'poll' || (!quiz && initialQuizType === 'poll')
 
   useEffect(() => {
     if (id) {
       loadQuiz()
+    } else {
+      // For new quizzes, set initial form values based on URL param
+      form.setFieldsValue({
+        quiz_type: initialQuizType
+      })
     }
-  }, [id])
+  }, [id, initialQuizType, form])
 
   const loadQuiz = useCallback(async () => {
     try {
@@ -788,7 +798,7 @@ export default function QuizBuilder() {
         )}
       </Space>
 
-      <Card title={id ? t('quiz.editQuiz') : t('quiz.createNewQuiz')} style={{ marginBottom: 24, width: '100%' }}>
+      <Card title={id ? t('quiz.editQuiz') : (initialQuizType === 'poll' ? 'Create New Poll' : t('quiz.createNewQuiz'))} style={{ marginBottom: 24, width: '100%' }}>
         {quiz && (
           <Space style={{ marginBottom: 16 }}>
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
@@ -815,27 +825,28 @@ export default function QuizBuilder() {
         >
           <Form.Item
             name="title"
-            label={t('quiz.quizTitle')}
-            rules={[{ required: true, message: t('quiz.quizTitleRequired') }]}
+            label={isPoll ? 'Poll Title' : t('quiz.quizTitle')}
+            rules={[{ required: true, message: isPoll ? 'Please enter a poll title' : t('quiz.quizTitleRequired') }]}
           >
-            <Input placeholder={t('quiz.enterQuizTitle')} size="large" />
+            <Input placeholder={isPoll ? 'Enter poll title' : t('quiz.enterQuizTitle')} size="large" />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label={t('quiz.quizDescription')}
+            label={isPoll ? 'Poll Description' : t('quiz.quizDescription')}
           >
-            <TextArea rows={3} placeholder={t('quiz.enterQuizDescription')} />
+            <TextArea rows={3} placeholder={isPoll ? 'Enter poll description' : t('quiz.enterQuizDescription')} />
           </Form.Item>
 
           <Form.Item
             name="quiz_type"
             label="Mode"
             initialValue="quiz"
+            hidden
           >
             <Radio.Group>
-              <Radio value="quiz">Quiz (with score/leaderboard)</Radio>
-              <Radio value="poll">Poll (no score/leaderboard)</Radio>
+              <Radio value="quiz">Quiz</Radio>
+              <Radio value="poll">Poll</Radio>
             </Radio.Group>
           </Form.Item>
 
@@ -845,7 +856,7 @@ export default function QuizBuilder() {
             icon={<SaveOutlined />}
             loading={loading}
           >
-            {id ? t('quiz.editQuiz') : t('quiz.createQuiz')}
+            {id ? (isPoll ? 'Update Poll' : t('quiz.editQuiz')) : (isPoll ? 'Create Poll' : t('quiz.createQuiz'))}
           </Button>
         </Form>
       </Card>

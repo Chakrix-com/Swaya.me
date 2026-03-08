@@ -52,8 +52,8 @@ function AudienceJoin() {
       </div>
 
       <div className="container overflow-hidden py-4">
-        <div className="row justify-content-center">
-          <div className="col-12 col-sm-8 col-md-6 col-lg-4">
+        <div className="row justify-content-center mx-0">
+          <div className="col-12 col-sm-8 col-md-6 col-lg-4 px-0 px-sm-3">
             <Card title={t('audience.joinQuiz')}>
               <Form form={form} name="join" onFinish={onFinish} layout="vertical">
                 <Form.Item

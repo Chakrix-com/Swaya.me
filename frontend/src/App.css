@@ -176,6 +176,19 @@
   color: var(--aud-input-placeholder) !important;
 }
 
+@media screen and (max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on inputs which forces users to manually zoom out */
+  .audience-join .ant-input,
+  .audience-session .ant-input,
+  .audience-join .ant-input-textarea textarea,
+  .audience-session .ant-input-textarea textarea,
+  .audience-join input,
+  .audience-session input {
+    font-size: 16px !important;
+  }
+}
+
+
 .audience-session .ant-table,
 .audience-session .ant-table-container table {
   background: transparent;

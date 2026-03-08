@@ -137,9 +137,6 @@ export default function AudienceSession() {
   }
 
   const handleSubmitAnswer = async () => {
-    const isWordCloud = currentQuestion?.question_type === 'word_cloud'
-    const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
-    const isScaleQuestion = currentQuestion?.question_type === 'scale'
     if (isTextQuestion ? !wordCloudAnswer?.trim() : selectedAnswer === null) return
 
     setLoading(true)
@@ -286,9 +283,9 @@ export default function AudienceSession() {
 
   return (
     <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <div className="container overflow-hidden py-3">
-        <div className="row justify-content-center">
-          <div className="col-12 col-sm-10 col-md-8 col-lg-7" style={{ position: 'relative', overflowX: 'hidden', minWidth: 0 }}>
+      <div className="container py-3">
+        <div className="row justify-content-center mx-0">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-7 px-0 px-sm-3" style={{ position: 'relative', overflowX: 'hidden', minWidth: 0 }}>
 
             {/* ── No session token ── */}
             {!sessionToken && (
@@ -516,33 +513,18 @@ export default function AudienceSession() {
                   ) : !submitted ? (
                     <>
                       {isScaleQuestion ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-                          {(currentQuestion.options || ['1', '2', '3', '4', '5']).map((label, idx) => {
-                            const key = String(idx)
-                            const isSelected = selectedAnswer === key
-                            return (
-                              <div
-                                key={key}
-                                onClick={() => setSelectedAnswer(key)}
-                                style={{
-                                  display: 'block',
-                                  width: '100%',
-                                  padding: '12px 16px',
-                                  border: `2px solid ${isSelected ? '#1890ff' : '#d9d9d9'}`,
-                                  borderRadius: 8,
-                                  backgroundColor: isSelected ? '#e6f7ff' : 'white',
-                                  cursor: 'pointer',
-                                  boxSizing: 'border-box',
-                                  wordBreak: 'break-word',
-                                  color: 'var(--aud-input-text)',
-                                  textAlign: 'center',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {label}
-                              </div>
-                            )
-                          })}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', alignItems: 'center', padding: '24px 0' }}>
+                          <Text style={{ fontSize: 18, color: 'var(--aud-input-text)' }}>Tap a star to rate:</Text>
+                          <Rate
+                            className="audience-rate-stars"
+                            style={{ fontSize: 48, color: '#faad14' }}
+                            value={selectedAnswer ? Number(selectedAnswer) + 1 : 0}
+                            onChange={(val) => {
+                              // We submit 0-indexed values for our backend (0 = 1 star, 4 = 5 stars)
+                              if (val > 0) setSelectedAnswer(String(val - 1))
+                            }}
+                          />
+                          <Text type="secondary">{selectedAnswer ? `Selected: ${Number(selectedAnswer) + 1} Star${Number(selectedAnswer) !== 0 ? 's' : ''}` : 'No rating selected'}</Text>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
@@ -599,30 +581,24 @@ export default function AudienceSession() {
                   ) : (
                     <>
                       <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                        {isScaleQuestion ? (currentQuestion.options || ['1', '2', '3', '4', '5']).map((label, idx) => {
+                        {isScaleQuestion ? (() => {
                           const dist = currentQuestion.answer_distribution || []
                           const totalAns = currentQuestion.total_answers || 0
-                          const count = dist[idx] || 0
-                          const pct = totalAns > 0 ? (count / totalAns * 100) : 0
-                          const selected = selectedAnswer === String(idx)
+                          let sum = 0
+                          dist.forEach((count, idx) => { sum += count * (idx + 1) })
+                          const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
                           return (
-                            <div key={idx} style={{
-                              border: `2px solid ${selected ? '#1890ff' : '#d9d9d9'}`,
-                              borderRadius: 8,
-                              padding: '12px 16px',
-                              background: selected ? '#e6f7ff' : '#fafafa',
-                              color: 'var(--aud-input-text)',
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                <span style={{ fontWeight: 600 }}>{label}</span>
-                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
-                                  {count} ({pct.toFixed(1)}%)
-                                </span>
-                              </div>
-                              <Progress percent={parseFloat(pct.toFixed(1))} strokeColor="#1890ff" showInfo={false} size="small" />
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: 16 }}>
+                               <Text style={{ fontSize: 18 }}>Average Rating</Text>
+                               <Space align="baseline">
+                                 <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
+                                 <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
+                               </Space>
+                               <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 32, color: '#faad14' }} />
+                               <Text type="secondary">{totalAns} rating{totalAns !== 1 ? 's' : ''}</Text>
                             </div>
                           )
-                        }) : isPoll ? ['A', 'B', 'C', 'D'].map((key) => {
+                        })() : isPoll ? ['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
                           const idx = key.charCodeAt(0) - 65
                           const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]

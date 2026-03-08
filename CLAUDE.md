@@ -254,3 +254,9 @@ Project documentation in `Docs/`:
 - `auth.md` — authentication design
 - `business_scope.md` — business context
 - `UI_Requirements.md` — UI specs
+
+---
+
+## AI Agent Operating Instructions
+
+This application is currently running from the domain www.swaya.me served via nginix from the folders frontend and backend. Restart backend/frontend as required after each change elevating privilages using sudo when required. Docker, if used, must only be for selenuim testing.
