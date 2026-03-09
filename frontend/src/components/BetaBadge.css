@@ -1,0 +1,23 @@
+.beta-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid #1677ff;
+  background: rgba(22, 119, 255, 0.12);
+  color: #0b63d1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.visitor-theme--dark .beta-badge {
+  border-color: rgba(24, 144, 255, 0.75);
+  background: rgba(24, 144, 255, 0.22);
+  color: #d9ebff;
+}

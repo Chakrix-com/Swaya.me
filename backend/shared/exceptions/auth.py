@@ -41,3 +41,8 @@ class TenantNotFoundError(AuthenticationError):
 class DuplicateUserError(Exception):
     """User with email already exists"""
     pass
+
+
+class EmailNotVerifiedError(AuthenticationError):
+    """Email address has not been verified"""
+    pass

@@ -11,6 +11,14 @@
   border-bottom: none;
 }
 
+.dashboard-action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
 .quiz-item-meta {
   flex: 1 1 0;
   min-width: 0;
@@ -53,7 +61,14 @@
     width: 100%;
   }
 
-  .dashboard-page .ant-pro-card-extra .ant-btn {
+  .dashboard-action-buttons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .dashboard-action-buttons .ant-btn {
     width: 100%;
   }
 

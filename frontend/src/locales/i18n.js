@@ -8,6 +8,10 @@ import teTranslation from './te/translation.json'
 import kaTranslation from './ka/translation.json'
 import bnTranslation from './bn/translation.json'
 import guTranslation from './gu/translation.json'
+import esTranslation from './es/translation.json'
+import frTranslation from './fr/translation.json'
+import ruTranslation from './ru/translation.json'
+import deTranslation from './de/translation.json'
 
 const resources = {
   en: {
@@ -30,6 +34,18 @@ const resources = {
   },
   gu: {
     translation: guTranslation,
+  },
+  es: {
+    translation: esTranslation,
+  },
+  de: {
+    translation: deTranslation,
+  },
+  fr: {
+    translation: frTranslation,
+  },
+  ru: {
+    translation: ruTranslation,
   },
 }
 
@@ -54,4 +70,3 @@ if (savedLanguage) {
 }
 
 export default i18n
-

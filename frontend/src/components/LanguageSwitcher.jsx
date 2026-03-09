@@ -17,6 +17,10 @@ const LanguageSwitcher = () => {
     { label: 'ಕನ್ನಡ', value: 'ka' },
     { label: 'বাঙ্গালি', value: 'bn' },
     { label: 'ગુજરાતી', value: 'gu' },
+    { label: 'Español', value: 'es' },
+    { label: 'Deutsch', value: 'de' },
+    { label: 'Français', value: 'fr' },
+    { label: 'Русский', value: 'ru' },
   ]
 
   const handleLanguageChange = async (value) => {
@@ -67,8 +71,7 @@ const LanguageSwitcher = () => {
       value={i18n.language}
       onChange={handleLanguageChange}
       options={languages}
-      style={{ width: 150 }}
-      prefix={<GlobalOutlined />}
+      style={{ width: 120 }}
       suffixIcon={<GlobalOutlined />}
     />
   )

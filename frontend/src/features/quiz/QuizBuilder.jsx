@@ -125,6 +125,11 @@ const QuestionForm = ({
         form={questionForm}
         layout="vertical"
         onFinish={onSave}
+        onFinishFailed={(errorInfo) => {
+          const errors = errorInfo.errorFields.map(f => f.errors.join(', ')).join(' | ');
+          message.warning('Form validation failed: ' + errors);
+          console.error('Validation failed:', errorInfo);
+        }}
         initialValues={{
           question_type: 'mcq',
           correct_answer: isPoll ? undefined : 'A'
@@ -137,10 +142,10 @@ const QuestionForm = ({
         >
           <Radio.Group onChange={handleTypeChange}>
             <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
-            <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>
+            {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
             <Radio value="single_line">Single Line</Radio>
-            <Radio value="scale">Scale (1-5)</Radio>
-            <Radio value="paragraph">Paragraph</Radio>
+            {isPoll && <Radio value="scale">Scale (1-5)</Radio>}
+            {isPoll && <Radio value="paragraph">Paragraph</Radio>}
           </Radio.Group>
         </Form.Item>
 
@@ -149,7 +154,13 @@ const QuestionForm = ({
           label={t('quiz.question')}
           rules={[{ required: true, message: t('quiz.questionRequired') }]}
         >
-          <TextArea rows={2} placeholder={t('quiz.enterQuestion')} />
+          <TextArea 
+            rows={2} 
+            placeholder={t('quiz.enterQuestion')} 
+            spellCheck="true"
+            lang={t('common.langCode', { defaultValue: 'en' })}
+            onContextMenu={(e) => e.stopPropagation()}
+          />
         </Form.Item>
 
         {/* Question Image Upload */}
@@ -183,7 +194,12 @@ const QuestionForm = ({
               label={t('quiz.optionA')}
               rules={[{ required: true, message: t('quiz.optionARequired') }]}
             >
-              <Input placeholder={t('quiz.optionAPlaceholder')} />
+              <Input 
+                placeholder={t('quiz.optionAPlaceholder')} 
+                spellCheck="true"
+                lang={t('common.langCode', { defaultValue: 'en' })}
+                onContextMenu={(e) => e.stopPropagation()}
+              />
             </Form.Item>
             
             {/* Option A Image Upload */}
@@ -208,7 +224,12 @@ const QuestionForm = ({
               label={t('quiz.optionB')}
               rules={[{ required: true, message: t('quiz.optionBRequired') }]}
             >
-              <Input placeholder={t('quiz.optionBPlaceholder')} />
+              <Input 
+                placeholder={t('quiz.optionBPlaceholder')} 
+                spellCheck="true"
+                lang={t('common.langCode', { defaultValue: 'en' })}
+                onContextMenu={(e) => e.stopPropagation()}
+              />
             </Form.Item>
             
             {/* Option B Image Upload */}
@@ -233,7 +254,12 @@ const QuestionForm = ({
               label={t('quiz.optionC')}
               rules={[{ required: true, message: t('quiz.optionCRequired') }]}
             >
-              <Input placeholder={t('quiz.optionCPlaceholder')} />
+              <Input 
+                placeholder={t('quiz.optionCPlaceholder')} 
+                spellCheck="true"
+                lang={t('common.langCode', { defaultValue: 'en' })}
+                onContextMenu={(e) => e.stopPropagation()}
+              />
             </Form.Item>
             
             {/* Option C Image Upload */}
@@ -258,7 +284,12 @@ const QuestionForm = ({
               label={t('quiz.optionD')}
               rules={[{ required: true, message: t('quiz.optionDRequired') }]}
             >
-              <Input placeholder={t('quiz.optionDPlaceholder')} />
+              <Input 
+                placeholder={t('quiz.optionDPlaceholder')} 
+                spellCheck="true"
+                lang={t('common.langCode', { defaultValue: 'en' })}
+                onContextMenu={(e) => e.stopPropagation()}
+              />
             </Form.Item>
             
             {/* Option D Image Upload */}
@@ -306,13 +337,20 @@ const QuestionForm = ({
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
               Participants submit one short text response.
             </Text>
-            <Form.Item
-              name="expected_answer"
-              label={t('quiz.correctAnswer')}
-              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
-            >
-              <Input placeholder="Enter expected answer" />
-            </Form.Item>
+            {!isPoll && (
+              <Form.Item
+                name="expected_answer"
+                label={t('quiz.correctAnswer')}
+                rules={[{ required: !isPoll, message: t('quiz.correctAnswerRequired') }]}
+              >
+                <Input 
+                  placeholder="Enter expected answer" 
+                  spellCheck="true"
+                  lang={t('common.langCode', { defaultValue: 'en' })}
+                  onContextMenu={(e) => e.stopPropagation()}
+                />
+              </Form.Item>
+            )}
           </>
         )}
 
@@ -321,13 +359,21 @@ const QuestionForm = ({
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
               Participants submit a longer free-text response.
             </Text>
-            <Form.Item
-              name="expected_answer"
-              label={t('quiz.correctAnswer')}
-              rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
-            >
-              <TextArea rows={3} placeholder="Enter expected answer guidance" />
-            </Form.Item>
+            {!isPoll && (
+              <Form.Item
+                name="expected_answer"
+                label={t('quiz.correctAnswer')}
+                rules={[{ required: !isPoll, message: t('quiz.correctAnswerRequired') }]}
+              >
+                <TextArea 
+                  rows={3} 
+                  placeholder="Enter expected answer guidance" 
+                  spellCheck="true"
+                  lang={t('common.langCode', { defaultValue: 'en' })}
+                  onContextMenu={(e) => e.stopPropagation()}
+                />
+              </Form.Item>
+            )}
           </>
         )}
 
@@ -409,7 +455,7 @@ const MemoizedQuestionForm = memo(QuestionForm, arePropsEqual)
 export default function QuizBuilder() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [quiz, setQuiz] = useState(null)
@@ -521,7 +567,13 @@ export default function QuizBuilder() {
         navigate(`/quiz/${response.data.id}/edit`)
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || t('quiz.saveError')
+      let detail = error.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        detail = detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+      } else if (typeof detail === 'object') {
+        detail = JSON.stringify(detail);
+      }
+      const errorMsg = detail || t('quiz.saveError');
       message.error(errorMsg)
       console.error('Save quiz error:', error.response?.data || error)
     } finally {
@@ -551,7 +603,7 @@ export default function QuizBuilder() {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
-        questionData.options = [values.expected_answer]
+        questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
         questionData.correct_answer_index = null
       } else {
         questionData.options = null
@@ -636,7 +688,13 @@ export default function QuizBuilder() {
       console.log('Quiz reloaded successfully')
       setEditingQuestion(null)
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || t('quiz.addQuestionError')
+      let detail = error.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        detail = detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+      } else if (typeof detail === 'object') {
+        detail = JSON.stringify(detail);
+      }
+      const errorMsg = detail || t('quiz.addQuestionError');
       message.error(errorMsg)
       console.error('Add question error:', error.response?.data || error)
     } finally {
@@ -697,7 +755,7 @@ export default function QuizBuilder() {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
-        questionData.options = [values.expected_answer]
+        questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
         questionData.correct_answer_index = null
       } else {
         questionData.options = null
@@ -709,7 +767,13 @@ export default function QuizBuilder() {
       loadQuiz()
       setEditingQuestion(null)
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || t('quiz.updateQuestionError')
+      let detail = error.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        detail = detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+      } else if (typeof detail === 'object') {
+        detail = JSON.stringify(detail);
+      }
+      const errorMsg = detail || t('quiz.updateQuestionError');
       message.error(errorMsg)
       console.error('Update question error:', error.response?.data || error)
     } finally {
@@ -784,7 +848,7 @@ export default function QuizBuilder() {
             onClick={handlePublish}
             loading={loading}
           >
-            {t('quiz.publishQuiz')}
+            {isPoll ? 'Publish Poll' : t('quiz.publishQuiz')}
           </Button>
         )}
         {quiz && quiz.status === 'ready' && (
@@ -793,7 +857,7 @@ export default function QuizBuilder() {
             onClick={handleUnpublish}
             loading={loading}
           >
-            {t('quiz.unpublishQuiz')}
+            {isPoll ? 'Unpublish Poll' : t('quiz.unpublishQuiz')}
           </Button>
         )}
       </Space>
@@ -828,14 +892,24 @@ export default function QuizBuilder() {
             label={isPoll ? 'Poll Title' : t('quiz.quizTitle')}
             rules={[{ required: true, message: isPoll ? 'Please enter a poll title' : t('quiz.quizTitleRequired') }]}
           >
-            <Input placeholder={isPoll ? 'Enter poll title' : t('quiz.enterQuizTitle')} size="large" />
+            <Input 
+              placeholder={isPoll ? 'Enter poll title' : t('quiz.enterQuizTitle')} 
+              size="large"
+              spellCheck="true"
+              lang={i18n.language}
+            />
           </Form.Item>
 
           <Form.Item
             name="description"
             label={isPoll ? 'Poll Description' : t('quiz.quizDescription')}
           >
-            <TextArea rows={3} placeholder={isPoll ? 'Enter poll description' : t('quiz.enterQuizDescription')} />
+            <TextArea 
+              rows={3} 
+              placeholder={isPoll ? 'Enter poll description' : t('quiz.enterQuizDescription')} 
+              spellCheck="true"
+              lang={i18n.language}
+            />
           </Form.Item>
 
           <Form.Item

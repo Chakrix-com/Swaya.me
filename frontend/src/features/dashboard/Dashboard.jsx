@@ -222,7 +222,7 @@ function Dashboard() {
   }
 
   const getQuizTypeColor = (quizType) => (quizType === 'poll' ? 'purple' : 'blue')
-  const getQuizTypeLabel = (quizType) => (quizType === 'poll' ? 'Poll' : 'Quiz')
+  const getQuizTypeLabel = (quizType) => (quizType === 'poll' ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' }))
 
   // Calculate quiz statistics
   const statistics = useMemo(() => {
@@ -274,7 +274,7 @@ function Dashboard() {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Total Quizzes"
+              title={t('admin.stats.totalQuizzes')}
               value={statistics.total}
               prefix={<FileTextOutlined />}
               valueStyle={{ color: '#1890ff' }}
@@ -284,7 +284,7 @@ function Dashboard() {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Ready to Launch"
+              title={t('dashboard.readyToLaunch', { defaultValue: 'Ready to Launch' })}
               value={statistics.byStatus.ready}
               prefix={<RocketOutlined />}
               valueStyle={{ color: '#52c41a' }}
@@ -294,7 +294,7 @@ function Dashboard() {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Drafts"
+              title={t('dashboard.drafts', { defaultValue: 'Drafts' })}
               value={statistics.byStatus.draft}
               prefix={<EditFilled />}
               valueStyle={{ color: '#faad14' }}
@@ -304,7 +304,7 @@ function Dashboard() {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Total Questions"
+              title={t('dashboard.totalQuestions', { defaultValue: 'Total Questions' })}
               value={statistics.totalQuestions}
               prefix={<CheckCircleOutlined />}
               valueStyle={{ color: '#722ed1' }}
@@ -318,7 +318,7 @@ function Dashboard() {
         title={t('quiz.myQuizzes')}
         style={{ overflowX: 'hidden' }}
         extra={
-          <Space>
+          <div className="dashboard-action-buttons">
             <Button icon={<StarOutlined />} onClick={openTemplateModal}>
               {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
             </Button>
@@ -335,9 +335,9 @@ function Dashboard() {
               onClick={() => navigate('/quiz/new?type=poll')}
               style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
             >
-              Create Poll
+              {t('quiz.createPoll', { defaultValue: 'Create Poll' })}
             </Button>
-          </Space>
+          </div>
         }
       >
       <div style={{ width: '100%', overflow: 'hidden' }}>
@@ -439,7 +439,7 @@ function Dashboard() {
               dataIndex: 'title',
             },
             {
-              title: 'Type',
+              title: t('dashboard.type', { defaultValue: 'Type' }),
               dataIndex: 'quiz_type',
               width: 110,
               render: (value) => (

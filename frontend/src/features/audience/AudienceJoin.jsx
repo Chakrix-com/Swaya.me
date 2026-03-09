@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message } from 'antd'
+import { Form, Input, Button, Card, message, Space } from 'antd'
 import { LoginOutlined } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
 import { useDispatch } from 'react-redux'
 import { setSession } from '../../store/sessionSlice'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
+import BetaBadge from '../../components/BetaBadge'
 
 function AudienceJoin() {
   const { t } = useTranslation()
@@ -27,12 +28,12 @@ function AudienceJoin() {
     try {
       const response = await sessionAPI.join(values)
       dispatch(setSession(response.data))
-      message.success(t('audience.joinSuccess') || 'Joined successfully!')
+      message.success(t('audience.joinSuccess'))
       navigate(`/session/${response.data.session_id}`, {
         state: {
           sessionToken: response.data.session_token,
           sessionId: response.data.session_id,
-          displayName: values.display_name || 'Guest'
+          displayName: values.display_name || t('audience.guest', { defaultValue: 'Guest' })
         }
       })
     } catch (error) {
@@ -54,16 +55,23 @@ function AudienceJoin() {
       <div className="container overflow-hidden py-4">
         <div className="row justify-content-center mx-0">
           <div className="col-12 col-sm-8 col-md-6 col-lg-4 px-0 px-sm-3">
-            <Card title={t('audience.joinQuiz')}>
+            <Card
+              title={(
+                <Space size={8}>
+                  <span>{t('audience.joinQuiz')}</span>
+                  <BetaBadge />
+                </Space>
+              )}
+            >
               <Form form={form} name="join" onFinish={onFinish} layout="vertical">
                 <Form.Item
                   label={t('audience.sessionCode')}
                   name="join_code"
-                  rules={[{ required: true, message: `${t('audience.sessionCode')} is required` }]}
+                  rules={[{ required: true, message: t('audience.sessionCodeRequired', { defaultValue: 'Session Code is required' }) }]}
                   getValueFromEvent={(e) => e.target.value.replace(/\D/g, '').slice(0, 6)}
                 >
                   <Input
-                    placeholder="Enter 6-digit code"
+                    placeholder={t('audience.enterSixDigitCode', { defaultValue: 'Enter 6-digit code' })}
                     maxLength={6}
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -72,7 +80,7 @@ function AudienceJoin() {
                 </Form.Item>
 
                 <Form.Item label={t('audience.displayName')} name="display_name">
-                  <Input placeholder={`${t('audience.displayName')} (Optional)`} />
+                  <Input placeholder={t('audience.displayNameOptional', { defaultValue: 'Your Name (Optional)' })} />
                 </Form.Item>
 
                 <Form.Item>

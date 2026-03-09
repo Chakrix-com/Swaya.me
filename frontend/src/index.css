@@ -162,6 +162,15 @@ canvas {
   border-block-start-color: var(--visitor-panel-border) !important;
 }
 
+/* Fix Antd Rate component inactive star visibility in dark mode */
+.visitor-theme--dark .ant-rate .ant-rate-star-zero .ant-rate-star-first,
+.visitor-theme--dark .ant-rate .ant-rate-star-zero .ant-rate-star-second,
+.visitor-theme--dark .ant-rate .ant-rate-star-half .ant-rate-star-second,
+.visitor-theme--dark .ant-rate .ant-rate-star:not(.ant-rate-star-full):not(.ant-rate-star-half) .ant-rate-star-first,
+.visitor-theme--dark .ant-rate .ant-rate-star:not(.ant-rate-star-full):not(.ant-rate-star-half) .ant-rate-star-second {
+  color: rgba(255, 255, 255, 0.15) !important;
+}
+
 /* Remove blue box-shadow from ProLayout fixed header */
 .ant-pro-layout .ant-layout-header,
 .ant-pro-global-header,

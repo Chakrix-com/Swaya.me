@@ -58,6 +58,14 @@ class User(Base, TimestampMixin):
     is_active = Column(Boolean, default=True, nullable=False)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user, server_default="user")
     
+    # Email Verification
+    is_email_verified = Column(Boolean, default=False, nullable=False, server_default="0")
+    email_verification_token = Column(String(255), nullable=True)
+    
+    # Password Reset
+    reset_password_token = Column(String(255), unique=True, nullable=True)
+    reset_password_expires_at = Column(DateTime(timezone=True), nullable=True)
+    
     # Activity tracking
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     login_count = Column(Integer, nullable=False, default=0, server_default="0")

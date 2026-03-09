@@ -30,6 +30,11 @@
 }
 
 .pv-sidebar-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 14px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);

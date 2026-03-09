@@ -26,6 +26,7 @@ import {
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 import { useTranslation } from 'react-i18next'
+import BetaBadge from '../../components/BetaBadge'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -79,13 +80,13 @@ export default function AudienceSession() {
 
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
-          message.success('Quiz has ended! Thank you for participating!')
+          message.success(t('audience.quizEndedThanks', { defaultValue: 'Quiz has ended! Thank you for participating!' }))
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current)
             pollingIntervalRef.current = null
           }
         } else if (newStatus === 'active' && sessionStatus === 'created') {
-          message.info('Quiz is starting!')
+          message.info(t('audience.quizStarting', { defaultValue: 'Quiz is starting!' }))
         }
       }
       setSessionStatus(newStatus)
@@ -111,7 +112,7 @@ export default function AudienceSession() {
           clearInterval(pollingIntervalRef.current)
           pollingIntervalRef.current = null
         }
-        message.warning('Session has been restarted. Please rejoin with the new code.')
+        message.warning(t('audience.sessionRestarted', { defaultValue: 'Session has been restarted. Please rejoin with the new code.' }))
       }
     }
     if (latestResults?.quiz_type !== 'poll') {
@@ -183,9 +184,9 @@ export default function AudienceSession() {
         display_name: displayName,
       })
       setFeedbackSubmitted(true)
-      message.success('Thank you for your feedback')
+      message.success(t('audience.feedbackThanks', { defaultValue: 'Thank you for your feedback' }))
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to submit feedback')
+      message.error(error.response?.data?.detail || t('audience.feedbackSubmitFailed', { defaultValue: 'Failed to submit feedback' }))
     } finally {
       setFeedbackSubmitting(false)
     }
@@ -211,7 +212,7 @@ export default function AudienceSession() {
       ellipsis: false,
       render: (name, record) => (
         <span style={{ ...(record.is_current_participant ? { fontWeight: 700, color: '#1890ff' } : {}), whiteSpace: 'normal', wordBreak: 'break-word' }}>
-          {name}{record.is_current_participant ? ' (You)' : ''}
+          {name}{record.is_current_participant ? ` (${t('audience.you', { defaultValue: 'You' })})` : ''}
         </span>
       )
     },
@@ -267,7 +268,7 @@ export default function AudienceSession() {
             </div>
             {leaderboard.entries.length > 10 && (
               <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--aud-text-secondary)', fontSize: 12 }}>
-                +{leaderboard.entries.length - 10} more participants
+                {t('audience.moreParticipants', { count: leaderboard.entries.length - 10, defaultValue: `+${leaderboard.entries.length - 10} more participants` })}
               </div>
             )}
           </>
@@ -286,16 +287,19 @@ export default function AudienceSession() {
       <div className="container py-3">
         <div className="row justify-content-center mx-0">
           <div className="col-12 col-sm-10 col-md-8 col-lg-7 px-0 px-sm-3" style={{ position: 'relative', overflowX: 'hidden', minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <BetaBadge />
+            </div>
 
             {/* ── No session token ── */}
             {!sessionToken && (
               <Result
                 status="error"
-                title="No Session Found"
-                subTitle="Please join a session first"
+                title={t('audience.noSessionFound', { defaultValue: 'No Session Found' })}
+                subTitle={t('audience.pleaseJoinFirst', { defaultValue: 'Please join a session first' })}
                 extra={
                   <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')}>
-                    Go to Join Page
+                    {t('audience.goToJoinPage', { defaultValue: 'Go to Join Page' })}
                   </Button>
                 }
               />
@@ -307,11 +311,11 @@ export default function AudienceSession() {
                 <Result
                   status="warning"
                   icon={<CloseCircleOutlined style={{ color: '#faad14' }} />}
-                  title="Session Restarted"
-                  subTitle="The host has started a new quiz session"
+                  title={t('audience.sessionRestartedTitle', { defaultValue: 'Session Restarted' })}
+                  subTitle={t('audience.sessionRestartedSubtitle', { defaultValue: 'The host has started a new quiz session' })}
                   extra={
                     <Button type="primary" icon={<LoginOutlined />} onClick={() => navigate('/join')} size="large">
-                      Rejoin Quiz
+                      {t('audience.rejoinQuiz', { defaultValue: 'Rejoin Quiz' })}
                     </Button>
                   }
                 />
@@ -324,20 +328,20 @@ export default function AudienceSession() {
                 <Result
                   status="success"
                   icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                  title="Quiz Completed!"
+                  title={t('audience.quizCompleted', { defaultValue: 'Quiz Completed!' })}
                   subTitle={
                     <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
                       {isPoll ? (
                         <Title level={4} style={{ margin: 0 }}>
-                          Poll completed
+                          {t('quizPresent.pollCompleted', { defaultValue: 'Poll completed' })}
                         </Title>
                       ) : (
                         <>
                           <Title level={4} style={{ margin: 0 }}>
-                            Your Score: {results?.participant_correct || 0}/{results?.total_questions || 0}
+                            {t('audience.yourScore', { defaultValue: 'Your Score' })}: {results?.participant_correct || 0}/{results?.total_questions || 0}
                           </Title>
                           <Text type="secondary">
-                            You got {results?.participant_correct || 0} correct answer{(results?.participant_correct || 0) !== 1 ? 's' : ''}!
+                            {t('audience.correctAnswersCount', { count: results?.participant_correct || 0 })}
                           </Text>
                         </>
                       )}
@@ -345,12 +349,12 @@ export default function AudienceSession() {
                         color="blue"
                         style={{ marginTop: 8, maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}
                       >
-                        Joined as: {displayName}
+                        {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
                       </Tag>
                       <LeaderboardTable />
                       <Card size="small" style={{ width: '100%', marginTop: 16 }}>
                         <Space direction="vertical" style={{ width: '100%' }}>
-                          <Text strong>Share Feedback</Text>
+                          <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
                           <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
                           <TextArea
                             rows={3}
@@ -358,7 +362,7 @@ export default function AudienceSession() {
                             showCount
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Tell us what worked well or what can improve"
+                            placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
                             disabled={feedbackSubmitted}
                           />
                           <Button
@@ -367,13 +371,13 @@ export default function AudienceSession() {
                             loading={feedbackSubmitting}
                             disabled={feedbackSubmitted || !feedbackText.trim()}
                           >
-                            {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                            {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
                           </Button>
                         </Space>
                       </Card>
                     </Space>
                   }
-                  extra={<Text type="secondary">Thank you for participating!</Text>}
+                  extra={<Text type="secondary">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</Text>}
                 />
               </Card>
             )}
@@ -384,13 +388,13 @@ export default function AudienceSession() {
                   <Space direction="vertical" align="center" style={{ width: '100%' }}>
                     <LoadingOutlined style={{ fontSize: 48 }} />
                     <Title level={3}>
-                      {sessionStatus === 'created' ? 'Waiting for quiz to start...' : 'Waiting for next question...'}
+                      {sessionStatus === 'created' ? t('audience.waiting') : t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
                     </Title>
                     <Text type="secondary">
-                      {sessionStatus === 'created' ? 'The quiz will start soon' : 'Host is preparing the next question'}
+                      {sessionStatus === 'created' ? t('audience.quizWillStartSoon', { defaultValue: 'The quiz will start soon' }) : t('audience.hostPreparingNextQuestion', { defaultValue: 'Host is preparing the next question' })}
                     </Text>
                     <Tag color="blue" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                      Joined as: {displayName}
+                      {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
                     </Tag>
                   </Space>
                 </Card>
@@ -401,11 +405,11 @@ export default function AudienceSession() {
               <>
                 <Card style={{ marginBottom: 16 }}>
                   <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
-                    <Tag color="blue">Question {results.current_question_index + 1}</Tag>
-                    {isWordCloud && <Tag color="purple">Word Cloud</Tag>}
-                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">Single Line</Tag>}
-                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">Paragraph</Tag>}
-                    {isScaleQuestion && <Tag color="gold">Scale 1-5</Tag>}
+                    <Tag color="blue">{t('quiz.question')} {results.current_question_index + 1}</Tag>
+                    {isWordCloud && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
+                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
+                    {isScaleQuestion && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale 1-5' })}</Tag>}
                     <Text strong style={{ wordBreak: 'break-word' }}>{displayName}</Text>
                   </Space>
                 </Card>
@@ -416,7 +420,7 @@ export default function AudienceSession() {
                       {currentQuestion.question_image_url && (
                         <img
                           src={currentQuestion.question_image_url}
-                          alt="Question"
+                          alt={t('quiz.question')}
                           style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, display: 'block' }}
                         />
                       )}
@@ -440,10 +444,10 @@ export default function AudienceSession() {
                         rows={currentQuestion.question_type === 'paragraph' ? 5 : 3}
                         placeholder={
                           currentQuestion.question_type === 'word_cloud'
-                            ? 'Enter your answer (max 100 characters)'
+                            ? t('audience.enterWordCloudAnswer', { defaultValue: 'Enter your answer (max 100 characters)' })
                             : currentQuestion.question_type === 'single_line'
-                              ? 'Enter a short answer'
-                              : 'Enter your paragraph answer'
+                              ? t('audience.enterShortAnswer', { defaultValue: 'Enter a short answer' })
+                              : t('audience.enterParagraphAnswer', { defaultValue: 'Enter your paragraph answer' })
                         }
                         maxLength={
                           currentQuestion.question_type === 'word_cloud'
@@ -467,13 +471,13 @@ export default function AudienceSession() {
                         loading={loading}
                         style={{ marginBottom: 24 }}
                       >
-                        Submit Answer
+                        {t('quiz.submitAnswer')}
                       </Button>
                       {isWordCloud && wordCloudData.length > 0 ? (
                         <>
                           <Alert
-                            message="Live Word Cloud"
-                            description={`${wordCloudData.reduce((sum, w) => sum + w.value, 0)} responses submitted`}
+                            message={t('audience.liveWordCloud', { defaultValue: 'Live Word Cloud' })}
+                            description={t('audience.responsesSubmittedCount', { count: wordCloudData.reduce((sum, w) => sum + w.value, 0) })}
                             type="info"
                             showIcon
                             style={{ marginBottom: 16 }}
@@ -496,15 +500,15 @@ export default function AudienceSession() {
                         </>
                       ) : isWordCloud ? (
                         <Alert
-                          message="Be the first to respond!"
-                          description="Submit your answer and watch the word cloud grow."
+                          message={t('audience.beFirstToRespond', { defaultValue: 'Be the first to respond!' })}
+                          description={t('audience.wordCloudGrow', { defaultValue: 'Submit your answer and watch the word cloud grow.' })}
                           type="info"
                           showIcon
                         />
                       ) : (
                         <Alert
-                          message="Response submitted"
-                          description="Waiting for the host to move to the next question."
+                          message={t('audience.responseSubmitted', { defaultValue: 'Response submitted' })}
+                          description={t('audience.waitingHostNext', { defaultValue: 'Waiting for the host to move to the next question.' })}
                           type="success"
                           showIcon
                         />
@@ -514,7 +518,7 @@ export default function AudienceSession() {
                     <>
                       {isScaleQuestion ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', alignItems: 'center', padding: '24px 0' }}>
-                          <Text style={{ fontSize: 18, color: 'var(--aud-input-text)' }}>Tap a star to rate:</Text>
+                          <Text style={{ fontSize: 18, color: 'var(--aud-input-text)' }}>{t('audience.tapStarToRate', { defaultValue: 'Tap a star to rate:' })}</Text>
                           <Rate
                             className="audience-rate-stars"
                             style={{ fontSize: 48, color: '#faad14' }}
@@ -524,7 +528,7 @@ export default function AudienceSession() {
                               if (val > 0) setSelectedAnswer(String(val - 1))
                             }}
                           />
-                          <Text type="secondary">{selectedAnswer ? `Selected: ${Number(selectedAnswer) + 1} Star${Number(selectedAnswer) !== 0 ? 's' : ''}` : 'No rating selected'}</Text>
+                          <Text type="secondary">{selectedAnswer ? t('audience.selectedStars', { count: Number(selectedAnswer) + 1 }) : t('audience.noRatingSelected', { defaultValue: 'No rating selected' })}</Text>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
@@ -575,7 +579,7 @@ export default function AudienceSession() {
                         loading={loading}
                         style={{ marginTop: 24 }}
                       >
-                        Submit Answer
+                        {t('quiz.submitAnswer')}
                       </Button>
                     </>
                   ) : (
@@ -589,13 +593,13 @@ export default function AudienceSession() {
                           const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: 16 }}>
-                               <Text style={{ fontSize: 18 }}>Average Rating</Text>
+                               <Text style={{ fontSize: 18 }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</Text>
                                <Space align="baseline">
                                  <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
                                  <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
                                </Space>
                                <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 32, color: '#faad14' }} />
-                               <Text type="secondary">{totalAns} rating{totalAns !== 1 ? 's' : ''}</Text>
+                               <Text type="secondary">{t('audience.ratingsCount', { count: totalAns })}</Text>
                             </div>
                           )
                         })() : isPoll ? ['A', 'B', 'C', 'D'].map((key) => {
@@ -686,7 +690,7 @@ export default function AudienceSession() {
                         })}
                       </Space>
                       <Alert
-                        message="Waiting for next question..."
+                        message={t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
                         type="info"
                         showIcon
                         style={{ marginTop: 16 }}

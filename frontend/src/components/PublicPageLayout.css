@@ -12,6 +12,13 @@
   z-index: 100;
 }
 
+.public-beta-badge-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
 .public-page-content {
   width: 100%;
   display: flex;
@@ -21,3 +28,14 @@
   padding: 20px;
 }
 
+@media (max-width: 640px) {
+  .public-beta-badge-container {
+    top: 12px;
+    left: 12px;
+  }
+
+  .language-switcher-container {
+    top: 12px;
+    right: 12px;
+  }
+}

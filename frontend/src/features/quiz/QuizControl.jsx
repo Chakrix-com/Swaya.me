@@ -279,9 +279,9 @@ export default function QuizControl() {
         feedback_text: feedbackText.trim(),
       })
       setFeedbackSubmitted(true)
-      message.success('Feedback submitted')
+      message.success(t('audience.feedbackSubmitted', { defaultValue: 'Feedback submitted' }))
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to submit feedback')
+      message.error(error.response?.data?.detail || t('audience.feedbackSubmitFailed', { defaultValue: 'Failed to submit feedback' }))
     } finally {
       setFeedbackSubmitting(false)
     }
@@ -339,7 +339,7 @@ export default function QuizControl() {
           <Card>
             <Space direction="vertical" size={8} style={{ width: '100%' }}>
               <Tag color={isPoll ? 'purple' : 'blue'} style={{ width: 'fit-content' }}>
-                {isPoll ? 'Poll' : 'Quiz'}
+                {isPoll ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
               </Tag>
               <Title level={2} style={{ marginBottom: 0 }}>{quiz.title}</Title>
             </Space>
@@ -530,15 +530,15 @@ export default function QuizControl() {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Space>
                     <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
-                    {isWordCloudQuestion && <Tag color="purple">Word Cloud</Tag>}
-                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">Single Line</Tag>}
-                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">Paragraph</Tag>}
-                    {currentQuestion.question_type === 'scale' && <Tag color="gold">Scale (1-5)</Tag>}
+                    {isWordCloudQuestion && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
+                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
+                    {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
                   </Space>
                   {currentQuestion.question_image_url && (
                     <img 
                       src={currentQuestion.question_image_url} 
-                      alt="Question" 
+                      alt={t('quiz.question')} 
                       style={{ 
                         maxWidth: '100%', 
                         maxHeight: '300px', 
@@ -566,7 +566,7 @@ export default function QuizControl() {
                 // Word Cloud Question View
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <Alert
-                    message="Word Cloud Question"
+                    message={t('quiz.wordCloudQuestion')}
                     description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
                     type="info"
                     showIcon
@@ -597,8 +597,8 @@ export default function QuizControl() {
                     </div>
                   ) : (
                     <Alert
-                      message="No responses yet"
-                      description="Word cloud will appear once participants start submitting answers."
+                      message={t('quizPresent.noResponsesYet', { defaultValue: 'No responses yet' })}
+                      description={t('quizPresent.wordCloudWillAppear', { defaultValue: 'Word cloud will appear once participants start submitting answers.' })}
                       type="warning"
                     />
                   )}
@@ -606,13 +606,13 @@ export default function QuizControl() {
               ) : isTextQuestion ? (
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
                   <Alert
-                    message="Text Response Question"
+                    message={t('quizPresent.textResponseQuestion', { defaultValue: 'Text Response Question' })}
                     description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
                     type="info"
                     showIcon
                   />
                   {(currentQuestion.text_responses || []).length > 0 ? (
-                    <Card size="small" title="Latest responses">
+                    <Card size="small" title={t('quizPresent.latestResponses', { defaultValue: 'Latest responses' })}>
                       <Space direction="vertical" style={{ width: '100%' }}>
                         {currentQuestion.text_responses.map((entry, idx) => (
                           <div key={idx} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
@@ -623,7 +623,7 @@ export default function QuizControl() {
                       </Space>
                     </Card>
                   ) : (
-                    <Text type="secondary">No text responses yet.</Text>
+                    <Text type="secondary">{t('quizPresent.noTextResponsesYet', { defaultValue: 'No text responses yet.' })}</Text>
                   )}
                 </Space>
               ) : (
@@ -751,7 +751,7 @@ export default function QuizControl() {
                 <Text>{t('quiz.allQuestionsAnswered')}</Text>
                 <Card size="small" style={{ width: '100%', maxWidth: 620 }}>
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text strong>Share Feedback</Text>
+                    <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
                     <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
                     <TextArea
                       rows={4}
@@ -760,7 +760,7 @@ export default function QuizControl() {
                       maxLength={500}
                       showCount
                       disabled={feedbackSubmitted}
-                      placeholder="Share your experience running this quiz"
+                      placeholder={t('quizPresent.shareHostExperience', { defaultValue: 'Share your experience running this quiz' })}
                     />
                     <Button
                       type="primary"
@@ -768,7 +768,7 @@ export default function QuizControl() {
                       loading={feedbackSubmitting}
                       disabled={feedbackSubmitted || !feedbackText.trim()}
                     >
-                      {feedbackSubmitted ? 'Feedback Submitted' : 'Submit Feedback'}
+                      {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
                     </Button>
                   </Space>
                 </Card>
