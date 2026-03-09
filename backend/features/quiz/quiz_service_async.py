@@ -2,13 +2,22 @@
 Quiz Builder Service - Business logic for quiz CRUD operations (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
 import os
 
-from persistence.models.quiz import Quiz, Question, QuizStatus, QuizType, QuestionType, TemplateScope
+from persistence.models.quiz import (
+    Quiz,
+    Question,
+    QuizStatus,
+    QuizType,
+    QuestionType,
+    TemplateScope,
+    QuizSession,
+    QuizSessionStatus,
+)
 from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -133,6 +142,20 @@ class QuizBuilderServiceAsync:
         query = query.order_by(Quiz.created_at.desc())
         result = await db.execute(query)
         quizzes = result.scalars().all()
+
+        active_session_rows = await db.execute(
+            select(
+                QuizSession.quiz_id,
+                func.max(QuizSession.id).label("active_session_id")
+            ).filter(
+                QuizSession.tenant_id == current_user.tenant_id,
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
+            ).group_by(QuizSession.quiz_id)
+        )
+        active_session_map = {
+            row.quiz_id: row.active_session_id
+            for row in active_session_rows
+        }
         
         return [
             QuizListResponse(
@@ -144,6 +167,8 @@ class QuizBuilderServiceAsync:
                 is_template=q.is_template,
                 template_scope=q.template_scope,
                 question_count=len(q.questions),
+                has_active_session=q.id in active_session_map,
+                active_session_id=active_session_map.get(q.id),
                 created_at=q.created_at.isoformat()
             )
             for q in quizzes

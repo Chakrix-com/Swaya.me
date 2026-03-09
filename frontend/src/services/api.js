@@ -108,6 +108,7 @@ export const sessionAPI = {
   listSessions: (quizId) => api.get(`/quizzes/${quizId}/sessions`),
   start: (quizId) => api.post('/quizzes/sessions/start', null, { params: { quiz_id: quizId } }),
   join: (data) => api.post('/quizzes/sessions/join', data),
+  leave: (sessionToken) => api.post('/quizzes/sessions/leave', null, { params: { session_token: sessionToken } }),
   advance: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/advance`),
   back: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/back`),
   end: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/end`),

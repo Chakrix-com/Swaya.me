@@ -34,7 +34,10 @@
     "registerSuccess": "నమోదు విజయవంతమైనది! దయచేసి లాగిన్ చేయండి.",
     "loginSuccess": "తిరిగి స్వాగతం!",
     "platformSubtitle": "Interactive Quiz Platform",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "నా క్విజ్‌లు",
@@ -59,6 +62,10 @@
     "deleteQuestion": "ప్రశ్న తొలగించు",
     "deleteQuestionConfirm": "ఈ ప్రశ్నను తొలగించాలా?",
     "startQuiz": "క్విజ్ ప్రారంభించు",
+    "stopActiveSession": "Stop Active Session",
+    "stopActiveSessionConfirm": "Stop active session?",
+    "activeSessionStopped": "Active session stopped",
+    "failedToStopActiveSession": "Failed to stop active session",
     "endQuiz": "క్విజ్ ముగించు",
     "nextQuestion": "తరువాత ప్రశ్న",
     "previousQuestion": "గత ప్రశ్న",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "navigation": {
     "home": "హోమ్",

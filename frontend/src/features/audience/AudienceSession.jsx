@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import {
   Card,
   Button,
@@ -21,12 +22,14 @@ import {
   LoadingOutlined,
   LoginOutlined,
   SendOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  LogoutOutlined
 } from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 import { useTranslation } from 'react-i18next'
 import BetaBadge from '../../components/BetaBadge'
+import { clearSession } from '../../store/sessionSlice'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -34,6 +37,7 @@ const { TextArea } = Input
 export default function AudienceSession() {
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const { t } = useTranslation()
   const reduxSession = useSelector((state) => state.session.session)
 
@@ -192,6 +196,24 @@ export default function AudienceSession() {
     }
   }
 
+  const handleLeaveSession = async () => {
+    try {
+      if (sessionToken) {
+        await sessionAPI.leave(sessionToken)
+      }
+    } catch (_) {
+      // non-blocking
+    } finally {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+      dispatch(clearSession())
+      message.info(t('audience.leftSession', { defaultValue: 'You left the session' }))
+      navigate('/join')
+    }
+  }
+
   const isPollSession = results?.quiz_type === 'poll'
   const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
 
@@ -290,6 +312,13 @@ export default function AudienceSession() {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
               <BetaBadge />
             </div>
+            {sessionToken && !sessionInvalidated && sessionStatus !== 'ended' && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                <Button icon={<LogoutOutlined />} onClick={handleLeaveSession}>
+                  {t('audience.leaveSession', { defaultValue: 'Leave Session' })}
+                </Button>
+              </div>
+            )}
 
             {/* ── No session token ── */}
             {!sessionToken && (
