@@ -34,7 +34,10 @@
     "registerSuccess": "पंजीकरण सफल! कृपया लॉगिन करें।",
     "loginSuccess": "स्वागत है!",
     "platformSubtitle": "इंटरैक्टिव क्विज़ प्लेटफॉर्म",
-    "backToHome": "होम पर वापस जाएं"
+    "backToHome": "होम पर वापस जाएं",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "मेरी क्विज़",
@@ -57,6 +60,10 @@
     "deleteQuestion": "प्रश्न हटाएं",
     "updateQuestion": "प्रश्न अपडेट करें",
     "startQuiz": "क्विज़ शुरू करें",
+    "stopActiveSession": "Stop Active Session",
+    "stopActiveSessionConfirm": "Stop active session?",
+    "activeSessionStopped": "Active session stopped",
+    "failedToStopActiveSession": "Failed to stop active session",
     "endQuiz": "क्विज़ समाप्त करें",
     "nextQuestion": "अगला प्रश्न",
     "previousQuestion": "पिछला प्रश्न",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "navigation": {
     "home": "होम",

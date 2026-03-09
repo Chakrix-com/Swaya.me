@@ -34,7 +34,10 @@
     "registerSuccess": "Registration successful! Please log in.",
     "loginSuccess": "Welcome back!",
     "platformSubtitle": "Plateforme interactive de quiz",
-    "backToHome": "Retour à l'accueil"
+    "backToHome": "Retour à l'accueil",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "Mes quiz",
@@ -60,6 +63,10 @@
     "deleteQuestion": "Delete Question",
     "updateQuestion": "Update Question",
     "startQuiz": "Démarrer le quiz",
+    "stopActiveSession": "Arrêter la session active",
+    "stopActiveSessionConfirm": "Arrêter la session active ?",
+    "activeSessionStopped": "Session active arrêtée",
+    "failedToStopActiveSession": "Échec de l'arrêt de la session active",
     "endQuiz": "Terminer le quiz",
     "nextQuestion": "Question suivante",
     "previousQuestion": "Question précédente",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",

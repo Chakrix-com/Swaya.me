@@ -19,10 +19,15 @@ function Register() {
   const onFinish = async (values) => {
     dispatch(loginStart())
     try {
-      const response = await authAPI.register(values)
-      // We do not auto log them in anymore since they need to verify
-      message.success('Registration successful! Please check your email to verify your account before logging in.')
-      navigate('/login')
+      await authAPI.register(values)
+      dispatch(loginFailure(null))
+      message.success(t('auth.verifyEmailAfterSignup'))
+      navigate('/login', {
+        state: {
+          needsEmailVerification: true,
+          registrationEmail: values.email,
+        },
+      })
     } catch (error) {
       dispatch(loginFailure(error.response?.data?.detail || 'Registration failed'))
       message.error(error.response?.data?.detail || t('auth.invalidCredentials'))

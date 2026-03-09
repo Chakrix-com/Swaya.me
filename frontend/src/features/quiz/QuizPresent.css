@@ -204,6 +204,11 @@
   color: #fff;
   line-height: 1.45;
   margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* 2-column grid for MCQ options */

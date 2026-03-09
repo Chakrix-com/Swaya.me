@@ -34,7 +34,10 @@
     "registerSuccess": "பதிவு வெற்றிகரமாக உள்ளது! தயவுசெய்து உள்நுழையவும்.",
     "loginSuccess": "மீண்டும் வரவேற்கிறோம்!",
     "platformSubtitle": "Interactive Quiz Platform",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "என் வினாடி வினா",
@@ -59,6 +62,10 @@
     "deleteQuestion": "கேள்வி நீக்கவும்",
     "deleteQuestionConfirm": "இந்த கேள்வியை நீக்கவும்?",
     "startQuiz": "வினாடி வினா தொடங்கவும்",
+    "stopActiveSession": "Stop Active Session",
+    "stopActiveSessionConfirm": "Stop active session?",
+    "activeSessionStopped": "Active session stopped",
+    "failedToStopActiveSession": "Failed to stop active session",
     "endQuiz": "வினாடி வினா முடிக்கவும்",
     "nextQuestion": "அடுத்த கேள்வி",
     "previousQuestion": "முந்தைய கேள்வி",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "navigation": {
     "home": "முகப்பு",

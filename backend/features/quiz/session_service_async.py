@@ -8,7 +8,7 @@ from typing import Optional
 import secrets
 import string
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
     QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType
@@ -29,6 +29,7 @@ from core.auth.dependencies import CurrentUser
 
 class SessionServiceAsync:
     """Async service for quiz session management"""
+    STALE_SESSION_TIMEOUT_HOURS = 4
     
     def __init__(self, redis: RedisClient, tier_service: TierService):
         self.redis = redis
@@ -41,6 +42,78 @@ class SessionServiceAsync:
     def _generate_session_token(self) -> str:
         """Generate unique session token for participant"""
         return secrets.token_urlsafe(32)
+
+    async def _clear_event_join_code_if_no_active_sessions(
+        self,
+        db: AsyncSession,
+        tenant_id: int,
+        event_id: int
+    ) -> None:
+        """Clear join code when no open sessions remain for an event."""
+        active_for_event = await db.execute(
+            select(func.count(QuizSession.id))
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .filter(
+                QuizSession.tenant_id == tenant_id,
+                Quiz.event_id == event_id,
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE]),
+            )
+        )
+        if (active_for_event.scalar() or 0) == 0:
+            await db.execute(
+                update(Event)
+                .where(Event.tenant_id == tenant_id, Event.id == event_id)
+                .values(join_code=None)
+            )
+
+    async def _close_stale_sessions(
+        self,
+        db: AsyncSession,
+        tenant_id: int
+    ) -> int:
+        """Auto-end stale created/active sessions and deactivate their participants."""
+        cutoff = datetime.utcnow() - timedelta(hours=self.STALE_SESSION_TIMEOUT_HOURS)
+        stale_rows = (
+            await db.execute(
+                select(QuizSession.id, Quiz.event_id)
+                .join(Quiz, Quiz.id == QuizSession.quiz_id)
+                .filter(
+                    QuizSession.tenant_id == tenant_id,
+                    QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE]),
+                    QuizSession.updated_at < cutoff,
+                )
+            )
+        ).all()
+        if not stale_rows:
+            return 0
+
+        stale_session_ids = [row.id for row in stale_rows]
+        stale_event_ids = {row.event_id for row in stale_rows}
+        now = datetime.utcnow()
+
+        await db.execute(
+            update(QuizSession)
+            .where(QuizSession.id.in_(stale_session_ids))
+            .values(status=QuizSessionStatus.ENDED, current_question_status=None)
+        )
+        await db.execute(
+            update(Participant)
+            .where(Participant.session_id.in_(stale_session_ids))
+            .values(is_active=False)
+        )
+        await db.execute(
+            update(SessionQuestionTiming)
+            .where(
+                SessionQuestionTiming.session_id.in_(stale_session_ids),
+                SessionQuestionTiming.closed_at == None,  # noqa: E711
+            )
+            .values(closed_at=now)
+        )
+
+        for event_id in stale_event_ids:
+            await self._clear_event_join_code_if_no_active_sessions(db, tenant_id, event_id)
+
+        return len(stale_session_ids)
     
     async def start_session(
         self,
@@ -64,6 +137,11 @@ class SessionServiceAsync:
             InvalidQuizStatusError: If quiz not READY
             TierLimitExceededError: If concurrent event limit reached
         """
+        # Clean stale sessions first so abandoned sessions do not block new starts.
+        stale_closed_count = await self._close_stale_sessions(db, current_user.tenant_id)
+        if stale_closed_count:
+            await db.commit()
+
         # Get quiz
         result = await db.execute(
             select(Quiz).filter(
@@ -78,6 +156,21 @@ class SessionServiceAsync:
         
         if quiz.status != QuizStatus.READY:
             raise InvalidQuizStatusError("Quiz must be in READY status to start")
+
+        # If this quiz already has an open session, reuse it so host can resume/stop it.
+        existing = await db.execute(
+            select(QuizSession)
+            .filter(
+                QuizSession.quiz_id == quiz_id,
+                QuizSession.tenant_id == current_user.tenant_id,
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE]),
+            )
+            .options(joinedload(QuizSession.quiz))
+            .order_by(QuizSession.id.desc())
+        )
+        existing_session = existing.scalars().first()
+        if existing_session:
+            return await self._to_session_response(db, existing_session)
         
         # Check concurrent events limit (super admins bypass this limit)
         if current_user.user.role != UserRole.super_admin:
@@ -183,6 +276,10 @@ class SessionServiceAsync:
             
             if not event:
                 raise SessionNotFoundError("Invalid join code")
+
+            stale_closed_count = await self._close_stale_sessions(db, event.tenant_id)
+            if stale_closed_count:
+                await db.commit()
             
             # Find active session - get the LATEST one (in case multiple exist)
             result = await db.execute(
@@ -250,6 +347,26 @@ class SessionServiceAsync:
             raise
         except Exception as e:
             raise
+
+    async def leave_session(
+        self,
+        db: AsyncSession,
+        session_token: str
+    ) -> dict:
+        """Mark participant inactive when they intentionally leave a session."""
+        participant_result = await db.execute(
+            select(Participant).filter(Participant.session_token == session_token)
+        )
+        participant = participant_result.scalar_one_or_none()
+        if not participant:
+            raise ParticipantNotFoundError("Invalid session token")
+
+        if participant.is_active:
+            participant.is_active = False
+            await db.commit()
+            await self.tier_service.decrement_participant_count(participant.session_id)
+
+        return {"success": True, "message": "Left session successfully"}
     
     async def advance_question(
         self,
@@ -302,6 +419,9 @@ class SessionServiceAsync:
             # No more questions, end session
             session.status = QuizSessionStatus.ENDED
             session.current_question_status = None
+            await self._clear_event_join_code_if_no_active_sessions(
+                db, session.tenant_id, session.quiz.event_id
+            )
         else:
             # Open new question and record timing
             session.status = QuizSessionStatus.ACTIVE
@@ -440,6 +560,9 @@ class SessionServiceAsync:
 
         session.status = QuizSessionStatus.ENDED
         session.current_question_status = None
+        await self._clear_event_join_code_if_no_active_sessions(
+            db, session.tenant_id, session.quiz.event_id
+        )
 
         await db.commit()
         await db.refresh(session)

@@ -174,6 +174,8 @@ class QuizListResponse(BaseModel):
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     question_count: int
+    has_active_session: bool = False
+    active_session_id: Optional[int] = None
     created_at: str
     
     class Config:
@@ -214,6 +216,11 @@ class SessionJoinResponse(BaseModel):
     participant_id: int
     quiz_title: str
     status: SessionStatusEnum
+
+class SessionLeaveResponse(BaseModel):
+    """Leave session response"""
+    success: bool
+    message: str
 
 
 # Answer Schemas

@@ -11,6 +11,7 @@ from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse,
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
+    SessionLeaveResponse,
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
@@ -341,6 +342,18 @@ async def join_session(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except TierLimitExceededError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.post("/sessions/leave", response_model=SessionLeaveResponse)
+async def leave_session(
+    session_token: str,
+    db: AsyncSession = Depends(get_async_db),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Leave session as participant (anonymous)"""
+    try:
+        return await service.leave_session(db, session_token)
+    except ParticipantNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @router.post("/sessions/{session_id}/advance", response_model=SessionResponse)

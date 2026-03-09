@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
+import { Form, Input, Button, Card, message, Typography, Space, Alert } from 'antd'
 import { UserOutlined, LockOutlined, LoginOutlined, HomeOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure, logout } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
@@ -15,6 +15,7 @@ function Login() {
   const { t } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const { loading, isAuthenticated, token } = useSelector((state) => state.auth)
 
   useEffect(() => {
@@ -71,6 +72,19 @@ function Login() {
           <Title level={3} style={{ textAlign: 'center', marginBottom: '24px' }}>
             {t('auth.login')}
           </Title>
+
+          {location.state?.needsEmailVerification && (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message={t('auth.verifyEmailNoticeTitle', { defaultValue: 'Verify your email before logging in' })}
+              description={t('auth.verifyEmailNoticeBody', {
+                defaultValue: 'We sent a verification link to {{email}}. Please verify your email and then log in.',
+                email: location.state?.registrationEmail || t('auth.email'),
+              })}
+            />
+          )}
 
           <Form
             name="login"

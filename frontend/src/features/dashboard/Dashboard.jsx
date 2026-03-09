@@ -7,6 +7,7 @@ import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Mod
 import {
   PlusOutlined,
   PlayCircleOutlined,
+  CloseCircleOutlined,
   EditOutlined,
   DeleteOutlined,
   CopyOutlined,
@@ -20,7 +21,7 @@ import {
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
-import { quizAPI } from '../../services/api'
+import { quizAPI, sessionAPI } from '../../services/api'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -84,6 +85,20 @@ function Dashboard() {
       message.error(
         detail ||
         t('quiz.duplicateFailed', { defaultValue: 'Failed to duplicate quiz' })
+      )
+    }
+  }
+
+  const handleStopActiveSession = async (sessionId) => {
+    try {
+      await sessionAPI.end(sessionId)
+      message.success(t('quiz.activeSessionStopped', { defaultValue: 'Active session stopped' }))
+      loadQuizzes()
+    } catch (error) {
+      console.error('Failed to stop active session:', error)
+      message.error(
+        error?.response?.data?.detail ||
+        t('quiz.failedToStopActiveSession', { defaultValue: 'Failed to stop active session' })
       )
     }
   }
@@ -396,7 +411,20 @@ function Dashboard() {
               >
                 {t('quiz.history')}
               </Button>
-              {quiz.status === 'ready' && (
+              {quiz.has_active_session && quiz.active_session_id ? (
+                <Popconfirm
+                  title={t('quiz.stopActiveSessionConfirm', { defaultValue: 'Stop active session?' })}
+                  description={t('quiz.stopQuizConfirm', { defaultValue: 'This will end the session for all participants. You cannot restart it.' })}
+                  onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
+                  okText={t('quiz.stopQuizOk', { defaultValue: 'Yes, stop it' })}
+                  cancelText={t('common.cancel')}
+                >
+                  <Button danger icon={<CloseCircleOutlined />}>
+                    {t('quiz.stopActiveSession', { defaultValue: 'Stop Active Session' })}
+                  </Button>
+                </Popconfirm>
+              ) : null}
+              {quiz.status === 'ready' && !quiz.has_active_session && (
                 <Button
                   type="primary"
                   icon={<PlayCircleOutlined />}

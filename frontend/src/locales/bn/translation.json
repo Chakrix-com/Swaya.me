@@ -34,7 +34,10 @@
     "registerSuccess": "নিবন্ধন সফল! দয়া করে লগইন করুন।",
     "loginSuccess": "স্বাগতম!",
     "platformSubtitle": "Interactive Quiz Platform",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "আমার প্রশ্নোত্তর",
@@ -59,6 +62,10 @@
     "deleteQuestion": "প্রশ্ন মুছে ফেলুন",
     "deleteQuestionConfirm": "এই প্রশ্নটি মুছে ফেলবেন?",
     "startQuiz": "প্রশ্নোত্তর শুরু করুন",
+    "stopActiveSession": "Stop Active Session",
+    "stopActiveSessionConfirm": "Stop active session?",
+    "activeSessionStopped": "Active session stopped",
+    "failedToStopActiveSession": "Failed to stop active session",
     "endQuiz": "প্রশ্নোত্তর শেষ করুন",
     "nextQuestion": "পরবর্তী প্রশ্ন",
     "previousQuestion": "পূর্ববর্তী প্রশ্ন",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "navigation": {
     "home": "হোম",

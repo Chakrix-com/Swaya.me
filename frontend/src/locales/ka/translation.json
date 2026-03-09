@@ -34,7 +34,10 @@
     "registerSuccess": "ನೋಂದಾಯನ ಯಶಸ್ವಿ! ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಆಗಿ.",
     "loginSuccess": "ಪುನರಾಗಮನವನ್ನು ಸ್ವಾಗತ!",
     "platformSubtitle": "Interactive Quiz Platform",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "verifyEmailAfterSignup": "Registration successful! Check your email to verify your account before logging in.",
+    "verifyEmailNoticeTitle": "Verify your email before logging in",
+    "verifyEmailNoticeBody": "We sent a verification link to {{email}}. Please verify your email and then log in."
   },
   "quiz": {
     "myQuizzes": "ನನ್ನ ಪ್ರಶ್ನೋತ್ತರಿ",
@@ -59,6 +62,10 @@
     "deleteQuestion": "ಪ್ರಶ್ನೆ ಅಳಿಸಿ",
     "deleteQuestionConfirm": "ಈ ಪ್ರಶ್ನೆಯನ್ನು ಅಳಿಸುವುದೇ?",
     "startQuiz": "ಪ್ರಶ್ನೋತ್ತರಿ ಪ್ರಾರಂಭಿಸಿ",
+    "stopActiveSession": "Stop Active Session",
+    "stopActiveSessionConfirm": "Stop active session?",
+    "activeSessionStopped": "Active session stopped",
+    "failedToStopActiveSession": "Failed to stop active session",
     "endQuiz": "ಪ್ರಶ್ನೋತ್ತರಿ ಮುಕ್ತಾಯ ಮಾಡಿ",
     "nextQuestion": "ಮುಂದಿನ ಪ್ರಶ್ನೆ",
     "previousQuestion": "ಹಿಂದಿನ ಪ್ರಶ್ನೆ",
@@ -237,7 +244,9 @@
     "selectedStars_other": "Selected: {{count}} Stars",
     "noRatingSelected": "No rating selected",
     "ratingsCount_one": "{{count}} rating",
-    "ratingsCount_other": "{{count}} ratings"
+    "ratingsCount_other": "{{count}} ratings",
+    "leaveSession": "Leave Session",
+    "leftSession": "You left the session"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",
