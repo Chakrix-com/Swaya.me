@@ -30,6 +30,10 @@
   color: var(--visitor-text-primary);
 }
 
+.home-beta-badge {
+  margin-left: 10px;
+}
+
 .home-content {
   background: transparent;
 }

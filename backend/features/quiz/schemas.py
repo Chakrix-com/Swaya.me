@@ -82,13 +82,13 @@ class QuestionCreate(BaseModel):
             if self.correct_answer_index is not None:
                 raise ValueError('Word cloud questions should not have a correct answer')
         elif self.question_type == QuestionTypeEnum.SINGLE_LINE:
-            if not self.options or len(self.options) != 1:
-                raise ValueError('Single-line questions must have one expected answer')
+            if self.options is not None and len(self.options) > 1:
+                raise ValueError('Single-line questions can have at most one expected answer')
             if self.correct_answer_index is not None:
                 raise ValueError('Single-line questions should not have a correct answer')
         elif self.question_type == QuestionTypeEnum.PARAGRAPH:
-            if not self.options or len(self.options) != 1:
-                raise ValueError('Paragraph questions must have one expected answer')
+            if self.options is not None and len(self.options) > 1:
+                raise ValueError('Paragraph questions can have at most one expected answer')
             if self.correct_answer_index is not None:
                 raise ValueError('Paragraph questions should not have a correct answer')
         elif self.question_type == QuestionTypeEnum.SCALE:

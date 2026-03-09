@@ -11,8 +11,10 @@ import {
   DashboardOutlined,
   RocketOutlined
 } from '@ant-design/icons';
+import logo from '../../assets/logo.png';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import BetaBadge from '../../components/BetaBadge';
 import './Home.css';
 
 const { Header, Content, Footer } = Layout;
@@ -56,9 +58,10 @@ const Home = () => {
     <Layout className="home-layout">
       <Header className="home-header">
         <div className="home-header-content">
-          <div className="home-logo">
-            <RocketOutlined style={{ fontSize: '32px', marginRight: '12px', color: 'var(--visitor-accent)' }} />
+          <div className="home-logo" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+            <img src={logo} alt="Swaya Logo" style={{ height: 'auto', maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', marginRight: '16px', borderRadius: '8px' }} />
             <Title level={2} style={{ margin: 0, color: 'var(--visitor-text-primary)' }}>Swaya.me</Title>
+            <BetaBadge className="home-beta-badge" />
           </div>
           <Space size="middle" className="home-header-actions">
             <LanguageSwitcher />

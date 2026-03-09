@@ -215,19 +215,16 @@ class AnswerServiceAsync:
             if existing:
                 raise DuplicateAnswerError("You have already answered this question")
         
-        # Normalize text: replace one or more newlines with a single space
-        import re
-        if current_question.question_type == QuestionType.PARAGRAPH:
-            normalized_text = request.text_answer.strip()
-        else:
-            normalized_text = re.sub(r'\s+', ' ', request.text_answer.strip())
+        # Matches response with correct answer: strip whitespaces and convert to lowercase
         expected_answer = (current_question.options or [None])[0]
         is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
-        is_correct = (
-            bool(expected_answer) and normalized_text.lower() == str(expected_answer).strip().lower()
-            if is_text_scored
-            else None
-        )
+        
+        is_correct = None
+        if is_text_scored and expected_answer:
+            response_clean = request.text_answer.strip().lower()
+            expected_clean = str(expected_answer).strip().lower()
+            is_correct = (response_clean == expected_clean)
+
         
         # Create answer
         answer = Answer(
@@ -456,8 +453,11 @@ class AnswerServiceAsync:
                     expected = (q.options or [None])[0]
                     if not expected or not ans.text_answer:
                         continue
-                    normalized = ans.text_answer.strip() if q.question_type == QuestionType.PARAGRAPH else re.sub(r'\s+', ' ', ans.text_answer.strip())
-                    if normalized.lower() == str(expected).strip().lower():
+                    
+                    response_clean = ans.text_answer.strip().lower()
+                    expected_clean = str(expected).strip().lower()
+                    
+                    if response_clean == expected_clean:
                         correct_answers += 1
                 
                 participant_correct = correct_answers
@@ -741,8 +741,11 @@ class AnswerServiceAsync:
                 expected = (q.options or [None])[0]
                 if not expected or not a.text_answer:
                     continue
-                normalized = a.text_answer.strip() if q.question_type == QuestionType.PARAGRAPH else re.sub(r'\s+', ' ', a.text_answer.strip())
-                if normalized.lower() == str(expected).strip().lower():
+                    
+                response_clean = a.text_answer.strip().lower()
+                expected_clean = str(expected).strip().lower()
+                
+                if response_clean == expected_clean:
                     total += 1
             return total
 

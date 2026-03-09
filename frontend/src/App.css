@@ -255,3 +255,9 @@
 .results-chart {
   margin-top: 32px;
 }
+
+@media (max-width: 576px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}

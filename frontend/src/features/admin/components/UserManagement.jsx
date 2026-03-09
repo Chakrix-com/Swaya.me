@@ -143,21 +143,21 @@ const UserManagement = () => {
     try {
       // Prepare data for export
       const exportData = users.map(user => ({
-        'Email': user.email,
-        'Full Name': user.full_name || '',
-        'Role': {
+        [t('admin.users.email')]: user.email,
+        [t('admin.users.fullName', { defaultValue: 'Full Name' })]: user.full_name || '',
+        [t('admin.users.role')]: {
           super_admin: t('admin.users.superAdmin'),
           admin: t('admin.users.admin'),
           user: t('admin.users.user'),
           viewer: t('admin.users.viewer'),
         }[user.role] || user.role,
-        'Status': user.is_active ? t('admin.users.active') : t('admin.users.inactive'),
-        'Login Count': user.login_count || 0,
-        'Last Login': user.last_login_at 
+        [t('admin.users.status')]: user.is_active ? t('admin.users.active') : t('admin.users.inactive'),
+        [t('admin.users.loginCount')]: user.login_count || 0,
+        [t('admin.users.lastLogin')]: user.last_login_at 
           ? new Date(user.last_login_at).toLocaleString() 
-          : 'Never',
-        'Created At': new Date(user.created_at).toLocaleString(),
-        'Tenant': user.tenant_name || '',
+          : t('admin.users.never', { defaultValue: 'Never' }),
+        [t('admin.users.createdAt', { defaultValue: 'Created At' })]: new Date(user.created_at).toLocaleString(),
+        [t('admin.users.tenant', { defaultValue: 'Tenant' })]: user.tenant_name || '',
       }));
 
       // Create workbook and worksheet
@@ -328,7 +328,7 @@ const UserManagement = () => {
         return new Date(a.last_login_at) - new Date(b.last_login_at);
       },
       render: (date) =>
-        date ? new Date(date).toLocaleDateString() + ' ' + new Date(date).toLocaleTimeString() : 'Never',
+        date ? new Date(date).toLocaleDateString() + ' ' + new Date(date).toLocaleTimeString() : t('admin.users.never', { defaultValue: 'Never' }),
     },
     {
       title: t('admin.users.loginCount'),
@@ -396,7 +396,7 @@ const UserManagement = () => {
             <Statistic
               title={t('admin.users.currentPage')}
               value={users.length}
-              suffix={`of ${total}`}
+              suffix={`${t('admin.users.of', { defaultValue: 'of' })} ${total}`}
               prefix={<UserOutlined />}
             />
           </Card>

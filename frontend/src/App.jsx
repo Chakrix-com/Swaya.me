@@ -24,6 +24,9 @@ import { logout } from './store/authSlice'
 import Home from './features/home/Home'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
+import VerifyEmail from './features/auth/VerifyEmail'
+import ForgotPassword from './features/auth/ForgotPassword'
+import ResetPassword from './features/auth/ResetPassword'
 import Dashboard from './features/dashboard/Dashboard'
 import QuizBuilder from './features/quiz/QuizBuilder'
 import QuizControl from './features/quiz/QuizControl'
@@ -39,6 +42,8 @@ import PlatformQuizzes from './features/admin/PlatformQuizzes'
 import TierManagement from './features/admin/TierManagement'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import StatsPanel from './components/StatsPanel'
+import BetaBadge from './components/BetaBadge'
+import logo from './assets/logo.png'
 import './App.css'
 
 // Map i18n language codes to Ant Design locales
@@ -83,6 +88,13 @@ function AuthenticatedLayout({ children }) {
     <ProLayout
       title="Swaya.me"
       logo={null}
+      headerTitleRender={() => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+          <img src={logo} alt="Swaya.me Logo" style={{ height: 'auto', maxHeight: '32px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }} />
+          <span>Swaya.me</span>
+          <BetaBadge />
+        </span>
+      )}
       layout="mix"
       splitMenus={false}
       contentWidth="Fluid"
@@ -141,17 +153,17 @@ function AuthenticatedLayout({ children }) {
             },
             {
               path: '/admin/platform-quizzes',
-              name: 'Platform Quizzes',
+              name: t('admin.platformQuizzes'),
               icon: <AppstoreOutlined />,
             },
             {
               path: '/admin/tier-management',
-              name: 'Tier Management',
+              name: t('admin.tierManagement'),
               icon: <SlidersOutlined />,
             },
             {
               path: '/admin/feedback',
-              name: 'Feedback',
+              name: t('admin.feedback'),
               icon: <MessageOutlined />,
             }] : [])
           ] : []),
@@ -170,7 +182,7 @@ function AuthenticatedLayout({ children }) {
       }}
       avatarProps={{
         src: null,
-        title: user?.full_name || user?.email || t('common.user'),
+        title: <span className="hide-on-mobile">{user?.full_name || user?.email || t('common.user')}</span>,
         size: 'small',
         render: (props, dom) => {
           return dom
@@ -244,6 +256,9 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>

@@ -2,10 +2,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
-import { UserOutlined, LockOutlined, UserAddOutlined, RocketOutlined, HomeOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, UserAddOutlined, HomeOutlined } from '@ant-design/icons'
 import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
+import logo from '../../assets/logo.png'
 
 const { Title, Text } = Typography
 
@@ -19,9 +20,9 @@ function Register() {
     dispatch(loginStart())
     try {
       const response = await authAPI.register(values)
-      dispatch(loginSuccess(response.data))
-      message.success('Registration successful! An admin will assign you to an organization.')
-      navigate('/dashboard')
+      // We do not auto log them in anymore since they need to verify
+      message.success('Registration successful! Please check your email to verify your account before logging in.')
+      navigate('/login')
     } catch (error) {
       dispatch(loginFailure(error.response?.data?.detail || 'Registration failed'))
       message.error(error.response?.data?.detail || t('auth.invalidCredentials'))
@@ -35,9 +36,9 @@ function Register() {
           {/* Logo/Branding Header */}
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Space direction="vertical" size={4}>
-                <RocketOutlined style={{ fontSize: '48px', color: 'var(--visitor-accent)' }} />
-                <Title level={2} style={{ margin: 0, color: 'var(--visitor-accent)' }}>
+              <Space direction="vertical" size={16} align="center" style={{ width: '100%' }}>
+                <img src={logo} alt="Swaya Logo" style={{ display: 'block', margin: '0 auto', height: 'auto', maxHeight: '64px', maxWidth: '100%', objectFit: 'contain', borderRadius: '12px' }} />
+                <Title level={2} style={{ margin: 0, color: 'var(--visitor-accent)', textAlign: 'center' }}>
                   Swaya.me
                 </Title>
                 <Text type="secondary">{t('auth.platformSubtitle')}</Text>

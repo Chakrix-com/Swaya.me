@@ -60,7 +60,7 @@ function Statistics() {
       setStats(response.data)
       setLastUpdate(new Date())
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load statistics')
+      setError(err.response?.data?.detail || t('admin.stats.failedToLoadStats', { defaultValue: 'Failed to load statistics' }))
     } finally {
       setLoading(false)
     }
@@ -127,7 +127,7 @@ function Statistics() {
       const response = await languageTrackingAPI.getStats()
       setLanguageStats(response.data)
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || 'Failed to load language statistics'
+      const errorMsg = err.response?.data?.detail || t('admin.languageStats.error')
       setLanguageError(errorMsg)
       console.error('Language stats error:', err)
     } finally {
@@ -459,8 +459,8 @@ function Statistics() {
                           <YAxis />
                           <Tooltip />
                           <Legend />
-                          <Line type="monotone" dataKey="cpuPercent" stroke="#faad14" name="CPU %" />
-                          <Line type="monotone" dataKey="memoryPercent" stroke="#ff4d4f" name="Memory %" />
+                          <Line type="monotone" dataKey="cpuPercent" stroke="#faad14" name={`${t('admin.stats.cpuUsage')} %`} />
+                          <Line type="monotone" dataKey="memoryPercent" stroke="#ff4d4f" name={`${t('admin.stats.memoryUsage')} %`} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -524,7 +524,7 @@ function Statistics() {
                   <Card>
                     <Statistic
                       title={t('admin.languageStats.mostPopular')}
-                      value={languageStats.summary?.most_popular_language || 'N/A'}
+                      value={languageStats.summary?.most_popular_language || t('common.noData')}
                       prefix={<GlobalOutlined />}
                       valueStyle={{ color: '#52c41a' }}
                     />

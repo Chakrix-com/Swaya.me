@@ -262,7 +262,7 @@ export default function QuizHistory() {
 
       <Space direction="vertical" size={4} style={{ marginBottom: 4 }}>
         <Tag color={quizType === 'poll' ? 'purple' : 'blue'} style={{ width: 'fit-content' }}>
-          {quizType === 'poll' ? 'Poll' : 'Quiz'}
+          {quizType === 'poll' ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
         </Tag>
         <Title level={3} style={{ marginBottom: 0 }}>{quizTitle}</Title>
       </Space>

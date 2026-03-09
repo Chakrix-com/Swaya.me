@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Spin, Tag, Rate } from 'antd'
 import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI } from '../../services/api'
+import BetaBadge from '../../components/BetaBadge'
 import './QuizPresent.css'
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E']
@@ -26,22 +28,22 @@ const OPTION_ACCENT = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1']
 const WORDCLOUD_COLORS = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2']
 
 /* ── Waiting ─────────────────────────────────────────── */
-function WaitingView({ participantCount }) {
+function WaitingView({ participantCount, t }) {
   return (
     <div className="pv-center-fill">
       <span className="pv-waiting-emoji">📡</span>
-      <h2 className="pv-waiting-title">Waiting for the quiz to start…</h2>
+      <h2 className="pv-waiting-title">{t('audience.waiting')}</h2>
       <p className="pv-waiting-sub">
         {participantCount > 0
-          ? `${participantCount} participant${participantCount !== 1 ? 's' : ''} joined`
-          : 'Participants can join using the code'}
+          ? t('quizPresent.participantsJoined', { count: participantCount })
+          : t('quizPresent.participantsCanJoinUsingCode', { defaultValue: 'Participants can join using the code' })}
       </p>
     </div>
   )
 }
 
 /* ── Single MCQ option card ──────────────────────────── */
-function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isCorrect, showStats }) {
+function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isCorrect, showStats, t }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0
 
   const bg     = revealed ? (isCorrect ? 'rgba(82,196,26,0.18)' : 'rgba(255,255,255,0.03)') : OPTION_BG[index]
@@ -66,7 +68,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
           </span>
         )}
       </div>
-      {imageUrl && <img src={imageUrl} alt={`Option ${letter}`} className="pv-option-img" />}
+      {imageUrl && <img src={imageUrl} alt={t('quiz.option', { defaultValue: 'Option' }) + ` ${letter}`} className="pv-option-img" />}
       <div className="pv-bar-track">
         <div
           className="pv-bar-fill"
@@ -78,7 +80,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
 }
 
 /* ── MCQ Question ────────────────────────────────────── */
-function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll }) {
+function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll, t }) {
   const fallbackOptions = [
     question.option_a,
     question.option_b,
@@ -98,28 +100,28 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll })
     <div className="pv-question-wrap">
       <div className="pv-question-meta">
         <Tag color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
-          Question {questionNumber} of {totalQuestions}
+          {t('quiz.question')} {questionNumber} {t('quiz.of')} {totalQuestions}
         </Tag>
         {total > 0 && (
           <Tag color="geekblue" style={{ fontSize: 12 }}>
-            {total} response{total !== 1 ? 's' : ''}
+            {t('quizPresent.responsesCount', { count: total })}
           </Tag>
         )}
         {effectiveRevealed && (
           <Tag color="success" style={{ fontSize: 12 }}>
-            <CheckOutlined /> Answer revealed
+            <CheckOutlined /> {t('quizPresent.answerRevealed', { defaultValue: 'Answer revealed' })}
           </Tag>
         )}
         {isPoll && revealed && (
           <Tag color="geekblue" style={{ fontSize: 12 }}>
-            Statistics shown
+            {t('quizPresent.statisticsShown', { defaultValue: 'Statistics shown' })}
           </Tag>
         )}
       </div>
 
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
-          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+          <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
         </div>
       )}
 
@@ -138,6 +140,7 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll })
             revealed={effectiveRevealed}
             isCorrect={i === correctIndex}
             showStats={showStats}
+            t={t}
           />
         ))}
       </div>
@@ -146,7 +149,7 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll })
 }
 
 /* ── Scale Question ──────────────────────────────────── */
-function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
+function ScaleView({ question, questionNumber, totalQuestions, revealed, t }) {
   const total = question.total_answers || 0
   const dist = question.answer_distribution || []
   let sum = 0
@@ -157,23 +160,23 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
     <div className="pv-question-wrap">
       <div className="pv-question-meta">
         <Tag color="blue" style={{ fontSize: 13, padding: '2px 10px' }}>
-          Question {questionNumber} of {totalQuestions}
+          {t('quiz.question')} {questionNumber} {t('quiz.of')} {totalQuestions}
         </Tag>
         {total > 0 && (
           <Tag color="geekblue" style={{ fontSize: 12 }}>
-            {total} response{total !== 1 ? 's' : ''}
+            {t('quizPresent.responsesCount', { count: total })}
           </Tag>
         )}
         {revealed && (
           <Tag color="geekblue" style={{ fontSize: 12 }}>
-            Statistics shown
+            {t('quizPresent.statisticsShown', { defaultValue: 'Statistics shown' })}
           </Tag>
         )}
       </div>
 
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
-          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+          <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
         </div>
       )}
 
@@ -181,7 +184,7 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
 
       {revealed ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 0', gap: 24 }}>
-          <div style={{ fontSize: 24, color: 'rgba(255,255,255,0.85)' }}>Average Rating</div>
+          <div style={{ fontSize: 24, color: 'rgba(255,255,255,0.85)' }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
             <span style={{ fontSize: 84, fontWeight: 700, color: '#faad14', lineHeight: 1 }}>{avg}</span>
             <span style={{ fontSize: 32, color: 'rgba(255,255,255,0.45)' }}>/ 5</span>
@@ -191,7 +194,7 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
       ) : (
         <div className="pv-center-fill" style={{ minHeight: 300 }}>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 20 }}>
-             Waiting to reveal average rating...
+            {t('quizPresent.waitingToRevealAverageRating', { defaultValue: 'Waiting to reveal average rating...' })}
           </p>
         </div>
       )}
@@ -199,53 +202,107 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed }) {
   )
 }
 
-function TextResponseView({ question, questionNumber, totalQuestions }) {
+function TextResponseView({ question, questionNumber, totalQuestions, t }) {
   const total = question.total_answers || 0
-  const questionTypeLabel = question.question_type === 'single_line' ? 'Single Line' : 'Paragraph'
+  const questionTypeLabel = question.question_type === 'single_line' ? t('quizPresent.singleLine', { defaultValue: 'Single Line' }) : t('quizPresent.paragraph', { defaultValue: 'Paragraph' })
+  const responses = question.text_responses || []
+
   return (
-    <div className="pv-question-wrap">
-      <div className="pv-question-meta">
+    <div className="pv-question-wrap" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="pv-question-meta" style={{ flexShrink: 0 }}>
         <Tag color="geekblue" style={{ fontSize: 13, padding: '2px 10px' }}>
-          Question {questionNumber} of {totalQuestions}
+          {t('quiz.question')} {questionNumber} {t('quiz.of')} {totalQuestions}
         </Tag>
         <Tag color="geekblue">{questionTypeLabel}</Tag>
-        <Tag color="default">{total} response{total !== 1 ? 's' : ''}</Tag>
+        <Tag color="default">{t('quizPresent.responsesCount', { count: total })}</Tag>
       </div>
+      
       {question.question_image_url && (
-        <div className="pv-question-img-wrap">
-          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+        <div className="pv-question-img-wrap" style={{ flexShrink: 0 }}>
+          <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
         </div>
       )}
-      <p className="pv-question-text">{question.text || question.question_text}</p>
-      <div className="pv-center-fill">
-        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 16, margin: 0 }}>
-          {total} response{total !== 1 ? 's received' : ' received'}.
-        </p>
+      
+      <p className="pv-question-text" style={{ flexShrink: 0 }}>{question.text || question.question_text}</p>
+      
+      <div className="pv-text-responses-container" style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: '0 12px 24px', 
+        marginTop: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+      }}>
+        {responses.length > 0 ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '16px',
+            alignItems: 'start'
+          }}>
+            {responses.map((res, i) => (
+              <div key={i} style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.45)',
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  {res.participant_name}
+                </div>
+                <div style={{
+                  color: 'rgba(255,255,255,0.95)',
+                  fontSize: 16,
+                  lineHeight: 1.5,
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {res.text}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="pv-center-fill" style={{ minHeight: '200px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 16, margin: 0 }}>
+              {t('quizPresent.waitingForResponses', { defaultValue: 'Waiting for responses…' })}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 /* ── Word Cloud Question ─────────────────────────────── */
-function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions }) {
+function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions, t }) {
   const total = question.total_answers || 0
   return (
     <div className="pv-question-wrap">
       <div className="pv-question-meta">
         <Tag color="purple" style={{ fontSize: 13, padding: '2px 10px' }}>
-          Question {questionNumber} of {totalQuestions}
+          {t('quiz.question')} {questionNumber} {t('quiz.of')} {totalQuestions}
         </Tag>
-        <Tag color="purple">Word Cloud</Tag>
+        <Tag color="purple">{t('quiz.wordCloud')}</Tag>
         {total > 0 && (
           <Tag color="default" style={{ fontSize: 12 }}>
-            {total} submission{total !== 1 ? 's' : ''}
+            {t('quizPresent.submissionsCount', { count: total })}
           </Tag>
         )}
       </div>
 
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
-          <img src={question.question_image_url} alt="Question" className="pv-question-img" />
+          <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
         </div>
       )}
 
@@ -269,7 +326,7 @@ function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions
         ) : (
           <div className="pv-center-fill">
             <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 16, margin: 0 }}>
-              Waiting for responses…
+              {t('quizPresent.waitingForResponses', { defaultValue: 'Waiting for responses…' })}
             </p>
           </div>
         )}
@@ -282,7 +339,7 @@ function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions
 const MEDALS = ['🥇', '🥈', '🥉']
 const PODIUM_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32']
 
-function EndedView({ leaderboard }) {
+function EndedView({ leaderboard, t }) {
   const entries = leaderboard?.entries || []
   // Reorder top 3 as [2nd, 1st, 3rd] for classic podium visual
   const raw3 = entries.slice(0, 3)
@@ -297,7 +354,7 @@ function EndedView({ leaderboard }) {
     <div className="pv-ended-wrap">
       <div className="pv-ended-header">
         <TrophyOutlined className="pv-ended-icon" />
-        <h2 className="pv-ended-title">Final Leaderboard</h2>
+        <h2 className="pv-ended-title">{t('quizPresent.finalLeaderboard', { defaultValue: 'Final Leaderboard' })}</h2>
       </div>
 
       {podium.length > 0 && (
@@ -348,7 +405,7 @@ function EndedView({ leaderboard }) {
       )}
 
       {entries.length === 0 && (
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>No scores to display</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>{t('quizPresent.noScoresToDisplay', { defaultValue: 'No scores to display' })}</p>
       )}
     </div>
   )
@@ -358,7 +415,7 @@ function EndedView({ leaderboard }) {
 const MODAL_MEDALS = ['🥇', '🥈', '🥉']
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32']
 
-function LeaderboardModal({ leaderboard, onClose }) {
+function LeaderboardModal({ leaderboard, onClose, t }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -375,28 +432,28 @@ function LeaderboardModal({ leaderboard, onClose }) {
         <div className="pv-lb-panel-header">
           <div className="pv-lb-panel-title">
             <TrophyOutlined style={{ color: '#ffd700', fontSize: 18 }} />
-            <span>Full Leaderboard</span>
+            <span>{t('quizPresent.fullLeaderboard', { defaultValue: 'Full Leaderboard' })}</span>
             {leaderboard?.mcq_question_count > 1 && (
               <span className="pv-lb-panel-meta">
-                {leaderboard.mcq_question_count} MCQ questions
+                {t('quizPresent.mcqQuestionsCount', { count: leaderboard.mcq_question_count })}
               </span>
             )}
           </div>
-          <button className="pv-lb-panel-close" onClick={onClose} aria-label="Close">✕</button>
+          <button className="pv-lb-panel-close" onClick={onClose} aria-label={t('common.cancel')}>✕</button>
         </div>
 
         {/* Table */}
         <div className="pv-lb-panel-body">
           {entries.length === 0 ? (
-            <p className="pv-lb-empty">No scores yet — keep playing!</p>
+            <p className="pv-lb-empty">{t('quizPresent.noScoresYetKeepPlaying', { defaultValue: 'No scores yet - keep playing!' })}</p>
           ) : (
             <table className="pv-lb-table">
               <thead>
                 <tr>
                   <th className="pv-lbt-rank"><TrophyOutlined className="pv-lbt-icon" /> #</th>
-                  <th className="pv-lbt-name"><UserOutlined className="pv-lbt-icon" /> Participant</th>
-                  <th className="pv-lbt-score"><ThunderboltOutlined className="pv-lbt-icon" /> Score</th>
-                  <th className="pv-lbt-time"><ClockCircleOutlined className="pv-lbt-icon" /> Time</th>
+                  <th className="pv-lbt-name"><UserOutlined className="pv-lbt-icon" /> {t('leaderboard.participant')}</th>
+                  <th className="pv-lbt-score"><ThunderboltOutlined className="pv-lbt-icon" /> {t('leaderboard.score')}</th>
+                  <th className="pv-lbt-time"><ClockCircleOutlined className="pv-lbt-icon" /> {t('leaderboard.timeTaken')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -430,7 +487,7 @@ function LeaderboardModal({ leaderboard, onClose }) {
 
         {/* Footer hint */}
         <div className="pv-lb-panel-footer">
-          Press <kbd>Esc</kbd> or click outside to close
+          {t('quizPresent.pressEscToClose', { defaultValue: 'Press Esc or click outside to close' })}
         </div>
       </div>
     </div>
@@ -438,7 +495,7 @@ function LeaderboardModal({ leaderboard, onClose }) {
 }
 
 /* ── Host Control Bar ───────────────────────────────── */
-function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, onToggleHelp, revealed, isPoll }) {
+function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, onToggleHelp, revealed, isPoll, t }) {
   const notStarted = currentQIdx === -1
   const isLastQ = !notStarted && currentQIdx >= totalQ - 1
   const prevDisabled = loading || notStarted || currentQIdx <= 0
@@ -449,14 +506,14 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
     advanceLabel = '…'
     advanceTitle = ''
   } else if (notStarted) {
-    advanceLabel = '▶ Start'
-    advanceTitle = 'Start quiz'
+    advanceLabel = `▶ ${t('quiz.startQuiz')}`
+    advanceTitle = t('quiz.startQuiz')
   } else if (revealed) {
     advanceLabel = isLastQ ? <>End <CheckOutlined /></> : <>Continue <RightOutlined /></>
-    advanceTitle = isLastQ ? 'End session' : 'Next question'
+    advanceTitle = isLastQ ? t('quiz.endSession') : t('quiz.nextQuestion')
   } else {
-    advanceLabel = isLastQ ? 'Finish ✓' : (isPoll ? 'Show stats' : <RightOutlined />)
-    advanceTitle = isPoll ? 'Show stats' : 'Reveal answer'
+    advanceLabel = isLastQ ? `${t('quiz.finish')} ✓` : (isPoll ? t('quizPresent.showStats', { defaultValue: 'Show stats' }) : <RightOutlined />)
+    advanceTitle = isPoll ? t('quizPresent.showStats', { defaultValue: 'Show stats' }) : t('quizPresent.revealAnswer', { defaultValue: 'Reveal answer' })
   }
 
   return (
@@ -464,15 +521,15 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
       {confirmStop ? (
         <>
           <button className="pv-ctrl-btn pv-ctrl-stop-confirm pv-ctrl-confirm-wide" onClick={onStop} disabled={loading}>
-            Confirm Stop
+            {t('quizPresent.confirmStop', { defaultValue: 'Confirm Stop' })}
           </button>
           <button className="pv-ctrl-btn pv-ctrl-cancel" onClick={() => setConfirmStop(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </>
       ) : (
         <>
-          <button className="pv-ctrl-btn" onClick={onBack} disabled={prevDisabled} title="Previous question">
+          <button className="pv-ctrl-btn" onClick={onBack} disabled={prevDisabled} title={t('quiz.previousQuestion')}>
             <LeftOutlined />
           </button>
           <button
@@ -485,9 +542,9 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
             {' '}<kbd className="pv-kbd">→ / Space</kbd>
           </button>
           <button className="pv-ctrl-btn pv-ctrl-stop" onClick={() => setConfirmStop(true)}>
-            ■ Stop
+            ■ {t('quizPresent.stop', { defaultValue: 'Stop' })}
           </button>
-          <button className="pv-ctrl-btn pv-ctrl-help" onClick={onToggleHelp} title="Keyboard shortcuts">
+          <button className="pv-ctrl-btn pv-ctrl-help" onClick={onToggleHelp} title={t('quizPresent.keyboardShortcuts', { defaultValue: 'Keyboard shortcuts' })}>
             ?
           </button>
         </>
@@ -499,15 +556,15 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
 /* ── Compact Leaderboard (sidebar) ───────────────────── */
 const CLB_MEDALS = ['🥇', '🥈', '🥉']
 
-function CompactLeaderboard({ entries, total, onExpand }) {
+function CompactLeaderboard({ entries, total, onExpand, t }) {
   if (!entries || entries.length === 0) return null
   const top5 = entries.slice(0, 5)
   return (
     <div className="pv-clb-wrap">
       <div className="pv-clb-header">
         <TrophyOutlined style={{ fontSize: 11, color: '#faad14' }} />
-        <span>Live Standings</span>
-        <button className="pv-clb-expand-icon" onClick={onExpand} title="View full leaderboard">
+        <span>{t('quizPresent.liveStandings', { defaultValue: 'Live Standings' })}</span>
+        <button className="pv-clb-expand-icon" onClick={onExpand} title={t('quizPresent.viewFullLeaderboard', { defaultValue: 'View full leaderboard' })}>
           ⛶
         </button>
       </div>
@@ -525,7 +582,7 @@ function CompactLeaderboard({ entries, total, onExpand }) {
       ))}
       {total > 5 && (
         <button className="pv-clb-view-all" onClick={onExpand}>
-          View all {total} participants →
+          {t('quizPresent.viewAllParticipants', { count: total })}
         </button>
       )}
     </div>
@@ -533,20 +590,23 @@ function CompactLeaderboard({ entries, total, onExpand }) {
 }
 
 /* ── Sidebar ─────────────────────────────────────────── */
-function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll }) {
+function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll, t }) {
   return (
     <aside className="pv-sidebar">
-      <div className="pv-sidebar-title">{quizTitle}</div>
+      <div className="pv-sidebar-title">
+        <span>{quizTitle}</span>
+        <BetaBadge />
+      </div>
 
       {joinCode && (
         <>
           <div className="pv-sidebar-divider" />
           <div className="pv-qr-wrap">
             <QRCodeCanvas value={joinUrl} size={164} level="H" includeMargin={false} />
-            <span className="pv-qr-label">Scan to join</span>
+            <span className="pv-qr-label">{t('quizPresent.scanToJoin', { defaultValue: 'Scan to join' })}</span>
           </div>
           <div className="pv-join-code-wrap">
-            <span className="pv-join-code-label">Join Code</span>
+            <span className="pv-join-code-label">{t('quiz.joinCode')}</span>
             <span className="pv-join-code">{joinCode}</span>
             <span className="pv-join-host">{window.location.hostname}</span>
           </div>
@@ -558,7 +618,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
       <div className="pv-participants">
         <TeamOutlined className="pv-participants-icon" />
         <span className="pv-participants-count">{participantCount}</span>
-        <span className="pv-participants-label">Participants</span>
+        <span className="pv-participants-label">{t('quiz.participants')}</span>
       </div>
 
       {!isPoll && leaderboard?.entries?.some(e => e.score > 0) && (
@@ -568,6 +628,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
             entries={leaderboard.entries}
             total={leaderboard.total_participants}
             onExpand={onExpandLeaderboard}
+            t={t}
           />
         </>
       )}
@@ -579,6 +640,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
 export default function QuizPresent() {
   const { sessionId } = useParams()
   const [searchParams] = useSearchParams()
+  const { t } = useTranslation()
   const joinCode = searchParams.get('code') || ''
 
   const [results, setResults] = useState(null)
@@ -753,13 +815,14 @@ export default function QuizPresent() {
   return (
     <div className="pv-root">
       <Sidebar
-        quizTitle={results?.quiz_title ?? 'Quiz'}
+        quizTitle={results?.quiz_title ?? t('quiz.createQuiz')}
         joinCode={joinCode}
         joinUrl={joinUrl}
         participantCount={participantCount}
         leaderboard={leaderboard}
         onExpandLeaderboard={() => setShowLbModal(true)}
         isPoll={isPoll}
+        t={t}
       />
 
       <main className="pv-main">
@@ -770,27 +833,28 @@ export default function QuizPresent() {
         ) : isEnded ? (
           isPoll ? (
             <div className="pv-center-fill">
-              <h2 className="pv-waiting-title">Poll completed</h2>
-              <p className="pv-waiting-sub">Thanks for participating.</p>
+              <h2 className="pv-waiting-title">{t('quizPresent.pollCompleted', { defaultValue: 'Poll completed' })}</h2>
+              <p className="pv-waiting-sub">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</p>
             </div>
           ) : (
-            <EndedView leaderboard={leaderboard} />
+            <EndedView leaderboard={leaderboard} t={t} />
           )
         ) : isWaiting ? (
-          <WaitingView participantCount={participantCount} />
+          <WaitingView participantCount={participantCount} t={t} />
         ) : currentQ?.question_type === 'word_cloud' ? (
           <WordCloudView
             question={currentQ}
             wordCloudData={wordCloudData}
             questionNumber={qNumber}
             totalQuestions={totalQ}
+            t={t}
           />
         ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
-          <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} />
+          <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} t={t} />
         ) : currentQ?.question_type === 'scale' ? (
-          <ScaleView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} />
+          <ScaleView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} t={t} />
         ) : (
-          <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} />
+          <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} t={t} />
         )}
       </main>
 
@@ -806,6 +870,7 @@ export default function QuizPresent() {
             onToggleHelp={() => setShowHelp(v => !v)}
             revealed={revealed}
             isPoll={isPoll}
+            t={t}
           />
         </div>
       )}
@@ -814,24 +879,25 @@ export default function QuizPresent() {
         <LeaderboardModal
           leaderboard={leaderboard}
           onClose={() => setShowLbModal(false)}
+          t={t}
         />
       )}
 
       {showHelp && isHost && (
         <div className="pv-help-backdrop" onClick={() => setShowHelp(false)}>
           <div className="pv-help-panel" onClick={e => e.stopPropagation()}>
-            <div className="pv-help-title">Keyboard Shortcuts</div>
+            <div className="pv-help-title">{t('quizPresent.keyboardShortcuts', { defaultValue: 'Keyboard Shortcuts' })}</div>
             <table className="pv-help-table">
               <tbody>
-                <tr><td><kbd>→</kbd> or <kbd>Space</kbd> or <kbd>Enter</kbd> or <kbd>PageDown</kbd></td><td>Next question (press any one key)</td></tr>
-                <tr><td><kbd>←</kbd> or <kbd>Backspace</kbd> or <kbd>PageUp</kbd></td><td>Previous question (press any one key)</td></tr>
-                {!isPoll && <tr><td><kbd>L</kbd></td><td>Toggle leaderboard</td></tr>}
-                <tr><td><kbd>F</kbd></td><td>Toggle fullscreen</td></tr>
-                <tr><td><kbd>?</kbd></td><td>Show / hide this panel</td></tr>
-                <tr><td><kbd>Esc</kbd></td><td>Close overlays</td></tr>
+                <tr><td><kbd>→</kbd> or <kbd>Space</kbd> or <kbd>Enter</kbd> or <kbd>PageDown</kbd></td><td>{t('quizPresent.nextQuestionShortcut', { defaultValue: 'Next question (press any one key)' })}</td></tr>
+                <tr><td><kbd>←</kbd> or <kbd>Backspace</kbd> or <kbd>PageUp</kbd></td><td>{t('quizPresent.previousQuestionShortcut', { defaultValue: 'Previous question (press any one key)' })}</td></tr>
+                {!isPoll && <tr><td><kbd>L</kbd></td><td>{t('quizPresent.toggleLeaderboard', { defaultValue: 'Toggle leaderboard' })}</td></tr>}
+                <tr><td><kbd>F</kbd></td><td>{t('quizPresent.toggleFullscreen', { defaultValue: 'Toggle fullscreen' })}</td></tr>
+                <tr><td><kbd>?</kbd></td><td>{t('quizPresent.showHidePanel', { defaultValue: 'Show / hide this panel' })}</td></tr>
+                <tr><td><kbd>Esc</kbd></td><td>{t('quizPresent.closeOverlays', { defaultValue: 'Close overlays' })}</td></tr>
               </tbody>
             </table>
-            <button className="pv-help-close" onClick={() => setShowHelp(false)}>✕ Close</button>
+            <button className="pv-help-close" onClick={() => setShowHelp(false)}>✕ {t('quizPresent.close', { defaultValue: 'Close' })}</button>
           </div>
         </div>
       )}

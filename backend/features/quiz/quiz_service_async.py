@@ -523,8 +523,8 @@ class QuizBuilderServiceAsync:
                 # Word cloud questions don't need options or correct answer
                 pass
             elif question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
-                if not question.options or len(question.options) != 1:
-                    raise QuizValidationError("Text questions must include one expected answer")
+                if question.options is not None and len(question.options) > 1:
+                    raise QuizValidationError("Text questions can have at most one expected answer")
                 if question.correct_answer_index is not None:
                     raise QuizValidationError("Text questions cannot have a correct answer index")
     
