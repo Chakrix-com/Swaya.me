@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { Button, ConfigProvider } from 'antd'
+import { Button, ConfigProvider, Space, Divider, Typography } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import { 
@@ -22,6 +22,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { logout } from './store/authSlice'
 import Home from './features/home/Home'
+import PrivacyPolicy from './features/home/PrivacyPolicy'
+import TermsOfService from './features/home/TermsOfService'
+import About from './features/home/About'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
 import VerifyEmail from './features/auth/VerifyEmail'
@@ -196,6 +199,17 @@ function AuthenticatedLayout({ children }) {
           style={{ fontSize: 16, cursor: 'pointer' }}
         />,
       ]}
+      footerRender={() => (
+        <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+          <Space split={<Divider type="vertical" />} wrap style={{ justifyContent: 'center' }}>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>© 2026 Swaya.me. {t('home.footer.rights')}</Typography.Text>
+            <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.aboutLink')}</Button>
+            <Button type="link" size="small" onClick={() => navigate('/privacy-policy')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.privacyLink')}</Button>
+            <Button type="link" size="small" onClick={() => navigate('/terms-of-service')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.termsLink')}</Button>
+            <a href="mailto:info@chakrix.net" style={{ fontSize: 12 }}>{t('pages.legal.contactLink')}</a>
+          </Space>
+        </div>
+      )}
     >
       {children}
     </ProLayout>
@@ -224,6 +238,21 @@ function PublicLayout({ children, visitorTheme, onToggleVisitorTheme, hideVisito
 function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const location = useLocation()
+
+  // Legal/info routes are always public — accessible whether logged in or not
+  if (
+    location.pathname === '/privacy-policy' ||
+    location.pathname === '/terms-of-service' ||
+    location.pathname === '/about'
+  ) {
+    return (
+      <Routes>
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    )
+  }
 
   // Join, session, and present routes are always public — accessible whether logged in or not
   if (

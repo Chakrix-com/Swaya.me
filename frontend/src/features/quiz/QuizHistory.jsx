@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Card,
   Button,
+  Dropdown,
   Space,
   Typography,
   Tag,
@@ -16,8 +17,14 @@ import {
   Empty,
   Spin,
   Alert,
+  message,
 } from 'antd'
 import {
+  DownloadOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  FilePptOutlined,
+  FileExcelOutlined,
   LeftOutlined,
   TrophyOutlined,
   TeamOutlined,
@@ -228,6 +235,37 @@ export default function QuizHistory() {
   const [quizType, setQuizType] = useState('quiz')
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [exportingSessionId, setExportingSessionId] = useState(null)
+
+  const handleExport = async (sessionId, format) => {
+    setExportingSessionId(sessionId)
+    try {
+      const response = await sessionAPI.exportSession(sessionId, format)
+      const blob = new Blob([response.data], { type: response.headers['content-type'] })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const disposition = response.headers['content-disposition'] || ''
+      const match = disposition.match(/filename=(.+)/)
+      link.download = match ? match[1] : `quiz_results_${sessionId}.${format}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      message.success(t('quiz.exportSuccess'))
+    } catch {
+      message.error(t('quiz.exportFailed'))
+    } finally {
+      setExportingSessionId(null)
+    }
+  }
+
+  const exportMenuItems = (sessionId) => [
+    { key: 'pdf',  label: t('quiz.exportPdf'),  icon: <FilePdfOutlined />,  onClick: () => handleExport(sessionId, 'pdf') },
+    { key: 'docx', label: t('quiz.exportDocx'), icon: <FileWordOutlined />,  onClick: () => handleExport(sessionId, 'docx') },
+    { key: 'pptx', label: t('quiz.exportPptx'), icon: <FilePptOutlined />,   onClick: () => handleExport(sessionId, 'pptx') },
+    { key: 'xlsx', label: t('quiz.exportXlsx'), icon: <FileExcelOutlined />, onClick: () => handleExport(sessionId, 'xlsx') },
+  ]
 
   useEffect(() => {
     async function load() {
@@ -282,16 +320,33 @@ export default function QuizHistory() {
             const date = new Date(session.created_at)
             const dateStr = date.toLocaleString()
             const header = (
-              <Space wrap>
-                <Tag color={statusColor[session.status]}>{statusLabel[session.status]}</Tag>
-                <Text strong>{dateStr}</Text>
-                <Space>
-                  <TeamOutlined />
-                  <Text>{session.participant_count} {t('quiz.participants')}</Text>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Space wrap>
+                  <Tag color={statusColor[session.status]}>{statusLabel[session.status]}</Tag>
+                  <Text strong>{dateStr}</Text>
+                  <Space>
+                    <TeamOutlined />
+                    <Text>{session.participant_count} {t('quiz.participants')}</Text>
+                  </Space>
+                  <Text type="secondary">·</Text>
+                  <Text type="secondary">{session.total_responses} {t('quiz.responses')}</Text>
                 </Space>
-                <Text type="secondary">·</Text>
-                <Text type="secondary">{session.total_responses} {t('quiz.responses')}</Text>
-              </Space>
+                <div onClick={(e) => e.stopPropagation()} style={{ marginLeft: 8 }}>
+                  <Dropdown
+                    menu={{ items: exportMenuItems(session.id) }}
+                    trigger={['click']}
+                    disabled={session.status !== 'ended'}
+                  >
+                    <Button
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      loading={exportingSessionId === session.id}
+                    >
+                      {t('quiz.export')}
+                    </Button>
+                  </Dropdown>
+                </div>
+              </div>
             )
             return (
               <Panel key={session.id} header={header}>
