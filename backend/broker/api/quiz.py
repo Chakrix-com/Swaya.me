@@ -1,7 +1,8 @@
 """
 Quiz API Endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -507,6 +508,27 @@ async def get_word_cloud_results(
         return await service.get_word_cloud_results(db, session_id, question_id)
     except QuestionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/export")
+async def export_session_results(
+    session_id: int,
+    format: str = Query(..., pattern="^(pdf|docx|pptx|xlsx)$"),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    answer_service: AnswerServiceAsync = Depends(get_answer_service),
+):
+    """Export session results as PDF, DOCX, PPTX, or XLSX"""
+    from features.quiz.export_service import ExportService
+    export_svc = ExportService()
+    file_bytes, media_type, filename = await export_svc.generate(
+        session_id, format, db, current_user.tenant_id, answer_service
+    )
+    return StreamingResponse(
+        iter([file_bytes]),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @router.get("/sessions/{session_id}/results", response_model=SessionResultsResponse)

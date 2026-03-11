@@ -203,9 +203,17 @@ const Home = () => {
       </Content>
 
       <Footer className="home-footer">
-        <Text type="secondary">
-          © 2026 Swaya.me. {t('home.footer.rights')}
-        </Text>
+        <Space direction="vertical" size={8} style={{ width: '100%', alignItems: 'center' }}>
+          <Text type="secondary">
+            © 2026 Swaya.me. {t('home.footer.rights')}
+          </Text>
+          <Space split={<Divider type="vertical" />} wrap>
+            <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0 }}>{t('pages.legal.aboutLink')}</Button>
+            <Button type="link" size="small" onClick={() => navigate('/privacy-policy')} style={{ padding: 0 }}>{t('pages.legal.privacyLink')}</Button>
+            <Button type="link" size="small" onClick={() => navigate('/terms-of-service')} style={{ padding: 0 }}>{t('pages.legal.termsLink')}</Button>
+            <a href="mailto:info@chakrix.net" style={{ fontSize: 14 }}>{t('pages.legal.contactLink')}</a>
+          </Space>
+        </Space>
       </Footer>
     </Layout>
   );

@@ -129,6 +129,11 @@ export const sessionAPI = {
     api.get(`/quizzes/sessions/${sessionId}/leaderboard`, {
       params: sessionToken ? { session_token: sessionToken } : {}
     }),
+  exportSession: (sessionId, format) =>
+    api.get(`/quizzes/sessions/${sessionId}/export`, {
+      params: { format },
+      responseType: 'blob',
+    }),
 }
 
 // Stats API

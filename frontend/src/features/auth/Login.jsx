@@ -142,6 +142,15 @@ function Login() {
               </Link>
             </div>
           </Form>
+
+          <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--visitor-panel-border)', fontSize: 12, color: 'var(--visitor-text-secondary)' }}>
+            <Space split={<Text type="secondary">·</Text>} wrap size={4}>
+              <Link to="/about" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.aboutLink')}</Link>
+              <Link to="/privacy-policy" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.privacyLink')}</Link>
+              <Link to="/terms-of-service" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.termsLink')}</Link>
+              <a href="mailto:info@chakrix.net" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.contactLink')}</a>
+            </Space>
+          </div>
         </Card>
       </div>
     </PublicPageLayout>
