@@ -107,7 +107,7 @@ git_extract_backend_at_tag() {
 }
 
 # ─── Backup helpers ──────────────────────────────────────────────────────────
-backup_meta_file() { echo "$BACKUP_DIR/release_$1.meta"; }
+backup_meta_file() { echo "$BACKUP_DIR/release_${1//\//_}.meta"; }
 
 write_backup_meta() {
     local tag="$1" sha="$2"
@@ -255,7 +255,7 @@ cmd_promote_live() {
 
     # 6. Run DB migrations on live
     info "Running alembic migrations on live DB..."
-    (cd "$LIVE_BACKEND" && "$LIVE_VENV/bin/alembic" upgrade head)
+    (cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" "$LIVE_VENV/bin/alembic" upgrade head)
     success "Live DB migrations applied."
 
     # 7. Deploy frontend (build must already be done via deploy-test, or build now)
@@ -264,7 +264,7 @@ cmd_promote_live() {
         npm --prefix "$DEV_FRONTEND" run build
     fi
     info "Deploying frontend → $LIVE_FRONTEND ..."
-    rsync -av --delete "$DEV_FRONTEND/dist/" "$LIVE_FRONTEND/"
+    sudo rsync -av --delete "$DEV_FRONTEND/dist/" "$LIVE_FRONTEND/"
     success "Frontend deployed."
 
     # 8. Write deployed version marker to live backend
@@ -311,7 +311,7 @@ _restore_release() {
     # Frontend: must come from file backup (dist is gitignored)
     if [[ -d "$fe_backup" ]]; then
         info "Restoring frontend from file backup..."
-        rsync -av --delete "$fe_backup/" "$LIVE_FRONTEND/"
+        sudo rsync -av --delete "$fe_backup/" "$LIVE_FRONTEND/"
         success "Frontend restored."
     else
         error "No frontend backup for $tag — cannot restore frontend."
@@ -399,7 +399,7 @@ cmd_migrate_live() {
     header "Alembic migrate → live DB (swayame)"
     warn "This runs migrations on the LIVE database."
     confirm "Proceed?" || { info "Aborted."; return; }
-    (cd "$LIVE_BACKEND" && "$LIVE_VENV/bin/alembic" upgrade head)
+    (cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" "$LIVE_VENV/bin/alembic" upgrade head)
     success "Live DB migrations applied."
 }
 
