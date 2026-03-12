@@ -254,6 +254,8 @@ def _build_pdf(data: ExportData) -> bytes:
 
     # ---- Canvas with header / footer drawn on every page ----
     class HeaderFooterCanvas(rl_canvas.Canvas):
+        _hf_link_counter = 0  # class-level counter so names stay unique across state restores
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self._saved_page_states: list = []
@@ -264,20 +266,42 @@ def _build_pdf(data: ExportData) -> bytes:
 
         def save(self):
             total_pages = len(self._saved_page_states)
+            HeaderFooterCanvas._hf_link_counter = 0
             for state in self._saved_page_states:
                 self.__dict__.update(state)
                 self._draw_header_footer(total_pages)
                 super().showPage()
             super().save()
 
+        def _unique_link(self, url: str, rect) -> None:
+            """Add a URL annotation using a globally unique name."""
+            HeaderFooterCanvas._hf_link_counter += 1
+            name = f"HFLink{HeaderFooterCanvas._hf_link_counter}"
+            self._addAnnotation(
+                self._makeLink(url, rect),
+                name=name,
+            )
+
+        def _makeLink(self, url: str, rect):
+            from reportlab.pdfbase.pdfdoc import PDFDictionary, PDFName, PDFArray, PDFString
+            ann = PDFDictionary()
+            ann["Type"] = PDFName("Annot")
+            ann["Subtype"] = PDFName("Link")
+            ann["Rect"] = PDFArray(self._absRect(rect, 0))
+            A = PDFDictionary()
+            A["Type"] = PDFName("Action")
+            A["S"] = PDFName("URI")
+            A["URI"] = PDFString(url)
+            ann["A"] = A
+            from reportlab.pdfbase.pdfdoc import PDFArray as _PA
+            ann["Border"] = _PA([0, 0, 0])
+            return ann
+
         def _draw_header_footer(self, total_pages: int):
             self.saveState()
 
-            # ── Header band ──────────────────────────────────────────────
+            # ── Header line ───────────────────────────────────────────────
             header_y = PAGE_H - MARGIN - HEADER_H
-            # light blue strip
-            self.setFillColorRGB(0.094, 0.565, 1.0)   # #1890ff
-            self.rect(MARGIN, header_y, PAGE_W - 2 * MARGIN, HEADER_H, fill=1, stroke=0)
 
             # logo (if available)
             logo_drawn_w = 0.0
@@ -291,25 +315,46 @@ def _build_pdf(data: ExportData) -> bytes:
                         width=logo_w_pt, height=logo_h_pt,
                         preserveAspectRatio=True, mask="auto",
                     )
+                    # hyperlink over logo image
+                    self._unique_link(
+                        'https://www.swaya.me',
+                        (MARGIN + 4, header_y + 2,
+                         MARGIN + 4 + logo_w_pt, header_y + 2 + logo_h_pt),
+                    )
                     logo_drawn_w = logo_w_pt + 6
                 except Exception:
                     pass
 
-            # "Swaya.me" text in header
-            self.setFillColorRGB(1, 1, 1)
+            # "Swaya.me" text in header — brand blue (was white-on-blue)
+            self.setFillColorRGB(0.094, 0.565, 1.0)   # #1890ff
             self.setFont("Helvetica-Bold", 10)
-            self.drawString(MARGIN + logo_drawn_w + 4, header_y + HEADER_H * 0.3, "Swaya.me")
+            text_x = MARGIN + logo_drawn_w + 4
+            text_y = header_y + HEADER_H * 0.3
+            self.drawString(text_x, text_y, "Swaya.me")
+            # hyperlink over "Swaya.me" text
+            self._unique_link(
+                'https://www.swaya.me',
+                (text_x, text_y - 2, text_x + 55, text_y + 10),
+            )
 
-            # quiz title (right-aligned, truncated)
+            # quiz title (right-aligned, truncated) — grey
             max_title = 55
             title_str = data.quiz_title if len(data.quiz_title) <= max_title else data.quiz_title[:max_title] + "…"
+            self.setFillColorRGB(0.4, 0.4, 0.4)
             self.setFont("Helvetica", 9)
             self.drawRightString(PAGE_W - MARGIN - 4, header_y + HEADER_H * 0.3, title_str)
 
-            # ── Footer band ───────────────────────────────────────────────
+            # thin blue line below header content
+            self.setStrokeColorRGB(0.094, 0.565, 1.0)
+            self.setLineWidth(0.8)
+            self.line(MARGIN, header_y, PAGE_W - MARGIN, header_y)
+
+            # ── Footer line ────────────────────────────────────────────────
             footer_y = MARGIN - 2
-            self.setFillColorRGB(0.94, 0.94, 0.94)  # light grey
-            self.rect(MARGIN, footer_y, PAGE_W - 2 * MARGIN, FOOTER_H - 2, fill=1, stroke=0)
+            # thin grey line above footer content
+            self.setStrokeColorRGB(0.75, 0.75, 0.75)
+            self.setLineWidth(0.5)
+            self.line(MARGIN, footer_y + FOOTER_H - 2, PAGE_W - MARGIN, footer_y + FOOTER_H - 2)
 
             self.setFillColorRGB(0.4, 0.4, 0.4)
             self.setFont("Helvetica", 8)
@@ -465,38 +510,48 @@ def _build_pdf(data: ExportData) -> bytes:
             ]))
             q_items.append(tbl)
 
-        elif q.word_frequencies:
-            # Real word cloud image
-            wc_png = _make_wordcloud_png(q.word_frequencies, width=500, height=260)
-            if wc_png:
-                q_items.append(Paragraph("<b>Word Cloud</b>", body))
-                q_items.append(RLImage(io.BytesIO(wc_png), width=14 * cm, height=7.3 * cm))
-                q_items.append(Spacer(1, 0.3 * cm))
+            story.append(KeepTogether(q_items))
 
-            # Top-words bar chart below the cloud
-            top_words = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:15]
-            w_labels = [w for w, _ in top_words]
-            w_counts = [c for _, c in top_words]
-            max_wv = max(w_counts) if w_counts else 1
-            dw3, dh3 = 420, max(60, len(w_labels) * 24 + 20)
-            d4 = Drawing(dw3, dh3)
-            bc3 = HorizontalBarChart()
-            bc3.x = 60; bc3.y = 5; bc3.width = dw3 - 80; bc3.height = dh3 - 10
-            bc3.data = [w_counts]
-            bc3.categoryAxis.categoryNames = w_labels
-            bc3.valueAxis.valueMin = 0
-            bc3.valueAxis.valueMax = max_wv + 1
-            bc3.bars[0].fillColor = colors.HexColor("#722ed1")
-            d4.add(bc3)
-            q_items.append(Paragraph("<b>Top word frequencies</b>", body))
-            q_items.append(d4)
+        elif q.question_type == 'word_cloud':
+            # Add question title directly to story first
+            story.extend(q_items)
+            q_items = []  # clear so KeepTogether below is skipped
+
+            if q.word_frequencies:
+                # Real word cloud image — added directly (not in KeepTogether)
+                wc_png = _make_wordcloud_png(q.word_frequencies, width=500, height=260)
+                if wc_png:
+                    story.append(Paragraph("<b>Word Cloud</b>", body))
+                    story.append(RLImage(io.BytesIO(wc_png), width=14 * cm, height=7.3 * cm))
+                    story.append(Spacer(1, 0.3 * cm))
+
+                # Top-words bar chart added directly (not in KeepTogether)
+                top_words = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:15]
+                w_labels = [w for w, _ in top_words]
+                w_counts = [c for _, c in top_words]
+                max_wv = max(w_counts) if w_counts else 1
+                dw3, dh3 = 420, max(60, len(w_labels) * 24 + 20)
+                d4 = Drawing(dw3, dh3)
+                bc3 = HorizontalBarChart()
+                bc3.x = 60; bc3.y = 5; bc3.width = dw3 - 80; bc3.height = dh3 - 10
+                bc3.data = [w_counts]
+                bc3.categoryAxis.categoryNames = w_labels
+                bc3.valueAxis.valueMin = 0
+                bc3.valueAxis.valueMax = max_wv + 1
+                bc3.bars[0].fillColor = colors.HexColor("#722ed1")
+                d4.add(bc3)
+                story.append(Paragraph("<b>Top word frequencies</b>", body))
+                story.append(d4)
+            else:
+                story.append(Paragraph("<i>No responses submitted yet.</i>", body))
+
         else:
             q_items.append(Paragraph(
                 f"<i>Text response question — {sum(q.answer_distribution)} responses received</i>",
                 body
             ))
+            story.append(KeepTogether(q_items))
 
-        story.append(KeepTogether(q_items))
         story.append(Spacer(1, 0.6 * cm))
 
     # ---- Leaderboard page ----
@@ -606,10 +661,30 @@ def _build_docx(data: ExportData) -> bytes:
     right_cell = htbl.cell(0, 1)
     rp = right_cell.paragraphs[0]
     rp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    r1 = rp.add_run("Swaya.me")
-    r1.bold = True
-    r1.font.color.rgb = RGBColor(0x18, 0x90, 0xFF)
-    r1.font.size = Pt(12)
+    # Build a hyperlink run pointing to https://www.swaya.me
+    r_id = header.part.relate_to(
+        'https://www.swaya.me',
+        'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
+        is_external=True,
+    )
+    hyperlink_elem = OxmlElement('w:hyperlink')
+    hyperlink_elem.set(qn('r:id'), r_id)
+    run_elem = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+    b_elem = OxmlElement('w:b')
+    rPr.append(b_elem)
+    color_elem = OxmlElement('w:color')
+    color_elem.set(qn('w:val'), '1890FF')
+    rPr.append(color_elem)
+    sz_elem = OxmlElement('w:sz')
+    sz_elem.set(qn('w:val'), '24')
+    rPr.append(sz_elem)
+    run_elem.append(rPr)
+    t_elem = OxmlElement('w:t')
+    t_elem.text = 'Swaya.me'
+    run_elem.append(t_elem)
+    hyperlink_elem.append(run_elem)
+    rp._p.append(hyperlink_elem)
 
     # ---- Footer (page numbers) ----
     footer = section.footer
@@ -709,17 +784,20 @@ def _build_docx(data: ExportData) -> bytes:
                 row.cells[1].text = str(cnt)
                 row.cells[2].text = f"{cnt/total*100:.0f}%"
 
-        elif q.word_frequencies:
-            # Real word cloud image
-            wc_png = _make_wordcloud_png(q.word_frequencies, width=560, height=280)
-            if wc_png:
-                doc.add_paragraph("Word Cloud:").bold = True
-                doc.add_picture(io.BytesIO(wc_png), width=Inches(5.5))
-            # Bar chart of top words
-            wc_bar = _make_wc_bar_png(q.word_frequencies)
-            if wc_bar:
-                doc.add_paragraph("Top word frequencies:").bold = True
-                doc.add_picture(io.BytesIO(wc_bar), width=Inches(5.5))
+        elif q.question_type == 'word_cloud':
+            if q.word_frequencies:
+                # Real word cloud image
+                wc_png = _make_wordcloud_png(q.word_frequencies, width=560, height=280)
+                if wc_png:
+                    doc.add_paragraph("Word Cloud:").bold = True
+                    doc.add_picture(io.BytesIO(wc_png), width=Inches(5.5))
+                # Bar chart of top words
+                wc_bar = _make_wc_bar_png(q.word_frequencies)
+                if wc_bar:
+                    doc.add_paragraph("Top word frequencies:").bold = True
+                    doc.add_picture(io.BytesIO(wc_bar), width=Inches(5.5))
+            else:
+                doc.add_paragraph("No responses submitted yet.").italic = True
         else:
             doc.add_paragraph(
                 f"Text response question — {sum(q.answer_distribution)} responses received"
@@ -786,19 +864,12 @@ def _build_pptx(data: ExportData) -> bytes:
         return txb
 
     def add_header_footer(slide, page_num: int, total_pages: int):
-        """Draw blue header band + grey footer band on a slide."""
-        # ── Header ──
-        hdr = slide.shapes.add_shape(
-            1,  # MSO_SHAPE_TYPE.RECTANGLE
-            0, 0, W, HEADER_H
-        )
-        hdr.fill.solid()
-        hdr.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xFF)
-        hdr.line.fill.background()
+        """Draw header line + footer line on a slide (no filled rectangles)."""
+        from pptx.enum.text import PP_ALIGN
 
+        # ── Header ──
         # Logo in header
         logo_x = Inches(0.08)
-        logo_drawn = False
         if logo:
             try:
                 pil_logo = __import__("PIL.Image", fromlist=["Image"]).open(logo)
@@ -807,11 +878,10 @@ def _build_pptx(data: ExportData) -> bytes:
                 logo_w = int(logo_h * aspect)
                 slide.shapes.add_picture(logo, logo_x, Inches(0.03), logo_w, logo_h)
                 logo_x += logo_w + Inches(0.05)
-                logo_drawn = True
             except Exception:
                 pass
 
-        # "Swaya.me" in header
+        # "Swaya.me" in header — brand blue (transparent background now)
         brand_tb = slide.shapes.add_textbox(logo_x, Inches(0.04), Inches(1.5), HEADER_H)
         brand_tf = brand_tb.text_frame
         brand_p = brand_tf.paragraphs[0]
@@ -819,28 +889,21 @@ def _build_pptx(data: ExportData) -> bytes:
         brand_r.text = "Swaya.me"
         brand_r.font.bold = True
         brand_r.font.size = Pt(11)
-        brand_r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        brand_r.font.color.rgb = RGBColor(0x18, 0x90, 0xFF)
+        brand_r.hyperlink.address = 'https://www.swaya.me'
 
         # Quiz title (right side of header)
         title_str = data.quiz_title[:60] + ("…" if len(data.quiz_title) > 60 else "")
         title_tb = slide.shapes.add_textbox(Inches(2), Inches(0.04), W - Inches(2.1), HEADER_H)
         title_tf = title_tb.text_frame
         title_p = title_tf.paragraphs[0]
-        from pptx.enum.text import PP_ALIGN
         title_p.alignment = PP_ALIGN.RIGHT
         title_r = title_p.add_run()
         title_r.text = title_str
         title_r.font.size = Pt(9)
-        title_r.font.color.rgb = RGBColor(0xDD, 0xEE, 0xFF)
+        title_r.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
 
         # ── Footer ──
-        ftr = slide.shapes.add_shape(
-            1, 0, H - FOOTER_H, W, FOOTER_H
-        )
-        ftr.fill.solid()
-        ftr.fill.fore_color.rgb = RGBColor(0xF0, 0xF0, 0xF0)
-        ftr.line.fill.background()
-
         footer_tb = slide.shapes.add_textbox(0, H - FOOTER_H, W, FOOTER_H)
         footer_tf = footer_tb.text_frame
         footer_p = footer_tf.paragraphs[0]
@@ -848,7 +911,7 @@ def _build_pptx(data: ExportData) -> bytes:
         footer_r = footer_p.add_run()
         footer_r.text = f"Swaya.me  ·  Page {page_num} of {total_pages}  ·  {data.generated_at.strftime('%d %b %Y')}"
         footer_r.font.size = Pt(7)
-        footer_r.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+        footer_r.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
     # Count total slides up front so we can pass total_pages
     # Slide count: 1 (summary) + len(questions) + (1 if leaderboard)
@@ -932,28 +995,34 @@ def _build_pptx(data: ExportData) -> bytes:
                     else:
                         pt.format.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xff)
 
-        elif q.word_frequencies:
-            # Word cloud image in top half, bar chart in bottom half
-            wc_png = _make_wordcloud_png(q.word_frequencies, width=600, height=260)
-            if wc_png:
-                sl.shapes.add_picture(
-                    io.BytesIO(wc_png),
-                    Inches(0.3), content_top,
-                    W - Inches(0.6), content_h * 0.55
-                )
-                content_top += content_h * 0.55 + Inches(0.05)
-                content_h = content_h * 0.42
+        elif q.question_type == 'word_cloud':
+            if q.word_frequencies:
+                # Word cloud image in top half, bar chart in bottom half
+                wc_png = _make_wordcloud_png(q.word_frequencies, width=600, height=260)
+                if wc_png:
+                    sl.shapes.add_picture(
+                        io.BytesIO(wc_png),
+                        Inches(0.3), content_top,
+                        W - Inches(0.6), content_h * 0.55
+                    )
+                    content_top += content_h * 0.55 + Inches(0.05)
+                    content_h = content_h * 0.42
 
-            top_wf = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:10]
-            if top_wf:
-                cd3 = ChartData()
-                cd3.categories = [w for w, _ in top_wf]
-                cd3.add_series("Frequency", [c for _, c in top_wf])
-                sl.shapes.add_chart(
-                    XL_CHART_TYPE.BAR_CLUSTERED,
-                    Inches(0.3), content_top, W - Inches(0.6), content_h,
-                    cd3
-                )
+                top_wf = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:10]
+                if top_wf:
+                    cd3 = ChartData()
+                    cd3.categories = [w for w, _ in top_wf]
+                    cd3.add_series("Frequency", [c for _, c in top_wf])
+                    sl.shapes.add_chart(
+                        XL_CHART_TYPE.BAR_CLUSTERED,
+                        Inches(0.3), content_top, W - Inches(0.6), content_h,
+                        cd3
+                    )
+            else:
+                add_text_box(sl,
+                             "No responses submitted yet.",
+                             Inches(0.3), content_top, W - Inches(0.6), Inches(1),
+                             size=14, color="#888888")
         else:
             add_text_box(sl,
                          f"Text response question — {sum(q.answer_distribution)} responses received",
@@ -1045,6 +1114,8 @@ def _build_xlsx(data: ExportData) -> bytes:
 
     ws_s["C1"] = "Swaya.me"
     ws_s["C1"].font = Font(bold=True, size=14, color="1890FF")
+    ws_s["C1"].hyperlink = 'https://www.swaya.me'
+    ws_s["C1"].style = "Hyperlink"
 
     ws_s["A3"] = "Quiz Title";        ws_s["B3"] = data.quiz_title
     ws_s["A4"] = "Session ID";        ws_s["B4"] = data.session_id
