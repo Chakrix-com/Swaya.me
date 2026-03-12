@@ -4,6 +4,7 @@ Export Service — generate PDF, DOCX, PPTX, XLSX reports for quiz sessions.
 from __future__ import annotations
 
 import io
+import os
 import math
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +19,31 @@ from persistence.models.quiz import (
     Quiz, QuizSession, QuizType, Question, QuestionType
 )
 from features.quiz.answer_service_async import AnswerServiceAsync
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+
+_LOGO_PATH = os.path.join(
+    os.path.dirname(__file__),          # features/quiz/
+    "..", "..",                         # backend/
+    "uploads", "logo.png"
+)
+# Fallback: frontend asset (symlinked or copied at startup is not guaranteed,
+# so we try the frontend source tree too)
+_LOGO_FALLBACK = os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "..",
+    "frontend", "src", "assets", "logo.png"
+)
+
+
+def _logo_path() -> Optional[str]:
+    for p in (_LOGO_PATH, _LOGO_FALLBACK):
+        resolved = os.path.normpath(p)
+        if os.path.exists(resolved):
+            return resolved
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +100,32 @@ def _hex2rgb(h: str) -> Tuple[int, int, int]:
 
 
 # ---------------------------------------------------------------------------
-# Pillow PNG chart helpers  (used by DOCX)
+# Word cloud image (wordcloud library → Pillow PNG)
+# ---------------------------------------------------------------------------
+
+def _make_wordcloud_png(word_freq: Dict[str, int], width: int = 560, height: int = 300) -> bytes:
+    """Render a real word cloud PNG using the wordcloud library."""
+    if not word_freq:
+        return b""
+    try:
+        from wordcloud import WordCloud
+        wc = WordCloud(
+            width=width, height=height,
+            background_color="white",
+            colormap="tab10",
+            max_words=80,
+            prefer_horizontal=0.8,
+        )
+        wc.generate_from_frequencies(word_freq)
+        buf = io.BytesIO()
+        wc.to_image().save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception:
+        return b""
+
+
+# ---------------------------------------------------------------------------
+# Pillow PNG chart helpers  (bar + pie — used by DOCX)
 # ---------------------------------------------------------------------------
 
 def _make_bar_chart_png(
@@ -109,15 +160,12 @@ def _make_bar_chart_png(
         color = _CORRECT_HEX if i == correct_idx else _WRONG_HEX
         r, g, b = _hex2rgb(color)
 
-        # bar
         draw.rectangle([margin_left, y + 6, margin_left + max(bar_w, 2), y + row_h - 6],
                        fill=(r, g, b))
 
-        # option label (left)
         label = (opt[:18] + "…") if len(opt) > 20 else opt
         draw.text((4, y + row_h // 2 - 7), label, fill=(0, 0, 0))
 
-        # count + pct (right)
         pct = cnt / total * 100
         draw.text((margin_left + bar_w + 4, y + row_h // 2 - 7),
                   f"{cnt} ({pct:.0f}%)", fill=(80, 80, 80))
@@ -144,7 +192,6 @@ def _make_pie_chart_png(
     img = Image.new("RGB", (size, size + legend_h), "white")
     draw = ImageDraw.Draw(img)
 
-    # pie
     cx, cy, r = size // 2, size // 2, size // 2 - 10
     start = -90.0
     colors = [_hex2rgb(c) for c in _PALETTE_HEX]
@@ -155,7 +202,6 @@ def _make_pie_chart_png(
                       fill=colors[i % len(colors)])
         start += sweep
 
-    # legend
     for i, (lbl, val) in enumerate(zip(labels, values)):
         ly = size + 5 + i * 20
         r2, g2, b2 = colors[i % len(colors)]
@@ -178,7 +224,7 @@ def _make_wc_bar_png(word_freq: Dict[str, int], top: int = 15, width: int = 560)
 
 
 # ---------------------------------------------------------------------------
-# PDF builder (reportlab PLATYPUS + native charts)
+# PDF builder (reportlab PLATYPUS + native charts + header/footer)
 # ---------------------------------------------------------------------------
 
 def _build_pdf(data: ExportData) -> bytes:
@@ -189,20 +235,104 @@ def _build_pdf(data: ExportData) -> bytes:
         from reportlab.lib.units import cm
         from reportlab.platypus import (
             SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-            HRFlowable, KeepTogether, PageBreak
+            HRFlowable, KeepTogether, PageBreak, Image as RLImage
         )
         from reportlab.graphics.shapes import Drawing, Rect, String
         from reportlab.graphics.charts.barcharts import HorizontalBarChart
         from reportlab.graphics.charts.piecharts import Pie
         from reportlab.graphics import renderPDF
+        from reportlab.pdfgen import canvas as rl_canvas
     except ImportError:
         raise HTTPException(status_code=501, detail="Export libraries not available")
+
+    PAGE_W, PAGE_H = A4
+    MARGIN = 1.5 * cm
+    HEADER_H = 1.2 * cm   # reserved space at top for header band
+    FOOTER_H = 1.0 * cm   # reserved space at bottom for page number
+
+    logo = _logo_path()
+
+    # ---- Canvas with header / footer drawn on every page ----
+    class HeaderFooterCanvas(rl_canvas.Canvas):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._saved_page_states: list = []
+
+        def showPage(self):
+            self._saved_page_states.append(dict(self.__dict__))
+            self._startPage()
+
+        def save(self):
+            total_pages = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                self._draw_header_footer(total_pages)
+                super().showPage()
+            super().save()
+
+        def _draw_header_footer(self, total_pages: int):
+            self.saveState()
+
+            # ── Header band ──────────────────────────────────────────────
+            header_y = PAGE_H - MARGIN - HEADER_H
+            # light blue strip
+            self.setFillColorRGB(0.094, 0.565, 1.0)   # #1890ff
+            self.rect(MARGIN, header_y, PAGE_W - 2 * MARGIN, HEADER_H, fill=1, stroke=0)
+
+            # logo (if available)
+            logo_drawn_w = 0.0
+            if logo:
+                try:
+                    logo_h_pt = HEADER_H - 4
+                    logo_w_pt = logo_h_pt  # square assumption; reportlab scales it
+                    self.drawImage(
+                        logo,
+                        MARGIN + 4, header_y + 2,
+                        width=logo_w_pt, height=logo_h_pt,
+                        preserveAspectRatio=True, mask="auto",
+                    )
+                    logo_drawn_w = logo_w_pt + 6
+                except Exception:
+                    pass
+
+            # "Swaya.me" text in header
+            self.setFillColorRGB(1, 1, 1)
+            self.setFont("Helvetica-Bold", 10)
+            self.drawString(MARGIN + logo_drawn_w + 4, header_y + HEADER_H * 0.3, "Swaya.me")
+
+            # quiz title (right-aligned, truncated)
+            max_title = 55
+            title_str = data.quiz_title if len(data.quiz_title) <= max_title else data.quiz_title[:max_title] + "…"
+            self.setFont("Helvetica", 9)
+            self.drawRightString(PAGE_W - MARGIN - 4, header_y + HEADER_H * 0.3, title_str)
+
+            # ── Footer band ───────────────────────────────────────────────
+            footer_y = MARGIN - 2
+            self.setFillColorRGB(0.94, 0.94, 0.94)  # light grey
+            self.rect(MARGIN, footer_y, PAGE_W - 2 * MARGIN, FOOTER_H - 2, fill=1, stroke=0)
+
+            self.setFillColorRGB(0.4, 0.4, 0.4)
+            self.setFont("Helvetica", 8)
+            page_num = self._saved_page_states.index(
+                next(s for s in self._saved_page_states if s.get("_pageNumber") == self._pageNumber),
+                0
+            ) + 1 if hasattr(self, "_pageNumber") else 1
+            self.drawCentredString(
+                PAGE_W / 2, footer_y + 3,
+                f"Page {self._pageNumber} of {total_pages}"
+            )
+            self.drawString(MARGIN + 4, footer_y + 3, "Generated by Swaya.me")
+            self.drawRightString(PAGE_W - MARGIN - 4, footer_y + 3,
+                                 data.generated_at.strftime("%d %b %Y"))
+
+            self.restoreState()
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=1.5 * cm, rightMargin=1.5 * cm,
-        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+        leftMargin=MARGIN, rightMargin=MARGIN,
+        topMargin=MARGIN + HEADER_H + 0.3 * cm,
+        bottomMargin=MARGIN + FOOTER_H + 0.2 * cm,
     )
     styles = getSampleStyleSheet()
     story = []
@@ -299,7 +429,6 @@ def _build_pdf(data: ExportData) -> bytes:
         q_items.append(Paragraph(f"<b>Q{idx+1}. {q.text}</b>  <font color='grey' size=9>[{type_badge}]</font>", h2))
 
         if q.options:
-            # Horizontal bar chart
             max_v = max(q.answer_distribution) if q.answer_distribution else 1
             dw2, dh2 = 420, max(60, len(q.options) * 26 + 20)
             d3 = Drawing(dw2, dh2)
@@ -312,14 +441,12 @@ def _build_pdf(data: ExportData) -> bytes:
             ]
             bc2.valueAxis.valueMin = 0
             bc2.valueAxis.valueMax = max(max_v + 1, 5)
-            # colour each bar individually
             for i in range(len(q.options)):
                 color = colors.HexColor(_CORRECT_HEX) if i == q.correct_answer_index else colors.HexColor(_WRONG_HEX)
                 bc2.bars[(0, i)].fillColor = color
             d3.add(bc2)
             q_items.append(d3)
 
-            # Data table
             tbl_data = [["Option", "Votes", "%"]]
             for i, (opt, cnt) in enumerate(zip(q.options, q.answer_distribution)):
                 marker = " ✓" if i == q.correct_answer_index else ""
@@ -339,6 +466,14 @@ def _build_pdf(data: ExportData) -> bytes:
             q_items.append(tbl)
 
         elif q.word_frequencies:
+            # Real word cloud image
+            wc_png = _make_wordcloud_png(q.word_frequencies, width=500, height=260)
+            if wc_png:
+                q_items.append(Paragraph("<b>Word Cloud</b>", body))
+                q_items.append(RLImage(io.BytesIO(wc_png), width=14 * cm, height=7.3 * cm))
+                q_items.append(Spacer(1, 0.3 * cm))
+
+            # Top-words bar chart below the cloud
             top_words = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:15]
             w_labels = [w for w, _ in top_words]
             w_counts = [c for _, c in top_words]
@@ -370,13 +505,11 @@ def _build_pdf(data: ExportData) -> bytes:
         story.append(Paragraph("<b>Leaderboard</b>", title_style))
         story.append(Spacer(1, 0.3 * cm))
 
-        # Podium for top 3
         top3 = data.leaderboard[:3]
         if len(top3) >= 1:
             podium_d = Drawing(400, 120)
             heights = [80, 60, 40]
-            positions = [120, 20, 220]  # 2nd, 1st, 3rd
-            order_idx = [1, 0, 2]  # draw order: 1st center, 2nd left, 3rd right
+            positions = [120, 20, 220]
             podium_colors = [
                 colors.HexColor("#FFD700"),
                 colors.HexColor("#C0C0C0"),
@@ -395,7 +528,6 @@ def _build_pdf(data: ExportData) -> bytes:
                                     textAnchor="middle", fontSize=9, fillColor=colors.black))
             story.append(podium_d)
 
-        # Full table
         lb_data = [["Rank", "Name", "Score", "Time"]]
         rank_colors_map = {1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32"}
         for e in data.leaderboard:
@@ -418,7 +550,7 @@ def _build_pdf(data: ExportData) -> bytes:
         lb_tbl.setStyle(TableStyle(style_cmds))
         story.append(lb_tbl)
 
-    doc.build(story)
+    doc.build(story, canvasmaker=HeaderFooterCanvas)
     return buf.getvalue()
 
 
@@ -429,18 +561,97 @@ def _build_pdf(data: ExportData) -> bytes:
 def _build_docx(data: ExportData) -> bytes:
     try:
         from docx import Document
-        from docx.shared import Inches, Pt, RGBColor
+        from docx.shared import Inches, Pt, RGBColor, Cm
         from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
     except ImportError:
         raise HTTPException(status_code=501, detail="Export libraries not available")
 
     doc = Document()
+
+    # ---- Header (logo + title + divider) ----
+    section = doc.sections[0]
+    header = section.header
+    header.is_linked_to_previous = False
+    htbl = header.add_table(1, 2, Inches(6.5))
+    htbl.style = "Table Grid"
+    htbl.autofit = False
+    # Remove border styling
+    for row in htbl.rows:
+        for cell in row.cells:
+            tc = cell._tc
+            tcPr = tc.get_or_add_tcPr()
+            tcBorders = OxmlElement("w:tcBorders")
+            for side in ("top", "left", "bottom", "right"):
+                border = OxmlElement(f"w:{side}")
+                border.set(qn("w:val"), "none")
+                tcBorders.append(border)
+            tcPr.append(tcBorders)
+
+    logo = _logo_path()
+    left_cell = htbl.cell(0, 0)
+    left_cell.width = Inches(0.6)
+    lp = left_cell.paragraphs[0]
+    lp.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    if logo:
+        try:
+            run = lp.add_run()
+            run.add_picture(logo, width=Inches(0.45))
+        except Exception:
+            lp.add_run("Swaya.me")
+    else:
+        lp.add_run("Swaya.me").bold = True
+
+    right_cell = htbl.cell(0, 1)
+    rp = right_cell.paragraphs[0]
+    rp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    r1 = rp.add_run("Swaya.me")
+    r1.bold = True
+    r1.font.color.rgb = RGBColor(0x18, 0x90, 0xFF)
+    r1.font.size = Pt(12)
+
+    # ---- Footer (page numbers) ----
+    footer = section.footer
+    footer.is_linked_to_previous = False
+    fp = footer.paragraphs[0]
+    fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fp.add_run("Page ").font.size = Pt(8)
+    # Insert PAGE field
+    fldChar1 = OxmlElement("w:fldChar")
+    fldChar1.set(qn("w:fldCharType"), "begin")
+    instrText = OxmlElement("w:instrText")
+    instrText.text = "PAGE"
+    fldChar2 = OxmlElement("w:fldChar")
+    fldChar2.set(qn("w:fldCharType"), "end")
+    run_pg = fp.add_run()
+    run_pg._r.append(fldChar1)
+    run_pg._r.append(instrText)
+    run_pg._r.append(fldChar2)
+    run_pg.font.size = Pt(8)
+
+    fp.add_run(" of ").font.size = Pt(8)
+
+    fldChar3 = OxmlElement("w:fldChar")
+    fldChar3.set(qn("w:fldCharType"), "begin")
+    instrText2 = OxmlElement("w:instrText")
+    instrText2.text = "NUMPAGES"
+    fldChar4 = OxmlElement("w:fldChar")
+    fldChar4.set(qn("w:fldCharType"), "end")
+    run_np = fp.add_run()
+    run_np._r.append(fldChar3)
+    run_np._r.append(instrText2)
+    run_np._r.append(fldChar4)
+    run_np.font.size = Pt(8)
+
+    fp.add_run(f"  ·  Generated by Swaya.me  ·  {data.generated_at.strftime('%d %b %Y')}").font.size = Pt(8)
+
+    # ---- Document body ----
     doc.add_heading(data.quiz_title, 0)
     doc.add_paragraph(
         f"Session #{data.session_id}  ·  {data.generated_at.strftime('%d %b %Y, %H:%M')}"
     ).style.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
 
-    # Summary table
     tbl = doc.add_table(rows=2, cols=3)
     tbl.style = "Table Grid"
     headers = ["Participants", "Questions", "Type"]
@@ -452,7 +663,6 @@ def _build_docx(data: ExportData) -> bytes:
 
     doc.add_paragraph()
 
-    # Correct vs incorrect pie (quiz type)
     if data.quiz_type == "quiz":
         total_correct = sum(
             q.answer_distribution[q.correct_answer_index]
@@ -471,7 +681,6 @@ def _build_docx(data: ExportData) -> bytes:
                 doc.add_heading("Overall Results", level=1)
                 doc.add_picture(io.BytesIO(pie_png), width=Inches(3))
 
-    # Per-question sections
     doc.add_heading("Question Results", level=1)
     for idx, q in enumerate(data.questions):
         doc.add_heading(f"Q{idx+1}. {q.text}", level=2)
@@ -487,7 +696,6 @@ def _build_docx(data: ExportData) -> bytes:
             if chart_png:
                 doc.add_picture(io.BytesIO(chart_png), width=Inches(5.5))
 
-            # Data table
             tbl2 = doc.add_table(rows=len(q.options) + 1, cols=3)
             tbl2.style = "Table Grid"
             for cell_text, cell in zip(["Option", "Votes", "%"], tbl2.rows[0].cells):
@@ -502,9 +710,16 @@ def _build_docx(data: ExportData) -> bytes:
                 row.cells[2].text = f"{cnt/total*100:.0f}%"
 
         elif q.word_frequencies:
-            wc_png = _make_wc_bar_png(q.word_frequencies)
+            # Real word cloud image
+            wc_png = _make_wordcloud_png(q.word_frequencies, width=560, height=280)
             if wc_png:
+                doc.add_paragraph("Word Cloud:").bold = True
                 doc.add_picture(io.BytesIO(wc_png), width=Inches(5.5))
+            # Bar chart of top words
+            wc_bar = _make_wc_bar_png(q.word_frequencies)
+            if wc_bar:
+                doc.add_paragraph("Top word frequencies:").bold = True
+                doc.add_picture(io.BytesIO(wc_bar), width=Inches(5.5))
         else:
             doc.add_paragraph(
                 f"Text response question — {sum(q.answer_distribution)} responses received"
@@ -512,7 +727,6 @@ def _build_docx(data: ExportData) -> bytes:
 
         doc.add_paragraph()
 
-    # Leaderboard
     if data.quiz_type == "quiz" and data.leaderboard:
         doc.add_page_break()
         doc.add_heading("Leaderboard", level=1)
@@ -535,7 +749,7 @@ def _build_docx(data: ExportData) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# PPTX builder (python-pptx native charts)
+# PPTX builder (python-pptx native charts + header/footer)
 # ---------------------------------------------------------------------------
 
 def _build_pptx(data: ExportData) -> bytes:
@@ -550,10 +764,13 @@ def _build_pptx(data: ExportData) -> bytes:
 
     prs = Presentation()
     blank_layout = prs.slide_layouts[6]  # blank
-    title_layout = prs.slide_layouts[0]
 
     W = prs.slide_width
     H = prs.slide_height
+
+    HEADER_H = Inches(0.42)
+    FOOTER_H = Inches(0.25)
+    logo = _logo_path()
 
     def add_text_box(slide, text, left, top, width, height, bold=False, size=18, color=None):
         txb = slide.shapes.add_textbox(left, top, width, height)
@@ -568,17 +785,87 @@ def _build_pptx(data: ExportData) -> bytes:
             run.font.color.rgb = RGBColor(*_hex2rgb(color))
         return txb
 
+    def add_header_footer(slide, page_num: int, total_pages: int):
+        """Draw blue header band + grey footer band on a slide."""
+        # ── Header ──
+        hdr = slide.shapes.add_shape(
+            1,  # MSO_SHAPE_TYPE.RECTANGLE
+            0, 0, W, HEADER_H
+        )
+        hdr.fill.solid()
+        hdr.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xFF)
+        hdr.line.fill.background()
+
+        # Logo in header
+        logo_x = Inches(0.08)
+        logo_drawn = False
+        if logo:
+            try:
+                pil_logo = __import__("PIL.Image", fromlist=["Image"]).open(logo)
+                aspect = pil_logo.width / pil_logo.height
+                logo_h = HEADER_H - Inches(0.06)
+                logo_w = int(logo_h * aspect)
+                slide.shapes.add_picture(logo, logo_x, Inches(0.03), logo_w, logo_h)
+                logo_x += logo_w + Inches(0.05)
+                logo_drawn = True
+            except Exception:
+                pass
+
+        # "Swaya.me" in header
+        brand_tb = slide.shapes.add_textbox(logo_x, Inches(0.04), Inches(1.5), HEADER_H)
+        brand_tf = brand_tb.text_frame
+        brand_p = brand_tf.paragraphs[0]
+        brand_r = brand_p.add_run()
+        brand_r.text = "Swaya.me"
+        brand_r.font.bold = True
+        brand_r.font.size = Pt(11)
+        brand_r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+
+        # Quiz title (right side of header)
+        title_str = data.quiz_title[:60] + ("…" if len(data.quiz_title) > 60 else "")
+        title_tb = slide.shapes.add_textbox(Inches(2), Inches(0.04), W - Inches(2.1), HEADER_H)
+        title_tf = title_tb.text_frame
+        title_p = title_tf.paragraphs[0]
+        from pptx.enum.text import PP_ALIGN
+        title_p.alignment = PP_ALIGN.RIGHT
+        title_r = title_p.add_run()
+        title_r.text = title_str
+        title_r.font.size = Pt(9)
+        title_r.font.color.rgb = RGBColor(0xDD, 0xEE, 0xFF)
+
+        # ── Footer ──
+        ftr = slide.shapes.add_shape(
+            1, 0, H - FOOTER_H, W, FOOTER_H
+        )
+        ftr.fill.solid()
+        ftr.fill.fore_color.rgb = RGBColor(0xF0, 0xF0, 0xF0)
+        ftr.line.fill.background()
+
+        footer_tb = slide.shapes.add_textbox(0, H - FOOTER_H, W, FOOTER_H)
+        footer_tf = footer_tb.text_frame
+        footer_p = footer_tf.paragraphs[0]
+        footer_p.alignment = PP_ALIGN.CENTER
+        footer_r = footer_p.add_run()
+        footer_r.text = f"Swaya.me  ·  Page {page_num} of {total_pages}  ·  {data.generated_at.strftime('%d %b %Y')}"
+        footer_r.font.size = Pt(7)
+        footer_r.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+
+    # Count total slides up front so we can pass total_pages
+    # Slide count: 1 (summary) + len(questions) + (1 if leaderboard)
+    total_slides = 1 + len(data.questions) + (1 if data.quiz_type == "quiz" and data.leaderboard else 0)
+
     # ---- Slide 1: Title / Summary ----
     slide1 = prs.slides.add_slide(blank_layout)
+    add_header_footer(slide1, 1, total_slides)
+
     add_text_box(slide1, data.quiz_title,
-                 Inches(0.5), Inches(0.3), W - Inches(1), Inches(1.2),
+                 Inches(0.5), HEADER_H + Inches(0.1), W - Inches(1), Inches(1.2),
                  bold=True, size=28)
     add_text_box(slide1,
                  f"Session #{data.session_id}  ·  {data.generated_at.strftime('%d %b %Y, %H:%M')}",
-                 Inches(0.5), Inches(1.4), W - Inches(1), Inches(0.5),
+                 Inches(0.5), HEADER_H + Inches(1.2), W - Inches(1), Inches(0.5),
                  size=14, color="#888888")
 
-    # KPI boxes
     kpi_items = [
         (f"{data.total_participants}\nParticipants", "#e6f7ff"),
         (f"{data.total_questions}\nQuestions", "#f6ffed"),
@@ -587,12 +874,9 @@ def _build_pptx(data: ExportData) -> bytes:
     box_w = Inches(2.2)
     for i, (txt, bg_hex) in enumerate(kpi_items):
         left = Inches(0.5) + i * (box_w + Inches(0.2))
-        txb = slide1.shapes.add_textbox(left, Inches(2.0), box_w, Inches(1.0))
-        tf = txb.text_frame
-        tf.word_wrap = True
-        tf.paragraphs[0].add_run().text = txt
+        txb = slide1.shapes.add_textbox(left, HEADER_H + Inches(1.8), box_w, Inches(1.0))
+        txb.text_frame.paragraphs[0].add_run().text = txt
 
-    # Correct vs incorrect pie (quiz type only)
     if data.quiz_type == "quiz":
         total_correct = sum(
             q.answer_distribution[q.correct_answer_index]
@@ -608,7 +892,7 @@ def _build_pptx(data: ExportData) -> bytes:
             cd.add_series("Responses", [total_correct, total_wrong])
             chart = slide1.shapes.add_chart(
                 XL_CHART_TYPE.PIE,
-                Inches(0.5), Inches(3.2), Inches(4), Inches(3),
+                Inches(0.5), HEADER_H + Inches(3.0), Inches(4), Inches(3),
                 cd
             ).chart
             chart.series[0].points[0].format.fill.solid()
@@ -619,9 +903,13 @@ def _build_pptx(data: ExportData) -> bytes:
     # ---- Per-question slides ----
     for idx, q in enumerate(data.questions):
         sl = prs.slides.add_slide(blank_layout)
+        add_header_footer(sl, idx + 2, total_slides)
         add_text_box(sl, f"Q{idx+1}. {q.text}",
-                     Inches(0.3), Inches(0.1), W - Inches(0.6), Inches(1.2),
+                     Inches(0.3), HEADER_H + Inches(0.05), W - Inches(0.6), Inches(1.0),
                      bold=True, size=16)
+
+        content_top = HEADER_H + Inches(1.1)
+        content_h = H - HEADER_H - FOOTER_H - Inches(1.2)
 
         if q.options and q.answer_distribution:
             cd2 = ChartData()
@@ -632,10 +920,9 @@ def _build_pptx(data: ExportData) -> bytes:
             cd2.add_series("Votes", q.answer_distribution)
             chart2 = sl.shapes.add_chart(
                 XL_CHART_TYPE.BAR_CLUSTERED,
-                Inches(0.3), Inches(1.4), W - Inches(0.6), Inches(4.5),
+                Inches(0.3), content_top, W - Inches(0.6), content_h,
                 cd2
             ).chart
-            # Colour correct bar green
             if q.correct_answer_index is not None:
                 for i in range(len(q.options)):
                     pt = chart2.series[0].points[i]
@@ -646,6 +933,17 @@ def _build_pptx(data: ExportData) -> bytes:
                         pt.format.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xff)
 
         elif q.word_frequencies:
+            # Word cloud image in top half, bar chart in bottom half
+            wc_png = _make_wordcloud_png(q.word_frequencies, width=600, height=260)
+            if wc_png:
+                sl.shapes.add_picture(
+                    io.BytesIO(wc_png),
+                    Inches(0.3), content_top,
+                    W - Inches(0.6), content_h * 0.55
+                )
+                content_top += content_h * 0.55 + Inches(0.05)
+                content_h = content_h * 0.42
+
             top_wf = sorted(q.word_frequencies.items(), key=lambda x: -x[1])[:10]
             if top_wf:
                 cd3 = ChartData()
@@ -653,20 +951,21 @@ def _build_pptx(data: ExportData) -> bytes:
                 cd3.add_series("Frequency", [c for _, c in top_wf])
                 sl.shapes.add_chart(
                     XL_CHART_TYPE.BAR_CLUSTERED,
-                    Inches(0.3), Inches(1.4), W - Inches(0.6), Inches(4.5),
+                    Inches(0.3), content_top, W - Inches(0.6), content_h,
                     cd3
                 )
         else:
             add_text_box(sl,
                          f"Text response question — {sum(q.answer_distribution)} responses received",
-                         Inches(0.3), Inches(2), W - Inches(0.6), Inches(1),
+                         Inches(0.3), content_top, W - Inches(0.6), Inches(1),
                          size=14, color="#888888")
 
     # ---- Leaderboard slide ----
     if data.quiz_type == "quiz" and data.leaderboard:
         sl_lb = prs.slides.add_slide(blank_layout)
+        add_header_footer(sl_lb, total_slides, total_slides)
         add_text_box(sl_lb, "Leaderboard",
-                     Inches(0.3), Inches(0.1), W - Inches(0.6), Inches(0.7),
+                     Inches(0.3), HEADER_H + Inches(0.05), W - Inches(0.6), Inches(0.6),
                      bold=True, size=22)
 
         top10 = data.leaderboard[:10]
@@ -676,21 +975,17 @@ def _build_pptx(data: ExportData) -> bytes:
             cd4.add_series("Score", [e.score for e in top10])
             sl_lb.shapes.add_chart(
                 XL_CHART_TYPE.BAR_CLUSTERED,
-                Inches(0.3), Inches(0.9), W - Inches(0.6), Inches(3.5),
+                Inches(0.3), HEADER_H + Inches(0.7), W - Inches(0.6), Inches(3.2),
                 cd4
             )
 
-        # Table
-        rows = min(len(data.leaderboard), 20) + 1
+        rows = min(len(data.leaderboard), 15) + 1
         tbl = sl_lb.shapes.add_table(rows, 4,
-                                     Inches(0.3), Inches(4.6),
-                                     W - Inches(0.6), Inches(2.8)).table
-        gold_fill = RGBColor(0xFF, 0xD7, 0x00)
-        silver_fill = RGBColor(0xC0, 0xC0, 0xC0)
-        bronze_fill = RGBColor(0xCD, 0x7F, 0x32)
+                                     Inches(0.3), HEADER_H + Inches(4.0),
+                                     W - Inches(0.6), H - HEADER_H - FOOTER_H - Inches(4.1)).table
         for j, hdr in enumerate(["Rank", "Name", "Score", "Time"]):
             tbl.cell(0, j).text = hdr
-        for row_i, e in enumerate(data.leaderboard[:20]):
+        for row_i, e in enumerate(data.leaderboard[:15]):
             tbl.cell(row_i + 1, 0).text = str(e.rank)
             tbl.cell(row_i + 1, 1).text = e.display_name
             tbl.cell(row_i + 1, 2).text = str(e.score)
@@ -703,7 +998,7 @@ def _build_pptx(data: ExportData) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# XLSX builder (openpyxl native charts)
+# XLSX builder (openpyxl native charts + header/footer)
 # ---------------------------------------------------------------------------
 
 def _build_xlsx(data: ExportData) -> bytes:
@@ -712,31 +1007,53 @@ def _build_xlsx(data: ExportData) -> bytes:
         from openpyxl.styles import Font, PatternFill, Alignment
         from openpyxl.chart import BarChart, PieChart, Reference
         from openpyxl.chart.series import DataPoint
+        from openpyxl.drawing.image import Image as XLImage
     except ImportError:
         raise HTTPException(status_code=501, detail="Export libraries not available")
 
     wb = Workbook()
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="1890FF")
+
+    logo = _logo_path()
+
+    def _set_sheet_header_footer(ws):
+        """Apply print header/footer with page numbers to a worksheet."""
+        ws.oddHeader.left.text = "&G"          # logo (embedded separately)
+        ws.oddHeader.center.text = "&\"Helvetica,Bold\"&12Swaya.me"
+        ws.oddHeader.right.text = data.quiz_title[:40]
+        ws.oddFooter.left.text = f"Generated by Swaya.me  |  {data.generated_at.strftime('%d %b %Y')}"
+        ws.oddFooter.center.text = "Page &P of &N"
+        ws.oddFooter.right.text = f"Session #{data.session_id}"
+        ws.sheet_view.showGridLines = True
 
     # ---- Summary sheet ----
     ws_s = wb.active
     ws_s.title = "Summary"
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill("solid", fgColor="1890FF")
+    _set_sheet_header_footer(ws_s)
 
-    ws_s["A1"] = "Quiz Title"
-    ws_s["B1"] = data.quiz_title
-    ws_s["A2"] = "Session ID"
-    ws_s["B2"] = data.session_id
-    ws_s["A3"] = "Generated At"
-    ws_s["B3"] = data.generated_at.strftime("%Y-%m-%d %H:%M")
-    ws_s["A4"] = "Total Participants"
-    ws_s["B4"] = data.total_participants
-    ws_s["A5"] = "Total Questions"
-    ws_s["B5"] = data.total_questions
-    ws_s["A6"] = "Quiz Type"
-    ws_s["B6"] = data.quiz_type.capitalize()
+    # Logo image in cell A1
+    if logo:
+        try:
+            xl_logo = XLImage(logo)
+            xl_logo.width = 80
+            xl_logo.height = 40
+            ws_s.add_image(xl_logo, "A1")
+            ws_s.row_dimensions[1].height = 32
+        except Exception:
+            pass
 
-    for row in range(1, 7):
+    ws_s["C1"] = "Swaya.me"
+    ws_s["C1"].font = Font(bold=True, size=14, color="1890FF")
+
+    ws_s["A3"] = "Quiz Title";        ws_s["B3"] = data.quiz_title
+    ws_s["A4"] = "Session ID";        ws_s["B4"] = data.session_id
+    ws_s["A5"] = "Generated At";      ws_s["B5"] = data.generated_at.strftime("%Y-%m-%d %H:%M")
+    ws_s["A6"] = "Total Participants"; ws_s["B6"] = data.total_participants
+    ws_s["A7"] = "Total Questions";   ws_s["B7"] = data.total_questions
+    ws_s["A8"] = "Quiz Type";         ws_s["B8"] = data.quiz_type.capitalize()
+
+    for row in range(3, 9):
         ws_s[f"A{row}"].font = Font(bold=True)
 
     if data.quiz_type == "quiz":
@@ -749,23 +1066,24 @@ def _build_xlsx(data: ExportData) -> bytes:
         total_answers = sum(sum(q.answer_distribution) for q in data.questions if q.options)
         total_wrong = total_answers - total_correct
 
-        ws_s["A8"] = "Correct Answers"
-        ws_s["B8"] = total_correct
-        ws_s["A9"] = "Wrong Answers"
-        ws_s["B9"] = total_wrong
+        ws_s["A10"] = "Correct Answers"; ws_s["B10"] = total_correct
+        ws_s["A11"] = "Wrong Answers";   ws_s["B11"] = total_wrong
+        ws_s["A10"].font = Font(bold=True)
+        ws_s["A11"].font = Font(bold=True)
 
         if total_correct + total_wrong > 0:
             pc = PieChart()
             pc.title = "Correct vs Wrong"
-            labels = Reference(ws_s, min_col=1, min_row=8, max_row=9)
-            data_ref = Reference(ws_s, min_col=2, min_row=8, max_row=9)
+            labels = Reference(ws_s, min_col=1, min_row=10, max_row=11)
+            data_ref = Reference(ws_s, min_col=2, min_row=10, max_row=11)
             pc.add_data(data_ref)
             pc.set_categories(labels)
             pc.width = 10; pc.height = 8
-            ws_s.add_chart(pc, "D2")
+            ws_s.add_chart(pc, "D4")
 
     # ---- Questions sheet ----
     ws_q = wb.create_sheet("Questions")
+    _set_sheet_header_footer(ws_q)
     q_headers = ["Q#", "Text", "Type", "Opt A", "Opt B", "Opt C", "Opt D",
                  "Votes A", "Votes B", "Votes C", "Votes D",
                  "% A", "% B", "% C", "% D", "Correct Option"]
@@ -789,7 +1107,6 @@ def _build_xlsx(data: ExportData) -> bytes:
             if q.correct_answer_index is not None:
                 ws_q.cell(r, 16, chr(65 + q.correct_answer_index))
 
-    # Add a bar chart for all questions' vote totals
     if len(data.questions) > 0:
         ws_q.cell(1, 18, "Q")
         ws_q.cell(1, 19, "Total Votes")
@@ -812,6 +1129,7 @@ def _build_xlsx(data: ExportData) -> bytes:
     # ---- Leaderboard sheet ----
     if data.quiz_type == "quiz":
         ws_lb = wb.create_sheet("Leaderboard")
+        _set_sheet_header_footer(ws_lb)
         lb_headers = ["Rank", "Name", "Score", "Time (s)"]
         for col, h in enumerate(lb_headers, 1):
             cell = ws_lb.cell(row=1, column=col, value=h)
@@ -849,12 +1167,14 @@ def _build_xlsx(data: ExportData) -> bytes:
     wc_questions = [q for q in data.questions if q.word_frequencies]
     if wc_questions:
         ws_wc = wb.create_sheet("Word Cloud Data")
+        _set_sheet_header_footer(ws_wc)
         for col, h in enumerate(["Question", "Word", "Count", "%"], 1):
             cell = ws_wc.cell(row=1, column=col, value=h)
             cell.font = header_font
             cell.fill = header_fill
 
         row = 2
+        img_anchor_row = 2
         for q in wc_questions:
             total_wc = sum(q.word_frequencies.values()) or 1
             for word, cnt in sorted(q.word_frequencies.items(), key=lambda x: -x[1]):
@@ -864,8 +1184,21 @@ def _build_xlsx(data: ExportData) -> bytes:
                 ws_wc.cell(row, 4, round(cnt / total_wc * 100, 1))
                 row += 1
 
+            # Embed word cloud image to the right of the data
+            wc_png = _make_wordcloud_png(q.word_frequencies, width=500, height=250)
+            if wc_png:
+                try:
+                    xl_wc = XLImage(io.BytesIO(wc_png))
+                    xl_wc.width = 400
+                    xl_wc.height = 200
+                    ws_wc.add_image(xl_wc, f"F{img_anchor_row}")
+                    img_anchor_row += 18
+                except Exception:
+                    pass
+
     # ---- Raw Data sheet ----
     ws_raw = wb.create_sheet("Raw Data")
+    _set_sheet_header_footer(ws_raw)
     raw_headers = ["Q#", "Question Text", "Type", "Option", "Option Index", "Votes", "% of Total"]
     for col, h in enumerate(raw_headers, 1):
         cell = ws_raw.cell(row=1, column=col, value=h)
@@ -955,7 +1288,6 @@ class ExportService:
         tenant_id: int,
         answer_service: AnswerServiceAsync,
     ) -> ExportData:
-        # Load session with quiz + questions
         result = await db.execute(
             select(QuizSession)
             .filter(QuizSession.id == session_id)
@@ -971,11 +1303,9 @@ class ExportService:
         quiz = session.quiz
         questions = sorted(quiz.questions, key=lambda q: q.order)
 
-        # Load session results (answer distributions per question)
         session_results = await answer_service.get_session_results(db, session_id)
         results_by_qid = {qr.question_id: qr for qr in session_results.question_results}
 
-        # Load leaderboard
         lb_response = await answer_service.get_leaderboard(db, session_id)
         leaderboard = [
             LeaderboardEntryExport(
@@ -987,7 +1317,6 @@ class ExportService:
             for e in lb_response.entries
         ]
 
-        # Build question export list
         q_exports = []
         for q in questions:
             qr = results_by_qid.get(q.id)
