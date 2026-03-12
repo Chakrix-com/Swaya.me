@@ -231,7 +231,7 @@ class AnswerServiceAsync:
             session_id=session.id,
             participant_id=participant.id,
             question_id=request.question_id,
-            text_answer=normalized_text,
+            text_answer=request.text_answer.strip(),
             selected_option_index=None,
             is_correct=is_correct
         )
