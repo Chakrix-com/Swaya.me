@@ -1,18 +1,20 @@
 .legal-layout {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--visitor-page-bg);
+  color: var(--visitor-text-primary);
 }
 
 .legal-header {
-  background: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--visitor-header-bg);
+  border-bottom: 1px solid var(--visitor-header-border);
+  backdrop-filter: blur(10px);
   padding: 0 24px;
   height: 64px;
   line-height: 64px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--visitor-card-shadow);
 }
 
 .legal-header-content {
@@ -32,6 +34,7 @@
 
 .legal-content {
   padding: 48px 24px;
+  background: transparent;
 }
 
 .legal-body {
@@ -55,21 +58,45 @@
 
 .legal-body ul li {
   margin-bottom: 6px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--visitor-text-secondary);
 }
 
 .legal-footer {
   text-align: center;
-  background: #fafafa;
-  border-top: 1px solid #f0f0f0;
+  background: var(--visitor-header-bg);
+  border-top: 1px solid var(--visitor-header-border);
   padding: 24px;
 }
 
 .legal-footer a {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--visitor-text-secondary);
   cursor: pointer;
 }
 
 .legal-footer a:hover {
-  color: #1890ff;
+  color: var(--visitor-accent);
+}
+
+.legal-layout .ant-typography,
+.legal-layout .ant-card-head-title,
+.legal-layout .ant-collapse-header-text {
+  color: var(--visitor-text-primary) !important;
+}
+
+.legal-layout .ant-typography.ant-typography-secondary,
+.legal-layout .ant-card-meta-description,
+.legal-layout .ant-collapse-content-box .ant-typography-secondary {
+  color: var(--visitor-text-secondary) !important;
+}
+
+.legal-layout .ant-card,
+.legal-layout .ant-collapse,
+.legal-layout .ant-collapse-content {
+  background: var(--visitor-panel-bg);
+  border-color: var(--visitor-panel-border) !important;
+}
+
+.legal-layout .ant-divider-horizontal::before,
+.legal-layout .ant-divider-horizontal::after {
+  border-block-start-color: var(--visitor-panel-border) !important;
 }
