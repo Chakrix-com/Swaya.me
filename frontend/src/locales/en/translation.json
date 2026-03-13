@@ -660,6 +660,522 @@
       "s9Body": "We may update this Privacy Policy from time to time. When we do, we will update the 'Last updated' date at the top of this page. For significant changes, we will notify registered users by email.",
       "s10Body": "For any privacy-related questions or requests, please contact us at"
     },
+    "help": {
+      "backToHome": "Back to Home",
+      "heroTitle": "Help Center",
+      "heroSubtitle": "Everything you need to get started with Swaya.me",
+      "heroNote": "Each step has a",
+      "heroNoteCode": "Show me how",
+      "heroNoteEnd": "button — click it for a screenshot and detailed instructions.",
+      "clickToZoom": "Click to zoom",
+      "whatItLooksLike": "What it looks like",
+      "stepByStep": "Step-by-step",
+      "hideDetails": "Hide details",
+      "showMeHow": "Show me how",
+      "lessLabel": "▲ Less",
+      "moreLabel": "▼ More",
+      "hideLabel": "▲ Hide",
+      "showExamplesLabel": "▼ Show examples",
+      "navHostTitle": "I'm a Host",
+      "navHostDesc": "Create and run interactive sessions for your audience.",
+      "navHostButton": "Host Guide",
+      "navParticipantTitle": "I'm a Participant",
+      "navParticipantDesc": "Join a live session with a code — no account needed.",
+      "navParticipantButton": "Participant Guide",
+      "navQuizVsPollTitle": "Quiz vs Poll",
+      "navQuizVsPollDesc": "Not sure which to use? See the difference with real examples.",
+      "navQuizVsPollButton": "Compare",
+      "navExportTitle": "Export Results",
+      "navExportDesc": "Download session results as PDF, Word, PowerPoint, or Excel.",
+      "navExportButton": "Export Guide",
+      "hostsTitle": "For Hosts",
+      "hostsIntro": "Follow these steps to create and run your first quiz. Click",
+      "hostsIntroStrong": "Show me how",
+      "hostsIntroEnd": "on any step to see a screenshot and detailed instructions.",
+      "audienceTitle": "For Participants",
+      "audienceIntro": "Joining a session is quick and requires no account. Click",
+      "audienceIntroStrong": "Show me how",
+      "audienceIntroEnd": "on any step for a screenshot and detailed instructions.",
+      "questionTypesTitle": "Question Types",
+      "questionTypesIntro": "Swaya.me supports five question types. Click any type for a full description.",
+      "quizVsPollTitle": "Quiz vs Poll — When to Use What",
+      "quizVsPollIntro1": "Swaya.me supports two modes:",
+      "quizVsPollQuiz": "Quiz",
+      "quizVsPollAnd": "and",
+      "quizVsPollPoll": "Poll",
+      "quizVsPollIntro2": ". Both use the same join-code workflow and look identical to participants when joining — but they are fundamentally different in one key way:",
+      "quizVsPollKeyDiff": "only a Quiz has a leaderboard",
+      "quizVsPollIntro3": ". Scores are calculated from correct answers, and ties are broken by speed.",
+      "quizTagScored": "Scored",
+      "pollTagNoScoring": "No scoring",
+      "leaderboardTitle": "The Leaderboard — the defining Quiz feature",
+      "leaderboardIntro": "The leaderboard is what makes a",
+      "leaderboardIntroStrong1": "Quiz",
+      "leaderboardIntroMiddle": "fundamentally different from a",
+      "leaderboardIntroStrong2": "Poll",
+      "leaderboardIntroEnd": ". It appears live on the host's screen and on each participant's device after every question.",
+      "leaderboardHowItLooks": "How it looks",
+      "leaderboardHowRankingWorks": "How ranking works",
+      "leaderboardRank1Strong": "Score = correct answers.",
+      "leaderboardRank1Text": " Each MCQ question is worth 1 point. Only the correct option earns the point.",
+      "leaderboardRank2Strong": "Tie-breaker = speed.",
+      "leaderboardRank2Text": " If two participants have the same score, whoever answered correctly faster is ranked higher. So answering quickly matters.",
+      "leaderboardRank3Strong": "Live updates.",
+      "leaderboardRank3Text": " The leaderboard refreshes after every question. Participants can see their own rank highlighted on their device.",
+      "leaderboardRank4Strong": "Host control.",
+      "leaderboardRank4Text": " The host can choose to show or hide the leaderboard from participants at any time using the toggle on the session control screen.",
+      "pollNoLeaderboardStrong": "Poll sessions have no leaderboard.",
+      "pollNoLeaderboardText": " Since there are no correct answers, there is nothing to rank. All poll responses are shown as charts, clouds, or averages — but no participant is ranked above another.",
+      "howToCreateTitle": "How to create a Quiz or Poll",
+      "howToCreateIntro": "From your Dashboard, you'll see two buttons:",
+      "howToCreateNewQuiz": "New Quiz",
+      "howToCreateAnd": "and",
+      "howToCreatePoll": "Create Poll",
+      "howToCreateEnd": ". Click the one that matches your goal — the builder opens in the right mode automatically.",
+      "howToCreateDrilldownAlt": "Dashboard showing New Quiz and Create Poll buttons",
+      "howToCreateTips": [
+        "Log in and go to your Dashboard.",
+        "Click \"New Quiz\" to open the quiz builder in Quiz mode (MCQ with correct answers).",
+        "Click \"Create Poll\" to open the builder in Poll mode (all question types, no correct answers).",
+        "Give your quiz or poll a title and description.",
+        "Click \"Add Question\" to start adding questions — the available types depend on the mode.",
+        "When done, click \"Publish\" to make it ready to run."
+      ],
+      "exampleQuizTitle": "Example Quiz Questions",
+      "exampleQuizIntro": "In a Quiz, every MCQ question needs a correct answer marked. Participants are scored on correctness and speed. Use these as inspiration:",
+      "examplePollTitle": "Example Poll Questions (by type)",
+      "examplePollIntro": "In a Poll, there are no right or wrong answers. Mix and match question types to suit your session. Click any type below to see example questions:",
+      "quickRuleTitle": "Quick rule of thumb",
+      "quickRuleQuiz": "Want a",
+      "quickRuleQuizStrong": "leaderboard",
+      "quickRuleQuizMid": "with ranked scores and a winner? → use a",
+      "quickRuleQuizEnd": "Quiz",
+      "quickRulePoll": "Want to collect",
+      "quickRulePollStrong": "opinions or feedback",
+      "quickRulePollMid": "without ranking anyone? → use a",
+      "quickRulePollEnd": "Poll",
+      "exportTitle": "Exporting Results",
+      "exportIntro": "After a session ends, you can download the full results in four formats — PDF, Word, PowerPoint, and Excel. Each format is designed for a different use case.",
+      "exportAccessTitle": "How to access the Export button",
+      "exportAccessIntro": "Open your quiz, click",
+      "exportAccessHistory": "History",
+      "exportAccessMid": ", then find the session you want to export. Each ended session has an",
+      "exportAccessExport": "Export",
+      "exportAccessEnd": "button on the right — click it to choose a format.",
+      "exportHistoryAlt": "Quiz history page showing session rows with Export buttons",
+      "exportHistoryTips": [
+        "Log in and go to your Dashboard.",
+        "Find the quiz and click on it to open its detail page.",
+        "Click the \"History\" tab to see all past and active sessions.",
+        "Each row shows a session with its status (ENDED, LIVE, etc.).",
+        "For any ENDED session, click the Export (download) button on the right side of the row.",
+        "A dropdown appears with the four format options — click the one you want.",
+        "Your browser will download the file immediately."
+      ],
+      "exportDropdownLabel": "The export format dropdown",
+      "exportDropdownAlt": "Export dropdown showing PDF, Word, PowerPoint and Excel options",
+      "exportFormatComparisonTitle": "Format comparison",
+      "exportWhichFormatTitle": "Which format should I use?",
+      "exportWhichPdf": "— share with stakeholders who just need to read the results",
+      "exportWhichWord": "— insert results into an existing report or document",
+      "exportWhichPowerPoint": "— present results live in your next meeting",
+      "exportWhichExcel": "— dig into the raw data, filter, sort, and analyse",
+      "exportWhatsIncluded": "What's included:",
+      "faqTitle": "Frequently Asked Questions",
+      "contactTitle": "Still need help?",
+      "contactText": "If you have a question that isn't answered here, reach out to us at",
+      "footerRights": "© 2026 Swaya.me. All rights reserved.",
+      "footerAbout": "About",
+      "footerPrivacy": "Privacy Policy",
+      "footerTerms": "Terms of Service",
+      "footerHelp": "Help",
+      "footerContact": "Contact",
+      "hostSteps": [
+        {
+          "title": "Create an account",
+          "description": "Register at swaya.me, verify your email address."
+        },
+        {
+          "title": "Build your quiz",
+          "description": "Dashboard → New Quiz → Add questions (MCQ, Word Cloud, Scale, Single-line, Paragraph) → Publish."
+        },
+        {
+          "title": "Start a session",
+          "description": "Open your quiz → Start Session → share the 6-character join code (or QR code) with your audience."
+        },
+        {
+          "title": "Run the session",
+          "description": "Advance questions one by one, watch live results, end the session when done."
+        },
+        {
+          "title": "Export results",
+          "description": "Download a full report as PDF, DOCX, PPTX, or XLSX from the session results page."
+        }
+      ],
+      "hostDetails": [
+        {
+          "screenshotAlt": "Swaya.me home page with Sign Up button",
+          "tips": [
+            "Click \"Sign Up\" on the home page or go to swaya.me/register.",
+            "Enter your name, email address, and choose a password.",
+            "Check your inbox for a verification email and click the link to activate your account.",
+            "Once verified, log in — you land on your Dashboard."
+          ]
+        },
+        {
+          "screenshotAlt": "Quiz Builder showing question list",
+          "tips": [
+            "From the Dashboard, click \"New Quiz\" (top right).",
+            "Give your quiz a title and optional description.",
+            "Click \"Add Question\" to add your first question — choose a type from the dropdown (MCQ, Word Cloud, Scale, etc.).",
+            "For MCQ questions, fill in all 4 options and tick the correct answer.",
+            "You can upload an image for any question using the image icon.",
+            "When finished, click \"Publish\" to make the quiz ready to run."
+          ]
+        },
+        {
+          "screenshotAlt": "Session start screen showing join code and QR code",
+          "tips": [
+            "From your Dashboard, click the quiz you want to run.",
+            "Click \"Start Session\" — a join code (6 characters) appears on screen.",
+            "A QR code is also shown — participants can scan it instead of typing the code.",
+            "Display the join code on a screen/projector, or read it out loud.",
+            "Participants go to swaya.me and type this code to join."
+          ]
+        },
+        {
+          "screenshotAlt": "Host session control screen with live results",
+          "tips": [
+            "Once participants have joined, click \"Start Question\" to show the first question.",
+            "Watch live results update on your screen as participants answer.",
+            "When ready, click \"Next Question\" to advance.",
+            "You can see how many participants have answered before moving on.",
+            "Click \"End Session\" when all questions are done."
+          ]
+        },
+        {
+          "screenshotAlt": "Session results and export options",
+          "tips": [
+            "After ending a session, you are taken to the results page automatically.",
+            "You can also reach it from Dashboard → click your quiz → Session History.",
+            "Click \"Export\" to download results as PDF, Word (DOCX), PowerPoint (PPTX), or Excel (XLSX).",
+            "Each export includes per-question breakdowns and participant scores."
+          ]
+        }
+      ],
+      "audienceSteps": [
+        {
+          "title": "Go to swaya.me",
+          "description": "No account needed. Open swaya.me in any modern browser on your phone or computer."
+        },
+        {
+          "title": "Enter the join code",
+          "description": "Type the 6-character code from your host (or scan the QR code). Enter a display name when prompted."
+        },
+        {
+          "title": "Answer questions",
+          "description": "Questions appear as the host advances — tap an option, type a word, drag a slider, or type your response."
+        },
+        {
+          "title": "See live results",
+          "description": "After each question, live results are shown to everyone in the session."
+        }
+      ],
+      "audienceDetails": [
+        {
+          "screenshotAlt": "Swaya.me home page with join code field",
+          "tips": [
+            "Open any web browser on your phone or computer.",
+            "Go to swaya.me — no app download needed.",
+            "You do not need to create an account or sign in.",
+            "You will see a box on the home page asking for a join code — you can type it directly there."
+          ]
+        },
+        {
+          "screenshotAlt": "Join page with code entered and name field",
+          "tips": [
+            "Your host will display a 6-character code on a screen — type it into the join box.",
+            "Alternatively, scan the QR code shown by your host using your phone camera.",
+            "You will be asked to enter a display name — this is the name other participants will see.",
+            "Tap \"Join\" to enter the session."
+          ]
+        },
+        {
+          "screenshotAlt": "Audience answering an MCQ question",
+          "tips": [
+            "Questions appear on your screen as soon as the host advances them.",
+            "For Multiple Choice: tap the option you think is correct.",
+            "For Word Cloud: type a word or short phrase and tap \"Submit\".",
+            "For Scale questions: drag the slider to your chosen value.",
+            "For text questions: type your response and tap \"Submit\".",
+            "Answer quickly — some question types are scored by speed."
+          ]
+        },
+        {
+          "screenshotAlt": "Live results screen after answering",
+          "tips": [
+            "After you submit an answer, a waiting screen appears.",
+            "Once the host advances, results for that question are shown to everyone.",
+            "For MCQ, you can see how many people picked each option and whether you were correct.",
+            "For Word Cloud, watch all submitted words appear as a live cloud."
+          ]
+        }
+      ],
+      "questionTypes": [
+        {
+          "type": "Multiple Choice (MCQ)",
+          "summary": "4 options, one correct answer, scored.",
+          "detail": "The host sets 4 answer options and marks one as correct. Participants tap their choice. Scoring is based on correctness and, optionally, speed. Results show a bar chart of votes after the question closes."
+        },
+        {
+          "type": "Word Cloud",
+          "summary": "Participants type a word — shown as a live cloud.",
+          "detail": "Everyone types a word or short phrase. All responses appear together as a word cloud, with more frequent answers shown larger. There is no \"correct\" answer — it is great for brainstorming and open opinions."
+        },
+        {
+          "type": "Scale",
+          "summary": "Rate something on a numeric scale.",
+          "detail": "Participants drag a slider to a number (e.g. 1–10). Results show the average score and distribution. Use it for sentiment checks, confidence ratings, or polling a range of opinions."
+        },
+        {
+          "type": "Single-line",
+          "summary": "Short free-text answer.",
+          "detail": "Participants type a short text response. Good for names, quick answers, or any brief input. Responses are listed for the host to review."
+        },
+        {
+          "type": "Paragraph",
+          "summary": "Longer free-text response.",
+          "detail": "Like Single-line but designed for longer answers. Use for open-ended feedback, detailed explanations, or essay-style responses."
+        }
+      ],
+      "quizVsPollComparison": [
+        {
+          "aspect": "Leaderboard",
+          "quiz": "✅ Live leaderboard — participants ranked by score, ties broken by speed",
+          "poll": "❌ No leaderboard — all responses are equal, no ranking",
+          "highlight": true
+        },
+        {
+          "aspect": "Scoring",
+          "quiz": "+1 point per correct MCQ answer; faster = higher rank on a tie",
+          "poll": "Not scored — opinions and feelings have no right answer"
+        },
+        {
+          "aspect": "Purpose",
+          "quiz": "Test knowledge — find out who knows what",
+          "poll": "Gather opinions — find out what people think"
+        },
+        {
+          "aspect": "Correct answer",
+          "quiz": "You mark one correct option per MCQ question",
+          "poll": "No correct answer — all options are valid choices"
+        },
+        {
+          "aspect": "Question types",
+          "quiz": "Multiple Choice (MCQ) + Single-line",
+          "poll": "MCQ, Word Cloud, Scale, Single-line, Paragraph"
+        },
+        {
+          "aspect": "Best for",
+          "quiz": "Classrooms, training tests, trivia nights",
+          "poll": "Surveys, icebreakers, event feedback, brainstorms"
+        }
+      ],
+      "quizExamples": [
+        {
+          "label": "Trivia / General Knowledge",
+          "questions": [
+            {
+              "type": "MCQ",
+              "text": "Which planet is closest to the Sun?",
+              "options": ["Venus", "Mercury", "Mars", "Earth"],
+              "correct": 1,
+              "tip": "Mercury is the correct answer. Set option B as \"Mercury\" and mark it correct."
+            },
+            {
+              "type": "MCQ",
+              "text": "What is the chemical symbol for Gold?",
+              "options": ["Gd", "Go", "Au", "Ag"],
+              "correct": 2,
+              "tip": "Au (from the Latin \"Aurum\"). Mark option C as correct."
+            }
+          ]
+        },
+        {
+          "label": "Classroom / Training",
+          "questions": [
+            {
+              "type": "MCQ",
+              "text": "What does HTML stand for?",
+              "options": ["HyperText Markup Language", "High Transfer Markup Language", "HyperText Modeling Language", "Home Tool Markup Language"],
+              "correct": 0,
+              "tip": "HyperText Markup Language. Mark option A as correct."
+            },
+            {
+              "type": "MCQ",
+              "text": "Which of these is NOT a programming language?",
+              "options": ["Python", "Cobra", "Java", "Ruby"],
+              "correct": 1,
+              "tip": "\"Cobra\" is not a real programming language. Mark option B as correct."
+            }
+          ]
+        }
+      ],
+      "pollExamples": [
+        {
+          "type": "MCQ (Opinion)",
+          "label": "Multiple Choice — no right answer",
+          "questions": [
+            {
+              "text": "How did you hear about this event?",
+              "options": ["Social media", "A friend or colleague", "Online search", "Email newsletter"],
+              "tip": "Leave \"correct answer\" blank — all options are equally valid."
+            },
+            {
+              "text": "Which session topic are you most excited about?",
+              "options": ["Product roadmap", "Team building", "Customer stories", "Q&A panel"],
+              "tip": "Great for live audience preference checks before scheduling."
+            }
+          ]
+        },
+        {
+          "type": "Word Cloud",
+          "label": "Word Cloud — open word responses",
+          "questions": [
+            {
+              "text": "In one word — how do you feel about the project so far?",
+              "tip": "All responses appear as a live word cloud. Bigger = more common."
+            },
+            {
+              "text": "What word best describes our company culture?",
+              "tip": "Brilliant for icebreakers or retrospectives."
+            }
+          ]
+        },
+        {
+          "type": "Scale",
+          "label": "Scale — numeric rating",
+          "questions": [
+            {
+              "text": "How confident are you in the new process? (1 = Not at all, 10 = Very confident)",
+              "tip": "Participants drag a slider. Results show the average and spread."
+            },
+            {
+              "text": "How likely are you to recommend this event to a colleague? (1–10)",
+              "tip": "This is essentially a live NPS (Net Promoter Score) question."
+            }
+          ]
+        },
+        {
+          "type": "Paragraph",
+          "label": "Paragraph — free-form feedback",
+          "questions": [
+            {
+              "text": "What's one thing you'd like us to improve before the next session?",
+              "tip": "Participants type as much as they like. Responses are collected for you to review."
+            },
+            {
+              "text": "Describe the biggest challenge your team is facing right now.",
+              "tip": "Good for retrospectives and problem-surfacing workshops."
+            }
+          ]
+        },
+        {
+          "type": "Single-line",
+          "label": "Single-line — quick text answer",
+          "questions": [
+            {
+              "text": "What is your favourite team-building activity?",
+              "tip": "Short answers, perfect for quick check-ins."
+            },
+            {
+              "text": "Name one thing you learned today.",
+              "tip": "Great as a closing question to consolidate learning."
+            }
+          ]
+        }
+      ],
+      "exportFormats": [
+        {
+          "key": "pdf",
+          "label": "PDF",
+          "useCase": "Share results as a polished report — email it or print it.",
+          "includes": [
+            "Quiz / poll title, date, and total participants",
+            "Each question with the full results breakdown",
+            "Bar chart images for MCQ questions",
+            "Word cloud images for Word Cloud questions",
+            "Leaderboard table (Quiz mode only)"
+          ]
+        },
+        {
+          "key": "docx",
+          "label": "Word",
+          "useCase": "Edit the results in Microsoft Word or Google Docs.",
+          "includes": [
+            "Quiz / poll summary and metadata",
+            "Full question-by-question breakdown with answer counts",
+            "Charts and word cloud images embedded as images",
+            "Leaderboard table (Quiz mode only)",
+            "Editable text — ideal for inserting into reports or slide decks"
+          ]
+        },
+        {
+          "key": "pptx",
+          "label": "PowerPoint",
+          "useCase": "Present results directly in a slideshow.",
+          "includes": [
+            "One slide per question with results visualised",
+            "Charts and word cloud images on each slide",
+            "A summary slide with participant count and session info",
+            "Leaderboard slide (Quiz mode only)",
+            "Editable in PowerPoint, Keynote, or Google Slides"
+          ]
+        },
+        {
+          "key": "xlsx",
+          "label": "Excel",
+          "useCase": "Analyse raw data, build pivot tables, or import into another tool.",
+          "includes": [
+            "Multiple sheets: Summary, Question Results, Raw Answers, Leaderboard",
+            "Raw answer data — one row per participant per question",
+            "Timestamps and time-taken values for each answer",
+            "Leaderboard sheet with scores and response times (Quiz mode only)",
+            "Ideal for deep analysis or feeding into other systems"
+          ]
+        }
+      ],
+      "faqItems": [
+        {
+          "question": "Do I need an account to join a session?",
+          "answer": "No. Audience members never need to create an account. Just go to swaya.me, enter the join code your host gives you, and pick a display name — that's it."
+        },
+        {
+          "question": "How many questions can I add to a quiz?",
+          "answer": "The number of questions depends on your plan tier (FREE, BASIC, PRO, ENTERPRISE). Check your Dashboard for your current limits, or contact us to upgrade."
+        },
+        {
+          "question": "Can I add images to questions?",
+          "answer": "Yes. In the quiz builder, each question has an optional image upload field. Supported formats include JPG, PNG, and GIF."
+        },
+        {
+          "question": "How do I share my join code with the audience?",
+          "answer": "When you start a session, a join code and QR code are shown on the session control screen. You can display this on a projector, share a screenshot, or read the code aloud. Participants can also scan the QR code directly."
+        },
+        {
+          "question": "Where can I see the results after a session?",
+          "answer": "Go to your Dashboard, find the quiz, and click on the session history. Full results are available there and can be exported as PDF, Word, PowerPoint, or Excel."
+        },
+        {
+          "question": "What browsers are supported?",
+          "answer": "Swaya.me works on all modern browsers — Chrome, Firefox, Safari, and Edge — on both desktop and mobile. We recommend keeping your browser up to date for the best experience."
+        },
+        {
+          "question": "Is my data private?",
+          "answer": "Yes. Please read our Privacy Policy for full details on how we collect, store, and protect your data."
+        }
+      ]
+    },
     "terms": {
       "title": "Terms of Service",
       "s1": "1. About the Platform",

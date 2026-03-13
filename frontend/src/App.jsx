@@ -25,6 +25,7 @@ import Home from './features/home/Home'
 import PrivacyPolicy from './features/home/PrivacyPolicy'
 import TermsOfService from './features/home/TermsOfService'
 import About from './features/home/About'
+import Help from './features/home/Help'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
 import VerifyEmail from './features/auth/VerifyEmail'
@@ -206,6 +207,7 @@ function AuthenticatedLayout({ children }) {
             <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.aboutLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/privacy-policy')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.privacyLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/terms-of-service')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.termsLink')}</Button>
+            <Button type="link" size="small" onClick={() => navigate('/help')} style={{ padding: 0, fontSize: 12 }}>Help</Button>
             <a href="mailto:info@chakrix.net" style={{ fontSize: 12 }}>{t('pages.legal.contactLink')}</a>
           </Space>
         </div>
@@ -243,14 +245,21 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
   if (
     location.pathname === '/privacy-policy' ||
     location.pathname === '/terms-of-service' ||
-    location.pathname === '/about'
+    location.pathname === '/about' ||
+    location.pathname === '/help'
   ) {
     return (
-      <Routes>
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
+      <PublicLayout
+        visitorTheme={visitorTheme}
+        onToggleVisitorTheme={onToggleVisitorTheme}
+      >
+        <Routes>
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/help" element={<Help />} />
+        </Routes>
+      </PublicLayout>
     )
   }
 

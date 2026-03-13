@@ -93,6 +93,7 @@ export default function TermsOfService() {
             <a onClick={() => navigate('/about')}>{t('pages.legal.aboutLink')}</a>
             <a onClick={() => navigate('/privacy-policy')}>{t('pages.legal.privacyLink')}</a>
             <a onClick={() => navigate('/terms-of-service')}>{t('pages.legal.termsLink')}</a>
+            <a onClick={() => navigate('/help')}>Help</a>
             <a href="mailto:info@chakrix.net">{t('pages.legal.contactLink')}</a>
           </Space>
         </Space>
