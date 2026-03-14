@@ -801,11 +801,10 @@ export default function QuizBuilder() {
     try {
       await quizAPI.publish(id)
       message.success(t('quiz.publishSuccess'))
-      loadQuiz()
+      navigate(`/quiz/${id}/control`)
     } catch (error) {
       message.error(error.response?.data?.detail || t('quiz.publishError'))
       console.error(error)
-    } finally {
       setLoading(false)
     }
   }
@@ -852,13 +851,22 @@ export default function QuizBuilder() {
           </Button>
         )}
         {quiz && quiz.status === 'ready' && (
-          <Button 
-            type="default" 
-            onClick={handleUnpublish}
-            loading={loading}
-          >
-            {isPoll ? 'Unpublish Poll' : t('quiz.unpublishQuiz')}
-          </Button>
+          <>
+            <Button
+              type="primary"
+              icon={<RocketOutlined />}
+              onClick={() => navigate(`/quiz/${id}/control`)}
+            >
+              {isPoll ? t('quiz.startPoll', { defaultValue: 'Start Poll' }) : t('quiz.startSession')}
+            </Button>
+            <Button
+              type="default"
+              onClick={handleUnpublish}
+              loading={loading}
+            >
+              {isPoll ? 'Unpublish Poll' : t('quiz.unpublishQuiz')}
+            </Button>
+          </>
         )}
       </Space>
 
