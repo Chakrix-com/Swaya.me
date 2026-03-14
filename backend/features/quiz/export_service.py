@@ -46,6 +46,23 @@ def _logo_path() -> Optional[str]:
     return None
 
 
+_UPLOADS_BASE = os.path.normpath(os.path.join(
+    os.path.dirname(__file__), "..", "..", "uploads"
+))
+
+def _resolve_upload_path(stored: Optional[str]) -> Optional[str]:
+    """Convert a stored upload path/URL to an absolute local filesystem path."""
+    if not stored:
+        return None
+    p = stored.lstrip("/")
+    if p.startswith("api/"):
+        p = p[4:]
+    if not p.startswith("uploads/"):
+        return None
+    full = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", p))
+    return full if os.path.exists(full) else None
+
+
 # ---------------------------------------------------------------------------
 # Data container
 # ---------------------------------------------------------------------------
@@ -60,6 +77,8 @@ class QuestionExport:
     answer_distribution: List[int]
     total_answers: int
     word_frequencies: Optional[Dict[str, int]] = None   # word cloud only
+    question_image_path: Optional[str] = None
+    option_image_paths: Optional[Dict[str, str]] = None  # "A"/"B"/"C"/"D" -> local path
 
 
 @dataclass
@@ -473,6 +492,14 @@ def _build_pdf(data: ExportData) -> bytes:
         type_badge = q.question_type.upper()
         q_items.append(Paragraph(f"<b>Q{idx+1}. {q.text}</b>  <font color='grey' size=9>[{type_badge}]</font>", h2))
 
+        # Question image
+        if q.question_image_path:
+            try:
+                q_items.append(RLImage(q.question_image_path, width=10*cm, height=6*cm))
+                q_items.append(Spacer(1, 0.2*cm))
+            except Exception:
+                pass
+
         if q.options:
             max_v = max(q.answer_distribution) if q.answer_distribution else 1
             dw2, dh2 = 420, max(60, len(q.options) * 26 + 20)
@@ -509,6 +536,18 @@ def _build_pdf(data: ExportData) -> bytes:
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ]))
             q_items.append(tbl)
+
+            # Option images (after the MCQ table)
+            if q.option_image_paths:
+                for opt_key in ("A", "B", "C", "D"):
+                    img_path = q.option_image_paths.get(opt_key)
+                    if img_path:
+                        try:
+                            q_items.append(Paragraph(f"<b>Option {opt_key} image:</b>", small))
+                            q_items.append(RLImage(img_path, width=8*cm, height=5*cm))
+                            q_items.append(Spacer(1, 0.1*cm))
+                        except Exception:
+                            pass
 
             story.append(KeepTogether(q_items))
 
@@ -759,6 +798,13 @@ def _build_docx(data: ExportData) -> bytes:
     doc.add_heading("Question Results", level=1)
     for idx, q in enumerate(data.questions):
         doc.add_heading(f"Q{idx+1}. {q.text}", level=2)
+        # Question image
+        if q.question_image_path:
+            try:
+                doc.add_picture(q.question_image_path, width=Inches(4))
+                doc.add_paragraph()
+            except Exception:
+                pass
         p = doc.add_paragraph()
         run = p.add_run(f"[{q.question_type.upper()}]  Total answers: {sum(q.answer_distribution)}")
         run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
@@ -783,6 +829,17 @@ def _build_docx(data: ExportData) -> bytes:
                 row.cells[0].text = f"{chr(65+i)}. {opt}{marker}"
                 row.cells[1].text = str(cnt)
                 row.cells[2].text = f"{cnt/total*100:.0f}%"
+
+            # Option images
+            if q.option_image_paths:
+                for opt_key in ("A", "B", "C", "D"):
+                    img_path = q.option_image_paths.get(opt_key)
+                    if img_path:
+                        try:
+                            doc.add_paragraph(f"Option {opt_key}:")
+                            doc.add_picture(img_path, width=Inches(3))
+                        except Exception:
+                            pass
 
         elif q.question_type == 'word_cloud':
             if q.word_frequencies:
@@ -974,6 +1031,20 @@ def _build_pptx(data: ExportData) -> bytes:
         content_top = HEADER_H + Inches(1.1)
         content_h = H - HEADER_H - FOOTER_H - Inches(1.2)
 
+        # Question image — place to the right if present
+        q_img_w = 0
+        if q.question_image_path:
+            try:
+                from PIL import Image as PILImage
+                pil = PILImage.open(q.question_image_path)
+                aspect = pil.width / pil.height
+                img_h = min(Inches(1.5), content_h)
+                img_w = int(img_h * aspect)
+                sl.shapes.add_picture(q.question_image_path, W - Inches(0.3) - img_w, HEADER_H + Inches(0.05), img_w, img_h)
+                q_img_w = img_w + Inches(0.1)
+            except Exception:
+                pass
+
         if q.options and q.answer_distribution:
             cd2 = ChartData()
             cd2.categories = [
@@ -994,6 +1065,22 @@ def _build_pptx(data: ExportData) -> bytes:
                         pt.format.fill.fore_color.rgb = RGBColor(0x52, 0xc4, 0x1a)
                     else:
                         pt.format.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xff)
+
+            # Option images strip
+            if q.option_image_paths:
+                opt_keys = [k for k in ("A","B","C","D") if k in q.option_image_paths]
+                if opt_keys:
+                    strip_w = (W - Inches(0.6)) / len(opt_keys)
+                    strip_top = H - FOOTER_H - Inches(1.2)
+                    for i, ok in enumerate(opt_keys):
+                        try:
+                            sl.shapes.add_picture(
+                                q.option_image_paths[ok],
+                                Inches(0.3) + i * strip_w, strip_top,
+                                strip_w - Inches(0.05), Inches(1.1)
+                            )
+                        except Exception:
+                            pass
 
         elif q.question_type == 'word_cloud':
             if q.word_frequencies:
@@ -1178,6 +1265,32 @@ def _build_xlsx(data: ExportData) -> bytes:
             if q.correct_answer_index is not None:
                 ws_q.cell(r, 16, chr(65 + q.correct_answer_index))
 
+        # Question image
+        if q.question_image_path:
+            try:
+                xl_qimg = XLImage(q.question_image_path)
+                xl_qimg.width = 120
+                xl_qimg.height = 80
+                # Place image in column P of this row
+                ws_q.add_image(xl_qimg, f"P{r}")
+                ws_q.row_dimensions[r].height = 65
+            except Exception:
+                pass
+        # Option images
+        if q.option_image_paths:
+            for i, opt_key in enumerate(("A", "B", "C", "D")):
+                img_path = q.option_image_paths.get(opt_key)
+                if img_path:
+                    try:
+                        xl_oimg = XLImage(img_path)
+                        xl_oimg.width = 80
+                        xl_oimg.height = 60
+                        col_letter = chr(ord("Q") + i)
+                        ws_q.add_image(xl_oimg, f"{col_letter}{r}")
+                        ws_q.row_dimensions[r].height = max(ws_q.row_dimensions[r].height or 0, 50)
+                    except Exception:
+                        pass
+
     if len(data.questions) > 0:
         ws_q.cell(1, 18, "Q")
         ws_q.cell(1, 19, "Total Votes")
@@ -1321,8 +1434,9 @@ class ExportService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to gather export data: {e}")
 
-        safe_title = "".join(c if c.isalnum() or c in " _-" else "_" for c in data.quiz_title)[:40]
-        base_name = f"session_{session_id}_{safe_title}"
+        dt_str = data.generated_at.strftime("%Y%m%d_%H%M%S")
+        safe_title = "".join(c if c.isalnum() or c in "_-" else "_" for c in data.quiz_title).strip("_")[:40]
+        base_name = f"SwayameExtract_{safe_title}_{dt_str}"
 
         try:
             if fmt == "pdf":
@@ -1402,6 +1516,14 @@ class ExportService:
                 except Exception:
                     wf = {}
 
+            q_img = _resolve_upload_path(q.question_image_url)
+            opt_imgs: Dict[str, str] = {}
+            if q.option_images:
+                for key, path in q.option_images.items():
+                    rp = _resolve_upload_path(path)
+                    if rp:
+                        opt_imgs[key] = rp
+
             q_exports.append(QuestionExport(
                 id=q.id,
                 text=q.text,
@@ -1411,6 +1533,8 @@ class ExportService:
                 answer_distribution=dist,
                 total_answers=total_ans,
                 word_frequencies=wf,
+                question_image_path=q_img,
+                option_image_paths=opt_imgs if opt_imgs else None,
             ))
 
         return ExportData(

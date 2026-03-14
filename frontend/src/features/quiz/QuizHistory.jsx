@@ -190,7 +190,7 @@ function SessionDetail({ sessionId, quizType }) {
                 <Text strong style={{ display: 'block', marginBottom: 8 }}>
                   {idx + 1}. {q.question_text}
                 </Text>
-                {q.options ? (
+                {q.options?.length > 0 ? (
                   q.options.map((opt, i) => {
                     const count = q.answer_distribution?.[i] || 0
                     const pct = total > 0 ? (count / total) * 100 : 0
