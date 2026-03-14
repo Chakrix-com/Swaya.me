@@ -370,7 +370,7 @@ export default function Help({ visitorTheme = 'light' }) {
 
           {/* Quick Nav */}
           <Row gutter={[24, 24]} style={{ marginBottom: 48 }}>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={12} sm={6}>
               <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
                 <Space direction="vertical" size={12}>
                   <UserOutlined style={{ fontSize: 36, color: '#1890ff' }} />
@@ -382,7 +382,7 @@ export default function Help({ visitorTheme = 'light' }) {
                 </Space>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={12} sm={6}>
               <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
                 <Space direction="vertical" size={12}>
                   <TeamOutlined style={{ fontSize: 36, color: '#52c41a' }} />
@@ -394,7 +394,7 @@ export default function Help({ visitorTheme = 'light' }) {
                 </Space>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={12} sm={6}>
               <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
                 <Space direction="vertical" size={12}>
                   <PieChartOutlined style={{ fontSize: 36, color: '#722ed1' }} />
@@ -406,7 +406,7 @@ export default function Help({ visitorTheme = 'light' }) {
                 </Space>
               </Card>
             </Col>
-            <Col xs={24} sm={12} lg={6}>
+            <Col xs={12} sm={6}>
               <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
                 <Space direction="vertical" size={12}>
                   <DownloadOutlined style={{ fontSize: 36, color: '#389e0d' }} />

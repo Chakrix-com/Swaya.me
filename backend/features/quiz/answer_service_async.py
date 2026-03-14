@@ -23,6 +23,7 @@ from shared.exceptions.quiz import (
     SessionNotFoundError, ParticipantNotFoundError, QuestionNotFoundError,
     DuplicateAnswerError, QuestionNotOpenError
 )
+from shared.utils.content_filter import check_content
 from shared.utils.redis_client import RedisClient
 from core.storage import ImageService
 
@@ -217,8 +218,11 @@ class AnswerServiceAsync:
         
         # Matches response with correct answer: strip whitespaces and convert to lowercase
         expected_answer = (current_question.options or [None])[0]
+        # Content filter
+        check_content(request.text_answer.strip(), "Answer")
+
         is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
-        
+
         is_correct = None
         if is_text_scored and expected_answer:
             response_clean = request.text_answer.strip().lower()

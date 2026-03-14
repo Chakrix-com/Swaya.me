@@ -121,11 +121,11 @@ function Register() {
           </Form>
 
           <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--visitor-panel-border)', fontSize: 12, color: 'var(--visitor-text-secondary)' }}>
-            <Space split={<Text type="secondary">·</Text>} wrap size={4}>
+            <Space split={<Text type="secondary">·</Text>} wrap size={4} style={{ justifyContent: 'center', width: '100%' }}>
               <Link to="/about" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.aboutLink')}</Link>
               <Link to="/privacy-policy" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.privacyLink')}</Link>
               <Link to="/terms-of-service" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.termsLink')}</Link>
-              <Link to="/help" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>Help</Link>
+              <Link to="/help" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.helpLink')}</Link>
               <a href="mailto:info@chakrix.net" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.contactLink')}</a>
             </Space>
           </div>

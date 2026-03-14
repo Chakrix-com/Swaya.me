@@ -12,6 +12,7 @@ from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, InvalidQuizStatusError,
     TierLimitExceededError
 )
+from shared.utils.content_filter import check_content
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
 
@@ -80,10 +81,16 @@ class QuestionServiceAsync:
                 f"Question limit reached for {tier.value} tier"
             )
         
+        # Content filter
+        check_content(request.text, "Question text")
+        if request.options:
+            for i, opt in enumerate(request.options):
+                check_content(opt, f"Option {i + 1}")
+
         # Calculate next order
         max_order = max([q.order for q in quiz.questions], default=-1)
         next_order = max_order + 1
-        
+
         # Create question
         question = Question(
             quiz_id=quiz_id,
@@ -123,7 +130,14 @@ class QuestionServiceAsync:
         
         if question.quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
-        
+
+        # Content filter
+        if "text" in request.model_fields_set:
+            check_content(request.text, "Question text")
+        if "options" in request.model_fields_set and request.options:
+            for i, opt in enumerate(request.options):
+                check_content(opt, f"Option {i + 1}")
+
         # Update fields
         if "question_type" in request.model_fields_set:
             question.question_type = request.question_type

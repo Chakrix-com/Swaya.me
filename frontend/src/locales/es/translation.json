@@ -589,7 +589,8 @@
       "privacyLink": "Política de privacidad",
       "termsLink": "Términos de servicio",
       "aboutLink": "Acerca de",
-      "contactLink": "Contacto"
+      "contactLink": "Contacto",
+      "helpLink": "Ayuda"
     },
     "about": {
       "title": "Acerca de Swaya.me",
