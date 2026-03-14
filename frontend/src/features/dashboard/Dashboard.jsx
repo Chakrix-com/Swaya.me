@@ -381,7 +381,12 @@ function Dashboard() {
                       : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
                   </Tag>
                 )}
-                <span>{quiz.question_count || 0} {t('quiz.questions')}</span>
+                <span>
+                  {t('quiz.questionCount', {
+                    count: quiz.question_count || 0,
+                    defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
+                  })}
+                </span>
               </Space>
             </div>
             <div className="quiz-item-actions">
