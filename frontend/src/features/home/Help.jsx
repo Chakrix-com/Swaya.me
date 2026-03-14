@@ -54,6 +54,9 @@ const AUDIENCE_SCREENSHOTS = [
   '/assets/help-screens/audience_in_session_waiting.png',
 ]
 
+const SCREENSHOT_LANGUAGES = ['en', 'hi', 'ta', 'te', 'ka', 'bn', 'gu', 'es', 'de', 'fr', 'ru']
+const SCREENSHOT_ASSET_VERSION = '20260313_fix4'
+
 const QUESTION_TYPE_META = [
   { color: 'blue',   icon: <QuestionCircleOutlined /> },
   { color: 'green',  icon: <FontSizeOutlined /> },
@@ -81,7 +84,7 @@ const EXPORT_FORMAT_META = [
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function DrillDown({ screenshot, screenshotAlt, tips, accentColor }) {
+function DrillDown({ screenshot, screenshotFallback, screenshotAlt, tips, accentColor }) {
   const { t } = useTranslation()
   return (
     <div
@@ -102,6 +105,7 @@ function DrillDown({ screenshot, screenshotAlt, tips, accentColor }) {
           </Text>
           <Image
             src={screenshot}
+            fallback={screenshotFallback}
             alt={screenshotAlt}
             style={{ width: '100%', borderRadius: 8, border: '1px solid var(--visitor-panel-border)', cursor: 'zoom-in' }}
             preview={{ mask: t('pages.help.clickToZoom') }}
@@ -175,6 +179,7 @@ function DetailedSteps({ steps, details, accentColor }) {
             {expanded[i] && details[i] && (
               <DrillDown
                 screenshot={details[i].screenshot}
+                screenshotFallback={details[i].screenshotFallback}
                 screenshotAlt={details[i].screenshotAlt}
                 tips={details[i].tips}
                 accentColor={accentColor}
@@ -275,11 +280,19 @@ function OpenQuestionCard({ text, tip }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function Help() {
+export default function Help({ visitorTheme = 'light' }) {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [expandedQTypes, setExpandedQTypes] = useState({})
   const toggleQType = (key) => setExpandedQTypes((s) => ({ ...s, [key]: !s[key] }))
+
+  const normalizedLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]
+  const screenshotLanguage = SCREENSHOT_LANGUAGES.includes(normalizedLanguage) ? normalizedLanguage : 'en'
+  const screenshotTheme = visitorTheme === 'dark' ? 'dark' : 'light'
+  const getScreenshotPath = (sourcePath) => {
+    const fileName = sourcePath.split('/').pop()
+    return `/assets/help-screens/${screenshotLanguage}/${screenshotTheme}/${fileName}?v=${SCREENSHOT_ASSET_VERSION}`
+  }
 
   // Load translated data arrays
   const hostSteps        = t('pages.help.hostSteps',          { returnObjects: true })
@@ -296,8 +309,16 @@ export default function Help() {
   const exportHistoryTips = t('pages.help.exportHistoryTips',  { returnObjects: true })
 
   // Merge translated content with non-translated metadata
-  const hostDetails = hostDetailsRaw.map((d, i) => ({ ...d, screenshot: HOST_SCREENSHOTS[i] }))
-  const audienceDetails = audienceDetailsRaw.map((d, i) => ({ ...d, screenshot: AUDIENCE_SCREENSHOTS[i] }))
+  const hostDetails = hostDetailsRaw.map((d, i) => ({
+    ...d,
+    screenshot: getScreenshotPath(HOST_SCREENSHOTS[i]),
+    screenshotFallback: HOST_SCREENSHOTS[i],
+  }))
+  const audienceDetails = audienceDetailsRaw.map((d, i) => ({
+    ...d,
+    screenshot: getScreenshotPath(AUDIENCE_SCREENSHOTS[i]),
+    screenshotFallback: AUDIENCE_SCREENSHOTS[i],
+  }))
   const questionTypes = questionTypesRaw.map((qt, i) => ({ ...qt, ...QUESTION_TYPE_META[i] }))
   const quizExamples = quizExamplesRaw.map((ex, i) => ({ ...ex, icon: QUIZ_EXAMPLE_ICONS[i] }))
   const pollExamples = pollExamplesRaw.map((ex, i) => ({ ...ex, ...POLL_EXAMPLE_META[i] }))
@@ -355,7 +376,7 @@ export default function Help() {
                   <UserOutlined style={{ fontSize: 36, color: '#1890ff' }} />
                   <Title level={4} style={{ marginBottom: 4 }}>{t('pages.help.navHostTitle')}</Title>
                   <Paragraph type="secondary" style={{ marginBottom: 8 }}>{t('pages.help.navHostDesc')}</Paragraph>
-                  <Button type="primary" onClick={() => document.getElementById('hosts').scrollIntoView({ behavior: 'smooth' })}>
+                  <Button onClick={() => document.getElementById('hosts').scrollIntoView({ behavior: 'smooth' })}>
                     {t('pages.help.navHostButton')}
                   </Button>
                 </Space>
@@ -558,9 +579,10 @@ export default function Help() {
                     <CameraOutlined style={{ marginRight: 6 }} />{t('pages.help.leaderboardHowItLooks')}
                   </Text>
                   <Image
-                    src="/assets/help-screens/quiz_leaderboard_host.png"
+                    src={getScreenshotPath('/assets/help-screens/quiz_leaderboard_host.png')}
+                    fallback="/assets/help-screens/quiz_leaderboard_host.png"
                     alt="Live leaderboard showing participant rankings"
-                    style={{ width: '100%', borderRadius: 8, border: '1px solid #91caff', cursor: 'zoom-in' }}
+                    style={{ width: '100%', borderRadius: 8, border: '1px solid var(--visitor-panel-border)', cursor: 'zoom-in' }}
                     preview={{ mask: t('pages.help.clickToZoom') }}
                   />
                 </Col>
@@ -606,7 +628,8 @@ export default function Help() {
               {t('pages.help.howToCreateEnd')}
             </Paragraph>
             <DrillDown
-              screenshot="/assets/help-screens/dashboard_buttons.png"
+              screenshot={getScreenshotPath('/assets/help-screens/dashboard_buttons.png')}
+              screenshotFallback="/assets/help-screens/dashboard_buttons.png"
               screenshotAlt={t('pages.help.howToCreateDrilldownAlt')}
               tips={howToCreateTips}
               accentColor="#722ed1"
@@ -701,7 +724,8 @@ export default function Help() {
             </Paragraph>
 
             <DrillDown
-              screenshot="/assets/help-screens/quiz_history_page.png"
+              screenshot={getScreenshotPath('/assets/help-screens/quiz_history_page.png')}
+              screenshotFallback="/assets/help-screens/quiz_history_page.png"
               screenshotAlt={t('pages.help.exportHistoryAlt')}
               tips={exportHistoryTips}
               accentColor="#389e0d"
@@ -712,7 +736,8 @@ export default function Help() {
                 <CameraOutlined style={{ marginRight: 6 }} />{t('pages.help.exportDropdownLabel')}
               </Text>
               <Image
-                src="/assets/help-screens/quiz_export_dropdown.png"
+                src={getScreenshotPath('/assets/help-screens/quiz_export_dropdown.png')}
+                fallback="/assets/help-screens/quiz_export_dropdown.png"
                 alt={t('pages.help.exportDropdownAlt')}
                 style={{ maxWidth: 600, width: '100%', borderRadius: 8, border: '1px solid var(--visitor-panel-border)' }}
                 preview={{ mask: t('pages.help.clickToZoom') }}

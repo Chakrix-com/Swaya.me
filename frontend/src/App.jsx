@@ -107,15 +107,6 @@ function AuthenticatedLayout({ children }) {
       collapsed={collapsed}
       onCollapse={setCollapsed}
       contentStyle={{ overflowX: 'hidden' }}
-      token={{
-        layout: {
-          header: {
-            colorBgHeader: '#ffffff',
-            colorBgScrollHeader: '#ffffff',
-          },
-          bgLayout: '#f5f5f5',
-        },
-      }}
       location={{
         pathname: location.pathname,
       }}
@@ -207,7 +198,7 @@ function AuthenticatedLayout({ children }) {
             <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.aboutLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/privacy-policy')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.privacyLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/terms-of-service')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.termsLink')}</Button>
-            <Button type="link" size="small" onClick={() => navigate('/help')} style={{ padding: 0, fontSize: 12 }}>Help</Button>
+            <Button type="link" size="small" onClick={() => navigate('/help')} style={{ padding: 0, fontSize: 12 }}>{t('pages.help.footerHelp')}</Button>
             <a href="mailto:info@chakrix.net" style={{ fontSize: 12 }}>{t('pages.legal.contactLink')}</a>
           </Space>
         </div>
@@ -257,7 +248,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/about" element={<About />} />
-          <Route path="/help" element={<Help />} />
+            <Route path="/help" element={<Help visitorTheme={visitorTheme} />} />
         </Routes>
       </PublicLayout>
     )

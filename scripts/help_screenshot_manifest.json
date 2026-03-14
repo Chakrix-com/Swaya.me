@@ -1,0 +1,18 @@
+{
+  "languages": ["en", "hi", "ta", "te", "ka", "bn", "gu", "es", "de", "fr", "ru"],
+  "themes": ["light", "dark"],
+  "files": [
+    { "name": "home.png", "route": "/", "theme_sensitive": true },
+    { "name": "audience_join_with_code.png", "route": "/join/{join_code}", "theme_sensitive": true },
+    { "name": "audience_in_session_waiting.png", "route": "/join/{join_code}", "theme_sensitive": true },
+    { "name": "audience_answering_question.png", "route": "/join/{join_code}", "theme_sensitive": true },
+    { "name": "dashboard_buttons.png", "route": "/dashboard", "theme_sensitive": false },
+    { "name": "quiz_builder.png", "route": "/quiz/{quiz_id}/edit", "theme_sensitive": false },
+    { "name": "quiz_session_joincode.png", "route": "/quiz/{quiz_id}/control", "theme_sensitive": false },
+    { "name": "quiz_session_question_active.png", "route": "/quiz/{quiz_id}/control", "theme_sensitive": false },
+    { "name": "quiz_leaderboard_host.png", "route": "/quiz/{quiz_id}/control", "theme_sensitive": false },
+    { "name": "quiz_history_page.png", "route": "/quiz/{quiz_id}/history", "theme_sensitive": false },
+    { "name": "quiz_history_results.png", "route": "/quiz/{quiz_id}/history", "theme_sensitive": false },
+    { "name": "quiz_export_dropdown.png", "route": "/quiz/{quiz_id}/history", "theme_sensitive": false }
+  ]
+}

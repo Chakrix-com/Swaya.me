@@ -385,15 +385,17 @@ export default function AudienceSession() {
                         <Space direction="vertical" style={{ width: '100%' }}>
                           <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
                           <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
-                          <TextArea
-                            rows={3}
-                            maxLength={500}
-                            showCount
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
-                            disabled={feedbackSubmitted}
-                          />
+                          <div style={{ marginBottom: 20 }}>
+                            <TextArea
+                              rows={3}
+                              maxLength={500}
+                              showCount
+                              value={feedbackText}
+                              onChange={(e) => setFeedbackText(e.target.value)}
+                              placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
+                              disabled={feedbackSubmitted}
+                            />
+                          </div>
                           <Button
                             type="primary"
                             onClick={handleSubmitFeedback}
