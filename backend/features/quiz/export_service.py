@@ -51,15 +51,28 @@ _UPLOADS_BASE = os.path.normpath(os.path.join(
 ))
 
 def _resolve_upload_path(stored: Optional[str]) -> Optional[str]:
-    """Convert a stored upload path/URL to an absolute local filesystem path."""
+    """Convert a stored upload path/URL to an absolute local filesystem path.
+
+    Handles several formats:
+    - Bare relative path:  "2/13/file.png"           → uploads/images/2/13/file.png
+    - With images prefix:  "images/2/13/file.png"    → uploads/images/2/13/file.png
+    - Full upload path:    "uploads/images/..."       → uploads/images/...
+    - URL path:            "/api/uploads/images/..."  → uploads/images/...
+    """
     if not stored:
         return None
     p = stored.lstrip("/")
+    # Strip URL prefix
     if p.startswith("api/"):
         p = p[4:]
-    if not p.startswith("uploads/"):
-        return None
-    full = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", p))
+    # Now p may be: "uploads/images/...", "images/...", or bare "tenant/quiz/file.png"
+    if p.startswith("uploads/"):
+        full = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", p))
+    elif p.startswith("images/"):
+        full = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", p))
+    else:
+        # Bare relative path — assume it lives under uploads/images/
+        full = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "images", p))
     return full if os.path.exists(full) else None
 
 
