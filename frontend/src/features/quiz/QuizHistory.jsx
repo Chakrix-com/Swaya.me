@@ -47,8 +47,9 @@ function formatTime(secs) {
 }
 
 // Per-session detail panel (lazy-loaded when accordion opens)
-function SessionDetail({ sessionId }) {
+function SessionDetail({ sessionId, quizType }) {
   const { t } = useTranslation()
+  const isPoll = quizType === 'poll'
   const [results, setResults] = useState(null)
   const [leaderboard, setLeaderboard] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -60,14 +61,13 @@ function SessionDetail({ sessionId }) {
       setLoading(true)
       setError(null)
       try {
-        const [resResp, lbResp] = await Promise.allSettled([
-          sessionAPI.getResults(sessionId, null),
-          sessionAPI.getLeaderboard(sessionId, null),
-        ])
+        const requests = [sessionAPI.getResults(sessionId, null)]
+        if (!isPoll) requests.push(sessionAPI.getLeaderboard(sessionId, null))
+        const [resResp, lbResp] = await Promise.allSettled(requests)
         if (cancelled) return
         if (resResp.status === 'fulfilled') setResults(resResp.value.data)
         else setError(resResp.reason?.response?.data?.detail || t('quiz.failedToLoadResults'))
-        if (lbResp.status === 'fulfilled') setLeaderboard(lbResp.value.data)
+        if (!isPoll && lbResp?.status === 'fulfilled') setLeaderboard(lbResp.value.data)
       } catch (e) {
         if (!cancelled) setError(t('quiz.failedToLoadResults'))
       } finally {
@@ -350,7 +350,7 @@ export default function QuizHistory() {
             )
             return (
               <Panel key={session.id} header={header}>
-                <SessionDetail sessionId={session.id} />
+                <SessionDetail sessionId={session.id} quizType={quizType} />
               </Panel>
             )
           })}
