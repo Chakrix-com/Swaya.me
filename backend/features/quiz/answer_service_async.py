@@ -352,11 +352,23 @@ class AnswerServiceAsync:
         option_count = len(question.options or [])
         distribution = [0] * option_count
         total_answers = 0
-        
+
         for option_idx, count in answers:
             if option_idx is not None and 0 <= option_idx < option_count:
                 distribution[option_idx] = count
                 total_answers += count
+
+        # For text-based questions (word_cloud, single_line, paragraph) there are
+        # no selected_option_index rows — count text_answer rows instead
+        if option_count == 0:
+            count_result = await db.execute(
+                select(func.count(Answer.id)).filter(
+                    Answer.session_id == session_id,
+                    Answer.question_id == question_id,
+                    Answer.text_answer.isnot(None)
+                )
+            )
+            total_answers = count_result.scalar() or 0
         
         # Get participant's answer if token provided
         participant_answer = None
