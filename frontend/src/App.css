@@ -176,6 +176,21 @@
   color: var(--aud-input-placeholder) !important;
 }
 
+.audience-join .ant-input-data-count,
+.audience-session .ant-input-data-count,
+.audience-join .ant-input-textarea-show-count::after,
+.audience-session .ant-input-textarea-show-count::after {
+  color: var(--aud-input-placeholder) !important;
+}
+
+.visitor-theme--dark .audience-join .ant-input-data-count,
+.visitor-theme--dark .audience-session .ant-input-data-count,
+.visitor-theme--dark .audience-join .ant-input-textarea-show-count::after,
+.visitor-theme--dark .audience-session .ant-input-textarea-show-count::after {
+  color: var(--visitor-text-primary) !important;
+  -webkit-text-fill-color: var(--visitor-text-primary) !important;
+}
+
 @media screen and (max-width: 768px) {
   /* Prevent iOS Safari auto-zoom on inputs which forces users to manually zoom out */
   .audience-join .ant-input,
@@ -192,23 +207,23 @@
 .audience-session .ant-table,
 .audience-session .ant-table-container table {
   background: transparent;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--aud-text-primary);
 }
 
 .audience-session .ant-table-thead > tr > th {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.16) !important;
+  background: var(--aud-surface) !important;
+  color: var(--aud-text-primary) !important;
+  border-bottom-color: var(--aud-border) !important;
 }
 
 .audience-session .ant-table-tbody > tr > td {
   background: transparent !important;
-  color: rgba(255, 255, 255, 0.88) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  color: var(--aud-text-primary) !important;
+  border-bottom-color: var(--aud-border) !important;
 }
 
 .audience-session .ant-table-tbody > tr.ant-table-row:hover > td {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(24, 144, 255, 0.08) !important;
 }
 
 .audience-session .table-responsive {
@@ -260,4 +275,18 @@
   .hide-on-mobile {
     display: none !important;
   }
+}
+
+.ant-pro-layout .ant-pro-layout-content {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-pro-layout .ant-pro-layout-content > .ant-pro-layout-content-children {
+  flex: 1 0 auto;
+}
+
+.ant-pro-layout .ant-pro-global-footer {
+  margin-top: auto;
 }
