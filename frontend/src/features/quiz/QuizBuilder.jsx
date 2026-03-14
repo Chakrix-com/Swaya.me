@@ -2,16 +2,16 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Button, 
-  Space, 
-  List, 
-  Radio, 
-  Popconfirm, 
-  message,
+import {
+  App,
+  Card,
+  Form,
+  Input,
+  Button,
+  Space,
+  List,
+  Radio,
+  Popconfirm,
   Typography,
   Divider,
   Tag
@@ -453,6 +453,7 @@ const arePropsEqual = (prevProps, nextProps) => {
 const MemoizedQuestionForm = memo(QuestionForm, arePropsEqual)
 
 export default function QuizBuilder() {
+  const { message } = App.useApp()
   const { id } = useParams()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()

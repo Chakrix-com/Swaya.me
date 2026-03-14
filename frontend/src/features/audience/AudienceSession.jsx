@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import {
+  App,
   Card,
   Button,
   Space,
@@ -12,7 +13,6 @@ import {
   Result,
   Progress,
   Input,
-  message,
   Rate,
   Table
 } from 'antd'
@@ -35,6 +35,7 @@ const { Title, Text } = Typography
 const { TextArea } = Input
 
 export default function AudienceSession() {
+  const { message } = App.useApp()
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -172,7 +173,12 @@ export default function AudienceSession() {
         setSubmitted(true)
       }
     } catch (error) {
-      if (!isWordCloud) setSubmitted(true)
+      const detail = error.response?.data?.detail
+      if (detail) {
+        message.error(detail)
+      } else if (!isWordCloud) {
+        setSubmitted(true)
+      }
     } finally {
       setLoading(false)
     }

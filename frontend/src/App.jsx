@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { Button, ConfigProvider, Space, Divider, Typography } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import { 
@@ -331,9 +331,11 @@ function App() {
 
   return (
     <ConfigProvider locale={locale}>
-      <Router>
-        <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
-      </Router>
+      <AntApp>
+        <Router>
+          <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
+        </Router>
+      </AntApp>
     </ConfigProvider>
   )
 }

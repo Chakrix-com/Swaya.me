@@ -12,6 +12,7 @@ from persistence.models.core import User, UserRole
 from persistence.models.quiz import Participant, Quiz, QuizFeedback, QuizSession
 from features.quiz.schemas import FeedbackListResponse, FeedbackResponse, FeedbackSubmitRequest
 from shared.exceptions.quiz import ParticipantNotFoundError, QuizNotFoundError, SessionNotFoundError
+from shared.utils.content_filter import check_content
 
 
 class FeedbackServiceAsync:
@@ -47,6 +48,8 @@ class FeedbackServiceAsync:
         quiz = quiz_result.scalar_one_or_none()
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
+
+        check_content(request.feedback_text, "Feedback")
 
         feedback = QuizFeedback(
             tenant_id=session.tenant_id,
@@ -92,6 +95,8 @@ class FeedbackServiceAsync:
             session = session_result.scalar_one_or_none()
             if not session:
                 raise SessionNotFoundError("Session not found")
+
+        check_content(request.feedback_text, "Feedback")
 
         feedback = QuizFeedback(
             tenant_id=quiz.tenant_id,

@@ -28,7 +28,7 @@ from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, SessionNotFoundError,
     ParticipantNotFoundError, QuizValidationError, InvalidQuizStatusError,
     InvalidSessionStatusError, DuplicateAnswerError, QuestionNotOpenError,
-    TierLimitExceededError
+    TierLimitExceededError, ContentFilterError
 )
 from shared.utils.redis_client import get_redis, RedisClient
 from core.config.tier_service import TierService
@@ -278,6 +278,8 @@ async def add_question(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except (InvalidQuizStatusError, TierLimitExceededError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except ContentFilterError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
 @router.put("/questions/{question_id}", response_model=QuestionResponse)
@@ -295,6 +297,8 @@ async def update_question(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except ContentFilterError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -448,6 +452,8 @@ async def submit_word_cloud_answer(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except (QuestionNotOpenError, DuplicateAnswerError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except ContentFilterError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
 @router.get("/sessions/{session_id}/leaderboard", response_model=LeaderboardResponse)
@@ -480,6 +486,8 @@ async def submit_participant_feedback(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except (SessionNotFoundError, QuizNotFoundError) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ContentFilterError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
 @router.post("/feedback")
@@ -494,6 +502,8 @@ async def submit_user_feedback(
         return await service.submit_user_feedback(db, current_user, request)
     except (SessionNotFoundError, QuizNotFoundError) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ContentFilterError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
 @router.get("/questions/{question_id}/word-cloud-results", response_model=WordCloudResultsResponse)

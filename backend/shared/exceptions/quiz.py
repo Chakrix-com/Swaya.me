@@ -51,3 +51,8 @@ class QuestionNotOpenError(Exception):
 class TierLimitExceededError(Exception):
     """Tier limit exceeded"""
     pass
+
+
+class ContentFilterError(Exception):
+    """Submitted content failed the profanity/content filter"""
+    pass
