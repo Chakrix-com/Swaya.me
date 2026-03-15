@@ -75,7 +75,7 @@ def test_full_lifecycle():
         # 4. Submit answer
         print(f"\n{cycle}.4 Submitting answer...")
         response = requests.get(
-            f"{BASE_URL}/quizzes/sessions/{session_id}/results",
+            f"{BASE_URL}/quizzes/sessions/{session_id}/audience-results",
             params={"session_token": participant_token},
             verify=False
         )

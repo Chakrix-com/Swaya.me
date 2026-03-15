@@ -409,7 +409,9 @@ class AnswerServiceAsync:
         self,
         db: AsyncSession,
         session_id: int,
-        participant_token: Optional[str] = None
+        participant_token: Optional[str] = None,
+        include_question_results: bool = True,
+        include_text_responses: bool = True,
     ) -> SessionResultsResponse:
         """
         Get final results for entire session
@@ -479,19 +481,20 @@ class AnswerServiceAsync:
                 participant_correct = correct_answers
                 participant_score = total_answered
         
-        # Get results for each question
+        # Get results for each question (host/full views only)
         question_results = []
-        for question in questions:
-            try:
-                results = await self.get_question_results(
-                    db,
-                    session_id,
-                    question.id,
-                    participant_token
-                )
-                question_results.append(results)
-            except Exception:
-                pass
+        if include_question_results:
+            for question in questions:
+                try:
+                    results = await self.get_question_results(
+                        db,
+                        session_id,
+                        question.id,
+                        participant_token
+                    )
+                    question_results.append(results)
+                except Exception:
+                    pass
         
         # Get current question if session is active
         current_question = None
@@ -560,7 +563,7 @@ class AnswerServiceAsync:
                     )
                     total_answers = result.scalar()
                     text_responses = []
-                    if question_obj.question_type.value in ('single_line', 'paragraph'):
+                    if include_text_responses and question_obj.question_type.value in ('single_line', 'paragraph'):
                         responses_result = await db.execute(
                             select(Answer.text_answer, Participant.display_name)
                             .join(Participant, Participant.id == Answer.participant_id)

@@ -4,6 +4,7 @@ Quiz API Endpoints
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Optional
 
 from persistence.database_async import get_async_db
@@ -32,6 +33,7 @@ from shared.exceptions.quiz import (
 )
 from shared.utils.redis_client import get_redis, RedisClient
 from core.config.tier_service import TierService
+from persistence.models.quiz import Participant, QuizSession, Quiz
 
 router = APIRouter(prefix="/quizzes", tags=["Quiz"])
 
@@ -58,6 +60,44 @@ async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerS
 
 async def get_feedback_service() -> FeedbackServiceAsync:
     return FeedbackServiceAsync()
+
+
+async def _assert_host_session_access(
+    db: AsyncSession,
+    session_id: int,
+    current_user: CurrentUser
+) -> None:
+    result = await db.execute(
+        select(QuizSession.id)
+        .join(Quiz, Quiz.id == QuizSession.quiz_id)
+        .filter(
+            QuizSession.id == session_id,
+            QuizSession.tenant_id == current_user.tenant_id
+        )
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+
+async def _require_participant_for_session(
+    db: AsyncSession,
+    session_id: int,
+    session_token: str
+) -> Participant:
+    result = await db.execute(
+        select(Participant).filter(Participant.session_token == session_token)
+    )
+    participant = result.scalar_one_or_none()
+    if not participant:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session token")
+    if participant.session_id != session_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match session")
+    if not participant.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Session has been restarted. Please rejoin with the new code."
+        )
+    return participant
 
 
 # Quiz CRUD Endpoints
@@ -459,13 +499,14 @@ async def submit_word_cloud_answer(
 @router.get("/sessions/{session_id}/leaderboard", response_model=LeaderboardResponse)
 async def get_leaderboard(
     session_id: int,
-    session_token: Optional[str] = None,
     db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
-    """Get leaderboard for a session (ranked by correct MCQ answers)"""
+    """Get host leaderboard for a session (host-only)"""
     try:
-        return await service.get_leaderboard(db, session_id, session_token)
+        await _assert_host_session_access(db, session_id, current_user)
+        return await service.get_leaderboard(db, session_id, None)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception:
@@ -544,29 +585,49 @@ async def export_session_results(
 @router.get("/sessions/{session_id}/results", response_model=SessionResultsResponse)
 async def get_session_results(
     session_id: int,
-    session_token: Optional[str] = None,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: AnswerServiceAsync = Depends(get_answer_service)
+):
+    """Get host session results (host-only)"""
+    try:
+        await _assert_host_session_access(db, session_id, current_user)
+        return await service.get_session_results(db, session_id, None)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/audience-results", response_model=SessionResultsResponse)
+async def get_participant_session_results(
+    session_id: int,
+    session_token: str,
     db: AsyncSession = Depends(get_async_db),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
-    """Get session results"""
+    """Get participant-safe session results for the participant's own session"""
     try:
-        # Check if participant token is still active
-        if session_token:
-            from persistence.models.quiz import Participant
-            from sqlalchemy import select
-            result = await db.execute(
-                select(Participant).filter(
-                    Participant.session_token == session_token
-                )
-            )
-            participant = result.scalar_one_or_none()
-            
-            if participant and not participant.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Session has been restarted. Please rejoin with the new code."
-                )
-        
-        return await service.get_session_results(db, session_id, session_token)
+        await _require_participant_for_session(db, session_id, session_token)
+        return await service.get_session_results(
+            db,
+            session_id,
+            participant_token=session_token,
+            include_question_results=False,
+            include_text_responses=False,
+        )
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/audience-leaderboard", response_model=LeaderboardResponse)
+async def get_participant_leaderboard(
+    session_id: int,
+    session_token: str,
+    db: AsyncSession = Depends(get_async_db),
+    service: AnswerServiceAsync = Depends(get_answer_service)
+):
+    """Get leaderboard for a participant's own session"""
+    try:
+        await _require_participant_for_session(db, session_id, session_token)
+        return await service.get_leaderboard(db, session_id, session_token)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

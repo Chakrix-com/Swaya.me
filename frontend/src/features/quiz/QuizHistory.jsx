@@ -61,8 +61,8 @@ function SessionDetail({ sessionId, quizType }) {
       setLoading(true)
       setError(null)
       try {
-        const requests = [sessionAPI.getResults(sessionId, null)]
-        if (!isPoll) requests.push(sessionAPI.getLeaderboard(sessionId, null))
+        const requests = [sessionAPI.getResults(sessionId)]
+        if (!isPoll) requests.push(sessionAPI.getLeaderboard(sessionId))
         const [resResp, lbResp] = await Promise.allSettled(requests)
         if (cancelled) return
         if (resResp.status === 'fulfilled') setResults(resResp.value.data)

@@ -280,9 +280,9 @@ Response 200:
 }
 ```
 
-### Get Results
+### Get Audience Results (Participant)
 ```
-GET /api/v1/quizzes/sessions/{id}/results?session_token={token}
+GET /api/v1/quizzes/sessions/{id}/audience-results?session_token={token}
 
 Response 200:
 {
@@ -291,17 +291,25 @@ Response 200:
   "total_questions": 10,
   "participant_score": 10,
   "participant_correct": 8,
-  "question_results": [
-    {
-      "question_id": 1,
-      "question_text": "...",
-      "correct_answer_index": 2,
-      "answer_distribution": [5, 10, 25, 8],
-      "total_answers": 48,
-      "participant_answer": 2
-    }
-  ]
+  "question_results": []
 }
+```
+
+### Get Host Results (Host Only)
+```
+GET /api/v1/quizzes/sessions/{id}/results
+Authorization: Bearer {token}
+```
+
+### Get Audience Leaderboard (Participant)
+```
+GET /api/v1/quizzes/sessions/{id}/audience-leaderboard?session_token={token}
+```
+
+### Get Host Leaderboard (Host Only)
+```
+GET /api/v1/quizzes/sessions/{id}/leaderboard
+Authorization: Bearer {token}
 ```
 
 ---
