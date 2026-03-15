@@ -6,7 +6,14 @@ from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload, contains_eager
 from typing import List
 
-from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
+from persistence.models.quiz import (
+    Quiz,
+    Question,
+    Answer,
+    SessionQuestionTiming,
+    QuizStatus,
+    QuestionType,
+)
 from features.quiz.schemas import QuestionCreate, QuestionUpdate, QuestionResponse
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, InvalidQuizStatusError,
@@ -15,6 +22,7 @@ from shared.exceptions.quiz import (
 from shared.utils.content_filter import check_content
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
+from core.storage import ImageService
 
 
 class QuestionServiceAsync:
@@ -118,10 +126,13 @@ class QuestionServiceAsync:
     ) -> QuestionResponse:
         """Update question"""
         result = await db.execute(
-            select(Question).join(Quiz).filter(
+            select(Question)
+            .join(Quiz)
+            .filter(
                 Question.id == question_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
+            .options(contains_eager(Question.quiz))
         )
         question = result.scalar_one_or_none()
         
@@ -183,6 +194,18 @@ class QuestionServiceAsync:
         
         quiz_id = question.quiz_id
         deleted_order = question.order
+
+        # Remove dependent rows first to avoid FK nullification errors on async flush.
+        await db.execute(delete(Answer).filter(Answer.question_id == question_id))
+        await db.execute(delete(SessionQuestionTiming).filter(SessionQuestionTiming.question_id == question_id))
+
+        # Best-effort cleanup of image files.
+        if question.question_image_url:
+            ImageService.delete_image(question.question_image_url)
+        if question.option_images:
+            for image_path in question.option_images.values():
+                if image_path:
+                    ImageService.delete_image(image_path)
         
         # Delete question
         await db.delete(question)

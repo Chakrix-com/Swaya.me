@@ -9,13 +9,15 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-BASE_URL="https://www.swaya.me/api/v1"
+BASE_URL="${BASE_URL:-https://www.swaya.me/api/v1}"
+HOST_EMAIL="${HOST_EMAIL:-demo@swaya.me}"
+HOST_PASSWORD="${HOST_PASSWORD:-Demo1234}"
 
 # Step 1: Login as host
 echo -e "\n📝 Step 1: Host Login"
 TOKEN=$(curl -s -X POST "$BASE_URL/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@swaya.me","password":"Demo1234"}' \
+  -d "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}" \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 if [ -z "$TOKEN" ]; then
@@ -27,13 +29,25 @@ echo -e "${GREEN}✅ Host logged in${NC}"
 # Step 2: Get first quiz
 echo -e "\n📝 Step 2: Getting Quiz List"
 QUIZ_ID=$(curl -s "$BASE_URL/quizzes/" -H "Authorization: Bearer $TOKEN" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); print(data[0]['id'] if data else '')")
+  | python3 -c "import sys, json; data=json.load(sys.stdin); ready=next((q for q in data if str(q.get('status','')).lower()=='ready'), None); print(ready['id'] if ready else '')")
 
 if [ -z "$QUIZ_ID" ]; then
-  echo -e "${RED}❌ No quiz found${NC}"
+  echo -e "${RED}❌ No READY quiz found${NC}"
   exit 1
 fi
 echo -e "${GREEN}✅ Found quiz ID: $QUIZ_ID${NC}"
+
+# End any existing open sessions for this quiz to ensure deterministic flow
+OPEN_SESSIONS=$(curl -s "$BASE_URL/quizzes/$QUIZ_ID/sessions" -H "Authorization: Bearer $TOKEN" \
+  | python3 -c "import sys, json; data=json.load(sys.stdin); print('\n'.join(str(s['id']) for s in data.get('sessions', []) if s.get('status') in ('active','created')))")
+
+if [ -n "$OPEN_SESSIONS" ]; then
+  echo -e "\n🧹 Cleaning open sessions before test"
+  while IFS= read -r SID; do
+    [ -z "$SID" ] && continue
+    curl -s -X POST "$BASE_URL/quizzes/sessions/$SID/end" -H "Authorization: Bearer $TOKEN" > /dev/null || true
+  done <<< "$OPEN_SESSIONS"
+fi
 
 # Step 3: Start session
 echo -e "\n📝 Step 3: Starting Quiz Session"
@@ -75,9 +89,17 @@ echo -e "${GREEN}✅ Question received: \"$QUESTION_TEXT\" (ID: $QUESTION_ID)${N
 
 # Step 7: Submit answer
 echo -e "\n📝 Step 7: Submitting Answer (Option A = Index 0)"
-SUBMIT_RESPONSE=$(curl -s -X POST "$BASE_URL/quizzes/sessions/submit-answer?session_token=$PARTICIPANT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"question_id\":$QUESTION_ID,\"selected_option_index\":0}")
+QUESTION_TYPE=$(echo "$QUESTION_DATA" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('current_question',{}).get('question_type','mcq'))" 2>/dev/null || echo "mcq")
+
+if [ "$QUESTION_TYPE" = "word_cloud" ] || [ "$QUESTION_TYPE" = "single_line" ] || [ "$QUESTION_TYPE" = "paragraph" ]; then
+  SUBMIT_RESPONSE=$(curl -s -X POST "$BASE_URL/quizzes/sessions/submit-word-cloud?session_token=$PARTICIPANT_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"question_id\":$QUESTION_ID,\"text_answer\":\"regression\"}")
+else
+  SUBMIT_RESPONSE=$(curl -s -X POST "$BASE_URL/quizzes/sessions/submit-answer?session_token=$PARTICIPANT_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"question_id\":$QUESTION_ID,\"selected_option_index\":0}")
+fi
 
 SUCCESS=$(echo $SUBMIT_RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin).get('success', False))")
 if [ "$SUCCESS" != "True" ]; then
