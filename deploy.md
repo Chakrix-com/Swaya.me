@@ -32,7 +32,16 @@ git add ... && git commit -m "feat: ..."
 ./deploy.sh deploy-test
 # Check https://test.swaya.me visually (noVNC: http://www.swaya.me:7900)
 
-# 3. Promote to production
+# 3. Run mandatory regression gate on test environment
+BASE_URL=https://test.swaya.me/api/v1 \
+APP_BASE_URL=https://test.swaya.me \
+HOST_EMAIL=demo@swaya.me \
+HOST_PASSWORD=Demo1234 \
+bash scripts/regression/run_preprod_gate.sh
+# Optional for high-risk releases:
+# RUN_EXTENDED=1 bash scripts/regression/run_preprod_gate.sh
+
+# 4. Promote to production
 ./deploy.sh promote-live
 ```
 
@@ -147,6 +156,7 @@ Backups accumulate over time. Clean old ones manually when disk space is a conce
 
 - `.env`, `.venv/`, and `uploads/` are **never overwritten** by rsync — live secrets and data are always preserved
 - `promote-live` and `migrate-live` require explicit `y` confirmation
+- `promote-live` must only be run after a successful regression gate run on test (`scripts/regression/run_preprod_gate.sh`)
 - Auto-rollback triggers if the post-deploy health check fails
 - Dirty working tree on `promote-live` is a warning, not a hard block — but uncommitted changes won't be in the git tag
 
