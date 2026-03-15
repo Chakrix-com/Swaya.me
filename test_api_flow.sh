@@ -62,7 +62,7 @@ echo -e "${GREEN}✅ Participant joined - Session: $PARTICIPANT_SESSION_ID${NC}"
 
 # Step 6: Get current question
 echo -e "\n📝 Step 6: Fetching Current Question"
-QUESTION_DATA=$(curl -s "$BASE_URL/quizzes/sessions/$PARTICIPANT_SESSION_ID/results?session_token=$PARTICIPANT_TOKEN")
+QUESTION_DATA=$(curl -s "$BASE_URL/quizzes/sessions/$PARTICIPANT_SESSION_ID/audience-results?session_token=$PARTICIPANT_TOKEN")
 QUESTION_ID=$(echo $QUESTION_DATA | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['current_question']['id'] if data.get('current_question') else '')")
 QUESTION_TEXT=$(echo $QUESTION_DATA | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['current_question']['text'] if data.get('current_question') else 'No question')")
 

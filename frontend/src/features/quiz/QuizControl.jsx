@@ -106,7 +106,7 @@ export default function QuizControl() {
     if (!session) return
     let latestResults = null
     try {
-      const response = await sessionAPI.getResults(session.id, session.session_token)
+      const response = await sessionAPI.getResults(session.id)
       latestResults = response.data
       setResults(response.data)
 
@@ -119,7 +119,7 @@ export default function QuizControl() {
     }
     if (latestResults?.quiz_type !== 'poll' && quiz?.quiz_type !== 'poll') {
       // Leaderboard is non-critical — fetch independently so it never blocks results
-      sessionAPI.getLeaderboard(session.id, null)
+      sessionAPI.getLeaderboard(session.id)
         .then(res => setLeaderboard(res.data))
         .catch(() => {})
     } else {

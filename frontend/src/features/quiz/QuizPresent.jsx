@@ -660,13 +660,13 @@ export default function QuizPresent() {
 
   const refreshResults = async () => {
     try {
-      const res = await sessionAPI.getResults(Number(sessionId), null)
+      const res = await sessionAPI.getResults(Number(sessionId))
       setResults(res.data)
       prevQIdx.current = res.data.current_question_index
     } catch (_) {}
     if (!isPoll) {
       try {
-        const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
+        const lb = await sessionAPI.getLeaderboard(Number(sessionId))
         setLeaderboard(lb.data)
       } catch (_) {}
     } else {
@@ -766,13 +766,13 @@ export default function QuizPresent() {
   useEffect(() => {
     const poll = async () => {
       try {
-        const res = await sessionAPI.getResults(Number(sessionId), null)
+        const res = await sessionAPI.getResults(Number(sessionId))
         const data = res.data
         setResults(data)
 
         if (!data.quiz_type || data.quiz_type !== 'poll') {
           try {
-            const lb = await sessionAPI.getLeaderboard(Number(sessionId), null)
+            const lb = await sessionAPI.getLeaderboard(Number(sessionId))
             setLeaderboard(lb.data)
           } catch (_) {}
         } else {

@@ -123,11 +123,19 @@ export const sessionAPI = {
     }),
   getResults: (sessionId, sessionToken) =>
     api.get(`/quizzes/sessions/${sessionId}/results`, {
-      params: { session_token: sessionToken }
+      params: sessionToken ? { session_token: sessionToken } : {}
     }),
   getLeaderboard: (sessionId, sessionToken) =>
     api.get(`/quizzes/sessions/${sessionId}/leaderboard`, {
       params: sessionToken ? { session_token: sessionToken } : {}
+    }),
+  getAudienceResults: (sessionId, sessionToken) =>
+    api.get(`/quizzes/sessions/${sessionId}/audience-results`, {
+      params: { session_token: sessionToken }
+    }),
+  getAudienceLeaderboard: (sessionId, sessionToken) =>
+    api.get(`/quizzes/sessions/${sessionId}/audience-leaderboard`, {
+      params: { session_token: sessionToken }
     }),
   exportSession: (sessionId, format) =>
     api.get(`/quizzes/sessions/${sessionId}/export`, {

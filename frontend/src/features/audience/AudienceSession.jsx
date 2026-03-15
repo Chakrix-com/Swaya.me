@@ -78,7 +78,17 @@ export default function AudienceSession() {
     if (!sessionToken || !sessionId) return
     let latestResults = null
     try {
-      const response = await sessionAPI.getResults(sessionId, sessionToken)
+      let response
+      try {
+        response = await sessionAPI.getAudienceResults(sessionId, sessionToken)
+      } catch (error) {
+        // Backward compatibility for servers that have not yet deployed audience-safe endpoints
+        if (error.response?.status === 404) {
+          response = await sessionAPI.getResults(sessionId, sessionToken)
+        } else {
+          throw error
+        }
+      }
       latestResults = response.data
       const newQuestionId = response.data.current_question?.question_id
       const newStatus = response.data.status
@@ -121,9 +131,16 @@ export default function AudienceSession() {
       }
     }
     if (latestResults?.quiz_type !== 'poll') {
-      sessionAPI.getLeaderboard(sessionId, sessionToken)
+      sessionAPI.getAudienceLeaderboard(sessionId, sessionToken)
         .then(res => setLeaderboard(res.data))
-        .catch(() => {})
+        .catch(async (error) => {
+          if (error.response?.status === 404) {
+            try {
+              const fallback = await sessionAPI.getLeaderboard(sessionId, sessionToken)
+              setLeaderboard(fallback.data)
+            } catch (_) {}
+          }
+        })
     } else {
       setLeaderboard(null)
     }
