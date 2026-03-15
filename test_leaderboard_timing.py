@@ -10,17 +10,17 @@ Scenario:
   - Leaderboard checked → cumulative time shown
 """
 
-import time, requests
+import time, requests, os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-BASE = "https://www.swaya.me"
+BASE = os.getenv("APP_BASE_URL", "https://www.swaya.me")
 API  = f"{BASE}/api/v1"
-QUIZ_ID = 11          # Demo Quiz – General Knowledge (5 MCQ Qs)
-HOST_EMAIL    = "demo@swaya.me"
-HOST_PASSWORD = "Demo1234"
+QUIZ_ID = int(os.getenv("QUIZ_ID", "11"))  # Demo Quiz – General Knowledge (5 MCQ Qs)
+HOST_EMAIL = os.getenv("HOST_EMAIL", "demo@swaya.me")
+HOST_PASSWORD = os.getenv("HOST_PASSWORD", "Demo1234")
 
 # Q15: correct=1 (Paris). We'll answer index 0 (London) → WRONG
 Q1_ID      = 15

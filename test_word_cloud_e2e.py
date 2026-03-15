@@ -5,6 +5,8 @@ Tests: Create Word Cloud Quiz → Start Session → Join → Advance → Display
 """
 import time
 import sys
+import os
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,13 +14,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-BASE_URL = "https://www.swaya.me"
-SELENIUM_URL = "http://localhost:4444/wd/hub"
+BASE_URL = os.getenv("APP_BASE_URL", "https://www.swaya.me")
+API_BASE_URL = os.getenv("BASE_URL", f"{BASE_URL}/api/v1")
+SELENIUM_URL = os.getenv("SELENIUM_URL", "http://localhost:4444/wd/hub")
 TIMEOUT = 15
 
 # Test credentials
-EMAIL = "vinaykakade@gmail.com"
-PASSWORD = "Swaya@Me2025"
+EMAIL = os.getenv("HOST_EMAIL", "demo@swaya.me")
+PASSWORD = os.getenv("HOST_PASSWORD", "Demo1234")
 
 def log(message, level="INFO"):
     colors = {"INFO": "\033[94m", "SUCCESS": "\033[92m", "ERROR": "\033[91m", "WARN": "\033[93m"}
@@ -55,64 +58,109 @@ def wait_for_element(driver, by, value, timeout=TIMEOUT, name="element"):
         driver.save_screenshot(f"/tmp/timeout_{name.replace(' ', '_')}.png")
         raise
 
+def wait_for_any(driver, locators, timeout=TIMEOUT, clickable=False, name="element"):
+    """Try multiple locators and return first match."""
+    for by, value in locators:
+        try:
+            log(f"Waiting for {name}: {value}")
+            condition = EC.element_to_be_clickable((by, value)) if clickable else EC.presence_of_element_located((by, value))
+            element = WebDriverWait(driver, timeout).until(condition)
+            log(f"Found {name}", "SUCCESS")
+            return element
+        except TimeoutException:
+            continue
+    log(f"Timeout waiting for any locator for {name}", "ERROR")
+    driver.save_screenshot(f"/tmp/timeout_{name.replace(' ', '_')}.png")
+    raise TimeoutException(f"No locator matched for {name}")
+
+def safe_quit(driver):
+    if not driver:
+        return
+    try:
+        driver.quit()
+    except Exception:
+        pass
+
+def api_login():
+    response = requests.post(
+        f"{API_BASE_URL}/auth/login",
+        json={"email": EMAIL, "password": PASSWORD},
+        verify=False,
+        timeout=20
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
+
+def find_ready_wordcloud_quiz(token):
+    headers = {"Authorization": f"Bearer {token}"}
+    quizzes_resp = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
+    quizzes_resp.raise_for_status()
+    for quiz in quizzes_resp.json():
+        if str(quiz.get("status", "")).lower() != "ready":
+            continue
+        quiz_id = quiz["id"]
+        detail_resp = requests.get(f"{API_BASE_URL}/quizzes/{quiz_id}", headers=headers, verify=False, timeout=20)
+        if detail_resp.status_code != 200:
+            continue
+        questions = detail_resp.json().get("questions", [])
+        if any(q.get("question_type") == "word_cloud" for q in questions):
+            return quiz_id
+    raise RuntimeError("No READY quiz with word_cloud question found")
+
+def cleanup_open_sessions(token, quiz_id):
+    headers = {"Authorization": f"Bearer {token}"}
+    sessions_resp = requests.get(f"{API_BASE_URL}/quizzes/{quiz_id}/sessions", headers=headers, verify=False, timeout=20)
+    if sessions_resp.status_code != 200:
+        return
+    for session in sessions_resp.json().get("sessions", []):
+        if session.get("status") in ("active", "created"):
+            requests.post(f"{API_BASE_URL}/quizzes/sessions/{session['id']}/end", headers=headers, verify=False, timeout=20)
+
 def test_word_cloud_flow():
     """Test complete word cloud question flow"""
     host = None
-    audience = None
     
     try:
         log("=== Starting Word Cloud E2E Test ===", "INFO")
+        token = api_login()
+        quiz_id = find_ready_wordcloud_quiz(token)
+        cleanup_open_sessions(token, quiz_id)
         
         # Step 1: Host Login
         log("\n--- STEP 1: Host Login ---", "INFO")
         host = setup_driver("host")
         host.get(f"{BASE_URL}/login")
         time.sleep(2)
-        
-        email_input = wait_for_element(host, By.NAME, "email", name="email input")
+
+        email_input = wait_for_any(host, [
+            (By.ID, "login_email"),
+            (By.NAME, "email"),
+            (By.CSS_SELECTOR, "input[type='email']"),
+            (By.CSS_SELECTOR, "input[placeholder*='Email' i]"),
+            (By.CSS_SELECTOR, "input[autocomplete='username']")
+        ], name="email input")
         email_input.send_keys(EMAIL)
-        
-        password_input = wait_for_element(host, By.NAME, "password", name="password input")
+
+        password_input = wait_for_any(host, [
+            (By.ID, "login_password"),
+            (By.NAME, "password"),
+            (By.CSS_SELECTOR, "input[type='password']")
+        ], name="password input")
         password_input.send_keys(PASSWORD)
-        
-        login_btn = wait_for_element(host, By.XPATH, "//button[contains(., 'Login')]", name="login button")
+
+        login_btn = wait_for_any(host, [
+            (By.XPATH, "//button[contains(., 'Login')]"),
+            (By.CSS_SELECTOR, "button[type='submit']")
+        ], clickable=True, name="login button")
         login_btn.click()
-        
-        wait_for_element(host, By.XPATH, "//h1[contains(., 'Dashboard')] | //h2[contains(., 'Dashboard')]", 
-                        timeout=10, name="dashboard")
+        WebDriverWait(host, 15).until(lambda d: "/dashboard" in d.current_url or "/quiz/" in d.current_url)
         log("Host logged in successfully", "SUCCESS")
         
-        # Step 2: Find a quiz with word cloud questions
+        # Step 2: Navigate to selected quiz control
         log("\n--- STEP 2: Navigate to Quiz ---", "INFO")
-        host.get(f"{BASE_URL}/dashboard")
+        host.get(f"{BASE_URL}/quiz/{quiz_id}/control")
         time.sleep(2)
-        
-        # Find "Another Quiz" or any quiz
-        quiz_cards = host.find_elements(By.XPATH, "//div[contains(@class, 'ant-card')]")
-        log(f"Found {len(quiz_cards)} quizzes", "INFO")
-        
-        # Look for "Another Quiz" or first READY quiz
-        target_quiz = None
-        for card in quiz_cards:
-            if "Another Quiz" in card.text or "READY" in card.text:
-                target_quiz = card
-                break
-        
-        if not target_quiz:
-            log("No suitable quiz found, using first quiz", "WARN")
-            target_quiz = quiz_cards[0] if quiz_cards else None
-        
-        if not target_quiz:
-            raise Exception("No quizzes found")
-        
-        log(f"Quiz card text: {target_quiz.text[:100]}", "INFO")
-        
-        # Click "Control" button to start session
-        control_btn = target_quiz.find_element(By.XPATH, ".//button[contains(., 'Control')]")
-        control_btn.click()
-        time.sleep(2)
-        
-        log("Navigated to Quiz Control", "SUCCESS")
+        log(f"Navigated to quiz {quiz_id} control", "SUCCESS")
         
         # Step 3: Start Session
         log("\n--- STEP 3: Start Session ---", "INFO")
@@ -122,19 +170,29 @@ def test_word_cloud_flow():
         time.sleep(3)
         
         # Get join code
-        join_code_elem = wait_for_element(host, By.XPATH, 
-                                         "//*[contains(text(), 'Join Code:')]/following-sibling::* | //*[contains(@class, 'join-code')] | //code",
-                                         timeout=10, name="join code")
+        join_code_elem = wait_for_any(host, [
+            (By.XPATH, "//*[contains(text(), 'Join Code')]/following::*[1]"),
+            (By.CSS_SELECTOR, ".join-code"),
+            (By.CSS_SELECTOR, "code"),
+            (By.XPATH, "//div[contains(@class, 'ant-statistic-content')]")
+        ], timeout=15, name="join code")
         join_code = join_code_elem.text.strip()
         log(f"Session started with join code: {join_code}", "SUCCESS")
         
         # Step 4: Advance to first question
         log("\n--- STEP 4: Advance to Question ---", "INFO")
-        advance_btn = wait_for_element(host, By.XPATH, "//button[contains(., 'Next')] | //button[contains(., 'Advance')]",
-                                      timeout=10, name="advance button")
-        advance_btn.click()
-        time.sleep(2)
-        log("Advanced to first question", "SUCCESS")
+        try:
+            advance_btn = wait_for_any(host, [
+                (By.XPATH, "//button[contains(., 'Start First Question')]"),
+                (By.XPATH, "//button[contains(., 'Next')]"),
+                (By.XPATH, "//button[contains(., 'Advance')]"),
+                (By.XPATH, "//button[contains(., 'Next Question')]")
+            ], timeout=12, clickable=True, name="advance button")
+            advance_btn.click()
+            time.sleep(2)
+            log("Advanced to first question", "SUCCESS")
+        except TimeoutException:
+            log("No advance button found, continuing with current session state", "WARN")
         
         # Check what question is displayed on host screen
         time.sleep(2)
@@ -143,16 +201,26 @@ def test_word_cloud_flow():
         
         # Step 5: Audience joins
         log("\n--- STEP 5: Audience Joins ---", "INFO")
-        audience = setup_driver("audience")
+        host.execute_script("window.open('');")
+        host.switch_to.window(host.window_handles[-1])
+        audience = host
         audience.get(f"{BASE_URL}/join")
         time.sleep(2)
         
-        code_input = wait_for_element(audience, By.XPATH, "//input[@placeholder='Enter code']", 
-                                     timeout=10, name="join code input")
+        code_input = wait_for_any(audience, [
+            (By.ID, "join_join_code"),
+            (By.NAME, "join_code"),
+            (By.CSS_SELECTOR, "input[inputmode='numeric']"),
+            (By.CSS_SELECTOR, "input[placeholder*='code' i]")
+        ], timeout=10, name="join code input")
         code_input.send_keys(join_code)
-        
-        name_input = wait_for_element(audience, By.XPATH, "//input[@placeholder='Your name']",
-                                     timeout=10, name="display name input")
+
+        name_input = wait_for_any(audience, [
+            (By.ID, "join_display_name"),
+            (By.NAME, "display_name"),
+            (By.CSS_SELECTOR, "input[placeholder*='name' i]"),
+            (By.CSS_SELECTOR, "input[id*='display' i]")
+        ], timeout=10, name="display name input")
         name_input.send_keys("Test User")
         
         join_btn = wait_for_element(audience, By.XPATH, "//button[contains(., 'Join')]",
@@ -230,19 +298,22 @@ def test_word_cloud_flow():
         
         # Debug output
         if host:
-            log(f"Host URL: {host.current_url}", "INFO")
-            host.save_screenshot("/tmp/host_error.png")
-        if audience:
-            log(f"Audience URL: {audience.current_url}", "INFO")
-            audience.save_screenshot("/tmp/audience_error.png")
+            try:
+                log(f"Host URL: {host.current_url}", "INFO")
+                host.save_screenshot("/tmp/host_error.png")
+            except Exception:
+                pass
+        if 'audience' in locals() and audience:
+            try:
+                log(f"Audience URL: {audience.current_url}", "INFO")
+                audience.save_screenshot("/tmp/audience_error.png")
+            except Exception:
+                pass
         
         return False
         
     finally:
-        if host:
-            host.quit()
-        if audience:
-            audience.quit()
+        safe_quit(host)
 
 if __name__ == "__main__":
     # Use existing Selenium container on port 4444

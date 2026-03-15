@@ -6,10 +6,13 @@ Tests: Start → Advance → Answer → End → Start Again
 import requests
 import time
 import urllib3
+import os
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-BASE_URL = "https://www.swaya.me/api/v1"
+BASE_URL = os.getenv("BASE_URL", "https://www.swaya.me/api/v1")
+HOST_EMAIL = os.getenv("HOST_EMAIL", "demo@swaya.me")
+HOST_PASSWORD = os.getenv("HOST_PASSWORD", "Demo1234")
 
 def print_step(msg):
     print(f"\n{'='*60}")
@@ -22,7 +25,7 @@ def test_full_lifecycle():
     print_step("LOGGING IN")
     response = requests.post(
         f"{BASE_URL}/auth/login",
-        json={"email": "demo@swaya.me", "password": "Demo1234"},
+        json={"email": HOST_EMAIL, "password": HOST_PASSWORD},
         verify=False
     )
     token = response.json()["access_token"]
@@ -31,8 +34,19 @@ def test_full_lifecycle():
     
     # Get quiz
     response = requests.get(f"{BASE_URL}/quizzes/", headers=headers, verify=False)
-    quiz_id = response.json()[0]["id"]
+    quizzes = response.json()
+    ready_quiz = next((q for q in quizzes if str(q.get("status", "")).lower() == "ready"), None)
+    assert ready_quiz is not None, "No READY quiz found"
+    quiz_id = ready_quiz["id"]
     print(f"✅ Found quiz ID: {quiz_id}")
+
+    # End stale/open sessions for deterministic run
+    sessions_resp = requests.get(f"{BASE_URL}/quizzes/{quiz_id}/sessions", headers=headers, verify=False)
+    if sessions_resp.status_code == 200:
+        for s in sessions_resp.json().get("sessions", []):
+            if s.get("status") in ("active", "created"):
+                requests.post(f"{BASE_URL}/quizzes/sessions/{s['id']}/end", headers=headers, verify=False)
+                time.sleep(0.2)
     
     # Run 3 complete cycles
     for cycle in range(1, 4):
@@ -79,14 +93,24 @@ def test_full_lifecycle():
             params={"session_token": participant_token},
             verify=False
         )
-        question_id = response.json()["current_question"]["id"]
-        
-        response = requests.post(
-            f"{BASE_URL}/quizzes/sessions/submit-answer",
-            params={"session_token": participant_token},
-            json={"question_id": question_id, "selected_option_index": cycle % 4},
-            verify=False
-        )
+        current_question = response.json().get("current_question", {})
+        question_id = current_question["id"]
+        question_type = current_question.get("question_type", "mcq")
+
+        if question_type in ("word_cloud", "single_line", "paragraph"):
+            response = requests.post(
+                f"{BASE_URL}/quizzes/sessions/submit-word-cloud",
+                params={"session_token": participant_token},
+                json={"question_id": question_id, "text_answer": f"cycle-{cycle}"},
+                verify=False
+            )
+        else:
+            response = requests.post(
+                f"{BASE_URL}/quizzes/sessions/submit-answer",
+                params={"session_token": participant_token},
+                json={"question_id": question_id, "selected_option_index": cycle % 4},
+                verify=False
+            )
         assert response.status_code == 200, f"Submit failed: {response.status_code}"
         print(f"    ✅ Answer submitted")
         

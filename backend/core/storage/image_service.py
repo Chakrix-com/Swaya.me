@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 from fastapi import UploadFile, HTTPException
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 
 
@@ -16,7 +16,7 @@ class ImageService:
     ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
     ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
     MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
-    MAX_DIMENSION = 4000  # Max width/height in pixels
+    OPTIMIZED_MAX_DIMENSION = 1920  # Resize oversized images to screen-friendly dimensions
     
     UPLOAD_BASE_DIR = Path("/home/vinay/Swaya.me/backend/uploads/images")
     TEMP_BASE_DIR = Path("/home/vinay/Swaya.me/backend/uploads/temp")
@@ -67,25 +67,73 @@ class ImageService:
         if size == 0:
             raise HTTPException(status_code=400, detail="Empty file")
         
-        # Validate image dimensions using Pillow
+        # Validate image using Pillow
         try:
             contents = file.file.read()
             file.file.seek(0)  # Reset for later use
             
             img = Image.open(io.BytesIO(contents))
-            
-            if img.width > cls.MAX_DIMENSION or img.height > cls.MAX_DIMENSION:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Image dimensions too large. Maximum: {cls.MAX_DIMENSION}x{cls.MAX_DIMENSION}px"
-                )
-            
+            img.verify()
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise
             raise HTTPException(status_code=400, detail="Invalid image file")
         
         return True
+
+    @classmethod
+    def _prepare_image_bytes(cls, file: UploadFile) -> tuple[bytes, str]:
+        """
+        Validate and normalize image bytes for storage.
+        Oversized images are resized instead of rejected.
+        """
+        cls.validate_image(file)
+
+        ext = file.filename.split(".")[-1].lower()
+        save_format = {
+            "jpg": "JPEG",
+            "jpeg": "JPEG",
+            "png": "PNG",
+            "gif": "GIF",
+            "webp": "WEBP",
+        }.get(ext, "PNG")
+
+        try:
+            original_bytes = file.file.read()
+            file.file.seek(0)
+
+            img = Image.open(io.BytesIO(original_bytes))
+            img = ImageOps.exif_transpose(img)
+
+            # Preserve animated GIFs as-is.
+            if save_format == "GIF" and getattr(img, "is_animated", False):
+                return original_bytes, ext
+
+            if (
+                img.width > cls.OPTIMIZED_MAX_DIMENSION
+                or img.height > cls.OPTIMIZED_MAX_DIMENSION
+            ):
+                resampling = getattr(Image, "Resampling", Image).LANCZOS
+                img.thumbnail((cls.OPTIMIZED_MAX_DIMENSION, cls.OPTIMIZED_MAX_DIMENSION), resampling)
+
+            if save_format in {"JPEG", "WEBP"} and img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")
+
+            output = io.BytesIO()
+            save_kwargs = {}
+            if save_format == "JPEG":
+                save_kwargs = {"quality": 85, "optimize": True}
+            elif save_format == "PNG":
+                save_kwargs = {"optimize": True}
+            elif save_format == "WEBP":
+                save_kwargs = {"quality": 82, "method": 6}
+            elif save_format == "GIF":
+                save_kwargs = {"optimize": True}
+
+            img.save(output, format=save_format, **save_kwargs)
+            return output.getvalue(), ext
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid image file")
     
     @classmethod
     def save_image(
@@ -107,15 +155,14 @@ class ImageService:
         Returns:
             Relative path to saved image (for storing in DB)
         """
-        # Validate first
-        cls.validate_image(file)
+        # Validate and optimize image bytes
+        optimized_bytes, ext = cls._prepare_image_bytes(file)
         
         # Create directory structure: {tenant_id}/{quiz_id}/
         upload_dir = cls.UPLOAD_BASE_DIR / str(tenant_id) / str(quiz_id)
         upload_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate unique filename
-        ext = file.filename.split(".")[-1].lower()
         unique_id = uuid.uuid4().hex[:12]
         filename = f"{image_type}_{unique_id}.{ext}"
         
@@ -123,9 +170,8 @@ class ImageService:
         
         # Save file
         try:
-            contents = file.file.read()
             with open(file_path, "wb") as f:
-                f.write(contents)
+                f.write(optimized_bytes)
             
             # Set permissions (readable by nginx/web server)
             os.chmod(file_path, 0o644)
@@ -183,15 +229,14 @@ class ImageService:
         Returns:
             Tuple of (relative_url_path, temp_key) for moving later
         """
-        # Validate first
-        cls.validate_image(file)
+        # Validate and optimize image bytes
+        optimized_bytes, ext = cls._prepare_image_bytes(file)
         
         # Create temp directory structure: {tenant_id}/{quiz_id}/
         temp_dir = cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id)
         temp_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate unique temp filename
-        ext = file.filename.split(".")[-1].lower()
         unique_id = uuid.uuid4().hex[:12]
         filename = f"temp_{image_type}_{unique_id}.{ext}"
         
@@ -199,9 +244,8 @@ class ImageService:
         
         # Save file
         try:
-            contents = file.file.read()
             with open(file_path, "wb") as f:
-                f.write(contents)
+                f.write(optimized_bytes)
             
             # Set permissions
             os.chmod(file_path, 0o644)
