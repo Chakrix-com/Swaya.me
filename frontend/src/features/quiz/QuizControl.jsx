@@ -234,6 +234,47 @@ export default function QuizControl() {
     return t(`quiz.${statusKey}`)
   }
 
+  const getSessionStatusUi = (status) => {
+    const normalized = typeof status === 'string' ? status.toLowerCase() : ''
+    switch (normalized) {
+      case 'active':
+        return {
+          label: t('quiz.active'),
+          valueColor: '#52c41a',
+          tagColor: 'green',
+          tagLabel: t('quiz.live'),
+        }
+      case 'created':
+        return {
+          label: t('quiz.created'),
+          valueColor: '#1677ff',
+          tagColor: 'blue',
+          tagLabel: t('quiz.created'),
+        }
+      case 'ended':
+        return {
+          label: t('quiz.ended'),
+          valueColor: '#fa8c16',
+          tagColor: 'orange',
+          tagLabel: t('quiz.ended'),
+        }
+      case 'completed':
+        return {
+          label: t('quiz.completed'),
+          valueColor: '#722ed1',
+          tagColor: 'purple',
+          tagLabel: t('quiz.completed'),
+        }
+      default:
+        return {
+          label: getStatusTranslation(status),
+          valueColor: '#595959',
+          tagColor: 'default',
+          tagLabel: getStatusTranslation(status),
+        }
+    }
+  }
+
   const copyJoinLink = () => {
     const inputElement = document.getElementById('join-url-input')
     if (!inputElement || !inputElement.value) {
@@ -304,8 +345,10 @@ export default function QuizControl() {
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
-  const normalizedSessionStatus = typeof session?.status === 'string' ? session.status.toLowerCase() : ''
+  const effectiveSessionStatus = results?.status || session?.status
+  const normalizedSessionStatus = typeof effectiveSessionStatus === 'string' ? effectiveSessionStatus.toLowerCase() : ''
   const isSessionActive = normalizedSessionStatus === 'active'
+  const sessionStatusUi = getSessionStatusUi(effectiveSessionStatus)
   const presentLabel = t('quiz.presentView')
   const presentImmersiveTooltip = t(
     'quiz.presentImmersiveTooltip',
@@ -381,12 +424,12 @@ export default function QuizControl() {
           <Card style={{ height: '100%', minHeight: 100 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14, color: '#00000073', marginBottom: 8 }}>{t('quiz.status')}</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: isSessionActive ? '#52c41a' : '#faad14' }}>
-                {getStatusTranslation(session?.status)}
+              <div style={{ fontSize: 24, fontWeight: 600, color: sessionStatusUi.valueColor }}>
+                {sessionStatusUi.label}
               </div>
               {session && (
-                <Tag color={isSessionActive ? 'green' : 'orange'} style={{ marginTop: 8 }}>
-                  {isSessionActive ? t('quiz.live') : t('quiz.ended')}
+                <Tag color={sessionStatusUi.tagColor} style={{ marginTop: 8 }}>
+                  {sessionStatusUi.tagLabel}
                 </Tag>
               )}
             </div>
