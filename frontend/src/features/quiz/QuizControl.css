@@ -21,6 +21,14 @@
   font-weight: 600;
 }
 
+.quiz-control-present-btn,
+.quiz-control-present-btn:hover,
+.quiz-control-present-btn:focus {
+  background: #52c41a !important;
+  border-color: #52c41a !important;
+  color: #fff !important;
+}
+
 @media (max-width: 768px) {
   .quiz-control-page {
     padding: 12px !important;
