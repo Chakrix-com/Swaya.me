@@ -5,6 +5,7 @@ import {
   Card,
   Button,
   Space,
+  Tooltip,
   Typography,
   Tag,
   Statistic,
@@ -21,6 +22,7 @@ import {
 import {
   PlayCircleOutlined,
   ArrowRightOutlined,
+  MobileOutlined,
   CloseCircleOutlined,
   LeftOutlined,
   TeamOutlined,
@@ -72,8 +74,13 @@ export default function QuizControl() {
   const kbRef = useRef({})
   useEffect(() => {
     const onKey = (e) => {
-      const { session, results, loading, handleAdvanceQuestion, handleBackQuestion } = kbRef.current
+      const { session, results, loading, handleAdvanceQuestion, handleBackQuestion, handleOpenPresent } = kbRef.current
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+      if (e.key === 'F5' && session) {
+        e.preventDefault()
+        handleOpenPresent()
+        return
+      }
       if (session?.status !== 'active') return
       if (loading) return
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
@@ -184,9 +191,6 @@ export default function QuizControl() {
     }
   }
 
-  // Populate the keyboard-shortcut ref here, AFTER all const functions are defined
-  kbRef.current = { session, results, loading, handleAdvanceQuestion, handleBackQuestion }
-
   const handleOpenPresent = () => {
     if (!session) return
     window.open(
@@ -195,6 +199,9 @@ export default function QuizControl() {
       'noopener,noreferrer'
     )
   }
+
+  // Populate the keyboard-shortcut ref here, AFTER all const functions are defined
+  kbRef.current = { session, results, loading, handleAdvanceQuestion, handleBackQuestion, handleOpenPresent }
 
   const handleToggleLeaderboard = async () => {
     try {
@@ -296,6 +303,11 @@ export default function QuizControl() {
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
+  const presentLabel = t('quiz.presentView')
+  const presentImmersiveTooltip = t(
+    'quiz.presentImmersiveTooltip',
+    { defaultValue: 'Open immersive presenter mode in a new tab for audience-facing display.' }
+  )
 
   return (
     <div className="quiz-control-page" style={{ padding: 24 }}>
@@ -307,12 +319,16 @@ export default function QuizControl() {
           {t('quiz.backDashboard')}
         </Button>
         {session && (
-          <Button
-            icon={<DesktopOutlined />}
-            onClick={handleOpenPresent}
-          >
-            {t('quiz.presentView')}
-          </Button>
+          <Tooltip title={presentImmersiveTooltip}>
+            <Button
+              type="primary"
+              className="quiz-control-present-btn"
+              icon={<DesktopOutlined />}
+              onClick={handleOpenPresent}
+            >
+              {presentLabel} <kbd className="qc-kbd">F5</kbd>
+            </Button>
+          </Tooltip>
         )}
         {session && session.status === 'active' && (
           <Popconfirm
@@ -728,19 +744,23 @@ export default function QuizControl() {
                   <Button
                     type="primary"
                     size="large"
-                    icon={<ArrowRightOutlined />}
+                    icon={<MobileOutlined />}
                     onClick={handleAdvanceQuestion}
                     loading={loading}
                   >
                     {t('quiz.startFirstQuestion')} <kbd className="qc-kbd">Space</kbd>
                   </Button>
-                  <Button
-                    size="large"
-                    icon={<DesktopOutlined />}
-                    onClick={handleOpenPresent}
-                  >
-                    {t('quiz.presentView')}
-                  </Button>
+                  <Tooltip title={presentImmersiveTooltip}>
+                    <Button
+                      type="primary"
+                      className="quiz-control-present-btn"
+                      size="large"
+                      icon={<DesktopOutlined />}
+                      onClick={handleOpenPresent}
+                    >
+                      {presentLabel} <kbd className="qc-kbd">F5</kbd>
+                    </Button>
+                  </Tooltip>
                 </Space>
               </Space>
             </Card>
