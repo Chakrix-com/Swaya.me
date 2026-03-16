@@ -75,13 +75,14 @@ export default function QuizControl() {
   useEffect(() => {
     const onKey = (e) => {
       const { session, results, loading, handleAdvanceQuestion, handleBackQuestion, handleOpenPresent } = kbRef.current
+      const normalizedSessionStatus = typeof session?.status === 'string' ? session.status.toLowerCase() : ''
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
       if (e.key === 'F5' && session) {
         e.preventDefault()
         handleOpenPresent()
         return
       }
-      if (session?.status !== 'active') return
+      if (normalizedSessionStatus !== 'active') return
       if (loading) return
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
         // Don't intercept Enter/Space when a Popconfirm button is focused
@@ -303,6 +304,8 @@ export default function QuizControl() {
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
+  const normalizedSessionStatus = typeof session?.status === 'string' ? session.status.toLowerCase() : ''
+  const isSessionActive = normalizedSessionStatus === 'active'
   const presentLabel = t('quiz.presentView')
   const presentImmersiveTooltip = t(
     'quiz.presentImmersiveTooltip',
@@ -330,7 +333,7 @@ export default function QuizControl() {
             </Button>
           </Tooltip>
         )}
-        {session && session.status === 'active' && (
+        {session && isSessionActive && (
           <Popconfirm
             title={t('quiz.stopQuizTitle')}
             description={t('quiz.stopQuizConfirm')}
@@ -378,12 +381,12 @@ export default function QuizControl() {
           <Card style={{ height: '100%', minHeight: 100 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 14, color: '#00000073', marginBottom: 8 }}>{t('quiz.status')}</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: session?.status === 'active' ? '#52c41a' : '#faad14' }}>
+              <div style={{ fontSize: 24, fontWeight: 600, color: isSessionActive ? '#52c41a' : '#faad14' }}>
                 {getStatusTranslation(session?.status)}
               </div>
               {session && (
-                <Tag color={session.status === 'active' ? 'green' : 'orange'} style={{ marginTop: 8 }}>
-                  {session.status === 'active' ? t('quiz.live') : t('quiz.ended')}
+                <Tag color={isSessionActive ? 'green' : 'orange'} style={{ marginTop: 8 }}>
+                  {isSessionActive ? t('quiz.live') : t('quiz.ended')}
                 </Tag>
               )}
             </div>
