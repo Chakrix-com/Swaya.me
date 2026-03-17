@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form } from 'antd'
+import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree } from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -18,6 +18,9 @@ import {
   HistoryOutlined,
   StarOutlined,
   BarChartOutlined,
+  FolderFilled,
+  FolderOpenOutlined,
+  FolderAddOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -303,14 +306,60 @@ function Dashboard() {
     return mapNodes(folders)
   }, [folders])
 
+  const folderNavTreeData = useMemo(() => {
+    const mapNodes = (nodes) => (nodes || []).map((node) => ({
+      key: String(node.id),
+      title: node.name,
+      icon: selectedFolderId === node.id ? <FolderOpenOutlined /> : <FolderFilled />,
+      children: mapNodes(node.children || []),
+    }))
+    return mapNodes(folders)
+  }, [folders, selectedFolderId])
+
+  const selectedFolderName = useMemo(() => {
+    const stack = [...folders]
+    while (stack.length > 0) {
+      const node = stack.pop()
+      if (!node) continue
+      if (node.id === selectedFolderId) return node.name
+      if (node.children?.length) stack.push(...node.children)
+    }
+    return null
+  }, [folders, selectedFolderId])
+
+  const selectedFolderWithDescendants = useMemo(() => {
+    if (!selectedFolderId) return null
+    const stack = [...folders]
+    let selected = null
+    while (stack.length > 0) {
+      const node = stack.pop()
+      if (!node) continue
+      if (node.id === selectedFolderId) {
+        selected = node
+        break
+      }
+      if (node.children?.length) stack.push(...node.children)
+    }
+    if (!selected) return null
+    const ids = new Set([selected.id])
+    const walk = (node) => {
+      for (const child of node.children || []) {
+        ids.add(child.id)
+        walk(child)
+      }
+    }
+    walk(selected)
+    return ids
+  }, [folders, selectedFolderId])
+
   const filteredQuizzes = useMemo(() => {
     const term = searchText.trim().toLowerCase()
     return (quizzes || []).filter((quiz) => {
       const matchesSearch = !term || quiz.title.toLowerCase().includes(term)
-      const matchesFolder = !selectedFolderId || quiz.folder_id === selectedFolderId
+      const matchesFolder = !selectedFolderWithDescendants || selectedFolderWithDescendants.has(quiz.folder_id)
       return matchesSearch && matchesFolder
     })
-  }, [quizzes, searchText, selectedFolderId])
+  }, [quizzes, searchText, selectedFolderWithDescendants])
 
   // Calculate quiz statistics
   const statistics = useMemo(() => {
@@ -428,29 +477,55 @@ function Dashboard() {
           </div>
         }
       >
-      <Space wrap style={{ marginBottom: 16, width: '100%' }}>
-        <Input.Search
-          allowClear
-          placeholder={t('dashboard.searchQuizzes', { defaultValue: 'Search quizzes/polls' })}
-          style={{ width: 280 }}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        <TreeSelect
-          allowClear
-          treeData={folderTreeData}
-          value={selectedFolderId}
-          onChange={(value) => setSelectedFolderId(value)}
-          placeholder={t('dashboard.filterByFolder', { defaultValue: 'Filter by folder' })}
-          style={{ width: 280 }}
-          treeDefaultExpandAll
-          loading={foldersLoading}
-        />
-        <Button onClick={openCreateFolderModal}>
-          {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
-        </Button>
-      </Space>
-      <div style={{ width: '100%', overflow: 'hidden' }}>
+      <div className="dashboard-explorer-layout">
+        <aside className="dashboard-folder-pane">
+          <div className="dashboard-folder-pane-header">
+            <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
+            <Button size="small" icon={<FolderAddOutlined />} onClick={openCreateFolderModal}>
+              {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
+            </Button>
+          </div>
+          <div className="dashboard-folder-tree-wrapper">
+            <Button
+              type={!selectedFolderId ? 'primary' : 'default'}
+              className="dashboard-folder-all-btn"
+              onClick={() => setSelectedFolderId(undefined)}
+            >
+              {t('dashboard.allQuizzes', { defaultValue: 'All Quizzes & Polls' })}
+            </Button>
+            {foldersLoading ? (
+              <div style={{ color: '#888', padding: '8px 4px' }}>
+                {t('common.loading', { defaultValue: 'Loading...' })}
+              </div>
+            ) : (
+              <Tree
+                showIcon
+                showLine={{ showLeafIcon: false }}
+                treeData={folderNavTreeData}
+                selectedKeys={selectedFolderId ? [String(selectedFolderId)] : []}
+                onSelect={(keys) => setSelectedFolderId(keys[0] ? Number(keys[0]) : undefined)}
+                defaultExpandAll
+                className="dashboard-folder-tree"
+              />
+            )}
+          </div>
+        </aside>
+        <section className="dashboard-content-pane">
+          <Space wrap style={{ marginBottom: 16, width: '100%' }}>
+            <Input.Search
+              allowClear
+              placeholder={t('dashboard.searchQuizzes', { defaultValue: 'Search quizzes/polls' })}
+              style={{ width: 320 }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            {selectedFolderId ? (
+              <Tag color="blue">
+                {t('dashboard.inFolder', { defaultValue: 'In folder' })}: {selectedFolderName}
+              </Tag>
+            ) : null}
+          </Space>
+          <div style={{ width: '100%', overflow: 'hidden' }}>
         {filteredQuizzes.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
             {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
@@ -561,6 +636,8 @@ function Dashboard() {
             </div>
           </div>
         ))}
+      </div>
+        </section>
       </div>
     </ProCard>
       <Modal
