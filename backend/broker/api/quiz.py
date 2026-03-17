@@ -587,11 +587,13 @@ async def get_session_results(
     session_id: int,
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
-    service: AnswerServiceAsync = Depends(get_answer_service)
+    service: AnswerServiceAsync = Depends(get_answer_service),
+    session_service: SessionServiceAsync = Depends(get_session_service),
 ):
     """Get host session results (host-only)"""
     try:
         await _assert_host_session_access(db, session_id, current_user)
+        await session_service.reconcile_timed_question_state(db, session_id)
         return await service.get_session_results(db, session_id, None)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -602,11 +604,13 @@ async def get_participant_session_results(
     session_id: int,
     session_token: str,
     db: AsyncSession = Depends(get_async_db),
-    service: AnswerServiceAsync = Depends(get_answer_service)
+    service: AnswerServiceAsync = Depends(get_answer_service),
+    session_service: SessionServiceAsync = Depends(get_session_service),
 ):
     """Get participant-safe session results for the participant's own session"""
     try:
         await _require_participant_for_session(db, session_id, session_token)
+        await session_service.reconcile_timed_question_state(db, session_id)
         return await service.get_session_results(
             db,
             session_id,

@@ -55,6 +55,7 @@ export default function QuizControl() {
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [timerRemaining, setTimerRemaining] = useState(null)
 
   useEffect(() => {
     if (id) {
@@ -336,10 +337,6 @@ export default function QuizControl() {
     }
   }
 
-  if (!quiz) {
-    return <div style={{ padding: 24 }}>{t('common.loading')}</div>
-  }
-
   const currentQuestion = results?.current_question
   const isPoll = (results?.quiz_type || quiz?.quiz_type) === 'poll'
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
@@ -350,10 +347,42 @@ export default function QuizControl() {
   const isSessionActive = normalizedSessionStatus === 'active'
   const sessionStatusUi = getSessionStatusUi(effectiveSessionStatus)
   const presentLabel = t('quiz.presentView')
+  const timedQuestionActive = Boolean(isSessionActive && currentQuestion?.max_time_seconds)
+  const displayTimerRemaining = currentQuestion?.max_time_seconds
+    ? (timerRemaining ?? Number(currentQuestion.max_time_seconds))
+    : null
   const presentImmersiveTooltip = t(
     'quiz.presentImmersiveTooltip',
     { defaultValue: 'Open immersive presenter mode in a new tab for audience-facing display.' }
   )
+
+  useEffect(() => {
+    if (!currentQuestion?.max_time_seconds || !currentQuestion?.timer_started_at) {
+      setTimerRemaining(null)
+      return
+    }
+
+    const maxSeconds = Number(currentQuestion.max_time_seconds)
+    const startedAt = new Date(currentQuestion.timer_started_at).getTime()
+    if (!maxSeconds || Number.isNaN(startedAt)) {
+      setTimerRemaining(null)
+      return
+    }
+
+    const updateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+      const next = Math.max(0, maxSeconds - elapsed)
+      setTimerRemaining(next)
+    }
+
+    updateRemaining()
+    const interval = setInterval(updateRemaining, 1000)
+    return () => clearInterval(interval)
+  }, [currentQuestion?.id, currentQuestion?.max_time_seconds, currentQuestion?.timer_started_at])
+
+  if (!quiz) {
+    return <div style={{ padding: 24 }}>{t('common.loading')}</div>
+  }
 
   return (
     <div className="quiz-control-page" style={{ padding: 24 }}>
@@ -596,7 +625,20 @@ export default function QuizControl() {
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
+                    {currentQuestion.max_time_seconds ? <Tag color="orange">Timer: {currentQuestion.max_time_seconds}s</Tag> : null}
+                    <Tag color="green">Points: {currentQuestion.points || 1}</Tag>
                   </Space>
+                  {currentQuestion.max_time_seconds ? (
+                    <Space direction="vertical" style={{ width: '100%' }} size={4}>
+                      <Text type="secondary">Time left: {displayTimerRemaining}s</Text>
+                      <Progress
+                        percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
+                        size="small"
+                        status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                        showInfo={false}
+                      />
+                    </Space>
+                  ) : null}
                   {currentQuestion.question_image_url && (
                     <img 
                       src={currentQuestion.question_image_url} 
@@ -752,19 +794,42 @@ export default function QuizControl() {
                 >
                   {t('quiz.previousQuestion')} <kbd className="qc-kbd">←</kbd>
                 </Button>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
-                  onClick={handleAdvanceQuestion}
-                  loading={loading}
-                >
-                  {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
-                  {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
-                </Button>
+                {timedQuestionActive ? (
+                  <Popconfirm
+                    title={t('quiz.timerOverrideTitle', { defaultValue: 'Skip this timed question early?' })}
+                    description={t('quiz.timerOverrideDescription', { defaultValue: 'This question has an active timer. Continue only if you want to override it now.' })}
+                    onConfirm={handleAdvanceQuestion}
+                    okText={t('quiz.timerOverrideOk', { defaultValue: 'Yes, continue' })}
+                    cancelText={t('common.cancel')}
+                  >
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
+                      loading={loading}
+                    >
+                      {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
+                      {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
+                    onClick={handleAdvanceQuestion}
+                    loading={loading}
+                  >
+                    {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
+                    {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
+                  </Button>
+                )}
                 <Popconfirm
                   title={t('quiz.stopQuizTitle')}
-                  description={t('quiz.stopQuizConfirm')}
+                  description={timedQuestionActive
+                    ? t('quiz.timerEndOverrideDescription', { defaultValue: 'A timer is currently running for this question. Ending now will override the timer and end the session.' })
+                    : t('quiz.stopQuizConfirm')
+                  }
                   onConfirm={handleEndSession}
                   okText={t('quiz.stopQuizOk')}
                   cancelText={t('common.cancel')}

@@ -305,6 +305,8 @@ class QuizBuilderServiceAsync:
                     correct_answer_index=question.correct_answer_index,
                     question_image_url=question.question_image_url,
                     option_images=dict(question.option_images) if question.option_images else None,
+                    points=question.points,
+                    max_time_seconds=question.max_time_seconds,
                 )
             )
 
@@ -582,7 +584,9 @@ class QuizBuilderServiceAsync:
                     option_images={
                         key: ImageService.to_absolute_url(path, base_url)
                         for key, path in (q.option_images or {}).items()
-                    } if q.option_images else None
+                    } if q.option_images else None,
+                    points=q.points,
+                    max_time_seconds=q.max_time_seconds,
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],

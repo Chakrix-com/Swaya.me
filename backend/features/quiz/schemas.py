@@ -63,6 +63,8 @@ class QuestionCreate(BaseModel):
     correct_answer_index: Optional[int] = Field(None, ge=0, le=4)
     question_image_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
+    points: int = Field(default=1, ge=1)
+    max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
     
     @model_validator(mode='after')
     def validate_question_fields(self):
@@ -107,6 +109,8 @@ class QuestionUpdate(BaseModel):
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None
+    points: Optional[int] = Field(default=None, ge=1)
+    max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
 
 
 class QuestionResponse(BaseModel):
@@ -119,6 +123,8 @@ class QuestionResponse(BaseModel):
     correct_answer_index: Optional[int] = None  # Hidden during active session
     question_image_url: Optional[str] = None
     option_images: Optional[dict[str, str]] = None
+    points: int = 1
+    max_time_seconds: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -338,7 +344,7 @@ class LeaderboardEntry(BaseModel):
     rank: int
     participant_id: int
     display_name: str
-    score: int  # number of correct MCQ answers
+    score: int  # weighted score based on question points
     is_current_participant: bool = False
     time_taken_seconds: Optional[float] = None  # Time from join to last correct answer
 

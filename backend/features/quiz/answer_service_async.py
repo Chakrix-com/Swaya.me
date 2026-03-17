@@ -458,14 +458,16 @@ class AnswerServiceAsync:
                     )
                 )
                 participant_answers = result.scalars().all()
-                total_answered = len(participant_answers)
                 import re
                 correct_answers = 0
+                weighted_score = 0
                 for ans in participant_answers:
+                    q = question_by_id.get(ans.question_id)
+                    question_points = (q.points if q else 1) or 1
                     if ans.is_correct is True:
                         correct_answers += 1
+                        weighted_score += question_points
                         continue
-                    q = question_by_id.get(ans.question_id)
                     if not q or q.question_type not in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
                         continue
                     expected = (q.options or [None])[0]
@@ -477,9 +479,10 @@ class AnswerServiceAsync:
                     
                     if response_clean == expected_clean:
                         correct_answers += 1
+                        weighted_score += question_points
                 
                 participant_correct = correct_answers
-                participant_score = total_answered
+                participant_score = weighted_score
         
         # Get results for each question (host/full views only)
         question_results = []
@@ -500,6 +503,19 @@ class AnswerServiceAsync:
         current_question = None
         if session.current_question_index >= 0 and session.current_question_index < len(questions):
             question_obj = questions[session.current_question_index]
+            timing_row = (
+                await db.execute(
+                    select(SessionQuestionTiming)
+                    .filter(
+                        SessionQuestionTiming.session_id == session_id,
+                        SessionQuestionTiming.question_index == session.current_question_index,
+                        SessionQuestionTiming.closed_at == None,
+                    )
+                    .order_by(SessionQuestionTiming.opened_at.desc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+            timer_started_at = timing_row.opened_at.isoformat() if timing_row and timing_row.opened_at else None
             
             try:
                 # Handle based on question type
@@ -550,7 +566,10 @@ class AnswerServiceAsync:
                         "option_images": {
                             key: ImageService.to_absolute_url(path, base_url)
                             for key, path in (question_obj.option_images or {}).items()
-                        } if question_obj.option_images else None
+                        } if question_obj.option_images else None,
+                        "points": question_obj.points or 1,
+                        "max_time_seconds": question_obj.max_time_seconds,
+                        "timer_started_at": timer_started_at,
                     }
                 else:
                     # Text-based question: expose live response count
@@ -591,7 +610,10 @@ class AnswerServiceAsync:
                         "text_responses": text_responses,
                         "question_image_url": ImageService.to_absolute_url(
                             question_obj.question_image_url, base_url
-                        )
+                        ),
+                        "points": question_obj.points or 1,
+                        "max_time_seconds": question_obj.max_time_seconds,
+                        "timer_started_at": timer_started_at,
                     }
             except Exception as e:
                 print(f"Error loading current question: {e}")
@@ -656,7 +678,7 @@ class AnswerServiceAsync:
             )
 
         scored_question_count = sum(
-            1 for q in session.quiz.questions
+            (q.points or 1) for q in session.quiz.questions
             if q.question_type in (QuestionType.MCQ, QuestionType.SCALE, QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
         )
         question_by_id = {q.id: q for q in session.quiz.questions}
@@ -745,6 +767,10 @@ class AnswerServiceAsync:
                     total += (effective_close - last.opened_at).total_seconds()
             return round(total, 1)
 
+        def question_points(question_id: int) -> int:
+            q = question_by_id.get(question_id)
+            return q.points if q and q.points else 1
+
         def count_correct(participant_id: int) -> int:
             import re
             total = 0
@@ -752,7 +778,7 @@ class AnswerServiceAsync:
                 if a.participant_id != participant_id:
                     continue
                 if a.is_correct is True:
-                    total += 1
+                    total += question_points(a.question_id)
                     continue
                 q = question_by_id.get(a.question_id)
                 if not q or q.question_type not in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
@@ -765,7 +791,7 @@ class AnswerServiceAsync:
                 expected_clean = str(expected).strip().lower()
                 
                 if response_clean == expected_clean:
-                    total += 1
+                    total += question_points(a.question_id)
             return total
 
         # Build scored + timed entries, then sort

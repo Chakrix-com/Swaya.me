@@ -7,6 +7,7 @@ import {
   Card,
   Form,
   Input,
+  InputNumber,
   Button,
   Space,
   List,
@@ -67,7 +68,11 @@ const QuestionForm = ({
   useEffect(() => {
     console.log('[QuestionForm] useEffect triggered')
     if (question) {
-      questionForm.setFieldsValue(question)
+      questionForm.setFieldsValue({
+        ...question,
+        points: question.points ?? 1,
+        max_time_seconds: question.max_time_seconds ?? null,
+      })
       setQuestionType(question.question_type || 'mcq')
       
       // Set image URLs from question data
@@ -162,6 +167,24 @@ const QuestionForm = ({
             onContextMenu={(e) => e.stopPropagation()}
           />
         </Form.Item>
+
+        <Space size={16} style={{ width: '100%' }} wrap>
+          <Form.Item
+            name="points"
+            label="Points"
+            initialValue={1}
+            rules={[{ required: true, message: 'Points are required' }]}
+          >
+            <InputNumber min={1} precision={0} />
+          </Form.Item>
+          <Form.Item
+            name="max_time_seconds"
+            label="Max Time (seconds)"
+            tooltip="Optional auto-advance timer for this question"
+          >
+            <InputNumber min={1} max={3600} precision={0} />
+          </Form.Item>
+        </Space>
 
         {/* Question Image Upload */}
         <div style={{ marginBottom: 16 }}>
@@ -416,41 +439,8 @@ const QuestionForm = ({
   )
 }
 
-// Custom comparison function for React.memo
-const arePropsEqual = (prevProps, nextProps) => {
-  const changed = []
-  
-  // Check each prop
-  if (prevProps.question?.id !== nextProps.question?.id) changed.push('question.id')
-  if (prevProps.quizId !== nextProps.quizId) changed.push('quizId')
-  if (prevProps.questionImageUrl !== nextProps.questionImageUrl) changed.push('questionImageUrl')
-  if (prevProps.loading !== nextProps.loading) changed.push('loading')
-  if (prevProps.movingImages !== nextProps.movingImages) changed.push('movingImages')
-  if (prevProps.isPoll !== nextProps.isPoll) changed.push('isPoll')
-  if (prevProps.onSave !== nextProps.onSave) changed.push('onSave')
-  if (prevProps.onCancel !== nextProps.onCancel) changed.push('onCancel')
-  
-  // Check optionImages
-  if (JSON.stringify(prevProps.optionImages) !== JSON.stringify(nextProps.optionImages)) {
-    changed.push('optionImages')
-  }
-  
-  // Check tempImages
-  if (JSON.stringify(prevProps.tempImages) !== JSON.stringify(nextProps.tempImages)) {
-    changed.push('tempImages')
-  }
-  
-  if (changed.length > 0) {
-    console.log('[QuestionForm] Props changed:', changed.join(', '))
-    return false // Re-render
-  }
-  
-  console.log('[QuestionForm] Props unchanged, skipping render')
-  return true // Skip render
-}
-
-// Memoize QuestionForm to prevent unnecessary re-renders
-const MemoizedQuestionForm = memo(QuestionForm, arePropsEqual)
+// Memoize QuestionForm with default shallow prop comparison to avoid stale form values.
+const MemoizedQuestionForm = memo(QuestionForm)
 
 export default function QuizBuilder() {
   const { message } = App.useApp()
@@ -513,7 +503,9 @@ export default function QuizBuilder() {
         console.log('Transforming question:', q.id, 'Type:', q.question_type)
         const baseQuestion = {
           ...q,
-          question_type: q.question_type || 'mcq'
+          question_type: q.question_type || 'mcq',
+          points: q.points || 1,
+          max_time_seconds: q.max_time_seconds ?? null,
         }
         
         // Only transform options for MCQ questions
@@ -593,7 +585,9 @@ export default function QuizBuilder() {
       // Transform frontend format to backend format
       const questionData = {
         question_type: values.question_type || 'mcq',
-        text: values.text
+        text: values.text,
+        points: values.points || 1,
+        max_time_seconds: values.max_time_seconds ?? null,
       }
       
       // Add options for choice-based question types
@@ -745,7 +739,9 @@ export default function QuizBuilder() {
       // Transform frontend format to backend format
       const questionData = {
         question_type: values.question_type || 'mcq',
-        text: values.text
+        text: values.text,
+        points: values.points || 1,
+        max_time_seconds: values.max_time_seconds ?? null,
       }
       
       // Add options for choice-based question types
@@ -1008,6 +1004,10 @@ export default function QuizBuilder() {
                       <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
                         {QUESTION_TYPE_LABELS[question.question_type] || 'MCQ'}
                       </Tag>
+                      <Tag color="green">Points: {question.points || 1}</Tag>
+                      {question.max_time_seconds ? (
+                        <Tag color="orange">Timer: {question.max_time_seconds}s</Tag>
+                      ) : null}
                       <Text strong>{question.text}</Text>
                     </Space>
                   }

@@ -9,6 +9,7 @@ import secrets
 import string
 
 from datetime import datetime, timedelta
+from apscheduler.triggers.date import DateTrigger
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
     QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType
@@ -25,6 +26,8 @@ from shared.exceptions.quiz import (
 from shared.utils.redis_client import RedisClient
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
+from core.stats import scheduler as stats_scheduler
+from persistence.database_async import AsyncSessionLocal
 
 
 class SessionServiceAsync:
@@ -34,6 +37,186 @@ class SessionServiceAsync:
     def __init__(self, redis: RedisClient, tier_service: TierService):
         self.redis = redis
         self.tier_service = tier_service
+
+    def _timeout_job_id(self, session_id: int) -> str:
+        return f"question-timeout:{session_id}"
+
+    async def _cancel_question_timeout(self, session_id: int) -> None:
+        scheduler = stats_scheduler.scheduler
+        if scheduler is None:
+            return
+        job = scheduler.get_job(self._timeout_job_id(session_id))
+        if job:
+            scheduler.remove_job(job.id)
+
+    async def _schedule_question_timeout(self, session_id: int, question_index: int, max_time_seconds: int) -> None:
+        scheduler = stats_scheduler.scheduler
+        if scheduler is None or max_time_seconds is None or max_time_seconds <= 0:
+            return
+        await self._cancel_question_timeout(session_id)
+        scheduler.add_job(
+            self._handle_question_timeout,
+            trigger=DateTrigger(run_date=datetime.utcnow() + timedelta(seconds=max_time_seconds)),
+            args=[session_id, question_index],
+            id=self._timeout_job_id(session_id),
+            replace_existing=True,
+            misfire_grace_time=10,
+        )
+
+    async def _apply_timeout_transition(
+        self,
+        db: AsyncSession,
+        session: QuizSession,
+        questions: list[Question],
+        now: datetime,
+        expected_question_index: Optional[int] = None,
+    ) -> bool:
+        if session.status == QuizSessionStatus.ENDED:
+            return False
+        if session.current_question_status != QuestionStatus.OPEN:
+            return False
+        if expected_question_index is not None and session.current_question_index != expected_question_index:
+            return False
+
+        await db.execute(
+            update(SessionQuestionTiming)
+            .where(
+                SessionQuestionTiming.session_id == session.id,
+                SessionQuestionTiming.question_index == session.current_question_index,
+                SessionQuestionTiming.closed_at == None,  # noqa: E711
+            )
+            .values(closed_at=now)
+        )
+
+        session.current_question_status = QuestionStatus.CLOSED
+        session.current_question_index += 1
+
+        if session.current_question_index >= len(questions):
+            session.status = QuizSessionStatus.ENDED
+            session.current_question_status = None
+            await self._clear_event_join_code_if_no_active_sessions(
+                db, session.tenant_id, session.quiz.event_id
+            )
+        else:
+            session.status = QuizSessionStatus.ACTIVE
+            session.current_question_status = QuestionStatus.OPEN
+            next_question = questions[session.current_question_index]
+            db.add(SessionQuestionTiming(
+                session_id=session.id,
+                question_id=next_question.id,
+                question_index=session.current_question_index,
+                opened_at=now,
+            ))
+
+        await db.commit()
+
+        if session.status == QuizSessionStatus.ACTIVE:
+            next_question = questions[session.current_question_index]
+            if next_question.max_time_seconds:
+                await self._schedule_question_timeout(
+                    session.id,
+                    session.current_question_index,
+                    next_question.max_time_seconds
+                )
+        else:
+            await self._cancel_question_timeout(session.id)
+
+        await self.redis.set_json(
+            f"session:{session.id}:info",
+            {
+                "status": session.status.value,
+                "current_question_index": session.current_question_index,
+                "current_question_status": session.current_question_status.value if session.current_question_status else None
+            },
+            expire=86400
+        )
+        return True
+
+    async def _handle_question_timeout(self, session_id: int, question_index: int) -> None:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(QuizSession)
+                .filter(QuizSession.id == session_id)
+                .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
+            )
+            session = result.scalar_one_or_none()
+            if not session:
+                return
+            questions = sorted(session.quiz.questions, key=lambda q: q.order)
+            await self._apply_timeout_transition(
+                db,
+                session,
+                questions,
+                now=datetime.utcnow(),
+                expected_question_index=question_index,
+            )
+
+    async def reconcile_timed_question_state(self, db: AsyncSession, session_id: int) -> None:
+        """Heal/advance timed question state for running sessions (polling safety net)."""
+        result = await db.execute(
+            select(QuizSession)
+            .filter(QuizSession.id == session_id)
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            return
+        if session.status != QuizSessionStatus.ACTIVE:
+            return
+        if session.current_question_status != QuestionStatus.OPEN:
+            return
+
+        questions = sorted(session.quiz.questions, key=lambda q: q.order)
+        if session.current_question_index < 0 or session.current_question_index >= len(questions):
+            return
+
+        current_question = questions[session.current_question_index]
+        max_seconds = current_question.max_time_seconds
+        if not max_seconds or max_seconds <= 0:
+            return
+
+        timing_row = (
+            await db.execute(
+                select(SessionQuestionTiming)
+                .filter(
+                    SessionQuestionTiming.session_id == session_id,
+                    SessionQuestionTiming.question_index == session.current_question_index,
+                    SessionQuestionTiming.closed_at == None,  # noqa: E711
+                )
+                .order_by(SessionQuestionTiming.opened_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        now = datetime.utcnow()
+        if not timing_row:
+            db.add(SessionQuestionTiming(
+                session_id=session_id,
+                question_id=current_question.id,
+                question_index=session.current_question_index,
+                opened_at=now,
+            ))
+            await db.commit()
+            await self._schedule_question_timeout(
+                session_id,
+                session.current_question_index,
+                max_seconds
+            )
+            return
+
+        elapsed_seconds = (now - timing_row.opened_at).total_seconds()
+        if elapsed_seconds >= max_seconds:
+            await self._apply_timeout_transition(db, session, questions, now)
+            return
+
+        scheduler = stats_scheduler.scheduler
+        if scheduler is not None and scheduler.get_job(self._timeout_job_id(session_id)) is None:
+            remaining_seconds = max(1, int(max_seconds - elapsed_seconds))
+            await self._schedule_question_timeout(
+                session_id,
+                session.current_question_index,
+                remaining_seconds
+            )
     
     def _generate_join_code(self) -> str:
         """Generate unique 6-character join code"""
@@ -112,6 +295,8 @@ class SessionServiceAsync:
 
         for event_id in stale_event_ids:
             await self._clear_event_join_code_if_no_active_sessions(db, tenant_id, event_id)
+        for stale_session_id in stale_session_ids:
+            await self._cancel_question_timeout(stale_session_id)
 
         return len(stale_session_ids)
     
@@ -396,6 +581,7 @@ class SessionServiceAsync:
             raise InvalidSessionStatusError("Session has ended")
         
         now = datetime.utcnow()
+        await self._cancel_question_timeout(session_id)
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
 
         # Close timing for current question
@@ -435,6 +621,18 @@ class SessionServiceAsync:
 
         await db.commit()
         await db.refresh(session)
+
+        if (
+            session.status == QuizSessionStatus.ACTIVE
+            and 0 <= session.current_question_index < len(questions)
+        ):
+            current_question = questions[session.current_question_index]
+            if current_question.max_time_seconds:
+                await self._schedule_question_timeout(
+                    session_id,
+                    session.current_question_index,
+                    current_question.max_time_seconds
+                )
         
         # Update Redis cache
         await self.redis.set_json(
@@ -481,6 +679,7 @@ class SessionServiceAsync:
             raise InvalidSessionStatusError("Already at first question")
         
         now = datetime.utcnow()
+        await self._cancel_question_timeout(session_id)
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
 
         # Close timing for current question
@@ -511,6 +710,14 @@ class SessionServiceAsync:
 
         await db.commit()
         await db.refresh(session)
+
+        current_question = questions[session.current_question_index]
+        if current_question.max_time_seconds:
+            await self._schedule_question_timeout(
+                session_id,
+                session.current_question_index,
+                current_question.max_time_seconds
+            )
         
         # Update Redis cache
         await self.redis.set_json(
@@ -546,6 +753,7 @@ class SessionServiceAsync:
             raise SessionNotFoundError("Session not found")
         
         now = datetime.utcnow()
+        await self._cancel_question_timeout(session_id)
 
         # Close timing for current question if still open
         if session.current_question_index >= 0:

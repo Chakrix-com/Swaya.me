@@ -61,6 +61,7 @@ export default function AudienceSession() {
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [timerRemaining, setTimerRemaining] = useState(null)
   const lastQuestionIdRef = useRef(null)
   const pollingIntervalRef = useRef(null)
 
@@ -326,6 +327,31 @@ export default function AudienceSession() {
   const isScaleQuestion = currentQuestion?.question_type === 'scale'
   const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isPoll = results?.quiz_type === 'poll'
+  const displayTimerRemaining = currentQuestion?.max_time_seconds
+    ? (timerRemaining ?? Number(currentQuestion.max_time_seconds))
+    : null
+
+  useEffect(() => {
+    if (!currentQuestion?.max_time_seconds || !currentQuestion?.timer_started_at) {
+      setTimerRemaining(null)
+      return
+    }
+    const maxSeconds = Number(currentQuestion.max_time_seconds)
+    const startedAt = new Date(currentQuestion.timer_started_at).getTime()
+    if (!maxSeconds || Number.isNaN(startedAt)) {
+      setTimerRemaining(null)
+      return
+    }
+
+    const updateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+      setTimerRemaining(Math.max(0, maxSeconds - elapsed))
+    }
+
+    updateRemaining()
+    const interval = setInterval(updateRemaining, 1000)
+    return () => clearInterval(interval)
+  }, [currentQuestion?.id, currentQuestion?.max_time_seconds, currentQuestion?.timer_started_at])
 
   return (
     <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
@@ -464,8 +490,20 @@ export default function AudienceSession() {
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {isScaleQuestion && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale 1-5' })}</Tag>}
+                    {currentQuestion.max_time_seconds ? <Tag color="orange">Timer: {currentQuestion.max_time_seconds}s</Tag> : null}
                     <Text strong style={{ wordBreak: 'break-word' }}>{displayName}</Text>
                   </Space>
+                    {currentQuestion.max_time_seconds ? (
+                      <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={4}>
+                        <Text type="secondary">Time left: {displayTimerRemaining}s</Text>
+                        <Progress
+                          percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
+                          size="small"
+                          status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                          showInfo={false}
+                        />
+                      </Space>
+                    ) : null}
                 </Card>
 
                 <Card

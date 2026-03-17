@@ -85,6 +85,8 @@ class QuestionExport:
     id: int
     text: str
     question_type: str
+    points: int
+    max_time_seconds: Optional[int]
     options: Optional[List[str]]
     correct_answer_index: Optional[int]
     answer_distribution: List[int]
@@ -1541,6 +1543,8 @@ class ExportService:
                 id=q.id,
                 text=q.text,
                 question_type=q.question_type.value,
+                points=q.points or 1,
+                max_time_seconds=q.max_time_seconds,
                 options=q.options if q.options else None,
                 correct_answer_index=q.correct_answer_index,
                 answer_distribution=dist,

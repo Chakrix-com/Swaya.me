@@ -97,6 +97,8 @@ class Question(Base, TimestampMixin):
     correct_answer_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
     question_image_url = Column(String(500), nullable=True)  # Optional image for question text
     option_images = Column(JSON, nullable=True)  # Optional images for MCQ options: {"A": "path", "B": "path", ...}
+    points = Column(Integer, nullable=False, default=1, server_default="1")
+    max_time_seconds = Column(Integer, nullable=True)
     
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")

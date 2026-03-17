@@ -84,6 +84,8 @@ class QuestionService:
             text=request.text,
             options=request.options,
             correct_answer_index=request.correct_answer_index,
+            points=request.points,
+            max_time_seconds=request.max_time_seconds,
             order=next_order
         )
         
@@ -121,6 +123,10 @@ class QuestionService:
             question.options = request.options
         if request.correct_answer_index is not None:
             question.correct_answer_index = request.correct_answer_index
+        if request.points is not None:
+            question.points = request.points
+        if "max_time_seconds" in request.model_fields_set:
+            question.max_time_seconds = request.max_time_seconds
         
         db.commit()
         db.refresh(question)
@@ -207,5 +213,7 @@ class QuestionService:
             text=question.text,
             options=question.options,
             order=question.order,
-            correct_answer_index=question.correct_answer_index
+            correct_answer_index=question.correct_answer_index,
+            points=question.points,
+            max_time_seconds=question.max_time_seconds,
         )

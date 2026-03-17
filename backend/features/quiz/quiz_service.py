@@ -292,7 +292,9 @@ class QuizBuilderService:
                     option_images={
                         key: ImageService.to_absolute_url(path, base_url)
                         for key, path in (q.option_images or {}).items()
-                    } if q.option_images else None
+                    } if q.option_images else None,
+                    points=q.points,
+                    max_time_seconds=q.max_time_seconds,
                 )
                 for q in sorted(quiz.questions, key=lambda x: x.order)
             ],

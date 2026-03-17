@@ -108,6 +108,8 @@ class QuestionServiceAsync:
             correct_answer_index=request.correct_answer_index,
             question_image_url=request.question_image_url,
             option_images=request.option_images,
+            points=request.points,
+            max_time_seconds=request.max_time_seconds,
             order=next_order
         )
         
@@ -162,6 +164,10 @@ class QuestionServiceAsync:
             question.question_image_url = request.question_image_url
         if "option_images" in request.model_fields_set:
             question.option_images = request.option_images
+        if "points" in request.model_fields_set:
+            question.points = request.points
+        if "max_time_seconds" in request.model_fields_set:
+            question.max_time_seconds = request.max_time_seconds
         
         await db.commit()
         await db.refresh(question)
@@ -277,5 +283,7 @@ class QuestionServiceAsync:
             order=question.order,
             correct_answer_index=question.correct_answer_index,
             question_image_url=question.question_image_url,
-            option_images=question.option_images
+            option_images=question.option_images,
+            points=question.points,
+            max_time_seconds=question.max_time_seconds,
         )
