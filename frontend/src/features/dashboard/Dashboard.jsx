@@ -35,6 +35,7 @@ function Dashboard() {
   const dispatch = useDispatch()
   const { quizzes } = useSelector((state) => state.quiz)
   const [folderForm] = Form.useForm()
+  const [renameFolderForm] = Form.useForm()
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
@@ -45,6 +46,8 @@ function Dashboard() {
   const [selectedFolderId, setSelectedFolderId] = useState(undefined)
   const [folderModalOpen, setFolderModalOpen] = useState(false)
   const [folderSubmitting, setFolderSubmitting] = useState(false)
+  const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false)
+  const [renameFolderSubmitting, setRenameFolderSubmitting] = useState(false)
 
   useEffect(() => {
     loadQuizzes()
@@ -172,6 +175,30 @@ function Dashboard() {
       await loadQuizzes()
     } catch (error) {
       message.error(error?.response?.data?.detail || t('dashboard.folderDeleteFailed', { defaultValue: 'Failed to delete folder' }))
+    }
+  }
+
+  const openRenameFolderModal = () => {
+    if (!selectedFolderId || !selectedFolderName) return
+    renameFolderForm.setFieldsValue({ name: selectedFolderName })
+    setRenameFolderModalOpen(true)
+  }
+
+  const handleRenameFolder = async () => {
+    if (!selectedFolderId) return
+    try {
+      const values = await renameFolderForm.validateFields()
+      setRenameFolderSubmitting(true)
+      await quizAPI.updateFolder(selectedFolderId, { name: values.name })
+      message.success(t('dashboard.folderRenamed', { defaultValue: 'Folder renamed' }))
+      setRenameFolderModalOpen(false)
+      await loadFolders()
+      await loadQuizzes()
+    } catch (error) {
+      if (error?.errorFields) return
+      message.error(error?.response?.data?.detail || t('dashboard.folderRenameFailed', { defaultValue: 'Failed to rename folder' }))
+    } finally {
+      setRenameFolderSubmitting(false)
     }
   }
 
@@ -508,6 +535,14 @@ function Dashboard() {
               >
                 {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
               </Button>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={openRenameFolderModal}
+                disabled={!selectedFolderId}
+              >
+                {t('dashboard.renameFolder', { defaultValue: 'Rename' })}
+              </Button>
               <Popconfirm
                 title={t('dashboard.deleteFolderConfirmTitle', { defaultValue: 'Delete selected folder?' })}
                 description={t('dashboard.deleteFolderConfirmDesc', { defaultValue: 'Subfolders and quizzes will be moved to parent/root.' })}
@@ -709,6 +744,23 @@ function Dashboard() {
               placeholder={t('dashboard.noParentRoot', { defaultValue: 'No parent (root)' })}
               treeDefaultExpandAll
             />
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        title={t('dashboard.renameFolder', { defaultValue: 'Rename Folder' })}
+        open={renameFolderModalOpen}
+        onCancel={() => setRenameFolderModalOpen(false)}
+        onOk={handleRenameFolder}
+        confirmLoading={renameFolderSubmitting}
+      >
+        <Form form={renameFolderForm} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t('dashboard.folderName', { defaultValue: 'Folder name' })}
+            rules={[{ required: true, message: t('dashboard.folderNameRequired', { defaultValue: 'Folder name is required' }) }]}
+          >
+            <Input />
           </Form.Item>
         </Form>
       </Modal>
