@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Spin, Tag, Rate } from 'antd'
+import { Spin, Tag, Rate, Progress } from 'antd'
 import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -650,6 +650,7 @@ export default function QuizPresent() {
   const [showLbModal, setShowLbModal] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [revealed, setRevealed] = useState(false)
+  const [timerRemaining, setTimerRemaining] = useState(null)
   const prevQIdx = useRef(-2)
 
   // Host controls are shown only when a JWT token is present in this browser
@@ -811,6 +812,32 @@ export default function QuizPresent() {
   const currentQ = results?.current_question
   const isEnded = results?.status === 'ended'
   const isWaiting = !isEnded && (results?.current_question_index === -1 || !currentQ)
+  const displayTimerRemaining = currentQ?.max_time_seconds
+    ? (timerRemaining ?? Number(currentQ.max_time_seconds))
+    : null
+
+  useEffect(() => {
+    if (!currentQ?.max_time_seconds || !currentQ?.timer_started_at) {
+      setTimerRemaining(null)
+      return
+    }
+
+    const maxSeconds = Number(currentQ.max_time_seconds)
+    const startedAt = new Date(currentQ.timer_started_at).getTime()
+    if (!maxSeconds || Number.isNaN(startedAt)) {
+      setTimerRemaining(null)
+      return
+    }
+
+    const updateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+      setTimerRemaining(Math.max(0, maxSeconds - elapsed))
+    }
+
+    updateRemaining()
+    const interval = setInterval(updateRemaining, 1000)
+    return () => clearInterval(interval)
+  }, [currentQ?.id, currentQ?.max_time_seconds, currentQ?.timer_started_at])
 
   return (
     <div className="pv-root">
@@ -842,19 +869,87 @@ export default function QuizPresent() {
         ) : isWaiting ? (
           <WaitingView participantCount={participantCount} t={t} />
         ) : currentQ?.question_type === 'word_cloud' ? (
-          <WordCloudView
-            question={currentQ}
-            wordCloudData={wordCloudData}
-            questionNumber={qNumber}
-            totalQuestions={totalQ}
-            t={t}
-          />
+          <>
+            {currentQ?.max_time_seconds ? (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="orange">{t('quiz.timerTag', { seconds: currentQ.max_time_seconds })}</Tag>
+                <span style={{ marginLeft: 8, color: 'rgba(255,255,255,0.85)' }}>
+                  {t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                </span>
+                <Progress
+                  percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQ.max_time_seconds)) * 100))}
+                  size="small"
+                  showInfo={false}
+                  status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
+            <WordCloudView
+              question={currentQ}
+              wordCloudData={wordCloudData}
+              questionNumber={qNumber}
+              totalQuestions={totalQ}
+              t={t}
+            />
+          </>
         ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
-          <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} t={t} />
+          <>
+            {currentQ?.max_time_seconds ? (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="orange">{t('quiz.timerTag', { seconds: currentQ.max_time_seconds })}</Tag>
+                <span style={{ marginLeft: 8, color: 'rgba(255,255,255,0.85)' }}>
+                  {t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                </span>
+                <Progress
+                  percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQ.max_time_seconds)) * 100))}
+                  size="small"
+                  showInfo={false}
+                  status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
+            <TextResponseView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} t={t} />
+          </>
         ) : currentQ?.question_type === 'scale' ? (
-          <ScaleView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} t={t} />
+          <>
+            {currentQ?.max_time_seconds ? (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="orange">{t('quiz.timerTag', { seconds: currentQ.max_time_seconds })}</Tag>
+                <span style={{ marginLeft: 8, color: 'rgba(255,255,255,0.85)' }}>
+                  {t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                </span>
+                <Progress
+                  percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQ.max_time_seconds)) * 100))}
+                  size="small"
+                  showInfo={false}
+                  status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
+            <ScaleView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} t={t} />
+          </>
         ) : (
-          <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} t={t} />
+          <>
+            {currentQ?.max_time_seconds ? (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="orange">{t('quiz.timerTag', { seconds: currentQ.max_time_seconds })}</Tag>
+                <span style={{ marginLeft: 8, color: 'rgba(255,255,255,0.85)' }}>
+                  {t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                </span>
+                <Progress
+                  percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQ.max_time_seconds)) * 100))}
+                  size="small"
+                  showInfo={false}
+                  status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
+            <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} t={t} />
+          </>
         )}
       </main>
 
