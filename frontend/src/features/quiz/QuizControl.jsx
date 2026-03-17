@@ -270,10 +270,10 @@ export default function QuizControl() {
         }
       case 'created':
         return {
-          label: t('quiz.created'),
+          label: t('quiz.started', { defaultValue: 'Started' }),
           valueColor: '#1677ff',
           tagColor: 'blue',
-          tagLabel: t('quiz.created'),
+          tagLabel: t('quiz.started', { defaultValue: 'Started' }),
         }
       case 'ended':
         return {

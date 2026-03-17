@@ -288,7 +288,11 @@ export default function QuizHistory() {
   }, [id])
 
   const statusColor = { created: 'blue', active: 'green', ended: 'default' }
-  const statusLabel = { created: t('quiz.statusCreated') || 'Created', active: t('quiz.live'), ended: t('quiz.ended') }
+  const statusLabel = {
+    created: t('quiz.started', { defaultValue: 'Started' }),
+    active: t('quiz.live'),
+    ended: t('quiz.ended'),
+  }
 
   return (
     <div style={{ padding: 24 }}>
