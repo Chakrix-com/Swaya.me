@@ -174,6 +174,9 @@ cmd_deploy_test() {
 
     info "Building frontend..."
     npm --prefix "$DEV_FRONTEND" run build
+    # Ensure nginx worker can traverse and read test static assets.
+    chmod 751 "/home/vinay" "$DEV_ROOT"
+    chmod -R a+rX "$DEV_FRONTEND/dist"
     success "Frontend built → $DEV_FRONTEND/dist"
 
     info "Restarting test backend ($TEST_SERVICE)..."
