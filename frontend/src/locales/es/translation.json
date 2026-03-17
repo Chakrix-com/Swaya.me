@@ -199,7 +199,14 @@
     "exportPdf": "Informe PDF",
     "exportDocx": "Documento Word",
     "exportPptx": "Presentación PowerPoint",
-    "exportXlsx": "Hoja de cálculo Excel"
+    "exportXlsx": "Hoja de cálculo Excel",
+    "pointsLabel": "Puntos",
+    "pointsRequired": "Los puntos son obligatorios",
+    "maxTimeSecondsLabel": "Tiempo máximo (segundos)",
+    "maxTimeSecondsTooltip": "Temporizador opcional de avance automático para esta pregunta",
+    "timerTag": "Temporizador: {{seconds}}s",
+    "pointsTag": "Puntos: {{points}}",
+    "timeLeft": "Tiempo restante: {{seconds}}s"
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",

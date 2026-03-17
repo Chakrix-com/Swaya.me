@@ -199,7 +199,14 @@
     "exportPdf": "PDF-отчёт",
     "exportDocx": "Документ Word",
     "exportPptx": "Презентация PowerPoint",
-    "exportXlsx": "Таблица Excel"
+    "exportXlsx": "Таблица Excel",
+    "pointsLabel": "Баллы",
+    "pointsRequired": "Баллы обязательны",
+    "maxTimeSecondsLabel": "Макс. время (секунды)",
+    "maxTimeSecondsTooltip": "Необязательный таймер авто-перехода для этого вопроса",
+    "timerTag": "Таймер: {{seconds}}с",
+    "pointsTag": "Баллы: {{points}}",
+    "timeLeft": "Осталось времени: {{seconds}}с"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",

@@ -199,7 +199,14 @@
     "exportPdf": "PDF அறிக்கை",
     "exportDocx": "Word ஆவணம்",
     "exportPptx": "PowerPoint ஸ்லைடுகள்",
-    "exportXlsx": "Excel விரிதாள்"
+    "exportXlsx": "Excel விரிதாள்",
+    "pointsLabel": "மதிப்பெண்கள்",
+    "pointsRequired": "மதிப்பெண்கள் அவசியம்",
+    "maxTimeSecondsLabel": "அதிகபட்ச நேரம் (விநாடிகள்)",
+    "maxTimeSecondsTooltip": "இந்த கேள்விக்கான விருப்ப தானியங்கி முன்னேற்ற நேரிகை",
+    "timerTag": "நேரிகை: {{seconds}}வி",
+    "pointsTag": "மதிப்பெண்கள்: {{points}}",
+    "timeLeft": "மீதமுள்ள நேரம்: {{seconds}}வி"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",

@@ -201,7 +201,14 @@
     "exportPdf": "Rapport PDF",
     "exportDocx": "Document Word",
     "exportPptx": "Présentation PowerPoint",
-    "exportXlsx": "Feuille de calcul Excel"
+    "exportXlsx": "Feuille de calcul Excel",
+    "pointsLabel": "Points",
+    "pointsRequired": "Les points sont obligatoires",
+    "maxTimeSecondsLabel": "Temps max (secondes)",
+    "maxTimeSecondsTooltip": "Minuteur d'avance automatique optionnel pour cette question",
+    "timerTag": "Minuteur : {{seconds}}s",
+    "pointsTag": "Points : {{points}}",
+    "timeLeft": "Temps restant : {{seconds}}s"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",

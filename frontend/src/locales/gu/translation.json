@@ -199,7 +199,14 @@
     "exportPdf": "PDF રિપોર્ટ",
     "exportDocx": "Word દસ્તાવેજ",
     "exportPptx": "PowerPoint સ્લાઇડ્સ",
-    "exportXlsx": "Excel સ્પ્રેડશીટ"
+    "exportXlsx": "Excel સ્પ્રેડશીટ",
+    "pointsLabel": "પોઈન્ટ્સ",
+    "pointsRequired": "પોઈન્ટ્સ જરૂરી છે",
+    "maxTimeSecondsLabel": "મહત્તમ સમય (સેકન્ડ)",
+    "maxTimeSecondsTooltip": "આ પ્રશ્ન માટે વૈકલ્પિક ઑટો-એડવાન્સ ટાઈમર",
+    "timerTag": "ટાઈમર: {{seconds}}સે",
+    "pointsTag": "પોઈન્ટ્સ: {{points}}",
+    "timeLeft": "બાકી સમય: {{seconds}}સે"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",

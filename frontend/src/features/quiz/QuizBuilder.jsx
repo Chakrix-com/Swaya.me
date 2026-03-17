@@ -171,16 +171,16 @@ const QuestionForm = ({
         <Space size={16} style={{ width: '100%' }} wrap>
           <Form.Item
             name="points"
-            label="Points"
+            label={t('quiz.pointsLabel')}
             initialValue={1}
-            rules={[{ required: true, message: 'Points are required' }]}
+            rules={[{ required: true, message: t('quiz.pointsRequired') }]}
           >
             <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
             name="max_time_seconds"
-            label="Max Time (seconds)"
-            tooltip="Optional auto-advance timer for this question"
+            label={t('quiz.maxTimeSecondsLabel')}
+            tooltip={t('quiz.maxTimeSecondsTooltip')}
           >
             <InputNumber min={1} max={3600} precision={0} />
           </Form.Item>
@@ -1004,9 +1004,9 @@ export default function QuizBuilder() {
                       <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
                         {QUESTION_TYPE_LABELS[question.question_type] || 'MCQ'}
                       </Tag>
-                      <Tag color="green">Points: {question.points || 1}</Tag>
+                      <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>
                       {question.max_time_seconds ? (
-                        <Tag color="orange">Timer: {question.max_time_seconds}s</Tag>
+                        <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
                       ) : null}
                       <Text strong>{question.text}</Text>
                     </Space>

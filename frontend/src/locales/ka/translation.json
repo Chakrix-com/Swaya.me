@@ -199,7 +199,14 @@
     "exportPdf": "PDF Report",
     "exportDocx": "Word Document",
     "exportPptx": "PowerPoint Slides",
-    "exportXlsx": "Excel Spreadsheet"
+    "exportXlsx": "Excel Spreadsheet",
+    "pointsLabel": "ქულები",
+    "pointsRequired": "ქულები სავალდებულოა",
+    "maxTimeSecondsLabel": "მაქს. დრო (წამები)",
+    "maxTimeSecondsTooltip": "ამ კითხვისთვის სურვილისამებრ ავტომატური წინსვლის ტაიმერი",
+    "timerTag": "ტაიმერი: {{seconds}}წმ",
+    "pointsTag": "ქულები: {{points}}",
+    "timeLeft": "დარჩენილი დრო: {{seconds}}წმ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",

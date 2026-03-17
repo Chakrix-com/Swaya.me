@@ -199,7 +199,14 @@
     "exportPdf": "PDF रिपोर्ट",
     "exportDocx": "Word दस्तावेज़",
     "exportPptx": "PowerPoint स्लाइड",
-    "exportXlsx": "Excel स्प्रेडशीट"
+    "exportXlsx": "Excel स्प्रेडशीट",
+    "pointsLabel": "अंक",
+    "pointsRequired": "अंक आवश्यक हैं",
+    "maxTimeSecondsLabel": "अधिकतम समय (सेकंड)",
+    "maxTimeSecondsTooltip": "इस प्रश्न के लिए वैकल्पिक ऑटो-एडवांस टाइमर",
+    "timerTag": "टाइमर: {{seconds}}से",
+    "pointsTag": "अंक: {{points}}",
+    "timeLeft": "शेष समय: {{seconds}}से"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",

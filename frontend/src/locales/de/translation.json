@@ -199,7 +199,14 @@
     "exportPdf": "PDF-Bericht",
     "exportDocx": "Word-Dokument",
     "exportPptx": "PowerPoint-Präsentation",
-    "exportXlsx": "Excel-Tabelle"
+    "exportXlsx": "Excel-Tabelle",
+    "pointsLabel": "Punkte",
+    "pointsRequired": "Punkte sind erforderlich",
+    "maxTimeSecondsLabel": "Maximale Zeit (Sekunden)",
+    "maxTimeSecondsTooltip": "Optionaler Auto-Weiter-Timer für diese Frage",
+    "timerTag": "Timer: {{seconds}}s",
+    "pointsTag": "Punkte: {{points}}",
+    "timeLeft": "Verbleibende Zeit: {{seconds}}s"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",

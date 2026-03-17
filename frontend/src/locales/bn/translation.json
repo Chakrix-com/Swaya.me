@@ -199,7 +199,14 @@
     "exportPdf": "PDF রিপোর্ট",
     "exportDocx": "Word নথি",
     "exportPptx": "PowerPoint স্লাইড",
-    "exportXlsx": "Excel স্প্রেডশিট"
+    "exportXlsx": "Excel স্প্রেডশিট",
+    "pointsLabel": "পয়েন্ট",
+    "pointsRequired": "পয়েন্ট আবশ্যক",
+    "maxTimeSecondsLabel": "সর্বোচ্চ সময় (সেকেন্ড)",
+    "maxTimeSecondsTooltip": "এই প্রশ্নের জন্য ঐচ্ছিক অটো-অ্যাডভান্স টাইমার",
+    "timerTag": "টাইমার: {{seconds}}সে",
+    "pointsTag": "পয়েন্ট: {{points}}",
+    "timeLeft": "বাকি সময়: {{seconds}}সে"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",

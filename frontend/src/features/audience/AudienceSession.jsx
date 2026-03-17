@@ -490,12 +490,12 @@ export default function AudienceSession() {
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {isScaleQuestion && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale 1-5' })}</Tag>}
-                    {currentQuestion.max_time_seconds ? <Tag color="orange">Timer: {currentQuestion.max_time_seconds}s</Tag> : null}
+                    {currentQuestion.max_time_seconds ? <Tag color="orange">{t('quiz.timerTag', { seconds: currentQuestion.max_time_seconds })}</Tag> : null}
                     <Text strong style={{ wordBreak: 'break-word' }}>{displayName}</Text>
                   </Space>
-                    {currentQuestion.max_time_seconds ? (
-                      <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={4}>
-                        <Text type="secondary">Time left: {displayTimerRemaining}s</Text>
+                  {currentQuestion.max_time_seconds ? (
+                    <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={4}>
+                        <Text type="secondary">{t('quiz.timeLeft', { seconds: displayTimerRemaining })}</Text>
                         <Progress
                           percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
                           size="small"

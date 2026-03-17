@@ -199,7 +199,14 @@
     "exportPdf": "PDF నివేదిక",
     "exportDocx": "Word పత్రం",
     "exportPptx": "PowerPoint స్లైడులు",
-    "exportXlsx": "Excel స్ప్రెడ్‌షీట్"
+    "exportXlsx": "Excel స్ప్రెడ్‌షీట్",
+    "pointsLabel": "పాయింట్లు",
+    "pointsRequired": "పాయింట్లు అవసరం",
+    "maxTimeSecondsLabel": "గరిష్ట సమయం (సెకన్లు)",
+    "maxTimeSecondsTooltip": "ఈ ప్రశ్నకు ఐచ్చిక ఆటో-అడ్వాన్స్ టైమర్",
+    "timerTag": "టైమర్: {{seconds}}సె",
+    "pointsTag": "పాయింట్లు: {{points}}",
+    "timeLeft": "మిగిలిన సమయం: {{seconds}}సె"
   },
   "audience": {
     "joinQuiz": "క్విజ్‌లో చేరండి",

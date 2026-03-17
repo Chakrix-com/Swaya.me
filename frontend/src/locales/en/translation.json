@@ -199,7 +199,14 @@
     "exportPdf": "PDF Report",
     "exportDocx": "Word Document",
     "exportPptx": "PowerPoint Slides",
-    "exportXlsx": "Excel Spreadsheet"
+    "exportXlsx": "Excel Spreadsheet",
+    "pointsLabel": "Points",
+    "pointsRequired": "Points are required",
+    "maxTimeSecondsLabel": "Max Time (seconds)",
+    "maxTimeSecondsTooltip": "Optional auto-advance timer for this question",
+    "timerTag": "Timer: {{seconds}}s",
+    "pointsTag": "Points: {{points}}",
+    "timeLeft": "Time left: {{seconds}}s"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -993,14 +1000,24 @@
             {
               "type": "MCQ",
               "text": "Which planet is closest to the Sun?",
-              "options": ["Venus", "Mercury", "Mars", "Earth"],
+              "options": [
+                "Venus",
+                "Mercury",
+                "Mars",
+                "Earth"
+              ],
               "correct": 1,
               "tip": "Mercury is the correct answer. Set option B as \"Mercury\" and mark it correct."
             },
             {
               "type": "MCQ",
               "text": "What is the chemical symbol for Gold?",
-              "options": ["Gd", "Go", "Au", "Ag"],
+              "options": [
+                "Gd",
+                "Go",
+                "Au",
+                "Ag"
+              ],
               "correct": 2,
               "tip": "Au (from the Latin \"Aurum\"). Mark option C as correct."
             }
@@ -1012,14 +1029,24 @@
             {
               "type": "MCQ",
               "text": "What does HTML stand for?",
-              "options": ["HyperText Markup Language", "High Transfer Markup Language", "HyperText Modeling Language", "Home Tool Markup Language"],
+              "options": [
+                "HyperText Markup Language",
+                "High Transfer Markup Language",
+                "HyperText Modeling Language",
+                "Home Tool Markup Language"
+              ],
               "correct": 0,
               "tip": "HyperText Markup Language. Mark option A as correct."
             },
             {
               "type": "MCQ",
               "text": "Which of these is NOT a programming language?",
-              "options": ["Python", "Cobra", "Java", "Ruby"],
+              "options": [
+                "Python",
+                "Cobra",
+                "Java",
+                "Ruby"
+              ],
               "correct": 1,
               "tip": "\"Cobra\" is not a real programming language. Mark option B as correct."
             }
@@ -1033,12 +1060,22 @@
           "questions": [
             {
               "text": "How did you hear about this event?",
-              "options": ["Social media", "A friend or colleague", "Online search", "Email newsletter"],
+              "options": [
+                "Social media",
+                "A friend or colleague",
+                "Online search",
+                "Email newsletter"
+              ],
               "tip": "Leave \"correct answer\" blank — all options are equally valid."
             },
             {
               "text": "Which session topic are you most excited about?",
-              "options": ["Product roadmap", "Team building", "Customer stories", "Q&A panel"],
+              "options": [
+                "Product roadmap",
+                "Team building",
+                "Customer stories",
+                "Q&A panel"
+              ],
               "tip": "Great for live audience preference checks before scheduling."
             }
           ]

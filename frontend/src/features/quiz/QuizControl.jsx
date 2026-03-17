@@ -60,6 +60,7 @@ export default function QuizControl() {
   useEffect(() => {
     if (id) {
       loadQuiz()
+      loadLatestSession()
     }
   }, [id])
 
@@ -108,6 +109,28 @@ export default function QuizControl() {
     } catch (error) {
       message.error(t('quiz.failedToLoadQuiz'))
       console.error(error)
+    }
+  }
+
+  const loadLatestSession = async () => {
+    try {
+      const response = await sessionAPI.listSessions(id)
+      const sessions = response?.data?.sessions || []
+      const openSession = sessions.find((item) => {
+        const status = typeof item?.status === 'string' ? item.status.toLowerCase() : ''
+        return status === 'active' || status === 'created'
+      })
+      if (openSession) {
+        setSession((prev) => {
+          if (prev?.id === openSession.id) return prev
+          return {
+            ...prev,
+            ...openSession,
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error)
     }
   }
 
@@ -625,12 +648,12 @@ export default function QuizControl() {
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
-                    {currentQuestion.max_time_seconds ? <Tag color="orange">Timer: {currentQuestion.max_time_seconds}s</Tag> : null}
-                    <Tag color="green">Points: {currentQuestion.points || 1}</Tag>
+                    {currentQuestion.max_time_seconds ? <Tag color="orange">{t('quiz.timerTag', { seconds: currentQuestion.max_time_seconds })}</Tag> : null}
+                    <Tag color="green">{t('quiz.pointsTag', { points: currentQuestion.points || 1 })}</Tag>
                   </Space>
                   {currentQuestion.max_time_seconds ? (
                     <Space direction="vertical" style={{ width: '100%' }} size={4}>
-                      <Text type="secondary">Time left: {displayTimerRemaining}s</Text>
+                      <Text type="secondary">{t('quiz.timeLeft', { seconds: displayTimerRemaining })}</Text>
                       <Progress
                         percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
                         size="small"
