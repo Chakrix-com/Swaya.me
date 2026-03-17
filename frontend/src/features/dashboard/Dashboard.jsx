@@ -545,104 +545,106 @@ function Dashboard() {
             key={quiz.id}
             className="quiz-item"
           >
-            <div className="quiz-item-meta">
-              <div style={{ marginBottom: 4 }}>
-                <strong>{quiz.title}</strong>
-              </div>
-              <Space>
-                <Tag color={getQuizTypeColor(quiz.quiz_type)}>
-                  {getQuizTypeLabel(quiz.quiz_type)}
-                </Tag>
-                <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
-                {quiz.is_template && (
-                  <Tag color={quiz.template_scope === 'global' ? 'purple' : 'blue'}>
-                    {quiz.template_scope === 'global'
-                      ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
-                      : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
-                  </Tag>
-                )}
-                <span>
-                  {t('quiz.questionCount', {
-                    count: quiz.question_count || 0,
-                    defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
-                  })}
-                </span>
-                {quiz.folder_path && (
-                  <Tag color="cyan">
-                    {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}
-                  </Tag>
-                )}
-              </Space>
+            <div className="quiz-item-title">
+              <strong>{quiz.title}</strong>
             </div>
-            <div className="quiz-item-actions">
-              <TreeSelect
-                allowClear
-                treeData={folderTreeData}
-                value={quiz.folder_id ?? undefined}
-                onChange={(value) => handleAssignFolder(quiz.id, value)}
-                placeholder={t('dashboard.assignFolder', { defaultValue: 'Assign folder' })}
-                style={{ minWidth: 180 }}
-                treeDefaultExpandAll
-              />
-              <Button
-                icon={<StarOutlined />}
-                onClick={() => handleToggleTemplate(quiz)}
-              >
-                {quiz.is_template
-                  ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
-                  : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
-              </Button>
-              <Button
-                icon={<CopyOutlined />}
-                onClick={() => handleDuplicateQuiz(quiz.id)}
-              >
-                {t('quiz.duplicate', { defaultValue: 'Duplicate' })}
-              </Button>
-              <Button
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
-              >
-                {t('common.edit')}
-              </Button>
-              <Button
-                icon={<HistoryOutlined />}
-                onClick={() => navigate(`/quiz/${quiz.id}/history`)}
-              >
-                {t('quiz.history')}
-              </Button>
-              {quiz.has_active_session && quiz.active_session_id ? (
+            <div className="quiz-item-body">
+              <div className="quiz-item-meta">
+                <Space>
+                  <Tag color={getQuizTypeColor(quiz.quiz_type)}>
+                    {getQuizTypeLabel(quiz.quiz_type)}
+                  </Tag>
+                  <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
+                  {quiz.is_template && (
+                    <Tag color={quiz.template_scope === 'global' ? 'purple' : 'blue'}>
+                      {quiz.template_scope === 'global'
+                        ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
+                        : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
+                    </Tag>
+                  )}
+                  <span>
+                    {t('quiz.questionCount', {
+                      count: quiz.question_count || 0,
+                      defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
+                    })}
+                  </span>
+                  {quiz.folder_path && (
+                    <Tag color="cyan">
+                      {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}
+                    </Tag>
+                  )}
+                </Space>
+              </div>
+              <div className="quiz-item-actions">
+                <TreeSelect
+                  allowClear
+                  treeData={folderTreeData}
+                  value={quiz.folder_id ?? undefined}
+                  onChange={(value) => handleAssignFolder(quiz.id, value)}
+                  placeholder={t('dashboard.assignFolder', { defaultValue: 'Assign folder' })}
+                  style={{ minWidth: 180 }}
+                  treeDefaultExpandAll
+                />
+                <Button
+                  icon={<StarOutlined />}
+                  onClick={() => handleToggleTemplate(quiz)}
+                >
+                  {quiz.is_template
+                    ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
+                    : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
+                </Button>
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={() => handleDuplicateQuiz(quiz.id)}
+                >
+                  {t('quiz.duplicate', { defaultValue: 'Duplicate' })}
+                </Button>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
+                >
+                  {t('common.edit')}
+                </Button>
+                <Button
+                  icon={<HistoryOutlined />}
+                  onClick={() => navigate(`/quiz/${quiz.id}/history`)}
+                >
+                  {t('quiz.history')}
+                </Button>
+                {quiz.has_active_session && quiz.active_session_id ? (
+                  <Popconfirm
+                    title={t('quiz.stopActiveSessionConfirm', { defaultValue: 'Stop active session?' })}
+                    description={t('quiz.stopQuizConfirm', { defaultValue: 'This will end the session for all participants. You cannot restart it.' })}
+                    onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
+                    okText={t('quiz.stopQuizOk', { defaultValue: 'Yes, stop it' })}
+                    cancelText={t('common.cancel')}
+                  >
+                    <Button danger icon={<CloseCircleOutlined />}>
+                      {t('quiz.stopActiveSession', { defaultValue: 'Stop Active Session' })}
+                    </Button>
+                  </Popconfirm>
+                ) : null}
+                {quiz.status === 'ready' && !quiz.has_active_session && (
+                  <Button
+                    type="primary"
+                    icon={<PlayCircleOutlined />}
+                    onClick={() => navigate(`/quiz/${quiz.id}/control`)}
+                  >
+                    {t('quiz.startQuiz')}
+                  </Button>
+                )}
                 <Popconfirm
-                  title={t('quiz.stopActiveSessionConfirm', { defaultValue: 'Stop active session?' })}
-                  description={t('quiz.stopQuizConfirm', { defaultValue: 'This will end the session for all participants. You cannot restart it.' })}
-                  onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
-                  okText={t('quiz.stopQuizOk', { defaultValue: 'Yes, stop it' })}
+                  title={t('quiz.deleteConfirm')}
+                  description={t('quiz.deleteWarning')}
+                  onConfirm={() => handleDeleteQuiz(quiz.id)}
+                  okText={t('common.submit')}
                   cancelText={t('common.cancel')}
                 >
-                  <Button danger icon={<CloseCircleOutlined />}>
-                    {t('quiz.stopActiveSession', { defaultValue: 'Stop Active Session' })}
+                  <Button danger icon={<DeleteOutlined />}>
+                    {t('common.delete')}
                   </Button>
                 </Popconfirm>
-              ) : null}
-              {quiz.status === 'ready' && !quiz.has_active_session && (
-                <Button
-                  type="primary"
-                  icon={<PlayCircleOutlined />}
-                  onClick={() => navigate(`/quiz/${quiz.id}/control`)}
-                >
-                  {t('quiz.startQuiz')}
-                </Button>
-              )}
-              <Popconfirm
-                title={t('quiz.deleteConfirm')}
-                description={t('quiz.deleteWarning')}
-                onConfirm={() => handleDeleteQuiz(quiz.id)}
-                okText={t('common.submit')}
-                cancelText={t('common.cancel')}
-              >
-                <Button danger icon={<DeleteOutlined />}>
-                  {t('common.delete')}
-                </Button>
-              </Popconfirm>
+              </div>
             </div>
           </div>
         ))}

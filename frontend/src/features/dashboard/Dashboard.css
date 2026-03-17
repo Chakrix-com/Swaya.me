@@ -1,7 +1,7 @@
 .quiz-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
@@ -9,6 +9,18 @@
 
 .quiz-item:last-child {
   border-bottom: none;
+}
+
+.quiz-item-title {
+  width: 100%;
+  line-height: 1.4;
+}
+
+.quiz-item-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .dashboard-explorer-layout {
@@ -118,6 +130,12 @@
   }
 
   .quiz-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quiz-item-body {
+    width: 100%;
     flex-direction: column;
     align-items: flex-start;
   }
