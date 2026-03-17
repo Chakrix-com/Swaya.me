@@ -52,10 +52,11 @@ export const authAPI = {
 
 // Quiz API
 export const quizAPI = {
-  list: (eventId) => api.get('/quizzes/', { params: { event_id: eventId } }),
+  list: (eventId, search) => api.get('/quizzes/', { params: { event_id: eventId, search } }),
   get: (id) => api.get(`/quizzes/${id}`),
   create: (data) => api.post('/quizzes/', data),
   update: (id, data) => api.put(`/quizzes/${id}`, data),
+  assignFolder: (id, folderId) => api.put(`/quizzes/${id}/folder`, { folder_id: folderId }),
   delete: (id) => api.delete(`/quizzes/${id}`),
   publish: (id) => api.post(`/quizzes/${id}/publish`),
   unpublish: (id) => api.post(`/quizzes/${id}/unpublish`),
@@ -65,6 +66,10 @@ export const quizAPI = {
   listTemplatesLegacy: () => api.get('/quizzes/templates'),
   useTemplate: (templateQuizId) => api.post(`/quizzes/template-library/${templateQuizId}/use`),
   useTemplateLegacy: (templateQuizId) => api.post(`/quizzes/templates/${templateQuizId}/use`),
+  listFolders: () => api.get('/quizzes/folders'),
+  createFolder: (data) => api.post('/quizzes/folders', data),
+  updateFolder: (id, data) => api.put(`/quizzes/folders/${id}`, data),
+  deleteFolder: (id) => api.delete(`/quizzes/folders/${id}`),
 }
 
 // Question API

@@ -18,7 +18,8 @@ from features.quiz.schemas import (
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
     FeedbackSubmitRequest, LeaderboardResponse,
-    SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse
+    SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse,
+    FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.question_service_async import QuestionServiceAsync
@@ -132,12 +133,85 @@ async def get_quiz(
 @router.get("/", response_model=List[QuizListResponse])
 async def list_quizzes(
     event_id: Optional[int] = None,
+    search: Optional[str] = None,
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
     service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """List quizzes for tenant"""
-    return await service.list_quizzes(db, current_user, event_id)
+    quizzes = await service.list_quizzes(db, current_user, event_id)
+    if search:
+        term = search.strip().lower()
+        quizzes = [
+            q for q in quizzes
+            if term in q.title.lower()
+        ]
+    return quizzes
+
+
+@router.get("/folders", response_model=List[FolderResponse])
+async def list_folders(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    return await service.list_folders(db, current_user)
+
+
+@router.post("/folders", response_model=FolderResponse, status_code=status.HTTP_201_CREATED)
+async def create_folder(
+    request: FolderCreateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    try:
+        return await service.create_folder(db, request, current_user)
+    except (QuizNotFoundError, QuizValidationError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/folders/{folder_id}", response_model=FolderResponse)
+async def update_folder(
+    folder_id: int,
+    request: FolderUpdateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    try:
+        return await service.update_folder(db, folder_id, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_folder(
+    folder_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    try:
+        await service.delete_folder(db, folder_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.put("/{quiz_id:int}/folder", response_model=QuizResponse)
+async def assign_quiz_folder(
+    quiz_id: int,
+    request: FolderAssignRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    try:
+        return await service.assign_quiz_folder(db, quiz_id, request.folder_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.get("/templates", response_model=List[TemplateQuizListItemResponse])

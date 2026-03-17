@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table } from 'antd'
+import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form } from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -30,13 +30,21 @@ function Dashboard() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { quizzes } = useSelector((state) => state.quiz)
+  const [folderForm] = Form.useForm()
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [usingTemplateId, setUsingTemplateId] = useState(null)
+  const [folders, setFolders] = useState([])
+  const [foldersLoading, setFoldersLoading] = useState(false)
+  const [searchText, setSearchText] = useState('')
+  const [selectedFolderId, setSelectedFolderId] = useState(undefined)
+  const [folderModalOpen, setFolderModalOpen] = useState(false)
+  const [folderSubmitting, setFolderSubmitting] = useState(false)
 
   useEffect(() => {
     loadQuizzes()
+    loadFolders()
   }, [])
 
   useEffect(() => {
@@ -52,6 +60,19 @@ function Dashboard() {
       dispatch(setQuizzes(response.data))
     } catch (error) {
       console.error('Failed to load quizzes:', error)
+    }
+  }
+
+  const loadFolders = async () => {
+    setFoldersLoading(true)
+    try {
+      const response = await quizAPI.listFolders()
+      setFolders(response.data || [])
+    } catch (error) {
+      console.error('Failed to load folders:', error)
+      setFolders([])
+    } finally {
+      setFoldersLoading(false)
     }
   }
 
@@ -100,6 +121,40 @@ function Dashboard() {
         error?.response?.data?.detail ||
         t('quiz.failedToStopActiveSession', { defaultValue: 'Failed to stop active session' })
       )
+    }
+  }
+
+  const handleAssignFolder = async (quizId, folderId) => {
+    try {
+      await quizAPI.assignFolder(quizId, folderId ?? null)
+      message.success(t('dashboard.folderAssigned', { defaultValue: 'Folder updated' }))
+      await loadQuizzes()
+    } catch (error) {
+      message.error(error?.response?.data?.detail || t('dashboard.folderAssignFailed', { defaultValue: 'Failed to update folder' }))
+    }
+  }
+
+  const openCreateFolderModal = () => {
+    folderForm.setFieldsValue({ name: '', parent_id: null })
+    setFolderModalOpen(true)
+  }
+
+  const handleCreateFolder = async () => {
+    try {
+      const values = await folderForm.validateFields()
+      setFolderSubmitting(true)
+      await quizAPI.createFolder({
+        name: values.name,
+        parent_id: values.parent_id || null,
+      })
+      message.success(t('dashboard.folderCreated', { defaultValue: 'Folder created' }))
+      setFolderModalOpen(false)
+      await loadFolders()
+    } catch (error) {
+      if (error?.errorFields) return
+      message.error(error?.response?.data?.detail || t('dashboard.folderCreateFailed', { defaultValue: 'Failed to create folder' }))
+    } finally {
+      setFolderSubmitting(false)
     }
   }
 
@@ -239,6 +294,24 @@ function Dashboard() {
   const getQuizTypeColor = (quizType) => (quizType === 'poll' ? 'purple' : 'blue')
   const getQuizTypeLabel = (quizType) => (quizType === 'poll' ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' }))
 
+  const folderTreeData = useMemo(() => {
+    const mapNodes = (nodes) => (nodes || []).map((node) => ({
+      value: node.id,
+      title: node.name,
+      children: mapNodes(node.children || []),
+    }))
+    return mapNodes(folders)
+  }, [folders])
+
+  const filteredQuizzes = useMemo(() => {
+    const term = searchText.trim().toLowerCase()
+    return (quizzes || []).filter((quiz) => {
+      const matchesSearch = !term || quiz.title.toLowerCase().includes(term)
+      const matchesFolder = !selectedFolderId || quiz.folder_id === selectedFolderId
+      return matchesSearch && matchesFolder
+    })
+  }, [quizzes, searchText, selectedFolderId])
+
   // Calculate quiz statistics
   const statistics = useMemo(() => {
     const stats = {
@@ -251,7 +324,7 @@ function Dashboard() {
       totalQuestions: 0
     }
 
-    quizzes.forEach(quiz => {
+    filteredQuizzes.forEach(quiz => {
       // Count by status
       if (quiz.status in stats.byStatus) {
         stats.byStatus[quiz.status]++
@@ -263,7 +336,7 @@ function Dashboard() {
     })
 
     return stats
-  }, [quizzes])
+  }, [filteredQuizzes])
 
   const visibleTemplateData = (templates && templates.length > 0
     ? templates
@@ -355,12 +428,34 @@ function Dashboard() {
           </div>
         }
       >
+      <Space wrap style={{ marginBottom: 16, width: '100%' }}>
+        <Input.Search
+          allowClear
+          placeholder={t('dashboard.searchQuizzes', { defaultValue: 'Search quizzes/polls' })}
+          style={{ width: 280 }}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+        <TreeSelect
+          allowClear
+          treeData={folderTreeData}
+          value={selectedFolderId}
+          onChange={(value) => setSelectedFolderId(value)}
+          placeholder={t('dashboard.filterByFolder', { defaultValue: 'Filter by folder' })}
+          style={{ width: 280 }}
+          treeDefaultExpandAll
+          loading={foldersLoading}
+        />
+        <Button onClick={openCreateFolderModal}>
+          {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
+        </Button>
+      </Space>
       <div style={{ width: '100%', overflow: 'hidden' }}>
-        {quizzes.length === 0 ? (
+        {filteredQuizzes.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
             {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
           </div>
-        ) : quizzes.map((quiz, index) => (
+        ) : filteredQuizzes.map((quiz, index) => (
           <div
             key={quiz.id}
             className="quiz-item"
@@ -387,9 +482,23 @@ function Dashboard() {
                     defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
                   })}
                 </span>
+                {quiz.folder_path && (
+                  <Tag color="cyan">
+                    {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}
+                  </Tag>
+                )}
               </Space>
             </div>
             <div className="quiz-item-actions">
+              <TreeSelect
+                allowClear
+                treeData={folderTreeData}
+                value={quiz.folder_id ?? undefined}
+                onChange={(value) => handleAssignFolder(quiz.id, value)}
+                placeholder={t('dashboard.assignFolder', { defaultValue: 'Assign folder' })}
+                style={{ minWidth: 180 }}
+                treeDefaultExpandAll
+              />
               <Button
                 icon={<StarOutlined />}
                 onClick={() => handleToggleTemplate(quiz)}
@@ -454,6 +563,34 @@ function Dashboard() {
         ))}
       </div>
     </ProCard>
+      <Modal
+        title={t('dashboard.newFolder', { defaultValue: 'New Folder' })}
+        open={folderModalOpen}
+        onCancel={() => setFolderModalOpen(false)}
+        onOk={handleCreateFolder}
+        confirmLoading={folderSubmitting}
+      >
+        <Form form={folderForm} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t('dashboard.folderName', { defaultValue: 'Folder name' })}
+            rules={[{ required: true, message: t('dashboard.folderNameRequired', { defaultValue: 'Folder name is required' }) }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="parent_id"
+            label={t('dashboard.parentFolder', { defaultValue: 'Parent folder' })}
+          >
+            <TreeSelect
+              allowClear
+              treeData={folderTreeData}
+              placeholder={t('dashboard.noParentRoot', { defaultValue: 'No parent (root)' })}
+              treeDefaultExpandAll
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
       <Modal
         title={t('quiz.templateLibrary', { defaultValue: 'Template Library' })}
         open={templateModalOpen}

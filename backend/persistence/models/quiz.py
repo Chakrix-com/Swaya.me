@@ -1,7 +1,7 @@
 """
 Quiz feature domain models
 """
-from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
 from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
 from sqlalchemy.orm import relationship
 import enum
@@ -60,6 +60,7 @@ class Quiz(Base, TimestampMixin, TenantMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    folder_id = Column(Integer, ForeignKey('quiz_folders.id', ondelete='SET NULL'), nullable=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     quiz_type = Column(
@@ -80,6 +81,24 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     sessions = relationship("QuizSession", back_populates="quiz")
+    folder = relationship("QuizFolder", back_populates="quizzes")
+
+
+class QuizFolder(Base, TimestampMixin, TenantMixin):
+    """Nested folder for organizing quizzes and polls."""
+    __tablename__ = "quiz_folders"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "parent_id", "name", name="uq_quiz_folders_tenant_parent_name"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    parent_id = Column(Integer, ForeignKey("quiz_folders.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0, server_default="0")
+
+    parent = relationship("QuizFolder", remote_side=[id], back_populates="children")
+    children = relationship("QuizFolder", back_populates="parent", cascade="all, delete-orphan")
+    quizzes = relationship("Quiz", back_populates="folder")
 
 
 class Question(Base, TimestampMixin):

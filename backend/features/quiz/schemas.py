@@ -159,6 +159,8 @@ class QuizResponse(BaseModel):
     description: Optional[str]
     quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
     status: QuizStatusEnum
+    folder_id: Optional[int] = None
+    folder_path: Optional[str] = None
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     questions: List[QuestionResponse] = []
@@ -177,6 +179,8 @@ class QuizListResponse(BaseModel):
     title: str
     quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
     status: QuizStatusEnum
+    folder_id: Optional[int] = None
+    folder_path: Optional[str] = None
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     question_count: int
@@ -192,6 +196,29 @@ class QuizListResponse(BaseModel):
 class SessionStartRequest(BaseModel):
     """Start quiz session request"""
     quiz_id: int
+
+
+class FolderCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    parent_id: Optional[int] = None
+
+
+class FolderUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    parent_id: Optional[int] = None
+
+
+class FolderAssignRequest(BaseModel):
+    folder_id: Optional[int] = None
+
+
+class FolderResponse(BaseModel):
+    id: int
+    name: str
+    parent_id: Optional[int] = None
+    sort_order: int = 0
+    path: str
+    children: List["FolderResponse"] = []
 
 
 class SessionResponse(BaseModel):
@@ -397,3 +424,6 @@ class TemplateQuizListItemResponse(BaseModel):
     template_scope: TemplateScopeEnum
     tenant_id: int
     created_at: datetime
+
+
+FolderResponse.model_rebuild()

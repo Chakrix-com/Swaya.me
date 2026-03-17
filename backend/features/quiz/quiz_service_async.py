@@ -11,6 +11,7 @@ import os
 from persistence.models.quiz import (
     Quiz,
     Question,
+    QuizFolder,
     QuizStatus,
     QuizType,
     QuestionType,
@@ -22,7 +23,8 @@ from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse,
-    TemplateDesignationRequest, TemplateQuizListItemResponse
+    TemplateDesignationRequest, TemplateQuizListItemResponse,
+    FolderCreateRequest, FolderUpdateRequest, FolderResponse
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, QuizValidationError,
@@ -38,6 +40,276 @@ class QuizBuilderServiceAsync:
     
     def __init__(self, tier_service: TierService):
         self.tier_service = tier_service
+
+    def _folder_path_names(self, folder: Optional[QuizFolder]) -> list[str]:
+        if not folder:
+            return []
+        return [folder.name]
+
+    async def _compute_folder_path_names(self, db: AsyncSession, folder: QuizFolder) -> list[str]:
+        names: list[str] = [folder.name]
+        parent_id = folder.parent_id
+        guard = 0
+        while parent_id is not None and guard < 100:
+            parent = (
+                await db.execute(
+                    select(QuizFolder).filter(
+                        QuizFolder.id == parent_id,
+                        QuizFolder.tenant_id == folder.tenant_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not parent:
+                break
+            names.append(parent.name)
+            parent_id = parent.parent_id
+            guard += 1
+        names.reverse()
+        return names
+
+    def _folder_to_tree(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]], by_parent: dict[Optional[int], list[QuizFolder]]) -> FolderResponse:
+        path_names = self._folder_path_names_with_lookup(folder, parents)
+        children = sorted(by_parent.get(folder.id, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
+        return FolderResponse(
+            id=folder.id,
+            name=folder.name,
+            parent_id=folder.parent_id,
+            sort_order=folder.sort_order or 0,
+            path=" / ".join(path_names),
+            children=[self._folder_to_tree(child, parents, by_parent) for child in children],
+        )
+
+    def _folder_path_names_with_lookup(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]]) -> list[str]:
+        names: list[str] = []
+        cursor: Optional[QuizFolder] = folder
+        guard = 0
+        while cursor is not None and guard < 50:
+            names.append(cursor.name)
+            cursor = parents.get(cursor.id)
+            guard += 1
+        names.reverse()
+        return names
+
+    async def list_folders(self, db: AsyncSession, current_user: CurrentUser) -> list[FolderResponse]:
+        rows = (
+            await db.execute(
+                select(QuizFolder)
+                .filter(QuizFolder.tenant_id == current_user.tenant_id)
+                .order_by(QuizFolder.parent_id.asc(), QuizFolder.sort_order.asc(), QuizFolder.name.asc())
+            )
+        ).scalars().all()
+
+        by_id = {f.id: f for f in rows}
+        parents: dict[int, Optional[QuizFolder]] = {f.id: by_id.get(f.parent_id) for f in rows}
+        by_parent: dict[Optional[int], list[QuizFolder]] = {}
+        for folder in rows:
+            by_parent.setdefault(folder.parent_id, []).append(folder)
+
+        roots = sorted(by_parent.get(None, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
+        return [self._folder_to_tree(root, parents, by_parent) for root in roots]
+
+    async def create_folder(self, db: AsyncSession, request: FolderCreateRequest, current_user: CurrentUser) -> FolderResponse:
+        parent: Optional[QuizFolder] = None
+        if request.parent_id is not None:
+            parent = (
+                await db.execute(
+                    select(QuizFolder).filter(
+                        QuizFolder.id == request.parent_id,
+                        QuizFolder.tenant_id == current_user.tenant_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not parent:
+                raise QuizNotFoundError("Parent folder not found")
+
+        existing = (
+            await db.execute(
+                select(QuizFolder).filter(
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.parent_id == request.parent_id,
+                    func.lower(QuizFolder.name) == request.name.strip().lower(),
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            raise QuizValidationError("A folder with this name already exists in the selected parent")
+
+        max_order = (
+            await db.execute(
+                select(func.coalesce(func.max(QuizFolder.sort_order), 0)).filter(
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.parent_id == request.parent_id,
+                )
+            )
+        ).scalar_one()
+
+        folder = QuizFolder(
+            tenant_id=current_user.tenant_id,
+            parent_id=request.parent_id,
+            name=request.name.strip(),
+            sort_order=(max_order or 0) + 1,
+        )
+        db.add(folder)
+        await db.commit()
+        await db.refresh(folder)
+
+        path_names = await self._compute_folder_path_names(db, folder)
+        return FolderResponse(
+            id=folder.id,
+            name=folder.name,
+            parent_id=folder.parent_id,
+            sort_order=folder.sort_order or 0,
+            path=" / ".join(path_names),
+            children=[],
+        )
+
+    async def update_folder(self, db: AsyncSession, folder_id: int, request: FolderUpdateRequest, current_user: CurrentUser) -> FolderResponse:
+        folder = (
+            await db.execute(
+                select(QuizFolder).filter(
+                    QuizFolder.id == folder_id,
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not folder:
+            raise QuizNotFoundError("Folder not found")
+
+        parent_update_requested = "parent_id" in request.model_fields_set
+        target_parent_id = request.parent_id if parent_update_requested else folder.parent_id
+
+        if parent_update_requested and request.parent_id == folder.id:
+            raise QuizValidationError("Folder cannot be its own parent")
+
+        if parent_update_requested and request.parent_id is not None:
+            parent = (
+                await db.execute(
+                    select(QuizFolder).filter(
+                        QuizFolder.id == request.parent_id,
+                        QuizFolder.tenant_id == current_user.tenant_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not parent:
+                raise QuizNotFoundError("Parent folder not found")
+
+            cursor = parent
+            guard = 0
+            while cursor is not None and guard < 100:
+                if cursor.id == folder.id:
+                    raise QuizValidationError("Folder move would create a cycle")
+                if cursor.parent_id is None:
+                    break
+                cursor = (
+                    await db.execute(
+                        select(QuizFolder).filter(
+                            QuizFolder.id == cursor.parent_id,
+                            QuizFolder.tenant_id == current_user.tenant_id,
+                        )
+                    )
+                ).scalar_one_or_none()
+                guard += 1
+
+        if parent_update_requested:
+            folder.parent_id = request.parent_id
+
+        if request.name is not None:
+            candidate = request.name.strip()
+            existing = (
+                await db.execute(
+                    select(QuizFolder).filter(
+                        QuizFolder.tenant_id == current_user.tenant_id,
+                        QuizFolder.parent_id == target_parent_id,
+                        func.lower(QuizFolder.name) == candidate.lower(),
+                        QuizFolder.id != folder.id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing:
+                raise QuizValidationError("A folder with this name already exists in the selected parent")
+            folder.name = candidate
+
+        await db.commit()
+        await db.refresh(folder)
+        return FolderResponse(
+            id=folder.id,
+            name=folder.name,
+            parent_id=folder.parent_id,
+            sort_order=folder.sort_order or 0,
+            path=" / ".join(await self._compute_folder_path_names(db, folder)),
+            children=[],
+        )
+
+    async def delete_folder(self, db: AsyncSession, folder_id: int, current_user: CurrentUser) -> None:
+        folder = (
+            await db.execute(
+                select(QuizFolder).filter(
+                    QuizFolder.id == folder_id,
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not folder:
+            raise QuizNotFoundError("Folder not found")
+
+        child_rows = (
+            await db.execute(
+                select(QuizFolder.id).filter(
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.parent_id == folder_id,
+                )
+            )
+        ).all()
+        child_ids = [r.id for r in child_rows]
+        if child_ids:
+            await db.execute(
+                update(QuizFolder)
+                .where(QuizFolder.id.in_(child_ids))
+                .values(parent_id=folder.parent_id)
+            )
+
+        await db.execute(
+            update(Quiz)
+            .where(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id == folder_id,
+            )
+            .values(folder_id=folder.parent_id)
+        )
+        await db.delete(folder)
+        await db.commit()
+
+    async def assign_quiz_folder(self, db: AsyncSession, quiz_id: int, folder_id: Optional[int], current_user: CurrentUser) -> QuizResponse:
+        result = await db.execute(
+            select(Quiz)
+            .filter(
+                Quiz.id == quiz_id,
+                Quiz.tenant_id == current_user.tenant_id
+            )
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        )
+        quiz = result.scalar_one_or_none()
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+
+        if folder_id is not None:
+            folder = (
+                await db.execute(
+                    select(QuizFolder).filter(
+                        QuizFolder.id == folder_id,
+                        QuizFolder.tenant_id == current_user.tenant_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not folder:
+                raise QuizNotFoundError("Folder not found")
+            quiz.folder_id = folder_id
+        else:
+            quiz.folder_id = None
+
+        await db.commit()
+        await db.refresh(quiz)
+        return self._to_quiz_response(quiz)
     
     async def create_quiz(
         self,
@@ -138,7 +410,7 @@ class QuizBuilderServiceAsync:
             query = query.filter(Quiz.event_id == event_id)
         
         # Eagerly load questions to avoid lazy loading in async context
-        query = query.options(selectinload(Quiz.questions))
+        query = query.options(selectinload(Quiz.questions), selectinload(Quiz.folder).selectinload(QuizFolder.parent))
         query = query.order_by(Quiz.created_at.desc())
         result = await db.execute(query)
         quizzes = result.scalars().all()
@@ -164,6 +436,8 @@ class QuizBuilderServiceAsync:
                 title=q.title,
                 quiz_type=q.quiz_type,
                 status=q.status,
+                folder_id=q.folder_id,
+                folder_path=" / ".join(self._folder_path_names(q.folder)) if q.folder else None,
                 is_template=q.is_template,
                 template_scope=q.template_scope,
                 question_count=len(q.questions),
@@ -188,7 +462,7 @@ class QuizBuilderServiceAsync:
                 Quiz.id == quiz_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
-            .options(selectinload(Quiz.questions))
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
         )
         quiz = result.scalar_one_or_none()
         if not quiz:
@@ -568,6 +842,8 @@ class QuizBuilderServiceAsync:
             description=quiz.description,
             quiz_type=quiz.quiz_type,
             status=quiz.status,
+            folder_id=quiz.folder_id,
+            folder_path=" / ".join(self._folder_path_names(quiz.folder)) if quiz.folder else None,
             is_template=quiz.is_template,
             template_scope=quiz.template_scope,
             questions=[
