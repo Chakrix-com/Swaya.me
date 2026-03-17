@@ -60,7 +60,7 @@ class QuestionCreate(BaseModel):
     question_type: QuestionTypeEnum = Field(default=QuestionTypeEnum.MCQ)
     text: str = Field(..., min_length=1, max_length=1000)
     options: Optional[List[str]] = None
-    correct_answer_index: Optional[int] = Field(None, ge=0, le=4)
+    correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     points: int = Field(default=1, ge=1)
@@ -71,12 +71,14 @@ class QuestionCreate(BaseModel):
         """Validate fields based on question type"""
         if self.question_type == QuestionTypeEnum.MCQ:
             # MCQ must have options and correct answer
-            if not self.options or len(self.options) != 4:
-                raise ValueError('MCQ questions must have exactly 4 options')
+            if not self.options or len(self.options) < 2:
+                raise ValueError('MCQ questions must have at least 2 options')
+            if len(self.options) > 10:
+                raise ValueError('MCQ questions can have at most 10 options')
             if any(not opt.strip() for opt in self.options):
                 raise ValueError('All options must be non-empty')
-            if self.correct_answer_index is not None and (self.correct_answer_index < 0 or self.correct_answer_index > 3):
-                raise ValueError('MCQ correct answer must be between A and D')
+            if self.correct_answer_index is not None and not (0 <= self.correct_answer_index < len(self.options)):
+                raise ValueError('MCQ correct answer index must reference an existing option')
         elif self.question_type == QuestionTypeEnum.WORD_CLOUD:
             # Word cloud must NOT have options or correct answer
             if self.options is not None:

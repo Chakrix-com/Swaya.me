@@ -253,11 +253,13 @@ class QuizBuilderService:
             
             # Validate based on question type
             if question.question_type == QuestionType.MCQ:
-                if not question.options or len(question.options) != 4:
-                    raise QuizValidationError("MCQ questions must have exactly 4 options")
+                if not question.options or len(question.options) < 2:
+                    raise QuizValidationError("MCQ questions must have at least 2 options")
+                if len(question.options) > 10:
+                    raise QuizValidationError("MCQ questions can have at most 10 options")
                 if (
                     question.correct_answer_index is not None
-                    and (question.correct_answer_index < 0 or question.correct_answer_index > 3)
+                    and not (0 <= question.correct_answer_index < len(question.options))
                 ):
                     raise QuizValidationError("MCQ questions must have valid correct answer index")
                 if quiz.quiz_type != QuizType.POLL and question.correct_answer_index is None:

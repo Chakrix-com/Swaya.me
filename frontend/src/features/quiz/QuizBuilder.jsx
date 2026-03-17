@@ -26,7 +26,8 @@ import {
   RocketOutlined,
   LeftOutlined,
   EditOutlined,
-  CloseOutlined
+  CloseOutlined,
+  MinusCircleOutlined
 } from '@ant-design/icons'
 import { quizAPI, questionAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
@@ -68,11 +69,20 @@ const QuestionForm = ({
   useEffect(() => {
     console.log('[QuestionForm] useEffect triggered')
     if (question) {
-      questionForm.setFieldsValue({
+      const formValues = {
         ...question,
         points: question.points ?? 1,
         max_time_seconds: question.max_time_seconds ?? null,
-      })
+      }
+      if (question.question_type === 'mcq') {
+        formValues.option_a = question.options?.[0] || ''
+        formValues.option_b = question.options?.[1] || ''
+        formValues.option_c = question.options?.[2] || ''
+        formValues.option_d = question.options?.[3] || ''
+        formValues.extra_options = question.options?.slice(4) || []
+        formValues.correct_answer = isPoll ? undefined : String(question.correct_answer_index ?? 0)
+      }
+      questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
       
       // Set image URLs from question data
@@ -86,6 +96,14 @@ const QuestionForm = ({
     } else {
       // Reset form for new question
       questionForm.resetFields()
+      questionForm.setFieldsValue({
+        option_a: '',
+        option_b: '',
+        option_c: '',
+        option_d: '',
+        extra_options: [],
+        correct_answer: isPoll ? undefined : '0',
+      })
       setQuestionType('mcq')
       
       // Reset image state for new question
@@ -97,7 +115,7 @@ const QuestionForm = ({
         D: null
       })
     }
-  }, [question])  // Removed setQuestionImageUrl, setOptionImages - they're stable
+  }, [question, isPoll])  // Removed setQuestionImageUrl, setOptionImages - they're stable
 
   const handleTypeChange = (e) => {
     const nextType = e.target.value
@@ -108,6 +126,7 @@ const QuestionForm = ({
         option_b: undefined,
         option_c: undefined,
         option_d: undefined,
+        extra_options: [],
         correct_answer: undefined,
         expected_answer: undefined,
       })
@@ -137,7 +156,7 @@ const QuestionForm = ({
         }}
         initialValues={{
           question_type: 'mcq',
-          correct_answer: isPoll ? undefined : 'A'
+          correct_answer: isPoll ? undefined : '0'
         }}
       >
         <Form.Item
@@ -275,7 +294,6 @@ const QuestionForm = ({
             <Form.Item
               name="option_c"
               label={t('quiz.optionC')}
-              rules={[{ required: true, message: t('quiz.optionCRequired') }]}
             >
               <Input 
                 placeholder={t('quiz.optionCPlaceholder')} 
@@ -305,7 +323,6 @@ const QuestionForm = ({
             <Form.Item
               name="option_d"
               label={t('quiz.optionD')}
-              rules={[{ required: true, message: t('quiz.optionDRequired') }]}
             >
               <Input 
                 placeholder={t('quiz.optionDPlaceholder')} 
@@ -332,19 +349,65 @@ const QuestionForm = ({
               }}
             />
 
+            <Form.List name="extra_options">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map((field) => (
+                    <Space key={field.key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
+                      <Form.Item
+                        {...field}
+                        label={t('quiz.optionLabel', { defaultValue: `Option ${field.name + 5}` })}
+                        rules={[{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]}
+                      >
+                        <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                      </Form.Item>
+                      <Button icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      icon={<PlusOutlined />}
+                      disabled={fields.length >= 6}
+                    >
+                      {t('quiz.addOption', { defaultValue: 'Add option' })}
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+
             {!isPoll && (
-              <Form.Item
-                name="correct_answer"
-                label={t('quiz.correctAnswer')}
-                rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
-              >
-                <Radio.Group>
-                  <Radio value="A">A</Radio>
-                  <Radio value="B">B</Radio>
-                  <Radio value="C">C</Radio>
-                  <Radio value="D">D</Radio>
-                </Radio.Group>
-              </Form.Item>
+              <>
+                <Form.Item shouldUpdate>
+                  {() => {
+                    const optionValues = [
+                      questionForm.getFieldValue('option_a'),
+                      questionForm.getFieldValue('option_b'),
+                      questionForm.getFieldValue('option_c'),
+                      questionForm.getFieldValue('option_d'),
+                      ...(questionForm.getFieldValue('extra_options') || []),
+                    ].map((v) => (typeof v === 'string' ? v.trim() : v)).filter(Boolean)
+
+                    return (
+                      <Form.Item
+                        name="correct_answer"
+                        label={t('quiz.correctAnswer')}
+                        rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+                      >
+                        <Radio.Group>
+                          {optionValues.map((_, index) => (
+                            <Radio key={index} value={String(index)}>
+                              {t('quiz.optionLabel', { defaultValue: `Option ${index + 1}` })}
+                            </Radio>
+                          ))}
+                        </Radio.Group>
+                      </Form.Item>
+                    )
+                  }}
+                </Form.Item>
+              </>
             )}
           </>
         )}
@@ -516,9 +579,10 @@ export default function QuizBuilder() {
             option_b: q.options[1],
             option_c: q.options[2],
             option_d: q.options[3],
+            extra_options: q.question_type === 'mcq' ? (q.options.slice(4) || []) : [],
             option_e: q.options[4],
             correct_answer: q.question_type === 'mcq'
-              ? ['A', 'B', 'C', 'D'][q.correct_answer_index]
+              ? String(q.correct_answer_index ?? 0)
               : String(q.correct_answer_index ?? 0)
           }
         }
@@ -592,8 +656,26 @@ export default function QuizBuilder() {
       
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
-        questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
-        questionData.correct_answer_index = isPoll ? null : ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        const mcqOptions = [
+          values.option_a,
+          values.option_b,
+          values.option_c,
+          values.option_d,
+          ...(values.extra_options || []),
+        ]
+          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
+          .filter(Boolean)
+        if (mcqOptions.length < 2) {
+          message.error('MCQ must have at least 2 options')
+          return
+        }
+        questionData.options = mcqOptions
+        const selected = Number(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : selected
+        if (!isPoll && (!Number.isInteger(selected) || selected < 0 || selected >= mcqOptions.length)) {
+          message.error(t('quiz.correctAnswerRequired'))
+          return
+        }
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
@@ -746,8 +828,26 @@ export default function QuizBuilder() {
       
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
-        questionData.options = [values.option_a, values.option_b, values.option_c, values.option_d]
-        questionData.correct_answer_index = isPoll ? null : ['A', 'B', 'C', 'D'].indexOf(values.correct_answer)
+        const mcqOptions = [
+          values.option_a,
+          values.option_b,
+          values.option_c,
+          values.option_d,
+          ...(values.extra_options || []),
+        ]
+          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
+          .filter(Boolean)
+        if (mcqOptions.length < 2) {
+          message.error('MCQ must have at least 2 options')
+          return
+        }
+        questionData.options = mcqOptions
+        const selected = Number(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : selected
+        if (!isPoll && (!Number.isInteger(selected) || selected < 0 || selected >= mcqOptions.length)) {
+          message.error(t('quiz.correctAnswerRequired'))
+          return
+        }
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
