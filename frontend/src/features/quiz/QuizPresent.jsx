@@ -823,7 +823,9 @@ export default function QuizPresent() {
     }
 
     const maxSeconds = Number(currentQ.max_time_seconds)
-    const startedAt = new Date(currentQ.timer_started_at).getTime()
+    const rawStartedAt = String(currentQ.timer_started_at)
+    const startedAtIso = /Z$|[+-]\d{2}:\d{2}$/.test(rawStartedAt) ? rawStartedAt : `${rawStartedAt}Z`
+    const startedAt = new Date(startedAtIso).getTime()
     if (!maxSeconds || Number.isNaN(startedAt)) {
       setTimerRemaining(null)
       return

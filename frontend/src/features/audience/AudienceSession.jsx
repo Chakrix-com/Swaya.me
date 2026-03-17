@@ -337,7 +337,9 @@ export default function AudienceSession() {
       return
     }
     const maxSeconds = Number(currentQuestion.max_time_seconds)
-    const startedAt = new Date(currentQuestion.timer_started_at).getTime()
+    const rawStartedAt = String(currentQuestion.timer_started_at)
+    const startedAtIso = /Z$|[+-]\d{2}:\d{2}$/.test(rawStartedAt) ? rawStartedAt : `${rawStartedAt}Z`
+    const startedAt = new Date(startedAtIso).getTime()
     if (!maxSeconds || Number.isNaN(startedAt)) {
       setTimerRemaining(null)
       return
