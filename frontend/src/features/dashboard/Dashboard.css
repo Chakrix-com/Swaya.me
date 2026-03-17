@@ -29,6 +29,10 @@
   gap: 16px;
 }
 
+.dashboard-explorer-layout.collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .dashboard-folder-pane {
   border: 1px solid #f0f0f0;
   border-radius: 8px;

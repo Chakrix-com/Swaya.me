@@ -21,6 +21,8 @@ import {
   FolderFilled,
   FolderOpenOutlined,
   FolderAddOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -48,6 +50,7 @@ function Dashboard() {
   const [folderSubmitting, setFolderSubmitting] = useState(false)
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false)
   const [renameFolderSubmitting, setRenameFolderSubmitting] = useState(false)
+  const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false)
 
   useEffect(() => {
     loadQuizzes()
@@ -523,7 +526,8 @@ function Dashboard() {
           </div>
         }
       >
-      <div className="dashboard-explorer-layout">
+      <div className={`dashboard-explorer-layout${isExplorerCollapsed ? ' collapsed' : ''}`}>
+        {!isExplorerCollapsed ? (
         <aside className="dashboard-folder-pane">
           <div className="dashboard-folder-pane-header">
             <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
@@ -590,8 +594,18 @@ function Dashboard() {
             )}
           </div>
         </aside>
+        ) : null}
         <section className="dashboard-content-pane">
           <Space wrap style={{ marginBottom: 16, width: '100%' }}>
+            <Tooltip title={isExplorerCollapsed
+              ? t('dashboard.expandFolders', { defaultValue: 'Show folders' })
+              : t('dashboard.collapseFolders', { defaultValue: 'Hide folders' })}
+            >
+              <Button
+                icon={isExplorerCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setIsExplorerCollapsed((prev) => !prev)}
+              />
+            </Tooltip>
             <Input.Search
               className="dashboard-search-input"
               allowClear
