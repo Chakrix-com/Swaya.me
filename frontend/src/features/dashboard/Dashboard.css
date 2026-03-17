@@ -48,6 +48,10 @@
   font-weight: 600;
 }
 
+.dashboard-folder-pane-header .ant-space {
+  flex-shrink: 0;
+}
+
 .dashboard-folder-tree-wrapper {
   padding: 10px;
   overflow: auto;

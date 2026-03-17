@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree } from 'antd'
+import { Button, Tag, Space, Popconfirm, Tooltip, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree } from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -528,21 +528,23 @@ function Dashboard() {
           <div className="dashboard-folder-pane-header">
             <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
             <Space size={6}>
-              <Button
-                size="small"
-                icon={<FolderAddOutlined />}
-                onClick={() => openCreateFolderModal(selectedFolderId || null)}
-              >
-                {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
-              </Button>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={openRenameFolderModal}
-                disabled={!selectedFolderId}
-              >
-                {t('dashboard.renameFolder', { defaultValue: 'Rename' })}
-              </Button>
+              <Tooltip title={t('dashboard.newFolder', { defaultValue: 'New Folder' })}>
+                <Button
+                  size="small"
+                  shape="circle"
+                  icon={<FolderAddOutlined />}
+                  onClick={() => openCreateFolderModal(selectedFolderId || null)}
+                />
+              </Tooltip>
+              <Tooltip title={t('dashboard.renameFolder', { defaultValue: 'Rename Folder' })}>
+                <Button
+                  size="small"
+                  shape="circle"
+                  icon={<EditOutlined />}
+                  onClick={openRenameFolderModal}
+                  disabled={!selectedFolderId}
+                />
+              </Tooltip>
               <Popconfirm
                 title={t('dashboard.deleteFolderConfirmTitle', { defaultValue: 'Delete selected folder?' })}
                 description={t('dashboard.deleteFolderConfirmDesc', { defaultValue: 'Subfolders and quizzes will be moved to parent/root.' })}
@@ -551,14 +553,15 @@ function Dashboard() {
                 cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
                 disabled={!selectedFolderId}
               >
-                <Button
-                  size="small"
-                  danger
-                  icon={<DeleteOutlined />}
-                  disabled={!selectedFolderId}
-                >
-                  {t('dashboard.deleteFolder', { defaultValue: 'Delete' })}
-                </Button>
+                <Tooltip title={t('dashboard.deleteFolder', { defaultValue: 'Delete Folder' })}>
+                  <Button
+                    size="small"
+                    shape="circle"
+                    danger
+                    icon={<DeleteOutlined />}
+                    disabled={!selectedFolderId}
+                  />
+                </Tooltip>
               </Popconfirm>
             </Space>
           </div>
