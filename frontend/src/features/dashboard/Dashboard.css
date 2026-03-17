@@ -156,4 +156,8 @@
   .dashboard-folder-pane {
     min-height: 240px;
   }
+
+  .dashboard-search-input {
+    width: 100% !important;
+  }
 }

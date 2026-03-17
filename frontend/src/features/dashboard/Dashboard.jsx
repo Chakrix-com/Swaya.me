@@ -593,9 +593,10 @@ function Dashboard() {
         <section className="dashboard-content-pane">
           <Space wrap style={{ marginBottom: 16, width: '100%' }}>
             <Input.Search
+              className="dashboard-search-input"
               allowClear
               placeholder={t('dashboard.searchQuizzes', { defaultValue: 'Search quizzes/polls' })}
-              style={{ width: 320 }}
+              style={{ width: 'min(320px, 100%)' }}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
