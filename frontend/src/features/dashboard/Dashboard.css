@@ -18,9 +18,9 @@
 
 .quiz-item-body {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .dashboard-explorer-layout {
@@ -86,6 +86,7 @@
   flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
+  width: 100%;
 }
 
 @supports (-webkit-touch-callout: none) {
