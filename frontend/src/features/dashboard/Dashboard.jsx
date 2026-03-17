@@ -29,6 +29,7 @@ import './Dashboard.css'
 
 function Dashboard() {
   const TEMPLATE_CACHE_KEY = 'templateQuizIds'
+  const ROOT_FOLDER_KEY = 'swayame-root'
   const { t } = useTranslation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -137,8 +138,8 @@ function Dashboard() {
     }
   }
 
-  const openCreateFolderModal = () => {
-    folderForm.setFieldsValue({ name: '', parent_id: null })
+  const openCreateFolderModal = (parentId = null) => {
+    folderForm.setFieldsValue({ name: '', parent_id: parentId })
     setFolderModalOpen(true)
   }
 
@@ -313,7 +314,12 @@ function Dashboard() {
       icon: selectedFolderId === node.id ? <FolderOpenOutlined /> : <FolderFilled />,
       children: mapNodes(node.children || []),
     }))
-    return mapNodes(folders)
+    return [{
+      key: ROOT_FOLDER_KEY,
+      title: 'Swayame',
+      icon: <FolderOpenOutlined />,
+      children: mapNodes(folders),
+    }]
   }, [folders, selectedFolderId])
 
   const selectedFolderName = useMemo(() => {
@@ -481,18 +487,15 @@ function Dashboard() {
         <aside className="dashboard-folder-pane">
           <div className="dashboard-folder-pane-header">
             <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
-            <Button size="small" icon={<FolderAddOutlined />} onClick={openCreateFolderModal}>
+            <Button
+              size="small"
+              icon={<FolderAddOutlined />}
+              onClick={() => openCreateFolderModal(selectedFolderId || null)}
+            >
               {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
             </Button>
           </div>
           <div className="dashboard-folder-tree-wrapper">
-            <Button
-              type={!selectedFolderId ? 'primary' : 'default'}
-              className="dashboard-folder-all-btn"
-              onClick={() => setSelectedFolderId(undefined)}
-            >
-              {t('dashboard.allQuizzes', { defaultValue: 'All Quizzes & Polls' })}
-            </Button>
             {foldersLoading ? (
               <div style={{ color: '#888', padding: '8px 4px' }}>
                 {t('common.loading', { defaultValue: 'Loading...' })}
@@ -502,8 +505,15 @@ function Dashboard() {
                 showIcon
                 showLine={{ showLeafIcon: false }}
                 treeData={folderNavTreeData}
-                selectedKeys={selectedFolderId ? [String(selectedFolderId)] : []}
-                onSelect={(keys) => setSelectedFolderId(keys[0] ? Number(keys[0]) : undefined)}
+                selectedKeys={[selectedFolderId ? String(selectedFolderId) : ROOT_FOLDER_KEY]}
+                onSelect={(keys) => {
+                  const selectedKey = keys[0]
+                  if (!selectedKey || selectedKey === ROOT_FOLDER_KEY) {
+                    setSelectedFolderId(undefined)
+                    return
+                  }
+                  setSelectedFolderId(Number(selectedKey))
+                }}
                 defaultExpandAll
                 className="dashboard-folder-tree"
               />
