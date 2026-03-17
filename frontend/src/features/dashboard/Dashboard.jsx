@@ -162,6 +162,19 @@ function Dashboard() {
     }
   }
 
+  const handleDeleteFolder = async () => {
+    if (!selectedFolderId) return
+    try {
+      await quizAPI.deleteFolder(selectedFolderId)
+      message.success(t('dashboard.folderDeleted', { defaultValue: 'Folder deleted' }))
+      setSelectedFolderId(undefined)
+      await loadFolders()
+      await loadQuizzes()
+    } catch (error) {
+      message.error(error?.response?.data?.detail || t('dashboard.folderDeleteFailed', { defaultValue: 'Failed to delete folder' }))
+    }
+  }
+
   const handleToggleTemplate = async (quiz) => {
     const nextTemplateState = !quiz.is_template
     try {
@@ -487,13 +500,32 @@ function Dashboard() {
         <aside className="dashboard-folder-pane">
           <div className="dashboard-folder-pane-header">
             <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
-            <Button
-              size="small"
-              icon={<FolderAddOutlined />}
-              onClick={() => openCreateFolderModal(selectedFolderId || null)}
-            >
-              {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
-            </Button>
+            <Space size={6}>
+              <Button
+                size="small"
+                icon={<FolderAddOutlined />}
+                onClick={() => openCreateFolderModal(selectedFolderId || null)}
+              >
+                {t('dashboard.newFolder', { defaultValue: 'New Folder' })}
+              </Button>
+              <Popconfirm
+                title={t('dashboard.deleteFolderConfirmTitle', { defaultValue: 'Delete selected folder?' })}
+                description={t('dashboard.deleteFolderConfirmDesc', { defaultValue: 'Subfolders and quizzes will be moved to parent/root.' })}
+                onConfirm={handleDeleteFolder}
+                okText={t('common.delete', { defaultValue: 'Delete' })}
+                cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
+                disabled={!selectedFolderId}
+              >
+                <Button
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  disabled={!selectedFolderId}
+                >
+                  {t('dashboard.deleteFolder', { defaultValue: 'Delete' })}
+                </Button>
+              </Popconfirm>
+            </Space>
           </div>
           <div className="dashboard-folder-tree-wrapper">
             {foldersLoading ? (
