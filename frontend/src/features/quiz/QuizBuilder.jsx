@@ -15,38 +15,52 @@ import {
   Popconfirm,
   Typography,
   Divider,
-  Tag
+  Tag,
 } from 'antd'
-import { 
-  PlusOutlined, 
-  DeleteOutlined, 
-  SaveOutlined, 
-  ArrowUpOutlined, 
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  SaveOutlined,
+  ArrowUpOutlined,
   ArrowDownOutlined,
   RocketOutlined,
   LeftOutlined,
   EditOutlined,
   CloseOutlined,
-  MinusCircleOutlined
+  MinusCircleOutlined,
+  ThunderboltOutlined,
+  BulbOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
-import { quizAPI, questionAPI } from '../../services/api'
+import {
+  Modal,
+  Checkbox,
+  Select,
+  Spin,
+  Alert,
+  Tooltip,
+} from 'antd'
+import { quizAPI, questionAPI, aiAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
 import './QuizBuilder.css'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
-const QUESTION_TYPE_LABELS = {
-  mcq: 'MCQ',
-  word_cloud: 'Word Cloud',
-  single_line: 'Single Line',
-  scale: 'Scale (1-5)',
-  paragraph: 'Paragraph',
+const getQuestionTypeLabel = (type, t) => {
+  const labels = {
+    mcq: t('quiz.multipleChoice'),
+    word_cloud: t('quiz.wordCloud'),
+    single_line: t('quiz.singleLine'),
+    scale: t('quiz.scaleOneToFive'),
+    paragraph: t('quiz.paragraph'),
+  }
+  return labels[type] || t('quiz.multipleChoice')
 }
 
 // QuestionForm component - extracted to prevent recreation on parent re-renders
-const QuestionForm = ({ 
-  question, 
-  onSave, 
+const QuestionForm = ({
+  question,
+  onSave,
   onCancel,
   quizId,
   questionImageUrl,
@@ -58,10 +72,17 @@ const QuestionForm = ({
   loading,
   movingImages,
   isPoll,
+  language,
+  isAdmin,
   t
 }) => {
   const [questionForm] = Form.useForm()
   const [questionType, setQuestionType] = useState('mcq')
+  const [mcqBaseOptionCount, setMcqBaseOptionCount] = useState(2)
+  const [aiSuggestOpen, setAiSuggestOpen] = useState(false)
+  const [aiSuggestTopic, setAiSuggestTopic] = useState('')
+  const [aiSuggesting, setAiSuggesting] = useState(false)
+  const [rewriting, setRewriting] = useState({})
   
   // Debug: Log when component renders
   console.log('[QuestionForm] Rendering. Question ID:', question?.id || 'NEW')
@@ -75,6 +96,8 @@ const QuestionForm = ({
         max_time_seconds: question.max_time_seconds ?? null,
       }
       if (question.question_type === 'mcq') {
+        const existingOptionCount = question.options?.length || 2
+        setMcqBaseOptionCount(Math.min(4, Math.max(2, existingOptionCount)))
         formValues.option_a = question.options?.[0] || ''
         formValues.option_b = question.options?.[1] || ''
         formValues.option_c = question.options?.[2] || ''
@@ -96,6 +119,7 @@ const QuestionForm = ({
     } else {
       // Reset form for new question
       questionForm.resetFields()
+      setMcqBaseOptionCount(2)
       questionForm.setFieldsValue({
         option_a: '',
         option_b: '',
@@ -120,6 +144,15 @@ const QuestionForm = ({
   const handleTypeChange = (e) => {
     const nextType = e.target.value
     setQuestionType(nextType)
+    if (nextType === 'mcq') {
+      setMcqBaseOptionCount(2)
+      questionForm.setFieldsValue({
+        option_c: undefined,
+        option_d: undefined,
+        extra_options: [],
+        correct_answer: isPoll ? undefined : '0',
+      })
+    }
     if (nextType === 'word_cloud' || nextType === 'single_line' || nextType === 'paragraph') {
       questionForm.setFieldsValue({
         option_a: undefined,
@@ -143,6 +176,46 @@ const QuestionForm = ({
     }
   }
 
+  const normalizeCorrectAnswerAfterOptionCountChange = (nextOptionCount) => {
+    if (isPoll) return
+    const current = Number(questionForm.getFieldValue('correct_answer'))
+    if (!Number.isInteger(current) || current >= nextOptionCount) {
+      questionForm.setFieldValue('correct_answer', String(Math.max(0, nextOptionCount - 1)))
+    }
+  }
+
+  const handleRewrite = async (fieldName, context) => {
+    const val = questionForm.getFieldValue(fieldName)
+    if (!val?.trim()) return
+    setRewriting(prev => ({ ...prev, [fieldName]: true }))
+    try {
+      const res = await aiAPI.rewrite({ text: val.trim(), context, language: language || 'en' })
+      questionForm.setFieldsValue({ [fieldName]: res.data.rewritten })
+    } catch {
+      // silently fail — field stays unchanged
+    } finally {
+      setRewriting(prev => ({ ...prev, [fieldName]: false }))
+    }
+  }
+
+  const rewriteIcon = (fieldName) =>
+    rewriting[fieldName] ? <LoadingOutlined spin /> : <ThunderboltOutlined />
+
+  const handleAiSuggestPrompt = async () => {
+    if (!aiSuggestTopic.trim()) return
+    setAiSuggesting(true)
+    try {
+      const res = await aiAPI.generatePollPrompt({ topic: aiSuggestTopic.trim(), language: language || 'en' })
+      questionForm.setFieldsValue({ text: res.data.prompt })
+      setAiSuggestOpen(false)
+      setAiSuggestTopic('')
+    } catch {
+      // silently fail — user can still type manually
+    } finally {
+      setAiSuggesting(false)
+    }
+  }
+
   return (
     <Card style={{ marginBottom: 16, width: '100%' }}>
       <Form
@@ -151,7 +224,7 @@ const QuestionForm = ({
         onFinish={onSave}
         onFinishFailed={(errorInfo) => {
           const errors = errorInfo.errorFields.map(f => f.errors.join(', ')).join(' | ');
-          message.warning('Form validation failed: ' + errors);
+          message.warning(`${t('quiz.formValidationFailed')}: ${errors}`);
           console.error('Validation failed:', errorInfo);
         }}
         initialValues={{
@@ -164,12 +237,12 @@ const QuestionForm = ({
           label={t('quiz.questionType')}
           rules={[{ required: true }]}
         >
-          <Radio.Group onChange={handleTypeChange}>
-            <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
-            {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
-            <Radio value="single_line">Single Line</Radio>
-            {isPoll && <Radio value="scale">Scale (1-5)</Radio>}
-            {isPoll && <Radio value="paragraph">Paragraph</Radio>}
+            <Radio.Group onChange={handleTypeChange}>
+              <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
+              {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
+              <Radio value="single_line">{t('quiz.singleLine')}</Radio>
+              {isPoll && <Radio value="scale">{t('quiz.scaleOneToFive')}</Radio>}
+              {isPoll && <Radio value="paragraph">{t('quiz.paragraph')}</Radio>}
           </Radio.Group>
         </Form.Item>
 
@@ -178,14 +251,29 @@ const QuestionForm = ({
           label={t('quiz.question')}
           rules={[{ required: true, message: t('quiz.questionRequired') }]}
         >
-          <TextArea 
-            rows={2} 
-            placeholder={t('quiz.enterQuestion')} 
+          <TextArea
+            rows={2}
+            placeholder={t('quiz.enterQuestion')}
             spellCheck="true"
             lang={t('common.langCode', { defaultValue: 'en' })}
             onContextMenu={(e) => e.stopPropagation()}
           />
         </Form.Item>
+        {isAdmin && (
+          <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+            <Tooltip title={t('ai.rewriteWithAIModel')}>
+              <Button
+                size="small"
+                type="text"
+                icon={rewriteIcon('text')}
+                loading={rewriting['text']}
+                onClick={() => handleRewrite('text', isPoll ? 'poll question' : 'quiz question')}
+              >
+                {t('ai.rewrite')}
+              </Button>
+            </Tooltip>
+          </div>
+        )}
 
         <Space size={16} style={{ width: '100%' }} wrap>
           <Form.Item
@@ -208,7 +296,7 @@ const QuestionForm = ({
         {/* Question Image Upload */}
         <div style={{ marginBottom: 16 }}>
           <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
-            Question Image (optional)
+            {t('quiz.questionImageOptional')}
           </Text>
           <ImageUpload
             quizId={parseInt(quizId)}
@@ -236,11 +324,16 @@ const QuestionForm = ({
               label={t('quiz.optionA')}
               rules={[{ required: true, message: t('quiz.optionARequired') }]}
             >
-              <Input 
-                placeholder={t('quiz.optionAPlaceholder')} 
+              <Input
+                placeholder={t('quiz.optionAPlaceholder')}
                 spellCheck="true"
                 lang={t('common.langCode', { defaultValue: 'en' })}
                 onContextMenu={(e) => e.stopPropagation()}
+                suffix={isAdmin && (
+                  <Tooltip title={t('ai.rewriteWithAI')}>
+                    <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
+                  </Tooltip>
+                )}
               />
             </Form.Item>
             
@@ -266,11 +359,16 @@ const QuestionForm = ({
               label={t('quiz.optionB')}
               rules={[{ required: true, message: t('quiz.optionBRequired') }]}
             >
-              <Input 
-                placeholder={t('quiz.optionBPlaceholder')} 
+              <Input
+                placeholder={t('quiz.optionBPlaceholder')}
                 spellCheck="true"
                 lang={t('common.langCode', { defaultValue: 'en' })}
                 onContextMenu={(e) => e.stopPropagation()}
+                suffix={isAdmin && (
+                  <Tooltip title={t('ai.rewriteWithAI')}>
+                    <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
+                  </Tooltip>
+                )}
               />
             </Form.Item>
             
@@ -291,63 +389,79 @@ const QuestionForm = ({
               }}
             />
 
-            <Form.Item
-              name="option_c"
-              label={t('quiz.optionC')}
-            >
-              <Input 
-                placeholder={t('quiz.optionCPlaceholder')} 
-                spellCheck="true"
-                lang={t('common.langCode', { defaultValue: 'en' })}
-                onContextMenu={(e) => e.stopPropagation()}
-              />
-            </Form.Item>
-            
-            {/* Option C Image Upload */}
-            <ImageUpload
-              quizId={parseInt(quizId)}
-              questionId={question?.id}
-              imageType="option_c"
-              currentImageUrl={optionImages.C}
-              tempData={tempImages.optionC}
-              onImageChange={(url, tempKey) => {
-                if (tempKey) {
-                  setTempImages(prev => ({ ...prev, optionC: { url, tempKey } }))
-                } else {
-                  setOptionImages(prev => ({ ...prev, C: url }))
-                  setTempImages(prev => ({ ...prev, optionC: null }))
-                }
-              }}
-            />
+            {mcqBaseOptionCount >= 3 && (
+              <>
+                <Form.Item
+                  name="option_c"
+                  label={t('quiz.optionC')}
+                >
+                  <Input
+                    placeholder={t('quiz.optionCPlaceholder')}
+                    spellCheck="true"
+                    lang={t('common.langCode', { defaultValue: 'en' })}
+                    onContextMenu={(e) => e.stopPropagation()}
+                    suffix={isAdmin && (
+                      <Tooltip title={t('ai.rewriteWithAI')}>
+                        <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
+                      </Tooltip>
+                    )}
+                  />
+                </Form.Item>
+                
+                <ImageUpload
+                  quizId={parseInt(quizId)}
+                  questionId={question?.id}
+                  imageType="option_c"
+                  currentImageUrl={optionImages.C}
+                  tempData={tempImages.optionC}
+                  onImageChange={(url, tempKey) => {
+                    if (tempKey) {
+                      setTempImages(prev => ({ ...prev, optionC: { url, tempKey } }))
+                    } else {
+                      setOptionImages(prev => ({ ...prev, C: url }))
+                      setTempImages(prev => ({ ...prev, optionC: null }))
+                    }
+                  }}
+                />
+              </>
+            )}
 
-            <Form.Item
-              name="option_d"
-              label={t('quiz.optionD')}
-            >
-              <Input 
-                placeholder={t('quiz.optionDPlaceholder')} 
-                spellCheck="true"
-                lang={t('common.langCode', { defaultValue: 'en' })}
-                onContextMenu={(e) => e.stopPropagation()}
-              />
-            </Form.Item>
-            
-            {/* Option D Image Upload */}
-            <ImageUpload
-              quizId={parseInt(quizId)}
-              questionId={question?.id}
-              imageType="option_d"
-              currentImageUrl={optionImages.D}
-              tempData={tempImages.optionD}
-              onImageChange={(url, tempKey) => {
-                if (tempKey) {
-                  setTempImages(prev => ({ ...prev, optionD: { url, tempKey } }))
-                } else {
-                  setOptionImages(prev => ({ ...prev, D: url }))
-                  setTempImages(prev => ({ ...prev, optionD: null }))
-                }
-              }}
-            />
+            {mcqBaseOptionCount >= 4 && (
+              <>
+                <Form.Item
+                  name="option_d"
+                  label={t('quiz.optionD')}
+                >
+                  <Input
+                    placeholder={t('quiz.optionDPlaceholder')}
+                    spellCheck="true"
+                    lang={t('common.langCode', { defaultValue: 'en' })}
+                    onContextMenu={(e) => e.stopPropagation()}
+                    suffix={isAdmin && (
+                      <Tooltip title={t('ai.rewriteWithAI')}>
+                        <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
+                      </Tooltip>
+                    )}
+                  />
+                </Form.Item>
+                
+                <ImageUpload
+                  quizId={parseInt(quizId)}
+                  questionId={question?.id}
+                  imageType="option_d"
+                  currentImageUrl={optionImages.D}
+                  tempData={tempImages.optionD}
+                  onImageChange={(url, tempKey) => {
+                    if (tempKey) {
+                      setTempImages(prev => ({ ...prev, optionD: { url, tempKey } }))
+                    } else {
+                      setOptionImages(prev => ({ ...prev, D: url }))
+                      setTempImages(prev => ({ ...prev, optionD: null }))
+                    }
+                  }}
+                />
+              </>
+            )}
 
             <Form.List name="extra_options">
               {(fields, { add, remove }) => (
@@ -365,14 +479,61 @@ const QuestionForm = ({
                     </Space>
                   ))}
                   <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      icon={<PlusOutlined />}
-                      disabled={fields.length >= 6}
-                    >
-                      {t('quiz.addOption', { defaultValue: 'Add option' })}
-                    </Button>
+                    <Space>
+                      <Button
+                        type="dashed"
+                        onClick={() => {
+                          const totalOptions = mcqBaseOptionCount + fields.length
+                          if (totalOptions >= 10) {
+                            return
+                          }
+                          if (mcqBaseOptionCount < 4) {
+                            const nextCount = mcqBaseOptionCount + 1
+                            setMcqBaseOptionCount(nextCount)
+                            normalizeCorrectAnswerAfterOptionCountChange(nextCount + fields.length)
+                            return
+                          }
+                          add()
+                        }}
+                        icon={<PlusOutlined />}
+                        disabled={mcqBaseOptionCount + fields.length >= 10}
+                      >
+                        {t('quiz.addOption', { defaultValue: 'Add option' })}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (fields.length > 0) {
+                            remove(fields.length - 1)
+                            normalizeCorrectAnswerAfterOptionCountChange(mcqBaseOptionCount + fields.length - 1)
+                            return
+                          }
+                          if (mcqBaseOptionCount === 4) {
+                            questionForm.setFieldsValue({ option_d: undefined })
+                            setOptionImages(prev => ({ ...prev, D: null }))
+                            setTempImages(prev => ({ ...prev, optionD: null }))
+                            setMcqBaseOptionCount(3)
+                            normalizeCorrectAnswerAfterOptionCountChange(3)
+                            return
+                          }
+                          if (mcqBaseOptionCount === 3) {
+                            questionForm.setFieldsValue({ option_c: undefined })
+                            setOptionImages(prev => ({ ...prev, C: null }))
+                            setTempImages(prev => ({ ...prev, optionC: null }))
+                            setMcqBaseOptionCount(2)
+                            normalizeCorrectAnswerAfterOptionCountChange(2)
+                          }
+                        }}
+                        icon={<MinusCircleOutlined />}
+                        disabled={mcqBaseOptionCount + fields.length <= 2}
+                      >
+                        {t('quiz.removeOption', { defaultValue: 'Remove option' })}
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                  <Form.Item style={{ marginTop: -8 }}>
+                    <Text type="secondary">
+                      {t('quiz.optionCountHint', { defaultValue: 'Options: {{count}} (min 2, max 10)', count: mcqBaseOptionCount + fields.length })}
+                    </Text>
                   </Form.Item>
                 </>
               )}
@@ -413,15 +574,49 @@ const QuestionForm = ({
         )}
 
         {questionType === 'word_cloud' && (
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            {t('quiz.wordCloudDescription')}
-          </Text>
+          <>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+              {t('quiz.wordCloudDescription')}
+            </Text>
+            {!aiSuggestOpen && isAdmin ? (
+              <Button
+                size="small"
+                icon={<BulbOutlined />}
+                style={{ marginBottom: 12 }}
+                onClick={() => setAiSuggestOpen(true)}
+              >
+                {t('ai.aiSuggestPrompt')}
+              </Button>
+            ) : (
+              <Space style={{ marginBottom: 12, width: '100%' }} wrap>
+                <Input
+                  placeholder={t('ai.topicForAIPlaceholder')}
+                  value={aiSuggestTopic}
+                  onChange={e => setAiSuggestTopic(e.target.value)}
+                  onPressEnter={handleAiSuggestPrompt}
+                  style={{ width: 240 }}
+                  autoFocus
+                />
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<BulbOutlined />}
+                  loading={aiSuggesting}
+                  onClick={handleAiSuggestPrompt}
+                  disabled={!aiSuggestTopic.trim()}
+                >
+                  {t('ai.suggest')}
+                </Button>
+                <Button size="small" onClick={() => { setAiSuggestOpen(false); setAiSuggestTopic('') }}>Cancel</Button>
+              </Space>
+            )}
+          </>
         )}
 
         {questionType === 'single_line' && (
           <>
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-              Participants submit one short text response.
+              {t('quiz.singleLineDescription')}
             </Text>
             {!isPoll && (
               <Form.Item
@@ -430,7 +625,7 @@ const QuestionForm = ({
                 rules={[{ required: !isPoll, message: t('quiz.correctAnswerRequired') }]}
               >
                 <Input 
-                  placeholder="Enter expected answer" 
+                  placeholder={t('quiz.expectedAnswerPlaceholder')} 
                   spellCheck="true"
                   lang={t('common.langCode', { defaultValue: 'en' })}
                   onContextMenu={(e) => e.stopPropagation()}
@@ -443,7 +638,7 @@ const QuestionForm = ({
         {questionType === 'paragraph' && (
           <>
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-              Participants submit a longer free-text response.
+              {t('quiz.paragraphDescription')}
             </Text>
             {!isPoll && (
               <Form.Item
@@ -453,7 +648,7 @@ const QuestionForm = ({
               >
                 <TextArea 
                   rows={3} 
-                  placeholder="Enter expected answer guidance" 
+                  placeholder={t('quiz.expectedAnswerGuidancePlaceholder')} 
                   spellCheck="true"
                   lang={t('common.langCode', { defaultValue: 'en' })}
                   onContextMenu={(e) => e.stopPropagation()}
@@ -466,7 +661,7 @@ const QuestionForm = ({
         {questionType === 'scale' && (
           <>
             <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-              Participants choose a rating from 1 to 5.
+              {t('quiz.scaleDescription')}
             </Text>
             {!isPoll && (
               <Form.Item
@@ -493,7 +688,7 @@ const QuestionForm = ({
             loading={loading || movingImages}
             icon={question ? <SaveOutlined /> : <PlusOutlined />}
           >
-            {movingImages ? 'Moving images...' : (question ? t('quiz.updateQuestion') : t('quiz.addQuestion'))}
+            {movingImages ? t('quiz.movingImages') : (question ? t('quiz.updateQuestion') : t('quiz.addQuestion'))}
           </Button>
           <Button icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
         </Space>
@@ -542,6 +737,35 @@ export default function QuizBuilder() {
   // Loading state for moving temp images
   const [movingImages, setMovingImages] = useState(false)
   const isPoll = quiz?.quiz_type === 'poll' || (!quiz && initialQuizType === 'poll')
+  const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
+
+  // Rewrite state for main form fields
+  const [mainRewriting, setMainRewriting] = useState({})
+
+  const handleMainRewrite = async (fieldName, context) => {
+    const val = form.getFieldValue(fieldName)
+    if (!val?.trim()) return
+    setMainRewriting(prev => ({ ...prev, [fieldName]: true }))
+    try {
+      const res = await aiAPI.rewrite({ text: val.trim(), context, language: i18n.language })
+      form.setFieldsValue({ [fieldName]: res.data.rewritten })
+    } catch {
+      // silently fail
+    } finally {
+      setMainRewriting(prev => ({ ...prev, [fieldName]: false }))
+    }
+  }
+
+  // AI generation modal state
+  const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [aiStep, setAiStep] = useState('input') // 'input' | 'preview'
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [aiAdding, setAiAdding] = useState(false)
+  const [aiTopic, setAiTopic] = useState('')
+  const [aiCount, setAiCount] = useState(5)
+  const [aiError, setAiError] = useState(null)
+  const [aiPreview, setAiPreview] = useState([]) // [{text, options, correct_answer_index, selected}]
 
   useEffect(() => {
     if (id) {
@@ -666,7 +890,7 @@ export default function QuizBuilder() {
           .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
           .filter(Boolean)
         if (mcqOptions.length < 2) {
-          message.error('MCQ must have at least 2 options')
+          message.error(t('quiz.mcqMinOptions'))
           return
         }
         questionData.options = mcqOptions
@@ -753,7 +977,7 @@ export default function QuizBuilder() {
           
         } catch (moveError) {
           console.error('Failed to move temp images:', moveError)
-          message.error('Question saved but failed to move images. Please re-upload.')
+          message.error(t('quiz.moveImagesFailed'))
         } finally {
           setMovingImages(false)
         }
@@ -838,7 +1062,7 @@ export default function QuizBuilder() {
           .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
           .filter(Boolean)
         if (mcqOptions.length < 2) {
-          message.error('MCQ must have at least 2 options')
+          message.error(t('quiz.mcqMinOptions'))
           return
         }
         questionData.options = mcqOptions
@@ -920,6 +1144,58 @@ export default function QuizBuilder() {
     }
   }
   
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) return
+    setAiGenerating(true)
+    setAiError(null)
+    try {
+      const res = await aiAPI.generateQuestions({
+        topic: aiTopic.trim(),
+        count: aiCount,
+        language: i18n.language,
+      })
+      const questions = res.data.questions.map(q => ({ ...q, selected: true }))
+      if (questions.length === 0) {
+        setAiError(t('ai.noQuestionsGenerated'))
+        return
+      }
+      setAiPreview(questions)
+      setAiStep('preview')
+    } catch (err) {
+      setAiError(err.response?.data?.detail || t('ai.generationFailed'))
+    } finally {
+      setAiGenerating(false)
+    }
+  }
+
+  const handleAiAddSelected = async () => {
+    const selected = aiPreview.filter(q => q.selected)
+    if (selected.length === 0) return
+    setAiAdding(true)
+    try {
+      for (const q of selected) {
+        await questionAPI.add(id, {
+          question_type: 'mcq',
+          text: q.text,
+          options: q.options,
+          correct_answer_index: isPoll ? null : q.correct_answer_index,
+          points: 1,
+          max_time_seconds: null,
+        })
+      }
+      message.success(t('ai.addedSuccess', { count: selected.length }))
+      setAiModalOpen(false)
+      setAiStep('input')
+      setAiTopic('')
+      setAiPreview([])
+      await loadQuiz()
+    } catch (err) {
+      message.error(err.response?.data?.detail || 'Failed to add questions')
+    } finally {
+      setAiAdding(false)
+    }
+  }
+
   const getQuizStatusTranslation = (status) => {
     const statusMap = {
       draft: 'statusDraft',
@@ -944,7 +1220,7 @@ export default function QuizBuilder() {
             onClick={handlePublish}
             loading={loading}
           >
-            {isPoll ? 'Publish Poll' : t('quiz.publishQuiz')}
+            {isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
           </Button>
         )}
         {quiz && quiz.status === 'ready' && (
@@ -954,14 +1230,14 @@ export default function QuizBuilder() {
               icon={<RocketOutlined />}
               onClick={() => navigate(`/quiz/${id}/control`)}
             >
-              {isPoll ? t('quiz.startPoll', { defaultValue: 'Start Poll' }) : t('quiz.startSession')}
+              {isPoll ? t('quiz.startPoll') : t('quiz.startSession')}
             </Button>
             <Button
               type="default"
               onClick={handleUnpublish}
               loading={loading}
             >
-              {isPoll ? 'Unpublish Poll' : t('quiz.unpublishQuiz')}
+              {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
             </Button>
           </>
         )}
@@ -994,38 +1270,64 @@ export default function QuizBuilder() {
         >
           <Form.Item
             name="title"
-            label={isPoll ? 'Poll Title' : t('quiz.quizTitle')}
-            rules={[{ required: true, message: isPoll ? 'Please enter a poll title' : t('quiz.quizTitleRequired') }]}
+            label={isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
+            rules={[{ required: true, message: isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
           >
-            <Input 
-              placeholder={isPoll ? 'Enter poll title' : t('quiz.enterQuizTitle')} 
+            <Input
+              placeholder={isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
               size="large"
               spellCheck="true"
               lang={i18n.language}
+              suffix={isAdmin && (
+                <Tooltip title={t('ai.rewriteWithAI')}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={mainRewriting['title'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                    loading={mainRewriting['title']}
+                    onClick={() => handleMainRewrite('title', isPoll ? 'poll title' : 'quiz title')}
+                  />
+                </Tooltip>
+              )}
             />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label={isPoll ? 'Poll Description' : t('quiz.quizDescription')}
+            label={isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
           >
-            <TextArea 
-              rows={3} 
-              placeholder={isPoll ? 'Enter poll description' : t('quiz.enterQuizDescription')} 
+            <TextArea
+              rows={3}
+              placeholder={isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
               spellCheck="true"
               lang={i18n.language}
             />
           </Form.Item>
+          {isAdmin && (
+            <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+              <Tooltip title={t('ai.rewriteDescWithAI')}>
+                <Button
+                  size="small"
+                  type="text"
+                  icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                  loading={mainRewriting['description']}
+                  onClick={() => handleMainRewrite('description', isPoll ? 'poll description' : 'quiz description')}
+                >
+                  {t('ai.rewrite')}
+                </Button>
+              </Tooltip>
+            </div>
+          )}
 
           <Form.Item
             name="quiz_type"
-            label="Mode"
+            label={t('quiz.mode')}
             initialValue="quiz"
             hidden
           >
             <Radio.Group>
-              <Radio value="quiz">Quiz</Radio>
-              <Radio value="poll">Poll</Radio>
+              <Radio value="quiz">{t('quiz.modeQuiz')}</Radio>
+              <Radio value="poll">{t('quiz.modePoll')}</Radio>
             </Radio.Group>
           </Form.Item>
 
@@ -1035,7 +1337,7 @@ export default function QuizBuilder() {
             icon={<SaveOutlined />}
             loading={loading}
           >
-            {id ? (isPoll ? 'Update Poll' : t('quiz.editQuiz')) : (isPoll ? 'Create Poll' : t('quiz.createQuiz'))}
+            {id ? (isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')) : (isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))}
           </Button>
         </Form>
       </Card>
@@ -1044,6 +1346,18 @@ export default function QuizBuilder() {
         <>
           <Divider>{t('quiz.questions')}</Divider>
 
+          {editingQuestion !== 'new' && isAdmin && (
+            <Button
+              icon={<ThunderboltOutlined />}
+              onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
+              style={{ marginTop: 12, marginBottom: 8, width: '100%' }}
+              size="large"
+              disabled={!!editingQuestion}
+            >
+              {t('ai.generateWithAI')}
+            </Button>
+          )}
+
           {editingQuestion === 'new' ? (
             <MemoizedQuestionForm
               key="new-question"
@@ -1051,6 +1365,8 @@ export default function QuizBuilder() {
               onCancel={handleCancelQuestion}
               quizId={id}
               isPoll={isPoll}
+              language={i18n.language}
+              isAdmin={isAdmin}
               questionImageUrl={questionImageUrl}
               setQuestionImageUrl={setQuestionImageUrl}
               optionImages={optionImages}
@@ -1084,6 +1400,8 @@ export default function QuizBuilder() {
                   onCancel={handleCancelQuestion}
                   quizId={id}
                   isPoll={isPoll}
+                  language={i18n.language}
+                  isAdmin={isAdmin}
                   questionImageUrl={questionImageUrl}
                   setQuestionImageUrl={setQuestionImageUrl}
                   optionImages={optionImages}
@@ -1102,7 +1420,7 @@ export default function QuizBuilder() {
                     <Space>
                       <Tag color="blue">Q{index + 1}</Tag>
                       <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
-                        {QUESTION_TYPE_LABELS[question.question_type] || 'MCQ'}
+                        {getQuestionTypeLabel(question.question_type, t)}
                       </Tag>
                       <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>
                       {question.max_time_seconds ? (
@@ -1144,35 +1462,54 @@ export default function QuizBuilder() {
                   ) : question.question_type === 'single_line' || question.question_type === 'paragraph' ? (
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <Text type="secondary" italic>
-                        Participants provide a text response.
+                        {t('quiz.textResponseDescription')}
                       </Text>
-                      <Text><strong>Expected answer:</strong> {question.expected_answer || question.options?.[0] || '—'}</Text>
+                      <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {question.expected_answer || question.options?.[0] || t('quiz.emptyValue')}</Text>
                     </Space>
                   ) : question.question_type === 'scale' ? (
                     <Space direction="vertical" style={{ width: '100%' }}>
-                      <Text>Scale options: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
+                      <Text>{t('quiz.scaleOptionsLabel')}: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
                       {!isPoll && (
-                        <Text><strong>Expected answer:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || '—'}</Text>
+                        <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || t('quiz.emptyValue')}</Text>
                       )}
                     </Space>
                   ) : (
                     <Space direction="vertical" style={{ width: '100%' }}>
-                      <div>
-                        <Text>A: {question.option_a}</Text>
-                        {!isPoll && question.correct_answer === 'A' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                      </div>
-                      <div>
-                        <Text>B: {question.option_b}</Text>
-                        {!isPoll && question.correct_answer === 'B' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                      </div>
-                      <div>
-                        <Text>C: {question.option_c}</Text>
-                        {!isPoll && question.correct_answer === 'C' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                      </div>
-                      <div>
-                        <Text>D: {question.option_d}</Text>
-                        {!isPoll && question.correct_answer === 'D' && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                      </div>
+                      {(() => {
+                        const fallbackOptions = [
+                          question.option_a,
+                          question.option_b,
+                          question.option_c,
+                          question.option_d,
+                          ...(question.extra_options || []),
+                        ]
+                        const mcqOptions = (Array.isArray(question.options) && question.options.length > 0
+                          ? question.options
+                          : fallbackOptions
+                        )
+                          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
+                          .filter(Boolean)
+
+                        const answerToken = question.correct_answer
+                        let correctIndex = Number.isInteger(question.correct_answer_index)
+                          ? question.correct_answer_index
+                          : (Number.isInteger(Number(answerToken)) ? Number(answerToken) : -1)
+
+                        if (!Number.isInteger(question.correct_answer_index) && typeof answerToken === 'string') {
+                          const letterIndex = answerToken.toUpperCase().charCodeAt(0) - 65
+                          if (letterIndex >= 0) correctIndex = letterIndex
+                        }
+
+                        return mcqOptions.map((opt, idx) => {
+                          const letter = String.fromCharCode(65 + idx)
+                          return (
+                            <div key={`${question.id}-opt-${idx}`}>
+                              <Text>{letter}: {opt}</Text>
+                              {!isPoll && idx === correctIndex && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                            </div>
+                          )
+                        })
+                      })()}
                     </Space>
                   )}
                 </Card>
@@ -1181,6 +1518,94 @@ export default function QuizBuilder() {
           />
         </>
       )}
+
+      {/* AI Generate Questions Modal */}
+      <Modal
+        title={<Space><ThunderboltOutlined />{t('ai.generateQuestionsTitle')}</Space>}
+        open={aiModalOpen}
+        onCancel={() => { setAiModalOpen(false); setAiStep('input'); setAiPreview([]); setAiError(null) }}
+        footer={null}
+        width={600}
+      >
+        {aiStep === 'input' && (
+          <Space direction="vertical" style={{ width: '100%' }} size={16}>
+            <div>
+              <Text strong>{t('ai.topicLabel')}</Text>
+              <Input
+                placeholder={t('ai.topicPlaceholder')}
+                value={aiTopic}
+                onChange={e => setAiTopic(e.target.value)}
+                onPressEnter={handleAiGenerate}
+                style={{ marginTop: 4 }}
+                autoFocus
+              />
+            </div>
+            <div>
+              <Text strong>{t('ai.numberOfQuestions')}</Text>
+              <Select
+                value={aiCount}
+                onChange={setAiCount}
+                style={{ display: 'block', marginTop: 4 }}
+                options={[1,2,3,4,5].map(n => ({ value: n, label: t('ai.questionCount', { count: n }) }))}
+              />
+            </div>
+            {aiError && <Alert type="error" message={aiError} showIcon />}
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              block
+              loading={aiGenerating}
+              disabled={!aiTopic.trim()}
+              onClick={handleAiGenerate}
+            >
+              {aiGenerating ? t('ai.generating') : t('ai.generate')}
+            </Button>
+          </Space>
+        )}
+
+        {aiStep === 'preview' && (
+          <Space direction="vertical" style={{ width: '100%' }} size={12}>
+            <Space>
+              <Button size="small" onClick={() => setAiStep('input')}>{t('ai.back')}</Button>
+              <Text type="secondary">{t('ai.selectedCount', { selected: aiPreview.filter(q => q.selected).length, total: aiPreview.length })}</Text>
+            </Space>
+            {aiPreview.map((q, i) => (
+              <Card
+                key={i}
+                size="small"
+                style={{ borderColor: q.selected ? '#1677ff' : '#d9d9d9' }}
+                extra={
+                  <Checkbox
+                    checked={q.selected}
+                    onChange={e => setAiPreview(prev => prev.map((item, idx) => idx === i ? { ...item, selected: e.target.checked } : item))}
+                  />
+                }
+              >
+                <Text strong>{q.text}</Text>
+                <div style={{ marginTop: 8 }}>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi}>
+                      <Text type={oi === q.correct_answer_index ? 'success' : 'secondary'}>
+                        {String.fromCharCode(65 + oi)}: {opt}
+                        {oi === q.correct_answer_index && !isPoll && <Tag color="green" style={{ marginLeft: 6 }}>{t('ai.correct')}</Tag>}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
+            <Button
+              type="primary"
+              block
+              loading={aiAdding}
+              disabled={aiPreview.filter(q => q.selected).length === 0}
+              onClick={handleAiAddSelected}
+            >
+              {t('ai.addToQuiz', { count: aiPreview.filter(q => q.selected).length })}
+            </Button>
+          </Space>
+        )}
+      </Modal>
     </div>
   )
 }

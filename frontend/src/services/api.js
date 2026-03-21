@@ -142,6 +142,16 @@ export const sessionAPI = {
     api.get(`/quizzes/sessions/${sessionId}/audience-leaderboard`, {
       params: { session_token: sessionToken }
     }),
+  getWhiteboardState: (sessionId) =>
+    api.get(`/quizzes/sessions/${sessionId}/whiteboard-state`),
+  getPublicWhiteboardState: (sessionId, joinCode) =>
+    api.get(`/quizzes/sessions/${sessionId}/whiteboard-state/public`, {
+      params: { join_code: joinCode }
+    }),
+  updateWhiteboardState: (sessionId, data) =>
+    api.put(`/quizzes/sessions/${sessionId}/whiteboard-state`, data),
+  getPublicWhiteboardEventsUrl: (sessionId, joinCode) =>
+    `${API_BASE_URL}/quizzes/sessions/${sessionId}/whiteboard-events/public?join_code=${encodeURIComponent(joinCode)}`,
   exportSession: (sessionId, format) =>
     api.get(`/quizzes/sessions/${sessionId}/export`, {
       params: { format },
@@ -182,6 +192,15 @@ export const organizationAPI = {
   createAdmin: (data) => api.post('/admin/admin-users', data),
   updateAdminQuota: (adminId, quota) => api.patch(`/admin/admin-users/${adminId}/quota`, { user_quota: quota }),
   getAdminUsage: (adminId) => api.get(`/admin/admin-users/${adminId}/usage`),
+}
+
+// AI Generation API
+export const aiAPI = {
+  generateQuestions: (data) => api.post('/ai/generate/questions', data),
+  generateDistractors: (data) => api.post('/ai/generate/options', data),
+  generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data),
+  rewrite: (data) => api.post('/ai/rewrite', data),
+  listModels: () => api.get('/ai/models'),
 }
 
 // Language Tracking API
