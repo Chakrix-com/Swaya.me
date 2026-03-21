@@ -1,6 +1,7 @@
 import { Upload, Button, message, Tag } from 'antd'
 import { UploadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { questionAPI } from '../../../services/api'
 
 /**
@@ -21,6 +22,7 @@ export default function ImageUpload({
   onImageChange,
   tempData = null
 }) {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -33,14 +35,14 @@ export default function ImageUpload({
     // Validate file type
     const isImage = file.type.startsWith('image/')
     if (!isImage) {
-      message.error('You can only upload image files!')
+      message.error(t('quiz.imageUploadOnlyImages'))
       return false
     }
 
     // Validate file size (2MB)
     const isLt2M = file.size / 1024 / 1024 < 2
     if (!isLt2M) {
-      message.error('Image must be smaller than 2MB!')
+      message.error(t('quiz.imageUploadMaxSize'))
       return false
     }
 
@@ -51,9 +53,9 @@ export default function ImageUpload({
       const { image_url, is_temp, temp_key } = response.data
       
       if (is_temp) {
-        message.success('Image uploaded (temporary - will save with question)')
+        message.success(t('quiz.imageUploadedTemp'))
       } else {
-        message.success('Image uploaded successfully')
+        message.success(t('quiz.imageUploadedSuccess'))
       }
       
       // Call parent callback with new image URL and temp metadata
@@ -65,7 +67,7 @@ export default function ImageUpload({
         }
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to upload image')
+      message.error(error.response?.data?.detail || t('quiz.imageUploadFailed'))
     } finally {
       setUploading(false)
     }
@@ -87,14 +89,14 @@ export default function ImageUpload({
         await questionAPI.deleteImage(quizId, questionId, imageType, null)
       }
       
-      message.success('Image deleted successfully')
+      message.success(t('quiz.imageDeletedSuccess'))
       
       // Call parent callback with null
       if (onImageChange) {
         onImageChange(null, null)
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to delete image')
+      message.error(error.response?.data?.detail || t('quiz.imageDeleteFailed'))
     } finally {
       setDeleting(false)
     }
@@ -117,7 +119,7 @@ export default function ImageUpload({
           />
           {isTemp && (
             <Tag color="orange" style={{ marginBottom: 8 }}>
-              Temporary - will save with question
+              {t('quiz.imageTempTag')}
             </Tag>
           )}
           <Button 
@@ -127,7 +129,7 @@ export default function ImageUpload({
             danger
             size="small"
           >
-            Remove Image
+            {t('quiz.removeImage')}
           </Button>
         </div>
       ) : (
@@ -137,7 +139,7 @@ export default function ImageUpload({
           beforeUpload={handleUpload}
         >
           <Button icon={<UploadOutlined />} loading={uploading} size="small">
-            Upload Image {isTempMode && '(temp)'}
+            {t('quiz.uploadImage')} {isTempMode && `(${t('quiz.tempShort')})`}
           </Button>
         </Upload>
       )}

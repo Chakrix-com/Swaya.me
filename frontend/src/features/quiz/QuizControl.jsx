@@ -361,6 +361,10 @@ export default function QuizControl() {
   }
 
   const currentQuestion = results?.current_question
+  const currentQuestionAnswerCount = Number(currentQuestion?.total_answers ?? 0)
+  const visibleLeaderboard = (leaderboard && currentQuestionAnswerCount > 0)
+    ? leaderboard
+    : (leaderboard ? { ...leaderboard, entries: [] } : null)
   const isPoll = (results?.quiz_type || quiz?.quiz_type) === 'poll'
   const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
@@ -561,22 +565,24 @@ export default function QuizControl() {
             </Col>
           </Row>
 
-          {leaderboard && !isPoll && (
+          {visibleLeaderboard && !isPoll && (
             <Card
+              className="quiz-control-leaderboard-card"
               title={
-                <Space>
+                <Space wrap className="quiz-control-leaderboard-title">
                   <TrophyOutlined style={{ color: '#faad14' }} />
                   <span>{t('leaderboard.title')}</span>
-                  {leaderboard.total_participants > 0 && (
-                    <Tag color="blue">{leaderboard.total_participants} {t('quiz.participants')}</Tag>
+                  {visibleLeaderboard.total_participants > 0 && (
+                    <Tag color="blue">{visibleLeaderboard.total_participants} {t('quiz.participants')}</Tag>
                   )}
-                  {leaderboard.mcq_question_count > 0 && (
+                  {visibleLeaderboard.mcq_question_count > 0 && (
                     <Tag color="default">{t('leaderboard.mcqOnly')}</Tag>
                   )}
                 </Space>
               }
               extra={
                 <Button
+                  className="quiz-control-leaderboard-extra-btn"
                   size="small"
                   icon={results?.leaderboard_visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                   onClick={handleToggleLeaderboard}
@@ -586,12 +592,12 @@ export default function QuizControl() {
               }
               style={{ marginBottom: 24 }}
             >
-              {leaderboard.entries.length === 0 ? (
+              {visibleLeaderboard.entries.length === 0 ? (
                 <Text type="secondary">{t('leaderboard.noData')}</Text>
               ) : (
                 <>
                   <Table
-                    dataSource={leaderboard.entries.slice(0, 10)}
+                    dataSource={visibleLeaderboard.entries.slice(0, 10)}
                     rowKey="participant_id"
                     pagination={false}
                     size="small"
@@ -615,7 +621,7 @@ export default function QuizControl() {
                         ellipsis: true,
                       },
                       {
-                        title: leaderboard.mcq_question_count > 1 ? `${t('leaderboard.score')} / ${leaderboard.mcq_question_count}` : t('leaderboard.score'),
+                        title: visibleLeaderboard.mcq_question_count > 1 ? `${t('leaderboard.score')} / ${visibleLeaderboard.mcq_question_count}` : t('leaderboard.score'),
                         dataIndex: 'score',
                         width: 100,
                         render: (score) => <Tag color="green">{score}</Tag>
@@ -630,9 +636,9 @@ export default function QuizControl() {
                       }
                     ]}
                   />
-                  {leaderboard.entries.length > 10 && (
+                  {visibleLeaderboard.entries.length > 10 && (
                     <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
-                      +{leaderboard.entries.length - 10} more participants
+                      +{visibleLeaderboard.entries.length - 10} more participants
                     </div>
                   )}
                 </>

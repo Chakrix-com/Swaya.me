@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Input, Select, Switch, message } from 'antd';
 import { createUser, updateUser } from '../../../store/slices/userManagementSlice';
 
 const { Option } = Select;
 
 const UserForm = ({ visible, user, onSuccess, onCancel }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.userManagement);
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -46,11 +48,11 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         };
 
         await dispatch(updateUser({ userId: user.id, updates })).unwrap();
-        message.success('User updated successfully');
+        message.success(t('admin.userForm.userUpdatedSuccess'));
       } else {
         // Create new user
         await dispatch(createUser(values)).unwrap();
-        message.success('User created successfully');
+        message.success(t('admin.userForm.userCreatedSuccess'));
       }
 
       form.resetFields();
@@ -60,7 +62,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         // Validation error from form
         return;
       }
-      message.error(err.message || `Failed to ${isEditing ? 'update' : 'create'} user`);
+      message.error(err.message || t('admin.userForm.userActionFailed', { action: isEditing ? t('common.update') : t('common.create') }));
     }
   };
 
@@ -73,28 +75,28 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
     // Super admin can assign any role
     if (isSuperAdmin) {
       return [
-        { value: 'super_admin', label: 'Super Admin' },
-        { value: 'admin', label: 'Admin' },
-        { value: 'user', label: 'User' },
-        { value: 'viewer', label: 'Viewer' },
+        { value: 'super_admin', label: t('admin.userForm.roleSuperAdmin') },
+        { value: 'admin', label: t('admin.userForm.roleAdmin') },
+        { value: 'user', label: t('admin.userForm.roleUser') },
+        { value: 'viewer', label: t('admin.userForm.roleViewer') },
       ];
     }
 
     // Regular admin can only assign user and viewer roles
     return [
-      { value: 'user', label: 'User' },
-      { value: 'viewer', label: 'Viewer' },
+      { value: 'user', label: t('admin.userForm.roleUser') },
+      { value: 'viewer', label: t('admin.userForm.roleViewer') },
     ];
   };
 
   return (
     <Modal
-      title={isEditing ? 'Edit User' : 'Create User'}
+      title={isEditing ? t('admin.userForm.editUserTitle') : t('admin.userForm.createUserTitle')}
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
       confirmLoading={loading}
-      okText={isEditing ? 'Update' : 'Create'}
+      okText={isEditing ? t('common.update') : t('common.create')}
       width={500}
     >
       <Form
@@ -106,46 +108,46 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         }}
       >
         <Form.Item
-          label="Email"
+          label={t('admin.userForm.email')}
           name="email"
           rules={[
-            { required: true, message: 'Please enter email' },
-            { type: 'email', message: 'Please enter a valid email' },
+            { required: true, message: t('admin.userForm.emailRequired') },
+            { type: 'email', message: t('admin.userForm.emailInvalid') },
           ]}
         >
           <Input
-            placeholder="user@example.com"
+            placeholder={t('admin.userForm.emailPlaceholder')}
             disabled={isEditing} // Can't change email when editing
           />
         </Form.Item>
 
         {!isEditing && (
           <Form.Item
-            label="Password"
+            label={t('admin.userForm.password')}
             name="password"
             rules={[
-              { required: true, message: 'Please enter password' },
-              { min: 8, message: 'Password must be at least 8 characters' },
+              { required: true, message: t('admin.userForm.passwordRequired') },
+              { min: 8, message: t('admin.userForm.passwordMinLength') },
             ]}
           >
-            <Input.Password placeholder="Enter password" />
+            <Input.Password placeholder={t('admin.userForm.passwordPlaceholder')} />
           </Form.Item>
         )}
 
         <Form.Item
-          label="Full Name"
+          label={t('admin.userForm.fullName')}
           name="full_name"
           rules={[{ required: false }]}
         >
-          <Input placeholder="Enter full name (optional)" />
+          <Input placeholder={t('admin.userForm.fullNamePlaceholder')} />
         </Form.Item>
 
         <Form.Item
-          label="Role"
+          label={t('admin.userForm.role')}
           name="role"
-          rules={[{ required: true, message: 'Please select a role' }]}
+          rules={[{ required: true, message: t('admin.userForm.roleRequired') }]}
         >
-          <Select placeholder="Select role">
+          <Select placeholder={t('admin.userForm.rolePlaceholder')}>
             {getAvailableRoles().map((role) => (
               <Option key={role.value} value={role.value}>
                 {role.label}
@@ -155,7 +157,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         </Form.Item>
 
         <Form.Item
-          label="Active"
+          label={t('admin.userForm.active')}
           name="is_active"
           valuePropName="checked"
         >

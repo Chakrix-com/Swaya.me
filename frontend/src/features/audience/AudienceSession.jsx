@@ -239,6 +239,10 @@ export default function AudienceSession() {
   }
 
   const isPollSession = results?.quiz_type === 'poll'
+  const currentQuestionAnswerCount = Number(results?.current_question?.total_answers ?? 0)
+  const visibleLeaderboard = (leaderboard && currentQuestionAnswerCount > 0)
+    ? leaderboard
+    : (leaderboard ? { ...leaderboard, entries: [] } : null)
   const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
 
   const leaderboardColumns = [
@@ -282,7 +286,7 @@ export default function AudienceSession() {
   ]
 
   const LeaderboardTable = () => {
-    if (isPollSession || !leaderboard || results?.leaderboard_visible === false) return null
+    if (isPollSession || !visibleLeaderboard || results?.leaderboard_visible === false) return null
     return (
       <Card
         size="small"
@@ -290,20 +294,20 @@ export default function AudienceSession() {
           <Space wrap>
             <TrophyOutlined style={{ color: '#faad14' }} />
             <span>{t('leaderboard.title')}</span>
-            {leaderboard.current_participant_rank && (
-              <Tag color="blue">{t('leaderboard.yourRank', { rank: leaderboard.current_participant_rank })}</Tag>
+            {visibleLeaderboard.current_participant_rank && (
+              <Tag color="blue">{t('leaderboard.yourRank', { rank: visibleLeaderboard.current_participant_rank })}</Tag>
             )}
           </Space>
         }
         style={{ marginTop: 16 }}
       >
-        {leaderboard.entries.length === 0 ? (
+        {visibleLeaderboard.entries.length === 0 ? (
           <Text type="secondary">{t('leaderboard.noData')}</Text>
         ) : (
           <>
             <div className="table-responsive">
               <Table
-                dataSource={leaderboard.entries.slice(0, 10)}
+                dataSource={visibleLeaderboard.entries.slice(0, 10)}
                 rowKey="participant_id"
                 columns={leaderboardColumns}
                 pagination={false}
@@ -312,9 +316,9 @@ export default function AudienceSession() {
                 rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
               />
             </div>
-            {leaderboard.entries.length > 10 && (
+            {visibleLeaderboard.entries.length > 10 && (
               <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--aud-text-secondary)', fontSize: 12 }}>
-                {t('audience.moreParticipants', { count: leaderboard.entries.length - 10, defaultValue: `+${leaderboard.entries.length - 10} more participants` })}
+                {t('audience.moreParticipants', { count: visibleLeaderboard.entries.length - 10, defaultValue: `+${visibleLeaderboard.entries.length - 10} more participants` })}
               </div>
             )}
           </>

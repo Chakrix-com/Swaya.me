@@ -307,6 +307,7 @@ export default function Help({ visitorTheme = 'light' }) {
   const faqData          = t('pages.help.faqItems',            { returnObjects: true })
   const howToCreateTips  = t('pages.help.howToCreateTips',     { returnObjects: true })
   const exportHistoryTips = t('pages.help.exportHistoryTips',  { returnObjects: true })
+  const recentUpdates    = t('pages.help.recentUpdates.items', { returnObjects: true })
 
   // Merge translated content with non-translated metadata
   const hostDetails = hostDetailsRaw.map((d, i) => ({
@@ -368,11 +369,26 @@ export default function Help({ visitorTheme = 'light' }) {
 
           <Divider />
 
+          {/* Recent updates */}
+          <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', marginBottom: 32 }}>
+            <Title level={3} style={{ marginBottom: 8 }}>{t('pages.help.recentUpdates.title')}</Title>
+            <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+              {t('pages.help.recentUpdates.subtitle')}
+            </Paragraph>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {(recentUpdates || []).map((item, idx) => (
+                <li key={idx} style={{ marginBottom: 6 }}>
+                  <Text>{item}</Text>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
           {/* Quick Nav */}
           <Row gutter={[24, 24]} style={{ marginBottom: 48 }}>
             <Col xs={12} sm={6}>
-              <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
-                <Space direction="vertical" size={12}>
+              <Card className="help-quick-nav-card" bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
+                <Space className="help-quick-nav-stack" direction="vertical" size={12}>
                   <UserOutlined style={{ fontSize: 36, color: '#1890ff' }} />
                   <Title level={4} style={{ marginBottom: 4 }}>{t('pages.help.navHostTitle')}</Title>
                   <Paragraph type="secondary" style={{ marginBottom: 8 }}>{t('pages.help.navHostDesc')}</Paragraph>
@@ -383,8 +399,8 @@ export default function Help({ visitorTheme = 'light' }) {
               </Card>
             </Col>
             <Col xs={12} sm={6}>
-              <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
-                <Space direction="vertical" size={12}>
+              <Card className="help-quick-nav-card" bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
+                <Space className="help-quick-nav-stack" direction="vertical" size={12}>
                   <TeamOutlined style={{ fontSize: 36, color: '#52c41a' }} />
                   <Title level={4} style={{ marginBottom: 4 }}>{t('pages.help.navParticipantTitle')}</Title>
                   <Paragraph type="secondary" style={{ marginBottom: 8 }}>{t('pages.help.navParticipantDesc')}</Paragraph>
@@ -395,8 +411,8 @@ export default function Help({ visitorTheme = 'light' }) {
               </Card>
             </Col>
             <Col xs={12} sm={6}>
-              <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
-                <Space direction="vertical" size={12}>
+              <Card className="help-quick-nav-card" bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
+                <Space className="help-quick-nav-stack" direction="vertical" size={12}>
                   <PieChartOutlined style={{ fontSize: 36, color: '#722ed1' }} />
                   <Title level={4} style={{ marginBottom: 4 }}>{t('pages.help.navQuizVsPollTitle')}</Title>
                   <Paragraph type="secondary" style={{ marginBottom: 8 }}>{t('pages.help.navQuizVsPollDesc')}</Paragraph>
@@ -407,8 +423,8 @@ export default function Help({ visitorTheme = 'light' }) {
               </Card>
             </Col>
             <Col xs={12} sm={6}>
-              <Card bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
-                <Space direction="vertical" size={12}>
+              <Card className="help-quick-nav-card" bordered={false} style={{ background: 'var(--visitor-panel-bg)', border: '1px solid var(--visitor-panel-border)', textAlign: 'center', height: '100%' }}>
+                <Space className="help-quick-nav-stack" direction="vertical" size={12}>
                   <DownloadOutlined style={{ fontSize: 36, color: '#389e0d' }} />
                   <Title level={4} style={{ marginBottom: 4 }}>{t('pages.help.navExportTitle')}</Title>
                   <Paragraph type="secondary" style={{ marginBottom: 8 }}>{t('pages.help.navExportDesc')}</Paragraph>

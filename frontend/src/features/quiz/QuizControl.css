@@ -29,6 +29,14 @@
   color: #fff !important;
 }
 
+.quiz-control-leaderboard-card .ant-card-head-title {
+  overflow: visible;
+}
+
+.quiz-control-leaderboard-title {
+  row-gap: 6px;
+}
+
 @media (max-width: 768px) {
   .quiz-control-page {
     padding: 12px !important;
@@ -44,6 +52,25 @@
   }
 
   .quiz-control-page .quiz-control-topbar .ant-btn {
+    width: 100%;
+  }
+
+  .quiz-control-leaderboard-card .ant-card-head {
+    padding: 12px 14px;
+  }
+
+  .quiz-control-leaderboard-card .ant-card-head-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .quiz-control-leaderboard-title {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .quiz-control-leaderboard-extra-btn {
     width: 100%;
   }
 }

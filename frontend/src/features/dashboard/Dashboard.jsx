@@ -359,7 +359,7 @@ function Dashboard() {
     }))
     return [{
       key: ROOT_FOLDER_KEY,
-      title: 'Swayame',
+      title: t('common.appTitle'),
       icon: <FolderOpenOutlined />,
       children: mapNodes(folders),
     }]
@@ -376,39 +376,17 @@ function Dashboard() {
     return null
   }, [folders, selectedFolderId])
 
-  const selectedFolderWithDescendants = useMemo(() => {
-    if (!selectedFolderId) return null
-    const stack = [...folders]
-    let selected = null
-    while (stack.length > 0) {
-      const node = stack.pop()
-      if (!node) continue
-      if (node.id === selectedFolderId) {
-        selected = node
-        break
-      }
-      if (node.children?.length) stack.push(...node.children)
-    }
-    if (!selected) return null
-    const ids = new Set([selected.id])
-    const walk = (node) => {
-      for (const child of node.children || []) {
-        ids.add(child.id)
-        walk(child)
-      }
-    }
-    walk(selected)
-    return ids
-  }, [folders, selectedFolderId])
-
   const filteredQuizzes = useMemo(() => {
     const term = searchText.trim().toLowerCase()
     return (quizzes || []).filter((quiz) => {
       const matchesSearch = !term || quiz.title.toLowerCase().includes(term)
-      const matchesFolder = !selectedFolderWithDescendants || selectedFolderWithDescendants.has(quiz.folder_id)
+      const folderId = quiz.folder_id
+      const matchesFolder = selectedFolderId
+        ? Number(folderId) === Number(selectedFolderId)
+        : folderId == null
       return matchesSearch && matchesFolder
     })
-  }, [quizzes, searchText, selectedFolderWithDescendants])
+  }, [quizzes, searchText, selectedFolderId])
 
   // Calculate quiz statistics
   const statistics = useMemo(() => {

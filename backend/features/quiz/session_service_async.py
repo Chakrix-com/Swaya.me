@@ -17,7 +17,8 @@ from persistence.models.quiz import (
 from persistence.models.core import Event, Tenant, UserRole
 from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
-    SessionListItemResponse, SessionListResponse, SessionStatusEnum
+    SessionListItemResponse, SessionListResponse, SessionStatusEnum,
+    WhiteboardStateUpdateRequest, WhiteboardStateResponse
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, SessionNotFoundError, ParticipantNotFoundError,
@@ -225,6 +226,102 @@ class SessionServiceAsync:
     def _generate_session_token(self) -> str:
         """Generate unique session token for participant"""
         return secrets.token_urlsafe(32)
+
+    def _whiteboard_key(self, session_id: int, question_index: int) -> str:
+        return f"session:{session_id}:whiteboard:{question_index}"
+
+    async def _get_host_session_for_state(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        current_user: CurrentUser
+    ) -> QuizSession:
+        result = await db.execute(
+            select(QuizSession).filter(
+                QuizSession.id == session_id,
+                QuizSession.tenant_id == current_user.tenant_id
+            )
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            raise SessionNotFoundError("Session not found")
+        return session
+
+    async def get_whiteboard_state(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        current_user: CurrentUser
+    ) -> WhiteboardStateResponse:
+        session = await self._get_host_session_for_state(db, session_id, current_user)
+        question_index = session.current_question_index
+        payload = await self.redis.get_json(self._whiteboard_key(session_id, question_index))
+        return WhiteboardStateResponse(
+            session_id=session_id,
+            question_index=question_index,
+            enabled=bool(payload.get("enabled")) if payload else False,
+            image_data=payload.get("image_data") if payload else None,
+            updated_at=payload.get("updated_at") if payload else None,
+        )
+
+    async def get_public_whiteboard_state(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        join_code: str
+    ) -> WhiteboardStateResponse:
+        session_result = await db.execute(
+            select(QuizSession.current_question_index)
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .join(Event, Event.id == Quiz.event_id)
+            .filter(
+                QuizSession.id == session_id,
+                Event.join_code == join_code,
+            )
+        )
+        question_index = session_result.scalar_one_or_none()
+        if question_index is None:
+            raise SessionNotFoundError("Session not found")
+
+        payload = await self.redis.get_json(self._whiteboard_key(session_id, question_index))
+        return WhiteboardStateResponse(
+            session_id=session_id,
+            question_index=question_index,
+            enabled=bool(payload.get("enabled")) if payload else False,
+            image_data=payload.get("image_data") if payload else None,
+            updated_at=payload.get("updated_at") if payload else None,
+        )
+
+    async def update_whiteboard_state(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        request: WhiteboardStateUpdateRequest,
+        current_user: CurrentUser
+    ) -> WhiteboardStateResponse:
+        session = await self._get_host_session_for_state(db, session_id, current_user)
+        if session.status == QuizSessionStatus.ENDED:
+            raise InvalidSessionStatusError("Session has ended")
+        if request.question_index != session.current_question_index:
+            raise InvalidSessionStatusError("Question changed, reload presenter and try again")
+
+        payload = {
+            "enabled": request.enabled,
+            "image_data": request.image_data,
+            "updated_at": datetime.utcnow().isoformat() + "Z",
+        }
+        await self.redis.set_json(
+            self._whiteboard_key(session_id, request.question_index),
+            payload,
+            expire=86400
+        )
+        return WhiteboardStateResponse(
+            session_id=session_id,
+            question_index=request.question_index,
+            enabled=request.enabled,
+            image_data=request.image_data,
+            updated_at=payload["updated_at"],
+        )
 
     async def _clear_event_join_code_if_no_active_sessions(
         self,

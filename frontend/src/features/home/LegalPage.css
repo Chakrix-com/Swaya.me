@@ -77,6 +77,22 @@
   color: var(--visitor-accent);
 }
 
+.help-quick-nav-card .ant-card-body {
+  height: 100%;
+}
+
+.help-quick-nav-stack {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.help-quick-nav-stack .ant-btn {
+  margin-top: auto;
+}
+
 .legal-layout .ant-typography,
 .legal-layout .ant-card-head-title,
 .legal-layout .ant-collapse-header-text {

@@ -122,11 +122,27 @@
 
 .pv-main {
   flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
+}
+
+.pv-main-content {
+  position: relative;
+  z-index: 1;
+}
+
+.pv-whiteboard-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 180;
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .pv-center-fill {
@@ -822,6 +838,7 @@
   width: min(680px, calc(100vw - 24px));
   box-sizing: border-box;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 12px 14px;
   background: rgba(0, 0, 0, 0.72);
@@ -829,7 +846,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pv-ctrl-btn {
@@ -847,7 +864,7 @@
   white-space: nowrap;
 }
 
-.pv-ctrl-bar > .pv-ctrl-btn:first-child {
+.pv-ctrl-nav-back {
   flex: 0 0 40px;
   padding: 9px 0;
 }
@@ -946,6 +963,64 @@
 .pv-ctrl-help:hover {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
+}
+
+.pv-ctrl-whiteboard-toggle {
+  flex: 0 0 auto;
+  min-width: 134px;
+}
+
+.pv-ctrl-whiteboard-toggle-active {
+  background: rgba(82, 196, 26, 0.32);
+  border-color: rgba(82, 196, 26, 0.65);
+  color: #d9f7be;
+}
+
+.pv-whiteboard-controls {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.pv-ctrl-whiteboard-tool,
+.pv-ctrl-whiteboard-clear {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.pv-ctrl-whiteboard-tool-active {
+  background: rgba(250, 173, 20, 0.24);
+  border-color: rgba(250, 173, 20, 0.58);
+  color: #ffe7ba;
+}
+
+.pv-whiteboard-size {
+  flex: 1;
+  min-width: 96px;
+  accent-color: #40a9ff;
+  cursor: pointer;
+}
+
+.pv-whiteboard-palette {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pv-whiteboard-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 0;
+}
+
+.pv-whiteboard-color-active {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 
 /* ── KEYBOARD SHORTCUTS HELP PANEL ──────────────────────────────────── */
@@ -1161,6 +1236,19 @@
     width: calc(100vw - 24px);
     padding: 10px 16px;
     gap: 10px;
+  }
+
+  .pv-ctrl-whiteboard-toggle {
+    min-width: 118px;
+  }
+
+  .pv-whiteboard-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pv-whiteboard-size {
+    min-width: 76px;
   }
 
   /* No extra bottom padding on the top bar */

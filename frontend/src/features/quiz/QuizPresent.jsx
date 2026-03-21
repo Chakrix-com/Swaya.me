@@ -26,6 +26,9 @@ const OPTION_BORDER = [
 ]
 const OPTION_ACCENT = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1']
 const WORDCLOUD_COLORS = ['#4096ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2']
+const WHITEBOARD_COLORS = ['#ff4d4f', '#faad14', '#52c41a', '#40a9ff', '#b37feb', '#ffffff']
+const WHITEBOARD_PUSH_INTERVAL_MS = 320
+const WHITEBOARD_FALLBACK_POLL_MS = 2000
 
 /* ── Waiting ─────────────────────────────────────────── */
 function WaitingView({ participantCount, t }) {
@@ -495,7 +498,27 @@ function LeaderboardModal({ leaderboard, onClose, t }) {
 }
 
 /* ── Host Control Bar ───────────────────────────────── */
-function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, onToggleHelp, revealed, isPoll, t }) {
+function ControlBar({
+  currentQIdx,
+  totalQ,
+  loading,
+  onAdvance,
+  onBack,
+  onStop,
+  onToggleHelp,
+  onToggleWhiteboard,
+  onToggleWhiteboardEraser,
+  onClearWhiteboard,
+  whiteboardEnabled,
+  whiteboardEraser,
+  whiteboardColor,
+  whiteboardSize,
+  onWhiteboardSizeChange,
+  onWhiteboardColorChange,
+  revealed,
+  isPoll,
+  t,
+}) {
   const notStarted = currentQIdx === -1
   const isLastQ = !notStarted && currentQIdx >= totalQ - 1
   const prevDisabled = loading || notStarted || currentQIdx <= 0
@@ -509,7 +532,7 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
     advanceLabel = `▶ ${t('quiz.startQuiz')}`
     advanceTitle = t('quiz.startQuiz')
   } else if (revealed) {
-    advanceLabel = isLastQ ? <>End <CheckOutlined /></> : <>Continue <RightOutlined /></>
+    advanceLabel = isLastQ ? <>{t('quizPresent.end')} <CheckOutlined /></> : <>{t('quizPresent.continue')} <RightOutlined /></>
     advanceTitle = isLastQ ? t('quiz.endSession') : t('quiz.nextQuestion')
   } else {
     advanceLabel = isLastQ ? `${t('quiz.finish')} ✓` : (isPoll ? t('quizPresent.showStats', { defaultValue: 'Show stats' }) : <RightOutlined />)
@@ -529,7 +552,7 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
         </>
       ) : (
         <>
-          <button className="pv-ctrl-btn" onClick={onBack} disabled={prevDisabled} title={t('quiz.previousQuestion')}>
+          <button className="pv-ctrl-btn pv-ctrl-nav-back" onClick={onBack} disabled={prevDisabled} title={t('quiz.previousQuestion')}>
             <LeftOutlined />
           </button>
           <button
@@ -547,6 +570,52 @@ function ControlBar({ currentQIdx, totalQ, loading, onAdvance, onBack, onStop, o
           <button className="pv-ctrl-btn pv-ctrl-help" onClick={onToggleHelp} title={t('quizPresent.keyboardShortcuts', { defaultValue: 'Keyboard shortcuts' })}>
             ?
           </button>
+          <button
+            className={`pv-ctrl-btn pv-ctrl-whiteboard-toggle${whiteboardEnabled ? ' pv-ctrl-whiteboard-toggle-active' : ''}`}
+            onClick={onToggleWhiteboard}
+            title={t('quizPresent.toggleWhiteboard', { defaultValue: 'Toggle whiteboard' })}
+          >
+            ✎ {t('quizPresent.whiteboard', { defaultValue: 'Whiteboard' })}
+          </button>
+          {whiteboardEnabled && (
+            <div className="pv-whiteboard-controls">
+              <button
+                className={`pv-ctrl-btn pv-ctrl-whiteboard-tool${whiteboardEraser ? ' pv-ctrl-whiteboard-tool-active' : ''}`}
+                onClick={onToggleWhiteboardEraser}
+                title={t('quizPresent.eraser', { defaultValue: 'Eraser' })}
+              >
+                {t('quizPresent.eraser', { defaultValue: 'Eraser' })}
+              </button>
+              <button
+                className="pv-ctrl-btn pv-ctrl-whiteboard-clear"
+                onClick={onClearWhiteboard}
+                title={t('quizPresent.clearWhiteboard', { defaultValue: 'Clear whiteboard' })}
+              >
+                {t('quizPresent.clear', { defaultValue: 'Clear' })}
+              </button>
+              <input
+                className="pv-whiteboard-size"
+                type="range"
+                min={2}
+                max={20}
+                value={whiteboardSize}
+                onChange={e => onWhiteboardSizeChange(Number(e.target.value))}
+                title={t('quizPresent.brushSize', { defaultValue: 'Brush size' })}
+              />
+              <div className="pv-whiteboard-palette" aria-label={t('quizPresent.brushColor', { defaultValue: 'Brush color' })}>
+                {WHITEBOARD_COLORS.map(color => (
+                  <button
+                    key={color}
+                    className={`pv-whiteboard-color${whiteboardColor === color ? ' pv-whiteboard-color-active' : ''}`}
+                    style={{ background: color }}
+                    onClick={() => onWhiteboardColorChange(color)}
+                    title={color}
+                    aria-label={t('quizPresent.selectColor', { defaultValue: 'Select color' })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -651,7 +720,18 @@ export default function QuizPresent() {
   const [showHelp, setShowHelp] = useState(false)
   const [revealed, setRevealed] = useState(false)
   const [timerRemaining, setTimerRemaining] = useState(null)
+  const [whiteboardEnabled, setWhiteboardEnabled] = useState(false)
+  const [whiteboardEraser, setWhiteboardEraser] = useState(false)
+  const [whiteboardColor, setWhiteboardColor] = useState(WHITEBOARD_COLORS[0])
+  const [whiteboardSize, setWhiteboardSize] = useState(5)
+  const [whiteboardImageData, setWhiteboardImageData] = useState(null)
   const prevQIdx = useRef(-2)
+  const whiteboardCanvasRef = useRef(null)
+  const whiteboardIsDrawingRef = useRef(false)
+  const whiteboardLastUpdatedAtRef = useRef(0)
+  const whiteboardPushInFlightRef = useRef(false)
+  const whiteboardPushQueuedRef = useRef(false)
+  const whiteboardLastPushAtRef = useRef(0)
 
   // Host controls are shown only when a JWT token is present in this browser
   const isHost = !!localStorage.getItem('token')
@@ -719,6 +799,218 @@ export default function QuizPresent() {
     setCtrlLoading(false)
   }
 
+  const resizeWhiteboardCanvas = () => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const nextWidth = Math.max(1, Math.floor(rect.width))
+    const nextHeight = Math.max(1, Math.floor(rect.height))
+    if (canvas.width === nextWidth && canvas.height === nextHeight) return
+
+    const snapshot = (canvas.width > 0 && canvas.height > 0) ? canvas.toDataURL('image/png') : null
+    canvas.width = nextWidth
+    canvas.height = nextHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    if (snapshot) {
+      const img = new Image()
+      img.onload = () => ctx.drawImage(img, 0, 0, nextWidth, nextHeight)
+      img.src = snapshot
+    }
+  }
+
+  const clearWhiteboard = () => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+
+  const captureWhiteboardImage = () => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas || canvas.width <= 0 || canvas.height <= 0) return null
+    return canvas.toDataURL('image/png')
+  }
+
+  const drawWhiteboardImage = (imageData) => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (!imageData) return
+    const img = new Image()
+    img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    img.src = imageData
+  }
+
+  const syncWhiteboardState = async (enabled, imageData, questionIndexOverride) => {
+    if (!isHost) return
+    const questionIndex = questionIndexOverride ?? (results?.current_question_index ?? -1)
+    try {
+      const res = await sessionAPI.updateWhiteboardState(Number(sessionId), {
+        question_index: questionIndex,
+        enabled,
+        image_data: imageData,
+      })
+      const updatedAt = Date.parse(String(res?.data?.updated_at || ''))
+      if (!Number.isNaN(updatedAt)) {
+        whiteboardLastUpdatedAtRef.current = Math.max(whiteboardLastUpdatedAtRef.current, updatedAt)
+      }
+    } catch (_) {}
+  }
+
+  const pushWhiteboardStateThrottled = (force = false) => {
+    if (!isHost || !whiteboardEnabled) return
+    const now = Date.now()
+    if (!force && now - whiteboardLastPushAtRef.current < WHITEBOARD_PUSH_INTERVAL_MS) return
+
+    if (whiteboardPushInFlightRef.current) {
+      whiteboardPushQueuedRef.current = true
+      return
+    }
+
+    whiteboardPushInFlightRef.current = true
+    whiteboardLastPushAtRef.current = now
+    const imageData = captureWhiteboardImage()
+    setWhiteboardImageData(imageData)
+
+    syncWhiteboardState(whiteboardEnabled, imageData)
+      .finally(() => {
+        whiteboardPushInFlightRef.current = false
+        if (whiteboardPushQueuedRef.current) {
+          whiteboardPushQueuedRef.current = false
+          pushWhiteboardStateThrottled(true)
+        }
+      })
+  }
+
+  const fetchWhiteboardState = async () => {
+    if (!isHost && !joinCode) return
+    try {
+      const res = isHost
+        ? await sessionAPI.getWhiteboardState(Number(sessionId))
+        : await sessionAPI.getPublicWhiteboardState(Number(sessionId), joinCode)
+      const state = res.data
+      const updatedAt = Date.parse(String(state.updated_at || ''))
+      const effectiveUpdatedAt = Number.isNaN(updatedAt) ? 0 : updatedAt
+      if (effectiveUpdatedAt && effectiveUpdatedAt < whiteboardLastUpdatedAtRef.current) return
+      if (effectiveUpdatedAt) whiteboardLastUpdatedAtRef.current = effectiveUpdatedAt
+      setWhiteboardEnabled(Boolean(state.enabled))
+      setWhiteboardImageData(state.image_data || null)
+    } catch (_) {}
+  }
+
+  const handleToggleWhiteboard = () => {
+    const nextEnabled = !whiteboardEnabled
+    const imageData = captureWhiteboardImage() || whiteboardImageData
+    setWhiteboardEnabled(nextEnabled)
+    setWhiteboardImageData(imageData || null)
+    syncWhiteboardState(nextEnabled, imageData || null)
+  }
+
+  const handleClearWhiteboard = () => {
+    clearWhiteboard()
+    setWhiteboardImageData(null)
+    syncWhiteboardState(whiteboardEnabled, null)
+  }
+
+  const getPointerPoint = (event) => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }
+  }
+
+  const startWhiteboardDraw = (event) => {
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas || !whiteboardEnabled) return
+    const ctx = canvas.getContext('2d')
+    const point = getPointerPoint(event)
+    if (!ctx || !point) return
+
+    event.preventDefault()
+    canvas.setPointerCapture?.(event.pointerId)
+    whiteboardIsDrawingRef.current = true
+    ctx.globalCompositeOperation = whiteboardEraser ? 'destination-out' : 'source-over'
+    ctx.lineWidth = whiteboardEraser ? whiteboardSize * 2 : whiteboardSize
+    ctx.strokeStyle = whiteboardColor
+    ctx.beginPath()
+    ctx.moveTo(point.x, point.y)
+  }
+
+  const continueWhiteboardDraw = (event) => {
+    if (!whiteboardIsDrawingRef.current || !whiteboardEnabled) return
+    const canvas = whiteboardCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const point = getPointerPoint(event)
+    if (!ctx || !point) return
+
+    event.preventDefault()
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+    pushWhiteboardStateThrottled()
+  }
+
+  const stopWhiteboardDraw = (event) => {
+    if (!whiteboardIsDrawingRef.current) return
+    whiteboardIsDrawingRef.current = false
+    whiteboardCanvasRef.current?.releasePointerCapture?.(event.pointerId)
+    const imageData = captureWhiteboardImage()
+    setWhiteboardImageData(imageData)
+    pushWhiteboardStateThrottled(true)
+  }
+
+  useEffect(() => {
+    if (!whiteboardEnabled) return undefined
+    resizeWhiteboardCanvas()
+    window.addEventListener('resize', resizeWhiteboardCanvas)
+    return () => window.removeEventListener('resize', resizeWhiteboardCanvas)
+  }, [whiteboardEnabled])
+
+  useEffect(() => {
+    if (!whiteboardEnabled) return
+    resizeWhiteboardCanvas()
+    drawWhiteboardImage(whiteboardImageData)
+  }, [whiteboardEnabled, whiteboardImageData])
+
+  useEffect(() => {
+    fetchWhiteboardState()
+    if (joinCode) {
+      const streamUrl = sessionAPI.getPublicWhiteboardEventsUrl(Number(sessionId), joinCode)
+      const eventSource = new EventSource(streamUrl)
+      const onWhiteboardEvent = (event) => {
+        try {
+          const state = JSON.parse(event.data || '{}')
+          const updatedAt = Date.parse(String(state.updated_at || ''))
+          const effectiveUpdatedAt = Number.isNaN(updatedAt) ? 0 : updatedAt
+          if (effectiveUpdatedAt && effectiveUpdatedAt < whiteboardLastUpdatedAtRef.current) return
+          if (effectiveUpdatedAt) whiteboardLastUpdatedAtRef.current = effectiveUpdatedAt
+          if (!whiteboardIsDrawingRef.current) {
+            setWhiteboardEnabled(Boolean(state.enabled))
+            setWhiteboardImageData(state.image_data || null)
+          }
+        } catch (_) {}
+      }
+      eventSource.addEventListener('whiteboard', onWhiteboardEvent)
+      eventSource.onerror = () => {}
+      return () => {
+        eventSource.removeEventListener('whiteboard', onWhiteboardEvent)
+        eventSource.close()
+      }
+    }
+    const interval = setInterval(fetchWhiteboardState, WHITEBOARD_FALLBACK_POLL_MS)
+    return () => clearInterval(interval)
+  }, [sessionId, isHost, joinCode])
+
   // Keep a ref to the latest handlers so the keyboard listener never goes stale
   const ctrlRef = useRef({})
   ctrlRef.current = {
@@ -728,13 +1020,16 @@ export default function QuizPresent() {
     back: handleBack,
     toggleLb: () => setShowLbModal(v => !v),
     toggleHelp: () => setShowHelp(v => !v),
+    toggleWhiteboard: handleToggleWhiteboard,
+    clearWhiteboard: handleClearWhiteboard,
+    whiteboardEnabled,
     closeOverlays: () => { setShowLbModal(false); setShowHelp(false) },
   }
 
   useEffect(() => {
     if (!isHost) return
     const onKey = (e) => {
-      const { isEnded, loading, advance, back, toggleLb, toggleHelp, closeOverlays } = ctrlRef.current
+      const { isEnded, loading, advance, back, toggleLb, toggleHelp, toggleWhiteboard, clearWhiteboard, whiteboardEnabled: wbEnabled, closeOverlays } = ctrlRef.current
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
       if (e.key === 'Escape') { closeOverlays(); return }
       if (isEnded) return
@@ -756,6 +1051,12 @@ export default function QuizPresent() {
           break
         case '?':
           toggleHelp()
+          break
+        case 'w': case 'W':
+          toggleWhiteboard()
+          break
+        case 'c': case 'C':
+          if (wbEnabled) clearWhiteboard()
           break
         default: break
       }
@@ -811,6 +1112,10 @@ export default function QuizPresent() {
   const totalQ = results?.total_questions ?? 0
   const currentQ = results?.current_question
   const isEnded = results?.status === 'ended'
+  const hasCurrentAnswers = Number(currentQ?.total_answers ?? 0) > 0
+  const liveLeaderboard = (!isEnded && leaderboard && !hasCurrentAnswers)
+    ? { ...leaderboard, entries: [] }
+    : leaderboard
   const isWaiting = !isEnded && (results?.current_question_index === -1 || !currentQ)
   const displayTimerRemaining = currentQ?.max_time_seconds
     ? (timerRemaining ?? Number(currentQ.max_time_seconds))
@@ -848,14 +1153,15 @@ export default function QuizPresent() {
         joinCode={joinCode}
         joinUrl={joinUrl}
         participantCount={participantCount}
-        leaderboard={leaderboard}
+        leaderboard={liveLeaderboard}
         onExpandLeaderboard={() => setShowLbModal(true)}
         isPoll={isPoll}
         t={t}
       />
 
       <main className="pv-main">
-        {!results ? (
+        <div className="pv-main-content">
+          {!results ? (
           <div className="pv-center-fill">
             <Spin size="large" />
           </div>
@@ -952,6 +1258,18 @@ export default function QuizPresent() {
             ) : null}
             <MCQView question={currentQ} questionNumber={qNumber} totalQuestions={totalQ} revealed={revealed} isPoll={isPoll} t={t} />
           </>
+          )}
+        </div>
+        {whiteboardEnabled && (
+          <canvas
+            ref={whiteboardCanvasRef}
+            className="pv-whiteboard-canvas"
+            onPointerDown={isHost ? startWhiteboardDraw : undefined}
+            onPointerMove={isHost ? continueWhiteboardDraw : undefined}
+            onPointerUp={isHost ? stopWhiteboardDraw : undefined}
+            onPointerLeave={isHost ? stopWhiteboardDraw : undefined}
+            style={isHost ? undefined : { pointerEvents: 'none' }}
+          />
         )}
       </main>
 
@@ -965,6 +1283,15 @@ export default function QuizPresent() {
             onBack={handleBack}
             onStop={handleEnd}
             onToggleHelp={() => setShowHelp(v => !v)}
+            onToggleWhiteboard={handleToggleWhiteboard}
+            onToggleWhiteboardEraser={() => setWhiteboardEraser(v => !v)}
+            onClearWhiteboard={handleClearWhiteboard}
+            whiteboardEnabled={whiteboardEnabled}
+            whiteboardEraser={whiteboardEraser}
+            whiteboardColor={whiteboardColor}
+            whiteboardSize={whiteboardSize}
+            onWhiteboardSizeChange={setWhiteboardSize}
+            onWhiteboardColorChange={(color) => { setWhiteboardColor(color); setWhiteboardEraser(false) }}
             revealed={revealed}
             isPoll={isPoll}
             t={t}
@@ -974,7 +1301,7 @@ export default function QuizPresent() {
 
       {showLbModal && !isPoll && (
         <LeaderboardModal
-          leaderboard={leaderboard}
+          leaderboard={liveLeaderboard}
           onClose={() => setShowLbModal(false)}
           t={t}
         />
@@ -989,6 +1316,8 @@ export default function QuizPresent() {
                 <tr><td><kbd>→</kbd> or <kbd>Space</kbd> or <kbd>Enter</kbd> or <kbd>PageDown</kbd></td><td>{t('quizPresent.nextQuestionShortcut', { defaultValue: 'Next question (press any one key)' })}</td></tr>
                 <tr><td><kbd>←</kbd> or <kbd>Backspace</kbd> or <kbd>PageUp</kbd></td><td>{t('quizPresent.previousQuestionShortcut', { defaultValue: 'Previous question (press any one key)' })}</td></tr>
                 {!isPoll && <tr><td><kbd>L</kbd></td><td>{t('quizPresent.toggleLeaderboard', { defaultValue: 'Toggle leaderboard' })}</td></tr>}
+                <tr><td><kbd>W</kbd></td><td>{t('quizPresent.toggleWhiteboard', { defaultValue: 'Toggle whiteboard' })}</td></tr>
+                <tr><td><kbd>C</kbd></td><td>{t('quizPresent.clearWhiteboard', { defaultValue: 'Clear whiteboard' })}</td></tr>
                 <tr><td><kbd>F</kbd></td><td>{t('quizPresent.toggleFullscreen', { defaultValue: 'Toggle fullscreen' })}</td></tr>
                 <tr><td><kbd>?</kbd></td><td>{t('quizPresent.showHidePanel', { defaultValue: 'Show / hide this panel' })}</td></tr>
                 <tr><td><kbd>Esc</kbd></td><td>{t('quizPresent.closeOverlays', { defaultValue: 'Close overlays' })}</td></tr>

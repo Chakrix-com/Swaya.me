@@ -20,7 +20,7 @@ function ResetPassword() {
 
   const onFinish = async (values) => {
     if (!token) {
-      message.error("Passsword reset token is missing from the URL.")
+      message.error(t('auth.resetTokenMissingToast'))
       return
     }
 
@@ -31,9 +31,9 @@ function ResetPassword() {
         new_password: values.password 
       })
       setSuccess(true)
-      message.success("Password has been successfully reset! You can now log in.")
+      message.success(t('auth.resetPasswordSuccessToast'))
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Failed to reset password. The link may have expired.')
+      message.error(error.response?.data?.detail || t('auth.resetPasswordFailedDefault'))
     } finally {
       setLoading(false)
     }
@@ -46,11 +46,11 @@ function ResetPassword() {
         <div className="login-container">
           <Card className="login-form">
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <Title level={3} type="danger">Invalid Link</Title>
-              <Text>No reset token was found in the URL. Please request a new password reset link.</Text>
+              <Title level={3} type="danger">{t('auth.invalidResetLinkTitle')}</Title>
+              <Text>{t('auth.invalidResetLinkSubtitle')}</Text>
               <div style={{ marginTop: '24px' }}>
                 <Link to="/forgot-password">
-                  <Button type="primary">Request New Link</Button>
+                  <Button type="primary">{t('auth.requestNewLink')}</Button>
                 </Link>
               </div>
             </div>
@@ -78,10 +78,10 @@ function ResetPassword() {
           {!success ? (
             <>
               <Title level={3} style={{ textAlign: 'center', marginBottom: '16px' }}>
-                Reset Your Password
+                {t('auth.resetYourPasswordTitle')}
               </Title>
               <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: '24px' }}>
-                Please enter your new password below.
+                {t('auth.resetYourPasswordSubtitle')}
               </Text>
 
               <Form
@@ -91,34 +91,34 @@ function ResetPassword() {
                 layout="vertical"
               >
                 <Form.Item
-                  label="New Password"
+                  label={t('auth.newPasswordLabel')}
                   name="password"
                   rules={[
-                    { required: true, message: 'New password is required' },
-                    { min: 8, message: 'Password must be at least 8 characters' }
+                    { required: true, message: t('auth.newPasswordRequired') },
+                    { min: 8, message: t('auth.passwordMinLength') }
                   ]}
-                  extra="Must be at least 8 characters, and contain at least one uppercase letter and one number."
+                  extra={t('auth.passwordComplexityHint')}
                 >
-                  <Input.Password prefix={<LockOutlined />} placeholder="Enter new password" size="large" />
+                  <Input.Password prefix={<LockOutlined />} placeholder={t('auth.newPasswordPlaceholder')} size="large" />
                 </Form.Item>
 
                 <Form.Item
-                  label="Confirm New Password"
+                  label={t('auth.confirmNewPasswordLabel')}
                   name="confirmPassword"
                   dependencies={['password']}
                   rules={[
-                    { required: true, message: 'Please confirm your new password' },
+                    { required: true, message: t('auth.confirmNewPasswordRequired') },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue('password') === value) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error('The two passwords do not match.'));
+                        return Promise.reject(new Error(t('auth.passwordMismatch')));
                       },
                     }),
                   ]}
                 >
-                  <Input.Password prefix={<LockOutlined />} placeholder="Confirm new password" size="large" />
+                  <Input.Password prefix={<LockOutlined />} placeholder={t('auth.confirmNewPasswordPlaceholder')} size="large" />
                 </Form.Item>
 
                 <Form.Item>
@@ -130,7 +130,7 @@ function ResetPassword() {
                     icon={<CheckCircleOutlined />}
                     size="large"
                   >
-                    Save New Password
+                    {t('auth.saveNewPassword')}
                   </Button>
                 </Form.Item>
               </Form>
@@ -138,12 +138,12 @@ function ResetPassword() {
           ) : (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-              <Title level={3}>Password Reset</Title>
+              <Title level={3}>{t('auth.passwordResetTitle')}</Title>
               <Text style={{ display: 'block', marginBottom: '24px' }}>
-                Your password has been successfully updated.
+                {t('auth.passwordResetSubtitle')}
               </Text>
               <Button type="primary" size="large" block onClick={() => navigate('/login')}>
-                Go to Login
+                {t('auth.goToLogin')}
               </Button>
             </div>
           )}

@@ -258,6 +258,22 @@ class SessionLeaveResponse(BaseModel):
     message: str
 
 
+class WhiteboardStateUpdateRequest(BaseModel):
+    """Persist presenter whiteboard state for current question"""
+    question_index: int = Field(..., ge=-1)
+    enabled: bool = False
+    image_data: Optional[str] = None
+
+
+class WhiteboardStateResponse(BaseModel):
+    """Whiteboard state for present screen"""
+    session_id: int
+    question_index: int
+    enabled: bool
+    image_data: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
 # Answer Schemas
 class AnswerSubmitRequest(BaseModel):
     """Submit answer request for MCQ"""

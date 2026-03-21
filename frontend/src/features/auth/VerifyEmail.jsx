@@ -22,7 +22,7 @@ function VerifyEmail() {
     const verifyToken = async () => {
       if (!token) {
         setStatus('error')
-        setErrorMessage('No verification token provided.')
+        setErrorMessage(t('auth.verifyTokenMissing'))
         return
       }
 
@@ -31,12 +31,12 @@ function VerifyEmail() {
         setStatus('success')
       } catch (error) {
         setStatus('error')
-        setErrorMessage(error.response?.data?.detail || 'Verification failed. The link may be expired or invalid.')
+        setErrorMessage(error.response?.data?.detail || t('auth.verifyEmailFailedDefault'))
       }
     }
 
     verifyToken()
-  }, [token])
+  }, [token, t])
 
   return (
     <PublicPageLayout>
@@ -57,20 +57,20 @@ function VerifyEmail() {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <Spin size="large" />
               <Title level={4} style={{ marginTop: '24px' }}>
-                Verifying your email...
+                {t('auth.verifyingEmailTitle')}
               </Title>
-              <Text type="secondary">Please wait while we confirm your account.</Text>
+              <Text type="secondary">{t('auth.verifyingEmailSubtitle')}</Text>
             </div>
           )}
 
           {status === 'success' && (
             <Result
               status="success"
-              title="Email Verified Successfully!"
-              subTitle="Your account is now active. You can log in to start creating quizzes."
+              title={t('auth.verifyEmailSuccessTitle')}
+              subTitle={t('auth.verifyEmailSuccessSubtitle')}
               extra={[
                 <Button type="primary" key="login" onClick={() => navigate('/login')} size="large">
-                  Go to Login
+                  {t('auth.goToLogin')}
                 </Button>
               ]}
             />
@@ -79,20 +79,20 @@ function VerifyEmail() {
           {status === 'error' && (
             <Result
               status="error"
-              title="Verification Failed"
+              title={t('auth.verifyEmailFailedTitle')}
               subTitle={errorMessage}
               extra={[
                 <Button key="register" onClick={() => navigate('/register')} size="large">
-                  Back to Registration
+                  {t('auth.backToRegistration')}
                 </Button>,
                 <Button type="primary" key="login" onClick={() => navigate('/login')} size="large">
-                  Go to Login
+                  {t('auth.goToLogin')}
                 </Button>
               ]}
             >
               <div className="desc">
                 <Text type="secondary">
-                  If you continue to experience issues, please contact support or try registering again.
+                  {t('auth.verifyEmailHelpText')}
                 </Text>
               </div>
             </Result>

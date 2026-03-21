@@ -24,7 +24,7 @@ function ForgotPassword() {
     } catch (error) {
       // Even if there's an error, typically for forgot password we don't 
       // reveal if the email exists, but we catch network errors here.
-      message.error(error.response?.data?.detail || 'Failed to request password reset. Please try again.')
+      message.error(error.response?.data?.detail || t('auth.forgotPasswordRequestFailed'))
     } finally {
       setLoading(false)
     }
@@ -48,10 +48,10 @@ function ForgotPassword() {
           {!submitted ? (
             <>
               <Title level={3} style={{ textAlign: 'center', marginBottom: '16px' }}>
-                Forgot Password
+                {t('auth.forgotPasswordTitle')}
               </Title>
               <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: '24px' }}>
-                Enter your email address and we'll send you a link to reset your password.
+                {t('auth.forgotPasswordSubtitle')}
               </Text>
 
               <Form
@@ -80,7 +80,7 @@ function ForgotPassword() {
                     icon={<MailOutlined />}
                     size="large"
                   >
-                    Send Reset Link
+                    {t('auth.sendResetLink')}
                   </Button>
                 </Form.Item>
               </Form>
@@ -88,9 +88,9 @@ function ForgotPassword() {
           ) : (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <MailOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-              <Title level={3}>Check Your Email</Title>
+              <Title level={3}>{t('auth.checkYourEmail')}</Title>
               <Text style={{ display: 'block', marginBottom: '24px' }}>
-                If an account exists for <strong>{submitEmail}</strong>, an email with password reset instructions has been sent.
+                {t('auth.forgotPasswordEmailSent', { email: submitEmail })}
               </Text>
             </div>
           )}
@@ -98,7 +98,7 @@ function ForgotPassword() {
           <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--visitor-panel-border)' }}>
             <Space split={<Text type="secondary">|</Text>}>
               <Link to="/login">
-                <Button type="link">Back to Login</Button>
+                <Button type="link">{t('auth.backToLogin')}</Button>
               </Link>
               <Link to="/">
                 <Button type="link" icon={<HomeOutlined />}>

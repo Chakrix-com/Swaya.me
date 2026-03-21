@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Button, Card, Col, DatePicker, Input, Rate, Row, Select, Space, Table, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useSelector } from 'react-redux'
+import { useTranslation } from 'react-i18next'
 import { statsAPI } from '../../services/api'
 import './Admin.css'
 
@@ -9,6 +10,7 @@ const { Title, Text } = Typography
 const { RangePicker } = DatePicker
 
 function FeedbackManagement() {
+  const { t } = useTranslation()
   const { user } = useSelector((state) => state.auth)
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState([])
@@ -59,55 +61,55 @@ function FeedbackManagement() {
   if (user?.role !== 'super_admin') {
     return (
       <div style={{ padding: 24 }}>
-        <Alert message="Access denied" description="Only super admins can view feedback." type="error" showIcon />
+        <Alert message={t('admin.feedbackPage.accessDenied')} description={t('admin.feedbackPage.accessDeniedDescription')} type="error" showIcon />
       </div>
     )
   }
 
   const columns = [
     {
-      title: 'When',
+      title: t('admin.feedbackPage.columns.when'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 170,
       render: (value) => dayjs(value).format('YYYY-MM-DD HH:mm'),
     },
     {
-      title: 'Quiz',
+      title: t('admin.feedbackPage.columns.quiz'),
       dataIndex: 'quiz_title',
       key: 'quiz_title',
       width: 220,
       ellipsis: true,
     },
     {
-      title: 'Tenant',
+      title: t('admin.feedbackPage.columns.tenant'),
       dataIndex: 'tenant_id',
       key: 'tenant_id',
       width: 90,
     },
     {
-      title: 'Source',
+      title: t('admin.feedbackPage.columns.source'),
       dataIndex: 'source_type',
       key: 'source_type',
       width: 120,
       render: (value) => <Tag color={value === 'participant' ? 'blue' : 'green'}>{value}</Tag>,
     },
     {
-      title: 'Rating',
+      title: t('admin.feedbackPage.columns.rating'),
       dataIndex: 'rating',
       key: 'rating',
       width: 130,
-      render: (value) => (value ? <Rate disabled value={value} /> : <Text type="secondary">N/A</Text>),
+      render: (value) => (value ? <Rate disabled value={value} /> : <Text type="secondary">{t('admin.feedbackPage.notAvailable')}</Text>),
     },
     {
-      title: 'Submitted By',
+      title: t('admin.feedbackPage.columns.submittedBy'),
       key: 'submitted_by',
       width: 220,
-      render: (_, record) => record.display_name || record.user_email || 'Anonymous',
+      render: (_, record) => record.display_name || record.user_email || t('admin.feedbackPage.anonymous'),
       ellipsis: true,
     },
     {
-      title: 'Feedback',
+      title: t('admin.feedbackPage.columns.feedback'),
       dataIndex: 'feedback_text',
       key: 'feedback_text',
       ellipsis: true,
@@ -143,28 +145,28 @@ function FeedbackManagement() {
   return (
     <div className="admin-page" style={{ padding: 24 }}>
       <div style={{ marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>Feedback</Title>
-        <Text type="secondary">Super admin feedback console with server-side filtering and pagination</Text>
+        <Title level={2} style={{ margin: 0 }}>{t('admin.feedback')}</Title>
+        <Text type="secondary">{t('admin.feedbackPage.description')}</Text>
       </div>
 
       <Card style={{ marginBottom: 16 }}>
         <Row gutter={[12, 12]} className="admin-action-row">
           <Col xs={24} md={6}>
             <Select
-              placeholder="Source"
+              placeholder={t('admin.feedbackPage.filterSource')}
               allowClear
               className="admin-control"
               value={filters.source_type}
               onChange={(value) => setFilters((prev) => ({ ...prev, source_type: value }))}
               options={[
-                { label: 'Participant', value: 'participant' },
-                { label: 'User', value: 'user' },
+                { label: t('admin.feedbackPage.participant'), value: 'participant' },
+                { label: t('admin.feedbackPage.user'), value: 'user' },
               ]}
             />
           </Col>
           <Col xs={24} md={4}>
             <Select
-              placeholder="Rating"
+              placeholder={t('admin.feedbackPage.filterRating')}
               allowClear
               className="admin-control"
               value={filters.rating}
@@ -181,7 +183,7 @@ function FeedbackManagement() {
           </Col>
           <Col xs={24} md={6}>
             <Input
-              placeholder="Search feedback text"
+              placeholder={t('admin.feedbackPage.filterSearch')}
               className="admin-control"
               value={filters.search}
               onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
@@ -190,8 +192,8 @@ function FeedbackManagement() {
           </Col>
           <Col xs={24}>
             <Space wrap>
-              <Button type="primary" onClick={onApplyFilters}>Apply Filters</Button>
-              <Button onClick={onResetFilters}>Reset</Button>
+              <Button type="primary" onClick={onApplyFilters}>{t('admin.feedbackPage.applyFilters')}</Button>
+              <Button onClick={onResetFilters}>{t('admin.feedbackPage.reset')}</Button>
             </Space>
           </Col>
         </Row>
@@ -210,7 +212,7 @@ function FeedbackManagement() {
             total,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (value) => `Total ${value} feedback entries`,
+            showTotal: (value) => t('admin.feedbackPage.totalEntries', { value }),
           }}
           onChange={handleTableChange}
         />

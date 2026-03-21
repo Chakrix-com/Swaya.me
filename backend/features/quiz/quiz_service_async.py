@@ -388,7 +388,7 @@ class QuizBuilderServiceAsync:
                 Quiz.id == quiz_id,
                 Quiz.tenant_id == current_user.tenant_id
             )
-            .options(selectinload(Quiz.questions))
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder).selectinload(QuizFolder.parent))
         )
         quiz = result.scalar_one_or_none()
         
@@ -837,6 +837,7 @@ class QuizBuilderServiceAsync:
         base_url = os.getenv('BASE_URL', 'http://localhost:8000')
         loaded_questions = quiz.__dict__.get("questions") or []
         
+        loaded_folder = quiz.__dict__.get("folder")
         return QuizResponse(
             id=quiz.id,
             event_id=quiz.event_id,
@@ -845,7 +846,7 @@ class QuizBuilderServiceAsync:
             quiz_type=quiz.quiz_type,
             status=quiz.status,
             folder_id=quiz.folder_id,
-            folder_path=" / ".join(self._folder_path_names(quiz.folder)) if quiz.folder else None,
+            folder_path=" / ".join(self._folder_path_names(loaded_folder)) if loaded_folder else None,
             is_template=quiz.is_template,
             template_scope=quiz.template_scope,
             questions=[

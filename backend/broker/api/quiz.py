@@ -1,7 +1,10 @@
 """
 Quiz API Endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import asyncio
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -14,6 +17,7 @@ from features.quiz.schemas import (
     QuestionCreate, QuestionUpdate, QuestionResponse,
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     SessionLeaveResponse,
+    WhiteboardStateUpdateRequest, WhiteboardStateResponse,
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
@@ -533,6 +537,92 @@ async def end_session(
         return await service.end_session(db, session_id, current_user)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/whiteboard-state", response_model=WhiteboardStateResponse)
+async def get_whiteboard_state(
+    session_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Get whiteboard state for current presenter question (host-only)."""
+    try:
+        return await service.get_whiteboard_state(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/whiteboard-state/public", response_model=WhiteboardStateResponse)
+async def get_public_whiteboard_state(
+    session_id: int,
+    join_code: str,
+    db: AsyncSession = Depends(get_async_db),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Get whiteboard state using join code (present viewers)."""
+    try:
+        return await service.get_public_whiteboard_state(db, session_id, join_code)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.put("/sessions/{session_id}/whiteboard-state", response_model=WhiteboardStateResponse)
+async def update_whiteboard_state(
+    session_id: int,
+    request: WhiteboardStateUpdateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Persist presenter whiteboard state for current question (host-only)."""
+    try:
+        return await service.update_whiteboard_state(db, session_id, request, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidSessionStatusError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/whiteboard-events/public")
+async def stream_public_whiteboard_events(
+    session_id: int,
+    join_code: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_db),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """SSE stream for whiteboard state updates for present viewers."""
+
+    async def event_stream():
+        last_payload = None
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                state = await service.get_public_whiteboard_state(db, session_id, join_code)
+                payload = state.model_dump_json()
+                if payload != last_payload:
+                    yield f"event: whiteboard\ndata: {payload}\n\n"
+                    last_payload = payload
+            except SessionNotFoundError:
+                error_payload = json.dumps({"error": "session_not_found"})
+                yield f"event: error\ndata: {error_payload}\n\n"
+                break
+
+            # Keepalive comment for proxies and client reconnect stability
+            yield ": ping\n\n"
+            await asyncio.sleep(0.4)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # Answer Submission Endpoints

@@ -142,7 +142,7 @@ function OrganizationManagement() {
       )
     },
     {
-      title: 'Status',
+      title: t('admin.orgs.status'),
       dataIndex: 'is_active',
       key: 'is_active',
       render: (isActive) => (
@@ -152,7 +152,7 @@ function OrganizationManagement() {
       )
     },
     {
-      title: 'Actions',
+      title: t('admin.orgs.actions'),
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -189,7 +189,7 @@ function OrganizationManagement() {
         return (
           <div style={{ minWidth: 150 }}>
             <div style={{ marginBottom: 4 }}>
-              {record.quota_usage} / {record.user_quota} users
+              {record.quota_usage} / {record.user_quota} {t('admin.orgs.users')}
             </div>
             <Progress 
               percent={percentage} 
@@ -307,7 +307,7 @@ function OrganizationManagement() {
 
       {/* Organizations Table */}
       <Card
-        title="Organizations"
+        title={t('admin.organizations')}
         extra={
           <Button
             type="primary"
@@ -349,7 +349,7 @@ function OrganizationManagement() {
             label={t('admin.orgs.orgName')}
             rules={[{ required: true, message: t('admin.orgs.orgNameRequired') }]}
           >
-            <Input placeholder="e.g., Acme Corporation" />
+            <Input placeholder={t('admin.orgs.orgNameExample')} />
           </Form.Item>
 
           <Form.Item
@@ -357,7 +357,7 @@ function OrganizationManagement() {
             label={t('admin.orgs.slug')}
             help={t('admin.orgs.slugPlaceholder')}
           >
-            <Input placeholder="e.g., acme-corp" />
+            <Input placeholder={t('admin.orgs.slugExample')} />
           </Form.Item>
 
           <Form.Item
@@ -392,7 +392,7 @@ function OrganizationManagement() {
 
       {/* Manage Admins Modal */}
       <Modal
-        title={`Admins - ${selectedOrg?.name || ''}`}
+        title={t('admin.orgs.adminsForOrganization', { orgName: selectedOrg?.name || '' })}
         open={adminModalVisible}
         onCancel={() => {
           setAdminModalVisible(false)
@@ -405,7 +405,7 @@ function OrganizationManagement() {
       >
         <Card
           size="small"
-          title="Create Admin User"
+          title={t('admin.orgs.createAdminUser')}
           style={{ marginBottom: 16 }}
         >
           <Form
@@ -419,8 +419,8 @@ function OrganizationManagement() {
                   name="email"
                   label={t('admin.orgs.email')}
                   rules={[
-                    { required: true, message: 'Please enter email' },
-                    { type: 'email', message: 'Invalid email' }
+                    { required: true, message: t('admin.orgs.emailRequired') },
+                    { type: 'email', message: t('admin.orgs.emailInvalid') }
                   ]}
                 >
                   <Input />
@@ -442,7 +442,7 @@ function OrganizationManagement() {
                   name="password"
                   label={t('admin.orgs.password')}
                   rules={[
-                    { required: true, message: 'Please enter password' },
+                    { required: true, message: t('admin.orgs.passwordRequired') },
                     { min: 8, message: t('admin.orgs.passwordMinLength') }
                   ]}
                 >
@@ -456,7 +456,7 @@ function OrganizationManagement() {
                   initialValue={10}
                   rules={[{ required: true }]}
                 >
-                  <Input type="number" min={1} addonAfter="users" />
+                  <Input type="number" min={1} addonAfter={t('admin.orgs.users')} />
                 </Form.Item>
               </Col>
             </Row>

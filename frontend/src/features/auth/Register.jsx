@@ -84,10 +84,10 @@ function Register() {
               name="password"
               rules={[
                 { required: true, message: `${t('auth.password')} is required` },
-                { min: 8, message: 'Password must be at least 8 characters!' },
+                { min: 8, message: t('auth.passwordMinLength') },
                 {
                   pattern: /^(?=.*[A-Z])(?=.*\d)/,
-                  message: 'Password must contain uppercase and number!',
+                  message: t('auth.passwordUpperNumber'),
                 },
               ]}
             >
