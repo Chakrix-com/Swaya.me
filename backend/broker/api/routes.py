@@ -14,6 +14,7 @@ from broker.api.language_tracking import router as language_tracking_router
 from broker.api.quiz_admin import router as quiz_admin_router
 from broker.api.tier_management import router as tier_management_router
 from broker.api.ai import router as ai_router
+from broker.api.og import router as og_router
 
 api_router = APIRouter()
 
@@ -48,5 +49,6 @@ api_router.include_router(language_tracking_router)
 api_router.include_router(quiz_admin_router, prefix="/admin", tags=["admin"])
 api_router.include_router(tier_management_router, prefix="/admin", tags=["admin"])
 api_router.include_router(ai_router)
+api_router.include_router(og_router)
 
 # TODO: Include realtime routes
