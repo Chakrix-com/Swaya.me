@@ -12,7 +12,7 @@ from fastapi import Depends
 
 from persistence.database_async import get_async_db
 from persistence.models.core import Event
-from persistence.models.quiz import Quiz, QuizSession, QuizSessionStatus
+from persistence.models.quiz import Quiz, QuizSession, QuizSessionStatus, QuizType
 
 router = APIRouter(prefix="/og", tags=["og"])
 
@@ -109,5 +109,48 @@ async def og_join(join_code: str, db: AsyncSession = Depends(get_async_db)):
 
     return HTMLResponse(
         content=_html(title=title, description=description, url=join_url),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get("/poll/{slug}", response_class=HTMLResponse)
+async def og_poll(slug: str, db: AsyncSession = Depends(get_async_db)):
+    """
+    Return an OG-tag page for a /poll/:slug URL.
+    Looks up the offline poll title; falls back to generic tags if not found.
+    """
+    poll_url = f"{_SITE}/poll/{slug}"
+
+    quiz_name: str | None = None
+    quiz_description: str | None = None
+    try:
+        result = await db.execute(
+            select(Quiz).filter(
+                Quiz.poll_slug == slug,
+                Quiz.quiz_type == QuizType.OFFLINE_POLL,
+            )
+        )
+        quiz = result.scalar_one_or_none()
+        if quiz:
+            quiz_name = quiz.title
+            quiz_description = quiz.description
+    except Exception:
+        pass
+
+    if quiz_name:
+        title = f"{quiz_name} — Offline Poll on Swaya.me"
+        description = quiz_description or (
+            f"You've been invited to participate in \"{quiz_name}\" — an offline poll on Swaya.me. "
+            "Tap the link to share your responses."
+        )
+    else:
+        title = "Participate in an Offline Poll on Swaya.me"
+        description = (
+            "You've been invited to participate in an offline poll on Swaya.me. "
+            "Tap the link to share your responses at your convenience."
+        )
+
+    return HTMLResponse(
+        content=_html(title=title, description=description, url=poll_url),
         headers={"Cache-Control": "no-store"},
     )

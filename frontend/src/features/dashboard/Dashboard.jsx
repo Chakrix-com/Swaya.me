@@ -338,8 +338,16 @@ function Dashboard() {
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
 
-  const getQuizTypeColor = (quizType) => (quizType === 'poll' ? 'purple' : 'blue')
-  const getQuizTypeLabel = (quizType) => (quizType === 'poll' ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' }))
+  const getQuizTypeColor = (quizType) => {
+    if (quizType === 'offline_poll') return 'magenta'
+    if (quizType === 'poll') return 'purple'
+    return 'blue'
+  }
+  const getQuizTypeLabel = (quizType) => {
+    if (quizType === 'offline_poll') return t('offlinePoll.typeLabel', 'Offline Poll')
+    if (quizType === 'poll') return t('quiz.poll', { defaultValue: 'Poll' })
+    return t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })
+  }
 
   const folderTreeData = useMemo(() => {
     const mapNodes = (nodes) => (nodes || []).map((node) => ({
@@ -501,6 +509,13 @@ function Dashboard() {
             >
               {t('quiz.createPoll', { defaultValue: 'Create Poll' })}
             </Button>
+            <Button
+              icon={<BarChartOutlined />}
+              onClick={() => navigate('/quiz/new?type=offline_poll')}
+              style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
+            >
+              {t('offlinePoll.typeLabel', 'Offline Poll')}
+            </Button>
           </div>
         }
       >
@@ -636,6 +651,25 @@ function Dashboard() {
                       {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}
                     </Tag>
                   )}
+                  {quiz.quiz_type === 'offline_poll' && quiz.offline_start_at && (
+                    <Tag color={(() => {
+                      const now = new Date()
+                      const start = new Date(quiz.offline_start_at)
+                      const end = quiz.offline_end_at ? new Date(quiz.offline_end_at) : null
+                      if (now < start) return 'blue'
+                      if (end && now > end) return 'default'
+                      return 'green'
+                    })()}>
+                      {(() => {
+                        const now = new Date()
+                        const start = new Date(quiz.offline_start_at)
+                        const end = quiz.offline_end_at ? new Date(quiz.offline_end_at) : null
+                        if (now < start) return t('offlinePoll.statusNotStarted', 'Not Started')
+                        if (end && now > end) return t('offlinePoll.statusClosed', 'Closed')
+                        return t('offlinePoll.statusActive', 'Active')
+                      })()}
+                    </Tag>
+                  )}
                 </Space>
               </div>
               <div className="quiz-item-actions">
@@ -687,13 +721,31 @@ function Dashboard() {
                     </Button>
                   </Popconfirm>
                 ) : null}
-                {quiz.status === 'ready' && !quiz.has_active_session && (
+                {quiz.status === 'ready' && !quiz.has_active_session && quiz.quiz_type !== 'offline_poll' && (
                   <Button
                     type="primary"
                     icon={<PlayCircleOutlined />}
                     onClick={() => navigate(`/quiz/${quiz.id}/control`)}
                   >
                     {t('quiz.startQuiz')}
+                  </Button>
+                )}
+                {quiz.quiz_type === 'offline_poll' && quiz.poll_url && (
+                  <Button
+                    icon={<CopyOutlined />}
+                    onClick={() => {
+                      navigator.clipboard.writeText(quiz.poll_url)
+                      message.success(t('offlinePoll.linkCopied', 'Link copied!'))
+                    }}
+                  >
+                    {t('offlinePoll.copyLink', 'Copy Link')}
+                  </Button>
+                )}
+                {quiz.quiz_type === 'offline_poll' && quiz.status === 'ready' && (
+                  <Button
+                    onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)}
+                  >
+                    {t('offlinePoll.viewResults', 'View Results')}
                   </Button>
                 )}
                 <Popconfirm

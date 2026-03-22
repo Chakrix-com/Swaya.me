@@ -21,6 +21,7 @@ class QuizType(str, enum.Enum):
     """Quiz experience type"""
     QUIZ = "quiz"
     POLL = "poll"
+    OFFLINE_POLL = "offline_poll"
 
 
 class QuizSessionStatus(str, enum.Enum):
@@ -77,10 +78,17 @@ class Quiz(Base, TimestampMixin, TenantMixin):
         nullable=False,
         server_default=TemplateScope.TENANT.value,
     )
-    
+
+    # Offline poll fields
+    poll_slug = Column(String(64), nullable=True, unique=True, index=True)
+    offline_start_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    offline_end_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    offline_results_email = Column(String(255), nullable=True)
+    offline_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
+
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
-    sessions = relationship("QuizSession", back_populates="quiz")
+    sessions = relationship("QuizSession", back_populates="quiz", foreign_keys="QuizSession.quiz_id")
     folder = relationship("QuizFolder", back_populates="quizzes")
 
 
@@ -138,7 +146,7 @@ class QuizSession(Base, TimestampMixin, TenantMixin):
     leaderboard_visible = Column(Boolean, default=True, nullable=False)
     
     # Relationships
-    quiz = relationship("Quiz", back_populates="sessions")
+    quiz = relationship("Quiz", back_populates="sessions", foreign_keys=[quiz_id])
     participants = relationship("Participant", back_populates="session")
     answers = relationship("Answer", back_populates="session")
     question_timings = relationship("SessionQuestionTiming", back_populates="session", cascade="all, delete-orphan")
@@ -155,7 +163,8 @@ class Participant(Base, TimestampMixin):
     display_name = Column(String(100), nullable=True)
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    
+    completed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
     # Relationships
     session = relationship("QuizSession", back_populates="participants")
     answers = relationship("Answer", back_populates="participant")

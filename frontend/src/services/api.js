@@ -59,6 +59,7 @@ export const quizAPI = {
   assignFolder: (id, folderId) => api.put(`/quizzes/${id}/folder`, { folder_id: folderId }),
   delete: (id) => api.delete(`/quizzes/${id}`),
   publish: (id) => api.post(`/quizzes/${id}/publish`),
+  publishOffline: (id) => api.post(`/quizzes/${id}/publish-offline`),
   unpublish: (id) => api.post(`/quizzes/${id}/unpublish`),
   duplicate: (id) => api.post(`/quizzes/${id}/duplicate`),
   setTemplate: (id, data) => api.post(`/quizzes/${id}/template`, data),
@@ -193,6 +194,18 @@ export const organizationAPI = {
   updateAdminQuota: (adminId, quota) => api.patch(`/admin/admin-users/${adminId}/quota`, { user_quota: quota }),
   getAdminUsage: (adminId) => api.get(`/admin/admin-users/${adminId}/usage`),
 }
+
+// Offline Poll API
+export const offlinePollAPI = {
+  getInfo: (slug) => api.get(`/offline-poll/${slug}`),
+  join: (slug, data) => api.post(`/offline-poll/${slug}/join`, data),
+  saveAnswer: (slug, data) => api.post(`/offline-poll/${slug}/answer`, data),
+  complete: (slug, data) => api.post(`/offline-poll/${slug}/complete`, data),
+  getResults: (slug) => api.get(`/offline-poll/${slug}/results`),
+}
+
+// Quiz Publish Offline
+export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offline`)
 
 // AI Generation API
 export const aiAPI = {

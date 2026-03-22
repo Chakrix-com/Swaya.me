@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message, Space } from 'antd'
+import { Form, Input, Button, Card, message } from 'antd'
 import { LoginOutlined } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
 import { useDispatch } from 'react-redux'
 import { setSession } from '../../store/sessionSlice'
-import LanguageSwitcher from '../../components/LanguageSwitcher'
-import BetaBadge from '../../components/BetaBadge'
+import PublicBrandHeader from '../../components/PublicBrandHeader'
 
 function AudienceJoin() {
   const { t } = useTranslation()
@@ -45,24 +44,15 @@ function AudienceJoin() {
 
   return (
     <div
-      className="audience-join min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: 'linear-gradient(145deg, #0f0c29 0%, #302b63 55%, #1a1a3e 100%)', position: 'relative' }}
+      className="audience-join min-vh-100 d-flex flex-column"
+      style={{ position: 'relative' }}
     >
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 100 }}>
-        <LanguageSwitcher />
-      </div>
+      <PublicBrandHeader />
 
-      <div className="container overflow-hidden py-4">
+      <div className="container overflow-hidden py-4" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
         <div className="row justify-content-center mx-0">
           <div className="col-12 col-sm-8 col-md-6 col-lg-4 px-0 px-sm-3">
-            <Card
-              title={(
-                <Space size={8}>
-                  <span>{t('audience.joinQuiz')}</span>
-                  <BetaBadge />
-                </Space>
-              )}
-            >
+            <Card title={t('audience.joinQuiz')}>
               <Form form={form} name="join" onFinish={onFinish} layout="vertical">
                 <Form.Item
                   label={t('audience.sessionCode')}

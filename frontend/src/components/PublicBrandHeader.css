@@ -1,0 +1,53 @@
+.public-brand-header {
+  width: 100%;
+  background: var(--visitor-header-bg);
+  border-bottom: 1px solid var(--visitor-header-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-sizing: border-box;
+}
+
+.public-brand-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.public-brand-header__img {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.public-brand-header__name {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--visitor-text-primary) !important;
+  white-space: nowrap;
+}
+
+.public-brand-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.public-brand-header__theme-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  color: var(--visitor-text-primary) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -26,6 +26,7 @@ from features.quiz.schemas import (
     FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
+from features.quiz.schemas import OfflinePollPublishResponse
 from features.quiz.question_service_async import QuestionServiceAsync
 from features.quiz.session_service_async import SessionServiceAsync
 from features.quiz.answer_service_async import AnswerServiceAsync
@@ -328,6 +329,22 @@ async def publish_quiz(
     """Publish quiz (validate and mark as READY)"""
     try:
         return await service.publish_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (InvalidQuizStatusError, QuizValidationError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/{quiz_id:int}/publish-offline", response_model=OfflinePollPublishResponse)
+async def publish_offline_poll(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Publish an offline poll — creates permanent session and shareable slug."""
+    try:
+        return await service.publish_offline_poll(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except (InvalidQuizStatusError, QuizValidationError) as e:

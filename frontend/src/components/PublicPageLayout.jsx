@@ -1,6 +1,7 @@
 import React from 'react'
 import LanguageSwitcher from './LanguageSwitcher'
 import BetaBadge from './BetaBadge'
+import ThemeToggleButton from './ThemeToggleButton'
 import './PublicPageLayout.css'
 
 const PublicPageLayout = ({ children }) => {
@@ -10,6 +11,7 @@ const PublicPageLayout = ({ children }) => {
         <BetaBadge />
       </div>
       <div className="language-switcher-container">
+        <ThemeToggleButton />
         <LanguageSwitcher />
       </div>
       <div className="public-page-content">

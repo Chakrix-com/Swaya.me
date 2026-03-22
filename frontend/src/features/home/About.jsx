@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Layout, Typography, Button, Space, Divider, Row, Col, Card } from 'antd'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
+import ThemeToggleButton from '../../components/ThemeToggleButton'
 import {
   ArrowLeftOutlined,
   QuestionCircleOutlined,
@@ -65,6 +66,7 @@ export default function About() {
             <Text strong style={{ fontSize: 18 }}>Swaya.me</Text>
           </div>
           <Space>
+            <ThemeToggleButton />
             <LanguageSwitcher />
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>{t('pages.legal.backToHome')}</Button>
           </Space>

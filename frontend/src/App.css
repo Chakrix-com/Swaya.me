@@ -78,11 +78,6 @@
   --aud-input-bg: var(--visitor-aud-input-bg);
   --aud-input-text: var(--visitor-aud-input-text);
   --aud-input-placeholder: var(--visitor-aud-input-placeholder);
-  --aud-primary-btn-bg: #1677ff;
-  --aud-primary-btn-text: #ffffff;
-  --aud-disabled-bg: #f5f5f5;
-  --aud-disabled-text: rgba(0, 0, 0, 0.45);
-  --aud-disabled-border: #d9d9d9;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -129,66 +124,71 @@
 .audience-session .ant-input-affix-wrapper,
 .audience-join .ant-input-textarea textarea,
 .audience-session .ant-input-textarea textarea {
-  background: var(--aud-input-bg) !important;
-  color: var(--aud-input-text) !important;
-  -webkit-text-fill-color: var(--aud-input-text) !important;
+  background: var(--ctrl-input-bg) !important;
+  color: var(--ctrl-input-text) !important;
+  border-color: var(--ctrl-input-border) !important;
+  -webkit-text-fill-color: var(--ctrl-input-text) !important;
 }
 
 .audience-join .ant-input::placeholder,
 .audience-session .ant-input::placeholder,
 .audience-join .ant-input-textarea textarea::placeholder,
 .audience-session .ant-input-textarea textarea::placeholder {
-  color: var(--aud-input-placeholder) !important;
+  color: var(--ctrl-input-placeholder) !important;
 }
 
 .audience-session .ant-alert-message,
 .audience-session .ant-alert-description,
 .audience-join .ant-alert-message,
 .audience-join .ant-alert-description {
-  color: var(--aud-input-text) !important;
+  color: var(--ctrl-alert-text) !important;
 }
 
 .audience-join .ant-btn,
 .audience-session .ant-btn {
-  color: var(--aud-text-primary) !important;
+  background: var(--ctrl-btn-bg) !important;
+  color: var(--ctrl-btn-text) !important;
+  border-color: var(--ctrl-btn-border) !important;
+}
+
+.audience-join .ant-btn:not(:disabled):hover,
+.audience-session .ant-btn:not(:disabled):hover {
+  background: var(--ctrl-btn-hover-bg) !important;
 }
 
 .audience-join .ant-btn-primary,
 .audience-session .ant-btn-primary {
-  background: var(--aud-primary-btn-bg) !important;
-  border-color: var(--aud-primary-btn-bg) !important;
-  color: var(--aud-primary-btn-text) !important;
-  -webkit-text-fill-color: var(--aud-primary-btn-text) !important;
+  background: var(--ctrl-btn-primary-bg) !important;
+  border-color: var(--ctrl-btn-primary-border) !important;
+  color: var(--ctrl-btn-primary-text) !important;
+  -webkit-text-fill-color: var(--ctrl-btn-primary-text) !important;
+}
+
+.audience-join .ant-btn-primary:hover,
+.audience-session .ant-btn-primary:hover {
+  background: var(--ctrl-btn-primary-bg) !important;
 }
 
 .audience-join .ant-btn-primary:disabled,
 .audience-session .ant-btn-primary:disabled,
 .audience-join .ant-btn-primary[disabled],
 .audience-session .ant-btn-primary[disabled] {
-  color: var(--aud-disabled-text) !important;
-  background: var(--aud-disabled-bg) !important;
-  border-color: var(--aud-disabled-border) !important;
-  -webkit-text-fill-color: var(--aud-disabled-text) !important;
+  background: var(--ctrl-btn-disabled-bg) !important;
+  color: var(--ctrl-btn-disabled-text) !important;
+  border-color: var(--ctrl-btn-disabled-border) !important;
+  -webkit-text-fill-color: var(--ctrl-btn-disabled-text) !important;
 }
 
 .audience-join .ant-input-show-count-suffix,
 .audience-session .ant-input-show-count-suffix {
-  color: var(--aud-input-placeholder) !important;
+  color: var(--ctrl-input-placeholder) !important;
 }
 
 .audience-join .ant-input-data-count,
 .audience-session .ant-input-data-count,
 .audience-join .ant-input-textarea-show-count::after,
 .audience-session .ant-input-textarea-show-count::after {
-  color: var(--aud-input-placeholder) !important;
-}
-
-.visitor-theme--dark .audience-join .ant-input-data-count,
-.visitor-theme--dark .audience-session .ant-input-data-count,
-.visitor-theme--dark .audience-join .ant-input-textarea-show-count::after,
-.visitor-theme--dark .audience-session .ant-input-textarea-show-count::after {
-  color: var(--visitor-text-primary) !important;
-  -webkit-text-fill-color: var(--visitor-text-primary) !important;
+  color: var(--ctrl-input-placeholder) !important;
 }
 
 @media screen and (max-width: 768px) {
@@ -289,4 +289,158 @@
 
 .ant-pro-layout .ant-pro-global-footer {
   margin-top: auto;
+}
+
+/* ============================================================
+   Offline Poll Session — theme-aware public page
+   Mirrors the .audience-join / .audience-session pattern.
+   Variables are defined per-theme in index.css.
+   ============================================================ */
+
+.offline-poll-session {
+  --poll-bg: var(--visitor-poll-bg);
+  --poll-surface: var(--visitor-poll-surface);
+  --poll-border: var(--visitor-poll-border);
+  --poll-text-primary: var(--visitor-poll-text-primary);
+  --poll-text-secondary: var(--visitor-poll-text-secondary);
+  --poll-input-bg: var(--visitor-poll-input-bg);
+  --poll-input-text: var(--visitor-poll-input-text);
+  --poll-input-placeholder: var(--visitor-poll-input-placeholder);
+  --poll-card-shadow: var(--visitor-poll-card-shadow);
+  --poll-radio-selected: var(--visitor-poll-radio-selected);
+  --poll-tag-bg: var(--visitor-poll-tag-bg);
+  --poll-tag-color: var(--visitor-poll-tag-color);
+  min-height: 100vh;
+  background: var(--poll-bg);
+  color: var(--poll-text-primary);
+  color-scheme: var(--visitor-color-scheme);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.offline-poll-session__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  flex: 1;
+}
+
+.offline-poll-session .ant-card {
+  background: var(--poll-surface) !important;
+  border-color: var(--poll-border) !important;
+  box-shadow: var(--poll-card-shadow) !important;
+  backdrop-filter: blur(4px);
+}
+
+.offline-poll-session .ant-card-body,
+.offline-poll-session .ant-card-head {
+  background: transparent !important;
+  border-bottom-color: var(--poll-border) !important;
+}
+
+.offline-poll-session .ant-typography {
+  color: var(--poll-text-primary) !important;
+}
+
+.offline-poll-session .ant-typography.ant-typography-secondary {
+  color: var(--poll-text-secondary) !important;
+}
+
+.offline-poll-session .ant-input,
+.offline-poll-session .ant-input-affix-wrapper,
+.offline-poll-session .ant-input-textarea textarea {
+  background: var(--ctrl-input-bg) !important;
+  color: var(--ctrl-input-text) !important;
+  -webkit-text-fill-color: var(--ctrl-input-text) !important;
+  border-color: var(--ctrl-input-border) !important;
+}
+
+.offline-poll-session .ant-input::placeholder,
+.offline-poll-session .ant-input-textarea textarea::placeholder {
+  color: var(--ctrl-input-placeholder) !important;
+}
+
+.offline-poll-session .ant-input-data-count,
+.offline-poll-session .ant-input-textarea-show-count::after {
+  color: var(--ctrl-input-placeholder) !important;
+}
+
+.offline-poll-session .ant-radio-wrapper {
+  color: var(--poll-text-primary) !important;
+}
+
+.offline-poll-session .ant-radio-button-wrapper {
+  background: var(--ctrl-radio-option-bg) !important;
+  border-color: var(--ctrl-radio-option-border) !important;
+  color: var(--ctrl-btn-text) !important;
+}
+
+.offline-poll-session .ant-radio-button-wrapper-checked {
+  background: var(--ctrl-radio-selected-bg) !important;
+  border-color: var(--ctrl-radio-selected-border) !important;
+  color: var(--ctrl-btn-text) !important;
+}
+
+.offline-poll-session .ant-btn {
+  background: var(--ctrl-btn-bg) !important;
+  color: var(--ctrl-btn-text) !important;
+  border-color: var(--ctrl-btn-border) !important;
+}
+
+.offline-poll-session .ant-btn:not(:disabled):hover {
+  background: var(--ctrl-btn-hover-bg) !important;
+}
+
+.offline-poll-session .ant-btn-primary {
+  background: var(--ctrl-btn-primary-bg) !important;
+  border-color: var(--ctrl-btn-primary-border) !important;
+  color: var(--ctrl-btn-primary-text) !important;
+  -webkit-text-fill-color: var(--ctrl-btn-primary-text) !important;
+}
+
+.offline-poll-session .ant-btn-primary:hover {
+  background: var(--ctrl-btn-primary-bg) !important;
+}
+
+.offline-poll-session .ant-btn-primary:disabled,
+.offline-poll-session .ant-btn-primary[disabled] {
+  background: var(--ctrl-btn-disabled-bg) !important;
+  color: var(--ctrl-btn-disabled-text) !important;
+  border-color: var(--ctrl-btn-disabled-border) !important;
+  -webkit-text-fill-color: var(--ctrl-btn-disabled-text) !important;
+}
+
+.offline-poll-session .ant-progress-inner {
+  background: var(--ctrl-progress-track) !important;
+}
+
+.offline-poll-session .ant-tag {
+  border-color: var(--poll-border) !important;
+  color: var(--ctrl-tag-text) !important;
+}
+
+.offline-poll-session .ant-divider {
+  border-color: var(--ctrl-divider) !important;
+}
+
+.offline-poll-session .ant-alert {
+  border-color: var(--poll-border) !important;
+  color: var(--ctrl-alert-text) !important;
+}
+
+.offline-poll-session .poll-radio-option {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ctrl-radio-option-border);
+  margin-bottom: 4px;
+  background: var(--ctrl-radio-option-bg);
+  transition: background 0.15s ease;
+}
+
+.offline-poll-session .poll-radio-option.selected {
+  background: var(--ctrl-radio-selected-bg);
+  border-color: var(--ctrl-radio-selected-border);
 }

@@ -4,7 +4,7 @@
   align-items: stretch;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .quiz-item:last-child {
@@ -34,7 +34,7 @@
 }
 
 .dashboard-folder-pane {
-  border: 1px solid #f0f0f0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   background: #fafafa;
   display: flex;
@@ -47,9 +47,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: #f3f3f3;
   font-weight: 600;
+  border-radius: 8px 8px 0 0;
 }
 
 .dashboard-folder-pane-header .ant-space {
@@ -70,6 +71,26 @@
 .dashboard-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
   background-color: #dbe9ff !important;
   border-radius: 4px;
+}
+
+/* ── Dark mode overrides ────────────────────────────── */
+[data-theme="dark"] .dashboard-folder-pane {
+  background: #1f1f1f;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .dashboard-folder-pane-header {
+  background: #262626;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .quiz-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dashboard-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background-color: rgba(56, 115, 255, 0.2) !important;
 }
 
 .dashboard-content-pane {

@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
 import os
+import secrets
 
 from persistence.models.quiz import (
     Quiz,
@@ -24,7 +25,8 @@ from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse,
     TemplateDesignationRequest, TemplateQuizListItemResponse,
-    FolderCreateRequest, FolderUpdateRequest, FolderResponse
+    FolderCreateRequest, FolderUpdateRequest, FolderResponse,
+    OfflinePollPublishResponse,
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, QuizValidationError,
@@ -368,11 +370,17 @@ class QuizBuilderServiceAsync:
             quiz_type=QuizType(request.quiz_type.value),
             status=QuizStatus.DRAFT
         )
-        
+
+        # Offline poll fields
+        if request.quiz_type.value == "offline_poll":
+            quiz.offline_start_at = request.offline_start_at
+            quiz.offline_end_at = request.offline_end_at
+            quiz.offline_results_email = request.offline_results_email
+
         db.add(quiz)
         await db.commit()
         await db.refresh(quiz)
-        
+
         return self._to_quiz_response(quiz)
     
     async def get_quiz(
@@ -443,7 +451,14 @@ class QuizBuilderServiceAsync:
                 question_count=len(q.questions),
                 has_active_session=q.id in active_session_map,
                 active_session_id=active_session_map.get(q.id),
-                created_at=q.created_at.isoformat()
+                created_at=q.created_at.isoformat(),
+                poll_slug=getattr(q, 'poll_slug', None),
+                poll_url=(
+                    f"{os.getenv('FRONTEND_URL', 'https://www.swaya.me')}/poll/{q.poll_slug}"
+                    if getattr(q, 'poll_slug', None) else None
+                ),
+                offline_start_at=getattr(q, 'offline_start_at', None),
+                offline_end_at=getattr(q, 'offline_end_at', None),
             )
             for q in quizzes
         ]
@@ -626,10 +641,17 @@ class QuizBuilderServiceAsync:
             quiz.description = request.description
         if request.quiz_type is not None:
             quiz.quiz_type = QuizType(request.quiz_type.value)
-        
+        # Offline poll fields
+        if request.offline_start_at is not None:
+            quiz.offline_start_at = request.offline_start_at
+        if request.offline_end_at is not None:
+            quiz.offline_end_at = request.offline_end_at
+        if request.offline_results_email is not None:
+            quiz.offline_results_email = request.offline_results_email
+
         await db.commit()
         await db.refresh(quiz)
-        
+
         return self._to_quiz_response(quiz)
     
     async def delete_quiz(
@@ -686,8 +708,104 @@ class QuizBuilderServiceAsync:
         quiz.status = QuizStatus.READY
         await db.commit()
         await db.refresh(quiz)
-        
+
         return self._to_quiz_response(quiz)
+
+    async def publish_offline_poll(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        current_user: CurrentUser
+    ) -> OfflinePollPublishResponse:
+        """Publish an offline poll: create a permanent ACTIVE session and generate a shareable slug."""
+        from apscheduler.triggers.date import DateTrigger
+        from core.stats import scheduler as stats_scheduler
+
+        result = await db.execute(
+            select(Quiz)
+            .filter(
+                Quiz.id == quiz_id,
+                Quiz.tenant_id == current_user.tenant_id
+            )
+            .options(selectinload(Quiz.questions))
+        )
+        quiz = result.scalar_one_or_none()
+
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+
+        if quiz.quiz_type != QuizType.OFFLINE_POLL:
+            raise InvalidQuizStatusError("Quiz is not an offline poll")
+
+        if quiz.status not in (QuizStatus.DRAFT, QuizStatus.READY):
+            raise InvalidQuizStatusError("Offline poll is already active or archived")
+
+        if quiz.poll_slug:
+            raise InvalidQuizStatusError("Offline poll is already published")
+
+        # Validate
+        if not quiz.offline_start_at or not quiz.offline_end_at:
+            raise QuizValidationError("Offline poll must have start and end dates set")
+
+        if quiz.offline_end_at <= quiz.offline_start_at:
+            raise QuizValidationError("End date must be after start date")
+
+        # Validate quiz has at least one question
+        if not quiz.questions:
+            raise QuizValidationError("Offline poll must have at least one question")
+
+        # Generate unique slug (retry up to 3 times)
+        slug = None
+        for _ in range(3):
+            candidate = secrets.token_urlsafe(8)
+            existing = await db.execute(
+                select(Quiz).filter(Quiz.poll_slug == candidate)
+            )
+            if not existing.scalar_one_or_none():
+                slug = candidate
+                break
+
+        if not slug:
+            raise QuizValidationError("Failed to generate unique poll slug, please try again")
+
+        # Create the permanent session in ACTIVE state
+        session = QuizSession(
+            quiz_id=quiz.id,
+            tenant_id=quiz.tenant_id,
+            status=QuizSessionStatus.ACTIVE,
+            current_question_index=-1,
+        )
+        db.add(session)
+        await db.flush()
+
+        quiz.poll_slug = slug
+        quiz.offline_session_id = session.id
+        quiz.status = QuizStatus.READY
+        await db.commit()
+        await db.refresh(quiz)
+
+        # Schedule results email job
+        if quiz.offline_results_email and quiz.offline_end_at and stats_scheduler.scheduler:
+            try:
+                from features.quiz.offline_poll_service_async import send_results_email
+                stats_scheduler.scheduler.add_job(
+                    send_results_email,
+                    trigger=DateTrigger(run_date=quiz.offline_end_at),
+                    args=[quiz.id],
+                    id=f"offline-poll-results:{quiz.id}",
+                    replace_existing=True,
+                    misfire_grace_time=300,
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to schedule results email for quiz {quiz.id}: {e}")
+
+        frontend_url = os.getenv('FRONTEND_URL', 'https://www.swaya.me')
+        return OfflinePollPublishResponse(
+            poll_url=f"{frontend_url}/poll/{slug}",
+            poll_slug=slug,
+            quiz_id=quiz.id,
+        )
 
     async def duplicate_quiz(
         self,
@@ -871,5 +989,13 @@ class QuizBuilderServiceAsync:
             ],
             question_count=len(loaded_questions),
             created_at=quiz.created_at.isoformat(),
-            updated_at=quiz.updated_at.isoformat()
+            updated_at=quiz.updated_at.isoformat(),
+            poll_slug=getattr(quiz, 'poll_slug', None),
+            poll_url=(
+                f"{os.getenv('FRONTEND_URL', 'https://www.swaya.me')}/poll/{quiz.poll_slug}"
+                if getattr(quiz, 'poll_slug', None) else None
+            ),
+            offline_start_at=getattr(quiz, 'offline_start_at', None),
+            offline_end_at=getattr(quiz, 'offline_end_at', None),
+            offline_results_email=getattr(quiz, 'offline_results_email', None),
         )

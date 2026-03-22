@@ -18,6 +18,7 @@ class QuizTypeEnum(str, Enum):
     """Quiz experience type"""
     QUIZ = "quiz"
     POLL = "poll"
+    OFFLINE_POLL = "offline_poll"
 
 
 class SessionStatusEnum(str, Enum):
@@ -144,6 +145,18 @@ class QuizCreate(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     event_id: Optional[int] = Field(None, description="Event ID (auto-created if not provided)")
     quiz_type: QuizTypeEnum = QuizTypeEnum.QUIZ
+    # Offline poll fields
+    offline_start_at: Optional[datetime] = None
+    offline_end_at: Optional[datetime] = None
+    offline_results_email: Optional[str] = Field(None, max_length=255)
+
+    @model_validator(mode='after')
+    def validate_offline_poll_fields(self):
+        if self.quiz_type == QuizTypeEnum.OFFLINE_POLL:
+            if self.offline_start_at and self.offline_end_at:
+                if self.offline_end_at <= self.offline_start_at:
+                    raise ValueError('End date must be after start date')
+        return self
 
 
 class QuizUpdate(BaseModel):
@@ -151,6 +164,10 @@ class QuizUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
     quiz_type: Optional[QuizTypeEnum] = None
+    # Offline poll fields
+    offline_start_at: Optional[datetime] = None
+    offline_end_at: Optional[datetime] = None
+    offline_results_email: Optional[str] = Field(None, max_length=255)
 
 
 class QuizResponse(BaseModel):
@@ -169,7 +186,13 @@ class QuizResponse(BaseModel):
     question_count: int = 0
     created_at: str
     updated_at: str
-    
+    # Offline poll fields
+    poll_slug: Optional[str] = None
+    poll_url: Optional[str] = None
+    offline_start_at: Optional[datetime] = None
+    offline_end_at: Optional[datetime] = None
+    offline_results_email: Optional[str] = None
+
     class Config:
         from_attributes = True
 
@@ -189,7 +212,12 @@ class QuizListResponse(BaseModel):
     has_active_session: bool = False
     active_session_id: Optional[int] = None
     created_at: str
-    
+    # Offline poll fields
+    poll_slug: Optional[str] = None
+    poll_url: Optional[str] = None
+    offline_start_at: Optional[datetime] = None
+    offline_end_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
@@ -445,3 +473,69 @@ class TemplateQuizListItemResponse(BaseModel):
 
 
 FolderResponse.model_rebuild()
+
+
+# Offline Poll Schemas
+class OfflinePollInfoResponse(BaseModel):
+    """Public info about an offline poll (no auth required)"""
+    slug: str
+    title: str
+    description: Optional[str] = None
+    status: str  # "not_started" | "active" | "closed"
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    question_count: int = 0
+
+
+class OfflinePollJoinResponse(BaseModel):
+    """Response when joining / resuming an offline poll"""
+    session_token: str
+    participant_id: int
+    quiz_title: str
+    questions: List[QuestionResponse] = []
+    saved_answers: List[dict] = []  # [{question_id, selected_option_index, text_answer}]
+    ends_at: Optional[datetime] = None
+
+
+class OfflineAnswerRequest(BaseModel):
+    """Save one answer for an offline poll (upsert)"""
+    session_token: str
+    question_id: int
+    selected_option_index: Optional[int] = Field(None, ge=0)
+    text_answer: Optional[str] = Field(None, min_length=1, max_length=2000)
+
+
+class OfflineCompleteRequest(BaseModel):
+    """Mark an offline poll as completed"""
+    session_token: str
+
+
+class OfflineResultsQuestionResponse(BaseModel):
+    """Per-question results for an offline poll"""
+    question_id: int
+    question_text: str
+    question_type: str
+    options: Optional[List[str]] = None
+    answer_distribution: Optional[List[int]] = None  # MCQ: count per option
+    word_frequencies: Optional[dict] = None  # word_cloud: {word: count}
+    total_answers: int
+
+
+class OfflineResultsResponse(BaseModel):
+    """Aggregated results for an offline poll (auth required)"""
+    quiz_id: int
+    quiz_title: str
+    slug: Optional[str] = None
+    offline_start_at: Optional[datetime] = None
+    offline_end_at: Optional[datetime] = None
+    is_open: bool
+    total_participants: int
+    completed_participants: int
+    question_results: List[OfflineResultsQuestionResponse]
+
+
+class OfflinePollPublishResponse(BaseModel):
+    """Response after publishing an offline poll"""
+    poll_url: str
+    poll_slug: str
+    quiz_id: int

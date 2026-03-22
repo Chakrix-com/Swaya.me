@@ -15,6 +15,7 @@ import logo from '../../assets/logo.png';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import BetaBadge from '../../components/BetaBadge';
+import ThemeToggleButton from '../../components/ThemeToggleButton';
 import './Home.css';
 
 const { Header, Content, Footer } = Layout;
@@ -64,6 +65,7 @@ const Home = () => {
             <BetaBadge className="home-beta-badge" />
           </div>
           <Space size="middle" className="home-header-actions">
+            <ThemeToggleButton />
             <LanguageSwitcher />
             <Button 
               type="text" 

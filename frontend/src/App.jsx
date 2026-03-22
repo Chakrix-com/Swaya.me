@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState, createContext, useContext, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
-import { 
-  DashboardOutlined, 
-  PlusOutlined, 
+import {
+  DashboardOutlined,
+  PlusOutlined,
   LogoutOutlined,
   QuestionCircleOutlined,
   TeamOutlined,
@@ -15,8 +15,8 @@ import {
   MessageOutlined,
   AppstoreOutlined,
   SlidersOutlined,
-  MoonOutlined,
   SunOutlined,
+  MoonOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -37,6 +37,8 @@ import QuizControl from './features/quiz/QuizControl'
 import QuizHistory from './features/quiz/QuizHistory'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
+import OfflinePollSession from './features/offline-poll/OfflinePollSession'
+import OfflinePollResults from './features/offline-poll/OfflinePollResults'
 import QuizPresent from './features/quiz/QuizPresent'
 import UserManagement from './features/admin/components/UserManagement'
 import Statistics from './features/admin/Statistics'
@@ -63,6 +65,8 @@ const localeMap = {
 
 const THEME_STORAGE_KEY = 'visitor-theme-preference'
 
+export const VisitorThemeContext = createContext({ theme: 'dark', toggle: () => {} })
+
 const getInitialVisitorTheme = () => {
   const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
   if (storedTheme === 'dark' || storedTheme === 'light') {
@@ -72,7 +76,7 @@ const getInitialVisitorTheme = () => {
 }
 
 // Layout wrapper for authenticated routes
-function AuthenticatedLayout({ children }) {
+function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -89,6 +93,7 @@ function AuthenticatedLayout({ children }) {
   const isSuperAdmin = user?.role === 'super_admin'
 
   return (
+    <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: onToggleVisitorTheme }}>
     <ProLayout
       title="Swaya.me"
       logo={null}
@@ -185,14 +190,21 @@ function AuthenticatedLayout({ children }) {
       }}
       actionsRender={() => [
         <LanguageSwitcher key="language" />,
-        <LogoutOutlined 
-          key="logout" 
+        <Button
+          key="theme"
+          type="text"
+          icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+          onClick={onToggleVisitorTheme}
+          style={{ fontSize: 16 }}
+        />,
+        <LogoutOutlined
+          key="logout"
           onClick={handleLogout}
           style={{ fontSize: 16, cursor: 'pointer' }}
         />,
       ]}
       footerRender={() => (
-        <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid #f0f0f0', background: '#fff' }}>
+        <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
           <Space split={<Divider type="vertical" />} wrap style={{ justifyContent: 'center' }}>
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>© 2026 Swaya.me. {t('home.footer.rights')}</Typography.Text>
             <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.aboutLink')}</Button>
@@ -206,25 +218,18 @@ function AuthenticatedLayout({ children }) {
     >
       {children}
     </ProLayout>
+    </VisitorThemeContext.Provider>
   )
 }
 
 // Simple layout for public routes
-function PublicLayout({ children, visitorTheme, onToggleVisitorTheme, hideVisitorThemeToggle = false }) {
+function PublicLayout({ children, visitorTheme, onToggleVisitorTheme }) {
   return (
-    <div className={`visitor-theme visitor-theme--${visitorTheme}`}>
-      {!hideVisitorThemeToggle && (
-        <div className="visitor-theme-toggle">
-          <Button
-            type="text"
-            icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-            onClick={onToggleVisitorTheme}
-            aria-label={`Switch to ${visitorTheme === 'dark' ? 'light' : 'dark'} mode`}
-          />
-        </div>
-      )}
-      {children}
-    </div>
+    <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: onToggleVisitorTheme }}>
+      <div className={`visitor-theme visitor-theme--${visitorTheme}`}>
+        {children}
+      </div>
+    </VisitorThemeContext.Provider>
   )
 }
 
@@ -254,23 +259,24 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
     )
   }
 
-  // Join, session, and present routes are always public — accessible whether logged in or not
+  // Join, session, present, and offline poll routes are always public
   if (
     location.pathname.startsWith('/join') ||
     location.pathname.startsWith('/session') ||
-    location.pathname.startsWith('/present')
+    location.pathname.startsWith('/present') ||
+    location.pathname.startsWith('/poll')
   ) {
     return (
       <PublicLayout
         visitorTheme={visitorTheme}
         onToggleVisitorTheme={onToggleVisitorTheme}
-        hideVisitorThemeToggle={location.pathname.startsWith('/present')}
       >
         <Routes>
           <Route path="/join" element={<AudienceJoin />} />
           <Route path="/join/:joinCode" element={<AudienceJoin />} />
           <Route path="/session/:sessionId" element={<AudienceSession />} />
           <Route path="/present/:sessionId" element={<QuizPresent />} />
+          <Route path="/poll/:slug" element={<OfflinePollSession />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>
@@ -296,13 +302,14 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
 
   // Authenticated routes (with ProLayout)
   return (
-    <AuthenticatedLayout>
+    <AuthenticatedLayout visitorTheme={visitorTheme} onToggleVisitorTheme={onToggleVisitorTheme}>
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />
         <Route path="/quiz/:id/history" element={<QuizHistory />} />
+        <Route path="/quiz/:id/offline-results" element={<OfflinePollResults />} />
         <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/admin/organizations" element={<OrganizationManagement />} />
@@ -321,6 +328,10 @@ function App() {
   const locale = localeMap[i18n.language] || enUS
   const [visitorTheme, setVisitorTheme] = useState(getInitialVisitorTheme)
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = visitorTheme
+  }, [visitorTheme])
+
   const handleToggleVisitorTheme = () => {
     setVisitorTheme((currentTheme) => {
       const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
@@ -330,7 +341,10 @@ function App() {
   }
 
   return (
-    <ConfigProvider locale={locale}>
+    <ConfigProvider
+      locale={locale}
+      theme={{ algorithm: visitorTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm }}
+    >
       <AntApp>
         <Router>
           <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />

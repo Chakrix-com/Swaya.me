@@ -4,6 +4,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import logo from '../../assets/logo.png'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
+import ThemeToggleButton from '../../components/ThemeToggleButton'
 import './LegalPage.css'
 
 const { Header, Content, Footer } = Layout
@@ -22,6 +23,7 @@ export default function PrivacyPolicy() {
             <Text strong style={{ fontSize: 18 }}>Swaya.me</Text>
           </div>
           <Space>
+            <ThemeToggleButton />
             <LanguageSwitcher />
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>{t('pages.legal.backToHome')}</Button>
           </Space>

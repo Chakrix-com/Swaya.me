@@ -28,8 +28,8 @@ import {
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 import { useTranslation } from 'react-i18next'
-import BetaBadge from '../../components/BetaBadge'
 import { clearSession } from '../../store/sessionSlice'
+import PublicBrandHeader from '../../components/PublicBrandHeader'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -361,12 +361,10 @@ export default function AudienceSession() {
 
   return (
     <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
+      <PublicBrandHeader />
       <div className="container py-3">
         <div className="row justify-content-center mx-0">
           <div className="col-12 col-sm-10 col-md-8 col-lg-7 px-0 px-sm-3" style={{ position: 'relative', overflowX: 'hidden', minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-              <BetaBadge />
-            </div>
             {sessionToken && !sessionInvalidated && sessionStatus !== 'ended' && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
                 <Button icon={<LogoutOutlined />} onClick={handleLeaveSession}>

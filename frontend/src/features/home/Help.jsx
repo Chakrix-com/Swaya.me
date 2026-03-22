@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons'
 import logo from '../../assets/logo.png'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
+import ThemeToggleButton from '../../components/ThemeToggleButton'
 import './LegalPage.css'
 
 const { Header, Content, Footer } = Layout
@@ -344,6 +345,7 @@ export default function Help({ visitorTheme = 'light' }) {
             <Text strong style={{ fontSize: 18 }}>Swaya.me</Text>
           </div>
           <Space size="middle">
+            <ThemeToggleButton />
             <LanguageSwitcher />
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>{t('pages.help.backToHome')}</Button>
           </Space>
