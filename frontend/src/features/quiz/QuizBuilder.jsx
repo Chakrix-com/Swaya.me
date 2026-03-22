@@ -1287,7 +1287,7 @@ export default function QuizBuilder() {
         title={
           id
             ? (isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz'))
-            : (isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createNewQuiz'))
+            : (isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
         }
         style={{ marginBottom: 24, width: '100%' }}
       >
@@ -1297,7 +1297,7 @@ export default function QuizBuilder() {
               {getQuizStatusTranslation(quiz.status)}
             </Tag>
             <Tag color={quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
-              {quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Offline Poll') : quiz.quiz_type === 'poll' ? 'Poll' : 'Quiz'}
+              {quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
             </Tag>
             {quiz.quiz_type === 'offline_poll' && quiz.poll_slug && (
               <Text

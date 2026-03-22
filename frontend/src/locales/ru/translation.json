@@ -79,10 +79,10 @@
   },
   "quiz": {
     "myQuizzes": "Мои викторины",
-    "poll": "Опрос",
-    "quizTypeLabel": "Викторина",
-    "createQuiz": "Создать викторину",
-    "createPoll": "Создать опрос",
+    "poll": "Онлайн-опрос",
+    "quizTypeLabel": "Онлайн-викторина",
+    "createQuiz": "Создать онлайн-викторину",
+    "createPoll": "Создать онлайн-опрос",
     "editQuiz": "Редактировать викторину",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Название викторины",
@@ -256,8 +256,8 @@
     "pollDescription": "Poll Description",
     "enterPollDescription": "Enter poll description",
     "mode": "Mode",
-    "modeQuiz": "Quiz",
-    "modePoll": "Poll",
+    "modeQuiz": "Онлайн-викторина",
+    "modePoll": "Онлайн-опрос",
     "updatePoll": "Обновить опрос",
     "singleLine": "Одна строка",
     "paragraph": "Абзац",
@@ -285,10 +285,10 @@
     "startPoll": "Начать опрос",
     "publishPoll": "Опубликовать опрос",
     "unpublishPoll": "Снять с публикации",
-    "createPollSuccess": "Опрос успешно создан",
-    "savePollSuccess": "Опрос успешно обновлён",
-    "createOfflinePollSuccess": "Офлайн-опрос успешно создан",
-    "saveOfflinePollSuccess": "Офлайн-опрос успешно обновлён"
+    "createPollSuccess": "Онлайн-опрос успешно создан",
+    "savePollSuccess": "Онлайн-опрос успешно обновлён",
+    "createOfflinePollSuccess": "Опрос успешно создан",
+    "saveOfflinePollSuccess": "Опрос успешно обновлён"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",
@@ -1479,7 +1479,7 @@
     "generationFailed": "Создание не удалось. Попробуйте снова."
   },
   "offlinePoll": {
-    "typeLabel": "Офлайн-опрос",
+    "typeLabel": "Опрос",
     "startDate": "Дата и время начала",
     "endDate": "Дата и время окончания",
     "resultsEmail": "Отправить результаты на (необязательно)",
@@ -1510,7 +1510,7 @@
     "completed": "Завершено",
     "pollOpen": "Опрос открыт",
     "pollClosed": "Опрос закрыт",
-    "createOfflinePoll": "Создать офлайн-опрос",
+    "createOfflinePoll": "Создать опрос",
     "editOfflinePoll": "Редактировать офлайн-опрос",
     "updateOfflinePoll": "Обновить офлайн-опрос",
     "pollTitle": "Заголовок",

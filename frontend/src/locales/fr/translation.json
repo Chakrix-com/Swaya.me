@@ -79,10 +79,10 @@
   },
   "quiz": {
     "myQuizzes": "Mes quiz",
-    "poll": "Sondage",
-    "quizTypeLabel": "Quiz",
-    "createQuiz": "Créer un quiz",
-    "createPoll": "Créer un sondage",
+    "poll": "Sondage en ligne",
+    "quizTypeLabel": "Quiz en ligne",
+    "createQuiz": "Créer un quiz en ligne",
+    "createPoll": "Créer un sondage en ligne",
     "editQuiz": "Modifier le quiz",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Titre du quiz",
@@ -258,8 +258,8 @@
     "pollDescription": "Poll Description",
     "enterPollDescription": "Enter poll description",
     "mode": "Mode",
-    "modeQuiz": "Quiz",
-    "modePoll": "Poll",
+    "modeQuiz": "Quiz en ligne",
+    "modePoll": "Sondage en ligne",
     "updatePoll": "Mettre à jour le sondage",
     "singleLine": "Ligne unique",
     "paragraph": "Paragraphe",
@@ -287,10 +287,10 @@
     "startPoll": "Lancer le sondage",
     "publishPoll": "Publier le sondage",
     "unpublishPoll": "Dépublier le sondage",
-    "createPollSuccess": "Sondage créé avec succès",
-    "savePollSuccess": "Sondage mis à jour avec succès",
-    "createOfflinePollSuccess": "Sondage hors ligne créé avec succès",
-    "saveOfflinePollSuccess": "Sondage hors ligne mis à jour avec succès"
+    "createPollSuccess": "Sondage en ligne créé avec succès",
+    "savePollSuccess": "Sondage en ligne mis à jour avec succès",
+    "createOfflinePollSuccess": "Sondage créé avec succès",
+    "saveOfflinePollSuccess": "Sondage mis à jour avec succès"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -1482,7 +1482,7 @@
     "generationFailed": "Génération échouée. Réessayez."
   },
   "offlinePoll": {
-    "typeLabel": "Sondage hors ligne",
+    "typeLabel": "Sondage",
     "startDate": "Date et heure de début",
     "endDate": "Date et heure de fin",
     "resultsEmail": "Envoyer les résultats à (optionnel)",
@@ -1513,7 +1513,7 @@
     "completed": "Terminés",
     "pollOpen": "Sondage ouvert",
     "pollClosed": "Sondage fermé",
-    "createOfflinePoll": "Créer un sondage hors ligne",
+    "createOfflinePoll": "Créer un sondage",
     "editOfflinePoll": "Modifier le sondage hors ligne",
     "updateOfflinePoll": "Mettre à jour le sondage hors ligne",
     "pollTitle": "Titre",

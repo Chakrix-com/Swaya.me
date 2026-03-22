@@ -79,10 +79,10 @@
   },
   "quiz": {
     "myQuizzes": "Mis cuestionarios",
-    "poll": "Encuesta",
-    "quizTypeLabel": "Cuestionario",
-    "createQuiz": "Crear cuestionario",
-    "createPoll": "Crear encuesta",
+    "poll": "Encuesta en línea",
+    "quizTypeLabel": "Cuestionario en línea",
+    "createQuiz": "Crear cuestionario en línea",
+    "createPoll": "Crear encuesta en línea",
     "editQuiz": "Editar cuestionario",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Título del cuestionario",
@@ -256,8 +256,8 @@
     "pollDescription": "Poll Description",
     "enterPollDescription": "Enter poll description",
     "mode": "Mode",
-    "modeQuiz": "Quiz",
-    "modePoll": "Poll",
+    "modeQuiz": "Cuestionario en línea",
+    "modePoll": "Encuesta en línea",
     "updatePoll": "Actualizar encuesta",
     "singleLine": "Línea única",
     "paragraph": "Párrafo",
@@ -285,10 +285,10 @@
     "startPoll": "Iniciar encuesta",
     "publishPoll": "Publicar encuesta",
     "unpublishPoll": "Despublicar encuesta",
-    "createPollSuccess": "Encuesta creada correctamente",
-    "savePollSuccess": "Encuesta actualizada correctamente",
-    "createOfflinePollSuccess": "Encuesta sin conexión creada correctamente",
-    "saveOfflinePollSuccess": "Encuesta sin conexión actualizada correctamente"
+    "createPollSuccess": "Encuesta en línea creada correctamente",
+    "savePollSuccess": "Encuesta en línea actualizada correctamente",
+    "createOfflinePollSuccess": "Encuesta creada correctamente",
+    "saveOfflinePollSuccess": "Encuesta actualizada correctamente"
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",
@@ -1480,7 +1480,7 @@
     "generationFailed": "Generación fallida. Inténtalo de nuevo."
   },
   "offlinePoll": {
-    "typeLabel": "Encuesta sin conexión",
+    "typeLabel": "Encuesta",
     "startDate": "Fecha y hora de inicio",
     "endDate": "Fecha y hora de fin",
     "resultsEmail": "Enviar resultados a (opcional)",
@@ -1511,7 +1511,7 @@
     "completed": "Completados",
     "pollOpen": "Encuesta abierta",
     "pollClosed": "Encuesta cerrada",
-    "createOfflinePoll": "Crear encuesta sin conexión",
+    "createOfflinePoll": "Crear encuesta",
     "editOfflinePoll": "Editar encuesta sin conexión",
     "updateOfflinePoll": "Actualizar encuesta sin conexión",
     "pollTitle": "Título",

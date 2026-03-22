@@ -79,10 +79,10 @@
   },
   "quiz": {
     "myQuizzes": "My Quizzes",
-    "poll": "Poll",
-    "quizTypeLabel": "Quiz",
-    "createQuiz": "Create Quiz",
-    "createPoll": "Create Poll",
+    "poll": "Online Poll",
+    "quizTypeLabel": "Online Quiz",
+    "createQuiz": "Create Online Quiz",
+    "createPoll": "Create Online Poll",
     "editQuiz": "Edit Quiz",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Quiz Title",
@@ -256,8 +256,8 @@
     "pollDescription": "Poll Description",
     "enterPollDescription": "Enter poll description",
     "mode": "Mode",
-    "modeQuiz": "Quiz",
-    "modePoll": "Poll",
+    "modeQuiz": "Online Quiz",
+    "modePoll": "Online Poll",
     "updatePoll": "Update Poll",
     "singleLine": "Single Line",
     "paragraph": "Paragraph",
@@ -285,10 +285,10 @@
     "startPoll": "Start Poll",
     "publishPoll": "Publish Poll",
     "unpublishPoll": "Unpublish Poll",
-    "createPollSuccess": "Poll created successfully",
-    "savePollSuccess": "Poll updated successfully",
-    "createOfflinePollSuccess": "Offline poll created successfully",
-    "saveOfflinePollSuccess": "Offline poll updated successfully"
+    "createPollSuccess": "Online Poll created successfully",
+    "savePollSuccess": "Online Poll updated successfully",
+    "createOfflinePollSuccess": "Poll created successfully",
+    "saveOfflinePollSuccess": "Poll updated successfully"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -1480,7 +1480,7 @@
     "generationFailed": "Generation failed. Please try again."
   },
   "offlinePoll": {
-    "typeLabel": "Offline Poll",
+    "typeLabel": "Poll",
     "startDate": "Start Date & Time",
     "endDate": "End Date & Time",
     "resultsEmail": "Email Results To (optional)",
@@ -1511,7 +1511,7 @@
     "completed": "Completed",
     "pollOpen": "Poll open",
     "pollClosed": "Poll closed",
-    "createOfflinePoll": "Create Offline Poll",
+    "createOfflinePoll": "Create Poll",
     "editOfflinePoll": "Edit Offline Poll",
     "updateOfflinePoll": "Update Offline Poll",
     "pollTitle": "Title",

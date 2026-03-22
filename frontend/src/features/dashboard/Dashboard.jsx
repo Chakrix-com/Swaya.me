@@ -514,7 +514,7 @@ function Dashboard() {
               onClick={() => navigate('/quiz/new?type=offline_poll')}
               style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
             >
-              {t('offlinePoll.typeLabel', 'Offline Poll')}
+              {t('offlinePoll.createOfflinePoll', 'Create Poll')}
             </Button>
           </div>
         }

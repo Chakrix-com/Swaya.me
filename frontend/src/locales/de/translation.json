@@ -79,10 +79,10 @@
   },
   "quiz": {
     "myQuizzes": "Meine Quizze",
-    "poll": "Umfrage",
-    "quizTypeLabel": "Quiz",
-    "createQuiz": "Quiz erstellen",
-    "createPoll": "Umfrage erstellen",
+    "poll": "Online-Umfrage",
+    "quizTypeLabel": "Online-Quiz",
+    "createQuiz": "Online-Quiz erstellen",
+    "createPoll": "Online-Umfrage erstellen",
     "editQuiz": "Quiz bearbeiten",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Quiz-Titel",
@@ -256,8 +256,8 @@
     "pollDescription": "Poll Description",
     "enterPollDescription": "Enter poll description",
     "mode": "Mode",
-    "modeQuiz": "Quiz",
-    "modePoll": "Poll",
+    "modeQuiz": "Online-Quiz",
+    "modePoll": "Online-Umfrage",
     "updatePoll": "Umfrage aktualisieren",
     "singleLine": "Einzelzeile",
     "paragraph": "Absatz",
@@ -285,10 +285,10 @@
     "startPoll": "Umfrage starten",
     "publishPoll": "Umfrage veröffentlichen",
     "unpublishPoll": "Veröffentlichung aufheben",
-    "createPollSuccess": "Umfrage erfolgreich erstellt",
-    "savePollSuccess": "Umfrage erfolgreich aktualisiert",
-    "createOfflinePollSuccess": "Offline-Umfrage erfolgreich erstellt",
-    "saveOfflinePollSuccess": "Offline-Umfrage erfolgreich aktualisiert"
+    "createPollSuccess": "Online-Umfrage erfolgreich erstellt",
+    "savePollSuccess": "Online-Umfrage erfolgreich aktualisiert",
+    "createOfflinePollSuccess": "Umfrage erfolgreich erstellt",
+    "saveOfflinePollSuccess": "Umfrage erfolgreich aktualisiert"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -1479,7 +1479,7 @@
     "generationFailed": "Generierung fehlgeschlagen. Bitte erneut versuchen."
   },
   "offlinePoll": {
-    "typeLabel": "Offline-Umfrage",
+    "typeLabel": "Umfrage",
     "startDate": "Startdatum und -uhrzeit",
     "endDate": "Enddatum und -uhrzeit",
     "resultsEmail": "Ergebnisse senden an (optional)",
@@ -1510,7 +1510,7 @@
     "completed": "Abgeschlossen",
     "pollOpen": "Umfrage geöffnet",
     "pollClosed": "Umfrage geschlossen",
-    "createOfflinePoll": "Offline-Umfrage erstellen",
+    "createOfflinePoll": "Umfrage erstellen",
     "editOfflinePoll": "Offline-Umfrage bearbeiten",
     "updateOfflinePoll": "Offline-Umfrage aktualisieren",
     "pollTitle": "Titel",
