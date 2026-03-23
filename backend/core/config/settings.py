@@ -41,7 +41,7 @@ class RedisSettings(BaseSettings):
     port: int = Field(default=6379, alias="REDIS_PORT")
     password: str = Field(default="", alias="REDIS_PASSWORD")
     db: int = Field(default=0, alias="REDIS_DB")
-    pool_size: int = Field(default=10, alias="REDIS_POOL_SIZE")
+    pool_size: int = Field(default=50, alias="REDIS_POOL_SIZE")
 
     model_config = SettingsConfigDict(
         env_file=".env",

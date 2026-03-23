@@ -18,30 +18,36 @@ class TierService:
         self.redis = redis
     
     async def get_tier_config(self, db: AsyncSession, tier: TierEnum) -> Dict[str, Any]:
-        """Get tier configuration"""
+        """Get tier configuration — cached in Redis for 5 minutes to avoid DB hit on every join."""
+        cache_key = f"tier_config:{tier.value}"
+        cached = await self.redis.get_json(cache_key)
+        if cached:
+            return cached
+
         result = await db.execute(
             select(TierConfiguration).filter(TierConfiguration.tier == tier)
         )
         config = result.scalar_one_or_none()
-        
-        if not config:
-            # Return default limits if not configured
-            return self._get_default_limits(tier)
-        
-        features = None
-        if config.features:
-            try:
-                features = json.loads(config.features)
-            except Exception:
-                features = config.features
 
-        return {
-            "tier": config.tier.value,
-            "max_participants": config.max_participants,
-            "max_questions": config.max_questions,
-            "max_concurrent_events": config.max_concurrent_events,
-            "features": features
-        }
+        if not config:
+            data = self._get_default_limits(tier)
+        else:
+            features = None
+            if config.features:
+                try:
+                    features = json.loads(config.features)
+                except Exception:
+                    features = config.features
+            data = {
+                "tier": config.tier.value,
+                "max_participants": config.max_participants,
+                "max_questions": config.max_questions,
+                "max_concurrent_events": config.max_concurrent_events,
+                "features": features,
+            }
+
+        await self.redis.set_json(cache_key, data, expire=300)  # 5-minute TTL
+        return data
     
     def _get_default_limits(self, tier: TierEnum) -> Dict[str, Any]:
         """Get default limits for tier"""

@@ -153,7 +153,43 @@ class SessionServiceAsync:
             )
 
     async def reconcile_timed_question_state(self, db: AsyncSession, session_id: int) -> None:
-        """Heal/advance timed question state for running sessions (polling safety net)."""
+        """Heal/advance timed question state for running sessions (polling safety net).
+
+        Optimised: two-phase check — lightweight session state read first, only loads
+        quiz + questions if the session is ACTIVE with an OPEN question that has a timer.
+        """
+        # Phase 1: lightweight check — no joins, no question load
+        row = (await db.execute(
+            select(
+                QuizSession.status,
+                QuizSession.current_question_status,
+                QuizSession.current_question_index,
+                QuizSession.quiz_id,
+            ).filter(QuizSession.id == session_id)
+        )).first()
+
+        if not row:
+            return
+        if row.status != QuizSessionStatus.ACTIVE:
+            return
+        if row.current_question_status != QuestionStatus.OPEN:
+            return
+        if row.current_question_index < 0:
+            return
+
+        # Phase 2: fetch only the current question (not all questions)
+        q_result = await db.execute(
+            select(Question.id, Question.max_time_seconds)
+            .filter(Question.quiz_id == row.quiz_id, Question.order == row.current_question_index)
+        )
+        current_question = q_result.first()
+        if not current_question:
+            return
+        max_seconds = current_question.max_time_seconds
+        if not max_seconds or max_seconds <= 0:
+            return
+
+        # Need full session object for _apply_timeout_transition — load it now
         result = await db.execute(
             select(QuizSession)
             .filter(QuizSession.id == session_id)
@@ -162,26 +198,16 @@ class SessionServiceAsync:
         session = result.scalar_one_or_none()
         if not session:
             return
-        if session.status != QuizSessionStatus.ACTIVE:
-            return
-        if session.current_question_status != QuestionStatus.OPEN:
-            return
-
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
-        if session.current_question_index < 0 or session.current_question_index >= len(questions):
-            return
 
-        current_question = questions[session.current_question_index]
-        max_seconds = current_question.max_time_seconds
-        if not max_seconds or max_seconds <= 0:
-            return
+        q_index = row.current_question_index
 
         timing_row = (
             await db.execute(
                 select(SessionQuestionTiming)
                 .filter(
                     SessionQuestionTiming.session_id == session_id,
-                    SessionQuestionTiming.question_index == session.current_question_index,
+                    SessionQuestionTiming.question_index == q_index,
                     SessionQuestionTiming.closed_at == None,  # noqa: E711
                 )
                 .order_by(SessionQuestionTiming.opened_at.desc())
@@ -194,15 +220,11 @@ class SessionServiceAsync:
             db.add(SessionQuestionTiming(
                 session_id=session_id,
                 question_id=current_question.id,
-                question_index=session.current_question_index,
+                question_index=q_index,
                 opened_at=now,
             ))
             await db.commit()
-            await self._schedule_question_timeout(
-                session_id,
-                session.current_question_index,
-                max_seconds
-            )
+            await self._schedule_question_timeout(session_id, q_index, max_seconds)
             return
 
         elapsed_seconds = (now - timing_row.opened_at).total_seconds()
@@ -213,11 +235,7 @@ class SessionServiceAsync:
         scheduler = stats_scheduler.scheduler
         if scheduler is not None and scheduler.get_job(self._timeout_job_id(session_id)) is None:
             remaining_seconds = max(1, int(max_seconds - elapsed_seconds))
-            await self._schedule_question_timeout(
-                session_id,
-                session.current_question_index,
-                remaining_seconds
-            )
+            await self._schedule_question_timeout(session_id, q_index, remaining_seconds)
     
     def _generate_join_code(self) -> str:
         """Generate unique 6-character join code"""
@@ -608,9 +626,9 @@ class SessionServiceAsync:
             )
             
             db.add(participant)
+            await db.flush()   # assigns participant.id without a round-trip SELECT
             await db.commit()
-            await db.refresh(participant)
-            
+
             # Increment participant count in Redis
             await self.tier_service.increment_participant_count(session.id)
             

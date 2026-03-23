@@ -92,9 +92,11 @@ def api_login():
     return response.json()["access_token"]
 
 def find_ready_wordcloud_quiz(token):
+    """Return (quiz_id, advance_count) where advance_count is the 1-based position of the first word_cloud question."""
     headers = {"Authorization": f"Bearer {token}"}
     quizzes_resp = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
     quizzes_resp.raise_for_status()
+    best = None  # (quiz_id, advance_count) — prefer smallest advance_count
     for quiz in quizzes_resp.json():
         if str(quiz.get("status", "")).lower() != "ready":
             continue
@@ -103,8 +105,15 @@ def find_ready_wordcloud_quiz(token):
         if detail_resp.status_code != 200:
             continue
         questions = detail_resp.json().get("questions", [])
-        if any(q.get("question_type") == "word_cloud" for q in questions):
-            return quiz_id
+        sorted_qs = sorted(questions, key=lambda q: q.get("order", 0))
+        for idx, q in enumerate(sorted_qs):
+            if q.get("question_type") == "word_cloud":
+                advance_count = idx + 1  # 1 = first question, 2 = second, etc.
+                if best is None or advance_count < best[1]:
+                    best = (quiz_id, advance_count)
+                break
+    if best:
+        return best
     raise RuntimeError("No READY quiz with word_cloud question found")
 
 def cleanup_open_sessions(token, quiz_id):
@@ -123,7 +132,8 @@ def test_word_cloud_flow():
     try:
         log("=== Starting Word Cloud E2E Test ===", "INFO")
         token = api_login()
-        quiz_id = find_ready_wordcloud_quiz(token)
+        quiz_id, wc_advance_count = find_ready_wordcloud_quiz(token)
+        log(f"Using quiz {quiz_id}, will advance {wc_advance_count} time(s) to reach word cloud question", "INFO")
         cleanup_open_sessions(token, quiz_id)
         
         # Step 1: Host Login
@@ -179,20 +189,22 @@ def test_word_cloud_flow():
         join_code = join_code_elem.text.strip()
         log(f"Session started with join code: {join_code}", "SUCCESS")
         
-        # Step 4: Advance to first question
-        log("\n--- STEP 4: Advance to Question ---", "INFO")
-        try:
-            advance_btn = wait_for_any(host, [
-                (By.XPATH, "//button[contains(., 'Start First Question')]"),
-                (By.XPATH, "//button[contains(., 'Next')]"),
-                (By.XPATH, "//button[contains(., 'Advance')]"),
-                (By.XPATH, "//button[contains(., 'Next Question')]")
-            ], timeout=12, clickable=True, name="advance button")
-            advance_btn.click()
-            time.sleep(2)
-            log("Advanced to first question", "SUCCESS")
-        except TimeoutException:
-            log("No advance button found, continuing with current session state", "WARN")
+        # Step 4: Advance to the word cloud question (may require multiple advances)
+        log(f"\n--- STEP 4: Advance to Word Cloud Question (x{wc_advance_count}) ---", "INFO")
+        for advance_idx in range(wc_advance_count):
+            try:
+                advance_btn = wait_for_any(host, [
+                    (By.XPATH, "//button[contains(., 'Start First Question')]"),
+                    (By.XPATH, "//button[contains(., 'Next Question')]"),
+                    (By.XPATH, "//button[contains(., 'Next')]"),
+                    (By.XPATH, "//button[contains(., 'Advance')]"),
+                ], timeout=12, clickable=True, name="advance button")
+                advance_btn.click()
+                time.sleep(2)
+                log(f"Advanced ({advance_idx + 1}/{wc_advance_count})", "SUCCESS")
+            except TimeoutException:
+                log(f"No advance button found at step {advance_idx + 1}, continuing", "WARN")
+                break
         
         # Check what question is displayed on host screen
         time.sleep(2)

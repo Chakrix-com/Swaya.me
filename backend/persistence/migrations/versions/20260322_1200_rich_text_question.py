@@ -13,7 +13,7 @@ Create Date: 2026-03-22 12:00:00.000000
 
 # revision identifiers, used by Alembic.
 revision = '20260322_1200'
-down_revision = '20260322_1000'
+down_revision = 'a2b3c4d5e6f7'
 branch_labels = None
 depends_on = None
 
