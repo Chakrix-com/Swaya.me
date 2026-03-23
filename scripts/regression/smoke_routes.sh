@@ -27,7 +27,7 @@ check_route() {
 print_header "Smoke Routes: New Public Endpoints"
 
 # Offline poll info endpoint (expect 200 or 404, never 500)
-check_route "offline_poll_info"   "$API_BASE/poll/smoke-test-slug"
+check_route "offline_poll_info"   "$API_BASE/offline-poll/smoke-test-slug"
 
 # Exam/Test info endpoint (expect 200 or 404, never 500)
 check_route "exam_info"           "$API_BASE/e/smoke-test-slug"

@@ -170,7 +170,7 @@ class SessionService:
             raise SessionNotFoundError("Invalid join code")
         
         # Find active session - get the LATEST one, not the first
-        session = db.query(QuizSession).join(Quiz).filter(
+        session = db.query(QuizSession).join(Quiz, Quiz.id == QuizSession.quiz_id).filter(
             Quiz.event_id == event.id,
             QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
         ).order_by(QuizSession.id.desc()).first()

@@ -35,8 +35,9 @@ def test_full_lifecycle():
     # Get quiz
     response = requests.get(f"{BASE_URL}/quizzes/", headers=headers, verify=False)
     quizzes = response.json()
-    ready_quiz = next((q for q in quizzes if str(q.get("status", "")).lower() == "ready"), None)
-    assert ready_quiz is not None, "No READY quiz found"
+    ready_quiz = next((q for q in quizzes if str(q.get("status", "")).lower() == "ready"
+                       and q.get("quiz_type") in ("quiz", "poll")), None)
+    assert ready_quiz is not None, "No READY quiz (type=quiz/poll) found"
     quiz_id = ready_quiz["id"]
     print(f"✅ Found quiz ID: {quiz_id}")
 

@@ -29,7 +29,7 @@ echo -e "${GREEN}✅ Host logged in${NC}"
 # Step 2: Get first quiz
 echo -e "\n📝 Step 2: Getting Quiz List"
 QUIZ_ID=$(curl -s "$BASE_URL/quizzes/" -H "Authorization: Bearer $TOKEN" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); ready=next((q for q in data if str(q.get('status','')).lower()=='ready'), None); print(ready['id'] if ready else '')")
+  | python3 -c "import sys, json; data=json.load(sys.stdin); ready=next((q for q in data if str(q.get('status','')).lower()=='ready' and q.get('quiz_type') in ('quiz','poll')), None); print(ready['id'] if ready else '')")
 
 if [ -z "$QUIZ_ID" ]; then
   echo -e "${RED}❌ No READY quiz found${NC}"

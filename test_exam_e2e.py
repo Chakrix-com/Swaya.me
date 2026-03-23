@@ -157,6 +157,18 @@ def test_exam_flow():
         log("\n--- STEP 5: Answer questions ---")
         answered = 0
         for attempt in range(30):
+            # Dismiss any open Ant Design modal/confirm dialog first
+            # Look for modal overlay — if present, click its primary/confirm button
+            modal_overlays = driver.find_elements(By.CSS_SELECTOR, ".ant-modal-wrap:not([style*='display: none'])")
+            if modal_overlays:
+                # Try to click confirm/submit inside modal (not Cancel)
+                modal_btns = driver.find_elements(By.XPATH,
+                    "//div[contains(@class,'ant-modal')]//button[contains(., 'Submit') or contains(., 'Yes') or contains(., 'Confirm') or contains(., 'OK')]")
+                if modal_btns:
+                    driver.execute_script("arguments[0].click();", modal_btns[0])
+                    time.sleep(2)
+                    continue
+
             body_text = driver.find_element(By.TAG_NAME, "body").text
 
             # Detect results screen
@@ -166,28 +178,21 @@ def test_exam_flow():
                     log(f"Results screen reached after {answered} question(s)", "SUCCESS")
                     break
 
-            # Select first available radio option
+            # Select first available radio option (use JS click to bypass overlays)
             radios = driver.find_elements(By.CSS_SELECTOR, "input[type='radio']")
             if radios:
                 driver.execute_script("arguments[0].click();", radios[0])
                 time.sleep(0.5)
 
-            # Click Next / Submit Test
+            # Click Next / Submit Test (use JS click to bypass any residual overlay)
             for btn_text in ["Next", "Submit Test", "Submit Exam", "Submit", "Continue"]:
                 btns = driver.find_elements(By.XPATH, f"//button[contains(., '{btn_text}')]")
                 clickable_btns = [b for b in btns if b.is_enabled()]
                 if clickable_btns:
-                    clickable_btns[0].click()
+                    driver.execute_script("arguments[0].click();", clickable_btns[0])
                     answered += 1
                     time.sleep(2)
                     break
-
-            # Confirm submit dialog if it appears
-            confirm_btns = driver.find_elements(By.XPATH,
-                "//button[contains(., 'Yes') or contains(., 'Confirm') or contains(., 'OK')]")
-            if confirm_btns:
-                confirm_btns[0].click()
-                time.sleep(2)
 
         driver.save_screenshot("/tmp/exam_03_results.png")
 

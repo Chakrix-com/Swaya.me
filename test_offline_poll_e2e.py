@@ -85,7 +85,7 @@ def find_or_create_offline_poll(token):
     r.raise_for_status()
     for quiz in r.json():
         if quiz.get("quiz_type") == "offline_poll" and quiz.get("status") == "ready":
-            slug = quiz.get("slug") or quiz.get("join_code")
+            slug = quiz.get("poll_slug") or quiz.get("slug") or quiz.get("join_code")
             if slug:
                 log(f"Found existing published offline poll: id={quiz['id']} slug={slug}", "SUCCESS")
                 return quiz["id"], slug
@@ -112,11 +112,22 @@ def find_or_create_offline_poll(token):
                         verify=False, timeout=20)
     q_r.raise_for_status()
 
+    # Set required start/end dates before publishing
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    upd_r = requests.put(f"{API_BASE_URL}/quizzes/{quiz_id}",
+                           headers=headers,
+                           json={"offline_start_at": now.isoformat(),
+                                 "offline_end_at": (now + timedelta(days=7)).isoformat()},
+                           verify=False, timeout=20)
+    upd_r.raise_for_status()
+
     # Publish as offline poll
     pub_r = requests.post(f"{API_BASE_URL}/quizzes/{quiz_id}/publish-offline",
                           headers=headers, verify=False, timeout=20)
     pub_r.raise_for_status()
-    slug = pub_r.json().get("slug") or pub_r.json().get("join_code")
+    pub_data = pub_r.json()
+    slug = pub_data.get("poll_slug") or pub_data.get("slug") or pub_data.get("join_code")
     log(f"Created & published offline poll: id={quiz_id} slug={slug}", "SUCCESS")
     return quiz_id, slug
 
@@ -197,7 +208,7 @@ def test_offline_poll_flow():
         # ── Step 4: Verify results via API ──
         log("\n--- STEP 4: Verify results via API ---")
         headers = {"Authorization": f"Bearer {token}"}
-        results_r = requests.get(f"{API_BASE_URL}/poll/{slug}/results",
+        results_r = requests.get(f"{API_BASE_URL}/offline-poll/{slug}/results",
                                  headers=headers, verify=False, timeout=20)
         # 200 or accessible — just not 500
         assert results_r.status_code < 500, f"Results API returned {results_r.status_code}"
