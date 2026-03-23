@@ -444,3 +444,41 @@
   background: var(--ctrl-radio-selected-bg);
   border-color: var(--ctrl-radio-selected-border);
 }
+
+/* ============================================================
+   Exam Session — theme-aware public page
+   ============================================================ */
+
+.exam-session {
+  min-height: 100vh;
+  background: var(--visitor-page-bg, #f0f2f5);
+  color-scheme: var(--visitor-color-scheme);
+}
+
+/* Both modes: cards are borderless and transparent — content sits directly on page bg */
+.exam-session .ant-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.exam-session .ant-card-body,
+.exam-session .ant-card-head {
+  background: transparent !important;
+}
+
+/* Radio options — use theme-aware border instead of hardcoded #d9d9d9 */
+.exam-session .exam-radio-option {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ctrl-radio-option-border, #d9d9d9);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  background: var(--ctrl-radio-option-bg, transparent);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.exam-session .exam-radio-option.selected {
+  background: var(--ctrl-radio-selected-bg, rgba(24,144,255,0.08));
+  border-color: var(--ctrl-radio-selected-border, #1677ff);
+}

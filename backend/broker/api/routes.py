@@ -16,6 +16,7 @@ from broker.api.tier_management import router as tier_management_router
 from broker.api.ai import router as ai_router
 from broker.api.og import router as og_router
 from broker.api.offline_poll import router as offline_poll_router
+from broker.api.exam import router as exam_router
 
 api_router = APIRouter()
 
@@ -52,5 +53,6 @@ api_router.include_router(tier_management_router, prefix="/admin", tags=["admin"
 api_router.include_router(ai_router)
 api_router.include_router(og_router)
 api_router.include_router(offline_poll_router)
+api_router.include_router(exam_router)
 
 # TODO: Include realtime routes

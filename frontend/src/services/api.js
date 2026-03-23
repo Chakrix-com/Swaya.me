@@ -207,6 +207,18 @@ export const offlinePollAPI = {
 // Quiz Publish Offline
 export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offline`)
 
+// Exam API
+export const examAPI = {
+  getInfo: (slug) => api.get(`/e/${slug}`),
+  start: (slug, data) => api.post(`/e/${slug}/start`, data),
+  saveAnswer: (slug, data) => api.post(`/e/${slug}/answer`, data),
+  submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),
+  getMyResult: (slug, sessionToken) => api.post(`/e/${slug}/result`, { session_token: sessionToken }),
+  getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),
+  publish: (quizId) => api.post(`/quizzes/${quizId}/publish-exam`),
+  unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
+}
+
 // AI Generation API
 export const aiAPI = {
   generateQuestions: (data) => api.post('/ai/generate/questions', data),

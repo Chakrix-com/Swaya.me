@@ -39,6 +39,8 @@ import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
 import OfflinePollSession from './features/offline-poll/OfflinePollSession'
 import OfflinePollResults from './features/offline-poll/OfflinePollResults'
+import ExamSession from './features/exam/ExamSession'
+import ExamResults from './features/exam/ExamResults'
 import QuizPresent from './features/quiz/QuizPresent'
 import UserManagement from './features/admin/components/UserManagement'
 import Statistics from './features/admin/Statistics'
@@ -259,12 +261,13 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
     )
   }
 
-  // Join, session, present, and offline poll routes are always public
+  // Join, session, present, offline poll, and exam routes are always public
   if (
     location.pathname.startsWith('/join') ||
     location.pathname.startsWith('/session') ||
     location.pathname.startsWith('/present') ||
-    location.pathname.startsWith('/poll')
+    location.pathname.startsWith('/poll') ||
+    location.pathname.startsWith('/e/')
   ) {
     return (
       <PublicLayout
@@ -277,6 +280,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
           <Route path="/session/:sessionId" element={<AudienceSession />} />
           <Route path="/present/:sessionId" element={<QuizPresent />} />
           <Route path="/poll/:slug" element={<OfflinePollSession />} />
+          <Route path="/e/:slug" element={<ExamSession />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>
@@ -310,6 +314,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
         <Route path="/quiz/:id/control" element={<QuizControl />} />
         <Route path="/quiz/:id/history" element={<QuizHistory />} />
         <Route path="/quiz/:id/offline-results" element={<OfflinePollResults />} />
+        <Route path="/quiz/:id/exam-results" element={<ExamResults />} />
         <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/admin/organizations" element={<OrganizationManagement />} />

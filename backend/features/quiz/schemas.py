@@ -19,6 +19,7 @@ class QuizTypeEnum(str, Enum):
     QUIZ = "quiz"
     POLL = "poll"
     OFFLINE_POLL = "offline_poll"
+    EXAM = "exam"
 
 
 class SessionStatusEnum(str, Enum):
@@ -66,7 +67,8 @@ class QuestionCreate(BaseModel):
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     points: int = Field(default=1, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
-    
+    negative_points: int = Field(default=0, ge=0)
+
     @model_validator(mode='after')
     def validate_question_fields(self):
         """Validate fields based on question type"""
@@ -114,6 +116,7 @@ class QuestionUpdate(BaseModel):
     option_images: Optional[dict[str, str]] = None
     points: Optional[int] = Field(default=None, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
+    negative_points: Optional[int] = Field(default=None, ge=0)
 
 
 class QuestionResponse(BaseModel):
@@ -128,7 +131,8 @@ class QuestionResponse(BaseModel):
     option_images: Optional[dict[str, str]] = None
     points: int = 1
     max_time_seconds: Optional[int] = None
-    
+    negative_points: int = 0
+
     class Config:
         from_attributes = True
 
@@ -149,6 +153,11 @@ class QuizCreate(BaseModel):
     offline_start_at: Optional[datetime] = None
     offline_end_at: Optional[datetime] = None
     offline_results_email: Optional[str] = Field(None, max_length=255)
+    # Exam fields
+    exam_start_at: Optional[datetime] = None
+    exam_end_at: Optional[datetime] = None
+    exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
+    exam_results_email: Optional[str] = Field(None, max_length=255)
 
     @model_validator(mode='after')
     def validate_offline_poll_fields(self):
@@ -156,6 +165,10 @@ class QuizCreate(BaseModel):
             if self.offline_start_at and self.offline_end_at:
                 if self.offline_end_at <= self.offline_start_at:
                     raise ValueError('End date must be after start date')
+        if self.quiz_type == QuizTypeEnum.EXAM:
+            if self.exam_start_at and self.exam_end_at:
+                if self.exam_end_at <= self.exam_start_at:
+                    raise ValueError('Exam end date must be after start date')
         return self
 
 
@@ -168,6 +181,11 @@ class QuizUpdate(BaseModel):
     offline_start_at: Optional[datetime] = None
     offline_end_at: Optional[datetime] = None
     offline_results_email: Optional[str] = Field(None, max_length=255)
+    # Exam fields
+    exam_start_at: Optional[datetime] = None
+    exam_end_at: Optional[datetime] = None
+    exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
+    exam_results_email: Optional[str] = Field(None, max_length=255)
 
 
 class QuizResponse(BaseModel):
@@ -192,6 +210,13 @@ class QuizResponse(BaseModel):
     offline_start_at: Optional[datetime] = None
     offline_end_at: Optional[datetime] = None
     offline_results_email: Optional[str] = None
+    # Exam fields
+    exam_slug: Optional[str] = None
+    exam_url: Optional[str] = None
+    exam_start_at: Optional[datetime] = None
+    exam_end_at: Optional[datetime] = None
+    exam_time_limit_seconds: Optional[int] = None
+    exam_results_email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -217,6 +242,11 @@ class QuizListResponse(BaseModel):
     poll_url: Optional[str] = None
     offline_start_at: Optional[datetime] = None
     offline_end_at: Optional[datetime] = None
+    # Exam fields
+    exam_slug: Optional[str] = None
+    exam_url: Optional[str] = None
+    exam_start_at: Optional[datetime] = None
+    exam_end_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -539,3 +569,137 @@ class OfflinePollPublishResponse(BaseModel):
     poll_url: str
     poll_slug: str
     quiz_id: int
+
+
+# Exam Schemas
+class ExamPublishResponse(BaseModel):
+    """Response after publishing an exam"""
+    exam_url: str
+    exam_slug: str
+    quiz_id: int
+
+
+class ExamInfoResponse(BaseModel):
+    """Public info about an exam (no auth required)"""
+    slug: str
+    title: str
+    description: Optional[str] = None
+    status: str  # "upcoming" | "open" | "closed"
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    question_count: int = 0
+    time_limit_seconds: Optional[int] = None
+    has_per_question_timers: bool = False
+    # Scoring summary
+    points_per_correct: int = 1       # most common points value across questions
+    negative_points_per_wrong: int = 0  # most common negative_points value
+    scoring_varies: bool = False      # True if questions have different point values
+
+
+class ExamStartRequest(BaseModel):
+    """Start an exam (participant)"""
+    display_name: str = Field(..., min_length=1, max_length=100)
+
+
+class ExamQuestionResponse(BaseModel):
+    """Question as seen during exam (no correct answer revealed)"""
+    id: int
+    text: str
+    options: Optional[List[str]] = None
+    order: int
+    question_image_url: Optional[str] = None
+    option_images: Optional[dict] = None
+    points: int = 1
+    max_time_seconds: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ExamStartResponse(BaseModel):
+    """Response when starting an exam"""
+    session_token: str
+    participant_id: int
+    quiz_title: str
+    questions: List[ExamQuestionResponse] = []
+    started_at: datetime
+    time_limit_seconds: Optional[int] = None
+    ends_at: Optional[datetime] = None
+
+
+class ExamAnswerRequest(BaseModel):
+    """Save one answer during exam"""
+    session_token: str
+    question_id: int
+    selected_option_index: Optional[int] = Field(None, ge=0)
+
+
+class ExamSubmitRequest(BaseModel):
+    """Submit the exam"""
+    session_token: str
+
+
+class ExamQuestionResult(BaseModel):
+    """Per-question result shown to participant after submission"""
+    question_id: int
+    question_text: str
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = None
+    participant_answer: Optional[int] = None
+    is_correct: Optional[bool] = None
+    points_earned: int = 0
+    points_possible: int = 1
+    negative_points_applied: int = 0
+
+
+class ExamSubmitResponse(BaseModel):
+    """Score shown immediately after submit"""
+    total_score: int
+    max_score: int
+    percentage: float
+    correct_count: int
+    wrong_count: int
+    unanswered_count: int
+    question_results: List[ExamQuestionResult]
+
+
+class ExamLeaderboardEntry(BaseModel):
+    """Single entry in host's exam leaderboard"""
+    rank: int
+    display_name: str
+    score: int
+    max_score: int
+    percentage: float
+    correct_count: int
+    time_taken_seconds: Optional[float] = None
+    completed_at: Optional[datetime] = None
+    is_abandoned: bool = False
+
+
+class ExamQuestionAnalytics(BaseModel):
+    """Per-question analytics for host"""
+    question_id: int
+    question_text: str
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = None
+    answer_distribution: List[int] = []
+    correct_count: int = 0
+    total_answers: int = 0
+    percent_correct: float = 0.0
+
+
+class ExamResultsResponse(BaseModel):
+    """Full results for host dashboard"""
+    quiz_id: int
+    quiz_title: str
+    slug: Optional[str] = None
+    exam_start_at: Optional[datetime] = None
+    exam_end_at: Optional[datetime] = None
+    is_open: bool
+    total_started: int
+    total_completed: int
+    total_abandoned: int
+    average_score: float
+    max_score: int
+    leaderboard: List[ExamLeaderboardEntry]
+    question_analytics: List[ExamQuestionAnalytics]

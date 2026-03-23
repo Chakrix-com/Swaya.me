@@ -377,6 +377,13 @@ class QuizBuilderServiceAsync:
             quiz.offline_end_at = request.offline_end_at
             quiz.offline_results_email = request.offline_results_email
 
+        # Exam fields
+        if request.quiz_type.value == "exam":
+            quiz.exam_start_at = request.exam_start_at
+            quiz.exam_end_at = request.exam_end_at
+            quiz.exam_time_limit_seconds = request.exam_time_limit_seconds
+            quiz.exam_results_email = request.exam_results_email
+
         db.add(quiz)
         await db.commit()
         await db.refresh(quiz)
@@ -459,6 +466,13 @@ class QuizBuilderServiceAsync:
                 ),
                 offline_start_at=getattr(q, 'offline_start_at', None),
                 offline_end_at=getattr(q, 'offline_end_at', None),
+                exam_slug=getattr(q, 'exam_slug', None),
+                exam_url=(
+                    f"{os.getenv('FRONTEND_URL', 'https://www.swaya.me')}/e/{q.exam_slug}"
+                    if getattr(q, 'exam_slug', None) else None
+                ),
+                exam_start_at=getattr(q, 'exam_start_at', None),
+                exam_end_at=getattr(q, 'exam_end_at', None),
             )
             for q in quizzes
         ]
@@ -648,6 +662,16 @@ class QuizBuilderServiceAsync:
             quiz.offline_end_at = request.offline_end_at
         if request.offline_results_email is not None:
             quiz.offline_results_email = request.offline_results_email
+
+        # Exam fields
+        if request.exam_start_at is not None:
+            quiz.exam_start_at = request.exam_start_at
+        if request.exam_end_at is not None:
+            quiz.exam_end_at = request.exam_end_at
+        if request.exam_time_limit_seconds is not None:
+            quiz.exam_time_limit_seconds = request.exam_time_limit_seconds
+        if request.exam_results_email is not None:
+            quiz.exam_results_email = request.exam_results_email
 
         await db.commit()
         await db.refresh(quiz)
@@ -984,6 +1008,7 @@ class QuizBuilderServiceAsync:
                     } if q.option_images else None,
                     points=q.points,
                     max_time_seconds=q.max_time_seconds,
+                    negative_points=getattr(q, 'negative_points', 0) or 0,
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],
@@ -998,4 +1023,13 @@ class QuizBuilderServiceAsync:
             offline_start_at=getattr(quiz, 'offline_start_at', None),
             offline_end_at=getattr(quiz, 'offline_end_at', None),
             offline_results_email=getattr(quiz, 'offline_results_email', None),
+            exam_slug=getattr(quiz, 'exam_slug', None),
+            exam_url=(
+                f"{os.getenv('FRONTEND_URL', 'https://www.swaya.me')}/e/{quiz.exam_slug}"
+                if getattr(quiz, 'exam_slug', None) else None
+            ),
+            exam_start_at=getattr(quiz, 'exam_start_at', None),
+            exam_end_at=getattr(quiz, 'exam_end_at', None),
+            exam_time_limit_seconds=getattr(quiz, 'exam_time_limit_seconds', None),
+            exam_results_email=getattr(quiz, 'exam_results_email', None),
         )

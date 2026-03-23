@@ -110,6 +110,7 @@ class QuestionServiceAsync:
             option_images=request.option_images,
             points=request.points,
             max_time_seconds=request.max_time_seconds,
+            negative_points=request.negative_points,
             order=next_order
         )
         
@@ -168,7 +169,9 @@ class QuestionServiceAsync:
             question.points = request.points
         if "max_time_seconds" in request.model_fields_set:
             question.max_time_seconds = request.max_time_seconds
-        
+        if "negative_points" in request.model_fields_set:
+            question.negative_points = request.negative_points
+
         await db.commit()
         await db.refresh(question)
         
@@ -286,4 +289,5 @@ class QuestionServiceAsync:
             option_images=question.option_images,
             points=question.points,
             max_time_seconds=question.max_time_seconds,
+            negative_points=getattr(question, 'negative_points', 0) or 0,
         )

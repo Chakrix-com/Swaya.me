@@ -1,0 +1,726 @@
+/**
+ * ExamSession — participant-facing exam UI
+ * Route: /e/:slug (public)
+ */
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import {
+  Card, Typography, Button, Form, Input, Progress, Space,
+  Alert, Spin, Row, Col, Tag, Statistic, Divider, Radio, Result,
+  Modal, Badge
+} from 'antd'
+import {
+  ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
+  QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
+  TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined
+} from '@ant-design/icons'
+import { examAPI } from '../../services/api'
+import PublicBrandHeader from '../../components/PublicBrandHeader'
+import dayjs from 'dayjs'
+
+const { Title, Text, Paragraph } = Typography
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatSeconds(secs) {
+  if (secs == null) return '--'
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+// ── Status Screen ─────────────────────────────────────────────────────────────
+
+function StatusScreen({ info }) {
+  const { t } = useTranslation()
+
+  if (info.status === 'upcoming') {
+    return (
+      <Result
+        icon={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
+        title={t('exam.examUpcoming')}
+        subTitle={info.starts_at
+          ? t('exam.opensOn', { date: dayjs(info.starts_at).format('DD MMM YYYY, HH:mm') })
+          : ''}
+      />
+    )
+  }
+
+  if (info.status === 'closed') {
+    return (
+      <Result
+        status="warning"
+        title={t('exam.examClosed')}
+        subTitle={info.ends_at
+          ? t('exam.closesOn', { date: dayjs(info.ends_at).format('DD MMM YYYY, HH:mm') })
+          : ''}
+      />
+    )
+  }
+
+  return null
+}
+
+// ── Start Screen ─────────────────────────────────────────────────────────────
+
+function StartScreen({ info, onStart, loading }) {
+  const { t } = useTranslation()
+  const [form] = Form.useForm()
+
+  const handleSubmit = (values) => {
+    onStart(values.display_name.trim())
+  }
+
+  const timeLimitMins = info.time_limit_seconds ? Math.floor(info.time_limit_seconds / 60) : null
+
+  return (
+    <Card style={{ maxWidth: 600, margin: '0 auto' }} bordered={false}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <div>
+          <Title level={3} style={{ marginBottom: 4 }}>{info.title}</Title>
+          {info.description && <Paragraph type="secondary">{info.description}</Paragraph>}
+        </div>
+
+        {/* Exam stats */}
+        <Row gutter={[16, 16]}>
+          <Col span={8}>
+            <Statistic
+              title={t('quiz.questions')}
+              value={info.question_count}
+              prefix={<QuestionCircleOutlined />}
+            />
+          </Col>
+          {timeLimitMins && (
+            <Col span={8}>
+              <Statistic
+                title={t('exam.timeLimitMinutes')}
+                value={timeLimitMins}
+                suffix="min"
+                prefix={<ClockCircleOutlined />}
+              />
+            </Col>
+          )}
+          {info.ends_at && (
+            <Col span={8}>
+              <Statistic
+                title={t('exam.closesOn', { date: '' })}
+                value={dayjs(info.ends_at).format('HH:mm, DD MMM')}
+                prefix={<ClockCircleOutlined />}
+              />
+            </Col>
+          )}
+        </Row>
+
+        <Divider style={{ margin: '4px 0' }} />
+
+        {/* Scoring rules */}
+        <div>
+          <Text strong style={{ display: 'block', marginBottom: 8 }}>
+            <InfoCircleOutlined style={{ marginRight: 6 }} />
+            Scoring Rules
+          </Text>
+          <Space wrap>
+            <Tag icon={<PlusCircleOutlined />} color="success" style={{ fontSize: 13, padding: '3px 10px' }}>
+              +{info.points_per_correct} for correct answer
+            </Tag>
+            {info.negative_points_per_wrong > 0 ? (
+              <Tag icon={<MinusCircleOutlined />} color="error" style={{ fontSize: 13, padding: '3px 10px' }}>
+                −{info.negative_points_per_wrong} for wrong answer
+              </Tag>
+            ) : (
+              <Tag icon={<CheckCircleOutlined />} color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
+                No penalty for wrong answers
+              </Tag>
+            )}
+            <Tag color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
+              0 for unanswered
+            </Tag>
+          </Space>
+          {info.scoring_varies && (
+            <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
+              * Points vary per question
+            </Text>
+          )}
+        </div>
+
+        {/* Time warnings */}
+        {(info.has_per_question_timers || timeLimitMins) && (
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <Space direction="vertical" size={2}>
+                {timeLimitMins && (
+                  <Text>You have <strong>{timeLimitMins} minutes</strong> total from when you start.</Text>
+                )}
+                {info.has_per_question_timers && (
+                  <Text>Each question has a time limit — it auto-advances when the timer runs out. You cannot go back to expired questions.</Text>
+                )}
+              </Space>
+            }
+          />
+        )}
+
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="display_name"
+            label={t('exam.enterName')}
+            rules={[{ required: true, message: t('exam.enterNameRequired') }]}
+          >
+            <Input
+              placeholder={t('exam.enterNamePlaceholder')}
+              size="large"
+              maxLength={100}
+              autoFocus
+            />
+          </Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              block
+              loading={loading}
+              icon={<ArrowRightOutlined />}
+            >
+              {t('exam.startExam')}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Space>
+    </Card>
+  )
+}
+
+// ── Question Screen ──────────────────────────────────────────────────────────
+
+function QuestionScreen({
+  question,
+  questionIndex,
+  totalQuestions,
+  selectedAnswer,
+  onAnswerSelect,
+  onNext,
+  onPrev,
+  onSubmit,
+  globalSecondsLeft,
+  questionSecondsLeft,
+  hasPerQuestionTimers,
+  saving,
+}) {
+  const { t } = useTranslation()
+  const isLast = questionIndex === totalQuestions - 1
+
+  const globalUrgent = globalSecondsLeft != null && globalSecondsLeft < 60
+  const qUrgent = questionSecondsLeft != null && questionSecondsLeft < 10
+
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {/* Progress bar */}
+      <Progress
+        percent={Math.round(((questionIndex + 1) / totalQuestions) * 100)}
+        format={() => t('exam.questionOf', { current: questionIndex + 1, total: totalQuestions })}
+        style={{ marginBottom: 16 }}
+      />
+
+      {/* Global exam countdown — prominent bar */}
+      {globalSecondsLeft != null && (
+        <div style={{
+          background: globalUrgent ? 'rgba(255,77,79,0.1)' : 'rgba(22,119,255,0.08)',
+          border: `1px solid ${globalUrgent ? 'rgba(255,77,79,0.4)' : 'rgba(22,119,255,0.25)'}`,
+          borderRadius: 8,
+          padding: '10px 16px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <Space>
+            <ClockCircleOutlined style={{ color: globalUrgent ? '#ff4d4f' : '#1677ff', fontSize: 16 }} />
+            <Text style={{ color: globalUrgent ? '#ff4d4f' : undefined }}>
+              {t('exam.timeRemaining')}
+            </Text>
+          </Space>
+          <Text strong style={{ fontSize: 20, fontVariantNumeric: 'tabular-nums', color: globalUrgent ? '#ff4d4f' : '#1677ff' }}>
+            {formatSeconds(globalSecondsLeft)}
+          </Text>
+        </div>
+      )}
+
+      {/* Per-question timer tag */}
+      {questionSecondsLeft != null && (
+        <div style={{ marginBottom: 8 }}>
+          <Tag
+            icon={<ClockCircleOutlined />}
+            color={qUrgent ? 'red' : 'orange'}
+            style={{ fontSize: 13, padding: '3px 10px' }}
+          >
+            {t('exam.questionTimeRemaining')}: {formatSeconds(questionSecondsLeft)}
+          </Tag>
+        </div>
+      )}
+
+      <Card bordered={false}>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {question.question_image_url && (
+            <img
+              src={question.question_image_url}
+              alt="question"
+              style={{ maxWidth: '100%', borderRadius: 8 }}
+            />
+          )}
+          <Title level={4} style={{ marginBottom: 0 }}>{question.text}</Title>
+
+          <Radio.Group
+            value={selectedAnswer}
+            onChange={(e) => onAnswerSelect(e.target.value)}
+            style={{ width: '100%' }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {(question.options || []).map((opt, idx) => (
+                <Radio
+                  key={idx}
+                  value={idx}
+                  className={`exam-radio-option${selectedAnswer === idx ? ' selected' : ''}`}
+                >
+                  <Space>
+                    {question.option_images?.[String.fromCharCode(65 + idx)] && (
+                      <img
+                        src={question.option_images[String.fromCharCode(65 + idx)]}
+                        alt={`option ${idx}`}
+                        style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 4 }}
+                      />
+                    )}
+                    {opt}
+                  </Space>
+                </Radio>
+              ))}
+            </Space>
+          </Radio.Group>
+
+          <Row justify="space-between" style={{ marginTop: 8 }}>
+            <Col>
+              {!hasPerQuestionTimers && questionIndex > 0 && (
+                <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
+                  {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
+                </Button>
+              )}
+            </Col>
+            <Col>
+              {isLast ? (
+                <Button
+                  type="primary"
+                  onClick={onSubmit}
+                  loading={saving}
+                  icon={<CheckCircleOutlined />}
+                >
+                  {t('exam.submitExam')}
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  onClick={onNext}
+                  loading={saving}
+                  icon={<ArrowRightOutlined />}
+                >
+                  {t('common.next', 'Next')}
+                </Button>
+              )}
+            </Col>
+          </Row>
+        </Space>
+      </Card>
+    </div>
+  )
+}
+
+// ── Score Screen ─────────────────────────────────────────────────────────────
+
+function ScoreScreen({ result, onBack }) {
+  const { t } = useTranslation()
+
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <Card style={{ marginBottom: 16, textAlign: 'center' }} bordered={false}>
+        <TrophyOutlined style={{ fontSize: 48, color: '#faad14', marginBottom: 12 }} />
+        <Title level={2}>{t('exam.yourScore')}</Title>
+        <Title level={1} style={{ color: '#1890ff', marginTop: 0 }}>
+          {result.total_score} / {result.max_score}
+        </Title>
+        <Title level={3} style={{ color: '#52c41a' }}>
+          {result.percentage}%
+        </Title>
+        <Row gutter={24} justify="center" style={{ marginTop: 16 }}>
+          <Col>
+            <Statistic title={t('exam.correctAnswers')} value={result.correct_count} valueStyle={{ color: '#52c41a' }} prefix={<CheckCircleOutlined />} />
+          </Col>
+          <Col>
+            <Statistic title={t('exam.wrongAnswers')} value={result.wrong_count} valueStyle={{ color: '#ff4d4f' }} prefix={<CloseCircleOutlined />} />
+          </Col>
+          <Col>
+            <Statistic title={t('exam.unanswered')} value={result.unanswered_count} valueStyle={{ color: '#8c8c8c' }} />
+          </Col>
+        </Row>
+      </Card>
+
+      <Card title={t('exam.perQuestionBreakdown')} bordered={false}>
+        {result.question_results.map((qr, idx) => {
+          const isCorrect = qr.is_correct === true
+          const isWrong = qr.is_correct === false
+          const isSkipped = qr.participant_answer == null
+
+          return (
+            <div key={qr.question_id} style={{
+              padding: '12px 0',
+              borderBottom: idx < result.question_results.length - 1 ? '1px solid var(--ctrl-divider, #f0f0f0)' : 'none'
+            }}>
+              <Row justify="space-between" align="top">
+                <Col flex="auto">
+                  <Text strong>Q{idx + 1}: {qr.question_text}</Text>
+                  <div style={{ marginTop: 6 }}>
+                    {!isSkipped && (
+                      <Text type="secondary">
+                        {t('exam.yourAnswer')}: {qr.options?.[qr.participant_answer] ?? '--'}
+                      </Text>
+                    )}
+                    {isWrong && (
+                      <div>
+                        <Text type="danger">
+                          {t('exam.correctAnswer')}: {qr.options?.[qr.correct_answer_index] ?? '--'}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                </Col>
+                <Col>
+                  <Space direction="vertical" align="end">
+                    {isCorrect && <Tag color="success">+{qr.points_earned}</Tag>}
+                    {isWrong && qr.negative_points_applied > 0 && <Tag color="error">-{qr.negative_points_applied}</Tag>}
+                    {isWrong && qr.negative_points_applied === 0 && <Tag color="error">0</Tag>}
+                    {isSkipped && <Tag color="default">0</Tag>}
+                    {isCorrect && <CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                    {isWrong && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                    {isSkipped && <Text type="secondary">–</Text>}
+                  </Space>
+                </Col>
+              </Row>
+            </div>
+          )
+        })}
+      </Card>
+
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
+        <Button onClick={onBack}>{t('exam.backToDashboard')}</Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main ExamSession ─────────────────────────────────────────────────────────
+
+export default function ExamSession() {
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  const [phase, setPhase] = useState('loading') // loading | status | start | taking | score | error
+  const [examInfo, setExamInfo] = useState(null)
+  const [examResult, setExamResult] = useState(null)
+  const [error, setError] = useState(null)
+
+  // Exam state
+  const [sessionToken, setSessionToken] = useState(null)
+  const [startedAt, setStartedAt] = useState(null)
+  const [questions, setQuestions] = useState([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [answers, setAnswers] = useState({}) // questionId -> selectedOptionIndex
+  const [expiredQuestions, setExpiredQuestions] = useState(new Set()) // question ids that timed out
+
+  // Timers
+  const [globalSecondsLeft, setGlobalSecondsLeft] = useState(null)
+  const [questionSecondsLeft, setQuestionSecondsLeft] = useState(null)
+  const globalTimerRef = useRef(null)
+  const questionTimerRef = useRef(null)
+
+  const [starting, setStarting] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // ── Load exam info ────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await examAPI.getInfo(slug)
+        setExamInfo(res.data)
+        if (res.data.status === 'open') {
+          setPhase('start')
+        } else {
+          setPhase('status')
+        }
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setError(t('exam.examNotFound'))
+        } else {
+          setError(err.response?.data?.detail || t('common.error'))
+        }
+        setPhase('error')
+      }
+    }
+    load()
+  }, [slug, t])
+
+  // ── Global timer ──────────────────────────────────────────────────────────
+
+  const stopGlobalTimer = useCallback(() => {
+    if (globalTimerRef.current) {
+      clearInterval(globalTimerRef.current)
+      globalTimerRef.current = null
+    }
+  }, [])
+
+  const startGlobalTimer = useCallback((timeLimitSeconds, startedAtDate) => {
+    stopGlobalTimer()
+    const elapsed = (Date.now() - new Date(startedAtDate).getTime()) / 1000
+    const remaining = Math.max(0, Math.floor(timeLimitSeconds - elapsed))
+    setGlobalSecondsLeft(remaining)
+
+    globalTimerRef.current = setInterval(() => {
+      setGlobalSecondsLeft(prev => {
+        if (prev <= 1) {
+          stopGlobalTimer()
+          // Auto-submit
+          handleAutoSubmit()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }, [stopGlobalTimer])
+
+  // ── Per-question timer ────────────────────────────────────────────────────
+
+  const stopQuestionTimer = useCallback(() => {
+    if (questionTimerRef.current) {
+      clearInterval(questionTimerRef.current)
+      questionTimerRef.current = null
+    }
+    setQuestionSecondsLeft(null)
+  }, [])
+
+  const startQuestionTimer = useCallback((maxSeconds, questionId) => {
+    stopQuestionTimer()
+    setQuestionSecondsLeft(maxSeconds)
+
+    questionTimerRef.current = setInterval(() => {
+      setQuestionSecondsLeft(prev => {
+        if (prev <= 1) {
+          stopQuestionTimer()
+          // Mark question as expired and auto-advance
+          setExpiredQuestions(old => new Set([...old, questionId]))
+          setCurrentIdx(ci => ci + 1 < questions.length ? ci + 1 : ci)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }, [stopQuestionTimer, questions.length])
+
+  // Restart question timer when question changes
+  useEffect(() => {
+    if (phase !== 'taking') return
+    const q = questions[currentIdx]
+    if (!q) return
+    if (q.max_time_seconds && !expiredQuestions.has(q.id)) {
+      startQuestionTimer(q.max_time_seconds, q.id)
+    } else {
+      stopQuestionTimer()
+    }
+    return () => stopQuestionTimer()
+  }, [currentIdx, phase, questions, expiredQuestions, startQuestionTimer, stopQuestionTimer])
+
+  useEffect(() => {
+    return () => {
+      stopGlobalTimer()
+      stopQuestionTimer()
+    }
+  }, [stopGlobalTimer, stopQuestionTimer])
+
+  // ── Auto-submit (global timer expiry) ────────────────────────────────────
+
+  const handleAutoSubmit = useCallback(async () => {
+    if (!sessionToken) return
+    try {
+      const res = await examAPI.submit(slug, sessionToken)
+      setExamResult(res.data)
+      setPhase('score')
+    } catch {
+      // If already submitted, just show error
+      setPhase('error')
+      setError(t('exam.sessionExpired'))
+    }
+  }, [sessionToken, slug, t])
+
+  // ── Start exam ────────────────────────────────────────────────────────────
+
+  const handleStart = async (displayName) => {
+    setStarting(true)
+    try {
+      const res = await examAPI.start(slug, { display_name: displayName })
+      const data = res.data
+      setSessionToken(data.session_token)
+      setStartedAt(data.started_at)
+      setQuestions(data.questions)
+      setCurrentIdx(0)
+
+      if (data.time_limit_seconds) {
+        startGlobalTimer(data.time_limit_seconds, data.started_at)
+      }
+
+      setPhase('taking')
+    } catch (err) {
+      const detail = err.response?.data?.detail || ''
+      if (err.response?.status === 403 || detail.includes('abandoned') || detail.includes('already')) {
+        setError(t('exam.alreadyAttempted'))
+        setPhase('error')
+      } else {
+        setError(detail || t('common.error'))
+        setPhase('error')
+      }
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  // ── Save answer ───────────────────────────────────────────────────────────
+
+  const handleAnswerSelect = (optionIndex) => {
+    const q = questions[currentIdx]
+    setAnswers(prev => ({ ...prev, [q.id]: optionIndex }))
+    // Fire-and-forget save
+    examAPI.saveAnswer(slug, {
+      session_token: sessionToken,
+      question_id: q.id,
+      selected_option_index: optionIndex,
+    }).catch(() => {})
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+
+  const handleNext = async () => {
+    setSaving(true)
+    try {
+      const q = questions[currentIdx]
+      const optIdx = answers[q.id] ?? null
+      await examAPI.saveAnswer(slug, {
+        session_token: sessionToken,
+        question_id: q.id,
+        selected_option_index: optIdx,
+      })
+      setCurrentIdx(ci => Math.min(ci + 1, questions.length - 1))
+    } catch {
+      // ignore
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePrev = () => {
+    const hasPerQ = questions.some(q => q.max_time_seconds)
+    if (!hasPerQ) {
+      setCurrentIdx(ci => Math.max(ci - 1, 0))
+    }
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+
+  const handleSubmit = () => {
+    Modal.confirm({
+      title: t('exam.submitExam'),
+      content: t('exam.submitConfirm'),
+      okText: t('common.submit'),
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        setSaving(true)
+        try {
+          // Save current answer first
+          const q = questions[currentIdx]
+          const optIdx = answers[q.id] ?? null
+          await examAPI.saveAnswer(slug, {
+            session_token: sessionToken,
+            question_id: q.id,
+            selected_option_index: optIdx,
+          })
+          // Submit
+          const res = await examAPI.submit(slug, sessionToken)
+          stopGlobalTimer()
+          stopQuestionTimer()
+          setExamResult(res.data)
+          setPhase('score')
+        } catch (err) {
+          setError(err.response?.data?.detail || t('common.error'))
+          setPhase('error')
+        } finally {
+          setSaving(false)
+        }
+      }
+    })
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  const hasPerQuestionTimers = questions.some(q => q.max_time_seconds)
+
+  return (
+    <div className="exam-session">
+      <PublicBrandHeader />
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
+        {phase === 'loading' && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <Spin size="large" />
+          </div>
+        )}
+
+        {phase === 'error' && (
+          <Result
+            status="error"
+            title={t('common.error')}
+            subTitle={error}
+            extra={
+              <Button onClick={() => navigate('/')}>{t('exam.backToDashboard')}</Button>
+            }
+          />
+        )}
+
+        {phase === 'status' && examInfo && (
+          <StatusScreen info={examInfo} />
+        )}
+
+        {phase === 'start' && examInfo && (
+          <StartScreen info={examInfo} onStart={handleStart} loading={starting} />
+        )}
+
+        {phase === 'taking' && questions.length > 0 && (
+          <QuestionScreen
+            question={questions[currentIdx]}
+            questionIndex={currentIdx}
+            totalQuestions={questions.length}
+            selectedAnswer={answers[questions[currentIdx]?.id] ?? null}
+            onAnswerSelect={handleAnswerSelect}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            onSubmit={handleSubmit}
+            globalSecondsLeft={globalSecondsLeft}
+            questionSecondsLeft={questionSecondsLeft}
+            hasPerQuestionTimers={hasPerQuestionTimers}
+            saving={saving}
+          />
+        )}
+
+        {phase === 'score' && examResult && (
+          <ScoreScreen result={examResult} onBack={() => navigate('/')} />
+        )}
+      </div>
+    </div>
+  )
+}

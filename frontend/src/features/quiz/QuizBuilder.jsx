@@ -44,7 +44,7 @@ import {
 } from 'antd'
 import { CopyOutlined, ShareAltOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { quizAPI, questionAPI, aiAPI } from '../../services/api'
+import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
 import './QuizBuilder.css'
 
@@ -76,6 +76,7 @@ const QuestionForm = ({
   loading,
   movingImages,
   isPoll,
+  isExam,
   language,
   isAdmin,
   t
@@ -98,6 +99,7 @@ const QuestionForm = ({
         ...question,
         points: question.points ?? 1,
         max_time_seconds: question.max_time_seconds ?? null,
+        negative_points: question.negative_points ?? 0,
       }
       if (question.question_type === 'mcq') {
         const existingOptionCount = question.options?.length || 2
@@ -244,7 +246,7 @@ const QuestionForm = ({
             <Radio.Group onChange={handleTypeChange}>
               <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
               {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
-              <Radio value="single_line">{t('quiz.singleLine')}</Radio>
+              {!isExam && <Radio value="single_line">{t('quiz.singleLine')}</Radio>}
               {isPoll && <Radio value="scale">{t('quizPresent.scaleOneToFive')}</Radio>}
               {isPoll && <Radio value="paragraph">{t('quiz.paragraph')}</Radio>}
           </Radio.Group>
@@ -296,6 +298,16 @@ const QuestionForm = ({
             >
               <InputNumber min={1} max={3600} precision={0} />
             </Form.Item>
+            {isExam && (
+              <Form.Item
+                name="negative_points"
+                label={t('exam.negativePoints')}
+                initialValue={0}
+                tooltip="Points deducted for a wrong answer (0 = no penalty)"
+              >
+                <InputNumber min={0} precision={0} />
+              </Form.Item>
+            )}
           </Space>
         )}
 
@@ -731,7 +743,7 @@ export default function QuizBuilder() {
   // Extract query params for initial creation (e.g. ?type=poll or ?type=offline_poll)
   const searchParams = new URLSearchParams(location.search)
   const rawType = searchParams.get('type')
-  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : 'quiz'
+  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : rawType === 'exam' ? 'exam' : 'quiz'
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -744,8 +756,10 @@ export default function QuizBuilder() {
   // Loading state for moving temp images
   const [movingImages, setMovingImages] = useState(false)
   const [pollLinkModal, setPollLinkModal] = useState({ open: false, url: '' })
+  const [examLinkModal, setExamLinkModal] = useState({ open: false, url: '' })
   const isPoll = quiz?.quiz_type === 'poll' || quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'poll') || (!quiz && initialQuizType === 'offline_poll')
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
+  const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
 
@@ -839,6 +853,10 @@ export default function QuizBuilder() {
         offline_start_at: response.data.offline_start_at ? dayjs(response.data.offline_start_at) : undefined,
         offline_end_at: response.data.offline_end_at ? dayjs(response.data.offline_end_at) : undefined,
         offline_results_email: response.data.offline_results_email || undefined,
+        exam_start_at: response.data.exam_start_at ? dayjs(response.data.exam_start_at) : undefined,
+        exam_end_at: response.data.exam_end_at ? dayjs(response.data.exam_end_at) : undefined,
+        exam_time_limit_minutes: response.data.exam_time_limit_seconds ? Math.floor(response.data.exam_time_limit_seconds / 60) : undefined,
+        exam_results_email: response.data.exam_results_email || undefined,
       })
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
@@ -850,19 +868,24 @@ export default function QuizBuilder() {
   const handleSaveQuiz = async (rawValues) => {
     setLoading(true)
     // Serialize dayjs objects to ISO strings for the API
+    const timeLimitMins = rawValues.exam_time_limit_minutes
     const values = {
       ...rawValues,
       offline_start_at: rawValues.offline_start_at?.toISOString() ?? null,
       offline_end_at: rawValues.offline_end_at?.toISOString() ?? null,
+      exam_start_at: rawValues.exam_start_at?.toISOString() ?? null,
+      exam_end_at: rawValues.exam_end_at?.toISOString() ?? null,
+      exam_time_limit_seconds: timeLimitMins ? Number(timeLimitMins) * 60 : null,
     }
+    delete values.exam_time_limit_minutes
     try {
       if (id) {
         await quizAPI.update(id, values)
-        message.success(isOfflinePoll ? t('quiz.saveOfflinePollSuccess') : isPoll ? t('quiz.savePollSuccess') : t('quiz.saveSuccess'))
+        message.success(isExam ? t('exam.saveSuccess') : isOfflinePoll ? t('quiz.saveOfflinePollSuccess') : isPoll ? t('quiz.savePollSuccess') : t('quiz.saveSuccess'))
         loadQuiz()
       } else {
         const response = await quizAPI.create(values)
-        message.success(isOfflinePoll ? t('quiz.createOfflinePollSuccess') : isPoll ? t('quiz.createPollSuccess') : t('quiz.createSuccess'))
+        message.success(isExam ? t('exam.createSuccess') : isOfflinePoll ? t('quiz.createOfflinePollSuccess') : isPoll ? t('quiz.createPollSuccess') : t('quiz.createSuccess'))
         navigate(`/quiz/${response.data.id}/edit`)
       }
     } catch (error) {
@@ -885,7 +908,7 @@ export default function QuizBuilder() {
       message.warning(t('quiz.saveQuizFirst'))
       return
     }
-    
+
     setLoading(true)
     try {
       // Transform frontend format to backend format
@@ -894,8 +917,9 @@ export default function QuizBuilder() {
         text: values.text,
         points: values.points || 1,
         max_time_seconds: values.max_time_seconds ?? null,
+        negative_points: values.negative_points ?? 0,
       }
-      
+
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         const mcqOptions = [
@@ -1066,6 +1090,7 @@ export default function QuizBuilder() {
         text: values.text,
         points: values.points || 1,
         max_time_seconds: values.max_time_seconds ?? null,
+        negative_points: values.negative_points ?? 0,
       }
       
       // Add options for choice-based question types
@@ -1138,7 +1163,11 @@ export default function QuizBuilder() {
   const handlePublish = async () => {
     setLoading(true)
     try {
-      if (isOfflinePoll) {
+      if (isExam) {
+        const res = await examAPI.publish(id)
+        setExamLinkModal({ open: true, url: res.data.exam_url })
+        loadQuiz()
+      } else if (isOfflinePoll) {
         const res = await quizAPI.publishOffline(id)
         setPollLinkModal({ open: true, url: res.data.poll_url })
         loadQuiz()
@@ -1148,7 +1177,7 @@ export default function QuizBuilder() {
         navigate(`/quiz/${id}/control`)
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || t('quiz.publishError'))
+      message.error(error.response?.data?.detail || (isExam ? t('exam.publishError') : t('quiz.publishError')))
       console.error(error)
     } finally {
       setLoading(false)
@@ -1158,11 +1187,16 @@ export default function QuizBuilder() {
   const handleUnpublish = async () => {
     setLoading(true)
     try {
-      await quizAPI.unpublish(id)
-      message.success(t('quiz.unpublishSuccess'))
+      if (isExam) {
+        await examAPI.unpublish(id)
+        message.success(t('exam.unpublishSuccess'))
+      } else {
+        await quizAPI.unpublish(id)
+        message.success(t('quiz.unpublishSuccess'))
+      }
       loadQuiz()
     } catch (error) {
-      message.error(error.response?.data?.detail || t('quiz.unpublishError'))
+      message.error(error.response?.data?.detail || (isExam ? t('exam.unpublishError') : t('quiz.unpublishError')))
       console.error(error)
     } finally {
       setLoading(false)
@@ -1245,10 +1279,10 @@ export default function QuizBuilder() {
             onClick={handlePublish}
             loading={loading}
           >
-            {isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
+            {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
           </Button>
         )}
-        {quiz && quiz.status === 'ready' && !isOfflinePoll && (
+        {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && (
           <>
             <Button
               type="primary"
@@ -1281,13 +1315,37 @@ export default function QuizBuilder() {
             {t('offlinePoll.viewResults', 'View Results')}
           </Button>
         )}
+        {quiz && quiz.status === 'ready' && isExam && quiz.exam_slug && (
+          <Button
+            icon={<ShareAltOutlined />}
+            onClick={() => setExamLinkModal({ open: true, url: `${window.location.origin}/e/${quiz.exam_slug}` })}
+          >
+            {t('exam.copyLink')}
+          </Button>
+        )}
+        {quiz && quiz.status === 'ready' && isExam && (
+          <>
+            <Button
+              onClick={() => navigate(`/quiz/${id}/exam-results`)}
+            >
+              {t('exam.results.title', 'View Results')}
+            </Button>
+            <Button
+              type="default"
+              onClick={handleUnpublish}
+              loading={loading}
+            >
+              {t('exam.unpublishExam')}
+            </Button>
+          </>
+        )}
       </Space>
 
       <Card
         title={
           id
-            ? (isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz'))
-            : (isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
+            ? (isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz'))
+            : (isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
         }
         style={{ marginBottom: 24, width: '100%' }}
       >
@@ -1296,8 +1354,8 @@ export default function QuizBuilder() {
             <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
               {getQuizStatusTranslation(quiz.status)}
             </Tag>
-            <Tag color={quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
-              {quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+            <Tag color={quiz.quiz_type === 'exam' ? 'volcano' : quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
+              {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
             </Tag>
             {quiz.quiz_type === 'offline_poll' && quiz.poll_slug && (
               <Text
@@ -1310,7 +1368,7 @@ export default function QuizBuilder() {
             )}
             {quiz.status === 'ready' && !isOfflinePoll && (
               <Tag color="red">
-                {isPoll ? t('quiz.unpublishPollMessage', 'Click "Unpublish Poll" above to edit') : (t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit')}
+                {isExam ? t('exam.unpublishMessage', 'Click "Deactivate Exam" above to edit') : isPoll ? t('quiz.unpublishPollMessage', 'Click "Unpublish Poll" above to edit') : (t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit')}
               </Tag>
             )}
             <Text type="secondary">
@@ -1326,11 +1384,11 @@ export default function QuizBuilder() {
         >
           <Form.Item
             name="title"
-            label={isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-            rules={[{ required: true, message: isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+            label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
+            rules={[{ required: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
           >
             <Input
-              placeholder={isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
+              placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
               size="large"
               spellCheck="true"
               lang={i18n.language}
@@ -1341,7 +1399,7 @@ export default function QuizBuilder() {
                     size="small"
                     icon={mainRewriting['title'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
                     loading={mainRewriting['title']}
-                    onClick={() => handleMainRewrite('title', isPoll ? 'poll title' : 'quiz title')}
+                    onClick={() => handleMainRewrite('title', isExam ? 'exam title' : isPoll ? 'poll title' : 'quiz title')}
                   />
                 </Tooltip>
               )}
@@ -1350,11 +1408,11 @@ export default function QuizBuilder() {
 
           <Form.Item
             name="description"
-            label={isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
+            label={isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
           >
             <TextArea
               rows={3}
-              placeholder={isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
+              placeholder={isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
               spellCheck="true"
               lang={i18n.language}
             />
@@ -1414,6 +1472,32 @@ export default function QuizBuilder() {
             </Space>
           )}
 
+          {/* Exam configuration fields */}
+          {isExam && (
+            <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+              <Form.Item
+                name="exam_start_at"
+                label={t('exam.startAt')}
+                rules={[{ required: isExam, message: t('exam.startAtRequired') }]}
+              >
+                <DatePicker showTime style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item
+                name="exam_end_at"
+                label={t('exam.endAt')}
+                rules={[{ required: isExam, message: t('exam.endAtRequired') }]}
+              >
+                <DatePicker showTime style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item
+                name="exam_time_limit_minutes"
+                label={t('exam.timeLimitMinutes')}
+              >
+                <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: '100%' }} />
+              </Form.Item>
+            </Space>
+          )}
+
           <Button
             type="primary"
             htmlType="submit"
@@ -1421,8 +1505,8 @@ export default function QuizBuilder() {
             loading={loading}
           >
             {id
-              ? (isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz'))
-              : (isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
+              ? (isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz'))
+              : (isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
             }
           </Button>
         </Form>
@@ -1451,6 +1535,32 @@ export default function QuizBuilder() {
         </Space>
       </Modal>
 
+      {/* Exam link modal */}
+      <Modal
+        title={t('exam.publishSuccess')}
+        open={examLinkModal.open}
+        onCancel={() => setExamLinkModal({ open: false, url: '' })}
+        footer={[
+          <Button key="results" type="primary" onClick={() => { setExamLinkModal({ open: false, url: '' }); navigate(`/quiz/${id}/exam-results`) }}>
+            {t('exam.resultsTitle')}
+          </Button>,
+          <Button key="close" onClick={() => setExamLinkModal({ open: false, url: '' })}>
+            Close
+          </Button>
+        ]}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Text>Your exam is now live. Share this link with participants:</Text>
+          <Text
+            strong
+            copyable={{ text: examLinkModal.url, icon: <CopyOutlined />, tooltips: [t('exam.copyLink'), t('exam.linkCopied')] }}
+            style={{ wordBreak: 'break-all' }}
+          >
+            {examLinkModal.url}
+          </Text>
+        </Space>
+      </Modal>
+
       {id && (
         <>
           <Divider>{t('quiz.questions')}</Divider>
@@ -1474,6 +1584,7 @@ export default function QuizBuilder() {
               onCancel={handleCancelQuestion}
               quizId={id}
               isPoll={isPoll}
+              isExam={isExam}
               language={i18n.language}
               isAdmin={isAdmin}
               questionImageUrl={questionImageUrl}

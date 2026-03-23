@@ -1,0 +1,114 @@
+"""
+Exam API — public and authenticated endpoints for exam participation and results.
+"""
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from persistence.database_async import get_async_db
+from features.quiz.schemas import (
+    ExamInfoResponse,
+    ExamStartRequest,
+    ExamStartResponse,
+    ExamAnswerRequest,
+    ExamSubmitRequest,
+    ExamSubmitResponse,
+    ExamResultsResponse,
+    ExamPublishResponse,
+)
+from features.quiz import exam_service_async as svc
+from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError
+from core.auth.dependencies import get_current_user, CurrentUser
+
+router = APIRouter(tags=["exam"])
+
+
+@router.get("/e/{slug}", response_model=ExamInfoResponse)
+async def get_exam_info(slug: str, db: AsyncSession = Depends(get_async_db)):
+    """Public — get info about an exam (status, dates, question count)."""
+    try:
+        return await svc.get_exam_info(db, slug)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/e/{slug}/start", response_model=ExamStartResponse)
+async def start_exam(slug: str, body: ExamStartRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — start exam; returns all questions and session_token."""
+    try:
+        return await svc.start_exam(db, slug, body.display_name)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/e/{slug}/answer")
+async def save_answer(slug: str, body: ExamAnswerRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — upsert a single answer; updates last_activity_at."""
+    try:
+        return await svc.save_answer(
+            db, slug, body.session_token, body.question_id, body.selected_option_index
+        )
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/e/{slug}/submit", response_model=ExamSubmitResponse)
+async def submit_exam(slug: str, body: ExamSubmitRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — submit exam; score and return full result."""
+    try:
+        return await svc.submit_exam(db, slug, body.session_token)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/e/{slug}/result", response_model=ExamSubmitResponse)
+async def get_my_result(slug: str, body: ExamSubmitRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — retrieve participant's own score/breakdown after submission."""
+    try:
+        return await svc.get_my_result(db, slug, body.session_token)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/quiz/{quiz_id}/exam-results", response_model=ExamResultsResponse)
+async def get_exam_results(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — full results: leaderboard + per-question analytics."""
+    try:
+        return await svc.get_exam_results(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/quizzes/{quiz_id}/publish-exam", response_model=ExamPublishResponse)
+async def publish_exam(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — publish exam: generate slug + create session."""
+    try:
+        return await svc.publish_exam(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except (QuizValidationError, InvalidQuizStatusError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/quizzes/{quiz_id}/unpublish-exam")
+async def unpublish_exam(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — unpublish exam (reverts to DRAFT)."""
+    try:
+        return await svc.unpublish_exam(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except (QuizValidationError, InvalidQuizStatusError) as e:
+        raise HTTPException(status_code=400, detail=str(e))

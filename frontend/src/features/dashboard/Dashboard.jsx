@@ -339,11 +339,13 @@ function Dashboard() {
   }
 
   const getQuizTypeColor = (quizType) => {
+    if (quizType === 'exam') return 'volcano'
     if (quizType === 'offline_poll') return 'magenta'
     if (quizType === 'poll') return 'purple'
     return 'blue'
   }
   const getQuizTypeLabel = (quizType) => {
+    if (quizType === 'exam') return t('exam.typeLabel', 'Exam')
     if (quizType === 'offline_poll') return t('offlinePoll.typeLabel', 'Offline Poll')
     if (quizType === 'poll') return t('quiz.poll', { defaultValue: 'Poll' })
     return t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })
@@ -515,6 +517,13 @@ function Dashboard() {
               style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
             >
               {t('offlinePoll.createOfflinePoll', 'Create Poll')}
+            </Button>
+            <Button
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/quiz/new?type=exam')}
+              style={{ borderColor: '#fa541c', color: '#fa541c' }}
+            >
+              {t('exam.createExam', 'Create Exam')}
             </Button>
           </div>
         }
@@ -721,13 +730,31 @@ function Dashboard() {
                     </Button>
                   </Popconfirm>
                 ) : null}
-                {quiz.status === 'ready' && !quiz.has_active_session && quiz.quiz_type !== 'offline_poll' && (
+                {quiz.status === 'ready' && !quiz.has_active_session && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam' && (
                   <Button
                     type="primary"
                     icon={<PlayCircleOutlined />}
                     onClick={() => navigate(`/quiz/${quiz.id}/control`)}
                   >
                     {t('quiz.startQuiz')}
+                  </Button>
+                )}
+                {quiz.quiz_type === 'exam' && quiz.exam_url && (
+                  <Button
+                    icon={<CopyOutlined />}
+                    onClick={() => {
+                      navigator.clipboard.writeText(quiz.exam_url)
+                      message.success(t('exam.linkCopied', 'Link copied!'))
+                    }}
+                  >
+                    {t('exam.copyLink', 'Copy Link')}
+                  </Button>
+                )}
+                {quiz.quiz_type === 'exam' && quiz.status === 'ready' && (
+                  <Button
+                    onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)}
+                  >
+                    {t('exam.resultsTitle', 'Exam Results')}
                   </Button>
                 )}
                 {quiz.quiz_type === 'offline_poll' && quiz.poll_url && (

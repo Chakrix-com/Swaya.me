@@ -22,6 +22,7 @@ class QuizType(str, enum.Enum):
     QUIZ = "quiz"
     POLL = "poll"
     OFFLINE_POLL = "offline_poll"
+    EXAM = "exam"
 
 
 class QuizSessionStatus(str, enum.Enum):
@@ -86,6 +87,14 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     offline_results_email = Column(String(255), nullable=True)
     offline_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
 
+    # Exam fields
+    exam_slug = Column(String(64), nullable=True, unique=True, index=True)
+    exam_start_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    exam_end_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    exam_time_limit_seconds = Column(Integer, nullable=True)
+    exam_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
+    exam_results_email = Column(String(255), nullable=True)
+
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     sessions = relationship("QuizSession", back_populates="quiz", foreign_keys="QuizSession.quiz_id")
@@ -126,6 +135,7 @@ class Question(Base, TimestampMixin):
     option_images = Column(JSON, nullable=True)  # Optional images for MCQ options: {"A": "path", "B": "path", ...}
     points = Column(Integer, nullable=False, default=1, server_default="1")
     max_time_seconds = Column(Integer, nullable=True)
+    negative_points = Column(Integer, nullable=False, default=0, server_default="0")
     
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
@@ -164,6 +174,9 @@ class Participant(Base, TimestampMixin):
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     completed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    started_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    last_activity_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    is_abandoned = Column(Boolean, default=False, nullable=False, server_default="0")
 
     # Relationships
     session = relationship("QuizSession", back_populates="participants")
