@@ -345,7 +345,7 @@ function Dashboard() {
     return 'blue'
   }
   const getQuizTypeLabel = (quizType) => {
-    if (quizType === 'exam') return t('exam.typeLabel', 'Exam')
+    if (quizType === 'exam') return t('exam.typeLabel', 'Test')
     if (quizType === 'offline_poll') return t('offlinePoll.typeLabel', 'Offline Poll')
     if (quizType === 'poll') return t('quiz.poll', { defaultValue: 'Poll' })
     return t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })
@@ -523,7 +523,7 @@ function Dashboard() {
               onClick={() => navigate('/quiz/new?type=exam')}
               style={{ borderColor: '#fa541c', color: '#fa541c' }}
             >
-              {t('exam.createExam', 'Create Exam')}
+              {t('exam.createExam', 'Create Test')}
             </Button>
           </div>
         }
