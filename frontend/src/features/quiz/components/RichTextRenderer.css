@@ -1,0 +1,101 @@
+/* ── RichTextRenderer — participant/presenter view ─────────────────── */
+
+.rte-rendered {
+  line-height: 1.7;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+/* basic typography resets for Ant Design compat */
+.rte-rendered strong  { font-weight: 600; }
+.rte-rendered em      { font-style: italic; }
+.rte-rendered ul,
+.rte-rendered ol      { padding-left: 1.4em; margin: 0.4em 0; }
+.rte-rendered li      { margin: 0.2em 0; }
+.rte-rendered p       { margin: 0.3em 0; }
+
+/* ── Inline code ───────────────────────────────────────────────────── */
+.rte-rendered code:not(pre code) {
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 90%;
+}
+.rte-rendered--light code:not(pre code) {
+  background: #f0f0f0;
+  color: #d73a49;
+}
+.rte-rendered--dark code:not(pre code) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cba6f7;
+}
+
+/* ── Code block ────────────────────────────────────────────────────── */
+.rte-rendered pre {
+  margin: 10px 0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+.rte-rendered--light pre {
+  background: #f6f8fa;
+  color: #24292e;
+  border: 1px solid #e1e4e8;
+}
+.rte-rendered--dark pre {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.rte-rendered pre code {
+  background: none !important;
+  padding: 0 !important;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ── Syntax tokens — light ─────────────────────────────────────────── */
+.rte-rendered--light .hljs-keyword,
+.rte-rendered--light .hljs-tag    { color: #d73a49; }
+.rte-rendered--light .hljs-string { color: #032f62; }
+.rte-rendered--light .hljs-comment,
+.rte-rendered--light .hljs-quote  { color: #6a737d; font-style: italic; }
+.rte-rendered--light .hljs-number,
+.rte-rendered--light .hljs-literal { color: #005cc5; }
+.rte-rendered--light .hljs-title,
+.rte-rendered--light .hljs-function,
+.rte-rendered--light .hljs-name    { color: #6f42c1; }
+.rte-rendered--light .hljs-type,
+.rte-rendered--light .hljs-class   { color: #e36209; }
+.rte-rendered--light .hljs-built_in { color: #005cc5; }
+.rte-rendered--light .hljs-variable,
+.rte-rendered--light .hljs-params   { color: #24292e; }
+.rte-rendered--light .hljs-attr     { color: #005cc5; }
+.rte-rendered--light .hljs-meta     { color: #22863a; }
+.rte-rendered--light .hljs-operator { color: #d73a49; }
+.rte-rendered--light .hljs-punctuation { color: #24292e; }
+
+/* ── Syntax tokens — dark ──────────────────────────────────────────── */
+.rte-rendered--dark .hljs-keyword,
+.rte-rendered--dark .hljs-tag    { color: #cba6f7; }
+.rte-rendered--dark .hljs-string { color: #a6e3a1; }
+.rte-rendered--dark .hljs-comment,
+.rte-rendered--dark .hljs-quote  { color: #6c7086; font-style: italic; }
+.rte-rendered--dark .hljs-number,
+.rte-rendered--dark .hljs-literal { color: #fab387; }
+.rte-rendered--dark .hljs-title,
+.rte-rendered--dark .hljs-function,
+.rte-rendered--dark .hljs-name    { color: #89b4fa; }
+.rte-rendered--dark .hljs-type,
+.rte-rendered--dark .hljs-class   { color: #f38ba8; }
+.rte-rendered--dark .hljs-built_in { color: #89dceb; }
+.rte-rendered--dark .hljs-variable,
+.rte-rendered--dark .hljs-params   { color: #cdd6f4; }
+.rte-rendered--dark .hljs-attr     { color: #89b4fa; }
+.rte-rendered--dark .hljs-meta     { color: #a6e3a1; }
+.rte-rendered--dark .hljs-operator { color: #89dceb; }
+.rte-rendered--dark .hljs-punctuation { color: #cdd6f4; }

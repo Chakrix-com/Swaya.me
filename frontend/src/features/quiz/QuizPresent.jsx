@@ -7,6 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI } from '../../services/api'
 import BetaBadge from '../../components/BetaBadge'
+import RichTextRenderer from './components/RichTextRenderer'
 import './QuizPresent.css'
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E']
@@ -128,7 +129,7 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll, t
         </div>
       )}
 
-      <p className="pv-question-text">{question.text || question.question_text}</p>
+      <RichTextRenderer content={question.text || question.question_text} isDark={true} className="pv-question-text" />
 
       <div className="pv-options-grid">
         {opts.map((opt, i) => (
@@ -183,7 +184,7 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed, t }) {
         </div>
       )}
 
-      <p className="pv-question-text">{question.text || question.question_text}</p>
+      <RichTextRenderer content={question.text || question.question_text} isDark={true} className="pv-question-text" />
 
       {revealed ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 0', gap: 24 }}>
@@ -226,7 +227,7 @@ function TextResponseView({ question, questionNumber, totalQuestions, t }) {
         </div>
       )}
       
-      <p className="pv-question-text" style={{ flexShrink: 0 }}>{question.text || question.question_text}</p>
+      <RichTextRenderer content={question.text || question.question_text} isDark={true} className="pv-question-text" style={{ flexShrink: 0 }} />
       
       <div className="pv-text-responses-container" style={{ 
         flex: 1, 
@@ -309,7 +310,7 @@ function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions
         </div>
       )}
 
-      <p className="pv-question-text">{question.text || question.question_text}</p>
+      <RichTextRenderer content={question.text || question.question_text} isDark={true} className="pv-question-text" />
 
       <div className="pv-wordcloud-container">
         {wordCloudData.length > 0 ? (

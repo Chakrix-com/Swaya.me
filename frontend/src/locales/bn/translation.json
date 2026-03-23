@@ -288,7 +288,16 @@
     "createPollSuccess": "অনলাইন পোল সফলভাবে তৈরি হয়েছে",
     "savePollSuccess": "অনলাইন পোল সফলভাবে আপডেট হয়েছে",
     "createOfflinePollSuccess": "পোল সফলভাবে তৈরি হয়েছে",
-    "saveOfflinePollSuccess": "পোল সফলভাবে আপডেট হয়েছে"
+    "saveOfflinePollSuccess": "পোল সফলভাবে আপডেট হয়েছে",
+    "richTextToggle": "রিচ টেক্সট",
+    "simpleTextToggle": "সাধারণ",
+    "boldTooltip": "বোল্ড",
+    "italicTooltip": "ইটালিক",
+    "underlineTooltip": "আন্ডারলাইন",
+    "bulletListTooltip": "বুলেট তালিকা",
+    "orderedListTooltip": "নম্বরযুক্ত তালিকা",
+    "codeBlockTooltip": "কোড ব্লক",
+    "codeLanguageSelect": "ভাষা নির্বাচন করুন"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",

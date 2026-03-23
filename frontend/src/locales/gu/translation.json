@@ -288,7 +288,16 @@
     "createPollSuccess": "ઓનલાઇન મતદાન સફળતાપૂર્વક બનાવવામાં આવ્યો",
     "savePollSuccess": "ઓનલાઇન મતદાન સફળતાપૂર્વક અપડેટ થઈ ગયો",
     "createOfflinePollSuccess": "મતદાન સફળતાપૂર્વક બનાવવામાં આવ્યો",
-    "saveOfflinePollSuccess": "મતદાન સફળતાપૂર્વક અપડેટ થઈ ગયો"
+    "saveOfflinePollSuccess": "મતદાન સફળતાપૂર્વક અપડેટ થઈ ગયો",
+    "richTextToggle": "રિચ ટેક્સ્ટ",
+    "simpleTextToggle": "સરળ",
+    "boldTooltip": "બોલ્ડ",
+    "italicTooltip": "ત્રાંસો",
+    "underlineTooltip": "રેખાંકિત",
+    "bulletListTooltip": "બુલેટ સૂચિ",
+    "orderedListTooltip": "ક્રમાંક સૂચિ",
+    "codeBlockTooltip": "કોડ બ્લૉક",
+    "codeLanguageSelect": "ભાષા પસંદ કરો"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",

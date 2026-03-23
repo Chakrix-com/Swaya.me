@@ -2,7 +2,7 @@
  * ExamSession — participant-facing exam UI
  * Route: /e/:slug (public)
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useContext } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -17,6 +17,8 @@ import {
 } from '@ant-design/icons'
 import { examAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
+import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import { VisitorThemeContext } from '../../App'
 import dayjs from 'dayjs'
 
 const { Title, Text, Paragraph } = Typography
@@ -210,6 +212,7 @@ function QuestionScreen({
   saving,
 }) {
   const { t } = useTranslation()
+  const { theme } = useContext(VisitorThemeContext)
   const isLast = questionIndex === totalQuestions - 1
 
   const globalUrgent = globalSecondsLeft != null && globalSecondsLeft < 60
@@ -270,7 +273,7 @@ function QuestionScreen({
               style={{ maxWidth: '100%', borderRadius: 8 }}
             />
           )}
-          <Title level={4} style={{ marginBottom: 0 }}>{question.text}</Title>
+          <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
 
           <Radio.Group
             value={selectedAnswer}

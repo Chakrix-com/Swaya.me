@@ -288,7 +288,16 @@
     "createPollSuccess": "Online Poll created successfully",
     "savePollSuccess": "Online Poll updated successfully",
     "createOfflinePollSuccess": "Poll created successfully",
-    "saveOfflinePollSuccess": "Poll updated successfully"
+    "saveOfflinePollSuccess": "Poll updated successfully",
+    "richTextToggle": "Rich Text",
+    "simpleTextToggle": "Simple",
+    "boldTooltip": "Bold",
+    "italicTooltip": "Italic",
+    "underlineTooltip": "Underline",
+    "bulletListTooltip": "Bullet list",
+    "orderedListTooltip": "Numbered list",
+    "codeBlockTooltip": "Code block",
+    "codeLanguageSelect": "Select language"
   },
   "audience": {
     "joinQuiz": "Join Quiz",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Card, Button, Typography, Space, Progress, Radio, Input, Spin,
@@ -8,6 +8,8 @@ import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { offlinePollAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
+import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import { VisitorThemeContext } from '../../App'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -30,6 +32,7 @@ function formatDate(dt) {
 export default function OfflinePollSession() {
   const { slug } = useParams()
   const { t } = useTranslation()
+  const { theme } = useContext(VisitorThemeContext)
 
   // State machine: loading | not_started | active | closed | joining | answering | completed | already_completed
   const [phase, setPhase] = useState('loading')
@@ -374,7 +377,7 @@ export default function OfflinePollSession() {
                 style={{ maxWidth: '100%', borderRadius: 8 }}
               />
             )}
-            <Title level={4} style={{ margin: 0 }}>{question.text}</Title>
+            <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
 
             {/* MCQ options */}
             {question.question_type === 'mcq' && (

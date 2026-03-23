@@ -288,7 +288,16 @@
     "createPollSuccess": "ಆನ್‌ಲೈನ್ ಮತದಾನ ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ",
     "savePollSuccess": "ಆನ್‌ಲೈನ್ ಮತದಾನ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ",
     "createOfflinePollSuccess": "ಮತದಾನ ಯಶಸ್ವಿಯಾಗಿ ರಚಿಸಲಾಗಿದೆ",
-    "saveOfflinePollSuccess": "ಮತದಾನ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ"
+    "saveOfflinePollSuccess": "ಮತದಾನ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ",
+    "richTextToggle": "ರಿಚ್ ಟೆಕ್ಸ್ಟ್",
+    "simpleTextToggle": "ಸರಳ",
+    "boldTooltip": "ದಪ್ಪ",
+    "italicTooltip": "ಓರೆ",
+    "underlineTooltip": "ಅಡಿಗೆರೆ",
+    "bulletListTooltip": "ಚುಕ್ಕೆ ಪಟ್ಟಿ",
+    "orderedListTooltip": "ಸಂಖ್ಯಾ ಪಟ್ಟಿ",
+    "codeBlockTooltip": "ಕೋಡ್ ಬ್ಲಾಕ್",
+    "codeLanguageSelect": "ಭಾಷೆ ಆಯ್ಕೆ ಮಾಡಿ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",

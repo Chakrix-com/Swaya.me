@@ -288,7 +288,16 @@
     "createPollSuccess": "ఆన్‌లైన్ పోల్ విజయవంతంగా సృష్టించబడింది",
     "savePollSuccess": "ఆన్‌లైన్ పోల్ విజయవంతంగా నవీకరించబడింది",
     "createOfflinePollSuccess": "పోల్ విజయవంతంగా సృష్టించబడింది",
-    "saveOfflinePollSuccess": "పోల్ విజయవంతంగా నవీకరించబడింది"
+    "saveOfflinePollSuccess": "పోల్ విజయవంతంగా నవీకరించబడింది",
+    "richTextToggle": "రిచ్ టెక్స్ట్",
+    "simpleTextToggle": "సాధారణ",
+    "boldTooltip": "బోల్డ్",
+    "italicTooltip": "ఇటాలిక్",
+    "underlineTooltip": "అండర్‌లైన్",
+    "bulletListTooltip": "బుల్లెట్ జాబితా",
+    "orderedListTooltip": "నంబర్డ్ జాబితా",
+    "codeBlockTooltip": "కోడ్ బ్లాక్",
+    "codeLanguageSelect": "భాష ఎంచుకోండి"
   },
   "audience": {
     "joinQuiz": "క్విజ్‌లో చేరండి",

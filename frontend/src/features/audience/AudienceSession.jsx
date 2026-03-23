@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -30,6 +30,8 @@ import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 import { useTranslation } from 'react-i18next'
 import { clearSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
+import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import { VisitorThemeContext } from '../../App'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -40,6 +42,7 @@ export default function AudienceSession() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { t } = useTranslation()
+  const { theme } = useContext(VisitorThemeContext)
   const reduxSession = useSelector((state) => state.session.session)
 
   const locationState = location.state || {}
@@ -520,17 +523,11 @@ export default function AudienceSession() {
                           style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, display: 'block' }}
                         />
                       )}
-                      <Title
-                        level={3}
-                        style={{
-                          margin: currentQuestion.question_image_url ? '8px 0 0 0' : 0,
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word',
-                          whiteSpace: 'normal'
-                        }}
-                      >
-                        {currentQuestion.text}
-                      </Title>
+                      <RichTextRenderer
+                        content={currentQuestion.text}
+                        isDark={theme === 'dark'}
+                        className="aud-question-text"
+                      />
                     </Space>
                   }
                 >

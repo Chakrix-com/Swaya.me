@@ -60,7 +60,7 @@ class QuestionOptionCreate(BaseModel):
 class QuestionCreate(BaseModel):
     """Create question request"""
     question_type: QuestionTypeEnum = Field(default=QuestionTypeEnum.MCQ)
-    text: str = Field(..., min_length=1, max_length=1000)
+    text: str = Field(..., min_length=1, max_length=10000)
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
@@ -68,6 +68,13 @@ class QuestionCreate(BaseModel):
     points: int = Field(default=1, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
     negative_points: int = Field(default=0, ge=0)
+
+    @validator('text')
+    def no_dangerous_html(cls, v):
+        import re
+        if re.search(r'<script|<iframe|on\w+\s*=', v, re.IGNORECASE):
+            raise ValueError('Question text contains disallowed HTML')
+        return v
 
     @model_validator(mode='after')
     def validate_question_fields(self):
@@ -109,7 +116,7 @@ class QuestionCreate(BaseModel):
 class QuestionUpdate(BaseModel):
     """Update question request"""
     question_type: Optional[QuestionTypeEnum] = None
-    text: Optional[str] = Field(None, min_length=1, max_length=1000)
+    text: Optional[str] = Field(None, min_length=1, max_length=10000)
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)

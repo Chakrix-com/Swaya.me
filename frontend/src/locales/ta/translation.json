@@ -288,7 +288,16 @@
     "createPollSuccess": "ஆன்லைன் கருத்துக்கணிப்பு வெற்றிகரமாக உருவாக்கப்பட்டது",
     "savePollSuccess": "ஆன்லைன் கருத்துக்கணிப்பு வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
     "createOfflinePollSuccess": "கருத்துக்கணிப்பு வெற்றிகரமாக உருவாக்கப்பட்டது",
-    "saveOfflinePollSuccess": "கருத்துக்கணிப்பு வெற்றிகரமாக புதுப்பிக்கப்பட்டது"
+    "saveOfflinePollSuccess": "கருத்துக்கணிப்பு வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
+    "richTextToggle": "வளமான உரை",
+    "simpleTextToggle": "எளிய",
+    "boldTooltip": "தடிமன்",
+    "italicTooltip": "சாய்வு",
+    "underlineTooltip": "கோடிட்ட",
+    "bulletListTooltip": "புள்ளி பட்டியல்",
+    "orderedListTooltip": "எண்ணிட்ட பட்டியல்",
+    "codeBlockTooltip": "குறியீடு தொகுதி",
+    "codeLanguageSelect": "மொழி தேர்ந்தெடுக்கவும்"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",

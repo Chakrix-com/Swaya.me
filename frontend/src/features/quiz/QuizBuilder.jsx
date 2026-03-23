@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useState, useEffect, useCallback, memo, useContext } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
@@ -46,6 +46,8 @@ import { CopyOutlined, ShareAltOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
+import RichTextEditor from './components/RichTextEditor'
+import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 
 const { Title, Text } = Typography
@@ -88,6 +90,8 @@ const QuestionForm = ({
   const [aiSuggestTopic, setAiSuggestTopic] = useState('')
   const [aiSuggesting, setAiSuggesting] = useState(false)
   const [rewriting, setRewriting] = useState({})
+  const [useRichText, setUseRichText] = useState(false)
+  const { theme } = useContext(VisitorThemeContext)
   
   // Debug: Log when component renders
   console.log('[QuestionForm] Rendering. Question ID:', question?.id || 'NEW')
@@ -113,7 +117,10 @@ const QuestionForm = ({
       }
       questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
-      
+
+      // Auto-detect rich text: if question text contains HTML tags open in rich text mode
+      setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
+
       // Set image URLs from question data
       setQuestionImageUrl(question.question_image_url || null)
       setOptionImages({
@@ -126,6 +133,7 @@ const QuestionForm = ({
       // Reset form for new question
       questionForm.resetFields()
       setMcqBaseOptionCount(2)
+      setUseRichText(false)
       questionForm.setFieldsValue({
         option_a: '',
         option_b: '',
@@ -254,16 +262,36 @@ const QuestionForm = ({
 
         <Form.Item
           name="text"
-          label={t('quiz.question')}
+          label={
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {t('quiz.question')}
+              <Button
+                size="small"
+                type={useRichText ? 'primary' : 'default'}
+                onClick={() => setUseRichText(v => !v)}
+                style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
+              >
+                {useRichText ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+              </Button>
+            </span>
+          }
           rules={[{ required: true, message: t('quiz.questionRequired') }]}
+          getValueFromEvent={useRichText ? (v) => v : undefined}
         >
-          <TextArea
-            rows={2}
-            placeholder={t('quiz.enterQuestion')}
-            spellCheck="true"
-            lang={t('common.langCode', { defaultValue: 'en' })}
-            onContextMenu={(e) => e.stopPropagation()}
-          />
+          {useRichText ? (
+            <RichTextEditor
+              isDark={theme === 'dark'}
+              placeholder={t('quiz.enterQuestion')}
+            />
+          ) : (
+            <TextArea
+              rows={2}
+              placeholder={t('quiz.enterQuestion')}
+              spellCheck="true"
+              lang={t('common.langCode', { defaultValue: 'en' })}
+              onContextMenu={(e) => e.stopPropagation()}
+            />
+          )}
         </Form.Item>
         {isAdmin && (
           <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
@@ -273,7 +301,21 @@ const QuestionForm = ({
                 type="text"
                 icon={rewriteIcon('text')}
                 loading={rewriting['text']}
-                onClick={() => handleRewrite('text', isPoll ? 'poll question' : 'quiz question')}
+                onClick={() => {
+                  if (useRichText) {
+                    // Strip HTML before sending to AI, then put response back as plain text
+                    const rawHtml = questionForm.getFieldValue('text') || ''
+                    const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
+                    if (!plain) return
+                    setRewriting(prev => ({ ...prev, text: true }))
+                    aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
+                      .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
+                      .catch(() => {})
+                      .finally(() => setRewriting(prev => ({ ...prev, text: false })))
+                  } else {
+                    handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
+                  }
+                }}
               >
                 {t('ai.rewrite')}
               </Button>
@@ -1646,7 +1688,7 @@ export default function QuizBuilder() {
                       {!isPoll && question.max_time_seconds ? (
                         <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
                       ) : null}
-                      <Text strong>{question.text}</Text>
+                      <Text strong>{question.text.replace(/<[^>]*>/g, '')}</Text>
                     </Space>
                   }
                   extra={
