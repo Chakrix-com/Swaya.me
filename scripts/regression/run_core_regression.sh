@@ -13,8 +13,9 @@ export HOST_PASSWORD="${HOST_PASSWORD:-Demo1234}"
 
 FAILED=0
 
-run_step "core_smoke_suite" bash "$SCRIPT_DIR/run_smoke.sh" || FAILED=1
-run_step "core_leaderboard_timing" "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_leaderboard_timing.py" || FAILED=1
+run_step "core_smoke_suite"        bash "$SCRIPT_DIR/run_smoke.sh"                                                          || FAILED=1
+run_step "core_smoke_routes"       bash "$SCRIPT_DIR/smoke_routes.sh"                                                       || FAILED=1
+run_step "core_leaderboard_timing" "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_leaderboard_timing.py"              || FAILED=1
 
 if [ "$FAILED" -ne 0 ]; then
   log_error "Suite B failed"
