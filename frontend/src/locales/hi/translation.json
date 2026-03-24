@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "पृष्ठ URL"
+      },
+      "quizFeedbackTab": "क्विज़ प्रतिक्रिया",
+      "appFeedbackTab": "ऐप प्रतिक्रिया",
+      "filterPageUrl": "पृष्ठ URL से फ़िल्टर करें"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "प्रति प्रश्न समय सीमा (सेकंड)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "समयबद्ध, स्व-गति परीक्षा। स्कोर (+/- प्रति प्रश्न)। प्रतिभागी अंत में परिणाम और रैंक पाते हैं। लिंक से एक्सेस।"
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "प्रतिक्रिया साझा करें",
+    "modalTitle": "अपनी प्रतिक्रिया साझा करें",
+    "modalSubtitle": "Swaya.me को बेहतर बनाने में मदद करें — आपकी प्रतिक्रिया सीधे हमारी टीम तक पहुँचती है।",
+    "ratingLabel": "समग्र रेटिंग (वैकल्पिक):",
+    "placeholder": "बताएं क्या अच्छा रहा, क्या बेहतर हो सकता है, या कोई समस्या रिपोर्ट करें...",
+    "submitButton": "प्रतिक्रिया भेजें",
+    "successMessage": "आपकी प्रतिक्रिया के लिए धन्यवाद!",
+    "errorMessage": "प्रतिक्रिया भेजना विफल रहा। कृपया पुनः प्रयास करें।"
   }
 }

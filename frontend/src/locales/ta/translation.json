@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "பக்க URL"
+      },
+      "quizFeedbackTab": "வினாடி வினா கருத்து",
+      "appFeedbackTab": "செயலி கருத்து",
+      "filterPageUrl": "பக்க URL ஆல் வடிகட்டு"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "ஒரு கேள்விக்கான நேர வரம்பு (விநாடிகள்)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "நேர-வரம்பு, சுய-வேக தேர்வு. மதிப்பெண் (+/- கேள்விக்கு). பங்கேற்பாளர்கள் இறுதியில் முடிவு மற்றும் தரவரிசை பெறுவர். இணைப்பு மூலம் அணுகலாம்."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "கருத்தை பகிரவும்",
+    "modalTitle": "உங்கள் கருத்தை பகிரவும்",
+    "modalSubtitle": "Swaya.me ஐ மேம்படுத்த உதவுங்கள் — உங்கள் கருத்து நேரடியாக எங்கள் குழுவிற்கு சென்றடையும்.",
+    "ratingLabel": "ஒட்டுமொத்த மதிப்பீடு (விருப்பமானது):",
+    "placeholder": "என்ன நன்றாக இருந்தது, என்ன மேம்படலாம், அல்லது பிழையை அறிவிக்கவும்...",
+    "submitButton": "கருத்தை சமர்ப்பிக்கவும்",
+    "successMessage": "உங்கள் கருத்திற்கு நன்றி!",
+    "errorMessage": "கருத்தை சமர்ப்பிக்க தவறியது. மீண்டும் முயற்சிக்கவும்."
   }
 }

@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from core.config.settings import settings
+from persistence.models.app_feedback import AppFeedback  # noqa: F401
 from broker.api.routes import api_router
 from shared.utils.redis_client import redis_client
 from broker.policies.tenant_isolation import tenant_isolation_middleware

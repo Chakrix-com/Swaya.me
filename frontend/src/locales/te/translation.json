@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "పేజీ URL"
+      },
+      "quizFeedbackTab": "క్విజ్ అభిప్రాయం",
+      "appFeedbackTab": "యాప్ అభిప్రాయం",
+      "filterPageUrl": "పేజీ URL ద్వారా వడపోయండి"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "ప్రశ్నకు సమయ పరిమితి (సెకన్లు)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "సమయ పరిమితి, స్వయం వేగం పరీక్ష. స్కోరు (+/- ప్రశ్నకు). పాల్గొనే వారు చివరలో ఫలితం & ర్యాంక్ పొందుతారు. లింక్ ద్వారా యాక్సెస్."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",
+    "modalTitle": "మీ అభిప్రాయం పంచుకోండి",
+    "modalSubtitle": "Swaya.me ని మెరుగుపరచడంలో సహాయం చేయండి — మీ అభిప్రాయం నేరుగా మా బృందానికి చేరుతుంది.",
+    "ratingLabel": "మొత్తం రేటింగ్ (ఐచ్ఛికం):",
+    "placeholder": "ఏది బాగుంది, ఏమి మెరుగుపడవచ్చు, లేదా సమస్యను నివేదించండి...",
+    "submitButton": "అభిప్రాయం సమర్పించండి",
+    "successMessage": "మీ అభిప్రాయానికి ధన్యవాదాలు!",
+    "errorMessage": "అభిప్రాయం సమర్పించడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."
   }
 }

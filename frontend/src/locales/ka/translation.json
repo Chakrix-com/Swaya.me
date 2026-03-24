@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "ಪುಟ URL"
+      },
+      "quizFeedbackTab": "ಕ್ವಿಜ್ ಪ್ರತಿಕ್ರಿಯೆ",
+      "appFeedbackTab": "ಆ್ಯಪ್ ಪ್ರತಿಕ್ರಿಯೆ",
+      "filterPageUrl": "ಪುಟ URL ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "ಪ್ರಶ್ನೆಗೆ ಸಮಯ ಮಿತಿ (ಸೆಕೆಂಡ್)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "ಸಮಯ-ಮಿತಿ, ಸ್ವ-ವೇಗ ಪರೀಕ್ಷೆ. ಅಂಕಗಳು (+/- ಪ್ರಶ್ನೆಗೆ). ಭಾಗವಹಿಸುವವರು ಕೊನೆಯಲ್ಲಿ ಫಲಿತಾಂಶ & ರ್ಯಾಂಕ್ ಪಡೆಯುತ್ತಾರೆ. ಲಿಂಕ್ ಮೂಲಕ ಪ್ರವೇಶ."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",
+    "modalTitle": "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",
+    "modalSubtitle": "Swaya.me ಅನ್ನು ಸುಧಾರಿಸಲು ಸಹಾಯ ಮಾಡಿ — ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ ನೇರವಾಗಿ ನಮ್ಮ ತಂಡಕ್ಕೆ ತಲುಪುತ್ತದೆ.",
+    "ratingLabel": "ಒಟ್ಟಾರೆ ರೇಟಿಂಗ್ (ಐಚ್ಛಿಕ):",
+    "placeholder": "ಏನು ಚೆನ್ನಾಗಿದೆ, ಏನು ಸುಧಾರಿಸಬಹುದು, ಅಥವಾ ದೋಷ ವರದಿ ಮಾಡಿ...",
+    "submitButton": "ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಿ",
+    "successMessage": "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು!",
+    "errorMessage": "ಪ್ರತಿಕ್ರಿಯೆ ಸಲ್ಲಿಸಲು ವಿಫಲವಾಯಿತು. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
   }
 }

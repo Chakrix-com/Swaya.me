@@ -228,6 +228,11 @@ export const aiAPI = {
   listModels: () => api.get('/ai/models'),
 }
 
+export const appFeedbackAPI = {
+  submit: (data) => api.post('/feedback/app', data),
+  listAppFeedback: (params) => api.get('/admin/app-feedback', { params }),
+}
+
 // Language Tracking API
 export const languageTrackingAPI = {
   // Update authenticated user's language preference

@@ -688,8 +688,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "URL de la page"
+      },
+      "quizFeedbackTab": "Retours sur les quiz",
+      "appFeedbackTab": "Retours sur l'application",
+      "filterPageUrl": "Filtrer par URL de page"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1619,5 +1623,15 @@
     "perQuestionTimer": "Temps par question (secondes)",
     "resultsEmailPlaceholder": "votre@email.com",
     "typeInfo": "Examen chronométré et autonome. Noté (+/- par question). Les participants obtiennent un résultat et un classement à la fin. Accessible via un lien."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "Partager vos retours",
+    "modalTitle": "Partagez vos commentaires",
+    "modalSubtitle": "Aidez-nous à améliorer Swaya.me — vos retours parviennent directement à notre équipe.",
+    "ratingLabel": "Note générale (optionnel) :",
+    "placeholder": "Dites-nous ce qui a bien fonctionné, ce qui peut s'améliorer, ou signalez un bug...",
+    "submitButton": "Envoyer le retour",
+    "successMessage": "Merci pour vos commentaires !",
+    "errorMessage": "Échec de l'envoi du retour. Veuillez réessayer."
   }
 }

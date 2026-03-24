@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "પૃષ્ઠ URL"
+      },
+      "quizFeedbackTab": "ક્વિઝ પ્રતિક્રિયા",
+      "appFeedbackTab": "એપ પ્રતિક્રિયા",
+      "filterPageUrl": "પૃષ્ઠ URL દ્વારા ફિલ્ટર કરો"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "પ્રશ્ન દીઠ સમય મર્યાદા (સેકન્ડ)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "સમય-મર્યાદા, સ્વ-ગતિ પરીક્ષા. ગુણ (+/- દરેક પ્રશ્ન). સહભાગીઓ અંતે પરિણામ અને ક્રમ મેળવે છે. લિંક દ્વારા પ્રવેશ."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",
+    "modalTitle": "તમારી પ્રતિક્રિયા શેર કરો",
+    "modalSubtitle": "Swaya.me ને સુધારવામાં મદદ કરો — તમારી પ્રતિક્રિયા સીધી અમારી ટીમ સુધી પહોંચે છે.",
+    "ratingLabel": "સમગ્ર રેટિંગ (વૈકલ્પિક):",
+    "placeholder": "શું સારું હતું, શું સુધારી શકાય, અથવા સમસ્યા જણાવો...",
+    "submitButton": "પ્રતિક્રિયા સબમિટ કરો",
+    "successMessage": "તમારી પ્રતિક્રિયા માટે આભાર!",
+    "errorMessage": "પ્રતિક્રિયા સબમિટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો."
   }
 }

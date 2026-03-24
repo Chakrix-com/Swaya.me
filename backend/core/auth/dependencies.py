@@ -14,6 +14,7 @@ from shared.exceptions.auth import InvalidTokenError, ExpiredTokenError
 
 # HTTP Bearer token scheme
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 
 class CurrentUser:
@@ -99,15 +100,19 @@ async def get_current_user(
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
     db: AsyncSession = Depends(get_async_db)
 ) -> Optional[CurrentUser]:
     """
-    Optional authentication - returns None if no token provided
+    Optional authentication - returns None if no token provided.
+    Uses auto_error=False so anonymous requests are allowed through.
     """
     if not credentials:
         return None
-    return await get_current_user(credentials, db)
+    try:
+        return await get_current_user(credentials, db)
+    except HTTPException:
+        return None
 
 
 async def require_admin(

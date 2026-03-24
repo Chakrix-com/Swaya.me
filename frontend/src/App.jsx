@@ -49,6 +49,7 @@ import FeedbackManagement from './features/admin/FeedbackManagement'
 import PlatformQuizzes from './features/admin/PlatformQuizzes'
 import TierManagement from './features/admin/TierManagement'
 import LanguageSwitcher from './components/LanguageSwitcher'
+import GlobalOverlay from './components/GlobalOverlay'
 import StatsPanel from './components/StatsPanel'
 import BetaBadge from './components/BetaBadge'
 import logo from './assets/logo.png'
@@ -353,6 +354,7 @@ function App() {
       <AntApp>
         <Router>
           <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
+          <GlobalOverlay />
         </Router>
       </AntApp>
     </ConfigProvider>

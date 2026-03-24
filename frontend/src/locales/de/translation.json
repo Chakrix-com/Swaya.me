@@ -686,8 +686,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "Seiten-URL"
+      },
+      "quizFeedbackTab": "Quiz-Feedback",
+      "appFeedbackTab": "App-Feedback",
+      "filterPageUrl": "Nach Seiten-URL filtern"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1616,5 +1620,15 @@
     "perQuestionTimer": "Zeit pro Frage (Sekunden)",
     "resultsEmailPlaceholder": "ihre@email.de",
     "typeInfo": "Zeitgesteuerte, selbstständige Prüfung. Bewertet (+/- pro Frage). Teilnehmer erhalten am Ende Ergebnis & Rang. Zugang über einen Link."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "Feedback teilen",
+    "modalTitle": "Ihr Feedback teilen",
+    "modalSubtitle": "Helfen Sie uns, Swaya.me zu verbessern — Ihr Feedback geht direkt an unser Team.",
+    "ratingLabel": "Gesamtbewertung (optional):",
+    "placeholder": "Sagen Sie uns, was gut war, was verbessert werden kann, oder melden Sie einen Fehler...",
+    "submitButton": "Feedback senden",
+    "successMessage": "Danke für Ihr Feedback!",
+    "errorMessage": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen."
   }
 }

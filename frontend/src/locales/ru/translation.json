@@ -686,8 +686,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "URL страницы"
+      },
+      "quizFeedbackTab": "Отзывы о викторинах",
+      "appFeedbackTab": "Отзывы о приложении",
+      "filterPageUrl": "Фильтр по URL страницы"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1616,5 +1620,15 @@
     "perQuestionTimer": "Время на вопрос (секунды)",
     "resultsEmailPlaceholder": "ваш@email.ru",
     "typeInfo": "Тест с таймером и самостоятельным прохождением. С оценкой (+/- за вопрос). Участники получают результат и рейтинг в конце. Доступ по ссылке."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "Поделиться отзывом",
+    "modalTitle": "Поделитесь своим отзывом",
+    "modalSubtitle": "Помогите нам улучшить Swaya.me — ваш отзыв поступает напрямую в нашу команду.",
+    "ratingLabel": "Общая оценка (необязательно):",
+    "placeholder": "Расскажите, что работало хорошо, что можно улучшить, или сообщите об ошибке...",
+    "submitButton": "Отправить отзыв",
+    "successMessage": "Спасибо за ваш отзыв!",
+    "errorMessage": "Не удалось отправить отзыв. Пожалуйста, попробуйте ещё раз."
   }
 }

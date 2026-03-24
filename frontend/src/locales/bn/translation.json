@@ -625,8 +625,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "পেজ URL"
+      },
+      "quizFeedbackTab": "কুইজ মতামত",
+      "appFeedbackTab": "অ্যাপ মতামত",
+      "filterPageUrl": "পেজ URL দিয়ে ফিল্টার করুন"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "প্রশ্ন প্রতি সময়সীমা (সেকেন্ড)",
     "resultsEmailPlaceholder": "your@email.com",
     "typeInfo": "সময়সীমার স্ব-গতি পরীক্ষা। স্কোর (+/- প্রতিটি প্রশ্নে)। অংশগ্রহণকারীরা শেষে ফলাফল ও র‍্যাঙ্ক পান। লিংকের মাধ্যমে প্রবেশ।"
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "মতামত শেয়ার করুন",
+    "modalTitle": "আপনার মতামত শেয়ার করুন",
+    "modalSubtitle": "Swaya.me উন্নত করতে সাহায্য করুন — আপনার মতামত সরাসরি আমাদের দলে পৌঁছায়।",
+    "ratingLabel": "সামগ্রিক রেটিং (ঐচ্ছিক):",
+    "placeholder": "কী ভালো হয়েছে, কী উন্নত হতে পারে, অথবা সমস্যা জানান...",
+    "submitButton": "মতামত জমা দিন",
+    "successMessage": "আপনার মতামতের জন্য ধন্যবাদ!",
+    "errorMessage": "মতামত জমা দিতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।"
   }
 }

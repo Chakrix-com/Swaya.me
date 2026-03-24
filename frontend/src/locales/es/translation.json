@@ -686,8 +686,12 @@
         "source": "Source",
         "rating": "Rating",
         "submittedBy": "Submitted By",
-        "feedback": "Feedback"
-      }
+        "feedback": "Feedback",
+        "pageUrl": "URL de página"
+      },
+      "quizFeedbackTab": "Comentarios del cuestionario",
+      "appFeedbackTab": "Comentarios de la app",
+      "filterPageUrl": "Filtrar por URL de página"
     },
     "tierManagementPage": {
       "accessDenied": "Access denied",
@@ -1617,5 +1621,15 @@
     "perQuestionTimer": "Tiempo por pregunta (segundos)",
     "resultsEmailPlaceholder": "tu@email.com",
     "typeInfo": "Examen cronometrado y autoguiado. Con puntuación (+/- por pregunta). Los participantes obtienen resultado y clasificación al final. Acceso mediante enlace."
+  },
+  "appFeedback": {
+    "floatButtonTooltip": "Compartir comentarios",
+    "modalTitle": "Comparte tus comentarios",
+    "modalSubtitle": "Ayúdanos a mejorar Swaya.me — tu comentario llega directamente a nuestro equipo.",
+    "ratingLabel": "Valoración general (opcional):",
+    "placeholder": "Cuéntanos qué funcionó bien, qué puede mejorar, o reporta un error...",
+    "submitButton": "Enviar comentarios",
+    "successMessage": "¡Gracias por tus comentarios!",
+    "errorMessage": "No se pudo enviar el comentario. Por favor, inténtalo de nuevo."
   }
 }

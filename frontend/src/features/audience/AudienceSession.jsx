@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next'
 import { clearSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import RichTextEditor from '../quiz/components/RichTextEditor'
 import { VisitorThemeContext } from '../../App'
 
 const { Title, Text } = Typography
@@ -206,11 +207,11 @@ export default function AudienceSession() {
   }
 
   const handleSubmitFeedback = async () => {
-    if (!feedbackText.trim()) return
+    if (!feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === '') return
     setFeedbackSubmitting(true)
     try {
       await feedbackAPI.submitParticipant(sessionToken, {
-        feedback_text: feedbackText.trim(),
+        feedback_text: feedbackText,
         rating: feedbackRating || undefined,
         display_name: displayName,
       })
@@ -442,13 +443,11 @@ export default function AudienceSession() {
                           <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
                           <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
                           <div style={{ marginBottom: 20 }}>
-                            <TextArea
-                              rows={3}
-                              maxLength={500}
-                              showCount
+                            <RichTextEditor
                               value={feedbackText}
-                              onChange={(e) => setFeedbackText(e.target.value)}
+                              onChange={setFeedbackText}
                               placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
+                              isDark={theme === 'dark'}
                               disabled={feedbackSubmitted}
                             />
                           </div>
@@ -456,7 +455,7 @@ export default function AudienceSession() {
                             type="primary"
                             onClick={handleSubmitFeedback}
                             loading={feedbackSubmitting}
-                            disabled={feedbackSubmitted || !feedbackText.trim()}
+                            disabled={feedbackSubmitted || !feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === ''}
                           >
                             {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
                           </Button>
