@@ -354,7 +354,9 @@ function App() {
       <AntApp>
         <Router>
           <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
-          <GlobalOverlay />
+          <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: handleToggleVisitorTheme }}>
+            <GlobalOverlay />
+          </VisitorThemeContext.Provider>
         </Router>
       </AntApp>
     </ConfigProvider>
