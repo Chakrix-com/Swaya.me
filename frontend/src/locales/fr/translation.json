@@ -299,7 +299,9 @@
     "bulletListTooltip": "Liste à puces",
     "orderedListTooltip": "Liste numérotée",
     "codeBlockTooltip": "Bloc de code",
-    "codeLanguageSelect": "Sélectionner la langue"
+    "codeLanguageSelect": "Sélectionner la langue",
+    "quizTypeInfo": "Session en direct contrôlée par l'hôte. Questions QCM avec une réponse correcte. Classement en temps réel. Le public rejoint via un code.",
+    "pollTypeInfo": "Session en direct contrôlée par l'hôte. Questions ouvertes ou QCM — sans réponse correcte. Nuage de mots et questions à échelle disponibles. Le public rejoint via un code."
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -1530,7 +1532,8 @@
     "enterPollTitle": "Saisissez le titre du sondage",
     "pollDescription": "Description",
     "enterPollDescription": "Saisissez une description (optionnel)",
-    "questionCount": "{{total}} questions"
+    "questionCount": "{{total}} questions",
+    "typeInfo": "À votre rythme, sans animateur. Le public répond à tout moment via un lien. Les résultats s'accumulent dans le temps."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1614,6 +1617,7 @@
     "unpublishMessage": "Cliquez sur \"Désactiver le test\" ci-dessus pour modifier",
     "createError": "Échec de la création du test",
     "perQuestionTimer": "Temps par question (secondes)",
-    "resultsEmailPlaceholder": "votre@email.com"
+    "resultsEmailPlaceholder": "votre@email.com",
+    "typeInfo": "Examen chronométré et autonome. Noté (+/- par question). Les participants obtiennent un résultat et un classement à la fin. Accessible via un lien."
   }
 }

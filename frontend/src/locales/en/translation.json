@@ -297,7 +297,9 @@
     "bulletListTooltip": "Bullet list",
     "orderedListTooltip": "Numbered list",
     "codeBlockTooltip": "Code block",
-    "codeLanguageSelect": "Select language"
+    "codeLanguageSelect": "Select language",
+    "quizTypeInfo": "Live, host-controlled session. MCQ questions with a correct answer. Real-time leaderboard. Audience joins via a code.",
+    "pollTypeInfo": "Live, host-controlled session. Open-ended or MCQ questions — no correct answer. Word cloud & scale questions available. Audience joins via a code."
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -1528,7 +1530,8 @@
     "enterPollTitle": "Enter offline poll title",
     "pollDescription": "Description",
     "enterPollDescription": "Enter description (optional)",
-    "questionCount": "{{total}} questions"
+    "questionCount": "{{total}} questions",
+    "typeInfo": "Self-paced, no host needed. Audience answers at any time via a link. Results accumulate over time."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1612,6 +1615,7 @@
     "percentCorrect": "% Correct",
     "exportCsv": "Export CSV",
     "noParticipants": "No participants yet",
-    "unpublishMessage": "Click \"Deactivate Test\" above to edit"
+    "unpublishMessage": "Click \"Deactivate Test\" above to edit",
+    "typeInfo": "Timed, self-paced exam. Scored (+/- points per question). Participants get a result & rank at the end. Accessed via a link."
   }
 }

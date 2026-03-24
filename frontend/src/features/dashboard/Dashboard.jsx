@@ -23,6 +23,7 @@ import {
   FolderAddOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
@@ -496,35 +497,55 @@ function Dashboard() {
             <Button icon={<StarOutlined />} onClick={openTemplateModal}>
               {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
             </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/quiz/new?type=quiz')}
-            >
-              {t('quiz.createQuiz')}
-            </Button>
-            <Button
-              type="primary"
-              icon={<BarChartOutlined />}
-              onClick={() => navigate('/quiz/new?type=poll')}
-              style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
-            >
-              {t('quiz.createPoll', { defaultValue: 'Create Poll' })}
-            </Button>
-            <Button
-              icon={<BarChartOutlined />}
-              onClick={() => navigate('/quiz/new?type=offline_poll')}
-              style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
-            >
-              {t('offlinePoll.createOfflinePoll', 'Create Poll')}
-            </Button>
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/quiz/new?type=exam')}
-              style={{ borderColor: '#fa541c', color: '#fa541c' }}
-            >
-              {t('exam.createExam', 'Create Test')}
-            </Button>
+            <Space size={4}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/quiz/new?type=quiz')}
+              >
+                {t('quiz.createQuiz')}
+              </Button>
+              <Tooltip title={t('quiz.quizTypeInfo')}>
+                <InfoCircleOutlined style={{ color: '#1677ff', cursor: 'pointer', fontSize: 14 }} />
+              </Tooltip>
+            </Space>
+            <Space size={4}>
+              <Button
+                type="primary"
+                icon={<BarChartOutlined />}
+                onClick={() => navigate('/quiz/new?type=poll')}
+                style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
+              >
+                {t('quiz.createPoll', { defaultValue: 'Create Poll' })}
+              </Button>
+              <Tooltip title={t('quiz.pollTypeInfo')}>
+                <InfoCircleOutlined style={{ color: '#722ed1', cursor: 'pointer', fontSize: 14 }} />
+              </Tooltip>
+            </Space>
+            <Space size={4}>
+              <Button
+                icon={<BarChartOutlined />}
+                onClick={() => navigate('/quiz/new?type=offline_poll')}
+                style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
+              >
+                {t('offlinePoll.createOfflinePoll', 'Create Poll')}
+              </Button>
+              <Tooltip title={t('offlinePoll.typeInfo')}>
+                <InfoCircleOutlined style={{ color: '#eb2f96', cursor: 'pointer', fontSize: 14 }} />
+              </Tooltip>
+            </Space>
+            <Space size={4}>
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/quiz/new?type=exam')}
+                style={{ borderColor: '#fa541c', color: '#fa541c' }}
+              >
+                {t('exam.createExam', 'Create Test')}
+              </Button>
+              <Tooltip title={t('exam.typeInfo')}>
+                <InfoCircleOutlined style={{ color: '#fa541c', cursor: 'pointer', fontSize: 14 }} />
+              </Tooltip>
+            </Space>
           </div>
         }
       >

@@ -297,7 +297,9 @@
     "bulletListTooltip": "Lista con viñetas",
     "orderedListTooltip": "Lista numerada",
     "codeBlockTooltip": "Bloque de código",
-    "codeLanguageSelect": "Seleccionar idioma"
+    "codeLanguageSelect": "Seleccionar idioma",
+    "quizTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas de opción múltiple con respuesta correcta. Tabla de clasificación en tiempo real. El público se une con un código.",
+    "pollTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas abiertas o de opción múltiple — sin respuesta correcta. Nube de palabras y preguntas de escala disponibles. El público se une con un código."
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",
@@ -1528,7 +1530,8 @@
     "enterPollTitle": "Ingresa el título de la encuesta",
     "pollDescription": "Descripción",
     "enterPollDescription": "Ingresa una descripción (opcional)",
-    "questionCount": "{{total}} preguntas"
+    "questionCount": "{{total}} preguntas",
+    "typeInfo": "A ritmo propio, sin necesidad de anfitrión. El público responde en cualquier momento a través de un enlace. Los resultados se acumulan con el tiempo."
   },
   "exam": {
     "typeLabel": "Prueba",
@@ -1612,6 +1615,7 @@
     "unpublishMessage": "Haga clic en \"Desactivar prueba\" arriba para editar",
     "createError": "Error al crear la prueba",
     "perQuestionTimer": "Tiempo por pregunta (segundos)",
-    "resultsEmailPlaceholder": "tu@email.com"
+    "resultsEmailPlaceholder": "tu@email.com",
+    "typeInfo": "Examen cronometrado y autoguiado. Con puntuación (+/- por pregunta). Los participantes obtienen resultado y clasificación al final. Acceso mediante enlace."
   }
 }

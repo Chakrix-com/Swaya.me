@@ -297,7 +297,9 @@
     "bulletListTooltip": "બુલેટ સૂચિ",
     "orderedListTooltip": "ક્રમાંક સૂચિ",
     "codeBlockTooltip": "કોડ બ્લૉક",
-    "codeLanguageSelect": "ભાષા પસંદ કરો"
+    "codeLanguageSelect": "ભાષા પસંદ કરો",
+    "quizTypeInfo": "લાઇવ, હોસ્ટ-નિયંત્રિત સત્ર. સાચા જવાબ સાથે MCQ પ્રશ્નો. રીઅલ-ટાઇમ લીડરબોર્ડ. પ્રેક્ષકો કોડ દ્વારા જોડાય છે.",
+    "pollTypeInfo": "લાઇવ, હોસ્ટ-નિયંત્રિત સત્ર. ઓપન-એન્ડેડ અથવા MCQ પ્રશ્નો — કોઈ સાચો જવાબ નહીં. વર્ડ ક્લાઉડ અને સ્કેલ પ્રશ્નો ઉપલબ્ધ. પ્રેક્ષકો કોડ દ્વારા જોડાય છે."
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -1528,7 +1530,8 @@
     "enterPollTitle": "ઓफलाइन पोल शीर्षक दाखल करो",
     "pollDescription": "वर्णन",
     "enterPollDescription": "वर्णन दाखल करो (वैकल्पिक)",
-    "questionCount": "{{total}} પ્રશ્નો"
+    "questionCount": "{{total}} પ્રશ્નો",
+    "typeInfo": "સ્વ-ગતિ, હોસ્ટ વિના. પ્રેક્ષકો ગમે ત્યારે લિંક દ્વારા જવાબ આપી શકે છે. પરિણામો સમય જતાં ભેગા થાય છે."
   },
   "exam": {
     "typeLabel": "ટેસ્ટ",
@@ -1612,6 +1615,7 @@
     "unpublishMessage": "સંપાદન માટે ઉપર \"ટેસ્ટ નિષ્ક્રિય કરો\" ક્લિક કરો",
     "createError": "ટેસ્ટ બનાવવામાં નિષ્ફળ",
     "perQuestionTimer": "પ્રશ્ન દીઠ સમય મર્યાદા (સેકન્ડ)",
-    "resultsEmailPlaceholder": "your@email.com"
+    "resultsEmailPlaceholder": "your@email.com",
+    "typeInfo": "સમય-મર્યાદા, સ્વ-ગતિ પરીક્ષા. ગુણ (+/- દરેક પ્રશ્ન). સહભાગીઓ અંતે પરિણામ અને ક્રમ મેળવે છે. લિંક દ્વારા પ્રવેશ."
   }
 }

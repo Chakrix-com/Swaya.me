@@ -297,7 +297,9 @@
     "bulletListTooltip": "बुलेट सूची",
     "orderedListTooltip": "क्रमांकित सूची",
     "codeBlockTooltip": "कोड ब्लॉक",
-    "codeLanguageSelect": "भाषा चुनें"
+    "codeLanguageSelect": "भाषा चुनें",
+    "quizTypeInfo": "लाइव, होस्ट-नियंत्रित सत्र। सही उत्तर वाले MCQ प्रश्न। रियल-टाइम लीडरबोर्ड। दर्शक एक कोड से जुड़ते हैं।",
+    "pollTypeInfo": "लाइव, होस्ट-नियंत्रित सत्र। ओपन-एंडेड या MCQ प्रश्न — कोई सही उत्तर नहीं। वर्ड क्लाउड और स्केल प्रश्न उपलब्ध। दर्शक एक कोड से जुड़ते हैं।"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",
@@ -1528,7 +1530,8 @@
     "enterPollTitle": "ऑफलाइन पोल का शीर्षक दर्ज करें",
     "pollDescription": "विवरण",
     "enterPollDescription": "विवरण दर्ज करें (वैकल्पिक)",
-    "questionCount": "{{total}} प्रश्न"
+    "questionCount": "{{total}} प्रश्न",
+    "typeInfo": "स्व-गति, बिना होस्ट के। दर्शक किसी भी समय लिंक से उत्तर देते हैं। परिणाम समय के साथ एकत्रित होते हैं।"
   },
   "exam": {
     "typeLabel": "टेस्ट",
@@ -1612,6 +1615,7 @@
     "unpublishMessage": "संपादन के लिए ऊपर \"टेस्ट निष्क्रिय करें\" पर क्लिक करें",
     "createError": "टेस्ट बनाने में विफल",
     "perQuestionTimer": "प्रति प्रश्न समय सीमा (सेकंड)",
-    "resultsEmailPlaceholder": "your@email.com"
+    "resultsEmailPlaceholder": "your@email.com",
+    "typeInfo": "समयबद्ध, स्व-गति परीक्षा। स्कोर (+/- प्रति प्रश्न)। प्रतिभागी अंत में परिणाम और रैंक पाते हैं। लिंक से एक्सेस।"
   }
 }

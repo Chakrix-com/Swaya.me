@@ -1419,6 +1419,20 @@ export default function QuizBuilder() {
           </Space>
         )}
 
+        {!id && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message={
+              isExam ? t('exam.typeInfo')
+              : isOfflinePoll ? t('offlinePoll.typeInfo')
+              : isPoll ? t('quiz.pollTypeInfo')
+              : t('quiz.quizTypeInfo')
+            }
+          />
+        )}
+
         <Form
           form={form}
           layout="vertical"

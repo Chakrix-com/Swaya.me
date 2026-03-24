@@ -297,7 +297,9 @@
     "bulletListTooltip": "Aufzählungsliste",
     "orderedListTooltip": "Nummerierte Liste",
     "codeBlockTooltip": "Codeblock",
-    "codeLanguageSelect": "Sprache auswählen"
+    "codeLanguageSelect": "Sprache auswählen",
+    "quizTypeInfo": "Live, vom Host gesteuerte Sitzung. Multiple-Choice-Fragen mit richtiger Antwort. Echtzeit-Rangliste. Publikum tritt mit einem Code bei.",
+    "pollTypeInfo": "Live, vom Host gesteuerte Sitzung. Offene oder Multiple-Choice-Fragen — keine richtige Antwort. Word Cloud & Skalafragen verfügbar. Publikum tritt mit einem Code bei."
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -1527,7 +1529,8 @@
     "enterPollTitle": "Umfragetitel eingeben",
     "pollDescription": "Beschreibung",
     "enterPollDescription": "Beschreibung eingeben (optional)",
-    "questionCount": "{{total}} Fragen"
+    "questionCount": "{{total}} Fragen",
+    "typeInfo": "Selbsttempo, kein Host nötig. Publikum antwortet jederzeit über einen Link. Ergebnisse sammeln sich mit der Zeit an."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1611,6 +1614,7 @@
     "unpublishMessage": "Klicken Sie oben auf \"Test deaktivieren\" zum Bearbeiten",
     "createError": "Test erstellen fehlgeschlagen",
     "perQuestionTimer": "Zeit pro Frage (Sekunden)",
-    "resultsEmailPlaceholder": "ihre@email.de"
+    "resultsEmailPlaceholder": "ihre@email.de",
+    "typeInfo": "Zeitgesteuerte, selbstständige Prüfung. Bewertet (+/- pro Frage). Teilnehmer erhalten am Ende Ergebnis & Rang. Zugang über einen Link."
   }
 }
