@@ -449,6 +449,7 @@ export default function AudienceSession() {
                               placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
                               isDark={theme === 'dark'}
                               disabled={feedbackSubmitted}
+                              showCode={false}
                             />
                           </div>
                           <Button

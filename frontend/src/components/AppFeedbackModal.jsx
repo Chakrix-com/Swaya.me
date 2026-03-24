@@ -74,6 +74,7 @@ export default function AppFeedbackModal({ open, onClose }) {
           onChange={setFeedbackText}
           placeholder={t('appFeedback.placeholder')}
           isDark={isDark}
+          showCode={false}
         />
         <Space>
           <Text>{t('appFeedback.ratingLabel')}</Text>

@@ -40,18 +40,23 @@ export default function RichTextEditor({
   placeholder,
   isDark = false,
   disabled = false,
+  showCode = true,
 }) {
   const { t } = useTranslation()
   const [selectedLang, setSelectedLang] = useState('python')
   const lastEmitted = useRef(value || '')
 
+  const extensions = [
+    StarterKit.configure({ codeBlock: false }),
+    Underline,
+    Placeholder.configure({ placeholder: placeholder || '' }),
+  ]
+  if (showCode) {
+    extensions.push(CodeBlockLowlight.configure({ lowlight }))
+  }
+
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ codeBlock: false }),
-      Underline,
-      CodeBlockLowlight.configure({ lowlight }),
-      Placeholder.configure({ placeholder: placeholder || '' }),
-    ],
+    extensions,
     content: value || '',
     editable: !disabled,
     onUpdate: ({ editor }) => {
@@ -170,28 +175,32 @@ export default function RichTextEditor({
           </Button>
         </Tooltip>
 
-        <div className="rte-toolbar-divider" />
+        {showCode && (
+          <>
+            <div className="rte-toolbar-divider" />
 
-        <Select
-          className="rte-lang-select"
-          size="small"
-          value={selectedLang}
-          onChange={handleLangChange}
-          options={CODE_LANGUAGES}
-          aria-label={t('quiz.codeLanguageSelect')}
-        />
+            <Select
+              className="rte-lang-select"
+              size="small"
+              value={selectedLang}
+              onChange={handleLangChange}
+              options={CODE_LANGUAGES}
+              aria-label={t('quiz.codeLanguageSelect')}
+            />
 
-        <Tooltip title={t('quiz.codeBlockTooltip')}>
-          <Button
-            type="text"
-            size="small"
-            className={`rte-toolbar-btn${editor.isActive('codeBlock') ? ' rte-active' : ''}`}
-            onMouseDown={(e) => { e.preventDefault(); insertCodeBlock() }}
-            aria-label={t('quiz.codeBlockTooltip')}
-          >
-            <CodeOutlined />
-          </Button>
-        </Tooltip>
+            <Tooltip title={t('quiz.codeBlockTooltip')}>
+              <Button
+                type="text"
+                size="small"
+                className={`rte-toolbar-btn${editor.isActive('codeBlock') ? ' rte-active' : ''}`}
+                onMouseDown={(e) => { e.preventDefault(); insertCodeBlock() }}
+                aria-label={t('quiz.codeBlockTooltip')}
+              >
+                <CodeOutlined />
+              </Button>
+            </Tooltip>
+          </>
+        )}
       </div>
 
       <div className="rte-content">
