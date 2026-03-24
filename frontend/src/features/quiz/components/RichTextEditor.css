@@ -10,7 +10,7 @@
 /* ── Light ─────────────────────────────────────────────────────────── */
 .rte-wrap--light {
   border-color: #d9d9d9;
-  background: #ffffff;
+  background: #ffffff !important;
 }
 .rte-wrap--light:focus-within {
   border-color: #1677ff;
@@ -106,10 +106,10 @@
   font-size: 14px;
 }
 .rte-wrap--light .rte-content .ProseMirror {
-  color: rgba(0, 0, 0, 0.88);
+  color: rgba(0, 0, 0, 0.88) !important;
 }
 .rte-wrap--dark .rte-content .ProseMirror {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* placeholder */
