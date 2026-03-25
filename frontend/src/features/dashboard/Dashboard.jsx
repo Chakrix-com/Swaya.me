@@ -524,9 +524,10 @@ function Dashboard() {
             </Space>
             <Space size={4}>
               <Button
+                type="primary"
                 icon={<BarChartOutlined />}
                 onClick={() => navigate('/quiz/new?type=offline_poll')}
-                style={{ borderColor: '#eb2f96', color: '#eb2f96' }}
+                style={{ backgroundColor: '#eb2f96', borderColor: '#eb2f96' }}
               >
                 {t('offlinePoll.createOfflinePoll', 'Create Poll')}
               </Button>
@@ -536,9 +537,10 @@ function Dashboard() {
             </Space>
             <Space size={4}>
               <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/quiz/new?type=exam')}
-                style={{ borderColor: '#fa541c', color: '#fa541c' }}
+                style={{ backgroundColor: '#fa541c', borderColor: '#fa541c' }}
               >
                 {t('exam.createExam', 'Create Test')}
               </Button>
