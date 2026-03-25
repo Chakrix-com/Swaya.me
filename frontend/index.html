@@ -29,6 +29,20 @@
     <meta name="twitter:title"       content="Swaya.me — Live Interactive Quizzes &amp; Polls" />
     <meta name="twitter:description" content="Create and run live interactive quizzes and polls. Audiences join instantly — no app needed." />
     <meta name="twitter:image"       content="https://www.swaya.me/og-image.png" />
+
+    <!-- Google Analytics — production only -->
+    <script>
+      if (window.location.hostname === 'www.swaya.me') {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-NN80Y170WP';
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-NN80Y170WP');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
