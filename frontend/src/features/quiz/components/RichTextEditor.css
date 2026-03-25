@@ -80,15 +80,23 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-.rte-lang-select {
+.rte-lang-select,
+.rte-heading-select {
   font-size: 12px !important;
+}
+.rte-lang-select {
   width: 120px !important;
 }
-.rte-lang-select .ant-select-selector {
+.rte-heading-select {
+  width: 100px !important;
+}
+.rte-lang-select .ant-select-selector,
+.rte-heading-select .ant-select-selector {
   height: 26px !important;
   padding: 0 8px !important;
 }
-.rte-lang-select .ant-select-selection-item {
+.rte-lang-select .ant-select-selection-item,
+.rte-heading-select .ant-select-selection-item {
   line-height: 24px !important;
   font-size: 12px !important;
 }
@@ -216,4 +224,105 @@
 .rte-wrap--dark .rte-content .ProseMirror code:not(pre code) {
   background: rgba(255, 255, 255, 0.08);
   color: #cba6f7;
+}
+
+/* ── Headings ──────────────────────────────────────────────────────── */
+.rte-content .ProseMirror h1 { font-size: 1.8em; font-weight: 700; margin: 0.6em 0 0.3em; }
+.rte-content .ProseMirror h2 { font-size: 1.4em; font-weight: 700; margin: 0.5em 0 0.25em; }
+.rte-content .ProseMirror h3 { font-size: 1.2em; font-weight: 600; margin: 0.4em 0 0.2em; }
+.rte-content .ProseMirror h4 { font-size: 1.05em; font-weight: 600; margin: 0.35em 0 0.2em; }
+
+/* ── Blockquote ─────────────────────────────────────────────────────── */
+.rte-content .ProseMirror blockquote {
+  margin: 8px 0;
+  padding: 6px 12px;
+  border-left: 4px solid;
+  font-style: italic;
+}
+.rte-wrap--light .rte-content .ProseMirror blockquote {
+  border-left-color: #1677ff;
+  background: #f0f5ff;
+  color: #333;
+}
+.rte-wrap--dark .rte-content .ProseMirror blockquote {
+  border-left-color: #4096ff;
+  background: rgba(64, 150, 255, 0.08);
+  color: rgba(255,255,255,0.75);
+}
+
+/* ── Horizontal rule ────────────────────────────────────────────────── */
+.rte-content .ProseMirror hr {
+  margin: 10px 0;
+  border: none;
+  border-top: 2px solid;
+}
+.rte-wrap--light .rte-content .ProseMirror hr { border-top-color: #d9d9d9; }
+.rte-wrap--dark  .rte-content .ProseMirror hr { border-top-color: rgba(255,255,255,0.18); }
+
+/* ── Links ──────────────────────────────────────────────────────────── */
+.rte-content .ProseMirror a {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rte-wrap--light .rte-content .ProseMirror a { color: #1677ff; }
+.rte-wrap--dark  .rte-content .ProseMirror a { color: #4096ff; }
+
+/* ── Task list ──────────────────────────────────────────────────────── */
+.rte-content .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.rte-content .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.rte-content .ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 2px;
+  user-select: none;
+}
+.rte-content .ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────── */
+.rte-content .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  overflow: hidden;
+}
+.rte-content .ProseMirror table td,
+.rte-content .ProseMirror table th {
+  padding: 6px 10px;
+  border: 1px solid;
+  min-width: 60px;
+  vertical-align: top;
+  position: relative;
+}
+.rte-wrap--light .rte-content .ProseMirror table td,
+.rte-wrap--light .rte-content .ProseMirror table th {
+  border-color: #d9d9d9;
+}
+.rte-wrap--dark .rte-content .ProseMirror table td,
+.rte-wrap--dark .rte-content .ProseMirror table th {
+  border-color: rgba(255,255,255,0.18);
+}
+.rte-content .ProseMirror table th {
+  font-weight: 600;
+}
+.rte-wrap--light .rte-content .ProseMirror table th { background: #f5f5f5; }
+.rte-wrap--dark  .rte-content .ProseMirror table th { background: rgba(255,255,255,0.06); }
+.rte-content .ProseMirror table .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(22, 119, 255, 0.15);
+}
+
+/* ── Highlight ──────────────────────────────────────────────────────── */
+.rte-content .ProseMirror mark {
+  border-radius: 2px;
+  padding: 0 2px;
 }
