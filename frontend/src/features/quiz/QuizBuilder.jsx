@@ -91,9 +91,40 @@ const QuestionForm = ({
   const [aiSuggesting, setAiSuggesting] = useState(false)
   const [rewriting, setRewriting] = useState({})
   const [useRichText, setUseRichText] = useState(false)
-  const [useRichTextOptions, setUseRichTextOptions] = useState(true)
+  const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
+  const [extraRichOpts, setExtraRichOpts] = useState([])
   const { theme } = useContext(VisitorThemeContext)
-  
+
+  const toggleOptRich = (key) => {
+    setUseRichTextOptions((prev) => {
+      const next = !prev[key]
+      if (!next) {
+        // Switching to plain — strip HTML from that field
+        const v = questionForm.getFieldValue(key)
+        if (v) questionForm.setFieldsValue({ [key]: stripHtml(v) })
+      }
+      return { ...prev, [key]: next }
+    })
+  }
+
+  const toggleExtraOptRich = (index) => {
+    setExtraRichOpts((prev) => {
+      const next = [...prev]
+      const wasRich = !!next[index]
+      if (wasRich) {
+        const extras = questionForm.getFieldValue('extra_options') || []
+        const v = extras[index]
+        if (v) {
+          const updated = [...extras]
+          updated[index] = stripHtml(v)
+          questionForm.setFieldsValue({ extra_options: updated })
+        }
+      }
+      next[index] = !wasRich
+      return next
+    })
+  }
+
   // Debug: Log when component renders
   console.log('[QuestionForm] Rendering. Question ID:', question?.id || 'NEW')
 
@@ -121,9 +152,15 @@ const QuestionForm = ({
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
-      // Auto-detect rich text for options
-      const anyOptionHasHtml = (question.options || []).some((o) => /<[a-z][\s\S]*>/i.test(o || ''))
-      setUseRichTextOptions(anyOptionHasHtml)
+      // Auto-detect rich text per option
+      const opts = question.options || []
+      setUseRichTextOptions({
+        option_a: /<[a-z][\s\S]*>/i.test(opts[0] || ''),
+        option_b: /<[a-z][\s\S]*>/i.test(opts[1] || ''),
+        option_c: /<[a-z][\s\S]*>/i.test(opts[2] || ''),
+        option_d: /<[a-z][\s\S]*>/i.test(opts[3] || ''),
+      })
+      setExtraRichOpts(opts.slice(4).map((o) => /<[a-z][\s\S]*>/i.test(o || '')))
 
       // Set image URLs from question data
       setQuestionImageUrl(question.question_image_url || null)
@@ -138,7 +175,8 @@ const QuestionForm = ({
       questionForm.resetFields()
       setMcqBaseOptionCount(2)
       setUseRichText(false)
-      setUseRichTextOptions(true)
+      setUseRichTextOptions({ option_a: false, option_b: false, option_c: false, option_d: false })
+      setExtraRichOpts([])
       questionForm.setFieldsValue({
         option_a: '',
         option_b: '',
@@ -392,46 +430,25 @@ const QuestionForm = ({
 
         {questionType === 'mcq' && (
           <>
-            {/* Rich text toggle for all options */}
-            <div style={{ marginBottom: 12 }}>
-              <Tooltip title={useRichTextOptions ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
-              <Button
-                size="small"
-                type={useRichTextOptions ? 'primary' : 'default'}
-                onClick={() => {
-                  setUseRichTextOptions((prev) => {
-                    if (prev) {
-                      // Switching to plain: strip HTML from all option values
-                      const keys = ['option_a', 'option_b', 'option_c', 'option_d']
-                      const updates = {}
-                      keys.forEach((k) => {
-                        const v = questionForm.getFieldValue(k)
-                        if (v) updates[k] = stripHtml(v)
-                      })
-                      const extra = questionForm.getFieldValue('extra_options') || []
-                      updates.extra_options = extra.map((o) => stripHtml(o))
-                      questionForm.setFieldsValue(updates)
-                    }
-                    return !prev
-                  })
-                }}
-                style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
-              >
-                {useRichTextOptions ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
-              </Button>
-              </Tooltip>
-            </div>
-
             <Form.Item
               name="option_a"
-              label={t('quiz.optionA')}
-              rules={useRichTextOptions
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {t('quiz.optionA')}
+                  <Tooltip title={useRichTextOptions.option_a ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
+                    <Button size="small" type={useRichTextOptions.option_a ? 'primary' : 'default'} onClick={() => toggleOptRich('option_a')} style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}>
+                      {useRichTextOptions.option_a ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                    </Button>
+                  </Tooltip>
+                </span>
+              }
+              rules={useRichTextOptions.option_a
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionARequired')) }]
                 : [{ required: true, message: t('quiz.optionARequired') }]
               }
-              getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
+              getValueFromEvent={useRichTextOptions.option_a ? (v) => v : undefined}
             >
-              {useRichTextOptions
+              {useRichTextOptions.option_a
                 ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionAPlaceholder')} />
                 : <Input
                     placeholder={t('quiz.optionAPlaceholder')}
@@ -446,7 +463,7 @@ const QuestionForm = ({
                   />
               }
             </Form.Item>
-            {useRichTextOptions && (
+            {useRichTextOptions.option_a && (
               <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                 <Tooltip title={t('ai.rewriteWithAI')}>
                   <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
@@ -473,14 +490,23 @@ const QuestionForm = ({
 
             <Form.Item
               name="option_b"
-              label={t('quiz.optionB')}
-              rules={useRichTextOptions
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {t('quiz.optionB')}
+                  <Tooltip title={useRichTextOptions.option_b ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
+                    <Button size="small" type={useRichTextOptions.option_b ? 'primary' : 'default'} onClick={() => toggleOptRich('option_b')} style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}>
+                      {useRichTextOptions.option_b ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                    </Button>
+                  </Tooltip>
+                </span>
+              }
+              rules={useRichTextOptions.option_b
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionBRequired')) }]
                 : [{ required: true, message: t('quiz.optionBRequired') }]
               }
-              getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
+              getValueFromEvent={useRichTextOptions.option_b ? (v) => v : undefined}
             >
-              {useRichTextOptions
+              {useRichTextOptions.option_b
                 ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionBPlaceholder')} />
                 : <Input
                     placeholder={t('quiz.optionBPlaceholder')}
@@ -495,7 +521,7 @@ const QuestionForm = ({
                   />
               }
             </Form.Item>
-            {useRichTextOptions && (
+            {useRichTextOptions.option_b && (
               <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                 <Tooltip title={t('ai.rewriteWithAI')}>
                   <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
@@ -524,10 +550,19 @@ const QuestionForm = ({
               <>
                 <Form.Item
                   name="option_c"
-                  label={t('quiz.optionC')}
-                  getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {t('quiz.optionC')}
+                      <Tooltip title={useRichTextOptions.option_c ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
+                        <Button size="small" type={useRichTextOptions.option_c ? 'primary' : 'default'} onClick={() => toggleOptRich('option_c')} style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}>
+                          {useRichTextOptions.option_c ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                        </Button>
+                      </Tooltip>
+                    </span>
+                  }
+                  getValueFromEvent={useRichTextOptions.option_c ? (v) => v : undefined}
                 >
-                  {useRichTextOptions
+                  {useRichTextOptions.option_c
                     ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionCPlaceholder')} />
                     : <Input
                         placeholder={t('quiz.optionCPlaceholder')}
@@ -542,7 +577,7 @@ const QuestionForm = ({
                       />
                   }
                 </Form.Item>
-                {useRichTextOptions && (
+                {useRichTextOptions.option_c && (
                   <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                     <Tooltip title={t('ai.rewriteWithAI')}>
                       <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
@@ -572,10 +607,19 @@ const QuestionForm = ({
               <>
                 <Form.Item
                   name="option_d"
-                  label={t('quiz.optionD')}
-                  getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {t('quiz.optionD')}
+                      <Tooltip title={useRichTextOptions.option_d ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
+                        <Button size="small" type={useRichTextOptions.option_d ? 'primary' : 'default'} onClick={() => toggleOptRich('option_d')} style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}>
+                          {useRichTextOptions.option_d ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                        </Button>
+                      </Tooltip>
+                    </span>
+                  }
+                  getValueFromEvent={useRichTextOptions.option_d ? (v) => v : undefined}
                 >
-                  {useRichTextOptions
+                  {useRichTextOptions.option_d
                     ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionDPlaceholder')} />
                     : <Input
                         placeholder={t('quiz.optionDPlaceholder')}
@@ -590,7 +634,7 @@ const QuestionForm = ({
                       />
                   }
                 </Form.Item>
-                {useRichTextOptions && (
+                {useRichTextOptions.option_d && (
                   <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                     <Tooltip title={t('ai.rewriteWithAI')}>
                       <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
@@ -619,27 +663,39 @@ const QuestionForm = ({
             <Form.List name="extra_options">
               {(fields, { add, remove }) => (
                 <>
-                  {fields.map((field) => (
-                    <div key={field.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
-                      <div style={{ flex: 1 }}>
-                        <Form.Item
-                          {...field}
-                          label={t('quiz.optionLabel', { defaultValue: `Option ${field.name + 5}` })}
-                          rules={useRichTextOptions
-                            ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' })) }]
-                            : [{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]
-                          }
-                          getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
-                        >
-                          {useRichTextOptions
-                            ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
-                            : <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
-                          }
-                        </Form.Item>
+                  {fields.map((field) => {
+                    const isRich = !!extraRichOpts[field.name]
+                    return (
+                      <div key={field.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <Form.Item
+                            {...field}
+                            label={
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {t('quiz.optionLabel', { defaultValue: `Option ${field.name + 5}` })}
+                                <Tooltip title={isRich ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
+                                  <Button size="small" type={isRich ? 'primary' : 'default'} onClick={() => toggleExtraOptRich(field.name)} style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}>
+                                    {isRich ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                                  </Button>
+                                </Tooltip>
+                              </span>
+                            }
+                            rules={isRich
+                              ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' })) }]
+                              : [{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]
+                            }
+                            getValueFromEvent={isRich ? (v) => v : undefined}
+                          >
+                            {isRich
+                              ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                              : <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                            }
+                          </Form.Item>
+                        </div>
+                        <Button style={{ marginTop: 30 }} icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />
                       </div>
-                      <Button style={{ marginTop: 30 }} icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />
-                    </div>
-                  ))}
+                    )
+                  })}
                   <Form.Item>
                     <Space>
                       <Button
