@@ -283,6 +283,7 @@
     "moveImagesFailed": "Frage gespeichert, aber Bilder verschieben fehlgeschlagen. Bitte erneut hochladen.",
     "formValidationFailed": "Formularvalidierung fehlgeschlagen",
     "removeOption": "Option entfernen",
+    "addOption": "Option hinzufügen",
     "optionCountHint": "Optionen: {{count}} (min. 2, max. 10)",
     "startPoll": "Umfrage starten",
     "publishPoll": "Umfrage veröffentlichen",

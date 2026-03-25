@@ -285,6 +285,7 @@
     "moveImagesFailed": "Question sauvegardée mais échec du déplacement des images. Veuillez re-télécharger.",
     "formValidationFailed": "Échec de la validation du formulaire",
     "removeOption": "Supprimer l'option",
+    "addOption": "Ajouter une option",
     "optionCountHint": "Options : {{count}} (min 2, max 10)",
     "startPoll": "Lancer le sondage",
     "publishPoll": "Publier le sondage",

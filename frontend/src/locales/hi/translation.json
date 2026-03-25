@@ -283,6 +283,7 @@
     "moveImagesFailed": "प्रश्न सहेजा गया लेकिन इमेज स्थानांतरित करने में विफल। कृपया पुनः अपलोड करें।",
     "formValidationFailed": "फ़ॉर्म सत्यापन विफल",
     "removeOption": "विकल्प हटाएं",
+    "addOption": "विकल्प जोड़ें",
     "optionCountHint": "विकल्प: {{count}} (न्यूनतम 2, अधिकतम 10)",
     "startPoll": "पोल शुरू करें",
     "publishPoll": "पोल प्रकाशित करें",

@@ -283,6 +283,7 @@
     "moveImagesFailed": "પ્રશ્ન સેવ થયો પરંતુ ઇમેજ ખસેડવામાં નિષ્ફળ. કૃપા કરીને ફરીથી અપલોડ કરો.",
     "formValidationFailed": "ફોર્મ ચકાસણી નિષ્ફળ",
     "removeOption": "વિકલ્પ દૂર કરો",
+    "addOption": "વિકલ્પ ઉમેરો",
     "optionCountHint": "વિકલ્પ: {{count}} (ઓછામાં ઓછા 2, વધુમાં વધુ 10)",
     "startPoll": "પોલ શરૂ કરો",
     "publishPoll": "પોલ પ્રકાશિત કરો",

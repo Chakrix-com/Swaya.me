@@ -283,6 +283,7 @@
     "moveImagesFailed": "Pregunta guardada pero no se pudieron mover las imágenes. Por favor, vuelve a subir.",
     "formValidationFailed": "Error de validación del formulario",
     "removeOption": "Eliminar opción",
+    "addOption": "Agregar opción",
     "optionCountHint": "Opciones: {{count}} (mín. 2, máx. 10)",
     "startPoll": "Iniciar encuesta",
     "publishPoll": "Publicar encuesta",

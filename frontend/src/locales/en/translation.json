@@ -283,6 +283,7 @@
     "moveImagesFailed": "Question saved but failed to move images. Please re-upload.",
     "formValidationFailed": "Form validation failed",
     "removeOption": "Remove option",
+    "addOption": "Add option",
     "optionCountHint": "Options: {{count}} (min 2, max 10)",
     "startPoll": "Start Poll",
     "publishPoll": "Publish Poll",
