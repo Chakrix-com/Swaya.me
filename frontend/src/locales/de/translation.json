@@ -299,7 +299,8 @@
     "codeBlockTooltip": "Codeblock",
     "codeLanguageSelect": "Sprache auswählen",
     "quizTypeInfo": "Live, vom Host gesteuerte Sitzung. Multiple-Choice-Fragen mit richtiger Antwort. Echtzeit-Rangliste. Publikum tritt mit einem Code bei.",
-    "pollTypeInfo": "Live, vom Host gesteuerte Sitzung. Offene oder Multiple-Choice-Fragen — keine richtige Antwort. Word Cloud & Skalafragen verfügbar. Publikum tritt mit einem Code bei."
+    "pollTypeInfo": "Live, vom Host gesteuerte Sitzung. Offene oder Multiple-Choice-Fragen — keine richtige Antwort. Word Cloud & Skalafragen verfügbar. Publikum tritt mit einem Code bei.",
+    "mcqDuplicateOptions": "Jede Option muss eindeutig sein — doppelte Optionen sind nicht erlaubt."
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",

@@ -301,7 +301,8 @@
     "codeBlockTooltip": "Bloc de code",
     "codeLanguageSelect": "Sélectionner la langue",
     "quizTypeInfo": "Session en direct contrôlée par l'hôte. Questions QCM avec une réponse correcte. Classement en temps réel. Le public rejoint via un code.",
-    "pollTypeInfo": "Session en direct contrôlée par l'hôte. Questions ouvertes ou QCM — sans réponse correcte. Nuage de mots et questions à échelle disponibles. Le public rejoint via un code."
+    "pollTypeInfo": "Session en direct contrôlée par l'hôte. Questions ouvertes ou QCM — sans réponse correcte. Nuage de mots et questions à échelle disponibles. Le public rejoint via un code.",
+    "mcqDuplicateOptions": "Chaque option doit être unique — les options en double ne sont pas autorisées."
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",

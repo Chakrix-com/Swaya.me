@@ -977,6 +977,11 @@ export default function QuizBuilder() {
           message.error(t('quiz.mcqMinOptions'))
           return
         }
+        const lowerOpts = mcqOptions.map((o) => o.toLowerCase())
+        if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
+          message.error(t('quiz.mcqDuplicateOptions'))
+          return
+        }
         questionData.options = mcqOptions
         const selected = Number(values.correct_answer)
         questionData.correct_answer_index = isPoll ? null : selected
@@ -1148,6 +1153,11 @@ export default function QuizBuilder() {
           .filter(Boolean)
         if (mcqOptions.length < 2) {
           message.error(t('quiz.mcqMinOptions'))
+          return
+        }
+        const lowerOpts = mcqOptions.map((o) => o.toLowerCase())
+        if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
+          message.error(t('quiz.mcqDuplicateOptions'))
           return
         }
         questionData.options = mcqOptions

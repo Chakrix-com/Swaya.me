@@ -299,7 +299,8 @@
     "codeBlockTooltip": "Bloque de código",
     "codeLanguageSelect": "Seleccionar idioma",
     "quizTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas de opción múltiple con respuesta correcta. Tabla de clasificación en tiempo real. El público se une con un código.",
-    "pollTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas abiertas o de opción múltiple — sin respuesta correcta. Nube de palabras y preguntas de escala disponibles. El público se une con un código."
+    "pollTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas abiertas o de opción múltiple — sin respuesta correcta. Nube de palabras y preguntas de escala disponibles. El público se une con un código.",
+    "mcqDuplicateOptions": "Cada opción debe ser única: no se permiten opciones duplicadas."
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",

@@ -299,7 +299,8 @@
     "codeBlockTooltip": "Code block",
     "codeLanguageSelect": "Select language",
     "quizTypeInfo": "Live, host-controlled session. MCQ questions with a correct answer. Real-time leaderboard. Audience joins via a code.",
-    "pollTypeInfo": "Live, host-controlled session. Open-ended or MCQ questions — no correct answer. Word cloud & scale questions available. Audience joins via a code."
+    "pollTypeInfo": "Live, host-controlled session. Open-ended or MCQ questions — no correct answer. Word cloud & scale questions available. Audience joins via a code.",
+    "mcqDuplicateOptions": "Each option must be unique — duplicate options are not allowed."
   },
   "audience": {
     "joinQuiz": "Join Quiz",
