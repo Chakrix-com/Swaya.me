@@ -21,7 +21,7 @@ try:
         MAIL_FROM=os.getenv("SMTP_FROM_EMAIL", "info@chakrix.com"),
         MAIL_PORT=int(os.getenv("SMTP_PORT", 465)),
         MAIL_SERVER=os.getenv("SMTP_HOST", "smtp.titan.email"),
-        MAIL_FROM_NAME=os.getenv("SMTP_FROM_NAME", "Swaya"),
+        MAIL_FROM_NAME=os.getenv("SMTP_FROM_NAME", "Swayame"),
         MAIL_STARTTLS=False,
         MAIL_SSL_TLS=True,
         USE_CREDENTIALS=True,
