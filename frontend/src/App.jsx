@@ -1,7 +1,7 @@
 import { useState, createContext, useContext, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -192,19 +192,21 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
         },
       }}
       actionsRender={() => [
-        <LanguageSwitcher key="language" />,
-        <Button
-          key="theme"
-          type="text"
-          icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-          onClick={onToggleVisitorTheme}
-          style={{ fontSize: 16 }}
-        />,
-        <LogoutOutlined
-          key="logout"
-          onClick={handleLogout}
-          style={{ fontSize: 16, cursor: 'pointer' }}
-        />,
+        <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
+        <Tooltip key="theme" title={t('tooltip.themeToggle')}>
+          <Button
+            type="text"
+            icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+            onClick={onToggleVisitorTheme}
+            style={{ fontSize: 16 }}
+          />
+        </Tooltip>,
+        <Tooltip key="logout" title={t('tooltip.logout')}>
+          <LogoutOutlined
+            onClick={handleLogout}
+            style={{ fontSize: 16, cursor: 'pointer' }}
+          />
+        </Tooltip>,
       ]}
       footerRender={() => (
         <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>

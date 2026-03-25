@@ -282,6 +282,8 @@
     "mcqMinOptions": "MCQ must have at least 2 options",
     "moveImagesFailed": "Question saved but failed to move images. Please re-upload.",
     "formValidationFailed": "Form validation failed",
+    "removeOption": "Remove option",
+    "optionCountHint": "Options: {{count}} (min 2, max 10)",
     "startPoll": "Start Poll",
     "publishPoll": "Publish Poll",
     "unpublishPoll": "Unpublish Poll",
@@ -298,8 +300,8 @@
     "orderedListTooltip": "Numbered list",
     "codeBlockTooltip": "Code block",
     "codeLanguageSelect": "Select language",
-    "quizTypeInfo": "Live, host-controlled session. MCQ questions with a correct answer. Real-time leaderboard. Audience joins via a code.",
-    "pollTypeInfo": "Live, host-controlled session. Open-ended or MCQ questions — no correct answer. Word cloud & scale questions available. Audience joins via a code.",
+    "quizTypeInfo": "Live, host-controlled session. MCQ questions with scoring. Real-time leaderboard. Audience joins via a code.",
+    "pollTypeInfo": "Live, host-controlled session. Open MCQ or word cloud questions — no correct answer, no scoring.",
     "mcqDuplicateOptions": "Each option must be unique — duplicate options are not allowed."
   },
   "audience": {
@@ -1536,7 +1538,7 @@
     "pollDescription": "Description",
     "enterPollDescription": "Enter description (optional)",
     "questionCount": "{{total}} questions",
-    "typeInfo": "Self-paced, no host needed. Audience answers at any time via a link. Results accumulate over time."
+    "typeInfo": "No live host needed. Share a link — audience responds at their own pace. Results accumulate over time."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1621,7 +1623,7 @@
     "exportCsv": "Export CSV",
     "noParticipants": "No participants yet",
     "unpublishMessage": "Click \"Deactivate Test\" above to edit",
-    "typeInfo": "Timed, self-paced exam. Scored (+/- points per question). Participants get a result & rank at the end. Accessed via a link."
+    "typeInfo": "Timed, self-paced exam. Auto-scored with +/− points. Participants receive a rank and score at the end. Accessed via a link."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -1632,5 +1634,34 @@
     "submitButton": "Submit Feedback",
     "successMessage": "Thank you for your feedback!",
     "errorMessage": "Failed to submit feedback. Please try again."
+  },
+  "tooltip": {
+    "themeToggle": "Switch between light and dark mode",
+    "languageSwitcher": "Change the display language",
+    "logout": "Sign out of your account",
+    "useTemplate": "Start from a ready-made quiz — edit and launch in minutes",
+    "makeTemplate": "Save as a reusable template for your workspace",
+    "removeTemplate": "Remove from templates (quiz is kept)",
+    "quizHistory": "View past session results and participant scores",
+    "startSession": "Launch a live session — share the join code with your audience",
+    "publishQuiz": "Make this quiz ready to run. You can still edit it after publishing.",
+    "unpublishQuiz": "Move back to draft to make edits",
+    "copyShareLink": "Copy the link to share directly with your audience",
+    "questionPoints": "Points awarded for a correct answer",
+    "maxTime": "Auto-advances after this many seconds. Leave empty for no limit.",
+    "negativePoints": "Points deducted for a wrong answer. Set to 0 to disable.",
+    "expectedAnswer": "Model answer — Swaya uses AI to mark by meaning, not exact wording",
+    "richTextToggleQuestion": "Switch to rich text to add bold, tables, code, and colour",
+    "richTextToggleOptions": "Format answer options with bold, italic, and other styles",
+    "scaleCorrectAnswer": "The scale value (1–5) that will be marked as correct",
+    "revealAnswer": "Show participants which answer was correct",
+    "sessionCode": "Share this code — participants go to swaya.me and enter it to join",
+    "stopQuiz": "End the live session. Results are saved and available in History.",
+    "emptyStateTitle": "Create your first quiz",
+    "emptyStateSubtitle": "Choose the type that fits your use case",
+    "emptyStateQuizDesc": "Live Quiz — run with an audience in real time",
+    "emptyStatePollDesc": "Live Poll — gather instant audience responses",
+    "emptyStateOfflinePollDesc": "Offline Poll — share a link, collect responses anytime",
+    "emptyStateExamDesc": "Test / Exam — timed, auto-scored, shareable via link"
   }
 }

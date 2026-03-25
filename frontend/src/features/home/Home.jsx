@@ -213,7 +213,8 @@ const Home = () => {
             <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0 }}>{t('pages.legal.aboutLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/privacy-policy')} style={{ padding: 0 }}>{t('pages.legal.privacyLink')}</Button>
             <Button type="link" size="small" onClick={() => navigate('/terms-of-service')} style={{ padding: 0 }}>{t('pages.legal.termsLink')}</Button>
-            <Button type="link" size="small" onClick={() => navigate('/help')} style={{ padding: 0 }}>{t('pages.help.footerHelp')}</Button>
+            {/* Help link hidden — page still exists at /help */}
+            {/* <Button type="link" size="small" onClick={() => navigate('/help')} style={{ padding: 0 }}>{t('pages.help.footerHelp')}</Button> */}
             <a href="mailto:info@chakrix.net" style={{ fontSize: 14 }}>{t('pages.legal.contactLink')}</a>
           </Space>
         </Space>

@@ -273,14 +273,16 @@ const QuestionForm = ({
           label={
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {t('quiz.question')}
-              <Button
-                size="small"
-                type={useRichText ? 'primary' : 'default'}
-                onClick={() => setUseRichText(v => !v)}
-                style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
-              >
-                {useRichText ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
-              </Button>
+              <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
+                <Button
+                  size="small"
+                  type={useRichText ? 'primary' : 'default'}
+                  onClick={() => setUseRichText(v => !v)}
+                  style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
+                >
+                  {useRichText ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+                </Button>
+              </Tooltip>
             </span>
           }
           rules={[{ required: true, message: t('quiz.questionRequired') }]}
@@ -301,7 +303,7 @@ const QuestionForm = ({
             />
           )}
         </Form.Item>
-        {isAdmin && (
+        {(
           <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
             <Tooltip title={t('ai.rewriteWithAIModel')}>
               <Button
@@ -338,6 +340,7 @@ const QuestionForm = ({
               label={t('quiz.pointsLabel')}
               initialValue={1}
               rules={[{ required: true, message: t('quiz.pointsRequired') }]}
+              help={t('tooltip.questionPoints')}
             >
               <InputNumber min={1} precision={0} />
             </Form.Item>
@@ -345,6 +348,7 @@ const QuestionForm = ({
               name="max_time_seconds"
               label={t('quiz.maxTimeSecondsLabel')}
               tooltip={t('quiz.maxTimeSecondsTooltip')}
+              help={t('tooltip.maxTime')}
             >
               <InputNumber min={1} max={3600} precision={0} />
             </Form.Item>
@@ -353,7 +357,8 @@ const QuestionForm = ({
                 name="negative_points"
                 label={t('exam.negativePoints')}
                 initialValue={0}
-                tooltip="Points deducted for a wrong answer (0 = no penalty)"
+                tooltip={t('tooltip.negativePoints')}
+                help={t('tooltip.negativePoints')}
               >
                 <InputNumber min={0} precision={0} />
               </Form.Item>
@@ -389,6 +394,7 @@ const QuestionForm = ({
           <>
             {/* Rich text toggle for all options */}
             <div style={{ marginBottom: 12 }}>
+              <Tooltip title={useRichTextOptions ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
               <Button
                 size="small"
                 type={useRichTextOptions ? 'primary' : 'default'}
@@ -413,6 +419,7 @@ const QuestionForm = ({
               >
                 {useRichTextOptions ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
               </Button>
+              </Tooltip>
             </div>
 
             <Form.Item
@@ -431,7 +438,7 @@ const QuestionForm = ({
                     spellCheck="true"
                     lang={t('common.langCode', { defaultValue: 'en' })}
                     onContextMenu={(e) => e.stopPropagation()}
-                    suffix={isAdmin && (
+                    suffix={(
                       <Tooltip title={t('ai.rewriteWithAI')}>
                         <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
                       </Tooltip>
@@ -439,7 +446,7 @@ const QuestionForm = ({
                   />
               }
             </Form.Item>
-            {isAdmin && useRichTextOptions && (
+            {useRichTextOptions && (
               <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                 <Tooltip title={t('ai.rewriteWithAI')}>
                   <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
@@ -480,7 +487,7 @@ const QuestionForm = ({
                     spellCheck="true"
                     lang={t('common.langCode', { defaultValue: 'en' })}
                     onContextMenu={(e) => e.stopPropagation()}
-                    suffix={isAdmin && (
+                    suffix={(
                       <Tooltip title={t('ai.rewriteWithAI')}>
                         <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
                       </Tooltip>
@@ -488,7 +495,7 @@ const QuestionForm = ({
                   />
               }
             </Form.Item>
-            {isAdmin && useRichTextOptions && (
+            {useRichTextOptions && (
               <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                 <Tooltip title={t('ai.rewriteWithAI')}>
                   <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
@@ -527,7 +534,7 @@ const QuestionForm = ({
                         spellCheck="true"
                         lang={t('common.langCode', { defaultValue: 'en' })}
                         onContextMenu={(e) => e.stopPropagation()}
-                        suffix={isAdmin && (
+                        suffix={(
                           <Tooltip title={t('ai.rewriteWithAI')}>
                             <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
                           </Tooltip>
@@ -535,7 +542,7 @@ const QuestionForm = ({
                       />
                   }
                 </Form.Item>
-                {isAdmin && useRichTextOptions && (
+                {useRichTextOptions && (
                   <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                     <Tooltip title={t('ai.rewriteWithAI')}>
                       <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
@@ -575,7 +582,7 @@ const QuestionForm = ({
                         spellCheck="true"
                         lang={t('common.langCode', { defaultValue: 'en' })}
                         onContextMenu={(e) => e.stopPropagation()}
-                        suffix={isAdmin && (
+                        suffix={(
                           <Tooltip title={t('ai.rewriteWithAI')}>
                             <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
                           </Tooltip>
@@ -583,7 +590,7 @@ const QuestionForm = ({
                       />
                   }
                 </Form.Item>
-                {isAdmin && useRichTextOptions && (
+                {useRichTextOptions && (
                   <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
                     <Tooltip title={t('ai.rewriteWithAI')}>
                       <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
@@ -778,9 +785,10 @@ const QuestionForm = ({
                 name="expected_answer"
                 label={t('quiz.correctAnswer')}
                 rules={[{ required: !isPoll, message: t('quiz.correctAnswerRequired') }]}
+                help={t('tooltip.expectedAnswer')}
               >
-                <Input 
-                  placeholder={t('quiz.expectedAnswerPlaceholder')} 
+                <Input
+                  placeholder={t('quiz.expectedAnswerPlaceholder')}
                   spellCheck="true"
                   lang={t('common.langCode', { defaultValue: 'en' })}
                   onContextMenu={(e) => e.stopPropagation()}
@@ -800,10 +808,11 @@ const QuestionForm = ({
                 name="expected_answer"
                 label={t('quiz.correctAnswer')}
                 rules={[{ required: !isPoll, message: t('quiz.correctAnswerRequired') }]}
+                help={t('tooltip.expectedAnswer')}
               >
-                <TextArea 
-                  rows={3} 
-                  placeholder={t('quiz.expectedAnswerGuidancePlaceholder')} 
+                <TextArea
+                  rows={3}
+                  placeholder={t('quiz.expectedAnswerGuidancePlaceholder')}
                   spellCheck="true"
                   lang={t('common.langCode', { defaultValue: 'en' })}
                   onContextMenu={(e) => e.stopPropagation()}
@@ -823,6 +832,7 @@ const QuestionForm = ({
                 name="correct_answer"
                 label={t('quiz.correctAnswer')}
                 rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}
+                help={t('tooltip.scaleCorrectAnswer')}
               >
                 <Radio.Group>
                   <Radio value="0">1</Radio>
@@ -1418,14 +1428,16 @@ export default function QuizBuilder() {
           {t('quiz.backDashboard')}
         </Button>
         {quiz && quiz.status === 'draft' && questions.length >= 1 && (
-          <Button 
-            type="primary" 
-            icon={<RocketOutlined />}
-            onClick={handlePublish}
-            loading={loading}
-          >
-            {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
-          </Button>
+          <Tooltip title={t('tooltip.publishQuiz')}>
+            <Button
+              type="primary"
+              icon={<RocketOutlined />}
+              onClick={handlePublish}
+              loading={loading}
+            >
+              {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
+            </Button>
+          </Tooltip>
         )}
         {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && (
           <>
@@ -1436,22 +1448,26 @@ export default function QuizBuilder() {
             >
               {isPoll ? t('quiz.startPoll') : t('quiz.startSession')}
             </Button>
-            <Button
-              type="default"
-              onClick={handleUnpublish}
-              loading={loading}
-            >
-              {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
-            </Button>
+            <Tooltip title={t('tooltip.unpublishQuiz')}>
+              <Button
+                type="default"
+                onClick={handleUnpublish}
+                loading={loading}
+              >
+                {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+              </Button>
+            </Tooltip>
           </>
         )}
         {quiz && quiz.status === 'ready' && isOfflinePoll && quiz.poll_slug && (
-          <Button
-            icon={<ShareAltOutlined />}
-            onClick={() => setPollLinkModal({ open: true, url: `${window.location.origin}/poll/${quiz.poll_slug}` })}
-          >
-            {t('offlinePoll.copyLink', 'Copy Link')}
-          </Button>
+          <Tooltip title={t('tooltip.copyShareLink')}>
+            <Button
+              icon={<ShareAltOutlined />}
+              onClick={() => setPollLinkModal({ open: true, url: `${window.location.origin}/poll/${quiz.poll_slug}` })}
+            >
+              {t('offlinePoll.copyLink', 'Copy Link')}
+            </Button>
+          </Tooltip>
         )}
         {quiz && quiz.status === 'ready' && isOfflinePoll && (
           <Button
@@ -1461,12 +1477,14 @@ export default function QuizBuilder() {
           </Button>
         )}
         {quiz && quiz.status === 'ready' && isExam && quiz.exam_slug && (
-          <Button
-            icon={<ShareAltOutlined />}
-            onClick={() => setExamLinkModal({ open: true, url: `${window.location.origin}/e/${quiz.exam_slug}` })}
-          >
-            {t('exam.copyLink')}
-          </Button>
+          <Tooltip title={t('tooltip.copyShareLink')}>
+            <Button
+              icon={<ShareAltOutlined />}
+              onClick={() => setExamLinkModal({ open: true, url: `${window.location.origin}/e/${quiz.exam_slug}` })}
+            >
+              {t('exam.copyLink')}
+            </Button>
+          </Tooltip>
         )}
         {quiz && quiz.status === 'ready' && isExam && (
           <>
@@ -1475,13 +1493,15 @@ export default function QuizBuilder() {
             >
               {t('exam.results.title', 'View Results')}
             </Button>
-            <Button
-              type="default"
-              onClick={handleUnpublish}
-              loading={loading}
-            >
-              {t('exam.unpublishExam')}
-            </Button>
+            <Tooltip title={t('tooltip.unpublishQuiz')}>
+              <Button
+                type="default"
+                onClick={handleUnpublish}
+                loading={loading}
+              >
+                {t('exam.unpublishExam')}
+              </Button>
+            </Tooltip>
           </>
         )}
       </Space>
@@ -1551,7 +1571,7 @@ export default function QuizBuilder() {
               size="large"
               spellCheck="true"
               lang={i18n.language}
-              suffix={isAdmin && (
+              suffix={(
                 <Tooltip title={t('ai.rewriteWithAI')}>
                   <Button
                     type="text"
@@ -1576,7 +1596,7 @@ export default function QuizBuilder() {
               lang={i18n.language}
             />
           </Form.Item>
-          {isAdmin && (
+          {(
             <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
               <Tooltip title={t('ai.rewriteDescWithAI')}>
                 <Button

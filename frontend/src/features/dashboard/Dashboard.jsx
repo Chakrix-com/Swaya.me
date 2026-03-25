@@ -494,9 +494,11 @@ function Dashboard() {
         style={{ overflowX: 'hidden' }}
         extra={
           <div className="dashboard-action-buttons">
-            <Button icon={<StarOutlined />} onClick={openTemplateModal}>
-              {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
-            </Button>
+            <Tooltip title={t('tooltip.useTemplate')}>
+              <Button icon={<StarOutlined />} onClick={openTemplateModal}>
+                {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
+              </Button>
+            </Tooltip>
             <Space size={4}>
               <Button
                 type="primary"
@@ -647,9 +649,36 @@ function Dashboard() {
           </Space>
           <div style={{ width: '100%', overflow: 'hidden' }}>
         {filteredQuizzes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
-            {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
-          </div>
+          !searchText.trim() && !selectedFolderId ? (
+            <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{t('tooltip.emptyStateTitle')}</div>
+              <div style={{ color: '#888', marginBottom: 32, fontSize: 14 }}>{t('tooltip.emptyStateSubtitle')}</div>
+              <Row gutter={[16, 16]} justify="center">
+                {[
+                  { type: 'quiz', icon: '🎯', desc: t('tooltip.emptyStateQuizDesc'), color: '#1677ff' },
+                  { type: 'poll', icon: '📊', desc: t('tooltip.emptyStatePollDesc'), color: '#722ed1' },
+                  { type: 'offline_poll', icon: '📋', desc: t('tooltip.emptyStateOfflinePollDesc'), color: '#eb2f96' },
+                  { type: 'exam', icon: '📝', desc: t('tooltip.emptyStateExamDesc'), color: '#fa541c' },
+                ].map(({ type, icon, desc, color }) => (
+                  <Col xs={24} sm={12} md={6} key={type}>
+                    <Card
+                      hoverable
+                      onClick={() => navigate(`/quiz/new?type=${type}`)}
+                      style={{ borderTop: `3px solid ${color}`, cursor: 'pointer' }}
+                      bodyStyle={{ padding: '20px 16px', textAlign: 'center' }}
+                    >
+                      <div style={{ fontSize: 32, marginBottom: 8 }}>{icon}</div>
+                      <div style={{ fontSize: 13, color: '#444', lineHeight: 1.5 }}>{desc}</div>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
+              {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
+            </div>
+          )
         ) : filteredQuizzes.map((quiz, index) => (
           <div
             key={quiz.id}
@@ -714,14 +743,16 @@ function Dashboard() {
                   style={{ minWidth: 180 }}
                   treeDefaultExpandAll
                 />
-                <Button
-                  icon={<StarOutlined />}
-                  onClick={() => handleToggleTemplate(quiz)}
-                >
-                  {quiz.is_template
-                    ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
-                    : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
-                </Button>
+                <Tooltip title={quiz.is_template ? t('tooltip.removeTemplate') : t('tooltip.makeTemplate')}>
+                  <Button
+                    icon={<StarOutlined />}
+                    onClick={() => handleToggleTemplate(quiz)}
+                  >
+                    {quiz.is_template
+                      ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
+                      : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
+                  </Button>
+                </Tooltip>
                 <Button
                   icon={<CopyOutlined />}
                   onClick={() => handleDuplicateQuiz(quiz.id)}
@@ -734,12 +765,14 @@ function Dashboard() {
                 >
                   {t('common.edit')}
                 </Button>
-                <Button
-                  icon={<HistoryOutlined />}
-                  onClick={() => navigate(`/quiz/${quiz.id}/history`)}
-                >
-                  {t('quiz.history')}
-                </Button>
+                <Tooltip title={t('tooltip.quizHistory')}>
+                  <Button
+                    icon={<HistoryOutlined />}
+                    onClick={() => navigate(`/quiz/${quiz.id}/history`)}
+                  >
+                    {t('quiz.history')}
+                  </Button>
+                </Tooltip>
                 {quiz.has_active_session && quiz.active_session_id ? (
                   <Popconfirm
                     title={t('quiz.stopActiveSessionConfirm', { defaultValue: 'Stop active session?' })}
@@ -754,13 +787,15 @@ function Dashboard() {
                   </Popconfirm>
                 ) : null}
                 {quiz.status === 'ready' && !quiz.has_active_session && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam' && (
-                  <Button
-                    type="primary"
-                    icon={<PlayCircleOutlined />}
-                    onClick={() => navigate(`/quiz/${quiz.id}/control`)}
-                  >
-                    {t('quiz.startQuiz')}
-                  </Button>
+                  <Tooltip title={t('tooltip.startSession')}>
+                    <Button
+                      type="primary"
+                      icon={<PlayCircleOutlined />}
+                      onClick={() => navigate(`/quiz/${quiz.id}/control`)}
+                    >
+                      {t('quiz.startQuiz')}
+                    </Button>
+                  </Tooltip>
                 )}
                 {quiz.quiz_type === 'exam' && quiz.exam_url && (
                   <Button

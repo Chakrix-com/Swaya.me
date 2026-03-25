@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from core.auth.dependencies import require_admin, CurrentUser
+from core.auth.dependencies import require_admin, get_current_user, CurrentUser
 from core.ai.ollama_service import (
     generate_questions,
     generate_distractors,
@@ -170,7 +170,7 @@ class RewriteResponse(BaseModel):
 @router.post("/rewrite", response_model=RewriteResponse)
 async def api_rewrite(
     req: RewriteRequest,
-    current_user: CurrentUser = Depends(require_admin),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Rewrite a piece of text to be clearer and better suited for a quiz context."""
     model = req.model or FALLBACK_MODEL

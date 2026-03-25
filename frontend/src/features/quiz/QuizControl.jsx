@@ -443,13 +443,15 @@ export default function QuizControl() {
             cancelText={t('common.cancel')}
             okButtonProps={{ danger: true }}
           >
-            <Button
-              danger
-              icon={<CloseCircleOutlined />}
-              loading={loading}
-            >
-              {t('quiz.stopQuiz')}
-            </Button>
+            <Tooltip title={t('tooltip.stopQuiz')}>
+              <Button
+                danger
+                icon={<CloseCircleOutlined />}
+                loading={loading}
+              >
+                {t('quiz.stopQuiz')}
+              </Button>
+            </Tooltip>
           </Popconfirm>
         )}
       </Space>
@@ -558,6 +560,7 @@ export default function QuizControl() {
                         valueStyle={{ color: '#3f8600', fontSize: 32, fontWeight: 'bold' }}
                       />
                       <Text type="secondary" style={{ fontSize: 12 }}>{t('quiz.enterCodeAt')}</Text>
+                      <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{t('tooltip.sessionCode')}</div>
                     </div>
                   </Col>
                 </Row>
