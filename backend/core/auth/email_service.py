@@ -111,6 +111,142 @@ async def send_password_reset_email(email: EmailStr, token: str, name: Optional[
     )
 
 
+WELCOME_EMAIL_HTML = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to Swaya.me Beta</title>
+  <style>
+    body {{ margin: 0; padding: 0; background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; }}
+    .wrapper {{ max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
+    .header {{ background: #1677ff; padding: 28px 32px; }}
+    .header h1 {{ margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
+    .header p {{ margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 13px; }}
+    .body {{ padding: 32px; }}
+    .greeting {{ font-size: 16px; margin: 0 0 16px; }}
+    .intro {{ font-size: 15px; color: #444; margin: 0 0 24px; line-height: 1.6; }}
+    .feature-list {{ margin: 0 0 28px; padding: 0; list-style: none; }}
+    .feature-list li {{ padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: flex-start; }}
+    .feature-list li:last-child {{ border-bottom: none; }}
+    .feature-icon {{ font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; margin-top: 1px; }}
+    .feature-text strong {{ display: block; font-size: 15px; color: #1a1a1a; margin-bottom: 2px; }}
+    .feature-text span {{ font-size: 13px; color: #666; line-height: 1.5; }}
+    .cta-wrap {{ text-align: center; margin: 28px 0 8px; }}
+    .cta {{ display: inline-block; background: #1677ff; color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 6px; font-size: 15px; font-weight: 600; letter-spacing: 0.1px; }}
+    .footer {{ background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 32px; text-align: center; }}
+    .footer p {{ margin: 0; font-size: 12px; color: #999; line-height: 1.6; }}
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Welcome to Swaya.me Beta!</h1>
+      <p>Your account is verified and ready to go.</p>
+    </div>
+    <div class="body">
+      <p class="greeting">Hi {name},</p>
+      <p class="intro">
+        You're all set. Here's everything you can do with
+        <strong>Swaya.me Beta</strong> right now:
+      </p>
+      <ul class="feature-list">
+        <li>
+          <span class="feature-icon">🎯</span>
+          <span class="feature-text">
+            <strong>Live Quiz</strong>
+            <span>Create a quiz, share a join code, and run it live — audience answers in real time from any device.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">📊</span>
+          <span class="feature-text">
+            <strong>Live Poll</strong>
+            <span>Run an instant live poll and watch results update on screen as your audience responds.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">📋</span>
+          <span class="feature-text">
+            <strong>Offline Poll</strong>
+            <span>No live session needed — share a link and collect responses at your own pace.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">📝</span>
+          <span class="feature-text">
+            <strong>Test / Exam</strong>
+            <span>Set a time limit, enable negative marking, and let Swaya score submissions automatically.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">✍️</span>
+          <span class="feature-text">
+            <strong>Rich Text Questions</strong>
+            <span>Format questions with bold, italic, code blocks, tables, headings, colours, and more.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🖊️</span>
+          <span class="feature-text">
+            <strong>Whiteboard</strong>
+            <span>Draw and annotate live on a canvas during your quiz presentations.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🌙</span>
+          <span class="feature-text">
+            <strong>Dark / Light Mode</strong>
+            <span>Switch themes on every page, including participant and join screens.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">💬</span>
+          <span class="feature-text">
+            <strong>Feedback Button</strong>
+            <span>A floating button on every page — click it to send us feedback or report a bug instantly.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🌐</span>
+          <span class="feature-text">
+            <strong>11 Languages</strong>
+            <span>The full app is available in English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, and Russian.</span>
+          </span>
+        </li>
+      </ul>
+      <div class="cta-wrap">
+        <a class="cta" href="https://www.swaya.me">Go to Dashboard →</a>
+      </div>
+      <p style="font-size:14px; color:#555; text-align:center; margin-top:20px; line-height:1.6;">
+        Thanks for joining Swaya.me Beta.<br>
+        Your feedback helps us build something great.
+      </p>
+    </div>
+    <div class="footer">
+      <p>
+        You're receiving this because you registered at Swaya.me.<br>
+        © 2026 Swaya.me &nbsp;·&nbsp; <a href="https://www.swaya.me" style="color:#999;">www.swaya.me</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+
+async def send_welcome_email(email: str, name: Optional[str] = None) -> bool:
+    """Send a welcome email after a user verifies their email address."""
+    recipient_name = (name or email.split('@')[0]).strip().split()[0]
+    html_content = WELCOME_EMAIL_HTML.format(name=recipient_name)
+    return await send_email(
+        subject="Welcome to Swaya.me Beta — here's what you can do",
+        recipients=[email],
+        html_body=html_content,
+    )
+
+
 async def send_email(subject: str, recipients: list[EmailStr], html_body: str) -> bool:
     """
     Send an email using FastMail. If SMTP is not configured, logs the email content.

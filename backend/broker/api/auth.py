@@ -1,13 +1,17 @@
 """
 Authentication API endpoints
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from persistence.database_async import get_async_db
 from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
 from core.auth.service_async import register_user, login_user
 from core.auth.dependencies import get_current_user
+from core.auth.email_service import send_welcome_email
 from shared.exceptions.auth import (
     InvalidCredentialsError, 
     DuplicateUserError, 
@@ -121,7 +125,12 @@ async def verify_email(
     user.last_login_at = datetime.now(timezone.utc)
     
     await db.commit()
-    
+
+    try:
+        await send_welcome_email(user.email, user.full_name)
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {user.email}: {e}")
+
     return {"message": "Email verified successfully"}
 
 
