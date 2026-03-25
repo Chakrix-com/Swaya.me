@@ -225,9 +225,11 @@ class AnswerServiceAsync:
 
         is_correct = None
         if is_text_scored and expected_answer:
-            response_clean = request.text_answer.strip().lower()
-            expected_clean = str(expected_answer).strip().lower()
-            is_correct = (response_clean == expected_clean)
+            from core.ai.ollama_service import grade_text_answer
+            is_correct = await grade_text_answer(
+                participant_answer=request.text_answer.strip(),
+                expected_answer=str(expected_answer).strip(),
+            )
 
         
         # Create answer

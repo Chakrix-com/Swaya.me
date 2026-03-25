@@ -218,6 +218,36 @@ _PREAMBLE_RE = re.compile(
 )
 
 
+GRADING_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+
+
+async def grade_text_answer(participant_answer: str, expected_answer: str) -> bool:
+    """
+    Use the LLM to semantically compare a participant's text answer against
+    the expected answer. Returns True if the meaning matches, False otherwise.
+    Falls back to exact-match comparison if Ollama is unavailable or times out.
+    """
+    prompt = (
+        "You are a quiz answer grader.\n\n"
+        f"Expected answer: {expected_answer}\n"
+        f"Participant answer: {participant_answer}\n\n"
+        "Does the participant's answer convey the same meaning as the expected answer, "
+        "allowing for minor spelling mistakes, synonyms, different word order, or "
+        "extra/missing articles?\n\n"
+        "Reply with exactly one word: YES or NO."
+    )
+    try:
+        raw = await _generate(prompt, FALLBACK_MODEL, temperature=0.0, max_tokens=4, fmt="")
+        verdict = raw.strip().split()[0].upper() if raw.strip() else "NO"
+        return verdict == "YES"
+    except Exception:
+        logger.warning(
+            "Ollama unavailable for answer grading — falling back to exact match. "
+            "expected=%r participant=%r", expected_answer, participant_answer
+        )
+        return participant_answer.strip().lower() == expected_answer.strip().lower()
+
+
 def _clean_rewrite(raw: str) -> str:
     """Strip preambles, surrounding quotes, and markdown fences from model rewrite output."""
     text = raw.strip()
