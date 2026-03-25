@@ -120,19 +120,18 @@
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-/* placeholder */
-.rte-content .ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
+/* placeholder overlay (React-rendered, always in sync with i18n) */
+.rte-placeholder {
+  position: absolute;
+  top: 8px;
+  left: 12px;
   pointer-events: none;
-  float: left;
-  height: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  user-select: none;
 }
-.rte-wrap--light .rte-content .ProseMirror p.is-editor-empty:first-child::before {
-  color: rgba(0, 0, 0, 0.35);
-}
-.rte-wrap--dark .rte-content .ProseMirror p.is-editor-empty:first-child::before {
-  color: rgba(255, 255, 255, 0.25);
-}
+.rte-wrap--light .rte-placeholder { color: rgba(0, 0, 0, 0.35); }
+.rte-wrap--dark  .rte-placeholder { color: rgba(255, 255, 255, 0.25); }
 
 /* lists */
 .rte-content .ProseMirror ul,

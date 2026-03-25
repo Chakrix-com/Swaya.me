@@ -646,9 +646,9 @@ export default function AudienceSession() {
                                 color: 'var(--aud-input-text)',
                               }}
                             >
-                              <div>
-                                <span style={{ color: 'var(--aud-input-text)', fontWeight: 700 }}>{key}:</span>{' '}
-                                <span style={{ color: 'var(--aud-input-text)' }}>{label}</span>
+                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                <span style={{ color: 'var(--aud-input-text)', fontWeight: 700 }}>{key}:</span>
+                                <div style={{ color: 'var(--aud-input-text)', flex: 1 }} dangerouslySetInnerHTML={{ __html: label || '' }} />
                               </div>
                               {currentQuestion.option_images?.[key] && (
                                 <img
@@ -713,9 +713,7 @@ export default function AudienceSession() {
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                                 <span style={{ fontWeight: 700 }}>{key}:</span>
-                                <span style={{ flex: 1, wordBreak: 'break-word' }}>
-                                  {label}
-                                </span>
+                                <div style={{ flex: 1, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: label || '' }} />
                                 <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
                                   {count} ({pct.toFixed(1)}%)
                                 </span>
@@ -758,9 +756,7 @@ export default function AudienceSession() {
                                 }}>
                                   {badgeIcon}
                                 </span>
-                                <span style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: 'var(--aud-input-text)' }}>
-                                  {label}
-                                </span>
+                                <div style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: 'var(--aud-input-text)' }} dangerouslySetInnerHTML={{ __html: label || '' }} />
                                 <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
                                   {count} ({pct.toFixed(1)}%)
                                 </span>

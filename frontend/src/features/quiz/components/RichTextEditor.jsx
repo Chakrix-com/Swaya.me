@@ -3,7 +3,6 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
 import { TextStyle } from '@tiptap/extension-text-style'
@@ -101,12 +100,12 @@ export default function RichTextEditor({
 }) {
   const { t } = useTranslation()
   const [selectedLang, setSelectedLang] = useState('python')
+  const [isEmpty, setIsEmpty] = useState(true)
   const lastEmitted = useRef(value || '')
 
   const extensions = [
     StarterKit.configure({ codeBlock: false }),
     Underline,
-    Placeholder.configure({ placeholder: placeholder || '' }),
   ]
 
   if (showCode) {
@@ -136,6 +135,10 @@ export default function RichTextEditor({
       const html = editor.getHTML()
       lastEmitted.current = html
       onChange?.(html)
+      setIsEmpty(editor.isEmpty)
+    },
+    onCreate: ({ editor }) => {
+      setIsEmpty(editor.isEmpty)
     },
   })
 
@@ -145,6 +148,7 @@ export default function RichTextEditor({
     if (incoming !== lastEmitted.current) {
       lastEmitted.current = incoming
       editor.commands.setContent(incoming, false)
+      setIsEmpty(editor.isEmpty)
     }
   }, [value, editor])
 
@@ -326,7 +330,10 @@ export default function RichTextEditor({
         )}
       </div>
 
-      <div className="rte-content">
+      <div className="rte-content" style={{ position: 'relative' }}>
+        {isEmpty && placeholder && (
+          <div className="rte-placeholder" aria-hidden="true">{placeholder}</div>
+        )}
         <EditorContent editor={editor} />
       </div>
     </div>

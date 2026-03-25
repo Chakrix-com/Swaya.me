@@ -63,9 +63,7 @@ function OptionCard({ index, letter, text, imageUrl, count, total, revealed, isC
         <span className="pv-option-badge" style={{ background: accent }}>
           {revealed ? (isCorrect ? <CheckOutlined /> : <CloseOutlined />) : letter}
         </span>
-        <span className="pv-option-text" style={revealed && !isCorrect ? { opacity: 0.4 } : {}}>
-          {text}
-        </span>
+        <span className="pv-option-text" style={revealed && !isCorrect ? { opacity: 0.4 } : {}} dangerouslySetInnerHTML={{ __html: text || '' }} />
         {showStats && total > 0 && (
           <span className="pv-option-pct" style={revealed && !isCorrect ? { opacity: 0.35 } : {}}>
             {pct}%

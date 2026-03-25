@@ -804,7 +804,7 @@ export default function QuizControl() {
                   message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
                       description={
                         currentQuestion.question_type === 'mcq'
-                          ? `${currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || ''}`
+                          ? <span dangerouslySetInnerHTML={{ __html: currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || '' }} />
                           : ''
                       }
                       type="success"

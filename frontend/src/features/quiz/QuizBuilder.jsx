@@ -91,6 +91,7 @@ const QuestionForm = ({
   const [aiSuggesting, setAiSuggesting] = useState(false)
   const [rewriting, setRewriting] = useState({})
   const [useRichText, setUseRichText] = useState(false)
+  const [useRichTextOptions, setUseRichTextOptions] = useState(true)
   const { theme } = useContext(VisitorThemeContext)
   
   // Debug: Log when component renders
@@ -120,6 +121,9 @@ const QuestionForm = ({
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
+      // Auto-detect rich text for options
+      const anyOptionHasHtml = (question.options || []).some((o) => /<[a-z][\s\S]*>/i.test(o || ''))
+      setUseRichTextOptions(anyOptionHasHtml)
 
       // Set image URLs from question data
       setQuestionImageUrl(question.question_image_url || null)
@@ -134,6 +138,7 @@ const QuestionForm = ({
       questionForm.resetFields()
       setMcqBaseOptionCount(2)
       setUseRichText(false)
+      setUseRichTextOptions(true)
       questionForm.setFieldsValue({
         option_a: '',
         option_b: '',
@@ -198,12 +203,15 @@ const QuestionForm = ({
     }
   }
 
+  const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
+
   const handleRewrite = async (fieldName, context) => {
     const val = questionForm.getFieldValue(fieldName)
-    if (!val?.trim()) return
+    const plainVal = stripHtml(val) || (typeof val === 'string' ? val.trim() : '')
+    if (!plainVal) return
     setRewriting(prev => ({ ...prev, [fieldName]: true }))
     try {
-      const res = await aiAPI.rewrite({ text: val.trim(), context, language: language || 'en' })
+      const res = await aiAPI.rewrite({ text: plainVal, context, language: language || 'en' })
       questionForm.setFieldsValue({ [fieldName]: res.data.rewritten })
     } catch {
       // silently fail — field stays unchanged
@@ -379,24 +387,66 @@ const QuestionForm = ({
 
         {questionType === 'mcq' && (
           <>
+            {/* Rich text toggle for all options */}
+            <div style={{ marginBottom: 12 }}>
+              <Button
+                size="small"
+                type={useRichTextOptions ? 'primary' : 'default'}
+                onClick={() => {
+                  setUseRichTextOptions((prev) => {
+                    if (prev) {
+                      // Switching to plain: strip HTML from all option values
+                      const keys = ['option_a', 'option_b', 'option_c', 'option_d']
+                      const updates = {}
+                      keys.forEach((k) => {
+                        const v = questionForm.getFieldValue(k)
+                        if (v) updates[k] = stripHtml(v)
+                      })
+                      const extra = questionForm.getFieldValue('extra_options') || []
+                      updates.extra_options = extra.map((o) => stripHtml(o))
+                      questionForm.setFieldsValue(updates)
+                    }
+                    return !prev
+                  })
+                }}
+                style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
+              >
+                {useRichTextOptions ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
+              </Button>
+            </div>
+
             <Form.Item
               name="option_a"
               label={t('quiz.optionA')}
-              rules={[{ required: true, message: t('quiz.optionARequired') }]}
+              rules={useRichTextOptions
+                ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionARequired')) }]
+                : [{ required: true, message: t('quiz.optionARequired') }]
+              }
+              getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
             >
-              <Input
-                placeholder={t('quiz.optionAPlaceholder')}
-                spellCheck="true"
-                lang={t('common.langCode', { defaultValue: 'en' })}
-                onContextMenu={(e) => e.stopPropagation()}
-                suffix={isAdmin && (
-                  <Tooltip title={t('ai.rewriteWithAI')}>
-                    <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
-                  </Tooltip>
-                )}
-              />
+              {useRichTextOptions
+                ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionAPlaceholder')} />
+                : <Input
+                    placeholder={t('quiz.optionAPlaceholder')}
+                    spellCheck="true"
+                    lang={t('common.langCode', { defaultValue: 'en' })}
+                    onContextMenu={(e) => e.stopPropagation()}
+                    suffix={isAdmin && (
+                      <Tooltip title={t('ai.rewriteWithAI')}>
+                        <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
+                      </Tooltip>
+                    )}
+                  />
+              }
             </Form.Item>
-            
+            {isAdmin && useRichTextOptions && (
+              <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+                <Tooltip title={t('ai.rewriteWithAI')}>
+                  <Button type="text" size="small" icon={rewriteIcon('option_a')} onClick={() => handleRewrite('option_a', 'quiz answer option')} />
+                </Tooltip>
+              </div>
+            )}
+
             {/* Option A Image Upload */}
             <ImageUpload
               quizId={parseInt(quizId)}
@@ -417,21 +467,35 @@ const QuestionForm = ({
             <Form.Item
               name="option_b"
               label={t('quiz.optionB')}
-              rules={[{ required: true, message: t('quiz.optionBRequired') }]}
+              rules={useRichTextOptions
+                ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionBRequired')) }]
+                : [{ required: true, message: t('quiz.optionBRequired') }]
+              }
+              getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
             >
-              <Input
-                placeholder={t('quiz.optionBPlaceholder')}
-                spellCheck="true"
-                lang={t('common.langCode', { defaultValue: 'en' })}
-                onContextMenu={(e) => e.stopPropagation()}
-                suffix={isAdmin && (
-                  <Tooltip title={t('ai.rewriteWithAI')}>
-                    <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
-                  </Tooltip>
-                )}
-              />
+              {useRichTextOptions
+                ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionBPlaceholder')} />
+                : <Input
+                    placeholder={t('quiz.optionBPlaceholder')}
+                    spellCheck="true"
+                    lang={t('common.langCode', { defaultValue: 'en' })}
+                    onContextMenu={(e) => e.stopPropagation()}
+                    suffix={isAdmin && (
+                      <Tooltip title={t('ai.rewriteWithAI')}>
+                        <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
+                      </Tooltip>
+                    )}
+                  />
+              }
             </Form.Item>
-            
+            {isAdmin && useRichTextOptions && (
+              <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+                <Tooltip title={t('ai.rewriteWithAI')}>
+                  <Button type="text" size="small" icon={rewriteIcon('option_b')} onClick={() => handleRewrite('option_b', 'quiz answer option')} />
+                </Tooltip>
+              </div>
+            )}
+
             {/* Option B Image Upload */}
             <ImageUpload
               quizId={parseInt(quizId)}
@@ -454,20 +518,31 @@ const QuestionForm = ({
                 <Form.Item
                   name="option_c"
                   label={t('quiz.optionC')}
+                  getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
                 >
-                  <Input
-                    placeholder={t('quiz.optionCPlaceholder')}
-                    spellCheck="true"
-                    lang={t('common.langCode', { defaultValue: 'en' })}
-                    onContextMenu={(e) => e.stopPropagation()}
-                    suffix={isAdmin && (
-                      <Tooltip title={t('ai.rewriteWithAI')}>
-                        <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
-                      </Tooltip>
-                    )}
-                  />
+                  {useRichTextOptions
+                    ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionCPlaceholder')} />
+                    : <Input
+                        placeholder={t('quiz.optionCPlaceholder')}
+                        spellCheck="true"
+                        lang={t('common.langCode', { defaultValue: 'en' })}
+                        onContextMenu={(e) => e.stopPropagation()}
+                        suffix={isAdmin && (
+                          <Tooltip title={t('ai.rewriteWithAI')}>
+                            <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
+                          </Tooltip>
+                        )}
+                      />
+                  }
                 </Form.Item>
-                
+                {isAdmin && useRichTextOptions && (
+                  <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+                    <Tooltip title={t('ai.rewriteWithAI')}>
+                      <Button type="text" size="small" icon={rewriteIcon('option_c')} onClick={() => handleRewrite('option_c', 'quiz answer option')} />
+                    </Tooltip>
+                  </div>
+                )}
+
                 <ImageUpload
                   quizId={parseInt(quizId)}
                   questionId={question?.id}
@@ -491,20 +566,31 @@ const QuestionForm = ({
                 <Form.Item
                   name="option_d"
                   label={t('quiz.optionD')}
+                  getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
                 >
-                  <Input
-                    placeholder={t('quiz.optionDPlaceholder')}
-                    spellCheck="true"
-                    lang={t('common.langCode', { defaultValue: 'en' })}
-                    onContextMenu={(e) => e.stopPropagation()}
-                    suffix={isAdmin && (
-                      <Tooltip title={t('ai.rewriteWithAI')}>
-                        <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
-                      </Tooltip>
-                    )}
-                  />
+                  {useRichTextOptions
+                    ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionDPlaceholder')} />
+                    : <Input
+                        placeholder={t('quiz.optionDPlaceholder')}
+                        spellCheck="true"
+                        lang={t('common.langCode', { defaultValue: 'en' })}
+                        onContextMenu={(e) => e.stopPropagation()}
+                        suffix={isAdmin && (
+                          <Tooltip title={t('ai.rewriteWithAI')}>
+                            <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
+                          </Tooltip>
+                        )}
+                      />
+                  }
                 </Form.Item>
-                
+                {isAdmin && useRichTextOptions && (
+                  <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+                    <Tooltip title={t('ai.rewriteWithAI')}>
+                      <Button type="text" size="small" icon={rewriteIcon('option_d')} onClick={() => handleRewrite('option_d', 'quiz answer option')} />
+                    </Tooltip>
+                  </div>
+                )}
+
                 <ImageUpload
                   quizId={parseInt(quizId)}
                   questionId={question?.id}
@@ -527,16 +613,25 @@ const QuestionForm = ({
               {(fields, { add, remove }) => (
                 <>
                   {fields.map((field) => (
-                    <Space key={field.key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
-                      <Form.Item
-                        {...field}
-                        label={t('quiz.optionLabel', { defaultValue: `Option ${field.name + 5}` })}
-                        rules={[{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]}
-                      >
-                        <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
-                      </Form.Item>
-                      <Button icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />
-                    </Space>
+                    <div key={field.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <Form.Item
+                          {...field}
+                          label={t('quiz.optionLabel', { defaultValue: `Option ${field.name + 5}` })}
+                          rules={useRichTextOptions
+                            ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' })) }]
+                            : [{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]
+                          }
+                          getValueFromEvent={useRichTextOptions ? (v) => v : undefined}
+                        >
+                          {useRichTextOptions
+                            ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                            : <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                          }
+                        </Form.Item>
+                      </div>
+                      <Button style={{ marginTop: 30 }} icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />
+                    </div>
                   ))}
                   <Form.Item>
                     <Space>
@@ -609,7 +704,7 @@ const QuestionForm = ({
                       questionForm.getFieldValue('option_c'),
                       questionForm.getFieldValue('option_d'),
                       ...(questionForm.getFieldValue('extra_options') || []),
-                    ].map((v) => (typeof v === 'string' ? v.trim() : v)).filter(Boolean)
+                    ].filter((v) => stripHtml(v).length > 0)
 
                     return (
                       <Form.Item
@@ -971,13 +1066,12 @@ export default function QuizBuilder() {
           values.option_d,
           ...(values.extra_options || []),
         ]
-          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
-          .filter(Boolean)
+          .filter((opt) => stripHtml(opt).length > 0)
         if (mcqOptions.length < 2) {
           message.error(t('quiz.mcqMinOptions'))
           return
         }
-        const lowerOpts = mcqOptions.map((o) => o.toLowerCase())
+        const lowerOpts = mcqOptions.map((o) => stripHtml(o).toLowerCase())
         if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
           message.error(t('quiz.mcqDuplicateOptions'))
           return
@@ -1149,13 +1243,12 @@ export default function QuizBuilder() {
           values.option_d,
           ...(values.extra_options || []),
         ]
-          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
-          .filter(Boolean)
+          .filter((opt) => stripHtml(opt).length > 0)
         if (mcqOptions.length < 2) {
           message.error(t('quiz.mcqMinOptions'))
           return
         }
-        const lowerOpts = mcqOptions.map((o) => o.toLowerCase())
+        const lowerOpts = mcqOptions.map((o) => stripHtml(o).toLowerCase())
         if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
           message.error(t('quiz.mcqDuplicateOptions'))
           return
