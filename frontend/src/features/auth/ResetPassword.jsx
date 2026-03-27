@@ -10,7 +10,7 @@ import logo from '../../assets/logo.png'
 const { Title, Text } = Typography
 
 function ResetPassword() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
@@ -85,6 +85,7 @@ function ResetPassword() {
               </Text>
 
               <Form
+                key={i18n.language}
                 name="reset_password"
                 onFinish={onFinish}
                 autoComplete="off"

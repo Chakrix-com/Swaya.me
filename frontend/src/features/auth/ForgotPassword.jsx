@@ -10,7 +10,7 @@ import logo from '../../assets/logo.png'
 const { Title, Text } = Typography
 
 function ForgotPassword() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitEmail, setSubmitEmail] = useState('')
@@ -55,6 +55,7 @@ function ForgotPassword() {
               </Text>
 
               <Form
+                key={i18n.language}
                 name="forgot_password"
                 onFinish={onFinish}
                 autoComplete="off"
@@ -64,8 +65,8 @@ function ForgotPassword() {
                   label={t('auth.email')}
                   name="email"
                   rules={[
-                    { required: true, message: `${t('auth.email')} is required` },
-                    { type: 'email', message: `${t('auth.email')} is invalid` },
+                    { required: true, message: t('auth.emailRequired') },
+                    { type: 'email', message: t('auth.emailInvalid') },
                   ]}
                 >
                   <Input prefix={<UserOutlined />} placeholder={t('auth.email')} size="large" />

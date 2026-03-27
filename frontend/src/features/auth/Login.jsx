@@ -12,7 +12,7 @@ import logo from '../../assets/logo.png'
 const { Title, Text } = Typography
 
 function Login() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -87,6 +87,7 @@ function Login() {
           )}
 
           <Form
+            key={i18n.language}
             name="login"
             onFinish={onFinish}
             autoComplete="off"
@@ -96,8 +97,8 @@ function Login() {
               label={t('auth.email')}
               name="email"
               rules={[
-                { required: true, message: `${t('auth.email')} is required` },
-                { type: 'email', message: `${t('auth.email')} is invalid` },
+                { required: true, message: t('auth.emailRequired') },
+                { type: 'email', message: t('auth.emailInvalid') },
               ]}
             >
               <Input prefix={<UserOutlined />} placeholder={t('auth.email')} size="large" />
@@ -106,7 +107,7 @@ function Login() {
             <Form.Item
               label={t('auth.password')}
               name="password"
-              rules={[{ required: true, message: `${t('auth.password')} is required` }]}
+              rules={[{ required: true, message: t('auth.passwordRequired') }]}
             >
               <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} size="large" />
             </Form.Item>

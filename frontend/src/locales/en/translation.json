@@ -75,7 +75,10 @@
     "saveNewPassword": "Save New Password",
     "passwordResetTitle": "Password Reset",
     "passwordResetSubtitle": "Your password has been successfully updated.",
-    "passwordUpperNumber": "Password must contain uppercase and number!"
+    "passwordUpperNumber": "Password must contain uppercase and number!",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email",
+    "passwordRequired": "Password is required"
   },
   "quiz": {
     "myQuizzes": "My Quizzes",

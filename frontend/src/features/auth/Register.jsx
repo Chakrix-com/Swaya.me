@@ -11,7 +11,7 @@ import logo from '../../assets/logo.png'
 const { Title, Text } = Typography
 
 function Register() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { loading } = useSelector((state) => state.auth)
@@ -56,6 +56,7 @@ function Register() {
           </Title>
 
           <Form
+            key={i18n.language}
             name="register"
             onFinish={onFinish}
             autoComplete="off"
@@ -65,8 +66,8 @@ function Register() {
               label={t('auth.email')}
               name="email"
               rules={[
-                { required: true, message: `${t('auth.email')} is required` },
-                { type: 'email', message: `${t('auth.email')} is invalid` },
+                { required: true, message: t('auth.emailRequired') },
+                { type: 'email', message: t('auth.emailInvalid') },
               ]}
             >
               <Input prefix={<UserOutlined />} placeholder={t('auth.email')} size="large" />
@@ -83,7 +84,7 @@ function Register() {
               label={t('auth.password')}
               name="password"
               rules={[
-                { required: true, message: `${t('auth.password')} is required` },
+                { required: true, message: t('auth.passwordRequired') },
                 { min: 8, message: t('auth.passwordMinLength') },
                 {
                   pattern: /^(?=.*[A-Z])(?=.*\d)/,
