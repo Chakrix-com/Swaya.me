@@ -96,7 +96,8 @@ function ResetPassword() {
                   name="password"
                   rules={[
                     { required: true, message: t('auth.newPasswordRequired') },
-                    { min: 8, message: t('auth.passwordMinLength') }
+                    { min: 8, message: t('auth.passwordMinLength') },
+                    { pattern: /^(?=.*[A-Z])(?=.*\d)/, message: t('auth.passwordUpperNumber') },
                   ]}
                   extra={t('auth.passwordComplexityHint')}
                 >
