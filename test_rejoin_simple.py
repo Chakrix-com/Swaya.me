@@ -10,16 +10,23 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
+import argparse
 import time
 import os
 import requests
+
+# CLI overrides (--user-email / --user-password) for regular-user persona runs
+_parser = argparse.ArgumentParser(add_help=False)
+_parser.add_argument("--user-email", default=None)
+_parser.add_argument("--user-password", default=None)
+_args, _ = _parser.parse_known_args()
 
 # Configuration
 SELENIUM_URL = os.getenv("SELENIUM_URL", "http://localhost:4444/wd/hub")
 APP_URL = os.getenv("APP_BASE_URL", "https://www.swaya.me")
 API_BASE_URL = os.getenv("BASE_URL", f"{APP_URL}/api/v1")
-HOST_EMAIL = os.getenv("HOST_EMAIL", "demo@swaya.me")
-HOST_PASSWORD = os.getenv("HOST_PASSWORD", "Demo1234")
+HOST_EMAIL = _args.user_email or os.getenv("HOST_EMAIL", "demo@swaya.me")
+HOST_PASSWORD = _args.user_password or os.getenv("HOST_PASSWORD", "Demo1234")
 
 
 def find_first(driver, wait, locators, clickable=False, timeout=15):
@@ -55,6 +62,24 @@ def get_ready_quiz_id(token):
     if not ready_quiz:
         raise RuntimeError("No READY quiz found for rejoin test")
     return ready_quiz["id"]
+
+
+def cleanup_all_open_sessions(token):
+    """End ALL open sessions across all quizzes (prevents FREE-tier concurrent limit errors)."""
+    headers = {"Authorization": f"Bearer {token}"}
+    quizzes_r = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
+    if quizzes_r.status_code != 200:
+        return
+    for quiz in quizzes_r.json():
+        sessions_r = requests.get(f"{API_BASE_URL}/quizzes/{quiz['id']}/sessions", headers=headers, verify=False, timeout=20)
+        if sessions_r.status_code != 200:
+            continue
+        for session in sessions_r.json().get("sessions", []):
+            if session.get("status") in ("active", "created"):
+                requests.post(
+                    f"{API_BASE_URL}/quizzes/sessions/{session['id']}/end",
+                    headers=headers, verify=False, timeout=20,
+                )
 
 
 def cleanup_open_sessions(token, quiz_id):
@@ -124,6 +149,7 @@ def main():
         print("="*60 + "\n")
 
         token = api_login()
+        cleanup_all_open_sessions(token)  # clear concurrent limit before starting
         quiz_id = get_ready_quiz_id(token)
         cleanup_open_sessions(token, quiz_id)
         

@@ -3,6 +3,7 @@
 E2E Test for Word Cloud Question Flow
 Tests: Create Word Cloud Quiz → Start Session → Join → Advance → Display → Submit
 """
+import argparse
 import time
 import sys
 import os
@@ -14,14 +15,20 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+# CLI overrides (--user-email / --user-password) for regular-user persona runs
+_parser = argparse.ArgumentParser(add_help=False)
+_parser.add_argument("--user-email", default=None)
+_parser.add_argument("--user-password", default=None)
+_args, _ = _parser.parse_known_args()
+
 BASE_URL = os.getenv("APP_BASE_URL", "https://www.swaya.me")
 API_BASE_URL = os.getenv("BASE_URL", f"{BASE_URL}/api/v1")
 SELENIUM_URL = os.getenv("SELENIUM_URL", "http://localhost:4444/wd/hub")
 TIMEOUT = 15
 
 # Test credentials
-EMAIL = os.getenv("HOST_EMAIL", "demo@swaya.me")
-PASSWORD = os.getenv("HOST_PASSWORD", "Demo1234")
+EMAIL = _args.user_email or os.getenv("HOST_EMAIL", "demo@swaya.me")
+PASSWORD = _args.user_password or os.getenv("HOST_PASSWORD", "Demo1234")
 
 def log(message, level="INFO"):
     colors = {"INFO": "\033[94m", "SUCCESS": "\033[92m", "ERROR": "\033[91m", "WARN": "\033[93m"}
@@ -116,6 +123,24 @@ def find_ready_wordcloud_quiz(token):
         return best
     raise RuntimeError("No READY quiz with word_cloud question found")
 
+def cleanup_all_open_sessions(token):
+    """End ALL open sessions across all quizzes (prevents FREE-tier concurrent limit errors)."""
+    headers = {"Authorization": f"Bearer {token}"}
+    quizzes_r = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
+    if quizzes_r.status_code != 200:
+        return
+    for quiz in quizzes_r.json():
+        sessions_r = requests.get(f"{API_BASE_URL}/quizzes/{quiz['id']}/sessions", headers=headers, verify=False, timeout=20)
+        if sessions_r.status_code != 200:
+            continue
+        for session in sessions_r.json().get("sessions", []):
+            if session.get("status") in ("active", "created"):
+                requests.post(
+                    f"{API_BASE_URL}/quizzes/sessions/{session['id']}/end",
+                    headers=headers, verify=False, timeout=20,
+                )
+
+
 def cleanup_open_sessions(token, quiz_id):
     headers = {"Authorization": f"Bearer {token}"}
     sessions_resp = requests.get(f"{API_BASE_URL}/quizzes/{quiz_id}/sessions", headers=headers, verify=False, timeout=20)
@@ -132,6 +157,7 @@ def test_word_cloud_flow():
     try:
         log("=== Starting Word Cloud E2E Test ===", "INFO")
         token = api_login()
+        cleanup_all_open_sessions(token)  # clear concurrent limit before starting
         quiz_id, wc_advance_count = find_ready_wordcloud_quiz(token)
         log(f"Using quiz {quiz_id}, will advance {wc_advance_count} time(s) to reach word cloud question", "INFO")
         cleanup_open_sessions(token, quiz_id)
@@ -217,6 +243,8 @@ def test_word_cloud_flow():
         host.switch_to.window(host.window_handles[-1])
         audience = host
         audience.get(f"{BASE_URL}/join")
+        # Clear any host auth tokens so audience behaves as anonymous
+        audience.execute_script("window.localStorage.removeItem('token'); window.localStorage.removeItem('user');")
         time.sleep(2)
         
         code_input = wait_for_any(audience, [

@@ -35,6 +35,9 @@ check_route "exam_info"           "$API_BASE/e/smoke-test-slug"
 # OG metadata endpoint for join code (expect 200 or 404)
 check_route "og_join_metadata"    "$API_BASE/og/join/0000"
 
+# OG metadata endpoint for poll slug (expect 200 or 404)
+check_route "og_poll_metadata"    "$API_BASE/og/poll/smoke-test-slug"
+
 # Main app pages — should all return 200
 check_route "app_root"            "$APP_BASE_URL/"
 check_route "app_login"           "$APP_BASE_URL/login"

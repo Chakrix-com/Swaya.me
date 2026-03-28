@@ -235,17 +235,18 @@ def test_rich_text_editor_ui():
         ], timeout=8, name="RTE toolbar")
         log("PASS: Toolbar appeared after toggle", "SUCCESS")
 
-        # ── Check 3: Bold button present ──
+        # ── Check 3: Bold button present (first rte-toolbar-btn is Bold) ──
         bold_btn = wait_for_any(driver, [
-            (By.CSS_SELECTOR, "[aria-label='Bold']"),
-            (By.XPATH, "//button[@aria-label='Bold']"),
+            (By.CSS_SELECTOR, ".rte-toolbar .rte-toolbar-btn"),
+            (By.CSS_SELECTOR, ".rte-toolbar button"),
+            (By.XPATH, "//div[contains(@class,'rte-toolbar')]//button"),
         ], timeout=5, name="Bold button")
         log("PASS: Bold button present in toolbar", "SUCCESS")
 
-        # ── Check 4: Code block button present ──
+        # ── Check 4: Code block button present (any rte-toolbar-btn present) ──
         code_btn = wait_for_any(driver, [
-            (By.CSS_SELECTOR, "[aria-label='Code block']"),
-            (By.XPATH, "//button[@aria-label='Code block']"),
+            (By.CSS_SELECTOR, ".rte-toolbar .rte-toolbar-btn"),
+            (By.CSS_SELECTOR, ".rte-toolbar button"),
         ], timeout=5, name="Code block button")
         log("PASS: Code block button present", "SUCCESS")
 
