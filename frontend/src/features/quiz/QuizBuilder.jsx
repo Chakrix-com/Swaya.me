@@ -63,6 +63,8 @@ const getQuestionTypeLabel = (type, t) => {
   return labels[type] || t('quiz.multipleChoice')
 }
 
+const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
+
 // QuestionForm component - extracted to prevent recreation on parent re-renders
 const QuestionForm = ({
   question,
@@ -83,6 +85,7 @@ const QuestionForm = ({
   isAdmin,
   t
 }) => {
+  const { message } = App.useApp()
   const [questionForm] = Form.useForm()
   const [questionType, setQuestionType] = useState('mcq')
   const [mcqBaseOptionCount, setMcqBaseOptionCount] = useState(2)
@@ -241,7 +244,7 @@ const QuestionForm = ({
     }
   }
 
-  const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
+
 
   const handleRewrite = async (fieldName, context) => {
     const val = questionForm.getFieldValue(fieldName)
