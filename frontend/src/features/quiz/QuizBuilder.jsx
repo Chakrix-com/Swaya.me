@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useContext } from 'react'
+import { useState, useEffect, useCallback, memo, useContext, useRef } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
@@ -931,6 +931,7 @@ export default function QuizBuilder() {
   const [quiz, setQuiz] = useState(null)
   const [questions, setQuestions] = useState([])
   const [editingQuestion, setEditingQuestion] = useState(null)
+  const questionsRef = useRef(null)
   
   // Image state for question being edited/created
   const [questionImageUrl, setQuestionImageUrl] = useState(null)
@@ -1003,6 +1004,18 @@ export default function QuizBuilder() {
       })
     }
   }, [id, initialQuizType, form])
+
+  // On mobile, the quiz settings card can push the questions section off-screen.
+  // Scroll to it once after the initial load so users can see the Add Question button.
+  const hasScrolledRef = useRef(false)
+  useEffect(() => {
+    if (id && quiz && !hasScrolledRef.current && questionsRef.current) {
+      hasScrolledRef.current = true
+      setTimeout(() => {
+        questionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 300)
+    }
+  }, [id, quiz])
 
   const loadQuiz = useCallback(async () => {
     try {
@@ -1798,6 +1811,7 @@ export default function QuizBuilder() {
 
       {id && (
         <>
+          <div ref={questionsRef} />
           <Divider>{t('quiz.questions')}</Divider>
 
           {editingQuestion !== 'new' && isAdmin && (
