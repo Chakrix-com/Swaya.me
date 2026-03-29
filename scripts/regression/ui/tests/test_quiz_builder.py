@@ -63,22 +63,62 @@ def _run_add_question_flow(page: Page, email: str, password: str, persona: str):
 
 
 def test_excel_export_button_visibility(page: Page):
-    """Verify 'Download draft as Excel' button exists in edit view."""
-    # Login
+    """Verify 'Download draft as Excel' shown for exam, hidden for regular quiz."""
+    import requests as req
+    api = BASE_URL.replace(":3000", "").rstrip("/")
+    api_base = api.replace("https://test.swaya.me", "https://test.swaya.me/api/v1")
+
+    # Get auth token via API
+    token_r = req.post(f"{api_base}/auth/login",
+                       json={"email": HOST_EMAIL, "password": HOST_PASSWORD}, timeout=10)
+    token = token_r.json().get("access_token", "")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Find or create a draft exam quiz
+    quizzes = req.get(f"{api_base}/quizzes/", headers=headers, timeout=10).json()
+    exam = next((q for q in quizzes if q.get("quiz_type") == "exam" and q.get("status") == "draft"), None)
+    if not exam:
+        import datetime, pytz
+        now = datetime.datetime.now(pytz.utc)
+        r = req.post(f"{api_base}/quizzes/", headers=headers, timeout=10, json={
+            "title": "Excel Visibility Test Exam",
+            "quiz_type": "exam",
+            "exam_start_at": (now + datetime.timedelta(hours=1)).isoformat(),
+            "exam_end_at": (now + datetime.timedelta(hours=2)).isoformat(),
+        })
+        exam = r.json()
+
+    exam_id = exam["id"]
+
+    # Login in browser
     page.goto(f"{BASE_URL}/login")
     page.fill("input#login_email", HOST_EMAIL)
     page.fill("input#login_password", HOST_PASSWORD)
     page.click('button:has-text("Sign In")')
     page.wait_for_url(f"{BASE_URL}/dashboard")
 
-    # Find first quiz and click edit
-    page.click('button.ant-btn-text:has-text("Edit")')
-    page.wait_for_url("**/edit")
+    # Navigate directly to exam edit page
+    page.goto(f"{BASE_URL}/quiz/{exam_id}/edit")
+    page.wait_for_load_state("networkidle")
 
-    # Verify Download button
+    # Exam: Download draft as Excel should be visible
     download_btn = page.locator('button:has-text("Download draft as Excel")')
-    expect(download_btn).to_be_visible()
-    print("✓ Download draft as Excel button is visible in edit mode")
+    expect(download_btn).to_be_visible(timeout=10000)
+    print("✓ Download draft as Excel button visible for exam type")
+
+    # Find or create a regular draft quiz and verify button is hidden
+    regular = next((q for q in quizzes if q.get("quiz_type") == "quiz" and q.get("status") == "draft"), None)
+    if not regular:
+        r = req.post(f"{api_base}/quizzes/", headers=headers, timeout=10, json={
+            "title": "Excel Visibility Test Quiz",
+            "quiz_type": "quiz",
+        })
+        regular = r.json()
+
+    page.goto(f"{BASE_URL}/quiz/{regular['id']}/edit")
+    page.wait_for_load_state("networkidle")
+    expect(page.locator('button:has-text("Download draft as Excel")')).to_have_count(0)
+    print("✓ Download draft as Excel button hidden for regular quiz type")
 
 def test_create_test_persistence_ui(page: Page):
     """Verify creating a test via 'Create Test' button persists as exam."""
