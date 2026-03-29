@@ -22,6 +22,7 @@ run_step "core_regular_user_flows" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT
 run_step "core_folders_templates"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_folders_templates.py"                          || FAILED=1
 run_step "core_offline_poll"       "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_offline_poll_lifecycle.py"                     || FAILED=1
 run_step "core_exam_lifecycle"     "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_exam_lifecycle.py"                             || FAILED=1
+run_step "core_quiz_type_persistence" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_quiz_type_persistence.py"      || FAILED=1
 run_step "core_admin_api"          "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_admin_api_coverage.py"                         || FAILED=1
 run_step "core_misc_endpoints"     "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_misc_endpoints.py"                             || FAILED=1
 

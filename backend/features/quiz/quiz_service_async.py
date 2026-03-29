@@ -96,7 +96,10 @@ class QuizBuilderServiceAsync:
         rows = (
             await db.execute(
                 select(QuizFolder)
-                .filter(QuizFolder.tenant_id == current_user.tenant_id)
+                .filter(
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.created_by_id == current_user.user_id,
+                )
                 .order_by(QuizFolder.parent_id.asc(), QuizFolder.sort_order.asc(), QuizFolder.name.asc())
             )
         ).scalars().all()
@@ -118,6 +121,7 @@ class QuizBuilderServiceAsync:
                     select(QuizFolder).filter(
                         QuizFolder.id == request.parent_id,
                         QuizFolder.tenant_id == current_user.tenant_id,
+                        QuizFolder.created_by_id == current_user.user_id,
                     )
                 )
             ).scalar_one_or_none()
@@ -147,6 +151,7 @@ class QuizBuilderServiceAsync:
 
         folder = QuizFolder(
             tenant_id=current_user.tenant_id,
+            created_by_id=current_user.user_id,
             parent_id=request.parent_id,
             name=request.name.strip(),
             sort_order=(max_order or 0) + 1,
@@ -171,6 +176,7 @@ class QuizBuilderServiceAsync:
                 select(QuizFolder).filter(
                     QuizFolder.id == folder_id,
                     QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.created_by_id == current_user.user_id,
                 )
             )
         ).scalar_one_or_none()
@@ -189,6 +195,7 @@ class QuizBuilderServiceAsync:
                     select(QuizFolder).filter(
                         QuizFolder.id == request.parent_id,
                         QuizFolder.tenant_id == current_user.tenant_id,
+                        QuizFolder.created_by_id == current_user.user_id,
                     )
                 )
             ).scalar_one_or_none()
@@ -248,6 +255,7 @@ class QuizBuilderServiceAsync:
                 select(QuizFolder).filter(
                     QuizFolder.id == folder_id,
                     QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.created_by_id == current_user.user_id,
                 )
             )
         ).scalar_one_or_none()
@@ -361,13 +369,17 @@ class QuizBuilderServiceAsync:
             if not event:
                 raise QuizNotFoundError("Event not found")
         
+        # Explicitly determine quiz type
+        raw_type = request.quiz_type.value if hasattr(request.quiz_type, 'value') else str(request.quiz_type)
+        q_type = QuizType.EXAM if any(k in raw_type.lower() for k in ["exam", "test"]) else QuizType(raw_type)
+        
         # Create quiz
         quiz = Quiz(
             tenant_id=current_user.tenant_id,
             event_id=event_id,
             title=request.title,
             description=request.description,
-            quiz_type=QuizType(request.quiz_type.value),
+            quiz_type=q_type,
             status=QuizStatus.DRAFT
         )
 
@@ -654,7 +666,8 @@ class QuizBuilderServiceAsync:
         if request.description is not None:
             quiz.description = request.description
         if request.quiz_type is not None:
-            quiz.quiz_type = QuizType(request.quiz_type.value)
+            raw_type = request.quiz_type.value if hasattr(request.quiz_type, 'value') else str(request.quiz_type)
+            quiz.quiz_type = QuizType.EXAM if any(k in raw_type.lower() for k in ["exam", "test"]) else QuizType(raw_type)
         # Offline poll fields
         if request.offline_start_at is not None:
             quiz.offline_start_at = request.offline_start_at

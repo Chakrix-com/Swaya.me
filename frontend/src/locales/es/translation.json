@@ -306,7 +306,18 @@
     "codeLanguageSelect": "Seleccionar idioma",
     "quizTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas MCQ con puntuación. Tabla de clasificación en tiempo real. La audiencia se une con un código.",
     "pollTypeInfo": "Sesión en vivo controlada por el anfitrión. Preguntas MCQ abiertas o nube de palabras — sin respuesta correcta, sin puntuación.",
-    "mcqDuplicateOptions": "Cada opción debe ser única: no se permiten opciones duplicadas."
+    "mcqDuplicateOptions": "Cada opción debe ser única: no se permiten opciones duplicadas.",
+    "uploadExcelTab": "Cargar vía Excel",
+    "uploadExcelFile": "Cargar archivo Excel",
+    "downloadDraftExcel": "Descargar borrador como Excel",
+    "downloadTemplate": "Descargar plantilla",
+    "canImport": "Listo para importar",
+    "hasErrors": "Corregir errores para importar",
+    "importSuccess": "Cuestionario importado correctamente",
+    "importError": "Error al importar el cuestionario",
+    "finalizeImport": "Finalizar importación",
+    "importPreview": "Vista previa de importación",
+    "excelHint": "Haga clic o arrastre el archivo aquí para validar. Compatible con un solo archivo .xlsx."
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",

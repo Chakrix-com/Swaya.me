@@ -306,7 +306,22 @@
     "codeLanguageSelect": "Select language",
     "quizTypeInfo": "Live, host-controlled session. MCQ questions with scoring. Real-time leaderboard. Audience joins via a code.",
     "pollTypeInfo": "Live, host-controlled session. Open MCQ or word cloud questions — no correct answer, no scoring.",
-    "mcqDuplicateOptions": "Each option must be unique — duplicate options are not allowed."
+    "mcqDuplicateOptions": "Each option must be unique — duplicate options are not allowed.",
+    "fillOnline": "Fill Online",
+    "uploadExcelTab": "Upload via Excel",
+    "downloadTemplate": "Download Template",
+    "downloadDraftExcel": "Download draft as Excel",
+    "uploadExcelFile": "Upload Excel File",
+    "importPreview": "Import Preview",
+    "finalizeImport": "Finalize Import",
+    "validating": "Validating...",
+    "importSuccess": "Quiz imported successfully",
+    "importError": "Failed to import quiz",
+    "noQuestionsFound": "No questions found in file",
+    "invalidFile": "Invalid file format",
+    "canImport": "Ready to Import",
+    "hasErrors": "Correct Errors to Import",
+    "excelHint": "Click or drag file to this area to validate. Support for single .xlsx file."
   },
   "audience": {
     "joinQuiz": "Join Quiz",

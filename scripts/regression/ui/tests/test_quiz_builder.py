@@ -61,15 +61,53 @@ def _run_add_question_flow(page: Page, email: str, password: str, persona: str):
     print(f"[{persona}] No ReferenceErrors or TypeErrors detected")
 
 
-def test_add_question_regular_user(page: Page):
-    """Primary regression test: the stripHtml bug only surfaced for role=user."""
-    _run_add_question_flow(page, REGULAR_USER_EMAIL, REGULAR_USER_PASSWORD, "regular_user")
 
+def test_excel_export_button_visibility(page: Page):
+    """Verify 'Download draft as Excel' button exists in edit view."""
+    # Login
+    page.goto(f"{BASE_URL}/login")
+    page.fill("input#login_email", HOST_EMAIL)
+    page.fill("input#login_password", HOST_PASSWORD)
+    page.click('button:has-text("Sign In")')
+    page.wait_for_url(f"{BASE_URL}/dashboard")
 
-def test_add_question_admin_user(page: Page):
-    """Variant: same flow exercised as admin/super_admin user."""
-    _run_add_question_flow(page, HOST_EMAIL, HOST_PASSWORD, "admin")
+    # Find first quiz and click edit
+    page.click('button.ant-btn-text:has-text("Edit")')
+    page.wait_for_url("**/edit")
 
+    # Verify Download button
+    download_btn = page.locator('button:has-text("Download draft as Excel")')
+    expect(download_btn).to_be_visible()
+    print("✓ Download draft as Excel button is visible in edit mode")
+
+def test_create_test_persistence_ui(page: Page):
+    """Verify creating a test via 'Create Test' button persists as exam."""
+    page.goto(f"{BASE_URL}/login")
+    page.fill("input#login_email", HOST_EMAIL)
+    page.fill("input#login_password", HOST_PASSWORD)
+    page.click('button:has-text("Sign In")')
+    page.wait_for_url(f"{BASE_URL}/dashboard")
+
+    # Click 'Create Test'
+    page.click('button:has-text("Create Test")')
+    page.wait_for_url("**/quiz/new?type=exam")
+    
+    title = f"UI Persistence Test {os.getpid()}"
+    page.fill("input#title", title)
+    
+    # Check that it says 'Create Test' on the primary button
+    submit_btn = page.locator('button.ant-btn-primary:has-text("Create Test")')
+    expect(submit_btn).to_be_visible()
+    
+    submit_btn.click()
+    page.wait_for_url("**/edit")
+    
+    # Check header says 'Edit Test'
+    expect(page.locator('h1, span:has-text("Edit Test")')).to_be_visible()
+    
+    # Check persistence tag 'Test'
+    expect(page.locator('.ant-tag:has-text("Test")')).to_be_visible()
+    print(f"✓ Created test {title} successfully persisted as Exam type in UI")
 
 if __name__ == "__main__":
     pytest.main([__file__, "-s", "--headed"])

@@ -16,6 +16,10 @@ import {
   Typography,
   Divider,
   Tag,
+  Table,
+  Upload,
+  Tabs,
+  theme,
 } from 'antd'
 import {
   PlusOutlined,
@@ -42,7 +46,7 @@ import {
   DatePicker,
   message as antMessage,
 } from 'antd'
-import { CopyOutlined, ShareAltOutlined } from '@ant-design/icons'
+import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
@@ -925,6 +929,7 @@ const QuestionForm = ({
 const MemoizedQuestionForm = memo(QuestionForm)
 
 export default function QuizBuilder() {
+  const { token } = theme.useToken()
   const { message } = App.useApp()
   const { id } = useParams()
   const navigate = useNavigate()
@@ -949,8 +954,8 @@ export default function QuizBuilder() {
   
   // Extract query params for initial creation (e.g. ?type=poll or ?type=offline_poll)
   const searchParams = new URLSearchParams(location.search)
-  const rawType = searchParams.get('type')
-  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : rawType === 'exam' ? 'exam' : 'quiz'
+  const rawType = searchParams.get('type')?.toLowerCase()
+  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : (rawType === 'exam' || rawType === 'test') ? 'exam' : 'quiz'
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -996,15 +1001,140 @@ export default function QuizBuilder() {
   const [aiCount, setAiCount] = useState(5)
   const [aiError, setAiError] = useState(null)
   const [aiPreview, setAiPreview] = useState([]) // [{text, options, correct_answer_index, selected}]
+  
+  // Excel Import/Export State
+  const [importData, setImportData] = useState(null)
+  const [isValidating, setIsValidating] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [activeTab, setActiveTab] = useState('1')
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await quizAPI.getImportTemplate()
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Swaya_me_Test_Template.xlsx')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (error) {
+      message.error(t('quiz.exportFailed'))
+    }
+  }
+
+  const handleDownloadDraft = async () => {
+    try {
+      // Collect current form data and questions
+      const currentDraft = {
+        lang: i18n.language,
+        title: form.getFieldValue('title') || 'Untitled Quiz',
+        description: form.getFieldValue('description'),
+        quiz_type: form.getFieldValue('quiz_type') || 'quiz',
+        duration_minutes: form.getFieldValue('exam_time_limit_minutes'),
+        questions: (questions || []).map(q => ({
+          type: q.question_type,
+          text: q.text,
+          points: q.points,
+          negative_points: q.negative_points,
+          max_time_seconds: q.max_time_seconds,
+          correct_answer_index: q.correct_answer_index,
+          expected_answer: q.expected_answer,
+          options: (q.question_type === 'mcq' || q.question_type === 'scale') 
+            ? [q.option_a, q.option_b, q.option_c, q.option_d, ...(q.extra_options || [])]
+            : [q.expected_answer]
+        }))
+      }
+      
+      const response = await quizAPI.exportDraftToExcel(currentDraft)
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const fileName = `${currentDraft.title.replace(/\s+/g, '_')}_Swaya.xlsx`
+      link.download = fileName
+      
+      // Standard robust download trigger for Chrome/Safari compatibility
+      document.body.appendChild(link)
+      const clickEvent = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      })
+      link.dispatchEvent(clickEvent)
+      
+      // Minor delay before cleanup to ensure browser has handled the trigger
+      setTimeout(() => {
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      }, 100)
+    } catch (error) {
+      console.error('Export draft error:', error)
+      message.error(t('quiz.exportFailed'))
+    }
+  }
+
+  const handleExcelUpload = async (info) => {
+    const { status } = info.file
+    if (status === 'uploading') {
+      setIsValidating(true)
+      return
+    }
+    if (status === 'done' || (status === undefined && info.file)) {
+      // Ant Design's Dragger sometimes needs manual handling if not using 'action' prop
+      try {
+        setIsValidating(true)
+        const response = await quizAPI.validateImport(info.file.originFileObj || info.file)
+        setImportData(response.data)
+        message.success(`${info.file.name} validated successfully.`)
+      } catch (error) {
+        console.error('Validation error:', error)
+        message.error(`${info.file.name} validation failed: ${error.response?.data?.detail || error.message}`)
+      } finally {
+        setIsValidating(false)
+      }
+    }
+  }
+
+  const handleFinalizeImport = async () => {
+    if (!importData || !importData.canImport) return
+    
+    setIsImporting(true)
+    try {
+      const response = await quizAPI.finalizeImport(importData)
+      message.success(t('quiz.importSuccess'))
+      // Redirect to the new quiz or just refresh
+      navigate(`/quiz/${response.data.id}/edit`)
+    } catch (error) {
+      console.error('Import error:', error)
+      message.error(t('quiz.importError'))
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
   useEffect(() => {
     if (id) {
       loadQuiz()
     } else {
       // For new quizzes, set initial form values based on URL param
-      form.setFieldsValue({
+      const isExamLocal = initialQuizType === 'exam'
+      const isOfflineLocal = initialQuizType === 'offline_poll'
+      
+      const values = {
         quiz_type: initialQuizType
-      })
+      }
+      
+      if (isExamLocal) {
+        values.exam_start_at = dayjs()
+        values.exam_end_at = dayjs().add(1, 'day')
+        values.exam_time_limit_minutes = 30
+      } else if (isOfflineLocal) {
+        values.offline_start_at = dayjs()
+        values.offline_end_at = dayjs().add(1, 'day')
+      }
+      
+      form.setFieldsValue(values)
     }
   }, [id, initialQuizType, form])
 
@@ -1084,12 +1214,367 @@ export default function QuizBuilder() {
     }
   }, [id])
 
+  const renderQuizSettings = () => (
+    <>
+      <Form.Item name="quiz_type" hidden>
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="title"
+        label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
+        rules={[{ required: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+      >
+        <Input
+          placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
+          size="large"
+          spellCheck="true"
+          lang={i18n.language}
+          suffix={(
+            <Tooltip title={t('ai.rewriteWithAI')}>
+              <Button
+                type="text"
+                size="small"
+                icon={mainRewriting['title'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                loading={mainRewriting['title']}
+                onClick={() => handleMainRewrite('title', isExam ? 'exam title' : isPoll ? 'poll title' : 'quiz title')}
+              />
+            </Tooltip>
+          )}
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="description"
+        label={isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
+      >
+        <TextArea
+          rows={3}
+          placeholder={isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
+          spellCheck="true"
+          lang={i18n.language}
+        />
+      </Form.Item>
+      {(
+        <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
+          <Tooltip title={t('ai.rewriteDescWithAI')}>
+            <Button
+              size="small"
+              type="text"
+              icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+              loading={mainRewriting['description']}
+              onClick={() => handleMainRewrite('description', isPoll ? 'poll description' : 'quiz description')}
+            >
+              {t('ai.rewrite')}
+            </Button>
+          </Tooltip>
+        </div>
+      )}
+
+      {/* Offline poll configuration fields */}
+      {isOfflinePoll && (
+        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+          <Form.Item
+            name="offline_start_at"
+            label={t('offlinePoll.startDate', 'Start Date & Time')}
+            rules={[{ required: isOfflinePoll, message: 'Start date is required for offline polls' }]}
+          >
+            <DatePicker
+              showTime
+              style={{ width: '100%' }}
+              disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
+              disabledTime={(d) => {
+                if (!d || !d.isSame(dayjs(), 'day')) return {}
+                const now = dayjs()
+                return {
+                  disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+                  disabledMinutes: (h) => h === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : [],
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="offline_end_at"
+            label={t('offlinePoll.endDate', 'End Date & Time')}
+            rules={[{ required: isOfflinePoll, message: 'End date is required for offline polls' }]}
+          >
+            <DatePicker
+              showTime
+              style={{ width: '100%' }}
+              disabledDate={(d) => {
+                if (!d) return false
+                const start = form.getFieldValue('offline_start_at')
+                const floor = start ? start.startOf('day') : dayjs().startOf('day')
+                return d.isBefore(floor)
+              }}
+              disabledTime={(d) => {
+                if (!d) return {}
+                const start = form.getFieldValue('offline_start_at')
+                const ref = start && d.isSame(start, 'day') ? start : (d.isSame(dayjs(), 'day') ? dayjs() : null)
+                if (!ref) return {}
+                return {
+                  disabledHours: () => Array.from({ length: ref.hour() }, (_, i) => i),
+                  disabledMinutes: (h) => h === ref.hour() ? Array.from({ length: ref.minute() + 1 }, (_, i) => i) : [],
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="offline_results_email"
+            label={t('offlinePoll.resultsEmail', 'Email Results To (optional)')}
+          >
+            <Input type="email" placeholder="your@email.com" />
+          </Form.Item>
+        </Space>
+      )}
+
+      {/* Exam configuration fields */}
+      {isExam && (
+        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+          <Form.Item
+            name="exam_start_at"
+            label={t('exam.startAt')}
+            rules={[{ required: isExam, message: t('exam.startAtRequired') }]}
+          >
+            <DatePicker
+              showTime
+              style={{ width: '100%' }}
+              disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
+              disabledTime={(d) => {
+                if (!d || !d.isSame(dayjs(), 'day')) return {}
+                const now = dayjs()
+                return {
+                  disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+                  disabledMinutes: (h) => h === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : [],
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="exam_end_at"
+            label={t('exam.endAt')}
+            rules={[{ required: isExam, message: t('exam.endAtRequired') }]}
+          >
+            <DatePicker
+              showTime
+              style={{ width: '100%' }}
+              disabledDate={(d) => {
+                if (!d) return false
+                const start = form.getFieldValue('exam_start_at')
+                const floor = start ? start.startOf('day') : dayjs().startOf('day')
+                return d.isBefore(floor)
+              }}
+              disabledTime={(d) => {
+                if (!d) return {}
+                const start = form.getFieldValue('exam_start_at')
+                const ref = start && d.isSame(start, 'day') ? start : (d.isSame(dayjs(), 'day') ? dayjs() : null)
+                if (!ref) return {}
+                return {
+                  disabledHours: () => Array.from({ length: ref.hour() }, (_, i) => i),
+                  disabledMinutes: (h) => h === ref.hour() ? Array.from({ length: ref.minute() + 1 }, (_, i) => i) : [],
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="exam_time_limit_minutes"
+            label={t('exam.timeLimitMinutes')}
+          >
+            <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: '100%' }} />
+          </Form.Item>
+        </Space>
+      )}
+    </>
+  )
+
+  const renderQuestionsList = () => (
+    <>
+      <Divider>{t('quiz.questions')}</Divider>
+
+      {editingQuestion !== 'new' && isAdmin && (
+        <Button
+          icon={<ThunderboltOutlined />}
+          onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
+          style={{ marginTop: 12, marginBottom: 8, width: '100%' }}
+          size="large"
+          disabled={!!editingQuestion}
+        >
+          {t('ai.generateWithAI')}
+        </Button>
+      )}
+
+      {editingQuestion === 'new' ? (
+        <MemoizedQuestionForm
+          key="new-question"
+          onSave={handleAddQuestion}
+          onCancel={handleCancelQuestion}
+          quizId={id}
+          isPoll={isPoll}
+          isExam={isExam}
+          language={i18n.language}
+          isAdmin={isAdmin}
+          questionImageUrl={questionImageUrl}
+          setQuestionImageUrl={setQuestionImageUrl}
+          optionImages={optionImages}
+          setOptionImages={setOptionImages}
+          tempImages={tempImages}
+          setTempImages={setTempImages}
+          loading={loading}
+          movingImages={movingImages}
+          t={t}
+        />
+      ) : (
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={() => setEditingQuestion('new')}
+          style={{ marginTop: 12, marginBottom: 16, width: '100%' }}
+          size="large"
+          disabled={!!editingQuestion}
+        >
+          {t('quiz.addQuestion')}
+        </Button>
+      )}
+
+      <List
+        dataSource={questions}
+        renderItem={(question, index) => (
+          editingQuestion === question.id ? (
+            <MemoizedQuestionForm
+              key={`edit-question-${question.id}`}
+              question={question}
+              onSave={(values) => handleUpdateQuestion(question.id, values)}
+              onCancel={handleCancelQuestion}
+              quizId={id}
+              isPoll={isPoll}
+              language={i18n.language}
+              isAdmin={isAdmin}
+              questionImageUrl={questionImageUrl}
+              setQuestionImageUrl={setQuestionImageUrl}
+              optionImages={optionImages}
+              setOptionImages={setOptionImages}
+              tempImages={tempImages}
+              setTempImages={setTempImages}
+              loading={loading}
+              movingImages={movingImages}
+              t={t}
+            />
+          ) : (
+            <Card
+              key={question.id}
+              style={{ marginBottom: 16, width: '100%' }}
+              title={
+                <Space>
+                  <Tag color="blue">Q{index + 1}</Tag>
+                  <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
+                    {getQuestionTypeLabel(question.question_type, t)}
+                  </Tag>
+                  {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
+                  {!isPoll && question.max_time_seconds ? (
+                    <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
+                  ) : null}
+                  <Text strong>{question.text.replace(/<[^>]*>/g, '')}</Text>
+                </Space>
+              }
+              extra={
+                <Space>
+                  <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => setEditingQuestion(question.id)}
+                    disabled={!!editingQuestion}
+                  >
+                    {t('common.edit')}
+                  </Button>
+                  <Popconfirm
+                    title={t('quiz.deleteQuestionConfirm')}
+                    onConfirm={() => handleDeleteQuestion(question.id)}
+                    okText={t('common.submit')}
+                    cancelText={t('common.cancel')}
+                    disabled={!!editingQuestion}
+                  >
+                    <Button
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      disabled={!!editingQuestion}
+                    />
+                  </Popconfirm>
+                </Space>
+              }
+            >
+              {question.question_type === 'word_cloud' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text type="secondary" italic>
+                    {t('quiz.wordCloudQuestionDescription')}
+                  </Text>
+                </Space>
+              ) : question.question_type === 'single_line' || question.question_type === 'paragraph' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text type="secondary" italic>
+                    {t('quiz.textResponseDescription')}
+                  </Text>
+                  <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {question.expected_answer || question.options?.[0] || t('quiz.emptyValue')}</Text>
+                </Space>
+              ) : question.question_type === 'scale' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text>{t('quiz.scaleOptionsLabel')}: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
+                  {!isPoll && (
+                    <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || t('quiz.emptyValue')}</Text>
+                  )}
+                </Space>
+              ) : (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {(() => {
+                    const fallbackOptions = [
+                      question.option_a,
+                      question.option_b,
+                      question.option_c,
+                      question.option_d,
+                      ...(question.extra_options || []),
+                    ]
+                    const mcqOptions = (Array.isArray(question.options) && question.options.length > 0
+                      ? question.options
+                      : fallbackOptions
+                    )
+                      .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
+                      .filter(Boolean)
+
+                    const answerToken = question.correct_answer
+                    let correctIndex = Number.isInteger(question.correct_answer_index)
+                      ? question.correct_answer_index
+                      : (Number.isInteger(Number(answerToken)) ? Number(answerToken) : -1)
+
+                    if (!Number.isInteger(question.correct_answer_index) && typeof answerToken === 'string') {
+                      const letterIndex = answerToken.toUpperCase().charCodeAt(0) - 65
+                      if (letterIndex >= 0) correctIndex = letterIndex
+                    }
+
+                    return mcqOptions.map((opt, idx) => {
+                      const letter = String.fromCharCode(65 + idx)
+                      return (
+                        <div key={`${question.id}-opt-${idx}`}>
+                          <Text>{letter}: {opt}</Text>
+                          {!isPoll && idx === correctIndex && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        </div>
+                      )
+                    })
+                  })()}
+                </Space>
+              )}
+            </Card>
+          )
+        )}
+      />
+    </>
+  )
+
   const handleSaveQuiz = async (rawValues) => {
     setLoading(true)
     // Serialize dayjs objects to ISO strings for the API
     const timeLimitMins = rawValues.exam_time_limit_minutes
     const values = {
       ...rawValues,
+      quiz_type: !id ? initialQuizType : (rawValues.quiz_type || quiz?.quiz_type || initialQuizType || 'quiz'),
       offline_start_at: rawValues.offline_start_at?.toISOString() ?? null,
       offline_end_at: rawValues.offline_end_at?.toISOString() ?? null,
       exam_start_at: rawValues.exam_start_at?.toISOString() ?? null,
@@ -1390,22 +1875,52 @@ export default function QuizBuilder() {
   const handlePublish = async () => {
     setLoading(true)
     try {
+      // Automatically save current form values before publishing to ensure dates/settings are in the DB
+      const currentValues = await form.validateFields()
+      
+      // Serialize dayjs objects to ISO strings for the API (copied from handleSaveQuiz)
+      const timeLimitMins = currentValues.exam_time_limit_minutes
+      const saveValues = {
+        ...currentValues,
+        offline_start_at: currentValues.offline_start_at?.toISOString() ?? null,
+        offline_end_at: currentValues.offline_end_at?.toISOString() ?? null,
+        exam_start_at: currentValues.exam_start_at?.toISOString() ?? null,
+        exam_end_at: currentValues.exam_end_at?.toISOString() ?? null,
+        exam_time_limit_seconds: timeLimitMins ? Number(timeLimitMins) * 60 : null,
+      }
+      delete saveValues.exam_time_limit_minutes
+
+      // Perform the save
+      if (id) {
+        await quizAPI.update(id, saveValues)
+      } else {
+        const response = await quizAPI.create(saveValues)
+        // If it was a new quiz, we need the ID to publish, but this branch 
+        // is unlikely as handlePublish is only shown when id exists and questions >= 1
+        navigate(`/quiz/${response.data.id}/edit`)
+        return // Stop here to let the navigation and state reload happen
+      }
+
       if (isExam) {
         const res = await examAPI.publish(id)
         setExamLinkModal({ open: true, url: res.data.exam_url })
-        loadQuiz()
+        await loadQuiz()
       } else if (isOfflinePoll) {
         const res = await quizAPI.publishOffline(id)
         setPollLinkModal({ open: true, url: res.data.poll_url })
-        loadQuiz()
+        await loadQuiz()
       } else {
         await quizAPI.publish(id)
         message.success(t('quiz.publishSuccess'))
         navigate(`/quiz/${id}/control`)
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || (isExam ? t('exam.publishError') : t('quiz.publishError')))
-      console.error(error)
+      if (error?.name === 'ValidationError') {
+        message.warning(t('quiz.validationError', 'Please check all required fields before publishing'))
+      } else {
+        message.error(error.response?.data?.detail || (isExam ? t('exam.publishError') : t('quiz.publishError')))
+        console.error(error)
+      }
     } finally {
       setLoading(false)
     }
@@ -1563,7 +2078,7 @@ export default function QuizBuilder() {
             <Button
               onClick={() => navigate(`/quiz/${id}/exam-results`)}
             >
-              {t('exam.results.title', 'View Results')}
+              {t('exam.resultsTitle')}
             </Button>
             <Tooltip title={t('tooltip.unpublishQuiz')}>
               <Button
@@ -1576,192 +2091,277 @@ export default function QuizBuilder() {
             </Tooltip>
           </>
         )}
+        {!id && isExam && (
+          <Button
+            disabled={isValidating}
+            icon={<DownloadOutlined />}
+            onClick={handleDownloadTemplate}
+          >
+            {t('quiz.downloadTemplate')}
+          </Button>
+        )}
       </Space>
 
-      <Card
-        title={
-          id
-            ? (isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz'))
-            : (isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
-        }
-        style={{ marginBottom: 24, width: '100%' }}
-      >
-        {quiz && (
-          <Space style={{ marginBottom: 16 }}>
-            <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
-              {getQuizStatusTranslation(quiz.status)}
-            </Tag>
-            <Tag color={quiz.quiz_type === 'exam' ? 'volcano' : quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
-              {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
-            </Tag>
-            {quiz.quiz_type === 'offline_poll' && quiz.poll_slug && (
-              <Text
-                copyable={{ text: `${window.location.origin}/poll/${quiz.poll_slug}`, tooltips: ['Copy link', 'Copied!'] }}
-                type="secondary"
-                style={{ fontSize: 12 }}
-              >
-                {t('offlinePoll.copyLink', 'Copy Link')}
-              </Text>
-            )}
-            {quiz.status === 'ready' && !isOfflinePoll && (
-              <Tag color="red">
-                {isExam ? t('exam.unpublishMessage', 'Click "Deactivate Exam" above to edit') : isPoll ? t('quiz.unpublishPollMessage', 'Click "Unpublish Poll" above to edit') : (t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit')}
-              </Tag>
-            )}
-            <Text type="secondary">
-              {questions.length} {questions.length === 1 ? t('quiz.question') : t('quiz.questions')}
-            </Text>
-          </Space>
-        )}
+      {!id ? (
+        <Card bordered={false} className="premium-builder-card shadow-sm" style={{ marginTop: 24 }}>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            type="card"
+            items={[
+              {
+                key: '1',
+                label: t('quiz.fillOnline'),
+                children: (
+                  <div style={{ padding: '16px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <Text type="secondary">
+                         {isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
+                      </Text>
+                      {isExam && (
+                        <Button
+                          icon={<DownloadOutlined />}
+                          onClick={handleDownloadDraft}
+                          disabled={!questions.length && !form.getFieldValue('title')}
+                        >
+                          {t('quiz.downloadDraftExcel')}
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <Form
+                      form={form}
+                      layout="vertical"
+                      onFinish={handleSaveQuiz}
+                      initialValues={{
+                        quiz_type: initialQuizType,
+                        exam_time_limit_minutes: 30
+                      }}
+                    >
+                      {renderQuizSettings()}
+                      
+                      <div style={{ marginTop: 24, textAlign: 'center' }}>
+                        <Button 
+                          type="primary" 
+                          size="large" 
+                          htmlType="submit"
+                          icon={<SaveOutlined />} 
+                          loading={loading}
+                          style={{ minWidth: 200 }}
+                        >
+                          {isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz')}
+                        </Button>
+                      </div>
+                    </Form>
+                  </div>
+                )
+              },
+              ...(isExam ? [{
+                key: '2',
+                label: t('quiz.uploadExcelTab'),
+                children: (
+                  <div style={{ padding: '24px 0' }}>
+                    {!importData ? (
+                      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                        <Upload.Dragger
+                          name="file"
+                          multiple={false}
+                          accept=".xlsx,.xls"
+                          showUploadList={false}
+                          customRequest={({ file, onSuccess }) => {
+                            setTimeout(() => onSuccess("ok"), 0);
+                          }}
+                          onChange={handleExcelUpload}
+                          disabled={isValidating}
+                        >
+                          <p className="ant-upload-drag-icon">
+                            {isValidating ? <LoadingOutlined spin /> : <InboxOutlined />}
+                          </p>
+                          <p className="ant-upload-text">{t('quiz.uploadExcelFile')}</p>
+                          <p className="ant-upload-hint">
+                            {t('quiz.excelHint')}
+                          </p>
+                        </Upload.Dragger>
+                        
+                        <div style={{ marginTop: 32 }}>
+                          <Button size="large" onClick={handleDownloadDraft} icon={<DownloadOutlined />} style={{ marginRight: 16 }}>
+                            {t('quiz.downloadDraftExcel')}
+                          </Button>
+                          <Button size="large" onClick={handleDownloadTemplate} icon={<DownloadOutlined />}>
+                            {t('quiz.downloadTemplate')}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="import-preview-section">
+                        <Alert
+                          message={importData.canImport ? t('quiz.canImport') : t('quiz.hasErrors')}
+                          type={importData.canImport ? "success" : "error"}
+                          showIcon
+                          icon={importData.canImport ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+                          action={
+                            <Space>
+                              <Button size="small" onClick={() => setImportData(null)}>
+                                {t('common.cancel')}
+                              </Button>
+                              <Button 
+                                size="small" 
+                                type="primary" 
+                                disabled={!importData.canImport}
+                                loading={isImporting}
+                                onClick={handleFinalizeImport}
+                              >
+                                {t('quiz.finalizeImport')}
+                              </Button>
+                            </Space>
+                          }
+                          style={{ marginBottom: 24 }}
+                        />
+                        
+                        <ProCard title={t('quiz.importPreview')} bordered headerBordered ghost>
+                           <div style={{ marginBottom: 24 }}>
+                             <Space direction="vertical" style={{ width: '100%' }}>
+                               <div><Text strong>{t('quiz.quizTitle')}: </Text><Text>{importData.title}</Text></div>
+                               {importData.description && (
+                                 <div><Text strong>{t('quiz.quizDescription')}: </Text><Text>{importData.description}</Text></div>
+                               )}
+                               <Space size="middle">
+                                 <Tag color={importData.quiz_type === 'exam' ? 'volcano' : importData.quiz_type === 'offline_poll' ? 'magenta' : importData.quiz_type === 'poll' ? 'purple' : 'blue'}>
+                                   {importData.quiz_type === 'exam' ? t('exam.typeLabel') : importData.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : importData.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+                                 </Tag>
+                                 <Tag color="blue">{importData.questions?.length} {t('quiz.questions')}</Tag>
+                                 {importData.quiz_type === 'exam' && importData.duration_minutes && (
+                                   <Tag color="orange">{importData.duration_minutes} {t('exam.timeLimitMinutes')}</Tag>
+                                 )}
+                               </Space>
+                             </Space>
+                           </div>
 
-        {!id && (
-          <Alert
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-            message={
-              isExam ? t('exam.typeInfo')
-              : isOfflinePoll ? t('offlinePoll.typeInfo')
-              : isPoll ? t('quiz.pollTypeInfo')
-              : t('quiz.quizTypeInfo')
-            }
+                           <Table
+                             dataSource={importData.questions}
+                             rowKey="index"
+                             pagination={false}
+                             scroll={{ y: 500 }}
+                             columns={[
+                               { 
+                                 title: '#', 
+                                 dataIndex: 'index', 
+                                 width: 60 
+                               },
+                               { 
+                                 title: t('quiz.question'), 
+                                 dataIndex: 'text',
+                                 render: (text, record) => (
+                                   <div>
+                                     <div style={{ marginBottom: 4 }}>{text}</div>
+                                     {record.errors?.map((err, i) => (
+                                       <Tag key={i} color="error" style={{ fontSize: '11px', whiteSpace: 'normal' }}>{err}</Tag>
+                                     ))}
+                                   </div>
+                                 )
+                               },
+                               { 
+                                 title: t('quiz.questionType'), 
+                                 dataIndex: 'type',
+                                 width: 130,
+                                 render: (type) => <Tag color={type === 'MCQ' ? 'cyan' : 'green'}>{type}</Tag>
+                               },
+                               { 
+                                 title: t('quiz.answer'), 
+                                 dataIndex: 'answer',
+                                 width: 120,
+                                 render: (ans) => <Tag color="gold">{ans}</Tag>
+                               },
+                               {
+                                 title: t('common.status'),
+                                 dataIndex: 'isValid',
+                                 width: 100,
+                                 render: (isValid) => (
+                                   isValid ? <Tag color="success">Valid</Tag> : <Tag color="error">Error</Tag>
+                                 )
+                               }
+                             ]}
+                           />
+                        </ProCard>
+                      </div>
+                    )}
+                  </div>
+                )
+              }] : [])
+            ]}
           />
-        )}
-
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSaveQuiz}
+        </Card>
+      ) : (
+        /* Edit Mode: Single View */
+        <Card
+          title={isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz')}
+          style={{ marginTop: 24, marginBottom: 24, width: '100%' }}
         >
-          <Form.Item
-            name="title"
-            label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-            rules={[{ required: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
-          >
-            <Input
-              placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
-              size="large"
-              spellCheck="true"
-              lang={i18n.language}
-              suffix={(
-                <Tooltip title={t('ai.rewriteWithAI')}>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={mainRewriting['title'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
-                    loading={mainRewriting['title']}
-                    onClick={() => handleMainRewrite('title', isExam ? 'exam title' : isPoll ? 'poll title' : 'quiz title')}
-                  />
-                </Tooltip>
+          {quiz && (
+            <Space style={{ marginBottom: 16 }}>
+              <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
+                {getQuizStatusTranslation(quiz.status)}
+              </Tag>
+              <Tag color={quiz.quiz_type === 'exam' ? 'volcano' : quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
+                {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+              </Tag>
+              {quiz.status === 'ready' && !isOfflinePoll && (
+                <Tag color="red">
+                  {isExam ? t('exam.unpublishMessage', 'Click "Deactivate Exam" above to edit') : isPoll ? t('quiz.unpublishPollMessage', 'Click "Unpublish Poll" above to edit') : (t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit')}
+                </Tag>
               )}
-            />
-          </Form.Item>
+              <Text type="secondary">
+                {questions.length} {questions.length === 1 ? t('quiz.question') : t('quiz.questions')}
+              </Text>
+            </Space>
+          )}
 
-          <Form.Item
-            name="description"
-            label={isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
+          <div style={{ 
+            marginBottom: 24, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            backgroundColor: token.colorFillAlter, 
+            padding: '16px', 
+            borderRadius: token.borderRadiusLG,
+            border: `1px solid ${token.colorBorderSecondary}`
+          }}>
+            <Text type="secondary">
+               {isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
+            </Text>
+            {isExam && (
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleDownloadDraft}
+              >
+                {t('quiz.downloadDraftExcel')}
+              </Button>
+            )}
+          </div>
+
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSaveQuiz}
           >
-            <TextArea
-              rows={3}
-              placeholder={isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
-              spellCheck="true"
-              lang={i18n.language}
-            />
-          </Form.Item>
-          {(
-            <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
-              <Tooltip title={t('ai.rewriteDescWithAI')}>
-                <Button
-                  size="small"
-                  type="text"
-                  icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
-                  loading={mainRewriting['description']}
-                  onClick={() => handleMainRewrite('description', isPoll ? 'poll description' : 'quiz description')}
-                >
-                  {t('ai.rewrite')}
-                </Button>
-              </Tooltip>
+            {renderQuizSettings()}
+            
+            <div style={{ marginTop: 24, marginBottom: 24 }}>
+               <Button
+                 type="primary"
+                 htmlType="submit"
+                 icon={<SaveOutlined />}
+                 loading={loading}
+                 style={{ minWidth: 150 }}
+               >
+                 {isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
+               </Button>
             </div>
-          )}
+          </Form>
 
-          <Form.Item
-            name="quiz_type"
-            label={t('quiz.mode')}
-            initialValue="quiz"
-            hidden
-          >
-            <Radio.Group>
-              <Radio value="quiz">{t('quiz.modeQuiz')}</Radio>
-              <Radio value="poll">{t('quiz.modePoll')}</Radio>
-              <Radio value="offline_poll">{t('offlinePoll.typeLabel', 'Offline Poll')}</Radio>
-            </Radio.Group>
-          </Form.Item>
-
-          {/* Offline poll configuration fields */}
-          {isOfflinePoll && (
-            <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-              <Form.Item
-                name="offline_start_at"
-                label={t('offlinePoll.startDate', 'Start Date & Time')}
-                rules={[{ required: isOfflinePoll, message: 'Start date is required for offline polls' }]}
-              >
-                <DatePicker showTime style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item
-                name="offline_end_at"
-                label={t('offlinePoll.endDate', 'End Date & Time')}
-                rules={[{ required: isOfflinePoll, message: 'End date is required for offline polls' }]}
-              >
-                <DatePicker showTime style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item
-                name="offline_results_email"
-                label={t('offlinePoll.resultsEmail', 'Email Results To (optional)')}
-              >
-                <Input type="email" placeholder="your@email.com" />
-              </Form.Item>
-            </Space>
-          )}
-
-          {/* Exam configuration fields */}
-          {isExam && (
-            <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-              <Form.Item
-                name="exam_start_at"
-                label={t('exam.startAt')}
-                rules={[{ required: isExam, message: t('exam.startAtRequired') }]}
-              >
-                <DatePicker showTime style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item
-                name="exam_end_at"
-                label={t('exam.endAt')}
-                rules={[{ required: isExam, message: t('exam.endAtRequired') }]}
-              >
-                <DatePicker showTime style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item
-                name="exam_time_limit_minutes"
-                label={t('exam.timeLimitMinutes')}
-              >
-                <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: '100%' }} />
-              </Form.Item>
-            </Space>
-          )}
-
-          <Button
-            type="primary"
-            htmlType="submit"
-            icon={<SaveOutlined />}
-            loading={loading}
-          >
-            {id
-              ? (isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz'))
-              : (isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz'))
-            }
-          </Button>
-        </Form>
-      </Card>
+          {renderQuestionsList()}
+        </Card>
+      )}
 
       {/* Poll link modal for offline polls */}
       <Modal
@@ -1811,185 +2411,6 @@ export default function QuizBuilder() {
           </Text>
         </Space>
       </Modal>
-
-      {id && (
-        <>
-          <div ref={questionsRef} />
-          <Divider>{t('quiz.questions')}</Divider>
-
-          {editingQuestion !== 'new' && isAdmin && (
-            <Button
-              icon={<ThunderboltOutlined />}
-              onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
-              style={{ marginTop: 12, marginBottom: 8, width: '100%' }}
-              size="large"
-              disabled={!!editingQuestion}
-            >
-              {t('ai.generateWithAI')}
-            </Button>
-          )}
-
-          {editingQuestion === 'new' ? (
-            <MemoizedQuestionForm
-              key="new-question"
-              onSave={handleAddQuestion}
-              onCancel={handleCancelQuestion}
-              quizId={id}
-              isPoll={isPoll}
-              isExam={isExam}
-              language={i18n.language}
-              isAdmin={isAdmin}
-              questionImageUrl={questionImageUrl}
-              setQuestionImageUrl={setQuestionImageUrl}
-              optionImages={optionImages}
-              setOptionImages={setOptionImages}
-              tempImages={tempImages}
-              setTempImages={setTempImages}
-              loading={loading}
-              movingImages={movingImages}
-              t={t}
-            />
-          ) : (
-            <Button
-              type="dashed"
-              icon={<PlusOutlined />}
-              onClick={() => setEditingQuestion('new')}
-              style={{ marginTop: 12, marginBottom: 16, width: '100%' }}
-              size="large"
-            >
-              {t('quiz.addQuestion')}
-            </Button>
-          )}
-
-          <List
-            dataSource={questions}
-            renderItem={(question, index) => (
-              editingQuestion === question.id ? (
-                <MemoizedQuestionForm
-                  key={`edit-question-${question.id}`}
-                  question={question}
-                  onSave={(values) => handleUpdateQuestion(question.id, values)}
-                  onCancel={handleCancelQuestion}
-                  quizId={id}
-                  isPoll={isPoll}
-                  language={i18n.language}
-                  isAdmin={isAdmin}
-                  questionImageUrl={questionImageUrl}
-                  setQuestionImageUrl={setQuestionImageUrl}
-                  optionImages={optionImages}
-                  setOptionImages={setOptionImages}
-                  tempImages={tempImages}
-                  setTempImages={setTempImages}
-                  loading={loading}
-                  movingImages={movingImages}
-                  t={t}
-                />
-              ) : (
-                <Card
-                  key={question.id}
-                  style={{ marginBottom: 16, width: '100%' }}
-                  title={
-                    <Space>
-                      <Tag color="blue">Q{index + 1}</Tag>
-                      <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
-                        {getQuestionTypeLabel(question.question_type, t)}
-                      </Tag>
-                      {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
-                      {!isPoll && question.max_time_seconds ? (
-                        <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
-                      ) : null}
-                      <Text strong>{question.text.replace(/<[^>]*>/g, '')}</Text>
-                    </Space>
-                  }
-                  extra={
-                    <Space>
-                      <Button
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => setEditingQuestion(question.id)}
-                      >
-                        {t('common.edit')}
-                      </Button>
-                      <Popconfirm
-                        title={t('quiz.deleteQuestionConfirm')}
-                        onConfirm={() => handleDeleteQuestion(question.id)}
-                        okText={t('common.submit')}
-                        cancelText={t('common.cancel')}
-                      >
-                        <Button
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                        />
-                      </Popconfirm>
-                    </Space>
-                  }
-                >
-                  {question.question_type === 'word_cloud' ? (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <Text type="secondary" italic>
-                        {t('quiz.wordCloudQuestionDescription')}
-                      </Text>
-                    </Space>
-                  ) : question.question_type === 'single_line' || question.question_type === 'paragraph' ? (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <Text type="secondary" italic>
-                        {t('quiz.textResponseDescription')}
-                      </Text>
-                      <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {question.expected_answer || question.options?.[0] || t('quiz.emptyValue')}</Text>
-                    </Space>
-                  ) : question.question_type === 'scale' ? (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <Text>{t('quiz.scaleOptionsLabel')}: {(question.options || ['1', '2', '3', '4', '5']).join(', ')}</Text>
-                      {!isPoll && (
-                        <Text><strong>{t('quiz.expectedAnswerLabel')}:</strong> {(question.options || [])[question.correct_answer_index ?? -1] || t('quiz.emptyValue')}</Text>
-                      )}
-                    </Space>
-                  ) : (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      {(() => {
-                        const fallbackOptions = [
-                          question.option_a,
-                          question.option_b,
-                          question.option_c,
-                          question.option_d,
-                          ...(question.extra_options || []),
-                        ]
-                        const mcqOptions = (Array.isArray(question.options) && question.options.length > 0
-                          ? question.options
-                          : fallbackOptions
-                        )
-                          .map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
-                          .filter(Boolean)
-
-                        const answerToken = question.correct_answer
-                        let correctIndex = Number.isInteger(question.correct_answer_index)
-                          ? question.correct_answer_index
-                          : (Number.isInteger(Number(answerToken)) ? Number(answerToken) : -1)
-
-                        if (!Number.isInteger(question.correct_answer_index) && typeof answerToken === 'string') {
-                          const letterIndex = answerToken.toUpperCase().charCodeAt(0) - 65
-                          if (letterIndex >= 0) correctIndex = letterIndex
-                        }
-
-                        return mcqOptions.map((opt, idx) => {
-                          const letter = String.fromCharCode(65 + idx)
-                          return (
-                            <div key={`${question.id}-opt-${idx}`}>
-                              <Text>{letter}: {opt}</Text>
-                              {!isPoll && idx === correctIndex && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
-                            </div>
-                          )
-                        })
-                      })()}
-                    </Space>
-                  )}
-                </Card>
-              )
-            )}
-          />
-        </>
-      )}
 
       {/* AI Generate Questions Modal */}
       <Modal

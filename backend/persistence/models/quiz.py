@@ -112,6 +112,7 @@ class QuizFolder(Base, TimestampMixin, TenantMixin):
     parent_id = Column(Integer, ForeignKey("quiz_folders.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(255), nullable=False)
     sort_order = Column(Integer, nullable=False, default=0, server_default="0")
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
 
     parent = relationship("QuizFolder", remote_side=[id], back_populates="children")
     children = relationship("QuizFolder", back_populates="parent", cascade="all, delete-orphan")

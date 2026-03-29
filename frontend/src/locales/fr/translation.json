@@ -308,7 +308,18 @@
     "codeLanguageSelect": "Sélectionner la langue",
     "quizTypeInfo": "Session en direct contrôlée par l'hôte. Questions QCM avec score. Classement en temps réel. L'audience rejoint via un code.",
     "pollTypeInfo": "Session en direct contrôlée par l'hôte. Questions QCM ouvertes ou nuage de mots — pas de bonne réponse, pas de score.",
-    "mcqDuplicateOptions": "Chaque option doit être unique — les options en double ne sont pas autorisées."
+    "mcqDuplicateOptions": "Chaque option doit être unique — les options en double ne sont pas autorisées.",
+    "uploadExcelTab": "Importer via Excel",
+    "uploadExcelFile": "Télécharger un fichier Excel",
+    "downloadDraftExcel": "Télécharger le brouillon en Excel",
+    "downloadTemplate": "Télécharger le modèle",
+    "canImport": "Prêt à importer",
+    "hasErrors": "Corriger les erreurs pour importer",
+    "importSuccess": "Quiz importé avec succès",
+    "importError": "Échec de l'importation du quiz",
+    "finalizeImport": "Finaliser l'importation",
+    "importPreview": "Aperçu de l'importation",
+    "excelHint": "Cliquez ou faites glisser le fichier ici pour valider. Un seul fichier .xlsx pris en charge."
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",

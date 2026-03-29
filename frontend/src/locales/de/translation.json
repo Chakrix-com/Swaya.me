@@ -222,6 +222,7 @@
     "makeTemplate": "Als Vorlage speichern",
     "removeTemplate": "Vorlage entfernen",
     "duplicate": "Duplizieren",
+    "downloadDraftExcel": "Entwurf als Excel herunterladen",
     "scope": "Bereich",
     "globalTemplate": "Globale Vorlage",
     "tenantTemplate": "Organisationsvorlage",
@@ -306,7 +307,17 @@
     "codeLanguageSelect": "Sprache auswählen",
     "quizTypeInfo": "Live, vom Host gesteuerte Sitzung. MCQ-Fragen mit Bewertung. Echtzeit-Bestenliste. Publikum tritt per Code bei.",
     "pollTypeInfo": "Live, vom Host gesteuerte Sitzung. Offene MCQ- oder Wortwolken-Fragen — keine richtige Antwort, keine Wertung.",
-    "mcqDuplicateOptions": "Jede Option muss eindeutig sein — doppelte Optionen sind nicht erlaubt."
+    "mcqDuplicateOptions": "Jede Option muss eindeutig sein — doppelte Optionen sind nicht erlaubt.",
+    "uploadExcelTab": "Via Excel hochladen",
+    "uploadExcelFile": "Excel-Datei hochladen",
+    "downloadTemplate": "Vorlage herunterladen",
+    "canImport": "Bereit zum Importieren",
+    "hasErrors": "Fehler korrigieren zum Importieren",
+    "importSuccess": "Quiz erfolgreich importiert",
+    "importError": "Quiz-Import fehlgeschlagen",
+    "finalizeImport": "Import abschließen",
+    "importPreview": "Import-Vorschau",
+    "excelHint": "Datei hier klicken oder hineinziehen. Einzelne .xlsx-Datei wird unterstützt."
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
