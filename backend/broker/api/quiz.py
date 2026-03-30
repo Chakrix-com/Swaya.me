@@ -3,11 +3,13 @@ Quiz API Endpoints
 """
 import asyncio
 import json
+import io
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, File, UploadFile
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 
 from persistence.database_async import get_async_db
@@ -40,6 +42,7 @@ from shared.exceptions.quiz import (
 from shared.utils.redis_client import get_redis, RedisClient
 from core.config.tier_service import TierService
 from persistence.models.quiz import Participant, QuizSession, Quiz
+from features.quiz.import_service import ExcelImportService
 
 router = APIRouter(prefix="/quizzes", tags=["Quiz"])
 
@@ -66,6 +69,10 @@ async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerS
 
 async def get_feedback_service() -> FeedbackServiceAsync:
     return FeedbackServiceAsync()
+
+
+async def get_import_service() -> ExcelImportService:
+    return ExcelImportService()
 
 
 async def _assert_host_session_access(
@@ -395,6 +402,85 @@ async def list_quiz_sessions(
         return await service.list_sessions(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+# Import/Export Endpoints
+@router.get("/import/template")
+async def get_import_template(
+    service: ExcelImportService = Depends(get_import_service)
+):
+    """Download the blank Excel template for bulk upload"""
+    return FileResponse(
+        path=service.get_template_path(),
+        filename="Swaya_me_Test_Template.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+@router.post("/import/export-draft")
+async def export_draft_to_excel(
+    request: Request,
+    service: ExcelImportService = Depends(get_import_service)
+):
+    """Generate and download an Excel file from the current frontend draft JSON"""
+    try:
+        draft_data = await request.json()
+        file_bytes = service.generate_excel_from_draft(draft_data)
+        
+        return StreamingResponse(
+            io.BytesIO(file_bytes),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=Swaya_me_Draft_Export.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to export draft: {str(e)}")
+
+
+@router.post("/import/validate")
+async def validate_import_file(
+    file: UploadFile = File(...),
+    service: ExcelImportService = Depends(get_import_service)
+):
+    """Parse and validate an uploaded Excel file, returning a preview of results"""
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Invalid file format. Please upload an Excel (.xlsx) file.")
+    
+    try:
+        content = await file.read()
+        raw_data = await service.parse_excel(content)
+        validation_results = service.validate_import(raw_data)
+        return validation_results
+    except QuizValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error during validation: {str(e)}")
+
+
+@router.post("/import/finalize", response_model=QuizResponse)
+async def finalize_import(
+    request: Request,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ExcelImportService = Depends(get_import_service)
+):
+    """Create a new quiz and its questions from validated import data"""
+    try:
+        data = await request.json()
+        if not data.get("canImport"):
+            raise HTTPException(status_code=400, detail="Import data is invalid or has errors.")
+        
+        quiz = await service.create_from_import(db, data, current_user)
+        # Reload with questions eagerly to avoid lazy-load in async context
+        result = await db.execute(
+            select(Quiz)
+            .filter(Quiz.id == quiz.id)
+            .options(selectinload(Quiz.questions))
+        )
+        quiz = result.scalar_one()
+        builder_service = await get_quiz_service()
+        return builder_service._to_quiz_response(quiz)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to finalize import: {str(e)}")
 
 
 # Question Management Endpoints
