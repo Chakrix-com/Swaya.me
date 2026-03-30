@@ -156,7 +156,7 @@ def test_exam_flow():
         # ── Step 5: Answer all questions ──
         log("\n--- STEP 5: Answer questions ---")
         answered = 0
-        for attempt in range(30):
+        for attempt in range(100):
             # Dismiss any open Ant Design modal/confirm dialog first
             # Look for modal overlay — if present, click its primary/confirm button
             modal_overlays = driver.find_elements(By.CSS_SELECTOR, ".ant-modal-wrap:not([style*='display: none'])")

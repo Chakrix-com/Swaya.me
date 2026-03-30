@@ -36,6 +36,17 @@ def main():
     quizzes = requests.get(f"{BASE_URL}/quizzes/", headers=host_headers, verify=False, timeout=20)
     expect(quizzes.status_code == 200 and quizzes.json(), "no quiz available for negative checks")
     quiz_list = quizzes.json()
+
+    # End any open sessions across all quizzes to avoid concurrent session limit
+    for q in quiz_list:
+        sess_r = requests.get(f"{BASE_URL}/quizzes/{q['id']}/sessions",
+                              headers=host_headers, verify=False, timeout=20)
+        if sess_r.status_code == 200:
+            for s in sess_r.json().get("sessions", []):
+                if s.get("status") in ("active", "created"):
+                    requests.post(f"{BASE_URL}/quizzes/sessions/{s['id']}/end",
+                                  headers=host_headers, verify=False, timeout=20)
+
     ready = next((q for q in quiz_list if str(q.get("status", "")).lower() == "ready"), None)
     expect(ready is not None, "no READY quiz available for negative checks")
     quiz_id = ready["id"]
