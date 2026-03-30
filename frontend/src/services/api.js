@@ -71,6 +71,16 @@ export const quizAPI = {
   createFolder: (data) => api.post('/quizzes/folders', data),
   updateFolder: (id, data) => api.put(`/quizzes/folders/${id}`, data),
   deleteFolder: (id) => api.delete(`/quizzes/folders/${id}`),
+  getImportTemplate: () => api.get('/quizzes/import/template', { responseType: 'blob' }),
+  exportDraftToExcel: (data) => api.post('/quizzes/import/export-draft', data, { responseType: 'blob' }),
+  validateImport: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/quizzes/import/validate', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  finalizeImport: (data) => api.post('/quizzes/import/finalize', data),
 }
 
 // Question API
