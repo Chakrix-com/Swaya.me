@@ -50,8 +50,8 @@ function AudienceJoin() {
       <PublicBrandHeader />
 
       <div className="container overflow-hidden py-4" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-        <div className="row justify-content-center mx-0">
-          <div className="col-12 col-sm-8 col-md-6 col-lg-4 px-0 px-sm-3">
+        <div className="row justify-content-center mx-0" style={{ width: '100%' }}>
+          <div className="col-12 col-sm-10 col-md-7 col-lg-5 px-0 px-sm-3">
             <Card title={t('audience.joinQuiz')}>
               <Form form={form} name="join" onFinish={onFinish} layout="vertical">
                 <Form.Item
