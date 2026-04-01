@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from datetime import datetime, timezone, timedelta
 
 BASE_URL = os.getenv("APP_BASE_URL", "https://test.swaya.me")
 API_BASE_URL = os.getenv("BASE_URL", f"{BASE_URL}/api/v1")
@@ -80,14 +81,41 @@ def find_or_create_offline_poll(token):
     """Find a ready offline poll, or create+publish one."""
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Look for an existing published offline poll
+    # Look for an existing published offline poll that is currently active
     r = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
     r.raise_for_status()
+    now = datetime.now(timezone.utc)
+    
     for quiz in r.json():
         if quiz.get("quiz_type") == "offline_poll" and quiz.get("status") == "ready":
+            # Check if poll is currently within its scheduled window
+            start_str = quiz.get("offline_start_at")
+            end_str = quiz.get("offline_end_at")
+            
+            is_active = True
+            try:
+                if start_str:
+                    start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+                    if start_dt.tzinfo is None: start_dt = start_dt.replace(tzinfo=timezone.utc)
+                    if now < start_dt:
+                        is_active = False
+                
+                if end_str:
+                    end_dt = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
+                    if end_dt.tzinfo is None: end_dt = end_dt.replace(tzinfo=timezone.utc)
+                    if now > end_dt:
+                        is_active = False
+            except Exception as e:
+                log(f"Error parsing dates for quiz {quiz['id']}: {e}", "WARN")
+                is_active = False # Fallback to safe side
+                
+            if not is_active:
+                log(f"Skipping poll {quiz['id']} (slug={quiz.get('poll_slug')}): Not in active time window", "INFO")
+                continue
+
             slug = quiz.get("poll_slug") or quiz.get("slug") or quiz.get("join_code")
             if slug:
-                log(f"Found existing published offline poll: id={quiz['id']} slug={slug}", "SUCCESS")
+                log(f"Found active published offline poll: id={quiz['id']} slug={slug}", "SUCCESS")
                 return quiz["id"], slug
 
     # Create a minimal offline poll
@@ -113,7 +141,6 @@ def find_or_create_offline_poll(token):
     q_r.raise_for_status()
 
     # Set required start/end dates before publishing
-    from datetime import datetime, timedelta, timezone
     now = datetime.now(timezone.utc)
     upd_r = requests.put(f"{API_BASE_URL}/quizzes/{quiz_id}",
                            headers=headers,
@@ -145,7 +172,7 @@ def test_offline_poll_flow():
         driver = setup_driver("participant")
         poll_url = f"{BASE_URL}/poll/{slug}"
         driver.get(poll_url)
-        time.sleep(2)
+        time.sleep(5)
 
         body_text = driver.find_element(By.TAG_NAME, "body").text
         assert "500" not in body_text, "Page returned 500 error"

@@ -14,6 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
+from datetime import datetime, timezone
 
 BASE_URL = os.getenv("APP_BASE_URL", "https://test.swaya.me")
 API_BASE_URL = os.getenv("BASE_URL", f"{BASE_URL}/api/v1")
@@ -81,11 +82,38 @@ def find_published_exam(token):
     headers = {"Authorization": f"Bearer {token}"}
     r = requests.get(f"{API_BASE_URL}/quizzes/", headers=headers, verify=False, timeout=20)
     r.raise_for_status()
+    now = datetime.now(timezone.utc)
+    
     for quiz in r.json():
         if quiz.get("quiz_type") == "exam" and quiz.get("status") == "ready":
+            # Check if exam is currently within its scheduled window
+            start_str = quiz.get("exam_start_at")
+            end_str = quiz.get("exam_end_at")
+            
+            is_active = True
+            try:
+                if start_str:
+                    start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+                    if start_dt.tzinfo is None: start_dt = start_dt.replace(tzinfo=timezone.utc)
+                    if now < start_dt:
+                        is_active = False
+                
+                if end_str:
+                    end_dt = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
+                    if end_dt.tzinfo is None: end_dt = end_dt.replace(tzinfo=timezone.utc)
+                    if now > end_dt:
+                        is_active = False
+            except Exception as e:
+                log(f"Error parsing dates for exam {quiz['id']}: {e}", "WARN")
+                is_active = False # Fallback to safe side
+                
+            if not is_active:
+                log(f"Skipping exam {quiz['id']} (slug={quiz.get('exam_slug')}): Not in active time window", "INFO")
+                continue
+
             slug = quiz.get("slug") or quiz.get("exam_url", "").split("/")[-1]
             if slug:
-                log(f"Found published test: id={quiz['id']} slug={slug}", "SUCCESS")
+                log(f"Found active published test: id={quiz['id']} slug={slug}", "SUCCESS")
                 return quiz["id"], slug
     raise RuntimeError("No published exam/test found. Please publish at least one test in the dashboard.")
 
@@ -103,7 +131,7 @@ def test_exam_flow():
         log("\n--- STEP 1: Open exam start screen ---")
         driver = setup_driver("participant")
         driver.get(exam_url)
-        time.sleep(3)
+        time.sleep(5)
         driver.save_screenshot("/tmp/exam_01_start.png")
 
         body_text = driver.find_element(By.TAG_NAME, "body").text
