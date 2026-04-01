@@ -63,7 +63,7 @@ class TierService:
                 "max_concurrent_events": 2
             },
             TierEnum.PRO: {
-                "max_participants": 1000,
+                "max_participants": 2000,
                 "max_questions": 100,
                 "max_concurrent_events": 5
             },

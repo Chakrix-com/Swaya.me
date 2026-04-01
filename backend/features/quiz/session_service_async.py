@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload, joinedload, contains_eager
 from typing import Optional
 import secrets
 import string
+import random
 
 from datetime import datetime, timedelta
 from apscheduler.triggers.date import DateTrigger
@@ -437,10 +438,11 @@ class SessionServiceAsync:
             InvalidQuizStatusError: If quiz not READY
             TierLimitExceededError: If concurrent event limit reached
         """
-        # Clean stale sessions first so abandoned sessions do not block new starts.
-        stale_closed_count = await self._close_stale_sessions(db, current_user.tenant_id)
-        if stale_closed_count:
-            await db.commit()
+        # Clean stale sessions probabilistically (5% chance) to reduce DB load
+        if random.random() < 0.05:
+            stale_closed_count = await self._close_stale_sessions(db, current_user.tenant_id)
+            if stale_closed_count:
+                await db.commit()
 
         # Get quiz
         result = await db.execute(
@@ -577,12 +579,9 @@ class SessionServiceAsync:
             if not event:
                 raise SessionNotFoundError("Invalid join code")
 
-            stale_closed_count = await self._close_stale_sessions(db, event.tenant_id)
-            if stale_closed_count:
-                await db.commit()
-            
             # Find active session - get the LATEST one (in case multiple exist)
             result = await db.execute(
+
                 select(QuizSession)
                 .join(Quiz, Quiz.id == QuizSession.quiz_id)
                 .filter(

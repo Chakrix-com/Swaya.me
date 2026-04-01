@@ -13,8 +13,8 @@ API_BASE = "/api/v1"
 
 # You'll need to set these from an actual quiz session
 QUIZ_ID = 13  # Update this with actual quiz ID
-SESSION_ID = 324  # Session ID from join endpoint
-JOIN_CODE = "709135"  # Join code from URL
+SESSION_ID = 326  # Session ID from join endpoint
+JOIN_CODE = "523743"  # Join code from URL
 CURRENT_QUESTION_ID = None  # Will be updated during test
 
 
@@ -72,15 +72,16 @@ class QuizParticipant(HttpUser):
     
     @task(3)
     def get_session_results(self):
-        """Check current quiz state and question"""
+        """Check current quiz state and question (participant-safe)"""
         if not self.participant_joined or not SESSION_ID:
             return
         
         try:
+            # Use participant-safe audience-results endpoint to avoid 403
             response = self.client.get(
-                f"{API_BASE}/quizzes/sessions/{SESSION_ID}/results",
+                f"{API_BASE}/quizzes/sessions/{SESSION_ID}/audience-results",
                 params={"session_token": self.session_token},
-                name="/api/v1/quizzes/sessions/[id]/results"
+                name="/api/v1/quizzes/sessions/[id]/audience-results"
             )
             
             if response.status_code == 200:
@@ -88,8 +89,8 @@ class QuizParticipant(HttpUser):
                 current_q = data.get("current_question")
                 
                 if current_q and current_q.get("id"):
-                    global CURRENT_QUESTION_ID
-                    CURRENT_QUESTION_ID = current_q["id"]
+                    # Use local variable for current question to avoid global contention issues
+                    self.current_q_id = current_q["id"]
                     
         except Exception as e:
             print(f"⚠️  Results check error: {e}")
@@ -97,7 +98,9 @@ class QuizParticipant(HttpUser):
     @task(2)
     def submit_answer(self):
         """Submit answer to current question"""
-        if not self.participant_joined or not CURRENT_QUESTION_ID:
+        # Ensure we have a question ID from our own results check
+        q_id = getattr(self, 'current_q_id', None)
+        if not self.participant_joined or not q_id:
             return
         
         try:
@@ -108,7 +111,7 @@ class QuizParticipant(HttpUser):
                 f"{API_BASE}/quizzes/sessions/submit-answer",
                 params={"session_token": self.session_token},
                 json={
-                    "question_id": CURRENT_QUESTION_ID,
+                    "question_id": q_id,
                     "selected_option_index": answer
                 },
                 name="/api/v1/quizzes/sessions/submit-answer"

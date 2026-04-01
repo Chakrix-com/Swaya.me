@@ -9,7 +9,7 @@ EMAIL="demo@swaya.me"
 PASSWORD="Demo1234"
 QUIZ_ID=13
 TEST_DURATION="3m"
-TESTS=(500 750 1000)
+TESTS=(1000 1200)
 
 # Colors
 RED='\033[0;31m'
