@@ -1,7 +1,7 @@
-import { useState, createContext, useContext, useEffect } from 'react'
+import { useState, createContext, useContext, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip, Spin } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -17,37 +17,43 @@ import {
   SlidersOutlined,
   SunOutlined,
   MoonOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { logout } from './store/authSlice'
+
+// Essential public routes (eagerly loaded)
 import Home from './features/home/Home'
-import PrivacyPolicy from './features/home/PrivacyPolicy'
-import TermsOfService from './features/home/TermsOfService'
-import About from './features/home/About'
-import Help from './features/home/Help'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
-import VerifyEmail from './features/auth/VerifyEmail'
-import ForgotPassword from './features/auth/ForgotPassword'
-import ResetPassword from './features/auth/ResetPassword'
-import Dashboard from './features/dashboard/Dashboard'
-import QuizBuilder from './features/quiz/QuizBuilder'
-import QuizControl from './features/quiz/QuizControl'
-import QuizHistory from './features/quiz/QuizHistory'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
 import OfflinePollSession from './features/offline-poll/OfflinePollSession'
-import OfflinePollResults from './features/offline-poll/OfflinePollResults'
 import ExamSession from './features/exam/ExamSession'
-import ExamResults from './features/exam/ExamResults'
-import QuizPresent from './features/quiz/QuizPresent'
-import UserManagement from './features/admin/components/UserManagement'
-import Statistics from './features/admin/Statistics'
-import OrganizationManagement from './features/admin/OrganizationManagement'
-import FeedbackManagement from './features/admin/FeedbackManagement'
-import PlatformQuizzes from './features/admin/PlatformQuizzes'
-import TierManagement from './features/admin/TierManagement'
+
+// Heavy or Host-only routes (lazily loaded)
+const PrivacyPolicy = lazy(() => import('./features/home/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('./features/home/TermsOfService'))
+const About = lazy(() => import('./features/home/About'))
+const Help = lazy(() => import('./features/home/Help'))
+const VerifyEmail = lazy(() => import('./features/auth/VerifyEmail'))
+const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./features/auth/ResetPassword'))
+const Dashboard = lazy(() => import('./features/dashboard/Dashboard'))
+const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
+const QuizControl = lazy(() => import('./features/quiz/QuizControl'))
+const QuizHistory = lazy(() => import('./features/quiz/QuizHistory'))
+const OfflinePollResults = lazy(() => import('./features/offline-poll/OfflinePollResults'))
+const ExamResults = lazy(() => import('./features/exam/ExamResults'))
+const QuizPresent = lazy(() => import('./features/quiz/QuizPresent'))
+const UserManagement = lazy(() => import('./features/admin/components/UserManagement'))
+const Statistics = lazy(() => import('./features/admin/Statistics'))
+const OrganizationManagement = lazy(() => import('./features/admin/OrganizationManagement'))
+const FeedbackManagement = lazy(() => import('./features/admin/FeedbackManagement'))
+const PlatformQuizzes = lazy(() => import('./features/admin/PlatformQuizzes'))
+const TierManagement = lazy(() => import('./features/admin/TierManagement'))
+
 import LanguageSwitcher from './components/LanguageSwitcher'
 import GlobalOverlay from './components/GlobalOverlay'
 import StatsPanel from './components/StatsPanel'
@@ -356,7 +362,13 @@ function App() {
     >
       <AntApp>
         <Router>
-          <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
+          <Suspense fallback={
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+            </div>
+          }>
+            <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
+          </Suspense>
           <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: handleToggleVisitorTheme }}>
             <GlobalOverlay />
           </VisitorThemeContext.Provider>

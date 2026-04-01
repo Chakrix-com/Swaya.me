@@ -433,6 +433,17 @@ cmd_status() {
     echo ""
     echo -e "${BOLD}Live backend ($LIVE_SERVICE):${RESET}"
     sudo systemctl status "$LIVE_SERVICE" --no-pager -l | head -12 || true
+
+    # Check for worker count (concurrency warning)
+    local live_workers; live_workers=$(systemctl cat "$LIVE_SERVICE" 2>/dev/null | grep -oP "workers \d+" | grep -oP "\d+" || echo "0")
+    if [[ "$live_workers" -gt 0 && "$live_workers" -lt 4 ]]; then
+        echo ""
+        warn "CONCURRENCY WARNING: Live backend is running with only $live_workers workers."
+        warn "For 700+ simultaneous users, it is recommended to use at least 4-8 workers."
+        warn "To fix: sudo systemctl edit --full $LIVE_SERVICE"
+        warn "Change: --workers 4"
+        warn "Then:   sudo systemctl daemon-reload && sudo systemctl restart $LIVE_SERVICE"
+    fi
 }
 
 # ─── Command: logs ───────────────────────────────────────────────────────────

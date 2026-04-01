@@ -2,10 +2,6 @@
 Excel Import/Export Service - Logic for handling bulk quiz data via XLSX
 """
 import io
-import openpyxl
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Protection
-from openpyxl.worksheet.datavalidation import DataValidation
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -16,6 +12,7 @@ from persistence.models.quiz import (
 from persistence.models.core import Event
 from features.quiz.schemas import QuizCreate, QuestionCreate
 from shared.exceptions.quiz import QuizValidationError
+from fastapi import HTTPException
 
 class ExcelImportService:
     """Service to handle Excel import/export for quizzes"""
@@ -78,6 +75,11 @@ class ExcelImportService:
 
     async def parse_excel(self, file_content: bytes) -> Dict[str, Any]:
         """Parse the XLSX file and return raw data for validation"""
+        try:
+            import openpyxl
+        except ImportError:
+            raise HTTPException(status_code=501, detail="Excel processing library not available")
+
         try:
             wb = openpyxl.load_workbook(io.BytesIO(file_content), data_only=True)
             ws = wb.active
@@ -255,6 +257,13 @@ class ExcelImportService:
 
     def generate_excel_from_draft(self, draft_data: Dict[str, Any]) -> bytes:
         """Generate a populated XLSX from frontend draft JSON"""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, Protection
+            from openpyxl.worksheet.datavalidation import DataValidation
+        except ImportError:
+            raise HTTPException(status_code=501, detail="Excel processing library not available")
+
         wb = Workbook()
         ws = wb.active
         ws.title = "Swaya Quiz Draft"
