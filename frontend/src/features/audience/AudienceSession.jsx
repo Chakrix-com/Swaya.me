@@ -638,17 +638,21 @@ export default function AudienceSession() {
                                 padding: '12px 16px',
                                 border: `2px solid ${isSelected ? 'var(--ctrl-radio-selected-border)' : 'var(--ctrl-radio-option-border)'}`,
                                 borderRadius: 8,
-                                backgroundColor: isSelected ? 'var(--ctrl-radio-selected-bg)' : 'var(--ctrl-radio-option-bg)',
+                                backgroundColor: isSelected ? 'var(--ctrl-radio-selected-bg)' : 'var(--aud-input-bg)',
                                 cursor: 'pointer',
                                 boxSizing: 'border-box',
                                 wordBreak: 'break-word',
                                 overflowWrap: 'break-word',
-                                color: 'var(--aud-input-text)',
+                                color: 'var(--aud-text-primary)',
                               }}
                             >
-                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                                <span style={{ color: 'var(--aud-input-text)', fontWeight: 700 }}>{key}:</span>
-                                <div style={{ color: 'var(--aud-input-text)', flex: 1 }} dangerouslySetInnerHTML={{ __html: label || '' }} />
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                <span style={{ fontWeight: 700, marginTop: 4 }}>{key}:</span>
+                                <RichTextRenderer
+                                  content={label || ''}
+                                  isDark={theme === 'dark'}
+                                  style={{ flex: 1 }}
+                                />
                               </div>
                               {currentQuestion.option_images?.[key] && (
                                 <img
@@ -708,13 +712,17 @@ export default function AudienceSession() {
                               border: `2px solid ${selected ? 'var(--ctrl-radio-selected-border)' : 'var(--ctrl-radio-option-border)'}`,
                               borderRadius: 8,
                               padding: '12px 16px',
-                              background: selected ? 'var(--ctrl-radio-selected-bg)' : 'var(--ctrl-option-bg-alt)',
-                              color: 'var(--aud-input-text)',
+                              background: selected ? 'var(--ctrl-radio-selected-bg)' : 'var(--aud-input-bg)',
+                              color: 'var(--aud-text-primary)',
                             }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                                <span style={{ fontWeight: 700 }}>{key}:</span>
-                                <div style={{ flex: 1, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: label || '' }} />
-                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 8 }}>
+                                <span style={{ fontWeight: 700, marginTop: 4 }}>{key}:</span>
+                                <RichTextRenderer
+                                  content={label || ''}
+                                  isDark={theme === 'dark'}
+                                  style={{ flex: 1 }}
+                                />
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)', marginTop: 4 }}>
                                   {count} ({pct.toFixed(1)}%)
                                 </span>
                               </div>
@@ -736,7 +744,7 @@ export default function AudienceSession() {
                           const correct = currentQuestion.correct_answer === key
                           const selected = selectedAnswer === key
                           const borderColor = correct ? 'var(--ctrl-success-border)' : selected ? 'var(--ctrl-error-border)' : 'var(--ctrl-radio-option-border)'
-                          const bgColor = correct ? 'var(--ctrl-success-bg)' : selected ? 'var(--ctrl-error-bg)' : 'var(--ctrl-option-bg-alt)'
+                          const bgColor = correct ? 'var(--ctrl-success-bg)' : selected ? 'var(--ctrl-error-bg)' : 'var(--aud-input-bg)'
                           const badgeBg = correct ? '#52c41a' : selected ? '#ff4d4f' : '#bfbfbf'
                           const badgeIcon = correct ? <CheckCircleOutlined /> : selected ? <CloseCircleOutlined /> : key
                           return (
@@ -745,19 +753,24 @@ export default function AudienceSession() {
                               padding: '12px 16px', background: bgColor,
                               opacity: (!correct && !selected) ? 0.55 : 1,
                               transition: 'all 0.3s ease',
-                              color: 'var(--aud-input-text)',
+                              color: 'var(--aud-text-primary)',
                             }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 8 }}>
                                 <span style={{
                                   width: 30, height: 30, borderRadius: '50%',
                                   background: badgeBg, color: '#fff',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   fontSize: 14, fontWeight: 700, flexShrink: 0,
+                                  marginTop: 4
                                 }}>
                                   {badgeIcon}
                                 </span>
-                                <div style={{ flex: 1, wordBreak: 'break-word', fontWeight: correct ? 600 : 400, color: 'var(--aud-input-text)' }} dangerouslySetInnerHTML={{ __html: label || '' }} />
-                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)' }}>
+                                <RichTextRenderer
+                                  content={label || ''}
+                                  isDark={theme === 'dark'}
+                                  style={{ flex: 1, fontWeight: correct ? 600 : 400 }}
+                                />
+                                <span style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--aud-text-secondary)', marginTop: 4 }}>
                                   {count} ({pct.toFixed(1)}%)
                                 </span>
                               </div>
