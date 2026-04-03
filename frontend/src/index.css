@@ -118,8 +118,13 @@ canvas {
   --ctrl-input-placeholder:   rgba(0, 0, 0, 0.35);
   --ctrl-radio-option-bg:     #ffffff;
   --ctrl-radio-option-border: #d9d9d9;
-  --ctrl-radio-selected-bg:   #e6f0ff;
-  --ctrl-radio-selected-border: #1677ff;
+  --ctrl-radio-selected-bg:   #e6f7ff;
+  --ctrl-radio-selected-border: #1890ff;
+  --ctrl-success-bg:          #f6ffed;
+  --ctrl-success-border:      #52c41a;
+  --ctrl-error-bg:            #fff1f0;
+  --ctrl-error-border:        #ff4d4f;
+  --ctrl-option-bg-alt:       #fafafa;
   --ctrl-divider:             rgba(0, 0, 0, 0.1);
   --ctrl-progress-track:      rgba(0, 0, 0, 0.08);
   --ctrl-tag-text:            #152238;
@@ -185,6 +190,11 @@ canvas {
   --ctrl-radio-option-border: rgba(255, 255, 255, 0.15);
   --ctrl-radio-selected-bg:   rgba(22, 119, 255, 0.15);
   --ctrl-radio-selected-border: rgba(22, 119, 255, 0.55);
+  --ctrl-success-bg:          rgba(82, 196, 26, 0.15);
+  --ctrl-success-border:      #52c41a;
+  --ctrl-error-bg:            rgba(255, 77, 79, 0.15);
+  --ctrl-error-border:        #ff4d4f;
+  --ctrl-option-bg-alt:       rgba(255, 255, 255, 0.02);
   --ctrl-divider:             rgba(255, 255, 255, 0.1);
   --ctrl-progress-track:      rgba(255, 255, 255, 0.1);
   --ctrl-tag-text:            rgba(255, 255, 255, 0.85);

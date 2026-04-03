@@ -636,9 +636,9 @@ export default function AudienceSession() {
                                 display: 'block',
                                 width: '100%',
                                 padding: '12px 16px',
-                                border: `2px solid ${isSelected ? '#1890ff' : '#d9d9d9'}`,
+                                border: `2px solid ${isSelected ? 'var(--ctrl-radio-selected-border)' : 'var(--ctrl-radio-option-border)'}`,
                                 borderRadius: 8,
-                                backgroundColor: isSelected ? '#e6f7ff' : 'white',
+                                backgroundColor: isSelected ? 'var(--ctrl-radio-selected-bg)' : 'var(--ctrl-radio-option-bg)',
                                 cursor: 'pointer',
                                 boxSizing: 'border-box',
                                 wordBreak: 'break-word',
@@ -705,10 +705,10 @@ export default function AudienceSession() {
                           const selected = selectedAnswer === key
                           return (
                             <div key={key} style={{
-                              border: `2px solid ${selected ? '#1890ff' : '#d9d9d9'}`,
+                              border: `2px solid ${selected ? 'var(--ctrl-radio-selected-border)' : 'var(--ctrl-radio-option-border)'}`,
                               borderRadius: 8,
                               padding: '12px 16px',
-                              background: selected ? '#e6f7ff' : '#fafafa',
+                              background: selected ? 'var(--ctrl-radio-selected-bg)' : 'var(--ctrl-option-bg-alt)',
                               color: 'var(--aud-input-text)',
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
@@ -735,8 +735,8 @@ export default function AudienceSession() {
                           const pct = totalAns > 0 ? (count / totalAns * 100) : 0
                           const correct = currentQuestion.correct_answer === key
                           const selected = selectedAnswer === key
-                          const borderColor = correct ? '#52c41a' : selected ? '#ff4d4f' : '#d9d9d9'
-                          const bgColor = correct ? '#f6ffed' : selected ? '#fff1f0' : '#fafafa'
+                          const borderColor = correct ? 'var(--ctrl-success-border)' : selected ? 'var(--ctrl-error-border)' : 'var(--ctrl-radio-option-border)'
+                          const bgColor = correct ? 'var(--ctrl-success-bg)' : selected ? 'var(--ctrl-error-bg)' : 'var(--ctrl-option-bg-alt)'
                           const badgeBg = correct ? '#52c41a' : selected ? '#ff4d4f' : '#bfbfbf'
                           const badgeIcon = correct ? <CheckCircleOutlined /> : selected ? <CloseCircleOutlined /> : key
                           return (
