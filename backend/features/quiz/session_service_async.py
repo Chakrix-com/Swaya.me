@@ -43,6 +43,66 @@ class SessionServiceAsync:
     def _timeout_job_id(self, session_id: int) -> str:
         return f"question-timeout:{session_id}"
 
+    async def _write_audience_state_cache(
+        self,
+        session: QuizSession,
+        questions: list,
+        timer_started_at: Optional[str] = None,
+    ) -> None:
+        """Write the shared audience state cache used by every participant poll.
+
+        Keyed by session_id; invalidated (overwritten) on advance/back/end/timeout.
+        Answer distribution and participant-specific data are NOT stored here —
+        those come from separate Redis keys written at submit time.
+        """
+        import os
+        from core.storage import ImageService
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
+
+        q_data = None
+        idx = session.current_question_index
+        if (
+            session.status == QuizSessionStatus.ACTIVE
+            and 0 <= idx < len(questions)
+        ):
+            q = questions[idx]
+            options = q.options if isinstance(q.options, list) else (
+                __import__("json").loads(q.options) if q.options else []
+            )
+            q_data = {
+                "id": q.id,
+                "text": q.text,
+                "question_type": q.question_type.value,
+                "options": options,
+                "correct_answer_index": q.correct_answer_index,
+                "question_image_url": ImageService.to_absolute_url(q.question_image_url, base_url),
+                "option_images": {
+                    k: ImageService.to_absolute_url(v, base_url)
+                    for k, v in (q.option_images or {}).items()
+                } if q.option_images else None,
+                "points": q.points or 1,
+                "max_time_seconds": q.max_time_seconds,
+                "timer_started_at": timer_started_at,
+            }
+
+        is_poll = session.quiz.quiz_type == QuizType.POLL
+        payload = {
+            "session_id": session.id,
+            "quiz_title": session.quiz.title,
+            "quiz_type": session.quiz.quiz_type.value,
+            "scoring_enabled": not is_poll,
+            "total_questions": len(questions),
+            "status": session.status.value,
+            "current_question_index": session.current_question_index,
+            "leaderboard_visible": False if is_poll else session.leaderboard_visible,
+            "current_question": q_data,
+        }
+        await self.redis.set_json(
+            f"session:{session.id}:audience_state",
+            payload,
+            expire=86400,
+        )
+
     async def _cancel_question_timeout(self, session_id: int) -> None:
         scheduler = stats_scheduler.scheduler
         if scheduler is None:
@@ -123,6 +183,7 @@ class SessionServiceAsync:
         else:
             await self._cancel_question_timeout(session.id)
 
+        timer_started_at = now.isoformat() if session.status == QuizSessionStatus.ACTIVE else None
         await self.redis.set_json(
             f"session:{session.id}:info",
             {
@@ -132,6 +193,7 @@ class SessionServiceAsync:
             },
             expire=86400
         )
+        await self._write_audience_state_cache(session, questions, timer_started_at=timer_started_at)
         return True
 
     async def _handle_question_timeout(self, session_id: int, question_index: int) -> None:
@@ -156,33 +218,78 @@ class SessionServiceAsync:
     async def reconcile_timed_question_state(self, db: AsyncSession, session_id: int) -> None:
         """Heal/advance timed question state for running sessions (polling safety net).
 
-        Optimised: two-phase check — lightweight session state read first, only loads
-        quiz + questions if the session is ACTIVE with an OPEN question that has a timer.
+        Optimised: Redis-first check — reads session state from cache; only falls
+        back to DB if cache is cold. DB is only touched at all when the session is
+        ACTIVE with an OPEN question that has a timer (Phase 2+).
         """
-        # Phase 1: lightweight check — no joins, no question load
-        row = (await db.execute(
-            select(
-                QuizSession.status,
-                QuizSession.current_question_status,
-                QuizSession.current_question_index,
-                QuizSession.quiz_id,
-            ).filter(QuizSession.id == session_id)
-        )).first()
+        # Phase 1: check Redis cache first — zero DB queries in steady state
+        # audience_state has max_time_seconds + timer_started_at so we can
+        # evaluate timer expiry without touching DB at all.
+        cached_state = await self.redis.get_json(f"session:{session_id}:audience_state")
+        if cached_state is not None:
+            if cached_state.get("status") != "active":
+                return
+            q_data = cached_state.get("current_question") or {}
+            if not q_data:
+                return
+            max_seconds = q_data.get("max_time_seconds")
+            if not max_seconds or max_seconds <= 0:
+                return  # No timer — APScheduler handles advance; nothing to reconcile
+            timer_started_at_str = q_data.get("timer_started_at")
+            if not timer_started_at_str:
+                return
+            try:
+                from datetime import timezone
+                started = datetime.fromisoformat(timer_started_at_str)
+                if started.tzinfo is None:
+                    started = started.replace(tzinfo=timezone.utc)
+                elapsed = (datetime.now(timezone.utc) - started).total_seconds()
+            except Exception:
+                elapsed = max_seconds + 1  # force DB check on parse error
+            if elapsed < max_seconds:
+                return  # Timer not expired yet — nothing to do
+            # Timer has expired — fall through to DB to apply the transition
+            # Build a stub so Phase 2 fetches via join (quiz_id unknown from cache)
+            class _Row:
+                status = QuizSessionStatus.ACTIVE
+                current_question_status = QuestionStatus.OPEN
+                current_question_index = cached_state.get("current_question_index", 0)
+                quiz_id = None
+            row = _Row()
+        else:
+            # audience_state cache miss — fall back to DB
+            row = (await db.execute(
+                select(
+                    QuizSession.status,
+                    QuizSession.current_question_status,
+                    QuizSession.current_question_index,
+                    QuizSession.quiz_id,
+                ).filter(QuizSession.id == session_id)
+            )).first()
 
-        if not row:
-            return
-        if row.status != QuizSessionStatus.ACTIVE:
-            return
-        if row.current_question_status != QuestionStatus.OPEN:
-            return
-        if row.current_question_index < 0:
-            return
+            if not row:
+                return
+            if row.status != QuizSessionStatus.ACTIVE:
+                return
+            if row.current_question_status != QuestionStatus.OPEN:
+                return
+            if row.current_question_index < 0:
+                return
 
         # Phase 2: fetch only the current question (not all questions)
-        q_result = await db.execute(
-            select(Question.id, Question.max_time_seconds)
-            .filter(Question.quiz_id == row.quiz_id, Question.order == row.current_question_index)
-        )
+        # When row came from Redis cache, quiz_id is None — join through session
+        if row.quiz_id is not None:
+            q_result = await db.execute(
+                select(Question.id, Question.max_time_seconds)
+                .filter(Question.quiz_id == row.quiz_id, Question.order == row.current_question_index)
+            )
+        else:
+            q_result = await db.execute(
+                select(Question.id, Question.max_time_seconds)
+                .join(Quiz, Quiz.id == Question.quiz_id)
+                .join(QuizSession, QuizSession.quiz_id == Quiz.id)
+                .filter(QuizSession.id == session_id, Question.order == row.current_question_index)
+            )
         current_question = q_result.first()
         if not current_question:
             return
@@ -496,13 +603,23 @@ class SessionServiceAsync:
         
         if previous_sessions:
             session_ids = list(previous_sessions)
+            # Fetch tokens before marking inactive (needed for Redis cache invalidation)
+            token_result = await db.execute(
+                select(Participant.session_token).filter(
+                    Participant.session_id.in_(session_ids)
+                )
+            )
+            stale_tokens = token_result.scalars().all()
             await db.execute(
                 update(Participant).filter(
                     Participant.session_id.in_(session_ids)
                 ).values(is_active=False)
             )
             await db.commit()
-        
+            # Evict stale token entries from Redis so the DB check is not bypassed
+            for token in stale_tokens:
+                await self.redis.delete(f"session_token:{token}")
+
         # Generate unique join code
         join_code = self._generate_join_code()
         result = await db.execute(select(Event).filter(Event.join_code == join_code))
@@ -630,7 +747,14 @@ class SessionServiceAsync:
 
             # Increment participant count in Redis
             await self.tier_service.increment_participant_count(session.id)
-            
+
+            # Cache token → participant identity (eliminates a DB lookup on every poll)
+            await self.redis.set_json(
+                f"session_token:{session_token}",
+                {"participant_id": participant.id, "session_id": session.id, "is_active": True},
+                expire=86400,
+            )
+
             # Build response
             response = SessionJoinResponse(
                 session_id=session.id,
@@ -749,6 +873,7 @@ class SessionServiceAsync:
                 )
         
         # Update Redis cache
+        timer_started_at = now.isoformat() if session.status == QuizSessionStatus.ACTIVE else None
         await self.redis.set_json(
             f"session:{session.id}:info",
             {
@@ -758,9 +883,10 @@ class SessionServiceAsync:
             },
             expire=86400
         )
-        
+        await self._write_audience_state_cache(session, questions, timer_started_at=timer_started_at)
+
         return await self._to_session_response(db, session)
-    
+
     async def back_question(
         self,
         db: AsyncSession,
@@ -843,9 +969,10 @@ class SessionServiceAsync:
             },
             expire=86400
         )
-        
+        await self._write_audience_state_cache(session, questions, timer_started_at=now.isoformat())
+
         return await self._to_session_response(db, session)
-    
+
     async def end_session(
         self,
         db: AsyncSession,
@@ -895,9 +1022,10 @@ class SessionServiceAsync:
             {"status": "ended"},
             expire=86400
         )
-        
+        await self._write_audience_state_cache(session, [], timer_started_at=None)
+
         return await self._to_session_response(db, session)
-    
+
     async def toggle_leaderboard(
         self,
         db: AsyncSession,

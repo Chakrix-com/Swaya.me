@@ -136,7 +136,16 @@ class AnswerServiceAsync:
         
         # Update aggregation in Redis
         await self._update_aggregation(session.id, request.question_id, request.selected_option_index)
-        
+
+        # Update participant score cache used by the audience fast path
+        score_key = f"session_token:{session_token}:score"
+        score_data = await self.redis.get_json(score_key) or {"score": 0, "correct": 0}
+        if is_correct is True:
+            question_points = (current_question.points if current_question.points else 1)
+            score_data["score"] = score_data.get("score", 0) + question_points
+            score_data["correct"] = score_data.get("correct", 0) + 1
+        await self.redis.set_json(score_key, score_data, expire=86400)
+
         return AnswerSubmitResponse(
             success=True,
             message="Answer submitted successfully",
@@ -407,6 +416,96 @@ class AnswerServiceAsync:
             participant_answer=participant_answer
         )
     
+    async def _get_session_results_from_cache(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        participant_token: str,
+    ) -> Optional[SessionResultsResponse]:
+        """Serve audience-results entirely from Redis. Returns None on any cache miss."""
+        try:
+            # 1. Shared session+question state
+            state = await self.redis.get_json(f"session:{session_id}:audience_state")
+            if state is None:
+                return None
+
+            # 2. Live answer distribution from counters (always fresh)
+            current_question = None
+            q_data = state.get("current_question")
+            if q_data:
+                options = q_data.get("options") or []
+                distribution, total_answers = await self._get_answer_distribution_from_redis(
+                    session_id, q_data["id"], len(options)
+                )
+                is_poll = state.get("quiz_type") == "poll"
+                current_question = {
+                    "id": q_data["id"],
+                    "text": q_data["text"],
+                    "question_type": q_data["question_type"],
+                    "option_a": options[0] if len(options) > 0 else "",
+                    "option_b": options[1] if len(options) > 1 else "",
+                    "option_c": options[2] if len(options) > 2 else "",
+                    "option_d": options[3] if len(options) > 3 else "",
+                    "correct_answer": None,  # hidden from audience until closed
+                    "question_id": q_data["id"],
+                    "question_text": q_data["text"],
+                    "options": options,
+                    "correct_answer_index": None,  # hidden from audience
+                    "answer_distribution": distribution,
+                    "total_answers": total_answers,
+                    "question_image_url": q_data.get("question_image_url"),
+                    "option_images": q_data.get("option_images"),
+                    "points": q_data.get("points", 1),
+                    "max_time_seconds": q_data.get("max_time_seconds"),
+                    "timer_started_at": q_data.get("timer_started_at"),
+                }
+
+            # 3. Participant-specific: score and current-question answer
+            score_data = await self.redis.get_json(f"session_token:{participant_token}:score")
+            participant_score = score_data.get("score") if score_data else None
+            participant_correct = score_data.get("correct") if score_data else None
+
+            # 4. Total participants from Redis counter
+            count_raw = await self.redis.get(f"session:{session_id}:participants:count")
+            total_participants = int(count_raw) if count_raw else 0
+
+            return SessionResultsResponse(
+                session_id=session_id,
+                quiz_title=state["quiz_title"],
+                quiz_type=state["quiz_type"],
+                scoring_enabled=state.get("scoring_enabled", True),
+                total_questions=state.get("total_questions", 0),
+                total_participants=total_participants,
+                participant_score=participant_score,
+                participant_correct=participant_correct,
+                question_results=[],
+                status=state["status"],
+                current_question_index=state.get("current_question_index", -1),
+                current_question=current_question,
+                leaderboard_visible=state.get("leaderboard_visible", False),
+            )
+        except Exception:
+            # Any Redis error → fall back to DB path
+            return None
+
+    async def _get_answer_distribution_from_redis(
+        self,
+        session_id: int,
+        question_id: int,
+        option_count: int,
+    ) -> tuple[list[int], int]:
+        """Read answer counts from Redis counters written at submit time.
+        Returns (distribution list, total_answers). Falls back to empty on miss."""
+        if option_count == 0:
+            return [], 0
+        keys = [
+            f"session:{session_id}:question:{question_id}:option:{i}"
+            for i in range(option_count)
+        ]
+        values = await self.redis.mget(keys)
+        distribution = [int(v) if v else 0 for v in values]
+        return distribution, sum(distribution)
+
     async def get_session_results(
         self,
         db: AsyncSession,
@@ -416,16 +515,21 @@ class AnswerServiceAsync:
         include_text_responses: bool = True,
     ) -> SessionResultsResponse:
         """
-        Get final results for entire session
-        
-        Args:
-            db: Database session
-            session_id: Session ID
-            participant_token: Optional participant token for their score
-            
-        Returns:
-            Complete session results
+        Get final results for entire session.
+
+        Audience path (include_question_results=False): served from Redis caches
+        with zero DB queries in steady state. Falls back to DB on cache miss.
+        Host/full path: always hits DB for authoritative data.
         """
+        # ── Redis fast-path (audience polling only) ──────────────────────────
+        if not include_question_results and participant_token:
+            result = await self._get_session_results_from_cache(
+                db, session_id, participant_token
+            )
+            if result is not None:
+                return result
+        # ── DB path (host view, or audience cache miss) ───────────────────────
+
         # Get session with quiz and questions
         result = await db.execute(
             select(QuizSession)

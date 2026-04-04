@@ -95,8 +95,27 @@ async def _assert_host_session_access(
 async def _require_participant_for_session(
     db: AsyncSession,
     session_id: int,
-    session_token: str
+    session_token: str,
+    redis: "RedisClient | None" = None,
 ) -> Participant:
+    # Fast path: Redis cache set at join time
+    if redis is not None:
+        cached = await redis.get_json(f"session_token:{session_token}")
+        if cached is not None:
+            if cached.get("session_id") != session_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match session")
+            if not cached.get("is_active", True):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session has been restarted. Please rejoin with the new code.")
+            # Return a lightweight stub — only .session_id and .is_active are used downstream
+            class _CachedParticipant:
+                def __init__(self, d):
+                    self.id = d["participant_id"]
+                    self.session_id = d["session_id"]
+                    self.is_active = d.get("is_active", True)
+                    self.session_token = session_token
+            return _CachedParticipant(cached)
+
+    # Cache miss — fall back to DB
     result = await db.execute(
         select(Participant).filter(Participant.session_token == session_token)
     )
@@ -873,10 +892,11 @@ async def get_participant_session_results(
     db: AsyncSession = Depends(get_async_db),
     service: AnswerServiceAsync = Depends(get_answer_service),
     session_service: SessionServiceAsync = Depends(get_session_service),
+    redis: RedisClient = Depends(get_redis),
 ):
     """Get participant-safe session results for the participant's own session"""
     try:
-        await _require_participant_for_session(db, session_id, session_token)
+        await _require_participant_for_session(db, session_id, session_token, redis=redis)
         await session_service.reconcile_timed_question_state(db, session_id)
         return await service.get_session_results(
             db,

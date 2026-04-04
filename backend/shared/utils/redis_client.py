@@ -71,10 +71,22 @@ class RedisClient:
         """Get JSON value"""
         value = await self.get(key)
         return json.loads(value) if value else None
-    
+
     async def set_json(self, key: str, value: dict, expire: Optional[int] = None):
         """Set JSON value"""
         await self.set(key, json.dumps(value), expire)
+
+    async def mget(self, keys: list) -> list:
+        """Get multiple values by keys in a single round-trip"""
+        if not self.client:
+            await self.connect()
+        return await self.client.mget(keys)
+
+    async def incrby(self, key: str, amount: int) -> int:
+        """Increment counter by amount"""
+        if not self.client:
+            await self.connect()
+        return await self.client.incrby(key, amount)
 
 
 # Global Redis client instance
