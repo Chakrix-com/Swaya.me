@@ -13,8 +13,8 @@ API_BASE = "/api/v1"
 
 # You'll need to set these from an actual quiz session
 QUIZ_ID = 13  # Update this with actual quiz ID
-SESSION_ID = 326  # Session ID from join endpoint
-JOIN_CODE = "523743"  # Join code from URL
+SESSION_ID = 344  # Session ID from join endpoint
+JOIN_CODE = "106643"  # Join code from URL
 CURRENT_QUESTION_ID = None  # Will be updated during test
 
 
