@@ -1446,6 +1446,7 @@ export default function QuizBuilder() {
               onCancel={handleCancelQuestion}
               quizId={id}
               isPoll={isPoll}
+              isExam={isExam}
               language={i18n.language}
               isAdmin={isAdmin}
               questionImageUrl={questionImageUrl}
