@@ -434,7 +434,7 @@ export default function QuizControl() {
             </Button>
           </Tooltip>
         )}
-        {session && isSessionActive && (
+        {session && (isSessionActive || normalizedSessionStatus === 'created') && (
           <Popconfirm
             title={t('quiz.stopQuizTitle')}
             description={t('quiz.stopQuizConfirm')}
