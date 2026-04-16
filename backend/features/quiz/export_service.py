@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from persistence.models.quiz import (
-    Quiz, QuizSession, QuizType, Question, QuestionType
+    Quiz, QuizSession, QuizType, Question, QuestionType, Answer
 )
 from features.quiz.answer_service_async import AnswerServiceAsync
 
@@ -92,6 +92,7 @@ class QuestionExport:
     answer_distribution: List[int]
     total_answers: int
     word_frequencies: Optional[Dict[str, int]] = None   # word cloud only
+    text_answers: Optional[List[str]] = None             # single_line / paragraph only
     question_image_path: Optional[str] = None
     option_image_paths: Optional[Dict[str, str]] = None  # "A"/"B"/"C"/"D" -> local path
 
@@ -600,11 +601,19 @@ def _build_pdf(data: ExportData) -> bytes:
                 story.append(Paragraph("<i>No responses submitted yet.</i>", body))
 
         else:
-            q_items.append(Paragraph(
-                f"<i>Text response question — {sum(q.answer_distribution)} responses received</i>",
-                body
-            ))
-            story.append(KeepTogether(q_items))
+            if q.text_answers:
+                q_items.append(Paragraph(
+                    f"<i>Text responses ({len(q.text_answers)} received)</i>", body
+                ))
+                story.append(KeepTogether(q_items))
+                for ans in q.text_answers:
+                    story.append(Paragraph(f"• {ans}", body))
+            else:
+                q_items.append(Paragraph(
+                    f"<i>Text response question — {sum(q.answer_distribution)} responses received</i>",
+                    body
+                ))
+                story.append(KeepTogether(q_items))
 
         story.append(Spacer(1, 0.6 * cm))
 
@@ -1398,7 +1407,7 @@ def _build_xlsx(data: ExportData) -> bytes:
     # ---- Raw Data sheet ----
     ws_raw = wb.create_sheet("Raw Data")
     _set_sheet_header_footer(ws_raw)
-    raw_headers = ["Q#", "Question Text", "Type", "Option", "Option Index", "Votes", "% of Total"]
+    raw_headers = ["Q#", "Question Text", "Type", "Option / Response", "Option Index", "Votes", "% of Total"]
     for col, h in enumerate(raw_headers, 1):
         cell = ws_raw.cell(row=1, column=col, value=h)
         cell.font = header_font
@@ -1407,6 +1416,7 @@ def _build_xlsx(data: ExportData) -> bytes:
     raw_row = 2
     for idx, q in enumerate(data.questions):
         if q.options:
+            # MCQ / scale with labelled options
             total = sum(q.answer_distribution) or 1
             for i, (opt, cnt) in enumerate(zip(q.options, q.answer_distribution)):
                 ws_raw.cell(raw_row, 1, idx + 1)
@@ -1416,6 +1426,17 @@ def _build_xlsx(data: ExportData) -> bytes:
                 ws_raw.cell(raw_row, 5, i)
                 ws_raw.cell(raw_row, 6, cnt)
                 ws_raw.cell(raw_row, 7, round(cnt / total * 100, 1))
+                raw_row += 1
+        elif q.text_answers:
+            # single_line / paragraph — one row per response
+            for answer_text in q.text_answers:
+                ws_raw.cell(raw_row, 1, idx + 1)
+                ws_raw.cell(raw_row, 2, q.text)
+                ws_raw.cell(raw_row, 3, q.question_type)
+                ws_raw.cell(raw_row, 4, answer_text)
+                ws_raw.cell(raw_row, 5, None)
+                ws_raw.cell(raw_row, 6, None)
+                ws_raw.cell(raw_row, 7, None)
                 raw_row += 1
 
     buf = io.BytesIO()
@@ -1531,6 +1552,22 @@ class ExportService:
                 except Exception:
                     wf = {}
 
+            ta = None
+            if q.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH):
+                try:
+                    rows = await db.execute(
+                        select(Answer.text_answer)
+                        .filter(
+                            Answer.session_id == session_id,
+                            Answer.question_id == q.id,
+                            Answer.text_answer.isnot(None),
+                        )
+                        .order_by(Answer.created_at)
+                    )
+                    ta = [r for (r,) in rows.all() if r and r.strip()]
+                except Exception:
+                    ta = []
+
             q_img = _resolve_upload_path(q.question_image_url)
             opt_imgs: Dict[str, str] = {}
             if q.option_images:
@@ -1550,6 +1587,7 @@ class ExportService:
                 answer_distribution=dist,
                 total_answers=total_ans,
                 word_frequencies=wf,
+                text_answers=ta,
                 question_image_path=q_img,
                 option_image_paths=opt_imgs if opt_imgs else None,
             ))
