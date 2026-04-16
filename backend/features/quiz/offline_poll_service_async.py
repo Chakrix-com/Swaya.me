@@ -61,6 +61,7 @@ def _to_question_response(q: Question) -> QuestionResponse:
         } if q.option_images else None,
         points=q.points,
         max_time_seconds=q.max_time_seconds,
+        is_required=getattr(q, 'is_required', False) or False,
     )
 
 
@@ -289,6 +290,18 @@ async def complete_poll(
     if participant.completed_at:
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="Poll already completed")
+
+    # Enforce required questions
+    required_questions = [q for q in quiz.questions if getattr(q, 'is_required', False)]
+    if required_questions:
+        answered_question_ids = {a.question_id for a in participant.answers}
+        missing = [q.text[:60] for q in required_questions if q.id not in answered_question_ids]
+        if missing:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=422,
+                detail=f"Required question(s) not answered: {'; '.join(missing)}"
+            )
 
     participant.completed_at = _utcnow()
     await db.commit()

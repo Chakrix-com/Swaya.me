@@ -4,6 +4,7 @@
   line-height: 1.7;
   font-size: 15px;
   word-break: break-word;
+  white-space: normal;
 }
 
 /* basic typography resets for Ant Design compat */

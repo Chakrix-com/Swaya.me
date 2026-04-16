@@ -103,7 +103,7 @@
     "editQuestion": "Редактировать вопрос",
     "deleteQuestion": "Удалить вопрос",
     "updateQuestion": "Обновить вопрос",
-    "startQuiz": "Начать викторину",
+    "startQuiz": "Начать",
     "stopActiveSession": "Остановить активную сессию",
     "stopActiveSessionConfirm": "Остановить активную сессию?",
     "activeSessionStopped": "Активная сессия остановлена",
@@ -436,7 +436,8 @@
     "noTextResponsesYet": "No text responses yet.",
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
-    "continue": "Continue"
+    "continue": "Continue",
+    "closeWindow": "Закрыть это окно"
   },
   "navigation": {
     "home": "Home",
@@ -1677,5 +1678,11 @@
     "emptyStatePollDesc": "Живой опрос — собирайте мгновенные ответы аудитории",
     "emptyStateOfflinePollDesc": "Офлайн-опрос — поделитесь ссылкой, собирайте ответы в любое время",
     "emptyStateExamDesc": "Тест / Экзамен — с таймером, автооценкой, доступен по ссылке"
+  },
+  "promo": {
+    "tagline": "Создавайте опросы и викторины бесплатно на Swaya.me",
+    "visitBtn": "Перейти на Swaya.me",
+    "bookmarkBtn": "Добавить в закладки",
+    "bookmarkTip": "Нажмите Ctrl+D (или ⌘D на Mac) для добавления в закладки"
   }
 }

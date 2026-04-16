@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { offlinePollAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 
 const { Title, Text, Paragraph } = Typography
@@ -250,6 +251,7 @@ export default function OfflinePollSession() {
             <Title level={3} style={{ margin: 0 }}>
               {t('offlinePoll.alreadyCompleted', "You've already submitted this poll.")}
             </Title>
+            <PromoCard />
           </Space>
         </Card>
         </div>
@@ -276,6 +278,7 @@ export default function OfflinePollSession() {
                 {t('offlinePoll.closesOn', 'Closes on {{date}}', { date: formatDate(pollInfo.ends_at) })}
               </Text>
             )}
+            <PromoCard />
           </Space>
         </Card>
         </div>
@@ -349,6 +352,7 @@ export default function OfflinePollSession() {
     const answer = answers[question.id] || {}
     const isLast = currentIndex === questions.length - 1
     const hasAnswer = answer.selected_option_index !== undefined || (answer.text_answer && answer.text_answer.trim())
+    const isBlocked = question.is_required && !hasAnswer
 
     return (
       <div className="offline-poll-session">
@@ -377,7 +381,20 @@ export default function OfflinePollSession() {
                 style={{ maxWidth: '100%', borderRadius: 8 }}
               />
             )}
-            <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
+            <Space size={4} align="baseline">
+              <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
+              {question.is_required && (
+                <Text type="danger" style={{ fontWeight: 600 }}>*</Text>
+              )}
+            </Space>
+            {isBlocked && (
+              <Alert
+                type="warning"
+                message={t('offlinePoll.requiredWarning', 'This question is required. Please answer it to continue.')}
+                showIcon
+                style={{ marginTop: 4 }}
+              />
+            )}
 
             {/* MCQ options */}
             {question.question_type === 'mcq' && (
@@ -474,6 +491,7 @@ export default function OfflinePollSession() {
                     type="primary"
                     block
                     loading={submitting}
+                    disabled={isBlocked}
                     onClick={handleSubmit}
                   >
                     {t('offlinePoll.submitPoll', 'Submit Poll')}
@@ -483,6 +501,7 @@ export default function OfflinePollSession() {
                     type="primary"
                     block
                     loading={saving}
+                    disabled={isBlocked}
                     onClick={handleNext}
                   >
                     {t('offlinePoll.next', 'Next')}

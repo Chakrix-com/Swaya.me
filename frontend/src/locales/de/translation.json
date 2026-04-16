@@ -103,7 +103,7 @@
     "editQuestion": "Frage bearbeiten",
     "deleteQuestion": "Frage löschen",
     "updateQuestion": "Frage aktualisieren",
-    "startQuiz": "Quiz starten",
+    "startQuiz": "Starten",
     "stopActiveSession": "Aktive Sitzung stoppen",
     "stopActiveSessionConfirm": "Aktive Sitzung stoppen?",
     "activeSessionStopped": "Aktive Sitzung gestoppt",
@@ -436,7 +436,8 @@
     "noTextResponsesYet": "No text responses yet.",
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
-    "continue": "Continue"
+    "continue": "Continue",
+    "closeWindow": "Dieses Fenster schließen"
   },
   "navigation": {
     "home": "Home",
@@ -1677,5 +1678,11 @@
     "emptyStatePollDesc": "Live-Umfrage — sofortige Publikumsantworten sammeln",
     "emptyStateOfflinePollDesc": "Offline-Umfrage — Link teilen, Antworten jederzeit sammeln",
     "emptyStateExamDesc": "Test / Prüfung — zeitgesteuert, automatisch bewertet, per Link teilbar"
+  },
+  "promo": {
+    "tagline": "Erstelle eigene Umfragen und Quiz kostenlos auf Swaya.me",
+    "visitBtn": "Swaya.me besuchen",
+    "bookmarkBtn": "Seite als Lesezeichen speichern",
+    "bookmarkTip": "Drücke Ctrl+D (oder ⌘D auf dem Mac) zum Speichern als Lesezeichen"
   }
 }

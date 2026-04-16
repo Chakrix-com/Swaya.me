@@ -44,6 +44,7 @@ import {
   Alert,
   Tooltip,
   DatePicker,
+  Switch,
   message as antMessage,
 } from 'antd'
 import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
@@ -85,6 +86,7 @@ const QuestionForm = ({
   movingImages,
   isPoll,
   isExam,
+  isOfflinePoll,
   language,
   isAdmin,
   t
@@ -143,6 +145,7 @@ const QuestionForm = ({
         points: question.points ?? 1,
         max_time_seconds: question.max_time_seconds ?? null,
         negative_points: question.negative_points ?? 0,
+        is_required: question.is_required ?? false,
       }
       if (question.question_type === 'mcq') {
         const existingOptionCount = question.options?.length || 2
@@ -409,6 +412,17 @@ const QuestionForm = ({
               </Form.Item>
             )}
           </Space>
+        )}
+
+        {isOfflinePoll && (
+          <Form.Item
+            name="is_required"
+            label={t('offlinePoll.required', 'Required')}
+            valuePropName="checked"
+            tooltip={t('offlinePoll.requiredTooltip', 'Participants must answer this question before they can proceed.')}
+          >
+            <Switch />
+          </Form.Item>
         )}
 
         {/* Question Image Upload */}
@@ -1410,6 +1424,7 @@ export default function QuizBuilder() {
           quizId={id}
           isPoll={isPoll}
           isExam={isExam}
+          isOfflinePoll={isOfflinePoll}
           language={i18n.language}
           isAdmin={isAdmin}
           questionImageUrl={questionImageUrl}
@@ -1447,6 +1462,7 @@ export default function QuizBuilder() {
               quizId={id}
               isPoll={isPoll}
               isExam={isExam}
+              isOfflinePoll={isOfflinePoll}
               language={i18n.language}
               isAdmin={isAdmin}
               questionImageUrl={questionImageUrl}
@@ -1473,6 +1489,9 @@ export default function QuizBuilder() {
                   {!isPoll && question.max_time_seconds ? (
                     <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
                   ) : null}
+                  {isOfflinePoll && question.is_required && (
+                    <Tag color="red">{t('offlinePoll.required', 'Required')}</Tag>
+                  )}
                   <Text strong>{question.text.replace(/<[^>]*>/g, '')}</Text>
                 </Space>
               }
@@ -1623,6 +1642,7 @@ export default function QuizBuilder() {
         points: values.points || 1,
         max_time_seconds: values.max_time_seconds ?? null,
         negative_points: values.negative_points ?? 0,
+        is_required: values.is_required ?? false,
       }
 
       // Add options for choice-based question types
@@ -1800,8 +1820,9 @@ export default function QuizBuilder() {
         points: values.points || 1,
         max_time_seconds: values.max_time_seconds ?? null,
         negative_points: values.negative_points ?? 0,
+        is_required: values.is_required ?? false,
       }
-      
+
       // Add options for choice-based question types
       if (values.question_type === 'mcq') {
         const mcqOptions = [

@@ -18,6 +18,7 @@ import {
 import { examAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import dayjs from 'dayjs'
 
@@ -416,6 +417,7 @@ function ScoreScreen({ result, onBack }) {
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <Button onClick={onBack}>{t('exam.backToDashboard')}</Button>
       </div>
+      <PromoCard />
     </div>
   )
 }

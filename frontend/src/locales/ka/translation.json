@@ -102,7 +102,7 @@
     "updateQuestion": "ಪ್ರಶ್ನೆ ನವೀಕರಿಸಿ",
     "deleteQuestion": "ಪ್ರಶ್ನೆ ಅಳಿಸಿ",
     "deleteQuestionConfirm": "ಈ ಪ್ರಶ್ನೆಯನ್ನು ಅಳಿಸುವುದೇ?",
-    "startQuiz": "ಪ್ರಶ್ನೋತ್ತರಿ ಪ್ರಾರಂಭಿಸಿ",
+    "startQuiz": "ಪ್ರಾರಂಭಿಸಿ",
     "stopActiveSession": "ಸಕ್ರಿಯ ಅಧಿವೇಶನವನ್ನು ನಿಲ್ಲಿಸಿ",
     "stopActiveSessionConfirm": "ಸಕ್ರಿಯ ಅಧಿವೇಶನವನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?",
     "activeSessionStopped": "ಸಕ್ರಿಯ ಅಧಿವೇಶನವನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ",
@@ -1483,7 +1483,8 @@
     "noTextResponsesYet": "No text responses yet.",
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
-    "continue": "Continue"
+    "continue": "Continue",
+    "closeWindow": "ಈ ವಿಂಡೋವನ್ನು ಮುಚ್ಚಿ"
   },
   "ai": {
     "generateWithAI": "AI ಯಿಂದ ರಚಿಸಿ",
@@ -1678,5 +1679,11 @@
     "emptyStatePollDesc": "ಲೈವ್ ಪೋಲ್ — ತಕ್ಷಣದ ಪ್ರೇಕ್ಷಕ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ಸಂಗ್ರಹಿಸಿ",
     "emptyStateOfflinePollDesc": "ಆಫ್‌ಲೈನ್ ಪೋಲ್ — ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಿ, ಯಾವಾಗ ಬೇಕಾದರೂ ಪ್ರತಿಕ್ರಿಯೆ ಸಂಗ್ರಹಿಸಿ",
     "emptyStateExamDesc": "ಟೆಸ್ಟ್ / ಪರೀಕ್ಷೆ — ಸಮಯ ನಿರ್ಬಂಧ, ಸ್ವಯಂ-ಅಂಕ, ಲಿಂಕ್ ಮೂಲಕ ಹಂಚಿಕೊಳ್ಳಬಹುದು"
+  },
+  "promo": {
+    "tagline": "Swaya.me ನಲ್ಲಿ ನಿಮ್ಮ ಪೋಲ್‌ಗಳು ಮತ್ತು ಕ್ವಿಜ್‌ಗಳನ್ನು ಉಚಿತವಾಗಿ ರಚಿಸಿ",
+    "visitBtn": "Swaya.me ಗೆ ಭೇಟಿ ನೀಡಿ",
+    "bookmarkBtn": "ಈ ಪುಟವನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ",
+    "bookmarkTip": "ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಲು Ctrl+D (Mac ನಲ್ಲಿ ⌘D) ಒತ್ತಿ"
   }
 }

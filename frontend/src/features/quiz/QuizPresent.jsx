@@ -341,7 +341,7 @@ function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions
 const MEDALS = ['🥇', '🥈', '🥉']
 const PODIUM_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32']
 
-function EndedView({ leaderboard, t }) {
+function EndedView({ leaderboard, t, onClose }) {
   const entries = leaderboard?.entries || []
   // Reorder top 3 as [2nd, 1st, 3rd] for classic podium visual
   const raw3 = entries.slice(0, 3)
@@ -409,6 +409,15 @@ function EndedView({ leaderboard, t }) {
       {entries.length === 0 && (
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>{t('quizPresent.noScoresToDisplay', { defaultValue: 'No scores to display' })}</p>
       )}
+
+      <div style={{ textAlign: 'center', marginTop: 32 }}>
+        <p style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 12, fontSize: 15 }}>
+          {t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}
+        </p>
+        <button className="pv-close-window-btn" onClick={onClose}>
+          {t('quizPresent.closeWindow', { defaultValue: 'Close this window' })}
+        </button>
+      </div>
     </div>
   )
 }
@@ -1169,9 +1178,12 @@ export default function QuizPresent() {
             <div className="pv-center-fill">
               <h2 className="pv-waiting-title">{t('quizPresent.pollCompleted', { defaultValue: 'Poll completed' })}</h2>
               <p className="pv-waiting-sub">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</p>
+              <button className="pv-close-window-btn" onClick={() => window.close()}>
+                {t('quizPresent.closeWindow', { defaultValue: 'Close this window' })}
+              </button>
             </div>
           ) : (
-            <EndedView leaderboard={leaderboard} t={t} />
+            <EndedView leaderboard={leaderboard} t={t} onClose={() => window.close()} />
           )
         ) : isWaiting ? (
           <WaitingView participantCount={participantCount} t={t} />

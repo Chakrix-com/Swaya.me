@@ -137,6 +137,7 @@ class Question(Base, TimestampMixin):
     points = Column(Integer, nullable=False, default=1, server_default="1")
     max_time_seconds = Column(Integer, nullable=True)
     negative_points = Column(Integer, nullable=False, default=0, server_default="0")
+    is_required = Column(Boolean, nullable=False, default=False, server_default="0")
     
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")

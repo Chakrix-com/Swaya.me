@@ -103,7 +103,7 @@
     "editQuestion": "Editar pregunta",
     "deleteQuestion": "Eliminar pregunta",
     "updateQuestion": "Actualizar pregunta",
-    "startQuiz": "Iniciar cuestionario",
+    "startQuiz": "Iniciar",
     "stopActiveSession": "Detener sesión activa",
     "stopActiveSessionConfirm": "¿Detener la sesión activa?",
     "activeSessionStopped": "Sesión activa detenida",
@@ -436,7 +436,8 @@
     "noTextResponsesYet": "No text responses yet.",
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
-    "continue": "Continue"
+    "continue": "Continue",
+    "closeWindow": "Cerrar esta ventana"
   },
   "navigation": {
     "home": "Home",
@@ -1678,5 +1679,11 @@
     "emptyStatePollDesc": "Encuesta en vivo — recopila respuestas instantáneas de la audiencia",
     "emptyStateOfflinePollDesc": "Encuesta sin conexión — comparte un enlace, recoge respuestas en cualquier momento",
     "emptyStateExamDesc": "Test / Examen — con tiempo, puntuación automática, compartible por enlace"
+  },
+  "promo": {
+    "tagline": "Crea tus encuestas y cuestionarios gratis en Swaya.me",
+    "visitBtn": "Visitar Swaya.me",
+    "bookmarkBtn": "Marcar esta página",
+    "bookmarkTip": "Presiona Ctrl+D (o ⌘D en Mac) para marcar esta página"
   }
 }

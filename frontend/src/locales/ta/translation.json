@@ -102,7 +102,7 @@
     "updateQuestion": "கேள்வி புதுப்பிக்கவும்",
     "deleteQuestion": "கேள்வி நீக்கவும்",
     "deleteQuestionConfirm": "இந்த கேள்வியை நீக்கவும்?",
-    "startQuiz": "வினாடி வினா தொடங்கவும்",
+    "startQuiz": "தொடங்கவும்",
     "stopActiveSession": "செயலில் உள்ள அமர்வை நிறுத்து",
     "stopActiveSessionConfirm": "செயலில் உள்ள அமர்வை நிறுத்தவா?",
     "activeSessionStopped": "செயலில் உள்ள அமர்வு நிறுத்தப்பட்டது",
@@ -1483,7 +1483,8 @@
     "noTextResponsesYet": "No text responses yet.",
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
-    "continue": "Continue"
+    "continue": "Continue",
+    "closeWindow": "இந்த சாளரத்தை மூடுங்கள்"
   },
   "ai": {
     "generateWithAI": "AI மூலம் உருவாக்கு",
@@ -1678,5 +1679,11 @@
     "emptyStatePollDesc": "நேரடி வாக்கெடுப்பு — உடனடி பார்வையாளர் பதில்களை சேகரிக்கவும்",
     "emptyStateOfflinePollDesc": "ஆஃப்லைன் வாக்கெடுப்பு — இணைப்பை பகிரவும், எப்போது வேண்டுமானாலும் பதில்களை சேகரிக்கவும்",
     "emptyStateExamDesc": "சோதனை / தேர்வு — நேரம் வரையறுக்கப்பட்ட, தானியங்கி மதிப்பீடு, இணைப்பு மூலம் பகிரக்கூடியது"
+  },
+  "promo": {
+    "tagline": "Swaya.me இல் உங்கள் வாக்கெடுப்புகள் & வினாவிளையாட்டுகளை இலவசமாக உருவாக்குங்கள்",
+    "visitBtn": "Swaya.me ஐ பார்வையிடுங்கள்",
+    "bookmarkBtn": "இந்த பக்கத்தை புக்மார்க் செய்யுங்கள்",
+    "bookmarkTip": "புக்மார்க் செய்ய Ctrl+D (Mac இல் ⌘D) அழுத்துங்கள்"
   }
 }

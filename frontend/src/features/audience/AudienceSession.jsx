@@ -32,6 +32,7 @@ import { clearSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import RichTextEditor from '../quiz/components/RichTextEditor'
+import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 
 const { Title, Text } = Typography
@@ -466,6 +467,7 @@ export default function AudienceSession() {
                   }
                   extra={<Text type="secondary">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</Text>}
                 />
+                <PromoCard />
               </Card>
             )}
 
