@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Spin, Tag, Rate, Progress } from 'antd'
-import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { Spin, Tag, Rate, Progress, Modal } from 'antd'
+import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined, FullscreenOutlined } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI } from '../../services/api'
@@ -94,7 +94,7 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll, t
   const total = question.total_answers || 0
   const images = question.option_images || {}
   const correctIndex = question.correct_answer_index ?? -1
-  const showStats = !isPoll || revealed
+  const showStats = true
   const revealCorrectness = !isPoll && correctIndex >= 0
   const effectiveRevealed = revealed && revealCorrectness
 
@@ -668,6 +668,8 @@ function CompactLeaderboard({ entries, total, onExpand, t }) {
 
 /* ── Sidebar ─────────────────────────────────────────── */
 function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll, t }) {
+  const [qrModalOpen, setQrModalOpen] = useState(false)
+
   return (
     <aside className="pv-sidebar">
       <div className="pv-sidebar-title">
@@ -679,9 +681,36 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
         <>
           <div className="pv-sidebar-divider" />
           <div className="pv-qr-wrap">
-            <QRCodeCanvas value={joinUrl} size={164} level="H" includeMargin={false} />
+            <div
+              style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+              onClick={() => setQrModalOpen(true)}
+              title={t('quizPresent.expandQr', { defaultValue: 'Click to enlarge QR code' })}
+            >
+              <QRCodeCanvas value={joinUrl} size={164} level="H" includeMargin={false} />
+              <span style={{
+                position: 'absolute', bottom: 4, right: 4,
+                background: 'rgba(0,0,0,0.45)', borderRadius: 4,
+                color: '#fff', fontSize: 12, padding: '2px 4px', lineHeight: 1,
+                pointerEvents: 'none',
+              }}>
+                <FullscreenOutlined />
+              </span>
+            </div>
             <span className="pv-qr-label">{t('quizPresent.scanToJoin', { defaultValue: 'Scan to join' })}</span>
           </div>
+          <Modal
+            open={qrModalOpen}
+            onCancel={() => setQrModalOpen(false)}
+            footer={null}
+            centered
+            title={t('quizPresent.scanToJoin', { defaultValue: 'Scan to join' })}
+            width={480}
+          >
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <QRCodeCanvas value={joinUrl} size={380} level="H" includeMargin={true} />
+              <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>{joinUrl}</div>
+            </div>
+          </Modal>
           <div className="pv-join-code-wrap">
             <span className="pv-join-code-label">{t('quiz.joinCode')}</span>
             <span className="pv-join-code">{joinCode}</span>

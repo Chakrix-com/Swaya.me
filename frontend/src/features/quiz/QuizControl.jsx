@@ -17,7 +17,8 @@ import {
   Alert,
   Input,
   Table,
-  Popconfirm
+  Popconfirm,
+  Modal
 } from 'antd'
 import {
   PlayCircleOutlined,
@@ -31,7 +32,8 @@ import {
   TrophyOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
-  DesktopOutlined
+  DesktopOutlined,
+  FullscreenOutlined
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -56,6 +58,7 @@ export default function QuizControl() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [timerRemaining, setTimerRemaining] = useState(null)
+  const [qrModalOpen, setQrModalOpen] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -520,12 +523,46 @@ export default function QuizControl() {
               <Card title={t('quiz.joinInformation')}>
                 <Row gutter={16}>
                   <Col xs={24} md={8} style={{ textAlign: 'center' }}>
-                    <QRCodeCanvas
-                      value={`${window.location.origin}/join/${session.join_code}`}
-                      size={160}
-                      level="H"
-                      includeMargin={true}
-                    />
+                    <div
+                      style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
+                      onClick={() => setQrModalOpen(true)}
+                      title={t('quizPresent.expandQr', { defaultValue: 'Click to enlarge QR code' })}
+                    >
+                      <QRCodeCanvas
+                        value={`${window.location.origin}/join/${session.join_code}`}
+                        size={160}
+                        level="H"
+                        includeMargin={true}
+                      />
+                      <span style={{
+                        position: 'absolute', bottom: 6, right: 6,
+                        background: 'rgba(0,0,0,0.45)', borderRadius: 4,
+                        color: '#fff', fontSize: 12, padding: '2px 5px', lineHeight: 1,
+                        pointerEvents: 'none',
+                      }}>
+                        <FullscreenOutlined />
+                      </span>
+                    </div>
+                    <Modal
+                      open={qrModalOpen}
+                      onCancel={() => setQrModalOpen(false)}
+                      footer={null}
+                      centered
+                      title={t('quiz.joinInformation')}
+                      width={480}
+                    >
+                      <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                        <QRCodeCanvas
+                          value={`${window.location.origin}/join/${session.join_code}`}
+                          size={380}
+                          level="H"
+                          includeMargin={true}
+                        />
+                        <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>
+                          {`${window.location.origin}/join/${session.join_code}`}
+                        </div>
+                      </div>
+                    </Modal>
                   </Col>
                   <Col xs={24} md={8}>
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">

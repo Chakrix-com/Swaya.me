@@ -360,16 +360,17 @@ def _build_pdf(data: ExportData) -> bytes:
                 except Exception:
                     pass
 
-            # "Swaya.me" text in header — brand blue (was white-on-blue)
+            # "Swaya.me (www.swaya.me)" text in header — brand blue
             self.setFillColorRGB(0.094, 0.565, 1.0)   # #1890ff
             self.setFont("Helvetica-Bold", 10)
             text_x = MARGIN + logo_drawn_w + 4
             text_y = header_y + HEADER_H * 0.3
-            self.drawString(text_x, text_y, "Swaya.me")
-            # hyperlink over "Swaya.me" text
+            brand_text = "Swaya.me  (www.swaya.me)"
+            self.drawString(text_x, text_y, brand_text)
+            # hyperlink over brand text
             self._unique_link(
                 'https://www.swaya.me',
-                (text_x, text_y - 2, text_x + 55, text_y + 10),
+                (text_x, text_y - 2, text_x + 160, text_y + 10),
             )
 
             # quiz title (right-aligned, truncated) — grey
@@ -417,45 +418,48 @@ def _build_pdf(data: ExportData) -> bytes:
     styles = getSampleStyleSheet()
     story = []
 
-    title_style = ParagraphStyle("Title2", parent=styles["Title"], fontSize=22, spaceAfter=6)
-    h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=14, spaceBefore=10, spaceAfter=4)
+    title_style = ParagraphStyle("Title2", parent=styles["Title"], fontSize=24, spaceAfter=4,
+                                 textColor=colors.HexColor("#1890ff"))
+    h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=13, spaceBefore=14, spaceAfter=4,
+                        textColor=colors.HexColor("#1890ff"))
     body = styles["Normal"]
     small = ParagraphStyle("small", parent=body, fontSize=9, textColor=colors.grey)
+    caption = ParagraphStyle("caption", parent=body, fontSize=10, textColor=colors.HexColor("#555555"),
+                             spaceBefore=2, spaceAfter=6)
 
     # ---- Page 1: summary ----
     story.append(Paragraph(data.quiz_title, title_style))
     story.append(Paragraph(
         f"Session #{data.session_id}  ·  {data.generated_at.strftime('%d %b %Y, %H:%M')}",
-        small
+        caption
     ))
-    story.append(Spacer(1, 0.4 * cm))
-    story.append(HRFlowable(width="100%", color=colors.HexColor("#1890ff"), thickness=2))
-    story.append(Spacer(1, 0.4 * cm))
+    story.append(HRFlowable(width="100%", color=colors.HexColor("#1890ff"), thickness=3,
+                            spaceAfter=8))
 
-    # KPI row
+    # KPI row — large bold values
     kpi_data = [
         [
-            Paragraph(f"<b>{data.total_participants}</b><br/>Participants", body),
-            Paragraph(f"<b>{data.total_questions}</b><br/>Questions", body),
-            Paragraph(f"<b>{data.quiz_type.capitalize()}</b><br/>Type", body),
+            Paragraph(f"<font size=22><b>{data.total_participants}</b></font><br/><font size=10 color='#555555'>Participants</font>", body),
+            Paragraph(f"<font size=22><b>{data.total_questions}</b></font><br/><font size=10 color='#555555'>Questions</font>", body),
+            Paragraph(f"<font size=22><b>{data.quiz_type.capitalize()}</b></font><br/><font size=10 color='#555555'>Type</font>", body),
         ]
     ]
     kpi_tbl = Table(kpi_data, colWidths=["33%", "33%", "34%"])
     kpi_tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#e6f7ff")),
-        ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#f6ffed")),
-        ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#fff7e6")),
-        ("BOX", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#dbeeff")),
+        ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#d9f7d9")),
+        ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#fff3d6")),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#cccccc")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dddddd")),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
     ]))
     story.append(kpi_tbl)
     story.append(Spacer(1, 0.5 * cm))
 
-    # Overall correct/incorrect pie (quiz type only)
+    # Overall correct/incorrect pie (quiz type only) — use Pillow PNG for crisper rendering
     if data.quiz_type == "quiz":
         total_correct = 0
         total_wrong = 0
@@ -468,35 +472,28 @@ def _build_pdf(data: ExportData) -> bytes:
                         total_wrong += cnt
 
         if total_correct + total_wrong > 0:
-            d = Drawing(200, 160)
-            pie = Pie()
-            pie.x = 50; pie.y = 30; pie.width = 100; pie.height = 100
-            pie.data = [total_correct, total_wrong]
-            pie.labels = [f"Correct ({total_correct})", f"Wrong ({total_wrong})"]
-            pie.slices[0].fillColor = colors.HexColor(_CORRECT_HEX)
-            pie.slices[1].fillColor = colors.HexColor("#f5222d")
-            d.add(pie)
-            story.append(d)
-            story.append(Spacer(1, 0.3 * cm))
+            pie_png = _make_pie_chart_png(
+                [f"Correct ({total_correct})", f"Wrong ({total_wrong})"],
+                [total_correct, total_wrong],
+                title="Overall Results",
+                size=240,
+            )
+            if pie_png:
+                story.append(Paragraph("<b>Overall Results</b>", h2))
+                story.append(RLImage(io.BytesIO(pie_png), width=7 * cm, height=8 * cm))
+                story.append(Spacer(1, 0.3 * cm))
 
-    # Per-question overview bar chart
+    # Per-question overview bar chart — use Pillow PNG for crisper rendering
     if data.questions:
         q_labels = [f"Q{i+1}" for i in range(len(data.questions))]
         q_counts = [sum(q.answer_distribution) for q in data.questions]
-        max_count = max(q_counts) if q_counts else 1
-
-        dw, dh = 400, max(80, len(data.questions) * 18 + 20)
-        d2 = Drawing(dw, dh)
-        bc = HorizontalBarChart()
-        bc.x = 40; bc.y = 10; bc.width = dw - 60; bc.height = dh - 20
-        bc.data = [q_counts]
-        bc.categoryAxis.categoryNames = q_labels
-        bc.valueAxis.valueMin = 0
-        bc.valueAxis.valueMax = max(max_count + 2, 5)
-        bc.bars[0].fillColor = colors.HexColor(_WRONG_HEX)
-        d2.add(bc)
-        story.append(Paragraph("<b>Response count per question</b>", body))
-        story.append(d2)
+        overview_png = _make_bar_chart_png(
+            "", q_labels, q_counts, correct_idx=None, width=520
+        )
+        if overview_png:
+            story.append(Paragraph("<b>Response count per question</b>", h2))
+            story.append(RLImage(io.BytesIO(overview_png), width=14 * cm,
+                                 height=max(3, len(data.questions) * 0.55) * cm))
 
     story.append(PageBreak())
 
@@ -505,8 +502,11 @@ def _build_pdf(data: ExportData) -> bytes:
         total = sum(q.answer_distribution) or 1
         q_items = []
 
+        q_items.append(HRFlowable(width="100%", color=colors.HexColor("#1890ff"),
+                                  thickness=1, spaceBefore=6, spaceAfter=4))
         type_badge = q.question_type.upper()
-        q_items.append(Paragraph(f"<b>Q{idx+1}. {q.text}</b>  <font color='grey' size=9>[{type_badge}]</font>", h2))
+        q_items.append(Paragraph(
+            f"<b>Q{idx+1}. {q.text}</b>  <font color='#888888' size=8>[{type_badge}]</font>", h2))
 
         # Question image
         if q.question_image_path:
@@ -517,40 +517,41 @@ def _build_pdf(data: ExportData) -> bytes:
                 pass
 
         if q.options:
-            max_v = max(q.answer_distribution) if q.answer_distribution else 1
-            dw2, dh2 = 420, max(60, len(q.options) * 26 + 20)
-            d3 = Drawing(dw2, dh2)
-            bc2 = HorizontalBarChart()
-            bc2.x = 40; bc2.y = 5; bc2.width = dw2 - 60; bc2.height = dh2 - 10
-            bc2.data = [q.answer_distribution]
-            bc2.categoryAxis.categoryNames = [
-                (opt[:20] + "…") if len(opt) > 22 else opt
-                for opt in q.options
-            ]
-            bc2.valueAxis.valueMin = 0
-            bc2.valueAxis.valueMax = max(max_v + 1, 5)
-            for i in range(len(q.options)):
-                color = colors.HexColor(_CORRECT_HEX) if i == q.correct_answer_index else colors.HexColor(_WRONG_HEX)
-                bc2.bars[(0, i)].fillColor = color
-            d3.add(bc2)
-            q_items.append(d3)
+            # Pillow-based bar chart for crisp rendering
+            bar_png = _make_bar_chart_png(
+                q.text, q.options, q.answer_distribution,
+                correct_idx=q.correct_answer_index, width=520,
+            )
+            if bar_png:
+                bar_h = max(2.5, len(q.options) * 1.1) * cm
+                q_items.append(RLImage(io.BytesIO(bar_png), width=14 * cm, height=bar_h))
+                q_items.append(Spacer(1, 0.2 * cm))
 
             tbl_data = [["Option", "Votes", "%"]]
             for i, (opt, cnt) in enumerate(zip(q.options, q.answer_distribution)):
                 marker = " ✓" if i == q.correct_answer_index else ""
                 pct = cnt / total * 100
                 tbl_data.append([f"{chr(65+i)}. {opt}{marker}", str(cnt), f"{pct:.0f}%"])
-            tbl = Table(tbl_data, colWidths=["60%", "20%", "20%"])
-            tbl.setStyle(TableStyle([
+            style_cmds = [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1890ff")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f0f0f0")]),
-                ("BOX", (0, 0), (-1, -1), 0.4, colors.grey),
-                ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ]))
+                ("BOX", (0, 0), (-1, -1), 0.4, colors.HexColor("#cccccc")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e0e0e0")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f5f5")]),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]
+            # Highlight the correct answer row in green
+            if q.correct_answer_index is not None:
+                cr = q.correct_answer_index + 1  # +1 for header row
+                style_cmds += [
+                    ("BACKGROUND", (0, cr), (-1, cr), colors.HexColor("#e8f5e9")),
+                    ("TEXTCOLOR", (0, cr), (-1, cr), colors.HexColor("#2e7d32")),
+                    ("FONTNAME", (0, cr), (-1, cr), "Helvetica-Bold"),
+                ]
+            tbl = Table(tbl_data, colWidths=["60%", "20%", "20%"])
+            tbl.setStyle(TableStyle(style_cmds))
             q_items.append(tbl)
 
             # Option images (after the MCQ table)
@@ -656,15 +657,21 @@ def _build_pdf(data: ExportData) -> bytes:
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1890ff")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("BOX", (0, 0), (-1, -1), 0.4, colors.grey),
-            ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("BOX", (0, 0), (-1, -1), 0.4, colors.HexColor("#cccccc")),
+            ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#e0e0e0")),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("ALIGN", (0, 0), (0, -1), "CENTER"),
+            ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
         ]
+        # Alternating rows only for entries beyond top-3 (guard against short leaderboards)
+        if len(data.leaderboard) > 3:
+            style_cmds.append(("ROWBACKGROUNDS", (0, 4), (-1, -1), [colors.white, colors.HexColor("#f5faff")]))
         for row_i, e in enumerate(data.leaderboard, start=1):
             hex_c = rank_colors_map.get(e.rank)
             if hex_c:
                 style_cmds.append(("BACKGROUND", (0, row_i), (-1, row_i), colors.HexColor(hex_c)))
+                style_cmds.append(("FONTNAME", (0, row_i), (-1, row_i), "Helvetica-Bold"))
         lb_tbl.setStyle(TableStyle(style_cmds))
         story.append(lb_tbl)
 
@@ -744,7 +751,7 @@ def _build_docx(data: ExportData) -> bytes:
     rPr.append(sz_elem)
     run_elem.append(rPr)
     t_elem = OxmlElement('w:t')
-    t_elem.text = 'Swaya.me'
+    t_elem.text = 'Swaya.me  (www.swaya.me)'
     run_elem.append(t_elem)
     hyperlink_elem.append(run_elem)
     rp._p.append(hyperlink_elem)
@@ -784,21 +791,65 @@ def _build_docx(data: ExportData) -> bytes:
 
     fp.add_run(f"  ·  Generated by Swaya.me  ·  {data.generated_at.strftime('%d %b %Y')}").font.size = Pt(8)
 
+    def _set_cell_bg(cell, hex_color: str):
+        """Set background color of a table cell."""
+        tc = cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        shd = OxmlElement('w:shd')
+        shd.set(qn('w:val'), 'clear')
+        shd.set(qn('w:color'), 'auto')
+        shd.set(qn('w:fill'), hex_color.lstrip('#'))
+        tcPr.append(shd)
+
+    def _add_colored_heading(doc, text: str, level: int, hex_color: str = "1890FF"):
+        """Add a heading paragraph with custom color."""
+        h = doc.add_heading(text, level)
+        for run in h.runs:
+            run.font.color.rgb = RGBColor(
+                int(hex_color[0:2], 16),
+                int(hex_color[2:4], 16),
+                int(hex_color[4:6], 16),
+            )
+        return h
+
     # ---- Document body ----
-    doc.add_heading(data.quiz_title, 0)
-    doc.add_paragraph(
+    # Title block — blue background banner
+    title_tbl = doc.add_table(rows=1, cols=1)
+    title_tbl.style = "Table Grid"
+    title_cell = title_tbl.cell(0, 0)
+    _set_cell_bg(title_cell, "1890FF")
+    title_para = title_cell.paragraphs[0]
+    title_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    title_run = title_para.add_run(data.quiz_title)
+    title_run.bold = True
+    title_run.font.size = Pt(18)
+    title_run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+    title_cell.add_paragraph()
+    sub_run = title_cell.add_paragraph().add_run(
         f"Session #{data.session_id}  ·  {data.generated_at.strftime('%d %b %Y, %H:%M')}"
-    ).style.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+    )
+    sub_run.font.size = Pt(10)
+    sub_run.font.color.rgb = RGBColor(0xCC, 0xE5, 0xFF)
+    doc.add_paragraph()
 
-    tbl = doc.add_table(rows=2, cols=3)
-    tbl.style = "Table Grid"
-    headers = ["Participants", "Questions", "Type"]
-    values  = [str(data.total_participants), str(data.total_questions), data.quiz_type.capitalize()]
-    for i, (h, v) in enumerate(zip(headers, values)):
-        tbl.cell(0, i).text = h
-        tbl.cell(0, i).paragraphs[0].runs[0].bold = True
-        tbl.cell(1, i).text = v
-
+    # KPI summary table
+    kpi_tbl = doc.add_table(rows=2, cols=3)
+    kpi_tbl.style = "Table Grid"
+    kpi_headers = ["Participants", "Questions", "Type"]
+    kpi_values  = [str(data.total_participants), str(data.total_questions),
+                   data.quiz_type.capitalize()]
+    kpi_bg = ["DBEEFF", "D9F7D9", "FFF3D6"]
+    for i, (h, v, bg) in enumerate(zip(kpi_headers, kpi_values, kpi_bg)):
+        hcell = kpi_tbl.cell(0, i)
+        hcell.text = h
+        hcell.paragraphs[0].runs[0].bold = True
+        _set_cell_bg(hcell, bg)
+        vcell = kpi_tbl.cell(1, i)
+        vp = vcell.paragraphs[0]
+        vrun = vp.add_run(v)
+        vrun.bold = True
+        vrun.font.size = Pt(14)
+        _set_cell_bg(vcell, bg)
     doc.add_paragraph()
 
     if data.quiz_type == "quiz":
@@ -816,12 +867,12 @@ def _build_docx(data: ExportData) -> bytes:
                 title="Overall Correct vs Wrong"
             )
             if pie_png:
-                doc.add_heading("Overall Results", level=1)
+                _add_colored_heading(doc, "Overall Results", level=1)
                 doc.add_picture(io.BytesIO(pie_png), width=Inches(3))
 
-    doc.add_heading("Question Results", level=1)
+    _add_colored_heading(doc, "Question Results", level=1)
     for idx, q in enumerate(data.questions):
-        doc.add_heading(f"Q{idx+1}. {q.text}", level=2)
+        _add_colored_heading(doc, f"Q{idx+1}. {q.text}", level=2)
         # Question image
         if q.question_image_path:
             try:
@@ -843,9 +894,12 @@ def _build_docx(data: ExportData) -> bytes:
 
             tbl2 = doc.add_table(rows=len(q.options) + 1, cols=3)
             tbl2.style = "Table Grid"
+            # Header row — blue background
             for cell_text, cell in zip(["Option", "Votes", "%"], tbl2.rows[0].cells):
                 cell.text = cell_text
                 cell.paragraphs[0].runs[0].bold = True
+                _set_cell_bg(cell, "1890FF")
+                cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
             total = sum(q.answer_distribution) or 1
             for i, (opt, cnt) in enumerate(zip(q.options, q.answer_distribution)):
                 row = tbl2.rows[i + 1]
@@ -853,6 +907,16 @@ def _build_docx(data: ExportData) -> bytes:
                 row.cells[0].text = f"{chr(65+i)}. {opt}{marker}"
                 row.cells[1].text = str(cnt)
                 row.cells[2].text = f"{cnt/total*100:.0f}%"
+                # Highlight correct answer row green
+                if i == q.correct_answer_index:
+                    for cell in row.cells:
+                        _set_cell_bg(cell, "E8F5E9")
+                        for run in cell.paragraphs[0].runs:
+                            run.bold = True
+                            run.font.color.rgb = RGBColor(0x2E, 0x7D, 0x32)
+                elif i % 2 == 1:
+                    for cell in row.cells:
+                        _set_cell_bg(cell, "F5F5F5")
 
             # Option images
             if q.option_image_paths:
@@ -867,12 +931,10 @@ def _build_docx(data: ExportData) -> bytes:
 
         elif q.question_type == 'word_cloud':
             if q.word_frequencies:
-                # Real word cloud image
                 wc_png = _make_wordcloud_png(q.word_frequencies, width=560, height=280)
                 if wc_png:
                     doc.add_paragraph("Word Cloud:").bold = True
                     doc.add_picture(io.BytesIO(wc_png), width=Inches(5.5))
-                # Bar chart of top words
                 wc_bar = _make_wc_bar_png(q.word_frequencies)
                 if wc_bar:
                     doc.add_paragraph("Top word frequencies:").bold = True
@@ -888,12 +950,16 @@ def _build_docx(data: ExportData) -> bytes:
 
     if data.quiz_type == "quiz" and data.leaderboard:
         doc.add_page_break()
-        doc.add_heading("Leaderboard", level=1)
+        _add_colored_heading(doc, "Leaderboard", level=1)
         lb_tbl = doc.add_table(rows=len(data.leaderboard) + 1, cols=4)
         lb_tbl.style = "Table Grid"
+        # Header row
         for cell_text, cell in zip(["Rank", "Name", "Score", "Time"], lb_tbl.rows[0].cells):
             cell.text = cell_text
             cell.paragraphs[0].runs[0].bold = True
+            _set_cell_bg(cell, "1890FF")
+            cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        rank_bg = {1: "FFD700", 2: "E8E8E8", 3: "CD7F32"}
         for i, e in enumerate(data.leaderboard):
             row = lb_tbl.rows[i + 1]
             time_str = f"{e.time_taken_seconds:.1f}s" if e.time_taken_seconds is not None else "—"
@@ -901,6 +967,12 @@ def _build_docx(data: ExportData) -> bytes:
             row.cells[1].text = e.display_name
             row.cells[2].text = str(e.score)
             row.cells[3].text = time_str
+            bg = rank_bg.get(e.rank, "F5FAFF" if i % 2 == 0 else "FFFFFF")
+            for cell in row.cells:
+                _set_cell_bg(cell, bg)
+                if e.rank in rank_bg:
+                    for run in cell.paragraphs[0].runs:
+                        run.bold = True
 
     buf = io.BytesIO()
     doc.save(buf)
@@ -917,6 +989,7 @@ def _build_pptx(data: ExportData) -> bytes:
         from pptx.util import Inches, Pt, Emu
         from pptx.dml.color import RGBColor
         from pptx.enum.chart import XL_CHART_TYPE
+        from pptx.enum.text import PP_ALIGN
         from pptx.chart.data import ChartData
     except ImportError:
         raise HTTPException(status_code=501, detail="Export libraries not available")
@@ -967,11 +1040,12 @@ def _build_pptx(data: ExportData) -> bytes:
         brand_tf = brand_tb.text_frame
         brand_p = brand_tf.paragraphs[0]
         brand_r = brand_p.add_run()
-        brand_r.text = "Swaya.me"
+        brand_r.text = "Swaya.me  (www.swaya.me)"
         brand_r.font.bold = True
-        brand_r.font.size = Pt(11)
+        brand_r.font.size = Pt(10)
         brand_r.font.color.rgb = RGBColor(0x18, 0x90, 0xFF)
         brand_r.hyperlink.address = 'https://www.swaya.me'
+        brand_tb.width = Inches(2.2)
 
         # Quiz title (right side of header)
         title_str = data.quiz_title[:60] + ("…" if len(data.quiz_title) > 60 else "")
@@ -1011,15 +1085,42 @@ def _build_pptx(data: ExportData) -> bytes:
                  size=14, color="#888888")
 
     kpi_items = [
-        (f"{data.total_participants}\nParticipants", "#e6f7ff"),
-        (f"{data.total_questions}\nQuestions", "#f6ffed"),
-        (f"{data.quiz_type.capitalize()}\nType", "#fff7e6"),
+        (str(data.total_participants), "Participants", "DBEEFF", "1890FF"),
+        (str(data.total_questions),    "Questions",    "D9F7D9", "52C41A"),
+        (data.quiz_type.capitalize(),  "Type",         "FFF3D6", "FAAD14"),
     ]
     box_w = Inches(2.2)
-    for i, (txt, bg_hex) in enumerate(kpi_items):
+    for i, (val, lbl, bg_hex, accent_hex) in enumerate(kpi_items):
         left = Inches(0.5) + i * (box_w + Inches(0.2))
-        txb = slide1.shapes.add_textbox(left, HEADER_H + Inches(1.8), box_w, Inches(1.0))
-        txb.text_frame.paragraphs[0].add_run().text = txt
+        shp = slide1.shapes.add_shape(
+            1,  # MSO_SHAPE_TYPE.RECTANGLE
+            left, HEADER_H + Inches(1.8), box_w, Inches(1.0)
+        )
+        shp.fill.solid()
+        shp.fill.fore_color.rgb = RGBColor(
+            int(bg_hex[0:2], 16), int(bg_hex[2:4], 16), int(bg_hex[4:6], 16)
+        )
+        shp.line.color.rgb = RGBColor(
+            int(accent_hex[0:2], 16), int(accent_hex[2:4], 16), int(accent_hex[4:6], 16)
+        )
+        shp.line.width = Pt(1.5)
+        tf = shp.text_frame
+        tf.word_wrap = True
+        p0 = tf.paragraphs[0]
+        p0.alignment = PP_ALIGN.CENTER
+        r0 = p0.add_run()
+        r0.text = val
+        r0.font.bold = True
+        r0.font.size = Pt(22)
+        r0.font.color.rgb = RGBColor(
+            int(accent_hex[0:2], 16), int(accent_hex[2:4], 16), int(accent_hex[4:6], 16)
+        )
+        p1 = tf.add_paragraph()
+        p1.alignment = PP_ALIGN.CENTER
+        r1 = p1.add_run()
+        r1.text = lbl
+        r1.font.size = Pt(10)
+        r1.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
     if data.quiz_type == "quiz":
         total_correct = sum(
@@ -1163,14 +1264,32 @@ def _build_pptx(data: ExportData) -> bytes:
         tbl = sl_lb.shapes.add_table(rows, 4,
                                      Inches(0.3), HEADER_H + Inches(4.0),
                                      W - Inches(0.6), H - HEADER_H - FOOTER_H - Inches(4.1)).table
+        pptx_rank_bg = {1: (0xFF, 0xD7, 0x00), 2: (0xE8, 0xE8, 0xE8), 3: (0xCD, 0x7F, 0x32)}
         for j, hdr in enumerate(["Rank", "Name", "Score", "Time"]):
-            tbl.cell(0, j).text = hdr
+            cell = tbl.cell(0, j)
+            cell.text = hdr
+            cell.text_frame.paragraphs[0].runs[0].font.bold = True
+            cell.text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(0x18, 0x90, 0xFF)
         for row_i, e in enumerate(data.leaderboard[:15]):
             tbl.cell(row_i + 1, 0).text = str(e.rank)
             tbl.cell(row_i + 1, 1).text = e.display_name
             tbl.cell(row_i + 1, 2).text = str(e.score)
             time_str = f"{e.time_taken_seconds:.1f}s" if e.time_taken_seconds is not None else "—"
             tbl.cell(row_i + 1, 3).text = time_str
+            if e.rank in pptx_rank_bg:
+                rgb = pptx_rank_bg[e.rank]
+                for j in range(4):
+                    c = tbl.cell(row_i + 1, j)
+                    c.fill.solid()
+                    c.fill.fore_color.rgb = RGBColor(*rgb)
+                    c.text_frame.paragraphs[0].runs[0].font.bold = True
+            elif row_i % 2 == 0:
+                for j in range(4):
+                    c = tbl.cell(row_i + 1, j)
+                    c.fill.solid()
+                    c.fill.fore_color.rgb = RGBColor(0xF5, 0xFA, 0xFF)
 
     buf = io.BytesIO()
     prs.save(buf)
@@ -1194,6 +1313,21 @@ def _build_xlsx(data: ExportData) -> bytes:
     wb = Workbook()
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill("solid", fgColor="1890FF")
+    alt_fill_a = PatternFill("solid", fgColor="F5FAFF")
+    alt_fill_b = PatternFill("solid", fgColor="FFFFFF")
+
+    def _apply_alt_rows(ws, start_row: int, end_row: int, num_cols: int):
+        """Apply alternating row fills from start_row to end_row inclusive."""
+        for r in range(start_row, end_row + 1):
+            fill = alt_fill_a if r % 2 == 0 else alt_fill_b
+            for c in range(1, num_cols + 1):
+                ws.cell(r, c).fill = fill
+
+    def _set_col_widths(ws, widths: list):
+        """Set column widths by index (1-based)."""
+        from openpyxl.utils import get_column_letter
+        for i, w in enumerate(widths, 1):
+            ws.column_dimensions[get_column_letter(i)].width = w
 
     logo = _logo_path()
 
@@ -1223,8 +1357,8 @@ def _build_xlsx(data: ExportData) -> bytes:
         except Exception:
             pass
 
-    ws_s["C1"] = "Swaya.me"
-    ws_s["C1"].font = Font(bold=True, size=14, color="1890FF")
+    ws_s["C1"] = "Swaya.me  (www.swaya.me)"
+    ws_s["C1"].font = Font(bold=True, size=13, color="1890FF")
     ws_s["C1"].hyperlink = 'https://www.swaya.me'
     ws_s["C1"].style = "Hyperlink"
 
@@ -1236,7 +1370,11 @@ def _build_xlsx(data: ExportData) -> bytes:
     ws_s["A8"] = "Quiz Type";         ws_s["B8"] = data.quiz_type.capitalize()
 
     for row in range(3, 9):
-        ws_s[f"A{row}"].font = Font(bold=True)
+        ws_s[f"A{row}"].font = Font(bold=True, color="1890FF")
+        ws_s[f"A{row}"].fill = alt_fill_a if row % 2 == 0 else alt_fill_b
+        ws_s[f"B{row}"].fill = alt_fill_a if row % 2 == 0 else alt_fill_b
+
+    _set_col_widths(ws_s, [14, 40, 24])
 
     if data.quiz_type == "quiz":
         total_correct = sum(
@@ -1315,9 +1453,18 @@ def _build_xlsx(data: ExportData) -> bytes:
                     except Exception:
                         pass
 
+    # Alternating rows + col widths for Questions sheet
+    if data.questions:
+        _apply_alt_rows(ws_q, 2, len(data.questions) + 1, len(q_headers))
+    _set_col_widths(ws_q, [4, 40, 12, 20, 20, 20, 20, 8, 8, 8, 8, 7, 7, 7, 7, 12])
+
     if len(data.questions) > 0:
         ws_q.cell(1, 18, "Q")
         ws_q.cell(1, 19, "Total Votes")
+        ws_q.cell(1, 18).font = header_font
+        ws_q.cell(1, 18).fill = header_fill
+        ws_q.cell(1, 19).font = header_font
+        ws_q.cell(1, 19).fill = header_fill
         for idx, q in enumerate(data.questions):
             ws_q.cell(idx + 2, 18, f"Q{idx+1}")
             ws_q.cell(idx + 2, 19, sum(q.answer_distribution))
@@ -1331,7 +1478,14 @@ def _build_xlsx(data: ExportData) -> bytes:
         cats_ref = Reference(ws_q, min_col=18, min_row=2, max_row=end_row)
         bc.add_data(data_ref, titles_from_data=True)
         bc.set_categories(cats_ref)
-        bc.width = 15; bc.height = 10
+        bc.width = 16; bc.height = 12
+        # Apply brand color to bar series
+        try:
+            from openpyxl.chart.data_source import NumDataSource
+            ser = bc.series[0]
+            ser.graphicalProperties.solidFill = "1890FF"
+        except Exception:
+            pass
         ws_q.add_chart(bc, "R2")
 
     # ---- Leaderboard sheet ----
@@ -1346,8 +1500,13 @@ def _build_xlsx(data: ExportData) -> bytes:
 
         rank_fills = {
             1: PatternFill("solid", fgColor="FFD700"),
-            2: PatternFill("solid", fgColor="C0C0C0"),
+            2: PatternFill("solid", fgColor="E8E8E8"),
             3: PatternFill("solid", fgColor="CD7F32"),
+        }
+        rank_fonts = {
+            1: Font(bold=True, color="7A5700"),
+            2: Font(bold=True, color="555555"),
+            3: Font(bold=True, color="5C2E00"),
         }
         for i, e in enumerate(data.leaderboard):
             r = i + 2
@@ -1358,6 +1517,13 @@ def _build_xlsx(data: ExportData) -> bytes:
             if e.rank in rank_fills:
                 for col in range(1, 5):
                     ws_lb.cell(r, col).fill = rank_fills[e.rank]
+                    ws_lb.cell(r, col).font = rank_fonts[e.rank]
+            else:
+                fill = alt_fill_a if i % 2 == 0 else alt_fill_b
+                for col in range(1, 5):
+                    ws_lb.cell(r, col).fill = fill
+
+        _set_col_widths(ws_lb, [6, 30, 10, 12])
 
         if data.leaderboard:
             bc2 = BarChart()
@@ -1368,7 +1534,12 @@ def _build_xlsx(data: ExportData) -> bytes:
             cats_ref2 = Reference(ws_lb, min_col=2, min_row=2, max_row=end_lb)
             bc2.add_data(data_ref2, titles_from_data=True)
             bc2.set_categories(cats_ref2)
-            bc2.width = 15; bc2.height = 10
+            bc2.width = 16; bc2.height = 12
+            try:
+                ser2 = bc2.series[0]
+                ser2.graphicalProperties.solidFill = "52C41A"
+            except Exception:
+                pass
             ws_lb.add_chart(bc2, "F2")
 
     # ---- Word Cloud sheet ----
@@ -1439,6 +1610,11 @@ def _build_xlsx(data: ExportData) -> bytes:
                 ws_raw.cell(raw_row, 7, None)
                 raw_row += 1
 
+    # Alternating rows + col widths for Raw Data sheet
+    if raw_row > 2:
+        _apply_alt_rows(ws_raw, 2, raw_row - 1, len(raw_headers))
+    _set_col_widths(ws_raw, [4, 45, 12, 35, 10, 8, 8])
+
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
@@ -1498,6 +1674,9 @@ class ExportService:
         except ImportError as e:
             raise HTTPException(status_code=501, detail="Export libraries not available")
         except Exception as e:
+            import traceback as _tb
+            import logging as _log
+            _log.getLogger(__name__).error("Export failed (fmt=%s session=%s): %s", fmt, session_id, _tb.format_exc())
             raise HTTPException(status_code=500, detail=f"Failed to generate export: {e}")
 
         return file_bytes, media_type, filename
