@@ -1,7 +1,7 @@
-import { useState, createContext, useContext, useEffect, lazy, Suspense } from 'react'
+import { useState, createContext, useContext, useEffect, lazy, Suspense, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip, Spin } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip, Spin, Tag } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -22,6 +22,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { logout } from './store/authSlice'
+import { authAPI } from './services/api'
 
 // Essential public routes (eagerly loaded)
 import Home from './features/home/Home'
@@ -82,6 +83,40 @@ const getInitialVisitorTheme = () => {
     return storedTheme
   }
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+const TIER_COLORS = { free: 'default', basic: 'blue', pro: 'purple', enterprise: 'gold' }
+
+function TierBadge({ user }) {
+  const [limits, setLimits] = useState(null)
+  const fetchedRef = useRef(false)
+
+  useEffect(() => {
+    if (!user || fetchedRef.current) return
+    fetchedRef.current = true
+    authAPI.getMyLimits()
+      .then(r => setLimits(r.data))
+      .catch(() => {})
+  }, [user])
+
+  if (!user) return null
+  const tier = user.tier || 'free'
+  const color = TIER_COLORS[tier] || 'default'
+  const tooltipContent = limits ? (
+    <div style={{ fontSize: 12, lineHeight: '20px' }}>
+      <div>Participants / session: <b>{limits.max_participants}</b></div>
+      <div>Questions / quiz: <b>{limits.max_questions}</b></div>
+      <div>Concurrent sessions: <b>{limits.max_concurrent_events}</b></div>
+    </div>
+  ) : null
+
+  return (
+    <Tooltip title={tooltipContent} placement="bottomRight">
+      <Tag color={color} style={{ cursor: 'default', textTransform: 'uppercase', fontWeight: 600, fontSize: 11, letterSpacing: '0.5px' }}>
+        {tier}
+      </Tag>
+    </Tooltip>
+  )
 }
 
 // Layout wrapper for authenticated routes
@@ -198,6 +233,7 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
         },
       }}
       actionsRender={() => [
+        <TierBadge key="tier" user={user} />,
         <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
         <Tooltip key="theme" title={t('tooltip.themeToggle')}>
           <Button

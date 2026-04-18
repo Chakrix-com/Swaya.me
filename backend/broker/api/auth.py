@@ -134,6 +134,32 @@ async def verify_email(
     return {"message": "Email verified successfully"}
 
 
+from core.config.tier_service import TierService
+from shared.utils.redis_client import get_redis, RedisClient
+from persistence.models.core import TierEnum
+
+@router.get("/my-limits")
+async def get_my_limits(
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(get_current_user),
+    redis: RedisClient = Depends(get_redis)
+):
+    """Return the tier limits for the currently authenticated user's tenant."""
+    tier_service = TierService(redis)
+    tier_value = current_user.tenant.tier.value
+    try:
+        tier_enum = TierEnum(tier_value)
+    except ValueError:
+        tier_enum = TierEnum.FREE
+    config = await tier_service.get_tier_config(db, tier_enum)
+    return {
+        "tier": tier_value,
+        "max_participants": config.get("max_participants"),
+        "max_questions": config.get("max_questions"),
+        "max_concurrent_events": config.get("max_concurrent_events"),
+    }
+
+
 from core.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest
 from core.auth.service_async import request_password_reset, execute_password_reset
 
