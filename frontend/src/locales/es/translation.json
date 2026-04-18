@@ -79,7 +79,8 @@
     "passwordUpperNumber": "La contraseña debe contener al menos una letra mayúscula y un número.",
     "emailRequired": "El correo electrónico es obligatorio",
     "emailInvalid": "Por favor ingrese un correo válido",
-    "passwordRequired": "La contraseña es obligatoria"
+    "passwordRequired": "La contraseña es obligatoria",
+    "continueWithGoogle": "Continuar con Google"
   },
   "quiz": {
     "myQuizzes": "Mis cuestionarios",

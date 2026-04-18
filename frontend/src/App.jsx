@@ -28,6 +28,7 @@ import { authAPI } from './services/api'
 import Home from './features/home/Home'
 import Login from './features/auth/Login'
 import Register from './features/auth/Register'
+import GoogleCallback from './features/auth/GoogleCallback'
 import AudienceJoin from './features/audience/AudienceJoin'
 import AudienceSession from './features/audience/AudienceSession'
 import OfflinePollSession from './features/offline-poll/OfflinePollSession'
@@ -345,6 +346,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>

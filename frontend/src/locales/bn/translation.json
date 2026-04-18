@@ -79,7 +79,8 @@
     "passwordUpperNumber": "পাসওয়ার্ডে কমপক্ষে একটি বড় হাতের অক্ষর এবং একটি সংখ্যা থাকতে হবে।",
     "emailRequired": "ইমেইল আবশ্যক",
     "emailInvalid": "একটি বৈধ ইমেইল দিন",
-    "passwordRequired": "পাসওয়ার্ড আবশ্যক"
+    "passwordRequired": "পাসওয়ার্ড আবশ্যক",
+    "continueWithGoogle": "Google দিয়ে চালিয়ে যান"
   },
   "quiz": {
     "myQuizzes": "আমার প্রশ্নোত্তর",

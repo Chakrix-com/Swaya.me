@@ -53,7 +53,7 @@ class User(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey('tenants.id'), nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)
     full_name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user, server_default="user")
@@ -74,6 +74,10 @@ class User(Base, TimestampMixin):
     user_quota = Column(Integer, nullable=True)  # Max users this admin can create
     managed_by_admin_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)  # Which admin owns this user
     
+    # OAuth / Social login
+    oauth_provider = Column(String(50), nullable=True)
+    oauth_provider_id = Column(String(255), nullable=True)
+
     # Language preference
     language_preference = Column(String(10), nullable=False, default='en', server_default='en')
     

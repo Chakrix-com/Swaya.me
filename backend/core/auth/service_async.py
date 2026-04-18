@@ -263,6 +263,105 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
     )
 
 
+async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict) -> TokenResponse:
+    """
+    Find existing user by OAuth provider+id or create a new one.
+    Called after the provider's auth code has been exchanged for a profile.
+    """
+    from datetime import datetime, timezone
+
+    provider_id = str(profile.get('sub', ''))
+    email = profile.get('email', '')
+    name = profile.get('name') or email.split('@')[0]
+
+    # Find by oauth identity first
+    stmt = select(User).where(User.oauth_provider == provider, User.oauth_provider_id == provider_id)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # Fall back to matching by email (links OAuth to existing account)
+        stmt = select(User).where(User.email == email)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        if user:
+            user.oauth_provider = provider
+            user.oauth_provider_id = provider_id
+            await db.flush()
+        else:
+            # Create new tenant + user
+            email_local = email.split('@')[0]
+            base_name = name.strip() or email_local
+            tenant_name = f"{base_name}'s Workspace"
+            base_slug = create_tenant_slug(base_name) or "workspace"
+            slug = base_slug
+            suffix = 1
+            while True:
+                stmt = select(Tenant).where(Tenant.slug == slug)
+                result = await db.execute(stmt)
+                if not result.scalar_one_or_none():
+                    break
+                suffix += 1
+                slug = f"{base_slug}-{suffix}"
+
+            tenant = Tenant(name=tenant_name, slug=slug, tier=TierEnum.FREE, is_active=True)
+            db.add(tenant)
+            await db.flush()
+
+            user = User(
+                tenant_id=tenant.id,
+                email=email,
+                hashed_password=None,
+                full_name=name,
+                is_active=True,
+                role=UserRole.user,
+                is_email_verified=True,
+                oauth_provider=provider,
+                oauth_provider_id=provider_id,
+                login_count=0,
+                last_login_at=None,
+            )
+            db.add(user)
+            await db.flush()
+
+    # Load tenant
+    stmt = select(Tenant).where(Tenant.id == user.tenant_id)
+    result = await db.execute(stmt)
+    tenant = result.scalar_one_or_none()
+
+    if not tenant or not tenant.is_active:
+        raise TenantNotFoundError("Your organisation account is inactive. Please contact support.")
+
+    user.last_login_at = datetime.now(timezone.utc)
+    user.login_count = (user.login_count or 0) + 1
+    await db.commit()
+
+    access_token = create_access_token(data={
+        "sub": str(user.id),
+        "email": user.email,
+        "tenant_id": tenant.id,
+        "tier": tenant.tier.value,
+        "role": user.role.value,
+    })
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=86400,
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            tenant_id=tenant.id,
+            tenant_name=tenant.name,
+            tier=tenant.tier.value,
+            is_active=user.is_active,
+            role=user.role.value,
+        )
+    )
+
+
 async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
     """Get user by ID"""
     stmt = select(User).where(User.id == user_id)

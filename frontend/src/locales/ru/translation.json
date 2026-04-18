@@ -79,7 +79,8 @@
     "passwordUpperNumber": "Пароль должен содержать хотя бы одну заглавную букву и одну цифру.",
     "emailRequired": "Электронная почта обязательна",
     "emailInvalid": "Пожалуйста, введите действительный email",
-    "passwordRequired": "Пароль обязателен"
+    "passwordRequired": "Пароль обязателен",
+    "continueWithGoogle": "Продолжить с Google"
   },
   "quiz": {
     "myQuizzes": "Мои викторины",

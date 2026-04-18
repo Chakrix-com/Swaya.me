@@ -50,6 +50,7 @@ export const authAPI = {
   resetPassword: (data) => api.post('/auth/reset-password', data),
   getMyLimits: () => api.get('/auth/my-limits'),
   getTierPlans: () => api.get('/auth/tier-plans'),
+  googleCallback: (code) => api.get('/auth/google/callback', { params: { code } }),
 }
 
 // Quiz API

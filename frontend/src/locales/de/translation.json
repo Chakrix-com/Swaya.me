@@ -79,7 +79,8 @@
     "passwordUpperNumber": "Das Passwort muss mindestens einen Großbuchstaben und eine Ziffer enthalten.",
     "emailRequired": "E-Mail ist erforderlich",
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail ein",
-    "passwordRequired": "Passwort ist erforderlich"
+    "passwordRequired": "Passwort ist erforderlich",
+    "continueWithGoogle": "Mit Google fortfahren"
   },
   "quiz": {
     "myQuizzes": "Meine Quizze",

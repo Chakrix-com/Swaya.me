@@ -79,7 +79,8 @@
     "passwordUpperNumber": "పాస్వర్డ్‌లో కనీసం ఒక పెద్ద అక్షరం మరియు ఒక సంఖ్య ఉండాలి.",
     "emailRequired": "ఇమెయిల్ అవసరం",
     "emailInvalid": "దయచేసి చెల్లుబాటు అయ్యే ఇమెయిల్ నమోదు చేయండి",
-    "passwordRequired": "పాస్‌వర్డ్ అవసరం"
+    "passwordRequired": "పాస్‌వర్డ్ అవసరం",
+    "continueWithGoogle": "Google తో కొనసాగండి"
   },
   "quiz": {
     "myQuizzes": "నా క్విజ్‌లు",

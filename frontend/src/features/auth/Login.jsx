@@ -4,6 +4,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Form, Input, Button, Card, message, Typography, Space, Alert } from 'antd'
 import { UserOutlined, LockOutlined, LoginOutlined, HomeOutlined } from '@ant-design/icons'
+
+const GOOGLE_LOGIN_URL = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/login`
 import { loginStart, loginSuccess, loginFailure, logout } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
@@ -130,6 +132,22 @@ function Login() {
                 {t('auth.loginButton')}
               </Button>
             </Form.Item>
+
+            <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', gap: 8 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
+              <span style={{ color: 'var(--visitor-text-secondary)', fontSize: 12 }}>or</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
+            </div>
+
+            <Button
+              block
+              size="large"
+              href={GOOGLE_LOGIN_URL}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              icon={<img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: 16, height: 16 }} />}
+            >
+              {t('auth.continueWithGoogle')}
+            </Button>
 
             <div style={{ textAlign: 'center', marginTop: '16px', color: 'var(--visitor-text-secondary)' }}>
               {t('auth.noAccount')} <Link to="/register">{t('auth.registerButton')}</Link>

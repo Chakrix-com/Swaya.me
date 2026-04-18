@@ -79,7 +79,8 @@
     "passwordUpperNumber": "पासवर्ड में कम से कम एक बड़ा अक्षर और एक संख्या होनी चाहिए।",
     "emailRequired": "ईमेल आवश्यक है",
     "emailInvalid": "कृपया एक वैध ईमेल दर्ज करें",
-    "passwordRequired": "पासवर्ड आवश्यक है"
+    "passwordRequired": "पासवर्ड आवश्यक है",
+    "continueWithGoogle": "Google से जारी रखें"
   },
   "quiz": {
     "myQuizzes": "मेरी क्विज़",

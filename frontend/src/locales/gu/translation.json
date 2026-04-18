@@ -79,7 +79,8 @@
     "passwordUpperNumber": "પાસવર્ડમાં ઓછામાં ઓછો એક મોટો અક્ષર અને એક સંખ્યા હોવી જોઈએ.",
     "emailRequired": "ઈમેઈલ જરૂરી છે",
     "emailInvalid": "કૃપા કરી માન્ય ઈમેઈલ દાખલ કરો",
-    "passwordRequired": "પાસવર્ડ જરૂરી છે"
+    "passwordRequired": "પાસવર્ડ જરૂરી છે",
+    "continueWithGoogle": "Google સાથે ચાલુ રાખો"
   },
   "quiz": {
     "myQuizzes": "મારા ક્વિઝ",

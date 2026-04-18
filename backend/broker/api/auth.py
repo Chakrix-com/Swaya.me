@@ -180,6 +180,60 @@ async def get_tier_plans(
     return plans
 
 
+from urllib.parse import urlencode
+from fastapi import Request
+from fastapi.responses import RedirectResponse as FastAPIRedirect
+import httpx
+from core.config.settings import settings
+from core.auth.service_async import oauth_login_or_register
+
+
+@router.get("/google/login")
+async def google_login():
+    """Redirect browser to Google's OAuth consent screen."""
+    if not settings.google.client_id:
+        raise HTTPException(status_code=503, detail="Google OAuth is not configured")
+    params = {
+        "client_id": settings.google.client_id,
+        "redirect_uri": f"{settings.app.frontend_url}/auth/google/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+    }
+    return FastAPIRedirect(f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+
+
+@router.get("/google/callback")
+async def google_callback(code: str, db: AsyncSession = Depends(get_async_db)):
+    """Exchange Google auth code for a Swaya.me JWT."""
+    redirect_uri = f"{settings.app.frontend_url}/auth/google/callback"
+    async with httpx.AsyncClient() as client:
+        token_resp = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": settings.google.client_id,
+                "client_secret": settings.google.client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        token_data = token_resp.json()
+        if "access_token" not in token_data:
+            raise HTTPException(status_code=400, detail="Google token exchange failed")
+
+        info_resp = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+        )
+        profile = info_resp.json()
+
+    if not profile.get("email"):
+        raise HTTPException(status_code=400, detail="Could not retrieve email from Google")
+
+    return await oauth_login_or_register(db, "google", profile)
+
+
 from core.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest
 from core.auth.service_async import request_password_reset, execute_password_reset
 

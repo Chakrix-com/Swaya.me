@@ -79,7 +79,8 @@
     "passwordUpperNumber": "கடவுச்சொல்லில் குறைந்தது ஒரு பெரிய எழுத்து மற்றும் ஒரு எண் இருக்க வேண்டும்.",
     "emailRequired": "மின்னஞ்சல் தேவை",
     "emailInvalid": "செல்லுபடியான மின்னஞ்சலை உள்ளிடவும்",
-    "passwordRequired": "கடவுச்சொல் தேவை"
+    "passwordRequired": "கடவுச்சொல் தேவை",
+    "continueWithGoogle": "Google மூலம் தொடரவும்"
   },
   "quiz": {
     "myQuizzes": "என் வினாடி வினா",

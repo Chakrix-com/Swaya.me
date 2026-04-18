@@ -90,12 +90,25 @@ class AppSettings(BaseSettings):
     )
 
 
+class GoogleSettings(BaseSettings):
+    """Google OAuth configuration"""
+    client_id: str = Field(default="", alias="GOOGLE_CLIENT_ID")
+    client_secret: str = Field(default="", alias="GOOGLE_CLIENT_SECRET")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     app: AppSettings = Field(default_factory=AppSettings)
+    google: GoogleSettings = Field(default_factory=GoogleSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",

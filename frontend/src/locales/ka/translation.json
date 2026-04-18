@@ -79,7 +79,8 @@
     "passwordUpperNumber": "ಪಾಸ್‌ವರ್ಡ್‌ನಲ್ಲಿ ಕನಿಷ್ಠ ಒಂದು ದೊಡ್ಡ ಅಕ್ಷರ ಮತ್ತು ಒಂದು ಸಂಖ್ಯೆ ಇರಬೇಕು.",
     "emailRequired": "ಇಮೇಲ್ ಅಗತ್ಯವಿದೆ",
     "emailInvalid": "ದಯವಿಟ್ಟು ಮಾನ್ಯ ಇಮೇಲ್ ನಮೂದಿಸಿ",
-    "passwordRequired": "ಪಾಸ್‌ವರ್ಡ್ ಅಗತ್ಯವಿದೆ"
+    "passwordRequired": "ಪಾಸ್‌ವರ್ಡ್ ಅಗತ್ಯವಿದೆ",
+    "continueWithGoogle": "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಯಿರಿ"
   },
   "quiz": {
     "myQuizzes": "ನನ್ನ ಪ್ರಶ್ನೋತ್ತರಿ",
