@@ -90,6 +90,7 @@ const TIER_COLORS = { free: 'default', basic: 'blue', pro: 'purple', enterprise:
 function TierBadge({ user }) {
   const [limits, setLimits] = useState(null)
   const fetchedRef = useRef(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!user || fetchedRef.current) return
@@ -104,9 +105,9 @@ function TierBadge({ user }) {
   const color = TIER_COLORS[tier] || 'default'
   const tooltipContent = limits ? (
     <div style={{ fontSize: 12, lineHeight: '20px' }}>
-      <div>Participants / session: <b>{limits.max_participants}</b></div>
-      <div>Questions / quiz: <b>{limits.max_questions}</b></div>
-      <div>Concurrent sessions: <b>{limits.max_concurrent_events}</b></div>
+      <div>{t('dashboard.tierTooltipParticipants')}: <b>{limits.max_participants}</b></div>
+      <div>{t('dashboard.tierTooltipQuestions')}: <b>{limits.max_questions}</b></div>
+      <div>{t('dashboard.tierTooltipSessions')}: <b>{limits.max_concurrent_events}</b></div>
     </div>
   ) : null
 
