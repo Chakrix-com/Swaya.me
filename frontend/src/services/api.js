@@ -88,6 +88,7 @@ export const questionAPI = {
   add: (quizId, data) => api.post(`/quizzes/${quizId}/questions`, data),
   update: (id, data) => api.put(`/quizzes/questions/${id}`, data),
   delete: (id) => api.delete(`/quizzes/questions/${id}`),
+  reorder: (quizId, questionOrders) => api.put(`/quizzes/${quizId}/questions/reorder`, { question_orders: questionOrders }),
   getWordCloudResults: (questionId, sessionId) => 
     api.get(`/quizzes/questions/${questionId}/word-cloud-results`, {
       params: { session_id: sessionId }

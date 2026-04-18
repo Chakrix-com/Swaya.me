@@ -32,7 +32,7 @@ function AudienceJoin() {
         state: {
           sessionToken: response.data.session_token,
           sessionId: response.data.session_id,
-          displayName: values.display_name || t('audience.guest', { defaultValue: 'Guest' })
+          displayName: values.display_name || t('audience.anonymous', { defaultValue: 'Anonymous' })
         }
       })
     } catch (error) {

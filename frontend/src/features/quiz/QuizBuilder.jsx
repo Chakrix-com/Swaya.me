@@ -1497,6 +1497,22 @@ export default function QuizBuilder() {
               }
               extra={
                 <Space>
+                  {quiz?.status === 'draft' && (
+                    <>
+                      <Button
+                        size="small"
+                        icon={<ArrowUpOutlined />}
+                        onClick={() => handleMoveQuestion(index, -1)}
+                        disabled={!!editingQuestion || index === 0}
+                      />
+                      <Button
+                        size="small"
+                        icon={<ArrowDownOutlined />}
+                        onClick={() => handleMoveQuestion(index, 1)}
+                        disabled={!!editingQuestion || index === questions.length - 1}
+                      />
+                    </>
+                  )}
                   <Button
                     size="small"
                     icon={<EditOutlined />}
@@ -1891,6 +1907,21 @@ export default function QuizBuilder() {
       console.error('Delete question error:', error.response?.data || error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleMoveQuestion = async (index, direction) => {
+    const newQuestions = [...questions]
+    const swapIndex = index + direction
+    if (swapIndex < 0 || swapIndex >= newQuestions.length) return
+    ;[newQuestions[index], newQuestions[swapIndex]] = [newQuestions[swapIndex], newQuestions[index]]
+    setQuestions(newQuestions)
+    try {
+      const questionOrders = newQuestions.map((q, i) => [q.id, i])
+      await questionAPI.reorder(id, questionOrders)
+    } catch (error) {
+      message.error(t('quiz.saveError'))
+      loadQuiz()
     }
   }
 

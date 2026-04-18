@@ -16,7 +16,7 @@ from persistence.database_async import get_async_db
 from core.auth.dependencies import get_current_user, CurrentUser
 from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
-    QuestionCreate, QuestionUpdate, QuestionResponse,
+    QuestionCreate, QuestionUpdate, QuestionResponse, QuestionReorderRequest,
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     SessionLeaveResponse,
     WhiteboardStateUpdateRequest, WhiteboardStateResponse,
@@ -539,6 +539,23 @@ async def update_question(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ContentFilterError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+
+@router.put("/{quiz_id:int}/questions/reorder", status_code=status.HTTP_204_NO_CONTENT)
+async def reorder_questions(
+    quiz_id: int,
+    request: QuestionReorderRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuestionServiceAsync = Depends(get_question_service)
+):
+    """Reorder questions within a draft quiz"""
+    try:
+        await service.reorder_questions(db, quiz_id, request.question_orders, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
