@@ -4,11 +4,13 @@
 
 The proctoring module is a **standalone, composable layer** that sits entirely outside the core quiz engine. It is built as a registry of independent rules that are resolved at runtime based on three axes:
 
-- **User type** — who is being examined (anonymous participant, registered user, etc.)
+- **Tier** — the subscription tier of the tenant running the quiz (FREE, BASIC, PRO, ENTERPRISE); determines which rules are available
 - **Interaction type** — what kind of quiz is being taken (exam, offline poll, live quiz, poll)
 - **Question type** — what kind of question is being answered (MCQ, paragraph, word cloud, etc.)
 
-Proctoring is **never hardcoded** to any specific quiz type or user role. Adding or removing it for any combination requires only a policy record change — no code change.
+Proctoring is **never hardcoded** to any specific quiz type or tier. Adding or removing it for any combination requires only a policy record change — no code change.
+
+**Host-controlled activation:** Any host whose tenant tier has proctoring available may enable or disable proctoring for a specific quiz at will, for any interaction type that proctoring supports. This is a per-quiz toggle set in QuizBuilder — enabling it at the tenant level does not force it on every quiz; it only makes it available as an option.
 
 ### Design Goals
 
@@ -17,7 +19,8 @@ Proctoring is **never hardcoded** to any specific quiz type or user role. Adding
 - Fully composable — each rule is an independent, toggleable unit
 - Three-tier policy hierarchy — platform → tenant → quiz
 - Silent flagging where possible — don't alert agents they've been caught
-- Applicable to any combination of quiz type, user type, question type
+- Applicable to any combination of quiz type, tier, question type
+- Host retains full control — proctoring is opt-in per quiz, not forced by policy
 - Raise the effort cost of cheating above the value of cheating
 
 ---
@@ -66,15 +69,15 @@ At the moment a participant begins a question, the `ProctoringContextResolver` r
 ```
 {
   quiz_type:      "exam" | "offline_poll" | "quiz" | "poll"
-  user_type:      "anonymous" | "registered" | "invited"
-  question_type:  "mcq" | "paragraph" | "word_cloud" | "single_line" | "one_word" | "scale"
   tier:           "FREE" | "BASIC" | "PRO" | "ENTERPRISE"
+  question_type:  "mcq" | "paragraph" | "word_cloud" | "single_line" | "one_word" | "scale"
   quiz_id:        <id>
   tenant_id:      <id>
+  host_enabled:   bool   ← host explicitly toggled proctoring on for this quiz
 }
 ```
 
-It walks the hierarchy (platform → tenant → quiz) and returns the **merged, active rule set** for that exact context. Rules that don't apply to the current question type are silently skipped (e.g., honeypot fake answer option only applies to MCQ; behavioral keystroke biometrics only apply to text-input questions).
+It walks the hierarchy (platform → tenant → quiz) and returns the **merged, active rule set** for that exact context — but only if `host_enabled` is `true`. If the host has not toggled proctoring on for this quiz, the resolver returns `{enabled: false}` immediately and no rules are activated. Rules that don't apply to the current question type are silently skipped (e.g., honeypot fake answer option only applies to MCQ; behavioral keystroke biometrics only apply to text-input questions).
 
 ### Rule Registry
 
@@ -85,7 +88,7 @@ Each rule is a self-contained unit with:
   rule_id:          string (unique, e.g. "fullscreen_enforce")
   display_name:     string
   description:      string
-  applies_to:       { quiz_types, user_types, question_types }  ← applicability filter
+  applies_to:       { quiz_types, question_types }  ← applicability filter
   tier_minimum:     "FREE" | "BASIC" | "PRO" | "ENTERPRISE"
   config_schema:    JSONSchema (rule-specific parameters)
   default_config:   object
@@ -98,7 +101,7 @@ Each rule is a self-contained unit with:
 
 ## Applicability Matrix
 
-This table shows which rules are meaningful for each combination. The module only activates a rule if its `applies_to` filter matches the current context.
+This table shows which rules are meaningful for each combination. The module only activates a rule if its `applies_to` filter matches the current context **and** the host has toggled proctoring on for the quiz.
 
 ### By Quiz Type
 
@@ -116,22 +119,39 @@ This table shows which rules are meaningful for each combination. The module onl
 | Option randomization | Yes | Yes | No | No |
 | Steganographic watermark | Yes | Yes | No | No |
 | Canvas rendering | Yes | Optional | No | No |
-| Webcam monitoring | Yes | Optional | No | No |
-| Face detection | Yes | Optional | No | No |
+| Webcam monitoring | Yes | Yes | No | No |
+| Face detection | Yes | Yes | No | No |
 
-### By User Type
+### By Tier
 
-| Rule | anonymous | registered | invited |
-|------|-----------|-----------|---------|
-| Fullscreen enforce | Yes | Yes | Yes |
-| Bot signal detection | Yes | Yes | Yes |
-| Honeypot (DOM) | Yes | Yes | Yes |
-| Behavioral biometrics | Yes | Yes | Yes |
-| Browser fingerprint bind | Yes | Yes | Yes |
-| IP bind | Yes | Yes | Yes |
-| Identity snapshot | No | Optional | Yes |
-| Photo ID capture | No | No | Optional |
-| Steganographic watermark | Yes | Yes | Yes |
+Rules are unlocked at the tier minimum specified in the rule registry. A tenant on a lower tier will not see or be offered rules above their tier, even if the host enables proctoring.
+
+| Rule | FREE | BASIC | PRO | ENTERPRISE |
+|------|------|-------|-----|------------|
+| Fullscreen enforce | Yes | Yes | Yes | Yes |
+| Tab switch detect | Yes | Yes | Yes | Yes |
+| Copy-paste block | Yes | Yes | Yes | Yes |
+| Multi-tab detect | Yes | Yes | Yes | Yes |
+| Right-click block | Yes | Yes | Yes | Yes |
+| Bot signal detection | Yes | Yes | Yes | Yes |
+| Honeypot (DOM) | Yes | Yes | Yes | Yes |
+| Question randomization | — | Yes | Yes | Yes |
+| Option randomization | — | Yes | Yes | Yes |
+| Answer timing enforce | — | Yes | Yes | Yes |
+| Behavioral biometrics | — | — | Yes | Yes |
+| Browser fingerprint bind | — | — | Yes | Yes |
+| IP bind | — | — | Yes | Yes |
+| Steganographic watermark | — | — | Yes | Yes |
+| Devtools detect | — | — | Yes | Yes |
+| Canvas rendering | — | — | — | Yes |
+| Webcam monitoring | — | — | Yes | Yes |
+| Face detection | — | — | Yes | Yes |
+| Multiple face detection | — | — | Yes | Yes |
+| Gaze direction detection | — | — | Yes | Yes |
+| Identity snapshot at start | — | — | Yes | Yes |
+| Photo ID capture | — | — | — | Yes |
+
+**Host toggle availability by tier:** A host can enable proctoring for a quiz only if their tenant tier unlocks at least one rule for the selected quiz type. On FREE tier this means basic browser controls only. On PRO+ the full rule set is available, including webcam — and when webcam is enabled for a quiz, **all webcam sub-checks are active as a bundle** (identity snapshot, periodic snapshots, face presence, multiple-face detection, gaze direction); they cannot be individually disabled.
 
 ### By Question Type
 
@@ -158,7 +178,7 @@ id                BIGINT PK
 rule_id           VARCHAR(64) UNIQUE        ← e.g. "fullscreen_enforce"
 display_name      VARCHAR(128)
 description       TEXT
-applies_to        JSON                      ← {quiz_types, user_types, question_types}
+applies_to        JSON                      ← {quiz_types, question_types}
 tier_minimum      ENUM(FREE, BASIC, PRO, ENTERPRISE)
 config_schema     JSON                      ← JSONSchema for rule parameters
 default_config    JSON                      ← default parameter values
@@ -176,7 +196,7 @@ Per-tenant proctoring defaults. Set by tenant admin. Cannot exceed platform rule
 id                BIGINT PK
 tenant_id         FK → tenants.id
 rule_id           VARCHAR(64)               ← FK to platform_proctoring_rules.rule_id
-enabled_for       JSON                      ← {quiz_types: [...], user_types: [...]}
+enabled_for       JSON                      ← {quiz_types: [...]}
 config_override   JSON                      ← parameter overrides within platform defaults
 is_enabled        BOOL DEFAULT TRUE
 updated_at        DATETIME
@@ -187,9 +207,11 @@ updated_by        FK → users.id
 
 Per-quiz overrides. Set by the host in QuizBuilder. Inherits from tenant policy.
 
+`enabled` is the **host's explicit opt-in** — it defaults to `false` even if the tenant has proctoring configured. The host must consciously turn it on for each quiz. Once enabled, the rule set is determined by the tenant policy filtered to the quiz's interaction type and the tenant's tier.
+
 ```json
 {
-  "enabled": true,
+  "enabled": false,
   "level": "soft | hard | paranoid",
   "rules": {
     "fullscreen_enforce":       { "enabled": true },
@@ -204,8 +226,7 @@ Per-quiz overrides. Set by the host in QuizBuilder. Inherits from tenant policy.
     "option_randomization":     { "enabled": true },
     "steg_watermark":           { "enabled": true },
     "canvas_rendering":         { "enabled": false },
-    "webcam_monitoring":        { "enabled": false, "snapshot_interval_sec": 60 },
-    "face_detection":           { "enabled": false },
+    "webcam_monitoring":        { "enabled": false, "snapshot_interval_sec": 30 },
     "devtools_detect":          { "enabled": true },
     "right_click_block":        { "enabled": true }
   },
@@ -226,7 +247,7 @@ Per-quiz overrides. Set by the host in QuizBuilder. Inherits from tenant policy.
 |-------|-------------|
 | `soft` | fullscreen, tab switch, copy-paste block |
 | `hard` | soft + honeypots, behavioral biometrics, multi-tab, devtools, bot detection, randomization |
-| `paranoid` | hard + webcam, face detection, canvas rendering, identity snapshot, steganographic watermark |
+| `paranoid` | hard + webcam bundle (identity snapshot + periodic snapshots + face detection + multiple-face detection + gaze direction), canvas rendering, steganographic watermark |
 
 ### 4. New DB Table: `proctoring_sessions`
 
@@ -246,8 +267,9 @@ lock_reason           VARCHAR(100) NULL
 browser_fingerprint   VARCHAR(64)
 ip_address            VARCHAR(45)
 user_agent            TEXT
-webcam_consent_given  BOOL DEFAULT FALSE
-session_started_at    DATETIME
+webcam_required       BOOL DEFAULT FALSE      ← true when webcam rule is active for this quiz
+webcam_granted        BOOL DEFAULT FALSE      ← set to true only after browser permission confirmed
+session_started_at    DATETIME               ← set only after all required gates pass
 ```
 
 ### 5. New DB Table: `proctoring_events`
@@ -274,6 +296,7 @@ MULTI_TAB_DETECTED         BOT_SIGNAL_DETECTED        FINGERPRINT_MISMATCH
 IP_MISMATCH                ANSWER_TOO_FAST            LOW_INTEGRITY_SCORE
 HONEYPOT_OPTION_CLICKED    HONEYPOT_FIELD_FILLED      HONEYPOT_INSTRUCTION_FOLLOWED
 HONEYPOT_ENDPOINT_HIT      FACE_NOT_DETECTED          MULTIPLE_FACES_DETECTED
+GAZE_AWAY_DETECTED         WEBCAM_PERMISSION_DENIED   WEBCAM_STREAM_ENDED
 SESSION_LOCKED             SESSION_UNLOCKED_BY_ADMIN
 ```
 
@@ -313,7 +336,8 @@ class ProctoringContextResolver:
     def resolve(self, context: ProctoringContext) -> ResolvedRuleSet:
         """
         Walk the three-tier hierarchy and return the merged active rule set.
-        context: {quiz_id, tenant_id, quiz_type, user_type, question_type, tier}
+        Returns {enabled: False} immediately if host_enabled is False.
+        context: {quiz_id, tenant_id, quiz_type, tier, question_type, host_enabled}
         """
         platform_rules = self._load_platform_rules(context)
         tenant_overrides = self._load_tenant_policy(context.tenant_id, context)
@@ -325,7 +349,8 @@ class ProctoringContextResolver:
         """
         Tenant can only restrict platform rules, never expand.
         Quiz can only restrict tenant rules, never expand.
-        Rules whose applies_to filter doesn't match context are excluded.
+        Rules below the tenant's tier_minimum are excluded.
+        Rules whose applies_to filter doesn't match quiz_type/question_type are excluded.
         """
 ```
 
@@ -402,10 +427,11 @@ ProctoringService:
 frontend/src/features/proctoring/
   index.js                              ← public API: exports ProctoringProvider, ProctoringGate
   ProctoringProvider.jsx                ← context; resolves rules from server; activates hooks
-  ProctoringGate.jsx                    ← pre-exam consent + environment check
+  ProctoringGate.jsx                    ← hard gate: webcam permission + identity snapshot (blocks quiz start if webcam required and denied)
   ProctoringOverlay.jsx                 ← violation warning modal (countdown)
   ProctoringLockScreen.jsx              ← terminal screen on lock
-  ExamIdentityCapture.jsx               ← name + optional photo ID snapshot
+  WebcamDeniedScreen.jsx                ← shown when webcam required but browser permission denied
+  ExamIdentityCapture.jsx               ← identity snapshot + optional photo ID (runs inside gate)
   registry/
     ruleRegistry.js                     ← maps rule_id → hook factory function
     contextFilter.js                    ← filters active rules by current question context
@@ -419,7 +445,9 @@ frontend/src/features/proctoring/
     useBotSignalDetector.js             ← navigator.webdriver, CDP artifacts
     useBrowserFingerprint.js            ← canvas hash + screen dims + UA
     useBehavioralCollector.js           ← mouse coords, keystroke timing, scroll
-    useWebcamMonitor.js                 ← MediaStream capture, periodic snapshots
+    useWebcamGate.js                    ← requests browser permission; blocks until granted or shows WebcamDeniedScreen
+    useWebcamMonitor.js                 ← MediaStream capture, periodic snapshots, face/gaze checks (only starts after gate passes)
+    useFaceDetector.js                  ← @mediapipe/face_detection wrapper; face presence + multiple faces + gaze direction
     useViolationReporter.js             ← batches events → POST /proctoring/event
     useAnswerTimingGuard.js             ← enforces min answer time before submit
   honeypots/
@@ -447,7 +475,9 @@ export const RULE_REGISTRY = {
   behavioral_biometrics: { hook: useBehavioralCollector, type: 'hook' },
   answer_timing_enforce: { hook: useAnswerTimingGuard,   type: 'hook' },
   honeypot_traps:        { component: HoneypotBundle,    type: 'component' },
-  webcam_monitoring:     { hook: useWebcamMonitor,       type: 'hook' },
+  webcam_monitoring:     { hook: useWebcamMonitor,       type: 'hook', gate: useWebcamGate },
+  // webcam_monitoring activates as a bundle: useWebcamGate (hard gate) + useWebcamMonitor
+  // + useFaceDetector are all mounted together. They cannot be individually toggled.
 };
 ```
 
@@ -456,13 +486,14 @@ export const RULE_REGISTRY = {
 ```js
 // registry/contextFilter.js
 // Called each time the current question changes.
-// Returns only the rules relevant to the current question type.
+// Returns only the rules relevant to the current question type and tenant tier.
 
 export function filterRulesForQuestion(resolvedRules, questionType) {
   return resolvedRules.filter(rule =>
     rule.applies_to.question_types.includes(questionType) ||
     rule.applies_to.question_types.includes('all')
   );
+  // Tier filtering is done server-side during context resolution; client trusts the resolved set.
 }
 ```
 
@@ -483,9 +514,8 @@ import { ProctoringProvider, ProctoringGate } from '@/features/proctoring';
 
 export default function ExamSession({ quiz, participant }) {
   const proctoringContext = {
-    quizType:  quiz.quiz_type,
-    userType:  participant.is_registered ? 'registered' : 'anonymous',
-    tier:      quiz.tenant_tier,
+    quizType: quiz.quiz_type,
+    tier:     quiz.tenant_tier,
   };
 
   return (
@@ -502,7 +532,7 @@ export default function ExamSession({ quiz, participant }) {
 }
 ```
 
-`ProctoringProvider` fetches the resolved rule set from `/proctoring/config/{quiz_id}` on mount. If the response is `{enabled: false}` or the quiz has no proctoring policy, children render immediately with zero overhead.
+`ProctoringProvider` fetches the resolved rule set from `/proctoring/config/{quiz_id}` on mount. If the host has not enabled proctoring for this quiz (`enabled: false` in the quiz policy), the server returns `{enabled: false}` and children render immediately with zero overhead. No rules are loaded, no hooks are registered.
 
 ---
 
@@ -639,15 +669,34 @@ Zero-width Unicode characters (U+200B, U+200C, U+200D, U+FEFF) embedded at parti
 
 ### H. Webcam Monitoring *(applies to: exam + offline_poll, PRO+ tier)*
 
-Requires participant consent at `ProctoringGate`:
+**Webcam is a hard gate.** When `webcam_monitoring` is enabled for a quiz, the participant cannot start the interaction until:
 
-- **Identity snapshot at start** — reference frame captured and stored
-- **Periodic snapshots** — every N seconds (configurable), silent
-- **Face presence check** — `@mediapipe/face_detection`; logs `FACE_NOT_DETECTED` if no face for >10s
-- **Multiple face detection** — logs `MULTIPLE_FACES_DETECTED`
-- **Gaze direction** — looking down (phone) detectable with MediaPipe Face Mesh
+1. The browser webcam permission dialog is accepted.
+2. A live video feed is confirmed active (first frame received).
+3. An identity snapshot is captured and acknowledged.
 
-Snapshots stored at `backend/uploads/proctoring/{quiz_id}/{participant_id}/`.
+If the participant denies the permission or closes the dialog, they remain on `ProctoringGate` with the message: *"This exam requires webcam access. Please allow camera access and reload to continue."* — the quiz content is never shown.
+
+When the gate passes, **all of the following sub-checks activate as a mandatory bundle** — they cannot be individually disabled by the host or tenant:
+
+| Sub-check | Trigger | Event logged |
+|-----------|---------|-------------|
+| Identity snapshot at start | Once on gate pass | stored reference frame |
+| Periodic snapshots | Every `snapshot_interval_sec` (default 30s) | stored silently |
+| Face presence check | `@mediapipe/face_detection`; no face for >10s | `FACE_NOT_DETECTED` |
+| Multiple face detection | Two or more faces in frame | `MULTIPLE_FACES_DETECTED` |
+| Gaze direction | MediaPipe Face Mesh; looking down >5s | `GAZE_AWAY_DETECTED` |
+
+**Escalation for webcam events:**
+
+```
+Face not detected (>10s)     → Warning overlay: "Please ensure your face is visible."
+                                Repeated (>3 times) → violation counted
+Multiple faces detected       → Immediate violation logged; 3rd occurrence locks session
+Permission revoked mid-session→ SESSION LOCKED immediately (MediaStream track ends)
+```
+
+Snapshots stored at `backend/uploads/proctoring/{quiz_id}/{participant_id}/`. Photo ID capture (ENTERPRISE only) follows the same gate flow but prompts for a government-issued ID frame before the identity snapshot.
 
 ---
 
@@ -669,9 +718,11 @@ Nth violation  → SESSION LOCKED (N = lock_on_violation_count, default 3)
 
 Honeypot hit   → SESSION LOCKED immediately, no warnings, silent
 Bot signal     → SESSION LOCKED immediately, no warnings, silent
+Webcam denied  → CANNOT START — gate blocks entry; quiz content never shown
+Webcam revoked → SESSION LOCKED immediately (MediaStream track.onended fires)
 ```
 
-Escalation thresholds are configurable per rule (e.g., tab switching might allow 3 violations; honeypots lock on 1).
+Escalation thresholds are configurable per rule (e.g., tab switching might allow 3 violations; honeypots lock on 1). Webcam events (face not detected, multiple faces) use their own sub-thresholds but still contribute to the global violation count.
 
 ---
 
@@ -700,18 +751,25 @@ Escalation thresholds are configurable per rule (e.g., tab switching might allow
 
 ## QuizBuilder Configuration Panel
 
-New **"Proctoring"** tab in QuizBuilder. Visible for all quiz types but rules shown are filtered to those applicable to the selected quiz type.
+New **"Proctoring"** tab in QuizBuilder. Visible for all quiz types but rules shown are filtered to those applicable to the selected quiz type and the tenant's tier.
 
-- Master toggle (enabled / disabled)
-- Level selector: **Soft / Hard / Paranoid** (presets with descriptions)
+- **Master toggle (Enable Proctoring for this quiz)** — off by default. The host must explicitly turn this on. If the tenant tier has no proctoring rules available for the quiz's interaction type, the toggle is disabled with a tier upgrade prompt.
+- Level selector: **Soft / Hard / Paranoid** (presets with descriptions; only shown when master toggle is on)
 - Applicability section:
-  - Quiz types this applies to (read-only, set by quiz type)
-  - User types to proctor: `anonymous`, `registered`, `invited`
+  - Interaction type this applies to (read-only, derived from quiz type)
   - Question types with active rules (auto-populated, read-only)
-- Advanced section (collapsible): fine-grained rule toggles + parameters
-- Webcam section (PRO+ only): consent copy preview, snapshot interval
-- Tier gate notice if a rule requires a higher tier
+  - Current tier + rules unlocked at this tier (informational)
+- Advanced section (collapsible): fine-grained rule toggles + parameters (filtered to tier-available rules)
+- **Webcam section (PRO+ only):**
+  - Toggle to enable webcam for this quiz
+  - Warning copy shown to host: *"Enabling webcam makes it a hard requirement — participants who deny camera access cannot start the quiz."*
+  - Snapshot interval slider (default 30s)
+  - Photo ID capture toggle (ENTERPRISE only)
+  - Preview of the consent message participants will see at the gate
+  - All face detection sub-checks (face presence, multiple faces, gaze) are automatically active when webcam is enabled — no individual toggles
+- Tier gate notice if a rule requires a higher tier than the tenant's current tier
 - Preview: "What participants will see"
+- If proctoring is off: a summary card showing which rules *would* activate if enabled (encourages opt-in without forcing it)
 
 ---
 
@@ -744,31 +802,30 @@ New **"Proctoring"** tab in QuizBuilder. Visible for all quiz types but rules sh
 - Admin dashboard: integrity score badges + violation timeline
 - **Estimated effort: 2 days**
 
-### Phase 4 — Webcam + Identity
+### Phase 4 — Webcam Bundle (mandatory gate + all checks)
 
-- `useWebcamMonitor` hook
-- `ExamIdentityCapture` component (consent + name + optional photo ID)
-- Periodic snapshot capture + storage
-- Tier gate: PRO+ only
-- **Estimated effort: 2 days**
+Webcam is implemented as a single atomic feature. All sub-checks ship together; none are individually optional.
 
-### Phase 5 — AI Face Detection
+- `useWebcamGate.js` — requests `getUserMedia`; renders `WebcamDeniedScreen` on denial; blocks `ProctoringGate` from passing until stream confirmed
+- `useWebcamMonitor.js` — holds the `MediaStream`; takes identity snapshot on gate pass; periodic snapshots every N seconds; detects `track.onended` (permission revoked) → immediate session lock
+- `useFaceDetector.js` — `@mediapipe/face_detection` wrapper; face presence check (>10s no face → warning); multiple face detection (→ violation); MediaPipe Face Mesh gaze estimation (looking down >5s → `GAZE_AWAY_DETECTED`)
+- `WebcamDeniedScreen.jsx` — shown when webcam is required and permission denied; no quiz content visible
+- `ExamIdentityCapture.jsx` — identity snapshot + optional photo ID (ENTERPRISE); runs inside gate before quiz content
+- `webcam_required` + `webcam_granted` fields on `proctoring_sessions`
+- New event types: `WEBCAM_PERMISSION_DENIED`, `WEBCAM_STREAM_ENDED`, `GAZE_AWAY_DETECTED`
+- Tier gate: PRO+ (face detection included); Photo ID capture: ENTERPRISE only
+- **Estimated effort: 3 days**
 
-- `@mediapipe/face_detection` integration
-- No-face and multiple-face detection with configurable timeout
-- Gaze direction estimation (MediaPipe Face Mesh)
-- **Estimated effort: 2 days**
+### Phase 5 — Admin UIs + Builder Config Panel
 
-### Phase 6 — Admin UIs + Builder Config Panel
-
-- Proctoring config panel in QuizBuilder (context-aware rule display)
+- Proctoring config panel in QuizBuilder (context-aware rule display, webcam section with hard-gate warning copy)
 - Tenant admin policy editor
 - Super admin rule registry editor
-- Full violation report UI in quiz results
+- Full violation report UI in quiz results (webcam snapshot gallery, face/gaze event timeline)
 - Manual lock/unlock + CSV export
 - **Estimated effort: 2 days**
 
-### Phase 7 — Canvas Rendering + DOM Noise (paranoid mode)
+### Phase 6 — Canvas Rendering + DOM Noise (paranoid mode)
 
 - Canvas question rendering for MCQ questions
 - Decoy DOM noise injection
@@ -795,15 +852,21 @@ New **"Proctoring"** tab in QuizBuilder. Visible for all quiz types but rules sh
 | Question + option randomization | Sharing answers between participants |
 | Steganographic watermarks | Sharing question screenshots (traceable to participant) |
 | Bot signal detection at join | Automated browsers (Antigravity, browser-use, Selenium) |
-| Webcam + face detection | Physical cheating (notes, second person) |
-| Context-aware rule activation | Rules only fire for relevant question types — no noise |
+| Webcam hard gate | Quiz content unreachable until camera access confirmed |
+| Face presence + multiple face detection | Physical cheating (notes, second person in frame) |
+| Gaze direction detection | Looking down at phone or notes |
+| Webcam stream revocation → immediate lock | Participant disabling camera mid-exam |
+| Context-aware rule activation | Rules only fire for relevant question types and tier — no noise |
+| Tier-gated rule set | Higher tiers unlock stronger rules; FREE still gets core browser controls |
+| Host opt-in per quiz | Proctoring only activates when the host explicitly enables it for that quiz |
 
 ---
 
 ## Non-Goals
 
-- Preventing reading from printed notes (no webcam mode)
+- Preventing reading from printed notes when webcam is not enabled (out of frame)
 - Preventing OS-level screen recording tools
 - Achieving 100% cheating prevention (goal: raise cost above value)
 - Any impact on non-proctored quiz, poll, or live session flows
 - Storing raw video — only snapshots, with explicit consent
+- Distinguishing between anonymous and registered participants — proctoring rules apply equally to all participants; identity verification is a separate feature gate (identity snapshot, photo ID) unlocked by tier
