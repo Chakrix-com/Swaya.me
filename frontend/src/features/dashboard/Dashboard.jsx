@@ -499,7 +499,7 @@ function Dashboard() {
         }}>
           <ThunderboltOutlined style={{ fontSize: 22, color: TIER_COLOR[nextTier], flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: '#141414' }}>
               {nearLimit
                 ? `You're using ${qPct}% of your quiz quota — time to upgrade!`
                 : `You're on the `}
@@ -511,7 +511,7 @@ function Dashboard() {
               {!nearLimit && ' plan.'}
             </div>
             {nextPlan && (
-              <div style={{ fontSize: 13, color: '#595959' }}>
+              <div style={{ fontSize: 13, color: '#434343' }}>
                 Upgrade to{' '}
                 <Tag color={TIER_COLOR[nextTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11 }}>
                   {nextTier}
