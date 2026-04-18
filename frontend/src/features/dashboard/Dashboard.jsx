@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, Tooltip, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree } from 'antd'
+import { Button, Tag, Space, Popconfirm, Tooltip, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree, Progress, Alert } from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
   CloseCircleOutlined,
+  ArrowUpOutlined,
+  ThunderboltOutlined,
+  CloseOutlined,
   EditOutlined,
   DeleteOutlined,
   CopyOutlined,
@@ -27,7 +30,7 @@ import {
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { logout } from '../../store/authSlice'
-import { quizAPI, sessionAPI } from '../../services/api'
+import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -37,6 +40,13 @@ function Dashboard() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { quizzes } = useSelector((state) => state.quiz)
+  const { user } = useSelector((state) => state.auth)
+  const [tierPlans, setTierPlans] = useState(null)
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    const ts = localStorage.getItem('upgrade-banner-dismissed')
+    if (!ts) return false
+    return Date.now() - Number(ts) < 3 * 24 * 60 * 60 * 1000 // 3 days
+  })
   const [folderForm] = Form.useForm()
   const [renameFolderForm] = Form.useForm()
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
@@ -56,6 +66,7 @@ function Dashboard() {
   useEffect(() => {
     loadQuizzes()
     loadFolders()
+    authAPI.getTierPlans().then(r => setTierPlans(r.data)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -441,9 +452,107 @@ function Dashboard() {
           tenant_id: q.tenant_id,
         })))
 
+  const TIER_ORDER = ['free', 'basic', 'pro', 'enterprise']
+  const TIER_COLOR = { free: '#8c8c8c', basic: '#1677ff', pro: '#722ed1', enterprise: '#d48806' }
+  const TIER_GRADIENT = {
+    free:   'linear-gradient(135deg, #f5f5f5 0%, #e6f4ff 100%)',
+    basic:  'linear-gradient(135deg, #e6f4ff 0%, #f0f0ff 100%)',
+    pro:    'linear-gradient(135deg, #f9f0ff 0%, #fff0f6 100%)',
+  }
+
+  const currentTier = user?.tier || 'free'
+  const currentTierIdx = TIER_ORDER.indexOf(currentTier)
+  const nextTier = currentTierIdx >= 0 && currentTierIdx < TIER_ORDER.length - 1
+    ? TIER_ORDER[currentTierIdx + 1]
+    : null
+  const nextPlan = tierPlans?.find(p => p.tier === nextTier)
+  const currentPlan = tierPlans?.find(p => p.tier === currentTier)
+
+  const showBanner = !bannerDismissed && nextTier && currentPlan
+
+  const maxQ = currentPlan?.max_questions ?? 0
+  const usedQ = statistics.total
+  const qPct = maxQ > 0 ? Math.min(100, Math.round((usedQ / maxQ) * 100)) : 0
+  const nearLimit = qPct >= 70
+
+  const handleDismiss = () => {
+    localStorage.setItem('upgrade-banner-dismissed', String(Date.now()))
+    setBannerDismissed(true)
+  }
+
   return (
     <div className="dashboard-scroll">
       <div className="dashboard-page" style={{ padding: 24, overflowX: 'hidden' }}>
+
+      {/* Upgrade Banner */}
+      {showBanner && (
+        <div style={{
+          background: TIER_GRADIENT[currentTier] || '#f5f5f5',
+          border: `1px solid ${TIER_COLOR[nextTier] || '#d9d9d9'}`,
+          borderRadius: 10,
+          padding: '14px 20px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}>
+          <ThunderboltOutlined style={{ fontSize: 22, color: TIER_COLOR[nextTier], flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
+              {nearLimit
+                ? `You're using ${qPct}% of your quiz quota — time to upgrade!`
+                : `You're on the `}
+              {!nearLimit && (
+                <Tag color={TIER_COLOR[currentTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11 }}>
+                  {currentTier}
+                </Tag>
+              )}
+              {!nearLimit && ' plan.'}
+            </div>
+            {nextPlan && (
+              <div style={{ fontSize: 13, color: '#595959' }}>
+                Upgrade to{' '}
+                <Tag color={TIER_COLOR[nextTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11 }}>
+                  {nextTier}
+                </Tag>
+                {' '}for{' '}
+                <b>{nextPlan.max_participants.toLocaleString()}</b> participants/session,{' '}
+                <b>{nextPlan.max_questions}</b> questions/quiz,{' '}
+                <b>{nextPlan.max_concurrent_events}</b> concurrent sessions.
+              </div>
+            )}
+            {nearLimit && (
+              <Progress
+                percent={qPct}
+                size="small"
+                strokeColor={qPct >= 90 ? '#ff4d4f' : '#faad14'}
+                style={{ marginTop: 6, maxWidth: 260 }}
+                format={() => `${usedQ} / ${maxQ} quizzes`}
+              />
+            )}
+          </div>
+          <Space>
+            <Button
+              type="primary"
+              icon={<ArrowUpOutlined />}
+              size="small"
+              href="mailto:info@chakrix.net?subject=Upgrade%20Enquiry"
+              style={{ background: TIER_COLOR[nextTier], borderColor: TIER_COLOR[nextTier] }}
+            >
+              Upgrade to {nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}
+            </Button>
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              size="small"
+              onClick={handleDismiss}
+              style={{ color: '#8c8c8c' }}
+            />
+          </Space>
+        </div>
+      )}
+
       {/* Statistics Cards */}
       <Row gutter={[8, 8]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>

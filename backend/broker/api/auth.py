@@ -160,6 +160,26 @@ async def get_my_limits(
     }
 
 
+@router.get("/tier-plans")
+async def get_tier_plans(
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(get_current_user),
+    redis: RedisClient = Depends(get_redis)
+):
+    """Return limits for all tiers — used by the upgrade banner. Accessible to any authenticated user."""
+    tier_service = TierService(redis)
+    plans = []
+    for tier_enum in TierEnum:
+        config = await tier_service.get_tier_config(db, tier_enum)
+        plans.append({
+            "tier": tier_enum.value,
+            "max_participants": config.get("max_participants"),
+            "max_questions": config.get("max_questions"),
+            "max_concurrent_events": config.get("max_concurrent_events"),
+        })
+    return plans
+
+
 from core.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest
 from core.auth.service_async import request_password_reset, execute_password_reset
 
