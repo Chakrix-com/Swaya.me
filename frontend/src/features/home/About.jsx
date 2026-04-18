@@ -55,6 +55,8 @@ export default function About() {
     t('pages.about.feature6'),
     t('pages.about.feature7'),
     t('pages.about.feature8'),
+    t('pages.about.feature9'),
+    t('pages.about.feature10'),
   ]
 
   return (
