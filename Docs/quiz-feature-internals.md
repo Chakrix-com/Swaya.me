@@ -1,23 +1,51 @@
-# Quiz Feature – Internal Design (MVP)
+# Quiz Feature – Internal Design
 
-This document defines the **internal design** of the Quiz feature for the MVP.
+Last updated: April 2026
+
+This document defines the **internal design** of the Quiz feature.
 It focuses on **state, lifecycle, and rules**, independent of transport,
 storage technology, or UI.
 
-The Quiz feature is invoked and orchestrated by the **Platform Kernel**.
-It does not interact directly with services, realtime connections, or tenants.
-
 ---
 
-## Feature Scope (MVP)
+## Feature Scope
 
 The Quiz feature is responsible for:
-- representing quiz definitions
+- representing quiz definitions across four modes: `quiz`, `poll`, `exam`, `offline_poll`
 - managing live quiz session state
-- validating and recording answers
+- validating and recording answers across all six question types
 - aggregating results per question
+- enforcing tier-based limits (participants, questions, concurrent sessions)
 
-The feature is **single-session focused** and optimized for live play.
+## Quiz Modes
+
+| Mode | Scoring | Leaderboard | Host required live |
+|------|---------|-------------|-------------------|
+| `quiz` | ✅ Points per MCQ | ✅ | ✅ |
+| `poll` | ❌ | ❌ (always 0) | ✅ |
+| `exam` | ✅ | ❌ | ❌ (self-paced) |
+| `offline_poll` | ❌ | ❌ | ❌ (async) |
+
+## Question Types
+
+| Type | Answer format | Scoring | Word cloud rendered |
+|------|--------------|---------|-------------------|
+| `mcq` | Single option index | ✅ (quiz mode) | ❌ |
+| `word_cloud` | Free text | ❌ | ✅ |
+| `one_word` | Single word (multi-word rejected) | ❌ | ✅ |
+| `single_line` | Short text | ❌ | ❌ |
+| `paragraph` | Long text | ❌ | ❌ |
+| `scale` | Numeric | ❌ | ❌ |
+
+## Per-Question Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `max_time_seconds` | int or null | Optional timer per question — available for **all quiz modes** |
+| `points` | int | Points awarded for correct MCQ answer |
+| `negative_points` | int | Points deducted for wrong MCQ answer |
+| `question_image_url` | str or null | Optional image on question body |
+| `option_image_urls` | list | Per-option images for MCQ |
 
 ---
 
@@ -99,15 +127,15 @@ State transitions are explicit and platform-driven.
 | Isolation | Feature must run without services or DB. | In-memory tests | Feature only | Required for fast tests |
 | Determinism | Same input must produce same output. | Property tests (optional) | Feature only | No randomness |
 
-## Non-Goals (MVP)
+## Non-Goals (Current)
 
-| Area | Explicitly Excluded | Reason |
-|----|---------------------|--------|
-| Scoring | Points, rankings, leaderboards | Not required for engagement MVP |
-| Timing | Timers, countdowns, auto-close | Adds complexity |
-| Analytics | Cross-session or historical analysis | Post-MVP concern |
-| AI | AI-based evaluation or adaptation | Cost and dependency risk |
-| Persistence | Long-term storage guarantees | MVP focuses on live play |
+| Area | Status |
+|----|--------|
+| Auto-close question on timer expiry | Not implemented; timer is display-only |
+| Cross-session analytics | Not implemented |
+| AI-based answer grading | Not implemented (AI generation of questions is available separately) |
+| Multi-select MCQ | Not implemented |
+| Answer change after submission | Not allowed by design |
 
 ## Design Guardrails (MVP)
 

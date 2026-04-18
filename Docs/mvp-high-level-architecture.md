@@ -1,7 +1,9 @@
-# MVP High-Level Architecture
+# High-Level Architecture — Swaya.me
+
+Last updated: April 2026
 
 This document describes the high-level architecture of the
-Interactive Audience Engagement Platform for the MVP phase.
+Swaya.me Interactive Audience Engagement Platform.
 
 The architecture is designed to:
 - run on a single cloud-hosted Linux VM (OCI IaaS)
@@ -244,13 +246,18 @@ Violating these rules introduces coupling and should be avoided.
 
 ---
 
-## Non-Goals (MVP)
+## Current Deployment
 
-The MVP explicitly excludes:
-- microservices
-- container orchestration
-- managed cloud services
-- message brokers
-- AI in core execution paths
+- **Production**: `www.swaya.me` — Nginx serves `frontend/dist`; backend via `swayame-backend.service` on port 8000
+- **Test**: `test.swaya.me` — same repo, `swayame-backend-test.service` on port 8001
+- **Promote to prod**: `./deploy.sh promote-live` (requires interactive confirmation)
+- **Selenium testing**: `selenium-arm` Docker container (standalone Chromium); noVNC at `www.swaya.me:7900`
 
-These may be introduced later if justified.
+## Non-Goals (Current)
+
+- Microservices
+- Container orchestration for production services
+- Managed cloud services
+- Message brokers
+- SSO / SAML (planned, not implemented)
+- AI in core execution paths (AI question generation available as optional feature via `/ai/` endpoints)
