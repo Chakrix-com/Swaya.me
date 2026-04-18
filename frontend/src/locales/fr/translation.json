@@ -390,7 +390,13 @@
     "type": "Type",
     "foldersTitle": "Dossiers",
     "assignFolder": "Attribuer un dossier",
-    "searchQuizzes": "Rechercher des quiz/sondages"
+    "searchQuizzes": "Rechercher des quiz/sondages",
+    "upgradeBannerNearLimit": "Vous utilisez {{pct}}% de votre quota de quiz — il est temps de passer à la version supérieure !",
+    "upgradeBannerOnPlan": "Vous êtes sur le plan",
+    "upgradeBannerPlan": ".",
+    "upgradeBannerNextTier": "Passez à {{tier}} pour {{participants}} participants/session, {{questions}} questions/quiz, {{sessions}} sessions simultanées.",
+    "upgradeBannerCta": "Passer à {{tier}}",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} quiz"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

@@ -764,7 +764,13 @@
     "type": "ধরন",
     "foldersTitle": "ফোল্ডারসমূহ",
     "assignFolder": "ফোল্ডার নির্ধারণ করুন",
-    "searchQuizzes": "কুইজ/পোল অনুসন্ধান করুন"
+    "searchQuizzes": "কুইজ/পোল অনুসন্ধান করুন",
+    "upgradeBannerNearLimit": "আপনি আপনার কুইজ কোটার {{pct}}% ব্যবহার করছেন — আপগ্রেডের সময়!",
+    "upgradeBannerOnPlan": "আপনি",
+    "upgradeBannerPlan": "প্ল্যানে আছেন।",
+    "upgradeBannerNextTier": "{{tier}}-এ আপগ্রেড করুন: {{participants}} অংশগ্রহণকারী/সেশন, {{questions}} প্রশ্ন/কুইজ, {{sessions}} একযোগে সেশন।",
+    "upgradeBannerCta": "{{tier}}-এ আপগ্রেড করুন",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} কুইজ"
   },
   "pages": {
     "legal": {

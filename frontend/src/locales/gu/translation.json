@@ -764,7 +764,13 @@
     "type": "પ્રકાર",
     "foldersTitle": "ફોલ્ડર્સ",
     "assignFolder": "ફોલ્ડર સોંપો",
-    "searchQuizzes": "ક્વિઝ/પોલ શોધો"
+    "searchQuizzes": "ક્વિઝ/પોલ શોધો",
+    "upgradeBannerNearLimit": "તમે તમારા ક્વિઝ ક્વોટાનો {{pct}}% ઉપયોગ કરી રહ્યા છો — અપગ્રેડ કરવાનો સમય!",
+    "upgradeBannerOnPlan": "તમે",
+    "upgradeBannerPlan": "પ્લાન પર છો.",
+    "upgradeBannerNextTier": "{{tier}} પર અપગ્રેડ કરો: {{participants}} સહભાગીઓ/સત્ર, {{questions}} પ્રશ્નો/ક્વિઝ, {{sessions}} એક સાથે સત્ર.",
+    "upgradeBannerCta": "{{tier}} પર અપગ્રેડ કરો",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} ક્વિઝ"
   },
   "pages": {
     "legal": {

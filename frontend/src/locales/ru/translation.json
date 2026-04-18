@@ -388,7 +388,13 @@
     "type": "Тип",
     "foldersTitle": "Папки",
     "assignFolder": "Назначить папку",
-    "searchQuizzes": "Поиск викторин/опросов"
+    "searchQuizzes": "Поиск викторин/опросов",
+    "upgradeBannerNearLimit": "Вы используете {{pct}}% квоты викторин — время обновиться!",
+    "upgradeBannerOnPlan": "Вы используете план",
+    "upgradeBannerPlan": ".",
+    "upgradeBannerNextTier": "Перейдите на {{tier}}: {{participants}} участников/сессия, {{questions}} вопросов/викторина, {{sessions}} одновременных сессий.",
+    "upgradeBannerCta": "Перейти на {{tier}}",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} викторин"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

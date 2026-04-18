@@ -764,7 +764,13 @@
     "type": "வகை",
     "foldersTitle": "கோப்புறைகள்",
     "assignFolder": "கோப்புறையை ஒதுக்கு",
-    "searchQuizzes": "வினாடி வினா/வாக்கெடுப்பை தேடு"
+    "searchQuizzes": "வினாடி வினா/வாக்கெடுப்பை தேடு",
+    "upgradeBannerNearLimit": "நீங்கள் உங்கள் வினாடி வினா ஒதுக்கீட்டில் {{pct}}% பயன்படுத்துகிறீர்கள் — மேம்படுத்த நேரம்!",
+    "upgradeBannerOnPlan": "நீங்கள்",
+    "upgradeBannerPlan": "திட்டத்தில் உள்ளீர்கள்.",
+    "upgradeBannerNextTier": "{{tier}} க்கு மேம்படுத்தவும்: {{participants}} பங்கேற்பாளர்கள்/அமர்வு, {{questions}} கேள்விகள்/வினாடி வினா, {{sessions}} ஒரே நேர அமர்வுகள்.",
+    "upgradeBannerCta": "{{tier}} க்கு மேம்படுத்தவும்",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} வினாடி வினாக்கள்"
   },
   "pages": {
     "legal": {

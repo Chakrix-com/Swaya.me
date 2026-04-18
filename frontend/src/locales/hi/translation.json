@@ -768,7 +768,13 @@
     "type": "प्रकार",
     "foldersTitle": "फ़ोल्डर",
     "assignFolder": "फ़ोल्डर असाइन करें",
-    "searchQuizzes": "क्विज़/पोल खोजें"
+    "searchQuizzes": "क्विज़/पोल खोजें",
+    "upgradeBannerNearLimit": "आप अपने क्विज़ कोटे का {{pct}}% उपयोग कर रहे हैं — अपग्रेड का समय!",
+    "upgradeBannerOnPlan": "आप",
+    "upgradeBannerPlan": "प्लान पर हैं।",
+    "upgradeBannerNextTier": "{{tier}} पर अपग्रेड करें और पाएं {{participants}} प्रतिभागी/सत्र, {{questions}} प्रश्न/क्विज़, {{sessions}} एक साथ सत्र।",
+    "upgradeBannerCta": "{{tier}} में अपग्रेड करें",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} क्विज़"
   },
   "pages": {
     "legal": {

@@ -388,7 +388,13 @@
     "type": "Tipo",
     "foldersTitle": "Carpetas",
     "assignFolder": "Asignar carpeta",
-    "searchQuizzes": "Buscar cuestionarios/encuestas"
+    "searchQuizzes": "Buscar cuestionarios/encuestas",
+    "upgradeBannerNearLimit": "Estás usando el {{pct}}% de tu cuota de cuestionarios — ¡hora de actualizar!",
+    "upgradeBannerOnPlan": "Estás en el plan",
+    "upgradeBannerPlan": ".",
+    "upgradeBannerNextTier": "Actualiza a {{tier}} para obtener {{participants}} participantes/sesión, {{questions}} preguntas/cuestionario, {{sessions}} sesiones simultáneas.",
+    "upgradeBannerCta": "Actualizar a {{tier}}",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} cuestionarios"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

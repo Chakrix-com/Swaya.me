@@ -392,7 +392,13 @@
     "type": "Type",
     "foldersTitle": "Folders",
     "assignFolder": "Assign folder",
-    "searchQuizzes": "Search quizzes/polls"
+    "searchQuizzes": "Search quizzes/polls",
+    "upgradeBannerNearLimit": "You're using {{pct}}% of your quiz quota — time to upgrade!",
+    "upgradeBannerOnPlan": "You're on the",
+    "upgradeBannerPlan": "plan.",
+    "upgradeBannerNextTier": "Upgrade to {{tier}} for {{participants}} participants/session, {{questions}} questions/quiz, {{sessions}} concurrent sessions.",
+    "upgradeBannerCta": "Upgrade to {{tier}}",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} quizzes"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

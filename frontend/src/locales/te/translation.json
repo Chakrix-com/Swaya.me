@@ -764,7 +764,13 @@
     "type": "రకం",
     "foldersTitle": "ఫోల్డర్లు",
     "assignFolder": "ఫోల్డర్ కేటాయించు",
-    "searchQuizzes": "క్విజ్/పోల్ వెతకండి"
+    "searchQuizzes": "క్విజ్/పోల్ వెతకండి",
+    "upgradeBannerNearLimit": "మీరు మీ క్విజ్ కోటాలో {{pct}}% ఉపయోగిస్తున్నారు — అప్‌గ్రేడ్ చేయడానికి సమయం!",
+    "upgradeBannerOnPlan": "మీరు",
+    "upgradeBannerPlan": "ప్లాన్‌లో ఉన్నారు.",
+    "upgradeBannerNextTier": "{{tier}} కి అప్‌గ్రేడ్ చేయండి: {{participants}} పాల్గొనేవారు/సెషన్, {{questions}} ప్రశ్నలు/క్విజ్, {{sessions}} ఏకకాల సెషన్లు.",
+    "upgradeBannerCta": "{{tier}} కి అప్‌గ్రేడ్ చేయండి",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} క్విజ్‌లు"
   },
   "pages": {
     "legal": {

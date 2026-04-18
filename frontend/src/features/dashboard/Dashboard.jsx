@@ -501,25 +501,23 @@ function Dashboard() {
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: '#141414' }}>
               {nearLimit
-                ? `You're using ${qPct}% of your quiz quota — time to upgrade!`
-                : `You're on the `}
+                ? t('dashboard.upgradeBannerNearLimit', { pct: qPct })
+                : t('dashboard.upgradeBannerOnPlan')}
               {!nearLimit && (
-                <Tag color={TIER_COLOR[currentTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11 }}>
+                <Tag color={TIER_COLOR[currentTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11, margin: '0 4px' }}>
                   {currentTier}
                 </Tag>
               )}
-              {!nearLimit && ' plan.'}
+              {!nearLimit && t('dashboard.upgradeBannerPlan')}
             </div>
             {nextPlan && (
               <div style={{ fontSize: 13, color: '#434343' }}>
-                Upgrade to{' '}
-                <Tag color={TIER_COLOR[nextTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11 }}>
-                  {nextTier}
-                </Tag>
-                {' '}for{' '}
-                <b>{nextPlan.max_participants.toLocaleString()}</b> participants/session,{' '}
-                <b>{nextPlan.max_questions}</b> questions/quiz,{' '}
-                <b>{nextPlan.max_concurrent_events}</b> concurrent sessions.
+                {t('dashboard.upgradeBannerNextTier', {
+                  tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1),
+                  participants: nextPlan.max_participants.toLocaleString(),
+                  questions: nextPlan.max_questions,
+                  sessions: nextPlan.max_concurrent_events,
+                })}
               </div>
             )}
             {nearLimit && (
@@ -528,7 +526,7 @@ function Dashboard() {
                 size="small"
                 strokeColor={qPct >= 90 ? '#ff4d4f' : '#faad14'}
                 style={{ marginTop: 6, maxWidth: 260 }}
-                format={() => `${usedQ} / ${maxQ} quizzes`}
+                format={() => t('dashboard.upgradeBannerQuizUsage', { used: usedQ, max: maxQ })}
               />
             )}
           </div>
@@ -540,7 +538,7 @@ function Dashboard() {
               href="mailto:info@chakrix.net?subject=Upgrade%20Enquiry"
               style={{ background: TIER_COLOR[nextTier], borderColor: TIER_COLOR[nextTier] }}
             >
-              Upgrade to {nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}
+              {t('dashboard.upgradeBannerCta', { tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1) })}
             </Button>
             <Button
               type="text"

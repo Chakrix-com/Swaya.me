@@ -764,7 +764,13 @@
     "type": "ტიპი",
     "foldersTitle": "ಫೋಲ್ಡರ್‌ಗಳು",
     "assignFolder": "ಫೋಲ್ಡರ್ ಹಂಚಿಕೆ ಮಾಡಿ",
-    "searchQuizzes": "ಕ್ವಿಜ್/ಪೋಲ್ ಹುಡುಕಿ"
+    "searchQuizzes": "ಕ್ವಿಜ್/ಪೋಲ್ ಹುಡುಕಿ",
+    "upgradeBannerNearLimit": "თქვენ იყენებთ თქვენი კვიზის კვოტის {{pct}}%-ს — განახლების დრო!",
+    "upgradeBannerOnPlan": "თქვენ ხართ",
+    "upgradeBannerPlan": "გეგმაზე.",
+    "upgradeBannerNextTier": "განაახლეთ {{tier}}-ზე: {{participants}} მონაწილე/სესია, {{questions}} კითხვა/კვიზი, {{sessions}} ერთდროული სესია.",
+    "upgradeBannerCta": "განახლება {{tier}}-ზე",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} კვიზი"
   },
   "pages": {
     "legal": {

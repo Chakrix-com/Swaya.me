@@ -388,7 +388,13 @@
     "type": "Typ",
     "foldersTitle": "Ordner",
     "assignFolder": "Ordner zuweisen",
-    "searchQuizzes": "Quizze/Umfragen suchen"
+    "searchQuizzes": "Quizze/Umfragen suchen",
+    "upgradeBannerNearLimit": "Sie nutzen {{pct}}% Ihres Quiz-Kontingents — Zeit für ein Upgrade!",
+    "upgradeBannerOnPlan": "Sie nutzen den",
+    "upgradeBannerPlan": "Plan.",
+    "upgradeBannerNextTier": "Upgrade auf {{tier}} für {{participants}} Teilnehmer/Sitzung, {{questions}} Fragen/Quiz, {{sessions}} gleichzeitige Sitzungen.",
+    "upgradeBannerCta": "Upgrade auf {{tier}}",
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} Quizze"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
