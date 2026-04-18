@@ -98,7 +98,7 @@ def test_full_lifecycle():
         question_id = current_question["id"]
         question_type = current_question.get("question_type", "mcq")
 
-        if question_type in ("word_cloud", "single_line", "paragraph"):
+        if question_type in ("word_cloud", "single_line", "paragraph", "one_word"):
             response = requests.post(
                 f"{BASE_URL}/quizzes/sessions/submit-word-cloud",
                 params={"session_token": participant_token},

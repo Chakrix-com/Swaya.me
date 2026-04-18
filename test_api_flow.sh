@@ -91,7 +91,7 @@ echo -e "${GREEN}✅ Question received: \"$QUESTION_TEXT\" (ID: $QUESTION_ID)${N
 echo -e "\n📝 Step 7: Submitting Answer (Option A = Index 0)"
 QUESTION_TYPE=$(echo "$QUESTION_DATA" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('current_question',{}).get('question_type','mcq'))" 2>/dev/null || echo "mcq")
 
-if [ "$QUESTION_TYPE" = "word_cloud" ] || [ "$QUESTION_TYPE" = "single_line" ] || [ "$QUESTION_TYPE" = "paragraph" ]; then
+if [ "$QUESTION_TYPE" = "word_cloud" ] || [ "$QUESTION_TYPE" = "single_line" ] || [ "$QUESTION_TYPE" = "paragraph" ] || [ "$QUESTION_TYPE" = "one_word" ]; then
   SUBMIT_RESPONSE=$(curl -s -X POST "$BASE_URL/quizzes/sessions/submit-word-cloud?session_token=$PARTICIPANT_TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"question_id\":$QUESTION_ID,\"text_answer\":\"regression\"}")
