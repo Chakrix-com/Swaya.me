@@ -395,16 +395,14 @@ const QuestionForm = ({
               <InputNumber min={1} precision={0} />
             </Form.Item>
           )}
-          {!isOfflinePoll && (
-            <Form.Item
-              name="max_time_seconds"
-              label={t('quiz.maxTimeSecondsLabel')}
-              tooltip={t('quiz.maxTimeSecondsTooltip')}
-              help={t('tooltip.maxTime')}
-            >
-              <InputNumber min={1} max={3600} precision={0} />
-            </Form.Item>
-          )}
+          <Form.Item
+            name="max_time_seconds"
+            label={t('quiz.maxTimeSecondsLabel')}
+            tooltip={t('quiz.maxTimeSecondsTooltip')}
+            help={t('tooltip.maxTime')}
+          >
+            <InputNumber min={1} max={3600} precision={0} />
+          </Form.Item>
           {isExam && (
             <Form.Item
               name="negative_points"
@@ -1496,7 +1494,7 @@ export default function QuizBuilder() {
                     {getQuestionTypeLabel(question.question_type, t)}
                   </Tag>
                   {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
-                  {!isOfflinePoll && question.max_time_seconds ? (
+                  {question.max_time_seconds ? (
                     <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
                   ) : null}
                   {isOfflinePoll && question.is_required && (

@@ -25,6 +25,11 @@ run_step "core_exam_lifecycle"     "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT
 run_step "core_quiz_type_persistence" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_quiz_type_persistence.py"      || FAILED=1
 run_step "core_admin_api"          "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_admin_api_coverage.py"                         || FAILED=1
 run_step "core_misc_endpoints"     "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_misc_endpoints.py"                             || FAILED=1
+run_step "core_text_question_types" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_text_question_types.py"                       || FAILED=1
+run_step "core_live_poll"          "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_live_poll_lifecycle.py"                        || FAILED=1
+run_step "core_question_reorder"   "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_question_reorder.py"                           || FAILED=1
+run_step "core_anonymous_participant" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_anonymous_participant.py"                   || FAILED=1
+run_step "core_question_features"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_question_features.py"                          || FAILED=1
 
 if [ "$FAILED" -ne 0 ]; then
   log_error "Suite B failed"
