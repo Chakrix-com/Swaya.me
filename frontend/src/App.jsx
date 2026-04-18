@@ -21,7 +21,7 @@ import {
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { logout } from './store/authSlice'
+import { logout, refreshUser } from './store/authSlice'
 import { authAPI } from './services/api'
 
 // Essential public routes (eagerly loaded)
@@ -379,10 +379,19 @@ function App() {
   const { i18n } = useTranslation()
   const locale = localeMap[i18n.language] || enUS
   const [visitorTheme, setVisitorTheme] = useState(getInitialVisitorTheme)
+  const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector((state) => state.auth)
 
   useEffect(() => {
     document.documentElement.dataset.theme = visitorTheme
   }, [visitorTheme])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    authAPI.getMe()
+      .then(r => dispatch(refreshUser(r.data)))
+      .catch(() => {})
+  }, [isAuthenticated])
 
   const handleToggleVisitorTheme = () => {
     setVisitorTheme((currentTheme) => {
