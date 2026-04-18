@@ -192,6 +192,14 @@ const UserManagement = () => {
     }
   };
 
+  const TIER_COLORS = { free: 'default', basic: 'blue', pro: 'purple', enterprise: 'gold' }
+
+  const getTierBadge = (tier) => {
+    if (!tier) return null
+    const t_lower = tier.toLowerCase()
+    return <Tag color={TIER_COLORS[t_lower] || 'default'} style={{ textTransform: 'uppercase', fontWeight: 600, fontSize: 11 }}>{t_lower}</Tag>
+  }
+
   const getRoleBadge = (role) => {
     const roleColors = {
       super_admin: 'purple',
@@ -304,6 +312,19 @@ const UserManagement = () => {
         { text: t('admin.users.viewer'), value: 'viewer' },
       ],
       onFilter: (value, record) => record.role === value,
+    },
+    {
+      title: t('admin.users.tier'),
+      dataIndex: 'tier',
+      key: 'tier',
+      render: getTierBadge,
+      filters: [
+        { text: 'Free', value: 'free' },
+        { text: 'Basic', value: 'basic' },
+        { text: 'Pro', value: 'pro' },
+        { text: 'Enterprise', value: 'enterprise' },
+      ],
+      onFilter: (value, record) => (record.tier || '').toLowerCase() === value,
     },
     {
       title: t('admin.users.status'),

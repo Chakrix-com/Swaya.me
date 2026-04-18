@@ -4,6 +4,7 @@ Business logic for user CRUD, activity logging, and statistics
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, or_, func, desc, select
+from sqlalchemy.orm import selectinload
 from typing import Optional, List, Tuple
 from datetime import datetime
 from fastapi import HTTPException, status
@@ -219,12 +220,19 @@ class UserManagementServiceAsync:
         
         # Pagination
         offset = (page - 1) * per_page
-        stmt = stmt.order_by(desc(User.created_at)).offset(offset).limit(per_page)
+        stmt = stmt.options(selectinload(User.tenant)).order_by(desc(User.created_at)).offset(offset).limit(per_page)
         result = await self.db.execute(stmt)
         users = result.scalars().all()
-        
+
+        def to_response(u):
+            data = UserResponse.model_validate(u)
+            if u.tenant:
+                data.tier = u.tenant.tier.value
+                data.tenant_name = u.tenant.name
+            return data
+
         return UserListResponse(
-            users=[UserResponse.model_validate(u) for u in users],
+            users=[to_response(u) for u in users],
             total=total,
             page=page,
             per_page=per_page,

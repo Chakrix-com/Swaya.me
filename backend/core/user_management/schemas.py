@@ -37,7 +37,7 @@ class UserPasswordUpdate(BaseModel):
 class UserResponse(UserBase):
     """User response with all details"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     tenant_id: int
     role: UserRole
@@ -46,6 +46,8 @@ class UserResponse(UserBase):
     login_count: int
     created_at: datetime
     updated_at: datetime
+    tier: Optional[str] = None
+    tenant_name: Optional[str] = None
 
 
 class UserListResponse(BaseModel):
