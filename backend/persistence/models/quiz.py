@@ -46,6 +46,7 @@ class QuestionType(str, enum.Enum):
     SINGLE_LINE = "single_line"
     SCALE = "scale"
     PARAGRAPH = "paragraph"
+    ONE_WORD = "one_word"
 
 
 class TemplateScope(str, enum.Enum):

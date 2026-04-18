@@ -1118,7 +1118,7 @@ export default function QuizPresent() {
           setLeaderboard(null)
         }
 
-        if (data.current_question?.question_type === 'word_cloud') {
+        if (['word_cloud', 'one_word'].includes(data.current_question?.question_type)) {
           if (prevQIdx.current !== data.current_question_index) {
             setWordCloudData([])
           }
@@ -1216,7 +1216,7 @@ export default function QuizPresent() {
           )
         ) : isWaiting ? (
           <WaitingView participantCount={participantCount} t={t} />
-        ) : currentQ?.question_type === 'word_cloud' ? (
+        ) : (currentQ?.question_type === 'word_cloud' || currentQ?.question_type === 'one_word') ? (
           <>
             {currentQ?.max_time_seconds ? (
               <div style={{ marginBottom: 12 }}>

@@ -64,6 +64,7 @@ const getQuestionTypeLabel = (type, t) => {
     single_line: t('quiz.singleLine'),
     scale: t('quizPresent.scaleOneToFive'),
     paragraph: t('quiz.paragraph'),
+    one_word: t('quiz.oneWord'),
   }
   return labels[type] || t('quiz.multipleChoice')
 }
@@ -310,6 +311,7 @@ const QuestionForm = ({
             <Radio.Group onChange={handleTypeChange}>
               <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
               {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
+              {isPoll && <Radio value="one_word">{t('quiz.oneWord')}</Radio>}
               {!isExam && <Radio value="single_line">{t('quiz.singleLine')}</Radio>}
               {isPoll && <Radio value="scale">{t('quizPresent.scaleOneToFive')}</Radio>}
               {isPoll && <Radio value="paragraph">{t('quiz.paragraph')}</Radio>}
@@ -381,8 +383,8 @@ const QuestionForm = ({
           </div>
         )}
 
-        {!isPoll && (
-          <Space size={16} style={{ width: '100%' }} wrap>
+        <Space size={16} style={{ width: '100%' }} wrap>
+          {!isPoll && (
             <Form.Item
               name="points"
               label={t('quiz.pointsLabel')}
@@ -392,6 +394,8 @@ const QuestionForm = ({
             >
               <InputNumber min={1} precision={0} />
             </Form.Item>
+          )}
+          {!isOfflinePoll && (
             <Form.Item
               name="max_time_seconds"
               label={t('quiz.maxTimeSecondsLabel')}
@@ -400,19 +404,19 @@ const QuestionForm = ({
             >
               <InputNumber min={1} max={3600} precision={0} />
             </Form.Item>
-            {isExam && (
-              <Form.Item
-                name="negative_points"
-                label={t('exam.negativePoints')}
-                initialValue={0}
-                tooltip={t('tooltip.negativePoints')}
-                help={t('tooltip.negativePoints')}
-              >
-                <InputNumber min={0} precision={0} />
-              </Form.Item>
-            )}
-          </Space>
-        )}
+          )}
+          {isExam && (
+            <Form.Item
+              name="negative_points"
+              label={t('exam.negativePoints')}
+              initialValue={0}
+              tooltip={t('tooltip.negativePoints')}
+              help={t('tooltip.negativePoints')}
+            >
+              <InputNumber min={0} precision={0} />
+            </Form.Item>
+          )}
+        </Space>
 
         {isOfflinePoll && (
           <Form.Item
@@ -810,6 +814,12 @@ const QuestionForm = ({
               </>
             )}
           </>
+        )}
+
+        {questionType === 'one_word' && (
+          <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+            {t('quiz.oneWordDescription')}
+          </Text>
         )}
 
         {questionType === 'word_cloud' && (
@@ -1486,7 +1496,7 @@ export default function QuizBuilder() {
                     {getQuestionTypeLabel(question.question_type, t)}
                   </Tag>
                   {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
-                  {!isPoll && question.max_time_seconds ? (
+                  {!isOfflinePoll && question.max_time_seconds ? (
                     <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
                   ) : null}
                   {isOfflinePoll && question.is_required && (
@@ -1542,6 +1552,12 @@ export default function QuizBuilder() {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Text type="secondary" italic>
                     {t('quiz.wordCloudQuestionDescription')}
+                  </Text>
+                </Space>
+              ) : question.question_type === 'one_word' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text type="secondary" italic>
+                    {t('quiz.oneWordDescription')}
                   </Text>
                 </Space>
               ) : question.question_type === 'single_line' || question.question_type === 'paragraph' ? (

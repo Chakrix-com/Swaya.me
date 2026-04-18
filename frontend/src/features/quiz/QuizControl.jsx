@@ -146,7 +146,7 @@ export default function QuizControl() {
       setResults(response.data)
 
       // If current question is word cloud, fetch word cloud data
-      if (response.data.current_question?.question_type === 'word_cloud') {
+      if (['word_cloud', 'one_word'].includes(response.data.current_question?.question_type)) {
         loadWordCloudData(response.data.current_question.id)
       }
     } catch (error) {
@@ -369,7 +369,7 @@ export default function QuizControl() {
     ? leaderboard
     : (leaderboard ? { ...leaderboard, entries: [] } : null)
   const isPoll = (results?.quiz_type || quiz?.quiz_type) === 'poll'
-  const isWordCloudQuestion = currentQuestion?.question_type === 'word_cloud'
+  const isWordCloudQuestion = ['word_cloud', 'one_word'].includes(currentQuestion?.question_type)
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
   const effectiveSessionStatus = results?.status || session?.status
@@ -692,7 +692,8 @@ export default function QuizControl() {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Space>
                     <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
-                    {isWordCloudQuestion && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                    {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                    {currentQuestion.question_type === 'one_word' && <Tag color="volcano">{t('quiz.oneWord')}</Tag>}
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}

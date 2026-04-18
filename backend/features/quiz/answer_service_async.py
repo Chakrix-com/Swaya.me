@@ -209,8 +209,15 @@ class AnswerServiceAsync:
             QuestionType.WORD_CLOUD,
             QuestionType.SINGLE_LINE,
             QuestionType.PARAGRAPH,
+            QuestionType.ONE_WORD,
         ):
             raise ValueError("This endpoint is for text-based questions only")
+
+        # Validate one_word: must be a single word (no whitespace)
+        if current_question.question_type == QuestionType.ONE_WORD:
+            word = request.text_answer.strip()
+            if not word or any(c in word for c in (' ', '\t', '\n', '\r')):
+                raise ValueError("One-word answers must be a single word with no spaces")
 
         # Only word cloud allows unlimited submissions
         if current_question.question_type != QuestionType.WORD_CLOUD:
@@ -291,7 +298,7 @@ class AnswerServiceAsync:
         if not question:
             raise QuestionNotFoundError("Question not found")
         
-        if question.question_type != QuestionType.WORD_CLOUD:
+        if question.question_type not in (QuestionType.WORD_CLOUD, QuestionType.ONE_WORD):
             raise ValueError("Not a word cloud question")
         
         # Get all text answers

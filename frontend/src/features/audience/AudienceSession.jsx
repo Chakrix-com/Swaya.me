@@ -123,7 +123,7 @@ export default function AudienceSession() {
       setResults(response.data)
       setCurrentQuestion(response.data.current_question)
 
-      if (response.data.current_question?.question_type === 'word_cloud') {
+      if (['word_cloud', 'one_word'].includes(response.data.current_question?.question_type)) {
         loadWordCloudData(response.data.current_question.question_id)
       }
     } catch (error) {
@@ -333,8 +333,9 @@ export default function AudienceSession() {
   }
 
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
+  const isOneWord = currentQuestion?.question_type === 'one_word'
   const isScaleQuestion = currentQuestion?.question_type === 'scale'
-  const isTextQuestion = ['word_cloud', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
+  const isTextQuestion = ['word_cloud', 'one_word', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isPoll = results?.quiz_type === 'poll'
   const displayTimerRemaining = currentQuestion?.max_time_seconds
     ? (timerRemaining ?? Number(currentQuestion.max_time_seconds))
@@ -496,6 +497,7 @@ export default function AudienceSession() {
                   <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
                     <Tag color="blue">{t('quiz.question')} {results.current_question_index + 1}</Tag>
                     {isWordCloud && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                    {isOneWord && <Tag color="volcano">{t('quiz.oneWord')}</Tag>}
                     {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                     {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                     {isScaleQuestion && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale 1-5' })}</Tag>}
@@ -535,6 +537,17 @@ export default function AudienceSession() {
                 >
                   {isTextQuestion ? (
                     <>
+                      {isOneWord ? (
+                        <Input
+                          placeholder={t('audience.enterOneWord', { defaultValue: 'Enter one word' })}
+                          maxLength={30}
+                          value={wordCloudAnswer}
+                          onChange={(e) => setWordCloudAnswer(e.target.value.replace(/\s/g, ''))}
+                          style={{ marginBottom: 16, fontSize: 18, textAlign: 'center' }}
+                          size="large"
+                          showCount
+                        />
+                      ) : (
                       <TextArea
                         rows={currentQuestion.question_type === 'paragraph' ? 5 : 3}
                         placeholder={
@@ -556,6 +569,7 @@ export default function AudienceSession() {
                         showCount
                         style={{ marginBottom: 16 }}
                       />
+                      )}
                       <Button
                         type="primary"
                         size="large"
@@ -568,7 +582,7 @@ export default function AudienceSession() {
                       >
                         {t('quiz.submitAnswer')}
                       </Button>
-                      {isWordCloud && wordCloudData.length > 0 ? (
+                      {(isWordCloud || isOneWord) && wordCloudData.length > 0 ? (
                         <>
                           <Alert
                             message={t('audience.liveWordCloud', { defaultValue: 'Live Word Cloud' })}
@@ -593,7 +607,7 @@ export default function AudienceSession() {
                             />
                           </div>
                         </>
-                      ) : isWordCloud ? (
+                      ) : (isWordCloud || isOneWord) ? (
                         <Alert
                           message={t('audience.beFirstToRespond', { defaultValue: 'Be the first to respond!' })}
                           description={t('audience.wordCloudGrow', { defaultValue: 'Submit your answer and watch the word cloud grow.' })}
