@@ -770,7 +770,10 @@
     "upgradeBannerPlan": "გეგმაზე.",
     "upgradeBannerNextTier": "განაახლეთ {{tier}}-ზე: {{participants}} მონაწილე/სესია, {{questions}} კითხვა/კვიზი, {{sessions}} ერთდროული სესია.",
     "upgradeBannerCta": "განახლება {{tier}}-ზე",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} კვიზი"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} კვიზი",
+    "tierTooltipParticipants": "მონაწილე / სესია",
+    "tierTooltipQuestions": "კითხვა / კვიზი",
+    "tierTooltipSessions": "ერთდროული სესიები"
   },
   "pages": {
     "legal": {

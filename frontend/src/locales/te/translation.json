@@ -770,7 +770,10 @@
     "upgradeBannerPlan": "ప్లాన్‌లో ఉన్నారు.",
     "upgradeBannerNextTier": "{{tier}} కి అప్‌గ్రేడ్ చేయండి: {{participants}} పాల్గొనేవారు/సెషన్, {{questions}} ప్రశ్నలు/క్విజ్, {{sessions}} ఏకకాల సెషన్లు.",
     "upgradeBannerCta": "{{tier}} కి అప్‌గ్రేడ్ చేయండి",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} క్విజ్‌లు"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} క్విజ్‌లు",
+    "tierTooltipParticipants": "పాల్గొనేవారు / సెషన్",
+    "tierTooltipQuestions": "ప్రశ్నలు / క్విజ్",
+    "tierTooltipSessions": "ఏకకాల సెషన్లు"
   },
   "pages": {
     "legal": {

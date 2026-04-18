@@ -770,7 +770,10 @@
     "upgradeBannerPlan": "திட்டத்தில் உள்ளீர்கள்.",
     "upgradeBannerNextTier": "{{tier}} க்கு மேம்படுத்தவும்: {{participants}} பங்கேற்பாளர்கள்/அமர்வு, {{questions}} கேள்விகள்/வினாடி வினா, {{sessions}} ஒரே நேர அமர்வுகள்.",
     "upgradeBannerCta": "{{tier}} க்கு மேம்படுத்தவும்",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} வினாடி வினாக்கள்"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} வினாடி வினாக்கள்",
+    "tierTooltipParticipants": "பங்கேற்பாளர்கள் / அமர்வு",
+    "tierTooltipQuestions": "கேள்விகள் / வினாடி வினா",
+    "tierTooltipSessions": "ஒரே நேர அமர்வுகள்"
   },
   "pages": {
     "legal": {

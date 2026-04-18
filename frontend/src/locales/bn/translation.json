@@ -770,7 +770,10 @@
     "upgradeBannerPlan": "প্ল্যানে আছেন।",
     "upgradeBannerNextTier": "{{tier}}-এ আপগ্রেড করুন: {{participants}} অংশগ্রহণকারী/সেশন, {{questions}} প্রশ্ন/কুইজ, {{sessions}} একযোগে সেশন।",
     "upgradeBannerCta": "{{tier}}-এ আপগ্রেড করুন",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} কুইজ"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} কুইজ",
+    "tierTooltipParticipants": "অংশগ্রহণকারী / সেশন",
+    "tierTooltipQuestions": "প্রশ্ন / কুইজ",
+    "tierTooltipSessions": "একযোগে সেশন"
   },
   "pages": {
     "legal": {

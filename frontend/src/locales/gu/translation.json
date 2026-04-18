@@ -770,7 +770,10 @@
     "upgradeBannerPlan": "પ્લાન પર છો.",
     "upgradeBannerNextTier": "{{tier}} પર અપગ્રેડ કરો: {{participants}} સહભાગીઓ/સત્ર, {{questions}} પ્રશ્નો/ક્વિઝ, {{sessions}} એક સાથે સત્ર.",
     "upgradeBannerCta": "{{tier}} પર અપગ્રેડ કરો",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} ક્વિઝ"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} ક્વિઝ",
+    "tierTooltipParticipants": "સહભાગીઓ / સત્ર",
+    "tierTooltipQuestions": "પ્રશ્નો / ક્વિઝ",
+    "tierTooltipSessions": "એક સાથે સત્ર"
   },
   "pages": {
     "legal": {

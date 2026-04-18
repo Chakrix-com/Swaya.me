@@ -774,7 +774,10 @@
     "upgradeBannerPlan": "प्लान पर हैं।",
     "upgradeBannerNextTier": "{{tier}} पर अपग्रेड करें और पाएं {{participants}} प्रतिभागी/सत्र, {{questions}} प्रश्न/क्विज़, {{sessions}} एक साथ सत्र।",
     "upgradeBannerCta": "{{tier}} में अपग्रेड करें",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} क्विज़"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} क्विज़",
+    "tierTooltipParticipants": "प्रतिभागी / सत्र",
+    "tierTooltipQuestions": "प्रश्न / क्विज़",
+    "tierTooltipSessions": "एक साथ सत्र"
   },
   "pages": {
     "legal": {

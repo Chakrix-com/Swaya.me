@@ -394,7 +394,10 @@
     "upgradeBannerPlan": ".",
     "upgradeBannerNextTier": "Перейдите на {{tier}}: {{participants}} участников/сессия, {{questions}} вопросов/викторина, {{sessions}} одновременных сессий.",
     "upgradeBannerCta": "Перейти на {{tier}}",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} викторин"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} викторин",
+    "tierTooltipParticipants": "Участники / сессия",
+    "tierTooltipQuestions": "Вопросы / викторина",
+    "tierTooltipSessions": "Одновременные сессии"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

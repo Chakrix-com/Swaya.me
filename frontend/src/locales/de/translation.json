@@ -394,7 +394,10 @@
     "upgradeBannerPlan": "Plan.",
     "upgradeBannerNextTier": "Upgrade auf {{tier}} für {{participants}} Teilnehmer/Sitzung, {{questions}} Fragen/Quiz, {{sessions}} gleichzeitige Sitzungen.",
     "upgradeBannerCta": "Upgrade auf {{tier}}",
-    "upgradeBannerQuizUsage": "{{used}} / {{max}} Quizze"
+    "upgradeBannerQuizUsage": "{{used}} / {{max}} Quizze",
+    "tierTooltipParticipants": "Teilnehmer / Sitzung",
+    "tierTooltipQuestions": "Fragen / Quiz",
+    "tierTooltipSessions": "Gleichzeitige Sitzungen"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
