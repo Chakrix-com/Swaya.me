@@ -473,7 +473,7 @@ function Dashboard() {
   const maxQ = currentPlan?.max_questions ?? 0
   const usedQ = statistics.total
   const qPct = maxQ > 0 ? Math.min(100, Math.round((usedQ / maxQ) * 100)) : 0
-  const nearLimit = qPct >= 70
+  const nearLimit = qPct >= 70 || currentTier === 'free'
 
   const handleDismiss = () => {
     localStorage.setItem('upgrade-banner-dismissed', String(Date.now()))
