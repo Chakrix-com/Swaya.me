@@ -549,7 +549,8 @@
       "createdAt": "Erstellt am",
       "tenant": "Organisation",
       "never": "Nie",
-      "of": "von"
+      "of": "von",
+      "tier": "Stufe"
     },
     "orgs": {
       "orgManagement": "Organisationsverwaltung",

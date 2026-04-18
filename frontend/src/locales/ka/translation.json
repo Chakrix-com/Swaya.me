@@ -478,7 +478,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "ಶ್ರೇಣಿ"
     },
     "orgs": {
       "orgManagement": "ಸಂಸ್ಥೆ ನಿರ್ವಹಣೆ",

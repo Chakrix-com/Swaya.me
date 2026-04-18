@@ -478,7 +478,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "સ્તર"
     },
     "orgs": {
       "orgManagement": "સંગઠન સંચાલન",

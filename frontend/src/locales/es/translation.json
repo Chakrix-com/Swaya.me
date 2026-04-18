@@ -549,7 +549,8 @@
       "createdAt": "Creado el",
       "tenant": "Organización",
       "never": "Nunca",
-      "of": "de"
+      "of": "de",
+      "tier": "Nivel"
     },
     "orgs": {
       "orgManagement": "Organization Management",

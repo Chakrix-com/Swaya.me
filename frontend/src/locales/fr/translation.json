@@ -551,7 +551,8 @@
       "createdAt": "Créé le",
       "tenant": "Organisation",
       "never": "Jamais",
-      "of": "sur"
+      "of": "sur",
+      "tier": "Niveau"
     },
     "orgs": {
       "orgManagement": "Gestion des organisations",

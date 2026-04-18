@@ -478,7 +478,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "স্তর"
     },
     "orgs": {
       "orgManagement": "সংস্থা ব্যবস্থাপনা",

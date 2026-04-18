@@ -478,7 +478,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "స్థాయి"
     },
     "orgs": {
       "orgManagement": "సంస్థ నిర్వహణ",

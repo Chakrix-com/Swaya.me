@@ -478,7 +478,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "அடுக்கு"
     },
     "orgs": {
       "orgManagement": "நிறுவன நிர்வாகம்",

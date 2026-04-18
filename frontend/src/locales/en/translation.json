@@ -553,7 +553,8 @@
       "createdAt": "Created At",
       "tenant": "Tenant",
       "never": "Never",
-      "of": "of"
+      "of": "of",
+      "tier": "Tier"
     },
     "orgs": {
       "orgManagement": "Organization Management",
