@@ -16,7 +16,8 @@
     "submit": "సమర్పించు",
     "actions": "చర్యలు",
     "beta": "బీటా",
-    "betaAriaLabel": "బీటా వెర్షన్"
+    "betaAriaLabel": "బీటా వెర్షన్",
+    "update": "అప్‌డేట్"
   },
   "auth": {
     "login": "లాగిన్",

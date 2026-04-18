@@ -26,6 +26,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
     role: Optional[UserRole] = None
+    tier: Optional[TierEnum] = None
 
 
 class UserPasswordUpdate(BaseModel):

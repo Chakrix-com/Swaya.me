@@ -16,7 +16,8 @@
     "submit": "Senden",
     "actions": "Aktionen",
     "beta": "Beta",
-    "betaAriaLabel": "Beta-Version"
+    "betaAriaLabel": "Beta-Version",
+    "update": "Aktualisieren"
   },
   "auth": {
     "login": "Anmelden",

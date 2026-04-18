@@ -16,7 +16,8 @@
     "submit": "Submit",
     "actions": "Actions",
     "beta": "Beta",
-    "betaAriaLabel": "Beta version"
+    "betaAriaLabel": "Beta version",
+    "update": "Update"
   },
   "auth": {
     "login": "Login",

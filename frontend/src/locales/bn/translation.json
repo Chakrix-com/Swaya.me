@@ -16,7 +16,8 @@
     "submit": "জমা দিন",
     "actions": "অ্যাকশন",
     "beta": "বেটা",
-    "betaAriaLabel": "বেটা সংস্করণ"
+    "betaAriaLabel": "বেটা সংস্করণ",
+    "update": "আপডেট করুন"
   },
   "auth": {
     "login": "লগইন",

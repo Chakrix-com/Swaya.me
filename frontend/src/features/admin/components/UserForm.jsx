@@ -24,6 +24,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         full_name: user.full_name,
         role: user.role,
         is_active: user.is_active,
+        tier: user.tier ? user.tier.toLowerCase() : undefined,
       });
     } else if (visible) {
       // Reset form when creating
@@ -45,6 +46,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
           full_name: values.full_name,
           role: values.role,
           is_active: values.is_active,
+          ...(isSuperAdmin && values.tier ? { tier: values.tier } : {}),
         };
 
         await dispatch(updateUser({ userId: user.id, updates })).unwrap();
@@ -155,6 +157,17 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
             ))}
           </Select>
         </Form.Item>
+
+        {isSuperAdmin && isEditing && (
+          <Form.Item label={t('admin.users.tier')} name="tier">
+            <Select placeholder={t('admin.users.tier')}>
+              <Option value="free">Free</Option>
+              <Option value="basic">Basic</Option>
+              <Option value="pro">Pro</Option>
+              <Option value="enterprise">Enterprise</Option>
+            </Select>
+          </Form.Item>
+        )}
 
         <Form.Item
           label={t('admin.userForm.active')}

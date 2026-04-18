@@ -16,7 +16,8 @@
     "submit": "Отправить",
     "actions": "Действия",
     "beta": "Бета",
-    "betaAriaLabel": "Бета-версия"
+    "betaAriaLabel": "Бета-версия",
+    "update": "Обновить"
   },
   "auth": {
     "login": "Вход",

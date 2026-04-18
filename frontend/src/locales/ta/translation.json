@@ -16,7 +16,8 @@
     "submit": "சமர்ப்பிக்கவும்",
     "actions": "செயல்கள்",
     "beta": "பீட்டா",
-    "betaAriaLabel": "பீட்டா பதிப்பு"
+    "betaAriaLabel": "பீட்டா பதிப்பு",
+    "update": "புதுப்பி"
   },
   "auth": {
     "login": "உள்நுழைക",

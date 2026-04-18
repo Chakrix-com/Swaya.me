@@ -278,7 +278,14 @@ class UserManagementServiceAsync:
             user.is_active = user_update.is_active
         if user_update.role is not None:
             user.role = user_update.role
-        
+        if user_update.tier is not None:
+            if not AuthorizationService.is_super_admin(current_user):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only super admins can change tier")
+            tenant_result = await self.db.execute(select(Tenant).filter(Tenant.id == user.tenant_id))
+            tenant = tenant_result.scalar_one_or_none()
+            if tenant:
+                tenant.tier = user_update.tier
+
         await self.db.commit()
         await self.db.refresh(user)
         

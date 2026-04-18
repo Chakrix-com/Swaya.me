@@ -16,7 +16,8 @@
     "submit": "Soumettre",
     "actions": "Actions",
     "beta": "Bêta",
-    "betaAriaLabel": "Version bêta"
+    "betaAriaLabel": "Version bêta",
+    "update": "Mettre à jour"
   },
   "auth": {
     "login": "Connexion",

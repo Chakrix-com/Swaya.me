@@ -16,7 +16,8 @@
     "submit": "जमा करें",
     "actions": "क्रियाएँ",
     "beta": "बीटा",
-    "betaAriaLabel": "बीटा संस्करण"
+    "betaAriaLabel": "बीटा संस्करण",
+    "update": "अपडेट करें"
   },
   "auth": {
     "login": "लॉगिन",
