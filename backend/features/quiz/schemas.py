@@ -43,6 +43,7 @@ class QuestionTypeEnum(str, Enum):
     SINGLE_LINE = "single_line"
     SCALE = "scale"
     PARAGRAPH = "paragraph"
+    ONE_WORD = "one_word"
 
 
 class TemplateScopeEnum(str, Enum):
@@ -111,6 +112,11 @@ class QuestionCreate(BaseModel):
                 raise ValueError('Scale questions must have exactly 5 options')
             if self.correct_answer_index is not None and (self.correct_answer_index < 0 or self.correct_answer_index > 4):
                 raise ValueError('Scale correct answer must be between 1 and 5')
+        elif self.question_type == QuestionTypeEnum.ONE_WORD:
+            if self.options is not None:
+                raise ValueError('One-word questions should not have options')
+            if self.correct_answer_index is not None:
+                raise ValueError('One-word questions should not have a correct answer')
         return self
 
 
