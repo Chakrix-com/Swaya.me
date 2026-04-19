@@ -403,7 +403,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} quizzes",
     "tierTooltipParticipants": "Participants / session",
     "tierTooltipQuestions": "Questions / quiz",
-    "tierTooltipSessions": "Concurrent sessions"
+    "tierTooltipSessions": "Concurrent sessions",
+    "plansTab": "User Plans",
+    "currentPlan": "Current Plan",
+    "upgradeTo": "Upgrade to {{tier}}",
+    "plansNote": "Contact info@chakrix.net to upgrade your plan."
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

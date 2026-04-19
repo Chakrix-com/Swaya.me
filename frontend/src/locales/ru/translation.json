@@ -399,7 +399,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} викторин",
     "tierTooltipParticipants": "Участники / сессия",
     "tierTooltipQuestions": "Вопросы / викторина",
-    "tierTooltipSessions": "Одновременные сессии"
+    "tierTooltipSessions": "Одновременные сессии",
+    "plansTab": "Тарифные планы",
+    "currentPlan": "Текущий план",
+    "upgradeTo": "Перейти на {{tier}}",
+    "plansNote": "Свяжитесь с info@chakrix.net для обновления плана."
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

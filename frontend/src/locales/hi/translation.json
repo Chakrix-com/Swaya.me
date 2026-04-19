@@ -780,7 +780,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} क्विज़",
     "tierTooltipParticipants": "प्रतिभागी / सत्र",
     "tierTooltipQuestions": "प्रश्न / क्विज़",
-    "tierTooltipSessions": "एक साथ सत्र"
+    "tierTooltipSessions": "एक साथ सत्र",
+    "plansTab": "यूज़र प्लान",
+    "currentPlan": "वर्तमान प्लान",
+    "upgradeTo": "{{tier}} में अपग्रेड करें",
+    "plansNote": "अपना प्लान अपग्रेड करने के लिए info@chakrix.net से संपर्क करें।"
   },
   "pages": {
     "legal": {

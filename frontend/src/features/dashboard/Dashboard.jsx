@@ -595,9 +595,7 @@ function Dashboard() {
         </Col>
       </Row>
 
-      {/* Quiz List */}
       <ProCard
-        title={t('quiz.myQuizzes')}
         style={{ overflowX: 'hidden' }}
         extra={
           <div className="dashboard-action-buttons">
@@ -958,7 +956,7 @@ function Dashboard() {
       </div>
         </section>
       </div>
-    </ProCard>
+      </ProCard>
       <Modal
         title={t('dashboard.newFolder', { defaultValue: 'New Folder' })}
         open={folderModalOpen}

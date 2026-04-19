@@ -399,7 +399,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} Quizze",
     "tierTooltipParticipants": "Teilnehmer / Sitzung",
     "tierTooltipQuestions": "Fragen / Quiz",
-    "tierTooltipSessions": "Gleichzeitige Sitzungen"
+    "tierTooltipSessions": "Gleichzeitige Sitzungen",
+    "plansTab": "Benutzerpläne",
+    "currentPlan": "Aktueller Plan",
+    "upgradeTo": "Auf {{tier}} upgraden",
+    "plansNote": "Kontaktiere info@chakrix.net, um deinen Plan zu upgraden."
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

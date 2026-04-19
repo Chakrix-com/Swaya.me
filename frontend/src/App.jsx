@@ -18,6 +18,7 @@ import {
   SunOutlined,
   MoonOutlined,
   LoadingOutlined,
+  CrownOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -43,6 +44,7 @@ const VerifyEmail = lazy(() => import('./features/auth/VerifyEmail'))
 const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'))
 const ResetPassword = lazy(() => import('./features/auth/ResetPassword'))
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'))
+const UserPlans = lazy(() => import('./features/dashboard/UserPlans'))
 const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
 const QuizControl = lazy(() => import('./features/quiz/QuizControl'))
 const QuizHistory = lazy(() => import('./features/quiz/QuizHistory'))
@@ -168,6 +170,11 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
             path: '/dashboard',
             name: t('common.dashboard'),
             icon: <DashboardOutlined />,
+          },
+          {
+            path: '/plans',
+            name: t('dashboard.plansTab', 'User Plans'),
+            icon: <CrownOutlined />,
           },
           {
             path: '/quiz/new',
@@ -358,6 +365,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
     <AuthenticatedLayout visitorTheme={visitorTheme} onToggleVisitorTheme={onToggleVisitorTheme}>
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/plans" element={<UserPlans />} />
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />

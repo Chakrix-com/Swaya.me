@@ -776,7 +776,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} క్విజ్‌లు",
     "tierTooltipParticipants": "పాల్గొనేవారు / సెషన్",
     "tierTooltipQuestions": "ప్రశ్నలు / క్విజ్",
-    "tierTooltipSessions": "ఏకకాల సెషన్లు"
+    "tierTooltipSessions": "ఏకకాల సెషన్లు",
+    "plansTab": "వినియోగదారు ప్లాన్‌లు",
+    "currentPlan": "ప్రస్తుత ప్లాన్",
+    "upgradeTo": "{{tier}} కి అప్‌గ్రేడ్ చేయండి",
+    "plansNote": "మీ ప్లాన్ అప్‌గ్రేడ్ చేయడానికి info@chakrix.net కి సంప్రదించండి."
   },
   "pages": {
     "legal": {

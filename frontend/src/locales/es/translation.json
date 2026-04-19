@@ -399,7 +399,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} cuestionarios",
     "tierTooltipParticipants": "Participantes / sesión",
     "tierTooltipQuestions": "Preguntas / cuestionario",
-    "tierTooltipSessions": "Sesiones simultáneas"
+    "tierTooltipSessions": "Sesiones simultáneas",
+    "plansTab": "Planes de usuario",
+    "currentPlan": "Plan actual",
+    "upgradeTo": "Actualizar a {{tier}}",
+    "plansNote": "Contacta info@chakrix.net para actualizar tu plan."
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

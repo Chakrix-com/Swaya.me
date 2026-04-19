@@ -776,7 +776,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} ક્વિઝ",
     "tierTooltipParticipants": "સહભાગીઓ / સત્ર",
     "tierTooltipQuestions": "પ્રશ્નો / ક્વિઝ",
-    "tierTooltipSessions": "એક સાથે સત્ર"
+    "tierTooltipSessions": "એક સાથે સત્ર",
+    "plansTab": "વપરાશકર્તા યોજનાઓ",
+    "currentPlan": "વર્તમાન યોજના",
+    "upgradeTo": "{{tier}} પર અપગ્રેડ કરો",
+    "plansNote": "તમારી યોજના અપગ્રેડ કરવા માટે info@chakrix.net પર સંપર્ક કરો."
   },
   "pages": {
     "legal": {

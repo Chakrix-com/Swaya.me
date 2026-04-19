@@ -776,7 +776,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} வினாடி வினாக்கள்",
     "tierTooltipParticipants": "பங்கேற்பாளர்கள் / அமர்வு",
     "tierTooltipQuestions": "கேள்விகள் / வினாடி வினா",
-    "tierTooltipSessions": "ஒரே நேர அமர்வுகள்"
+    "tierTooltipSessions": "ஒரே நேர அமர்வுகள்",
+    "plansTab": "பயனர் திட்டங்கள்",
+    "currentPlan": "தற்போதைய திட்டம்",
+    "upgradeTo": "{{tier}} க்கு மேம்படுத்து",
+    "plansNote": "உங்கள் திட்டத்தை மேம்படுத்த info@chakrix.net ஐ தொடர்பு கொள்ளுங்கள்."
   },
   "pages": {
     "legal": {

@@ -776,7 +776,11 @@
     "upgradeBannerQuizUsage": "{{used}} / {{max}} კვიზი",
     "tierTooltipParticipants": "მონაწილე / სესია",
     "tierTooltipQuestions": "კითხვა / კვიზი",
-    "tierTooltipSessions": "ერთდროული სესიები"
+    "tierTooltipSessions": "ერთდროული სესიები",
+    "plansTab": "ಬಳಕೆದಾರ ಯೋಜನೆಗಳು",
+    "currentPlan": "ಪ್ರಸ್ತುತ ಯೋಜನೆ",
+    "upgradeTo": "{{tier}} ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ",
+    "plansNote": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು info@chakrix.net ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
   },
   "pages": {
     "legal": {
