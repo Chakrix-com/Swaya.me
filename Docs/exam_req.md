@@ -300,12 +300,49 @@ New keys in all 11 locale files under a new `exam` namespace:
 
 ---
 
-## 11. Out of Scope (Initial Release)
+## 11. Proctoring (Shipped — April 2026)
+
+Proctoring is now implemented as an optional, per-quiz anti-cheating layer. See `Docs/proctoring.md` for the full spec. Key points relevant to the exam type:
+
+### Activation
+
+The host enables proctoring in the exam builder via a toggle. Proctoring is only available for `exam` and `offline_poll` types.
+
+### Exam Builder UX Changes (April 2026)
+
+| Change | Details |
+|--------|---------|
+| Unified save | A single "Save Settings" button saves both exam metadata and proctoring policy in one `PUT /quizzes/{id}` call — no separate proctoring save button |
+| Proctoring panel position | The proctoring settings card appears above the questions list (between metadata form and questions), not below |
+| Live exam banner | When `status=ready`, a yellow banner warns that questions are locked and changes take effect immediately |
+| Question lock | When exam is live, the questions list is read-only — add/edit/delete/reorder controls are hidden |
+| Preset labels | **Light Monitoring** / **Standard Security** / **Maximum Security** (replaces cryptic "Soft/Hard/Paranoid") |
+| Escalation summary | Dynamic inline summary: "Participant gets N−1 warning(s), then locked on the Nth violation" |
+
+### Rules Available for Exam Type
+
+All free-tier browser rules (`fullscreen_enforce`, `tab_switch_detect`, `right_click_block`, `copy_paste_block`, `multi_tab_detect`, `bot_signal_detect`, `honeypot_traps`) are available. PRO+ adds `devtools_detect`, `answer_timing`, and `webcam_monitoring`.
+
+### Escalation
+
+- `lock_on_violation_count` — lock after this many cumulative violations (default 3)
+- `auto_submit_on_lock` — if true, the participant's answers at lock time are auto-submitted; if false, answers are abandoned on lock unless the participant submitted before being locked
+
+### Webcam (`webcam_monitoring` rule — PRO+)
+
+When enabled, participants must grant camera permission before seeing any exam content. After the browser permission dialog is accepted, the frontend calls `POST /proctoring/session/webcam-granted` to update the database — this is what the Integrity Report reads for the "Webcam Granted" column. The session init call always sets `webcam_granted=false`; only this second call flips it.
+
+### Integrity Report
+
+Available at `/quiz/:id/exam-results` → Integrity tab. Shows per-participant: integrity score, violation count, locked status, webcam_granted, and an expandable event timeline. Admins can manually lock or unlock any session.
+
+---
+
+## 12. Still Out of Scope
 
 - Question order shuffling per participant
 - MCQ option order shuffling per participant
 - Password-protected exams
-- Proctoring / screen monitoring
 - IP-based duplicate detection
 - Non-MCQ question types (Word Cloud, Scale, Paragraph, Single Line)
 - Certificates / badges on completion
@@ -314,7 +351,7 @@ New keys in all 11 locale files under a new `exam` namespace:
 
 ---
 
-## 12. All Design Decisions
+## 13. All Design Decisions
 
 | Decision | Outcome |
 |---|---|

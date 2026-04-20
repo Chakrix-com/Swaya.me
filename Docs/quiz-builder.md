@@ -597,3 +597,56 @@ flowchart LR
   UC35 -.-> UC33
 
 ```
+
+---
+
+## Exam Builder UX (April 2026)
+
+The exam builder (`/quiz/:id/edit`) has a specific layout for `quiz_type=exam` and `offline_poll` that differs from the live quiz builder.
+
+### Page Layout (top to bottom)
+
+| Section | Shown when | Notes |
+|---------|-----------|-------|
+| Live exam banner | `status=ready` | Yellow alert; warns questions are locked and changes take effect immediately |
+| Metadata form | always | Title, exam start/end dates, time limit, results email |
+| Proctoring Settings card | exam/offline_poll only | Positioned above questions to reflect its pre-publish configuration nature |
+| Save Settings button | always | Single button saves metadata + proctoring in one `PUT /quizzes/{id}` |
+| Questions list | always | Locked (read-only) when exam is live; editable in DRAFT |
+
+### Unified Save
+
+Before this redesign, the builder had two separate save paths:
+1. "Edit Exam" button — saved metadata (dates, time limit)
+2. "Save Proctoring Settings" button — saved proctoring policy
+
+Both called the same `PUT /quizzes/{id}` endpoint. This was confusing because hosts would change proctoring rules and forget to save them separately.
+
+The redesign lifts `proctoringPolicy` state to `QuizBuilder`, passes it as `onChange` prop to `ProctoringSettings` (which no longer has its own save), and includes it in the unified save payload.
+
+### Proctoring Settings Card (inside exam builder)
+
+When the master toggle is enabled:
+
+1. **Preset selector** — three clickable cards:
+   - **Light Monitoring** — fullscreen + tab-switch detection
+   - **Standard Security** — adds copy-paste block, multi-tab detect, bot signal detect, honeypot traps
+   - **Maximum Security** — all rules available for the tenant's tier
+
+2. **Per-rule toggles** — each rule shows: name, severity tag ("locks exam" | "warns"), tier badge if non-free, silent badge if `is_silent=true`
+
+3. **Escalation settings:**
+   - "Lock exam after ___ warnings" — `InputNumber`, default 3
+   - "Auto-submit on lock" — `Switch`, default off
+   - Live summary Alert: *"Participant gets N−1 warning(s), then locked on the Nth violation"*
+
+4. **Webcam notice** — warning shown when `webcam_monitoring` is enabled (PRO+ only)
+
+### Question Locking (live exam)
+
+When `quiz?.status === 'ready'` and `isExam`:
+- "Add Question" button hidden
+- Per-question edit / delete / reorder controls hidden
+- A notice is shown: questions cannot be edited while the exam is active
+
+This prevents accidental question changes affecting participants currently mid-attempt.

@@ -243,11 +243,11 @@ Per-quiz overrides. Set by the host in QuizBuilder. Inherits from tenant policy.
 
 **Level presets (applied in QuizBuilder; sets rule defaults):**
 
-| Level | Rules Active |
-|-------|-------------|
-| `soft` | fullscreen, tab switch, copy-paste block |
-| `hard` | soft + honeypots, behavioral biometrics, multi-tab, devtools, bot detection, randomization |
-| `paranoid` | hard + webcam bundle (identity snapshot + periodic snapshots + face detection + multiple-face detection + gaze direction), canvas rendering, steganographic watermark |
+| Level key | Display label | Rules Active |
+|-----------|--------------|-------------|
+| `light` | Light Monitoring | fullscreen, tab switch, right-click block |
+| `standard` | Standard Security | light + copy-paste block, multi-tab detect, bot signal detect, honeypot traps |
+| `maximum` | Maximum Security | all rules available for this tenant's tier |
 
 ### 4. New DB Table: `proctoring_sessions`
 
@@ -399,23 +399,27 @@ ProctoringService:
     → returns {is_bot, confidence, signals}
 ```
 
-### New API Routes: `/api/v1/proctoring/`
+### API Routes: `/api/v1/proctoring/`
 
 | Method | Route | Auth | Purpose |
 |--------|-------|------|---------|
-| POST | `/proctoring/session/init` | participant token | Register session; returns resolved rule set |
-| POST | `/proctoring/event` | participant token | Log a violation event |
-| POST | `/proctoring/honeypot` | none | Record honeypot hit (silent 200) |
-| POST | `/proctoring/biometrics` | participant token | Submit behavioral biometric sample |
-| POST | `/proctoring/answer-timing` | participant token | Validate answer timing server-side |
-| GET | `/proctoring/config/{quiz_id}` | participant token | Active rule set for this participant's context |
-| GET | `/proctoring/report/{quiz_id}` | admin JWT | Violation summary per participant |
-| POST | `/proctoring/lock/{session_token}` | admin JWT | Manual lock |
-| POST | `/proctoring/unlock/{session_token}` | admin JWT | Manual unlock |
-| GET | `/admin/proctoring/rules` | super_admin JWT | List all platform rules |
+| POST | `/proctoring/session/init` | X-Session-Token | Register session; idempotent — second call returns same session |
+| POST | `/proctoring/session/webcam-granted` | X-Session-Token | Mark webcam permission as granted after browser dialog accepted |
+| POST | `/proctoring/event` | X-Session-Token | Log a violation event; returns `{logged, is_locked, violations_remaining, silent}` |
+| POST | `/proctoring/honeypot` | none | Honeypot trap — always returns HTTP 200 with `{}` body regardless of payload |
+| POST | `/proctoring/biometrics` | X-Session-Token | Submit behavioral biometric sample |
+| POST | `/proctoring/answer-timing` | X-Session-Token | Validate answer timing server-side |
+| GET | `/proctoring/config/{quiz_id}` | none | Active rule set and escalation policy for a quiz |
+| GET | `/proctoring/rules` | JWT | Platform rule registry (filtered to caller's tier) |
+| GET | `/proctoring/report/{quiz_id}` | JWT | Per-participant violation summary; tenant-scoped |
+| POST | `/proctoring/lock/{session_token}` | JWT | Admin: manually lock a participant session |
+| POST | `/proctoring/unlock/{session_token}` | JWT | Admin: manually unlock a participant session |
+| GET | `/admin/proctoring/rules` | super_admin JWT | List all platform rules (unfiltered) |
 | PUT | `/admin/proctoring/rules/{rule_id}` | super_admin JWT | Update platform rule |
 | GET | `/admin/proctoring/tenant-policy/{tenant_id}` | admin JWT | Get tenant policy |
 | PUT | `/admin/proctoring/tenant-policy/{tenant_id}` | admin JWT | Update tenant policy |
+
+> **`webcam-granted` note:** Session init always sets `webcam_granted=false`. After the browser `getUserMedia` permission dialog is accepted (in `ProctoringGate`), the frontend calls `POST /proctoring/session/webcam-granted` to flip the flag. This ensures the Integrity Report accurately reflects whether the participant consented — it is not derived from the init call alone.
 
 ---
 
@@ -751,25 +755,34 @@ Escalation thresholds are configurable per rule (e.g., tab switching might allow
 
 ## QuizBuilder Configuration Panel
 
-New **"Proctoring"** tab in QuizBuilder. Visible for all quiz types but rules shown are filtered to those applicable to the selected quiz type and the tenant's tier.
+The proctoring settings panel is embedded directly in the exam builder (`/quiz/:id/edit`), positioned **above the questions list** and below the metadata form. It is only shown for `exam` and `offline_poll` quiz types.
 
-- **Master toggle (Enable Proctoring for this quiz)** — off by default. The host must explicitly turn this on. If the tenant tier has no proctoring rules available for the quiz's interaction type, the toggle is disabled with a tier upgrade prompt.
-- Level selector: **Soft / Hard / Paranoid** (presets with descriptions; only shown when master toggle is on)
-- Applicability section:
-  - Interaction type this applies to (read-only, derived from quiz type)
-  - Question types with active rules (auto-populated, read-only)
-  - Current tier + rules unlocked at this tier (informational)
-- Advanced section (collapsible): fine-grained rule toggles + parameters (filtered to tier-available rules)
-- **Webcam section (PRO+ only):**
-  - Toggle to enable webcam for this quiz
-  - Warning copy shown to host: *"Enabling webcam makes it a hard requirement — participants who deny camera access cannot start the quiz."*
-  - Snapshot interval slider (default 30s)
-  - Photo ID capture toggle (ENTERPRISE only)
-  - Preview of the consent message participants will see at the gate
-  - All face detection sub-checks (face presence, multiple faces, gaze) are automatically active when webcam is enabled — no individual toggles
-- Tier gate notice if a rule requires a higher tier than the tenant's current tier
-- Preview: "What participants will see"
-- If proctoring is off: a summary card showing which rules *would* activate if enabled (encourages opt-in without forcing it)
+### Layout (exam builder page order)
+
+1. **Live exam banner** — yellow `Alert` shown when `status=ready`; informs host that questions are locked and settings changes take effect immediately for active participants
+2. **Metadata form** — title, start/end dates, time limit, results email
+3. **Proctoring Settings card** — see below
+4. **Save Settings button** — single action saves both metadata and proctoring policy in one `PUT /quizzes/{id}` call
+5. **Questions list** — locked (read-only) when exam is live; editable in DRAFT
+
+### Proctoring Settings Card
+
+- **Master toggle (Enable Proctoring for this quiz)** — off by default; host must explicitly turn this on
+- When enabled:
+  - **Preset selector** — three cards with title + description:
+    - **Light Monitoring** — fullscreen enforcement + tab-switching detection only
+    - **Standard Security** — adds copy-paste blocking, multi-tab detection, and bot signal checks
+    - **Maximum Security** — all available rules for the tenant's plan
+  - **Per-rule toggles** — each rule shows: display name, severity tag ("locks exam" / "warns"), tier badge if non-free, silent badge with tooltip if applicable
+  - **Escalation settings:**
+    - "Lock exam after ___ warnings" — `InputNumber` 1–20; default 3
+    - "Auto-submit on lock" — `Switch`; off by default
+    - Live summary: *"Participant gets N−1 warning(s), then locked on the Nth violation. Auto-submit is ON/OFF."*
+  - **Webcam notice** — warning `Alert` shown when `webcam_monitoring` rule is enabled
+
+### Unified Save
+
+Proctoring settings are **not saved independently**. Changing any proctoring rule or escalation setting updates component state only. The single "Save Settings" button at the bottom of the form serializes both exam metadata and `proctoring_policy` into one `PUT /quizzes/{id}` payload. This eliminates the two-button confusion where hosts had to remember to save proctoring separately.
 
 ---
 

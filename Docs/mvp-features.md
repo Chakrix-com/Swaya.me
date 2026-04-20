@@ -97,10 +97,85 @@ Swaya.me is a live audience engagement platform. Hosts create and run interactiv
 
 | Feature | Description |
 |---------|-------------|
-| Self-paced | Participants start and submit on their own schedule |
-| Individual result | Each participant sees their own score on submission |
-| Host export | Host downloads all exam results |
-| Publish / unpublish | Separate publish flow from live quiz |
+| Self-paced | Participants start and submit on their own schedule within the configured date window |
+| Global time limit | Optional countdown from when the participant clicks "Start Exam"; auto-submits on expiry |
+| Per-question time limit | Configurable per question; auto-advances on expiry |
+| Individual result | Each participant sees their own score and per-question breakdown on submission |
+| Host results dashboard | `/quiz/:id/exam-results` — leaderboard, per-participant score, per-question analytics, integrity report |
+| Publish / unpublish | `POST /quizzes/{id}/publish-exam` generates a unique slug and permanent session; `unpublish-exam` reverts to DRAFT |
+| Grace period | 10-minute resumption window; attempt locked after expiry or submission |
+| Live edit banner | When exam is active (`status=ready`), the builder shows a warning banner; questions are locked from editing |
+
+---
+
+## Proctoring
+
+Optional, per-quiz anti-cheating layer available for **Exam** and **Offline Poll** types. Enabled by the host in the exam builder; availability of rules depends on the tenant's tier.
+
+### Activation
+
+| Step | Details |
+|------|---------|
+| Host opt-in | Toggle "Enable Proctoring" in the exam builder; off by default |
+| Unified save | Proctoring settings and exam metadata (dates, time limit) are saved in a single action |
+| Preset levels | **Light Monitoring** (fullscreen + tab-switch), **Standard Security** (+ copy-paste block, multi-tab, bot detection), **Maximum Security** (all available rules for this tier) |
+
+### Browser-Side Rules (FREE tier and above)
+
+| Rule | Trigger | Severity |
+|------|---------|---------|
+| `fullscreen_enforce` | Participant exits fullscreen | warn |
+| `tab_switch_detect` | Tab loses focus or visibility | warn |
+| `right_click_block` | Right-click inside exam | warn |
+| `copy_paste_block` | Ctrl+C / Ctrl+V / Ctrl+X inside exam | warn |
+| `multi_tab_detect` | BroadcastChannel detects another tab | lock |
+| `bot_signal_detect` | Missing browser APIs, improbable timing | lock |
+| `honeypot_traps` | Hidden fake API URLs / DOM fields triggered | lock (silent) |
+
+### Advanced Rules (PRO+ tiers)
+
+| Rule | Trigger | Severity |
+|------|---------|---------|
+| `devtools_detect` | DevTools open detected | warn |
+| `answer_timing` | Answer submitted faster than minimum plausible time | warn |
+| `webcam_monitoring` | Webcam bundle: face absence, multiple faces, gaze away, permission revoked | warn/lock |
+
+### Escalation
+
+Configurable per-quiz:
+- **Lock after N violations** — participant receives N−1 warnings then is permanently locked on the Nth
+- **Auto-submit on lock** — when enabled, the participant's answers at lock time are automatically submitted; when disabled, a locked participant's answers are not submitted unless they submitted before being locked
+
+### Integrity Report
+
+Available at `/quiz/:id/exam-results` → Integrity tab:
+
+| Column | Description |
+|--------|-------------|
+| Participant | Display name |
+| Score | Total score |
+| Integrity Score | 0–100; starts at 100, deducted per violation |
+| Violations | Count of violation events |
+| Locked | Whether the session was locked |
+| Webcam Granted | Whether the participant granted camera permission (PRO+ only) |
+| Events | Expandable timeline of all violation events |
+
+Admins can manually lock or unlock any session from the report.
+
+### Key API Endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| POST | `/proctoring/session/init` | X-Session-Token | Register proctoring session for a participant |
+| POST | `/proctoring/session/webcam-granted` | X-Session-Token | Mark webcam permission as granted after browser allow |
+| POST | `/proctoring/event` | X-Session-Token | Log a violation event |
+| POST | `/proctoring/honeypot` | none | Silent honeypot trap — always returns HTTP 200 |
+| POST | `/proctoring/answer-timing` | X-Session-Token | Server-side answer speed validation |
+| GET | `/proctoring/config/{quiz_id}` | none | Active rule set for a quiz |
+| GET | `/proctoring/report/{quiz_id}` | JWT | Per-participant integrity report |
+| GET | `/proctoring/rules` | JWT | Platform rule registry |
+| POST | `/proctoring/lock/{token}` | JWT | Admin: manually lock a session |
+| POST | `/proctoring/unlock/{token}` | JWT | Admin: manually unlock a session |
 
 ---
 
@@ -196,12 +271,14 @@ Limits enforced at session start and quiz publish time via `TierService` (Redis-
 
 ## Regression Test Suite
 
-Automated suites run via `scripts/regression/run_preprod_gate.sh`:
+Automated suites in `scripts/regression/`:
 
-| Suite | Description |
-|-------|-------------|
-| A — Smoke | API health, auth flow, basic quiz CRUD, session lifecycle |
-| B — Core | Full quiz lifecycle, all question types, answer submission, results |
-| C — Negative | Invalid inputs, auth failures, tier constraint violations |
-| D — Extended | Text question types, live poll mode, question reorder, anonymous participant, question field persistence |
-| E — UI | Selenium browser tests via `selenium-arm` Docker container |
+| Suite | Script | Description |
+|-------|--------|-------------|
+| A — Smoke | `run_preprod_gate.sh` | API health, auth flow, basic quiz CRUD, session lifecycle |
+| B — Core | `run_preprod_gate.sh` | Full quiz lifecycle, all question types, answer submission, results |
+| C — Negative | `run_preprod_gate.sh` | Invalid inputs, auth failures, tier constraint violations |
+| D — Extended | `run_preprod_gate.sh` | Text question types, live poll mode, question reorder, anonymous participant, question field persistence |
+| E — UI | `run_preprod_gate.sh` | Selenium browser tests via `selenium-arm` Docker container |
+| Exam Lifecycle | `test_exam_lifecycle.py` | Create→publish→start→answer→submit→result→unpublish; includes UTC timezone assertion on `started_at` |
+| Proctoring | `test_proctoring.py` | 10-phase regression: rule registry, session init/idempotency, escalation/locking, admin lock/unlock, tier filtering, violation report, answer timing, watermark, integrity scorer, webcam-granted endpoint, unified save |
