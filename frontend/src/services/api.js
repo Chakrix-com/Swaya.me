@@ -267,4 +267,25 @@ export const languageTrackingAPI = {
   },
 }
 
+export const proctoringAPI = {
+  getConfig: (quizId, sessionToken) =>
+    api.get(`/proctoring/config/${quizId}`, {
+      headers: sessionToken ? { 'X-Session-Token': sessionToken } : {},
+    }),
+  initSession: (body, sessionToken) =>
+    api.post('/proctoring/session/init', body, {
+      headers: sessionToken ? { 'X-Session-Token': sessionToken } : {},
+    }),
+  logEvent: (body) => api.post('/proctoring/event', body),
+  answerTiming: (body) => api.post('/proctoring/answer-timing', body),
+  biometrics: (body) => api.post('/proctoring/biometrics', body),
+  getReport: (quizId) => api.get(`/proctoring/report/${quizId}`),
+  lockSession: (token) => api.post(`/proctoring/lock/${token}`),
+  unlockSession: (token) => api.post(`/proctoring/unlock/${token}`),
+  getPlatformRules: () => api.get('/proctoring/admin/rules'),
+  updatePlatformRule: (ruleId, body) => api.put(`/proctoring/admin/rules/${ruleId}`, body),
+  getTenantPolicy: (tenantId) => api.get(`/proctoring/admin/tenant-policy/${tenantId}`),
+  updateTenantPolicy: (tenantId, body) => api.put(`/proctoring/admin/tenant-policy/${tenantId}`, body),
+}
+
 export default api

@@ -656,10 +656,19 @@ class QuizBuilderServiceAsync:
         
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
-        
+
+        # Always allow proctoring_policy updates on published exams; all other edits require DRAFT
         if quiz.status != QuizStatus.DRAFT:
+            if request.proctoring_policy is not None:
+                data = request.model_dump(exclude_unset=True)
+                if set(data.keys()) - {'proctoring_policy'}:
+                    raise InvalidQuizStatusError("Can only edit quizzes in DRAFT status")
+                quiz.proctoring_policy = request.proctoring_policy
+                await db.commit()
+                await db.refresh(quiz)
+                return self._to_quiz_response(quiz)
             raise InvalidQuizStatusError("Can only edit quizzes in DRAFT status")
-        
+
         # Update fields
         if request.title is not None:
             quiz.title = request.title
@@ -685,6 +694,10 @@ class QuizBuilderServiceAsync:
             quiz.exam_time_limit_seconds = request.exam_time_limit_seconds
         if request.exam_results_email is not None:
             quiz.exam_results_email = request.exam_results_email
+
+        # Proctoring policy
+        if request.proctoring_policy is not None:
+            quiz.proctoring_policy = request.proctoring_policy
 
         await db.commit()
         await db.refresh(quiz)

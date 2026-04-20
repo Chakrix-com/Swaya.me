@@ -48,8 +48,16 @@ async def lifespan(app: FastAPI):
     # Start statistics snapshot scheduler
     start_scheduler()
     print("✓  Statistics scheduler started")
-    
-    # TODO: Run database migrations check
+
+    # Seed proctoring platform rules
+    try:
+        from persistence.database_async import AsyncSessionLocal
+        from features.proctoring.rule_registry import seed_platform_rules
+        async with AsyncSessionLocal() as seed_db:
+            await seed_platform_rules(seed_db)
+        print("✓  Proctoring rules seeded")
+    except Exception as e:
+        print(f"⚠  Proctoring rules seed skipped: {e}")
     
     yield
     

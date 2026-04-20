@@ -1665,7 +1665,15 @@
     "exportCsv": "Export CSV",
     "noParticipants": "No participants yet",
     "unpublishMessage": "Click \"Deactivate Test\" above to edit",
-    "typeInfo": "Timed, self-paced exam. Auto-scored with +/− points. Participants receive a rank and score at the end. Accessed via a link."
+    "typeInfo": "Timed, self-paced exam. Auto-scored with +/− points. Participants receive a rank and score at the end. Accessed via a link.",
+    "scoringRules": "Scoring Rules",
+    "pointsForCorrect": "+{{points}} for correct answer",
+    "penaltyForWrong": "−{{points}} for wrong answer",
+    "noPenalty": "No penalty for wrong answers",
+    "zeroForUnanswered": "0 for unanswered",
+    "pointsVary": "* Points vary per question",
+    "timeLimitWarning": "You have <strong>{{minutes}} minutes</strong> total from when you start.",
+    "perQuestionTimerWarning": "Each question has a time limit — it auto-advances when the timer runs out. You cannot go back to expired questions."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -1711,5 +1719,81 @@
     "visitBtn": "Visit Swaya.me",
     "bookmarkBtn": "Bookmark this page",
     "bookmarkTip": "Press Ctrl+D (or ⌘D on Mac) to bookmark this page"
+  },
+  "proctoring": {
+    "warning": {
+      "title": "This is a Proctored Examination",
+      "subtitle": "Read the following carefully before you proceed",
+      "webcamNotice": "Your webcam is being recorded and monitored live for the entire duration of this exam. Ensure your face is clearly visible, well-lit, and centred on camera at all times.",
+      "violationsTitle": "The following actions will be flagged as violations:",
+      "lockMessage_one": "After {{count}} violation, your exam will be permanently locked",
+      "lockMessage_other": "After {{count}} violations, your exam will be permanently locked",
+      "autoSubmit": " and your answers submitted automatically. You will not be able to re-enter.",
+      "noAutoSubmit": ". You will not be able to continue or re-enter.",
+      "allLogged": "All violations are logged and reviewed by the exam host.",
+      "checkboxLabel": "I have read and understood the above rules. I agree to take this exam honestly and accept that any violation may result in disqualification.",
+      "acknowledgeButton": "I Acknowledge — Proceed to Exam",
+      "rules": {
+        "tab_switch_detect": "Switching to another tab, window, or application",
+        "copy_paste_block": "Copying or pasting any text during the exam",
+        "right_click_block": "Right-clicking anywhere on the exam page",
+        "fullscreen_enforce": "Exiting fullscreen or minimising the browser",
+        "multi_tab_detect": "Opening multiple browser tabs or windows",
+        "devtools_detect": "Opening browser developer tools (F12)",
+        "bot_signal_detect": "Using automation tools, scripts, or browser extensions that tamper with exam controls",
+        "webcam_monitoring": "Looking away from the screen, leaving camera frame, or allowing another person to appear on camera"
+      }
+    },
+    "overlay": {
+      "violation": "Proctoring Violation",
+      "finalWarning": "Final Warning",
+      "violationMessage": "A proctoring rule was triggered. Please follow the exam guidelines.",
+      "finalWarningMessage": "This is your final warning. One more violation will lock your session.",
+      "remaining_one": "{{count}} violation remaining before lock",
+      "remaining_other": "{{count}} violations remaining before lock",
+      "understand": "I Understand ({{seconds}}s)",
+      "autoDismiss": "This warning will auto-dismiss in {{seconds}}s"
+    },
+    "lock": {
+      "title": "Session Locked",
+      "adminMessage": "Your session has been locked. Please contact the exam administrator.",
+      "violationMessage": "A proctoring violation was detected. Your session has been locked.",
+      "submitted": "Your responses have been submitted.",
+      "reload": "Reload Page"
+    },
+    "webcam": {
+      "denied": "Camera Access Required",
+      "deniedMessage": "This exam requires webcam access to proceed. Please allow camera access in your browser and reload the page.",
+      "reload": "Reload and Try Again",
+      "requesting": "Requesting camera access…"
+    },
+    "fullscreen": {
+      "entering": "Entering fullscreen…",
+      "required": "This exam requires fullscreen mode. Click below to continue.",
+      "button": "Enter Fullscreen"
+    },
+    "report": {
+      "title": "Integrity Report",
+      "participant": "Participant",
+      "integrityScore": "Integrity Score",
+      "violations": "Violations",
+      "status": "Status",
+      "webcam": "Webcam",
+      "actions": "Actions",
+      "viewDetail": "View Detail",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "locked": "Locked",
+      "flagged": "Flagged",
+      "clean": "Clean",
+      "granted": "Granted",
+      "denied": "Denied",
+      "na": "N/A",
+      "notEnabled": "Proctoring is not enabled for this exam.",
+      "notEnabledDesc": "Enable proctoring in the quiz settings to start tracking participant integrity.",
+      "enabledNoData": "Proctoring is enabled — no participant data yet.",
+      "enabledNoDataDesc": "Integrity data will appear here once participants start the exam through the proctored flow.",
+      "timeline": "Participant #{{id}} — Violation Timeline"
+    }
   }
 }

@@ -18,6 +18,7 @@ from broker.api.og import router as og_router
 from broker.api.offline_poll import router as offline_poll_router
 from broker.api.exam import router as exam_router
 from broker.api.app_feedback import router as app_feedback_router, admin_router as app_feedback_admin_router
+from broker.api.proctoring import router as proctoring_router
 
 api_router = APIRouter()
 
@@ -57,5 +58,6 @@ api_router.include_router(offline_poll_router)
 api_router.include_router(exam_router)
 api_router.include_router(app_feedback_router)
 api_router.include_router(app_feedback_admin_router, prefix="/admin", tags=["admin"])
+api_router.include_router(proctoring_router)
 
 # TODO: Include realtime routes

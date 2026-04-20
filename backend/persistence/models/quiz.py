@@ -96,6 +96,9 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     exam_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
     exam_results_email = Column(String(255), nullable=True)
 
+    # Proctoring
+    proctoring_policy = Column(JSON, nullable=True)
+
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     sessions = relationship("QuizSession", back_populates="quiz", foreign_keys="QuizSession.quiz_id")

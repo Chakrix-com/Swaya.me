@@ -30,6 +30,7 @@ run_step "core_live_poll"          "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT
 run_step "core_question_reorder"   "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_question_reorder.py"                           || FAILED=1
 run_step "core_anonymous_participant" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_anonymous_participant.py"                   || FAILED=1
 run_step "core_question_features"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_question_features.py"                          || FAILED=1
+run_step "core_proctoring"         "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_proctoring.py"                                   || FAILED=1
 
 if [ "$FAILED" -ne 0 ]; then
   log_error "Suite B failed"

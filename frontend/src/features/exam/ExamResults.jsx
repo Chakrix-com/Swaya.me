@@ -17,6 +17,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { examAPI } from '../../services/api'
 import dayjs from 'dayjs'
+import { ViolationReport } from './ViolationReport'
 
 const { Title, Text } = Typography
 
@@ -298,6 +299,8 @@ export default function ExamResults() {
           </div>
         ))}
       </Card>
+
+      <ViolationReport quizId={id} />
     </div>
   )
 }

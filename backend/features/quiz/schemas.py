@@ -202,6 +202,8 @@ class QuizUpdate(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
+    # Proctoring
+    proctoring_policy: Optional[dict] = None
 
 
 class QuizResponse(BaseModel):
@@ -597,6 +599,7 @@ class ExamPublishResponse(BaseModel):
 
 class ExamInfoResponse(BaseModel):
     """Public info about an exam (no auth required)"""
+    quiz_id: Optional[int] = None
     slug: str
     title: str
     description: Optional[str] = None

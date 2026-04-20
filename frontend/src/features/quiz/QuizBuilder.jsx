@@ -54,6 +54,7 @@ import ImageUpload from './components/ImageUpload'
 import RichTextEditor from './components/RichTextEditor'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
+import { ProctoringSettings } from './components/ProctoringSettings'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -2427,6 +2428,16 @@ export default function QuizBuilder() {
           </Form>
 
           {renderQuestionsList()}
+
+          {id && (isExam || isOfflinePoll) && (
+            <ProctoringSettings
+              quizId={parseInt(id)}
+              quizType={quiz?.quiz_type}
+              tenantTier={currentUser?.tier || 'free'}
+              currentPolicy={quiz?.proctoring_policy}
+              onSaved={(p) => setQuiz((q) => q ? { ...q, proctoring_policy: p } : q)}
+            />
+          )}
         </Card>
       )}
 

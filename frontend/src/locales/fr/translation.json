@@ -1663,7 +1663,15 @@
     "createError": "Échec de la création du test",
     "perQuestionTimer": "Temps par question (secondes)",
     "resultsEmailPlaceholder": "votre@email.com",
-    "typeInfo": "Examen chronométré et à rythme libre. Noté automatiquement avec +/− points. Les participants reçoivent un rang et un score à la fin. Accessible via un lien."
+    "typeInfo": "Examen chronométré et à rythme libre. Noté automatiquement avec +/− points. Les participants reçoivent un rang et un score à la fin. Accessible via un lien.",
+    "scoringRules": "Règles de notation",
+    "pointsForCorrect": "+{{points}} pour bonne réponse",
+    "penaltyForWrong": "−{{points}} pour mauvaise réponse",
+    "noPenalty": "Pas de pénalité pour les mauvaises réponses",
+    "zeroForUnanswered": "0 pour les questions sans réponse",
+    "pointsVary": "* Les points varient par question",
+    "timeLimitWarning": "Vous avez <strong>{{minutes}} minutes</strong> au total depuis le début.",
+    "perQuestionTimerWarning": "Chaque question a une limite de temps — elle passe automatiquement à la suivante quand le temps est écoulé. Vous ne pouvez pas revenir aux questions expirées."
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",
@@ -1709,5 +1717,81 @@
     "visitBtn": "Visiter Swaya.me",
     "bookmarkBtn": "Ajouter aux favoris",
     "bookmarkTip": "Appuyez sur Ctrl+D (ou ⌘D sur Mac) pour ajouter aux favoris"
+  },
+  "proctoring": {
+    "warning": {
+      "title": "Cet examen est surveillé",
+      "subtitle": "Lisez attentivement ce qui suit avant de continuer",
+      "webcamNotice": "Votre webcam est enregistrée et surveillée en direct pendant toute la durée de cet examen. Assurez-vous que votre visage est clairement visible, bien éclairé et centré sur la caméra en tout temps.",
+      "violationsTitle": "Les actions suivantes seront signalées comme violations :",
+      "lockMessage_one": "Après {{count}} violation, votre examen sera définitivement verrouillé",
+      "lockMessage_other": "Après {{count}} violations, votre examen sera définitivement verrouillé",
+      "autoSubmit": " et vos réponses seront soumises automatiquement. Vous ne pourrez pas vous reconnecter.",
+      "noAutoSubmit": ". Vous ne pourrez pas continuer ni vous reconnecter.",
+      "allLogged": "Toutes les violations sont enregistrées et examinées par le responsable de l'examen.",
+      "checkboxLabel": "J'ai lu et compris les règles ci-dessus. J'accepte de passer cet examen honnêtement et reconnais que toute violation peut entraîner une disqualification.",
+      "acknowledgeButton": "Je reconnais — Procéder à l'examen",
+      "rules": {
+        "tab_switch_detect": "Passer à un autre onglet, fenêtre ou application",
+        "copy_paste_block": "Copier ou coller du texte pendant l'examen",
+        "right_click_block": "Faire un clic droit n'importe où sur la page d'examen",
+        "fullscreen_enforce": "Quitter le mode plein écran ou réduire le navigateur",
+        "multi_tab_detect": "Ouvrir plusieurs onglets ou fenêtres du navigateur",
+        "devtools_detect": "Ouvrir les outils de développement du navigateur (F12)",
+        "bot_signal_detect": "Utiliser des outils d'automatisation, des scripts ou des extensions de navigateur qui interfèrent avec les contrôles de l'examen",
+        "webcam_monitoring": "Regarder ailleurs, sortir du cadre de la caméra ou laisser une autre personne apparaître à la caméra"
+      }
+    },
+    "overlay": {
+      "violation": "Violation de surveillance",
+      "finalWarning": "Avertissement final",
+      "violationMessage": "Une règle de surveillance a été déclenchée. Veuillez respecter les consignes de l'examen.",
+      "finalWarningMessage": "Ceci est votre dernier avertissement. Une autre violation verrouillera votre session.",
+      "remaining_one": "{{count}} violation restante avant le verrouillage",
+      "remaining_other": "{{count}} violations restantes avant le verrouillage",
+      "understand": "Compris ({{seconds}}s)",
+      "autoDismiss": "Cet avertissement se fermera automatiquement dans {{seconds}}s"
+    },
+    "lock": {
+      "title": "Session verrouillée",
+      "adminMessage": "Votre session a été verrouillée. Veuillez contacter l'administrateur de l'examen.",
+      "violationMessage": "Une violation de surveillance a été détectée. Votre session a été verrouillée.",
+      "submitted": "Vos réponses ont été soumises.",
+      "reload": "Recharger la page"
+    },
+    "webcam": {
+      "denied": "Accès à la caméra requis",
+      "deniedMessage": "Cet examen nécessite un accès à la webcam. Autorisez l'accès à la caméra dans votre navigateur et rechargez la page.",
+      "reload": "Recharger et réessayer",
+      "requesting": "Demande d'accès à la caméra…"
+    },
+    "fullscreen": {
+      "entering": "Passage en plein écran…",
+      "required": "Cet examen nécessite le mode plein écran. Cliquez ci-dessous pour continuer.",
+      "button": "Passer en plein écran"
+    },
+    "report": {
+      "title": "Rapport d'intégrité",
+      "participant": "Participant",
+      "integrityScore": "Score d'intégrité",
+      "violations": "Violations",
+      "status": "Statut",
+      "webcam": "Webcam",
+      "actions": "Actions",
+      "viewDetail": "Voir le détail",
+      "lock": "Verrouiller",
+      "unlock": "Déverrouiller",
+      "locked": "Verrouillé",
+      "flagged": "Signalé",
+      "clean": "Propre",
+      "granted": "Accordé",
+      "denied": "Refusé",
+      "na": "N/A",
+      "notEnabled": "La surveillance n'est pas activée pour cet examen.",
+      "notEnabledDesc": "Activez la surveillance dans les paramètres du quiz pour commencer à suivre l'intégrité des participants.",
+      "enabledNoData": "La surveillance est activée — aucune donnée de participant pour l'instant.",
+      "enabledNoDataDesc": "Les données d'intégrité apparaîtront ici une fois que les participants démarreront l'examen via le flux surveillé.",
+      "timeline": "Participant #{{id}} — Chronologie des violations"
+    }
   }
 }

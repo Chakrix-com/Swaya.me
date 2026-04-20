@@ -1660,7 +1660,15 @@
     "createError": "Test erstellen fehlgeschlagen",
     "perQuestionTimer": "Zeit pro Frage (Sekunden)",
     "resultsEmailPlaceholder": "ihre@email.de",
-    "typeInfo": "Zeitgesteuertes, selbstständiges Examen. Automatisch bewertet mit +/− Punkten. Teilnehmer erhalten am Ende Rang und Punktzahl. Zugang über einen Link."
+    "typeInfo": "Zeitgesteuertes, selbstständiges Examen. Automatisch bewertet mit +/− Punkten. Teilnehmer erhalten am Ende Rang und Punktzahl. Zugang über einen Link.",
+    "scoringRules": "Bewertungsregeln",
+    "pointsForCorrect": "+{{points}} für richtige Antwort",
+    "penaltyForWrong": "−{{points}} für falsche Antwort",
+    "noPenalty": "Keine Strafe für falsche Antworten",
+    "zeroForUnanswered": "0 für unbeantwortete Fragen",
+    "pointsVary": "* Punkte variieren je nach Frage",
+    "timeLimitWarning": "Sie haben insgesamt <strong>{{minutes}} Minuten</strong> ab dem Start.",
+    "perQuestionTimerWarning": "Jede Frage hat ein Zeitlimit — sie springt automatisch weiter, wenn die Zeit abläuft. Sie können nicht zu abgelaufenen Fragen zurückgehen."
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",
@@ -1706,5 +1714,81 @@
     "visitBtn": "Swaya.me besuchen",
     "bookmarkBtn": "Seite als Lesezeichen speichern",
     "bookmarkTip": "Drücke Ctrl+D (oder ⌘D auf dem Mac) zum Speichern als Lesezeichen"
+  },
+  "proctoring": {
+    "warning": {
+      "title": "Dies ist eine beaufsichtigte Prüfung",
+      "subtitle": "Lesen Sie Folgendes sorgfältig, bevor Sie fortfahren",
+      "webcamNotice": "Ihre Webcam wird während der gesamten Dauer dieser Prüfung live aufgezeichnet und überwacht. Stellen Sie sicher, dass Ihr Gesicht jederzeit klar sichtbar, gut beleuchtet und auf die Kamera ausgerichtet ist.",
+      "violationsTitle": "Die folgenden Aktionen werden als Verstöße gewertet:",
+      "lockMessage_one": "Nach {{count}} Verstoß wird Ihre Prüfung dauerhaft gesperrt",
+      "lockMessage_other": "Nach {{count}} Verstößen wird Ihre Prüfung dauerhaft gesperrt",
+      "autoSubmit": " und Ihre Antworten werden automatisch eingereicht. Sie können nicht mehr teilnehmen.",
+      "noAutoSubmit": ". Sie können nicht fortfahren oder erneut teilnehmen.",
+      "allLogged": "Alle Verstöße werden vom Prüfungsleiter protokolliert und überprüft.",
+      "checkboxLabel": "Ich habe die oben genannten Regeln gelesen und verstanden. Ich stimme zu, diese Prüfung ehrlich abzulegen, und erkenne an, dass ein Verstoß zur Disqualifikation führen kann.",
+      "acknowledgeButton": "Ich bestätige — Zur Prüfung fortfahren",
+      "rules": {
+        "tab_switch_detect": "Wechsel zu einem anderen Tab, Fenster oder Programm",
+        "copy_paste_block": "Kopieren oder Einfügen von Text während der Prüfung",
+        "right_click_block": "Rechtsklick auf der Prüfungsseite",
+        "fullscreen_enforce": "Verlassen des Vollbildmodus oder Minimieren des Browsers",
+        "multi_tab_detect": "Öffnen mehrerer Browser-Tabs oder -Fenster",
+        "devtools_detect": "Öffnen der Browser-Entwicklertools (F12)",
+        "bot_signal_detect": "Verwendung von Automatisierungstools, Skripten oder Browser-Erweiterungen, die die Prüfungssteuerung beeinträchtigen",
+        "webcam_monitoring": "Wegschauen vom Bildschirm, Verlassen des Kamerarahmens oder eine andere Person vor der Kamera"
+      }
+    },
+    "overlay": {
+      "violation": "Überwachungsverstoß",
+      "finalWarning": "Letzte Warnung",
+      "violationMessage": "Eine Überwachungsregel wurde ausgelöst. Bitte befolgen Sie die Prüfungsrichtlinien.",
+      "finalWarningMessage": "Dies ist Ihre letzte Warnung. Ein weiterer Verstoß sperrt Ihre Sitzung.",
+      "remaining_one": "{{count}} Verstoß verbleibend bis zur Sperrung",
+      "remaining_other": "{{count}} Verstöße verbleibend bis zur Sperrung",
+      "understand": "Verstanden ({{seconds}}s)",
+      "autoDismiss": "Diese Warnung wird in {{seconds}}s automatisch geschlossen"
+    },
+    "lock": {
+      "title": "Sitzung gesperrt",
+      "adminMessage": "Ihre Sitzung wurde gesperrt. Bitte wenden Sie sich an den Prüfungsadministrator.",
+      "violationMessage": "Ein Überwachungsverstoß wurde festgestellt. Ihre Sitzung wurde gesperrt.",
+      "submitted": "Ihre Antworten wurden eingereicht.",
+      "reload": "Seite neu laden"
+    },
+    "webcam": {
+      "denied": "Kamerazugriff erforderlich",
+      "deniedMessage": "Für diese Prüfung ist Webcam-Zugriff erforderlich. Erlauben Sie den Kamerazugriff in Ihrem Browser und laden Sie die Seite neu.",
+      "reload": "Neu laden und erneut versuchen",
+      "requesting": "Kamerazugriff wird angefragt…"
+    },
+    "fullscreen": {
+      "entering": "Vollbildmodus wird aktiviert…",
+      "required": "Diese Prüfung erfordert den Vollbildmodus. Klicken Sie unten, um fortzufahren.",
+      "button": "Vollbild aktivieren"
+    },
+    "report": {
+      "title": "Integritätsbericht",
+      "participant": "Teilnehmer",
+      "integrityScore": "Integritätswertung",
+      "violations": "Verstöße",
+      "status": "Status",
+      "webcam": "Webcam",
+      "actions": "Aktionen",
+      "viewDetail": "Details anzeigen",
+      "lock": "Sperren",
+      "unlock": "Entsperren",
+      "locked": "Gesperrt",
+      "flagged": "Markiert",
+      "clean": "Sauber",
+      "granted": "Gewährt",
+      "denied": "Verweigert",
+      "na": "N/V",
+      "notEnabled": "Beaufsichtigung ist für diese Prüfung nicht aktiviert.",
+      "notEnabledDesc": "Aktivieren Sie die Beaufsichtigung in den Quiz-Einstellungen, um die Integrität der Teilnehmer zu verfolgen.",
+      "enabledNoData": "Beaufsichtigung ist aktiviert — noch keine Teilnehmerdaten.",
+      "enabledNoDataDesc": "Integritätsdaten erscheinen hier, sobald Teilnehmer die Prüfung über den beaufsichtigten Ablauf starten.",
+      "timeline": "Teilnehmer #{{id}} — Verstoß-Zeitverlauf"
+    }
   }
 }

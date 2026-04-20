@@ -93,6 +93,7 @@ async def get_exam_info(db: AsyncSession, slug: str) -> ExamInfoResponse:
     scoring_varies = len(set(points_values)) > 1 or len(set(neg_values)) > 1
 
     return ExamInfoResponse(
+        quiz_id=quiz.id,
         slug=slug,
         title=quiz.title,
         description=quiz.description,
@@ -150,12 +151,14 @@ async def start_exam(
     await db.commit()
     await db.refresh(participant)
 
+    # Use timezone-aware datetime in response so the browser parses it as UTC
+    started_at_utc = datetime.now(timezone.utc)
     return ExamStartResponse(
         session_token=new_token,
         participant_id=participant.id,
         quiz_title=quiz.title,
         questions=[_to_exam_question_response(q) for q in questions],
-        started_at=now,
+        started_at=started_at_utc,
         time_limit_seconds=quiz.exam_time_limit_seconds,
         ends_at=quiz.exam_end_at,
     )

@@ -1661,7 +1661,15 @@
     "createError": "Error al crear la prueba",
     "perQuestionTimer": "Tiempo por pregunta (segundos)",
     "resultsEmailPlaceholder": "tu@email.com",
-    "typeInfo": "Examen cronometrado y a ritmo propio. Puntuación automática con +/− puntos. Los participantes reciben rango y puntuación al final. Se accede mediante enlace."
+    "typeInfo": "Examen cronometrado y a ritmo propio. Puntuación automática con +/− puntos. Los participantes reciben rango y puntuación al final. Se accede mediante enlace.",
+    "scoringRules": "Reglas de puntuación",
+    "pointsForCorrect": "+{{points}} por respuesta correcta",
+    "penaltyForWrong": "−{{points}} por respuesta incorrecta",
+    "noPenalty": "Sin penalización por respuestas incorrectas",
+    "zeroForUnanswered": "0 por preguntas sin responder",
+    "pointsVary": "* Los puntos varían por pregunta",
+    "timeLimitWarning": "Tiene <strong>{{minutes}} minutos</strong> en total desde que comienza.",
+    "perQuestionTimerWarning": "Cada pregunta tiene un límite de tiempo — avanza automáticamente cuando se acaba el tiempo. No puede volver a las preguntas caducadas."
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",
@@ -1707,5 +1715,81 @@
     "visitBtn": "Visitar Swaya.me",
     "bookmarkBtn": "Marcar esta página",
     "bookmarkTip": "Presiona Ctrl+D (o ⌘D en Mac) para marcar esta página"
+  },
+  "proctoring": {
+    "warning": {
+      "title": "Este es un examen supervisado",
+      "subtitle": "Lea detenidamente lo siguiente antes de continuar",
+      "webcamNotice": "Su cámara web está siendo grabada y monitoreada en vivo durante toda la duración de este examen. Asegúrese de que su rostro sea claramente visible, bien iluminado y centrado en la cámara en todo momento.",
+      "violationsTitle": "Las siguientes acciones serán marcadas como infracciones:",
+      "lockMessage_one": "Después de {{count}} infracción, su examen será bloqueado permanentemente",
+      "lockMessage_other": "Después de {{count}} infracciones, su examen será bloqueado permanentemente",
+      "autoSubmit": " y sus respuestas serán enviadas automáticamente. No podrá volver a ingresar.",
+      "noAutoSubmit": ". No podrá continuar ni volver a ingresar.",
+      "allLogged": "Todas las infracciones son registradas y revisadas por el administrador del examen.",
+      "checkboxLabel": "He leído y entendido las reglas anteriores. Acepto realizar este examen con honestidad y reconozco que cualquier infracción puede resultar en descalificación.",
+      "acknowledgeButton": "Reconozco — Proceder al examen",
+      "rules": {
+        "tab_switch_detect": "Cambiar a otra pestaña, ventana o aplicación",
+        "copy_paste_block": "Copiar o pegar cualquier texto durante el examen",
+        "right_click_block": "Hacer clic derecho en cualquier parte de la página del examen",
+        "fullscreen_enforce": "Salir de pantalla completa o minimizar el navegador",
+        "multi_tab_detect": "Abrir múltiples pestañas o ventanas del navegador",
+        "devtools_detect": "Abrir herramientas de desarrollador del navegador (F12)",
+        "bot_signal_detect": "Usar herramientas de automatización, scripts o extensiones del navegador que interfieran con los controles del examen",
+        "webcam_monitoring": "Mirar lejos de la pantalla, salir del encuadre de la cámara o permitir que otra persona aparezca en la cámara"
+      }
+    },
+    "overlay": {
+      "violation": "Infracción de supervisión",
+      "finalWarning": "Advertencia final",
+      "violationMessage": "Se activó una regla de supervisión. Siga las pautas del examen.",
+      "finalWarningMessage": "Esta es su advertencia final. Una infracción más bloqueará su sesión.",
+      "remaining_one": "{{count}} infracción restante antes del bloqueo",
+      "remaining_other": "{{count}} infracciones restantes antes del bloqueo",
+      "understand": "Entendido ({{seconds}}s)",
+      "autoDismiss": "Esta advertencia se cerrará automáticamente en {{seconds}}s"
+    },
+    "lock": {
+      "title": "Sesión bloqueada",
+      "adminMessage": "Su sesión ha sido bloqueada. Comuníquese con el administrador del examen.",
+      "violationMessage": "Se detectó una infracción de supervisión. Su sesión ha sido bloqueada.",
+      "submitted": "Sus respuestas han sido enviadas.",
+      "reload": "Recargar página"
+    },
+    "webcam": {
+      "denied": "Se requiere acceso a la cámara",
+      "deniedMessage": "Este examen requiere acceso a la cámara web para continuar. Permita el acceso a la cámara en su navegador y recargue la página.",
+      "reload": "Recargar e intentar de nuevo",
+      "requesting": "Solicitando acceso a la cámara…"
+    },
+    "fullscreen": {
+      "entering": "Entrando en pantalla completa…",
+      "required": "Este examen requiere el modo de pantalla completa. Haga clic abajo para continuar.",
+      "button": "Entrar en pantalla completa"
+    },
+    "report": {
+      "title": "Informe de integridad",
+      "participant": "Participante",
+      "integrityScore": "Puntuación de integridad",
+      "violations": "Infracciones",
+      "status": "Estado",
+      "webcam": "Cámara web",
+      "actions": "Acciones",
+      "viewDetail": "Ver detalle",
+      "lock": "Bloquear",
+      "unlock": "Desbloquear",
+      "locked": "Bloqueado",
+      "flagged": "Marcado",
+      "clean": "Limpio",
+      "granted": "Concedido",
+      "denied": "Denegado",
+      "na": "N/A",
+      "notEnabled": "La supervisión no está habilitada para este examen.",
+      "notEnabledDesc": "Habilite la supervisión en la configuración del cuestionario para comenzar a rastrear la integridad de los participantes.",
+      "enabledNoData": "La supervisión está habilitada — aún no hay datos de participantes.",
+      "enabledNoDataDesc": "Los datos de integridad aparecerán aquí una vez que los participantes inicien el examen a través del flujo supervisado.",
+      "timeline": "Participante #{{id}} — Línea de tiempo de infracciones"
+    }
   }
 }

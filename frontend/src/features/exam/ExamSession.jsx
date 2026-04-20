@@ -21,6 +21,7 @@ import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import dayjs from 'dayjs'
+import { ProctoringProvider, ProctoringGate } from '../proctoring'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -121,28 +122,28 @@ function StartScreen({ info, onStart, loading }) {
         <div>
           <Text strong style={{ display: 'block', marginBottom: 8 }}>
             <InfoCircleOutlined style={{ marginRight: 6 }} />
-            Scoring Rules
+            {t('exam.scoringRules')}
           </Text>
           <Space wrap>
             <Tag icon={<PlusCircleOutlined />} color="success" style={{ fontSize: 13, padding: '3px 10px' }}>
-              +{info.points_per_correct} for correct answer
+              {t('exam.pointsForCorrect', { points: info.points_per_correct })}
             </Tag>
             {info.negative_points_per_wrong > 0 ? (
               <Tag icon={<MinusCircleOutlined />} color="error" style={{ fontSize: 13, padding: '3px 10px' }}>
-                −{info.negative_points_per_wrong} for wrong answer
+                {t('exam.penaltyForWrong', { points: info.negative_points_per_wrong })}
               </Tag>
             ) : (
               <Tag icon={<CheckCircleOutlined />} color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
-                No penalty for wrong answers
+                {t('exam.noPenalty')}
               </Tag>
             )}
             <Tag color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
-              0 for unanswered
+              {t('exam.zeroForUnanswered')}
             </Tag>
           </Space>
           {info.scoring_varies && (
             <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
-              * Points vary per question
+              {t('exam.pointsVary')}
             </Text>
           )}
         </div>
@@ -155,10 +156,10 @@ function StartScreen({ info, onStart, loading }) {
             message={
               <Space direction="vertical" size={2}>
                 {timeLimitMins && (
-                  <Text>You have <strong>{timeLimitMins} minutes</strong> total from when you start.</Text>
+                  <span dangerouslySetInnerHTML={{ __html: t('exam.timeLimitWarning', { minutes: timeLimitMins }) }} />
                 )}
                 {info.has_per_question_timers && (
-                  <Text>Each question has a time limit — it auto-advances when the timer runs out. You cannot go back to expired questions.</Text>
+                  <Text>{t('exam.perQuestionTimerWarning')}</Text>
                 )}
               </Space>
             }
@@ -486,7 +487,9 @@ export default function ExamSession() {
 
   const startGlobalTimer = useCallback((timeLimitSeconds, startedAtDate) => {
     stopGlobalTimer()
-    const elapsed = (Date.now() - new Date(startedAtDate).getTime()) / 1000
+    // Backend returns naive UTC datetimes (no 'Z'/'+ offset'); force UTC parsing
+    const utcStr = String(startedAtDate).replace(' ', 'T').replace(/Z?$/, 'Z').replace('ZZ', 'Z')
+    const elapsed = (Date.now() - new Date(utcStr).getTime()) / 1000
     const remaining = Math.max(0, Math.floor(timeLimitSeconds - elapsed))
     setGlobalSecondsLeft(remaining)
 
@@ -706,20 +709,24 @@ export default function ExamSession() {
         )}
 
         {phase === 'taking' && questions.length > 0 && (
-          <QuestionScreen
-            question={questions[currentIdx]}
-            questionIndex={currentIdx}
-            totalQuestions={questions.length}
-            selectedAnswer={answers[questions[currentIdx]?.id] ?? null}
-            onAnswerSelect={handleAnswerSelect}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            onSubmit={handleSubmit}
-            globalSecondsLeft={globalSecondsLeft}
-            questionSecondsLeft={questionSecondsLeft}
-            hasPerQuestionTimers={hasPerQuestionTimers}
-            saving={saving}
-          />
+          <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken}>
+            <ProctoringGate>
+              <QuestionScreen
+                question={questions[currentIdx]}
+                questionIndex={currentIdx}
+                totalQuestions={questions.length}
+                selectedAnswer={answers[questions[currentIdx]?.id] ?? null}
+                onAnswerSelect={handleAnswerSelect}
+                onNext={handleNext}
+                onPrev={handlePrev}
+                onSubmit={handleSubmit}
+                globalSecondsLeft={globalSecondsLeft}
+                questionSecondsLeft={questionSecondsLeft}
+                hasPerQuestionTimers={hasPerQuestionTimers}
+                saving={saving}
+              />
+            </ProctoringGate>
+          </ProctoringProvider>
         )}
 
         {phase === 'score' && examResult && (
