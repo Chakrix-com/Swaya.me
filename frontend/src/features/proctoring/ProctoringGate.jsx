@@ -24,46 +24,58 @@ function ProctoringModuleActivator() {
 // Initialises as 'active' if fullscreen was already requested by the caller
 // (e.g. the warning screen's acknowledge button) so no second click is needed.
 // Falls back to a manual button if fullscreen wasn't yet granted.
-// FullscreenGate — waits for fullscreen to be confirmed.
-// Called with fullscreenElement already set (requestFullscreen was called
-// synchronously in the button click handler that triggered this mount).
-// If fullscreen isn't confirmed within 3s, shows a hard-blocking retry screen.
-// The exam content is NEVER shown if fullscreen is required and not active.
+// FullscreenGate — enforces fullscreen as a hard requirement.
+// The exam content is NEVER shown unless document.fullscreenElement is set.
 function FullscreenGate({ children, reportViolation }) {
   const { t } = useTranslation();
-  // Start as 'entering' — we know requestFullscreen was just called
   const [state, setState] = useState(() =>
     document.fullscreenElement ? 'active' : 'entering'
   );
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    if (state !== 'entering') return;
+  // Attempt to enter fullscreen and transition state on the result.
+  // Must be called synchronously inside a user-gesture handler OR at mount
+  // time when the gesture that triggered mount is still in the call stack.
+  const attemptFullscreen = useCallback(() => {
+    clearTimeout(timerRef.current);
 
-    const onFullscreenChange = () => {
+    // If already in fullscreen (e.g. fast browser), go straight to active.
+    if (document.fullscreenElement) {
+      setState('active');
+      return;
+    }
+
+    const onFSChange = () => {
       if (document.fullscreenElement) {
         clearTimeout(timerRef.current);
+        document.removeEventListener('fullscreenchange', onFSChange);
         setState('active');
-        document.removeEventListener('fullscreenchange', onFullscreenChange);
       }
     };
-    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('fullscreenchange', onFSChange);
 
+    document.documentElement.requestFullscreen().catch(() => {
+      clearTimeout(timerRef.current);
+      document.removeEventListener('fullscreenchange', onFSChange);
+      reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'api_rejected' });
+      setState('blocked');
+    });
+
+    // 4-second safety net in case fullscreenchange never fires
     timerRef.current = setTimeout(() => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('fullscreenchange', onFSChange);
       if (!document.fullscreenElement) {
         reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'timeout' });
         setState('blocked');
       }
-    }, 3000);
+    }, 4000);
+  }, [reportViolation]);
 
-    return () => {
-      clearTimeout(timerRef.current);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Run attemptFullscreen once on mount (the initial gate entry).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { attemptFullscreen(); return () => clearTimeout(timerRef.current); }, []);
 
-  // Also watch for the user manually exiting fullscreen before they even start
+  // Watch for the user exiting fullscreen while the exam is active.
   useEffect(() => {
     if (state !== 'active') return;
     const onExit = () => {
@@ -73,15 +85,11 @@ function FullscreenGate({ children, reportViolation }) {
     return () => document.removeEventListener('fullscreenchange', onExit);
   }, [state]);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
-
+  // Retry button — this IS a direct user gesture so requestFullscreen() works.
   const retryFullscreen = useCallback(() => {
     setState('entering');
-    document.documentElement.requestFullscreen().catch(() => {
-      reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'api_rejected' });
-      setState('blocked');
-    });
-  }, [reportViolation]);
+    attemptFullscreen();
+  }, [attemptFullscreen]);
 
   if (state === 'active') return children;
 
