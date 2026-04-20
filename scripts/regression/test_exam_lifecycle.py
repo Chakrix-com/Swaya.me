@@ -78,12 +78,22 @@ def main():
     # Start exam (public)
     r = anon.post(f"{BASE_URL}/e/{slug}/start", json={"display_name": "ExamTester"}, timeout=20)
     check(r.status_code in (200, 201), f"start exam failed: {r.status_code} {r.text[:200]}")
-    p_token = r.json().get("session_token")
+    start_data = r.json()
+    p_token = start_data.get("session_token")
     check(bool(p_token), "no session_token from exam start")
-    questions = r.json().get("questions", [])
+    questions = start_data.get("questions", [])
     check(len(questions) > 0, "no questions returned from exam start")
     q_id = questions[0]["id"]
     print(f"OK: start exam  token={p_token[:12]}…  questions={len(questions)}")
+
+    # UTC timezone guard — started_at must include 'Z' or '+' so browsers parse as UTC
+    # Regression: without this, elapsed time is wrong and the timer shows 0:00 immediately
+    started_at = start_data.get("started_at", "")
+    check(
+        bool(started_at) and (started_at.endswith("Z") or "+" in started_at),
+        f"started_at is timezone-aware UTC (ends with Z or contains +): got {started_at!r}",
+    )
+    print(f"OK: started_at is UTC-aware  value={started_at}")
 
     # Save answer (autosave)
     r = anon.post(f"{BASE_URL}/e/{slug}/answer", json={

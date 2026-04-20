@@ -235,6 +235,48 @@ def test_phase1(s: requests.Session, anon: requests.Session, quiz_id: int, slug:
     check(cfg2.get("enabled") == True, "R1.9 config reflects saved proctoring_policy",
           f"enabled={cfg2.get('enabled')}")
 
+    # R1.10 Unified save — proctoring_policy + exam metadata in same PUT call (DRAFT exam)
+    # Regression guard: the exam builder UX redesign sends both in a single PUT /quizzes/{id}
+    # This must be done on a DRAFT (unpublished) exam since the backend blocks date edits on
+    # published exams — the unified save happens before publishing in the normal UX flow.
+    now = datetime.now(timezone.utc)
+    r_draft = s.post(f"{BASE_URL}/quizzes/", json={
+        "title": "Unified Save Regression Draft",
+        "quiz_type": "exam",
+        "exam_start_at": now.isoformat(),
+        "exam_end_at": (now + timedelta(days=7)).isoformat(),
+    }, timeout=20)
+    if r_draft.status_code not in (200, 201):
+        fail("R1.10 could not create draft exam for unified save test",
+             f"{r_draft.status_code}")
+    else:
+        draft_id = r_draft.json()["id"]
+        new_end = (now + timedelta(days=14)).isoformat()
+        unified_payload = {
+            "proctoring_policy": {"enabled": True, "rules": {}, "escalation": {"lock_on_violation_count": 4}},
+            "exam_end_at": new_end,
+        }
+        r = s.put(f"{BASE_URL}/quizzes/{draft_id}", json=unified_payload, timeout=20)
+        check(r.status_code in (200, 201),
+              "R1.10 unified PUT with proctoring_policy + exam_end_at on DRAFT returns 200/201",
+              f"{r.status_code} {r.text[:100]}")
+        # Verify via proctoring config endpoint (GET /quizzes/{id} doesn't expose proctoring_policy)
+        r_cfg = anon.get(f"{BASE_URL}/proctoring/config/{draft_id}", timeout=20)
+        if r_cfg.status_code == 200:
+            pp = r_cfg.json()
+            check(pp.get("enabled") == True,
+                  "R1.10 proctoring_policy.enabled persisted in unified save",
+                  f"enabled={pp.get('enabled')}")
+            esc = pp.get("escalation") or {}
+            check(esc.get("lock_on_violation_count") == 4,
+                  "R1.10 escalation.lock_on_violation_count=4 persisted in unified save",
+                  f"got {esc.get('lock_on_violation_count')}")
+        else:
+            fail("R1.10 could not verify unified save via proctoring config",
+                 f"{r_cfg.status_code}")
+        # Cleanup draft
+        s.delete(f"{BASE_URL}/quizzes/{draft_id}", timeout=20)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Phase 1 — Session init + event flow
@@ -709,6 +751,74 @@ def test_integration_guard(s: requests.Session):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Webcam-granted endpoint (new — regression guard for fix deployed 2026-04-20)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_webcam_granted(s: requests.Session):
+    """
+    R10.1  POST /proctoring/session/webcam-granted updates webcam_granted=True
+    R10.2  Integrity report reflects webcam_granted=True after the call
+    R10.3  Missing X-Session-Token returns 401
+    """
+    section("Phase 10 — Webcam-Granted Endpoint")
+
+    quiz_id, slug = create_exam(s)
+    enable_proctoring(s, quiz_id, {
+        "enabled": True,
+        "rules": {},
+        "escalation": {"lock_on_violation_count": 5},
+    })
+
+    token, _ = start_exam(slug)
+    if not token:
+        fail("R10 — no session token; skipping webcam-granted tests")
+        return
+
+    anon = anon_session()
+    headers = {"X-Session-Token": token}
+
+    # Initialize session with webcam_granted=False
+    r = anon.post(f"{BASE_URL}/proctoring/session/init",
+                  json={"quiz_id": quiz_id, "browser_fingerprint": "fp_webcam",
+                        "ip_address": "1.2.3.4", "user_agent": "TestBot/Webcam",
+                        "webcam_granted": False},
+                  headers=headers, timeout=20)
+    check(r.status_code == 200, "R10 session init returns 200")
+
+    # R10.3 Missing token → 401
+    r_no_token = anon.post(f"{BASE_URL}/proctoring/session/webcam-granted", json={}, timeout=20)
+    check(r_no_token.status_code == 401,
+          "R10.3 POST /proctoring/session/webcam-granted without token → 401",
+          f"got {r_no_token.status_code}")
+
+    # R10.1 Call webcam-granted endpoint
+    r = anon.post(f"{BASE_URL}/proctoring/session/webcam-granted", json={},
+                  headers=headers, timeout=20)
+    check(r.status_code == 200,
+          "R10.1 POST /proctoring/session/webcam-granted returns 200",
+          f"got {r.status_code} {r.text[:100]}")
+    if r.status_code == 200:
+        check(r.json().get("ok") == True,
+              "R10.1 response body is {ok: true}",
+              f"got {r.json()}")
+
+    # R10.2 Integrity report shows webcam_granted=True
+    r_report = s.get(f"{BASE_URL}/proctoring/report/{quiz_id}", timeout=20)
+    check(r_report.status_code == 200,
+          "R10.2 GET /proctoring/report returns 200 after webcam grant")
+    if r_report.status_code == 200:
+        participants = r_report.json()
+        matched = [p for p in participants if p.get("session_token") == token]
+        if matched:
+            check(matched[0].get("webcam_granted") == True,
+                  "R10.2 report shows webcam_granted=True after endpoint call",
+                  f"got webcam_granted={matched[0].get('webcam_granted')}")
+        else:
+            # Report may only list participants with violations; just check endpoint worked
+            ok("R10.2 webcam-granted endpoint called successfully (participant not in report yet)")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -742,6 +852,7 @@ def main():
     test_watermark()
     test_integrity_scorer()
     test_integration_guard(s)
+    test_webcam_granted(s)
 
     print("\n" + "=" * 60)
     total = PASSED + FAILED
