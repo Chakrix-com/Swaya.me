@@ -1669,7 +1669,12 @@
     "zeroForUnanswered": "0 por preguntas sin responder",
     "pointsVary": "* Los puntos varían por pregunta",
     "timeLimitWarning": "Tiene <strong>{{minutes}} minutos</strong> en total desde que comienza.",
-    "perQuestionTimerWarning": "Cada pregunta tiene un límite de tiempo — avanza automáticamente cuando se acaba el tiempo. No puede volver a las preguntas caducadas."
+    "perQuestionTimerWarning": "Cada pregunta tiene un límite de tiempo — avanza automáticamente cuando se acaba el tiempo. No puede volver a las preguntas caducadas.",
+    "saveSettings": "Guardar configuración",
+    "saveSettingsHint": "Guarda la programación, puntuación y configuración de seguridad en un clic.",
+    "liveEditBannerTitle": "Este examen está activo",
+    "liveEditBannerDesc": "La programación, puntuación y configuración de seguridad pueden actualizarse. Las preguntas están bloqueadas — desactiva el examen para editarlas.",
+    "questionsLockedNotice": "Las preguntas están bloqueadas mientras el examen esté activo."
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",
@@ -1790,6 +1795,37 @@
       "enabledNoData": "La supervisión está habilitada — aún no hay datos de participantes.",
       "enabledNoDataDesc": "Los datos de integridad aparecerán aquí una vez que los participantes inicien el examen a través del flujo supervisado.",
       "timeline": "Participante #{{id}} — Línea de tiempo de infracciones"
+    },
+    "settings": {
+      "title": "Seguridad y Vigilancia",
+      "enableLabel": "Activar vigilancia",
+      "enableHint": "Cuando está desactivado, no hay monitoreo activo.",
+      "presetLabel": "Configuración rápida",
+      "rulesTitle": "Reglas de vigilancia",
+      "noRules": "No hay reglas disponibles para tu plan.",
+      "examOnly": "La vigilancia está disponible solo para Examen y Encuesta sin conexión.",
+      "severityLock": "bloquea el examen",
+      "severityWarn": "advierte",
+      "silent": "silencioso",
+      "silentHint": "Silencioso — el participante no ve una advertencia cuando se activa esta regla",
+      "webcamNotice": "La cámara web está activada — los participantes que denieguen acceso no podrán comenzar el examen."
+    },
+    "preset": {
+      "light": "Monitoreo básico",
+      "lightDesc": "Solo pantalla completa + detección de cambio de pestaña",
+      "standard": "Seguridad estándar",
+      "standardDesc": "Añade bloqueo de copiar-pegar, detección multi-pestaña",
+      "maximum": "Máxima seguridad",
+      "maximumDesc": "Todas las reglas disponibles de tu plan activadas"
+    },
+    "escalation": {
+      "lockLabel": "Bloquear examen después de ___ advertencias",
+      "lockHint": "El participante recibe {{warnings}} advertencia(s), luego se bloquea en la {{lockAt}}ª infracción",
+      "autoSubmitLabel": "Enviar respuestas automáticamente al bloquear",
+      "autoSubmitHint": "Si está activado, las respuestas al momento del bloqueo se envían automáticamente",
+      "summary": "{{warnings}} advertencia(s), luego bloqueado en infracción #{{lockAt}}",
+      "autoSubmitOn": "Envío automático ACTIVADO.",
+      "autoSubmitOff": "Envío automático DESACTIVADO."
     }
   }
 }

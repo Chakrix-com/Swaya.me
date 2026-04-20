@@ -962,6 +962,7 @@ export default function QuizBuilder() {
   const [quiz, setQuiz] = useState(null)
   const [questions, setQuestions] = useState([])
   const [editingQuestion, setEditingQuestion] = useState(null)
+  const [proctoringPolicy, setProctoringPolicy] = useState(null)
   const questionsRef = useRef(null)
   
   // Image state for question being edited/created
@@ -1177,6 +1178,7 @@ export default function QuizBuilder() {
     try {
       const response = await quizAPI.get(id)
       setQuiz(response.data)
+      setProctoringPolicy(response.data.proctoring_policy || { enabled: false, rules: {}, escalation: { lock_on_violation_count: 3, auto_submit_on_lock: false } })
       console.log('Quiz loaded from API:', response.data)
       console.log('Raw questions from API:', JSON.stringify(response.data.questions, null, 2))
       
@@ -1409,11 +1411,22 @@ export default function QuizBuilder() {
     </>
   )
 
-  const renderQuestionsList = () => (
+  const renderQuestionsList = () => {
+    const isLive = quiz?.status === 'ready' && isExam
+    return (
     <>
       <Divider>{t('quiz.questions')}</Divider>
 
-      {editingQuestion !== 'new' && isAdmin && (
+      {isLive && (
+        <Alert
+          type="info"
+          showIcon
+          message={t('exam.questionsLockedNotice')}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {!isLive && editingQuestion !== 'new' && isAdmin && (
         <Button
           icon={<ThunderboltOutlined />}
           onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
@@ -1425,7 +1438,7 @@ export default function QuizBuilder() {
         </Button>
       )}
 
-      {editingQuestion === 'new' ? (
+      {!isLive && (editingQuestion === 'new' ? (
         <MemoizedQuestionForm
           key="new-question"
           onSave={handleAddQuestion}
@@ -1457,7 +1470,7 @@ export default function QuizBuilder() {
         >
           {t('quiz.addQuestion')}
         </Button>
-      )}
+      ))}
 
       <List
         dataSource={questions}
@@ -1505,6 +1518,7 @@ export default function QuizBuilder() {
                 </Space>
               }
               extra={
+                !isLive ? (
                 <Space>
                   {quiz?.status === 'draft' && (
                     <>
@@ -1545,6 +1559,7 @@ export default function QuizBuilder() {
                     />
                   </Popconfirm>
                 </Space>
+                ) : null
               }
             >
               {question.question_type === 'word_cloud' ? (
@@ -1617,7 +1632,8 @@ export default function QuizBuilder() {
         )}
       />
     </>
-  )
+    )
+  }
 
   const handleSaveQuiz = async (rawValues) => {
     setLoading(true)
@@ -1633,6 +1649,10 @@ export default function QuizBuilder() {
       exam_time_limit_seconds: timeLimitMins ? Number(timeLimitMins) * 60 : null,
     }
     delete values.exam_time_limit_minutes
+    // Include proctoring policy in the same save (single unified request)
+    if (id && proctoringPolicy !== null && (isExam || quiz?.quiz_type === 'offline_poll')) {
+      values.proctoring_policy = proctoringPolicy
+    }
     try {
       if (id) {
         await quizAPI.update(id, values)
@@ -2407,37 +2427,54 @@ export default function QuizBuilder() {
             )}
           </div>
 
+          {/* Live exam banner — shown when exam is published/active */}
+          {quiz?.status === 'ready' && isExam && (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message={t('exam.liveEditBannerTitle')}
+              description={t('exam.liveEditBannerDesc')}
+            />
+          )}
+
           <Form
             form={form}
             layout="vertical"
             onFinish={handleSaveQuiz}
           >
             {renderQuizSettings()}
-            
-            <div style={{ marginTop: 24, marginBottom: 24 }}>
-               <Button
-                 type="primary"
-                 htmlType="submit"
-                 icon={<SaveOutlined />}
-                 loading={loading}
-                 style={{ minWidth: 150 }}
-               >
-                 {isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
-               </Button>
-            </div>
           </Form>
 
-          {renderQuestionsList()}
-
-          {id && (isExam || isOfflinePoll) && (
+          {/* Proctoring settings — above questions so security is configured before publish */}
+          {id && (isExam || isOfflinePoll) && proctoringPolicy !== null && (
             <ProctoringSettings
               quizId={parseInt(id)}
               quizType={quiz?.quiz_type}
               tenantTier={currentUser?.tier || 'free'}
-              currentPolicy={quiz?.proctoring_policy}
-              onSaved={(p) => setQuiz((q) => q ? { ...q, proctoring_policy: p } : q)}
+              currentPolicy={proctoringPolicy}
+              onChange={(p) => setProctoringPolicy(p)}
             />
           )}
+
+          <div style={{ marginTop: 20, marginBottom: 24 }}>
+            <Button
+              type="primary"
+              onClick={() => form.submit()}
+              icon={<SaveOutlined />}
+              loading={loading}
+              style={{ minWidth: 160 }}
+            >
+              {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
+            </Button>
+            {(isExam || isOfflinePoll) && (
+              <Text type="secondary" style={{ marginLeft: 12, fontSize: 13 }}>
+                {t('exam.saveSettingsHint')}
+              </Text>
+            )}
+          </div>
+
+          {renderQuestionsList()}
         </Card>
       )}
 

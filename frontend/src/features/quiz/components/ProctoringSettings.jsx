@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Card, Switch, Form, InputNumber, Space, Alert,
-  Divider, Typography, Tag, Button, message, Tooltip,
+  Divider, Typography, Tag, Tooltip,
 } from 'antd';
-import { LockOutlined, CameraOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { quizAPI, proctoringAPI } from '../../../services/api';
+import { LockOutlined, CameraOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 const { Text, Title } = Typography;
@@ -16,15 +15,16 @@ function tierGte(tenantTier, ruleTier) {
 }
 
 const PRESET_LEVELS = {
-  soft: ['fullscreen_enforce', 'tab_switch_detect', 'right_click_block'],
-  hard: ['fullscreen_enforce', 'tab_switch_detect', 'right_click_block', 'copy_paste_block', 'multi_tab_detect', 'bot_signal_detect', 'honeypot_traps'],
-  paranoid: null, // all rules
+  light: ['fullscreen_enforce', 'tab_switch_detect', 'right_click_block'],
+  standard: ['fullscreen_enforce', 'tab_switch_detect', 'right_click_block', 'copy_paste_block', 'multi_tab_detect', 'bot_signal_detect', 'honeypot_traps'],
+  maximum: null, // all rules
 };
 
-export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy, onSaved }) {
+export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy, onChange }) {
   const { t } = useTranslation();
-  const [policy, setPolicy] = useState(currentPolicy || { enabled: false, rules: {}, escalation: { lock_on_violation_count: 3, auto_submit_on_lock: false } });
-  const [saving, setSaving] = useState(false);
+  const [policy, setPolicy] = useState(
+    currentPolicy || { enabled: false, rules: {}, escalation: { lock_on_violation_count: 3, auto_submit_on_lock: false } }
+  );
   const [platformRules, setPlatformRules] = useState([]);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
   }, [currentPolicy]);
 
   useEffect(() => {
-    // Use the user-tier-filtered endpoint (not super-admin-only)
     import('../../../services/api').then(({ default: api }) => {
       api.get('/proctoring/rules').then((res) => setPlatformRules(res.data)).catch(() => {});
     });
@@ -47,29 +46,19 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
 
   const isExamOrPoll = quizType === 'exam' || quizType === 'offline_poll';
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await quizAPI.update(quizId, { proctoring_policy: policy });
-      message.success('Proctoring settings saved');
-      onSaved?.(policy);
-    } catch (e) {
-      message.error('Failed to save proctoring settings');
-    } finally {
-      setSaving(false);
-    }
+  const updatePolicy = (newPolicy) => {
+    setPolicy(newPolicy);
+    onChange?.(newPolicy);
   };
 
   const toggleRule = (ruleId, enabled) => {
-    setPolicy((p) => ({
-      ...p,
-      rules: { ...p.rules, [ruleId]: { ...(p.rules?.[ruleId] || {}), enabled } },
-    }));
+    updatePolicy({
+      ...policy,
+      rules: { ...policy.rules, [ruleId]: { ...(policy.rules?.[ruleId] || {}), enabled } },
+    });
   };
 
-  const isRuleEnabled = (ruleId) => {
-    return policy.rules?.[ruleId]?.enabled !== false;
-  };
+  const isRuleEnabled = (ruleId) => policy.rules?.[ruleId]?.enabled !== false;
 
   const applyPreset = (level) => {
     const allowed = PRESET_LEVELS[level];
@@ -77,14 +66,14 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
     applicableRules.forEach((r) => {
       newRules[r.rule_id] = { enabled: allowed === null || allowed.includes(r.rule_id) };
     });
-    setPolicy((p) => ({ ...p, rules: newRules }));
+    updatePolicy({ ...policy, rules: newRules });
   };
 
   if (!isExamOrPoll && quizType) {
     return (
-      <Card style={{ marginTop: 24 }}>
+      <Card style={{ marginTop: 16 }}>
         <Alert
-          message="Proctoring is available for Exam and Offline Poll types only."
+          message={t('proctoring.settings.examOnly')}
           type="info"
           showIcon
           icon={<LockOutlined />}
@@ -93,46 +82,61 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
     );
   }
 
+  const lockAt = policy.escalation?.lock_on_violation_count ?? 3;
+  const warnings = lockAt - 1;
+
   return (
     <Card
-      title={<Space><LockOutlined /> Proctoring Settings</Space>}
-      style={{ marginTop: 24 }}
-      extra={
-        <Button type="primary" onClick={handleSave} loading={saving}>
-          Save Proctoring Settings
-        </Button>
-      }
+      title={<Space><LockOutlined /> {t('proctoring.settings.title')}</Space>}
+      style={{ marginTop: 16 }}
     >
       <Form layout="vertical">
-        <Form.Item label={<Text strong>Enable Proctoring</Text>}>
+        <Form.Item
+          label={<Text strong>{t('proctoring.settings.enableLabel')}</Text>}
+          extra={<Text type="secondary">{t('proctoring.settings.enableHint')}</Text>}
+        >
           <Switch
             checked={policy.enabled}
-            onChange={(v) => setPolicy((p) => ({ ...p, enabled: v }))}
+            onChange={(v) => updatePolicy({ ...policy, enabled: v })}
           />
-          <Text type="secondary" style={{ marginLeft: 12 }}>
-            When disabled, no rules are active and participants have zero overhead.
-          </Text>
         </Form.Item>
 
         {policy.enabled && (
           <>
             <Divider />
-            <Form.Item label={<Text strong>Preset Level</Text>}>
-              <Space>
-                <Button size="small" onClick={() => applyPreset('soft')}>Soft</Button>
-                <Button size="small" onClick={() => applyPreset('hard')}>Hard</Button>
-                <Button size="small" onClick={() => applyPreset('paranoid')}>Paranoid</Button>
+            <Form.Item
+              label={<Text strong>{t('proctoring.settings.presetLabel')}</Text>}
+            >
+              <Space wrap>
+                <div
+                  onClick={() => applyPreset('light')}
+                  style={{ cursor: 'pointer', border: '1px solid #d9d9d9', borderRadius: 6, padding: '8px 14px', minWidth: 160, background: '#fafafa' }}
+                >
+                  <Text strong style={{ display: 'block' }}>{t('proctoring.preset.light')}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{t('proctoring.preset.lightDesc')}</Text>
+                </div>
+                <div
+                  onClick={() => applyPreset('standard')}
+                  style={{ cursor: 'pointer', border: '1px solid #d9d9d9', borderRadius: 6, padding: '8px 14px', minWidth: 160, background: '#fafafa' }}
+                >
+                  <Text strong style={{ display: 'block' }}>{t('proctoring.preset.standard')}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{t('proctoring.preset.standardDesc')}</Text>
+                </div>
+                <div
+                  onClick={() => applyPreset('maximum')}
+                  style={{ cursor: 'pointer', border: '1px solid #d9d9d9', borderRadius: 6, padding: '8px 14px', minWidth: 160, background: '#fafafa' }}
+                >
+                  <Text strong style={{ display: 'block' }}>{t('proctoring.preset.maximum')}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{t('proctoring.preset.maximumDesc')}</Text>
+                </div>
               </Space>
-              <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
-                Soft = fullscreen + tab detection. Hard = all free rules. Paranoid = all available rules.
-              </Text>
             </Form.Item>
 
             <Divider />
-            <Title level={5}>Active Rules</Title>
+            <Title level={5}>{t('proctoring.settings.rulesTitle')}</Title>
 
             {applicableRules.length === 0 && (
-              <Alert message="No rules available for your plan." type="warning" showIcon />
+              <Alert message={t('proctoring.settings.noRules')} type="warning" showIcon />
             )}
 
             {applicableRules.map((rule) => (
@@ -142,67 +146,75 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
                   <Space>
                     <Text>{rule.display_name}</Text>
                     <Tag color={rule.severity === 'lock' ? 'red' : 'orange'}>
-                      {rule.severity}
+                      {rule.severity === 'lock' ? t('proctoring.settings.severityLock') : t('proctoring.settings.severityWarn')}
                     </Tag>
-                    <Tag color="blue">{rule.tier_minimum}</Tag>
+                    {rule.tier_minimum !== 'free' && (
+                      <Tag color="blue">{rule.tier_minimum}</Tag>
+                    )}
                     {rule.is_silent && (
-                      <Tooltip title="Silent — participant does not see a warning">
-                        <Tag color="default">silent</Tag>
+                      <Tooltip title={t('proctoring.settings.silentHint')}>
+                        <Tag color="default">{t('proctoring.settings.silent')}</Tag>
                       </Tooltip>
                     )}
                   </Space>
                 }
+                extra={rule.description && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>{rule.description}</Text>
+                )}
               >
                 <Switch
                   checked={isRuleEnabled(rule.rule_id)}
                   onChange={(v) => toggleRule(rule.rule_id, v)}
                 />
-                {rule.description && (
-                  <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
-                    {rule.description}
-                  </Text>
-                )}
               </Form.Item>
             ))}
 
             <Divider />
-            <Title level={5}>Escalation Settings</Title>
+            <Title level={5}>{t('proctoring.settings.escalationTitle')}</Title>
 
-            <Form.Item label="Lock session after N violations">
+            <Form.Item
+              label={t('proctoring.escalation.lockLabel')}
+              extra={<Text type="secondary" style={{ fontSize: 12 }}>{t('proctoring.escalation.lockHint', { warnings, lockAt })}</Text>}
+            >
               <InputNumber
                 min={1}
                 max={20}
-                value={policy.escalation?.lock_on_violation_count ?? 3}
+                value={lockAt}
                 onChange={(v) =>
-                  setPolicy((p) => ({
-                    ...p,
-                    escalation: { ...(p.escalation || {}), lock_on_violation_count: v },
-                  }))
+                  updatePolicy({ ...policy, escalation: { ...(policy.escalation || {}), lock_on_violation_count: v } })
                 }
               />
             </Form.Item>
 
-            <Form.Item label="Auto-submit answers when session is locked">
+            <Form.Item
+              label={t('proctoring.escalation.autoSubmitLabel')}
+              extra={<Text type="secondary" style={{ fontSize: 12 }}>{t('proctoring.escalation.autoSubmitHint')}</Text>}
+            >
               <Switch
                 checked={policy.escalation?.auto_submit_on_lock || false}
                 onChange={(v) =>
-                  setPolicy((p) => ({
-                    ...p,
-                    escalation: { ...(p.escalation || {}), auto_submit_on_lock: v },
-                  }))
+                  updatePolicy({ ...policy, escalation: { ...(policy.escalation || {}), auto_submit_on_lock: v } })
                 }
               />
             </Form.Item>
 
+            <Alert
+              type="info"
+              showIcon
+              message={t('proctoring.escalation.summary', { warnings, lockAt })}
+              description={policy.escalation?.auto_submit_on_lock
+                ? t('proctoring.escalation.autoSubmitOn')
+                : t('proctoring.escalation.autoSubmitOff')}
+              style={{ marginTop: 4 }}
+            />
+
             {isRuleEnabled('webcam_monitoring') && applicableRules.some(r => r.rule_id === 'webcam_monitoring') && (
-              <>
-                <Divider />
-                <Alert
-                  message={<Space><CameraOutlined /> Webcam is enabled — participants who deny camera access cannot start this exam.</Space>}
-                  type="warning"
-                  showIcon={false}
-                />
-              </>
+              <Alert
+                message={<Space><CameraOutlined /> {t('proctoring.settings.webcamNotice')}</Space>}
+                type="warning"
+                showIcon={false}
+                style={{ marginTop: 12 }}
+              />
             )}
           </>
         )}

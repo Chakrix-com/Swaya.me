@@ -1668,7 +1668,12 @@
     "zeroForUnanswered": "0 für unbeantwortete Fragen",
     "pointsVary": "* Punkte variieren je nach Frage",
     "timeLimitWarning": "Sie haben insgesamt <strong>{{minutes}} Minuten</strong> ab dem Start.",
-    "perQuestionTimerWarning": "Jede Frage hat ein Zeitlimit — sie springt automatisch weiter, wenn die Zeit abläuft. Sie können nicht zu abgelaufenen Fragen zurückgehen."
+    "perQuestionTimerWarning": "Jede Frage hat ein Zeitlimit — sie springt automatisch weiter, wenn die Zeit abläuft. Sie können nicht zu abgelaufenen Fragen zurückgehen.",
+    "saveSettings": "Einstellungen speichern",
+    "saveSettingsHint": "Speichert Zeitplan, Bewertung und Sicherheitseinstellungen mit einem Klick.",
+    "liveEditBannerTitle": "Diese Prüfung ist derzeit aktiv",
+    "liveEditBannerDesc": "Zeitplan, Bewertung und Sicherheitseinstellungen können aktualisiert werden. Fragen sind gesperrt — deaktivieren Sie die Prüfung, um Fragen zu bearbeiten.",
+    "questionsLockedNotice": "Fragen sind gesperrt, während die Prüfung aktiv ist."
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",
@@ -1789,6 +1794,37 @@
       "enabledNoData": "Beaufsichtigung ist aktiviert — noch keine Teilnehmerdaten.",
       "enabledNoDataDesc": "Integritätsdaten erscheinen hier, sobald Teilnehmer die Prüfung über den beaufsichtigten Ablauf starten.",
       "timeline": "Teilnehmer #{{id}} — Verstoß-Zeitverlauf"
+    },
+    "settings": {
+      "title": "Sicherheit & Überwachung",
+      "enableLabel": "Überwachung aktivieren",
+      "enableHint": "Deaktiviert: keine aktive Überwachung.",
+      "presetLabel": "Schnellkonfiguration",
+      "rulesTitle": "Überwachungsregeln",
+      "noRules": "Keine Regeln für Ihren Plan verfügbar.",
+      "examOnly": "Überwachung ist nur für Prüfung und Offline-Umfrage verfügbar.",
+      "severityLock": "sperrt Prüfung",
+      "severityWarn": "warnt",
+      "silent": "still",
+      "silentHint": "Still — Teilnehmer sieht keine Warnung wenn diese Regel ausgelöst wird",
+      "webcamNotice": "Webcam ist aktiviert — Teilnehmer die den Kamerazugriff verweigern können die Prüfung nicht starten."
+    },
+    "preset": {
+      "light": "Leichte Überwachung",
+      "lightDesc": "Nur Vollbild + Tab-Wechsel-Erkennung",
+      "standard": "Standard-Sicherheit",
+      "standardDesc": "Fügt Copy-Paste-Blockierung, Multi-Tab-Erkennung hinzu",
+      "maximum": "Maximale Sicherheit",
+      "maximumDesc": "Alle verfügbaren Regeln Ihres Plans aktiviert"
+    },
+    "escalation": {
+      "lockLabel": "Prüfung nach ___ Warnungen sperren",
+      "lockHint": "Teilnehmer erhält {{warnings}} Warnung(en), dann Sperre beim {{lockAt}}. Verstoß",
+      "autoSubmitLabel": "Antworten beim Sperren automatisch einreichen",
+      "autoSubmitHint": "Wenn aktiviert, werden Antworten zum Sperrzeitpunkt automatisch eingereicht",
+      "summary": "{{warnings}} Warnung(en), dann Sperre bei Verstoß #{{lockAt}}",
+      "autoSubmitOn": "Automatisches Einreichen AN.",
+      "autoSubmitOff": "Automatisches Einreichen AUS."
     }
   }
 }

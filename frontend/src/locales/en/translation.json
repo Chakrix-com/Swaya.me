@@ -1673,7 +1673,12 @@
     "zeroForUnanswered": "0 for unanswered",
     "pointsVary": "* Points vary per question",
     "timeLimitWarning": "You have <strong>{{minutes}} minutes</strong> total from when you start.",
-    "perQuestionTimerWarning": "Each question has a time limit — it auto-advances when the timer runs out. You cannot go back to expired questions."
+    "perQuestionTimerWarning": "Each question has a time limit — it auto-advances when the timer runs out. You cannot go back to expired questions.",
+    "saveSettings": "Save Settings",
+    "saveSettingsHint": "Saves schedule, scoring, and security settings in one click.",
+    "liveEditBannerTitle": "This exam is currently live",
+    "liveEditBannerDesc": "Schedule, scoring, and security settings can be updated and take effect immediately. Questions are locked — deactivate the exam to add or edit questions.",
+    "questionsLockedNotice": "Questions are locked while the exam is active. Click \"Deactivate Exam\" in the top bar to edit questions."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -1794,6 +1799,37 @@
       "enabledNoData": "Proctoring is enabled — no participant data yet.",
       "enabledNoDataDesc": "Integrity data will appear here once participants start the exam through the proctored flow.",
       "timeline": "Participant #{{id}} — Violation Timeline"
+    },
+    "settings": {
+      "title": "Security & Proctoring",
+      "enableLabel": "Enable Proctoring",
+      "enableHint": "When disabled, no monitoring is active and participants have zero overhead.",
+      "presetLabel": "Quick Setup (choose a preset)",
+      "rulesTitle": "Monitoring Rules",
+      "noRules": "No rules available for your plan.",
+      "examOnly": "Proctoring is available for Exam and Offline Poll types only.",
+      "severityLock": "locks exam",
+      "severityWarn": "warns",
+      "silent": "silent",
+      "silentHint": "Silent — participant does not see a warning when this rule triggers",
+      "webcamNotice": "Webcam is enabled — participants who deny camera access will not be able to start this exam."
+    },
+    "preset": {
+      "light": "Light Monitoring",
+      "lightDesc": "Fullscreen enforcement + tab-switching detection only",
+      "standard": "Standard Security",
+      "standardDesc": "Adds copy-paste blocking, multi-tab detection, and bot signal checks",
+      "maximum": "Maximum Security",
+      "maximumDesc": "All available rules for your plan are enabled"
+    },
+    "escalation": {
+      "lockLabel": "Lock exam after ___ warnings to participant",
+      "lockHint": "Participant receives {{warnings}} warning(s), then is permanently locked on the {{lockAt}}th violation",
+      "autoSubmitLabel": "Auto-submit answers when exam is locked",
+      "autoSubmitHint": "When enabled, the participant's answers at the time of lock are submitted automatically",
+      "summary": "With these settings: participant gets {{warnings}} warning(s), then locked on violation #{{lockAt}}",
+      "autoSubmitOn": "Auto-submit is ON — their answers at the time of lock will be submitted automatically.",
+      "autoSubmitOff": "Auto-submit is OFF — a locked participant's answers will not be submitted unless they manually submitted before being locked."
     }
   }
 }
