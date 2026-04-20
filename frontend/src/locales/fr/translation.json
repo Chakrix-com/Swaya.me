@@ -1745,7 +1745,8 @@
         "devtools_detect": "Ouvrir les outils de développement du navigateur (F12)",
         "bot_signal_detect": "Utiliser des outils d'automatisation, des scripts ou des extensions de navigateur qui interfèrent avec les contrôles de l'examen",
         "webcam_monitoring": "Regarder ailleurs, sortir du cadre de la caméra ou laisser une autre personne apparaître à la caméra"
-      }
+      },
+      "acknowledgeButtonFullscreen": "Compris — Passer en plein écran"
     },
     "overlay": {
       "violation": "Violation de surveillance",
@@ -1773,7 +1774,10 @@
     "fullscreen": {
       "entering": "Passage en plein écran…",
       "required": "Cet examen nécessite le mode plein écran. Cliquez ci-dessous pour continuer.",
-      "button": "Passer en plein écran"
+      "button": "Passer en plein écran",
+      "blockedTitle": "Plein écran requis",
+      "blockedDesc": "Cet examen nécessite le mode plein écran. Si le navigateur l'a bloqué, vérifiez vos extensions et réessayez.",
+      "retryButton": "Réessayer le plein écran"
     },
     "report": {
       "title": "Rapport d'intégrité",

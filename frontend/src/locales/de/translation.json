@@ -1742,7 +1742,8 @@
         "devtools_detect": "Öffnen der Browser-Entwicklertools (F12)",
         "bot_signal_detect": "Verwendung von Automatisierungstools, Skripten oder Browser-Erweiterungen, die die Prüfungssteuerung beeinträchtigen",
         "webcam_monitoring": "Wegschauen vom Bildschirm, Verlassen des Kamerarahmens oder eine andere Person vor der Kamera"
-      }
+      },
+      "acknowledgeButtonFullscreen": "Verstanden — Vollbild aktivieren"
     },
     "overlay": {
       "violation": "Überwachungsverstoß",
@@ -1770,7 +1771,10 @@
     "fullscreen": {
       "entering": "Vollbildmodus wird aktiviert…",
       "required": "Diese Prüfung erfordert den Vollbildmodus. Klicken Sie unten, um fortzufahren.",
-      "button": "Vollbild aktivieren"
+      "button": "Vollbild aktivieren",
+      "blockedTitle": "Vollbild erforderlich",
+      "blockedDesc": "Diese Prüfung erfordert den Vollbildmodus. Falls der Browser es blockiert, überprüfen Sie Ihre Erweiterungen und versuchen Sie es erneut.",
+      "retryButton": "Vollbild erneut versuchen"
     },
     "report": {
       "title": "Integritätsbericht",

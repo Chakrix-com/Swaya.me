@@ -1747,7 +1747,8 @@
         "devtools_detect": "Opening browser developer tools (F12)",
         "bot_signal_detect": "Using automation tools, scripts, or browser extensions that tamper with exam controls",
         "webcam_monitoring": "Looking away from the screen, leaving camera frame, or allowing another person to appear on camera"
-      }
+      },
+      "acknowledgeButtonFullscreen": "I Understand — Enter Fullscreen & Begin"
     },
     "overlay": {
       "violation": "Proctoring Violation",
@@ -1775,7 +1776,10 @@
     "fullscreen": {
       "entering": "Entering fullscreen…",
       "required": "This exam requires fullscreen mode. Click below to continue.",
-      "button": "Enter Fullscreen"
+      "button": "Enter Fullscreen",
+      "blockedTitle": "Fullscreen Required",
+      "blockedDesc": "This exam requires fullscreen mode. If your browser blocked fullscreen, check for extensions that prevent it, then click Retry.",
+      "retryButton": "Retry Fullscreen"
     },
     "report": {
       "title": "Integrity Report",

@@ -24,17 +24,21 @@ function ProctoringModuleActivator() {
 // Initialises as 'active' if fullscreen was already requested by the caller
 // (e.g. the warning screen's acknowledge button) so no second click is needed.
 // Falls back to a manual button if fullscreen wasn't yet granted.
+// FullscreenGate — waits for fullscreen to be confirmed.
+// Called with fullscreenElement already set (requestFullscreen was called
+// synchronously in the button click handler that triggered this mount).
+// If fullscreen isn't confirmed within 3s, shows a hard-blocking retry screen.
+// The exam content is NEVER shown if fullscreen is required and not active.
 function FullscreenGate({ children, reportViolation }) {
   const { t } = useTranslation();
+  // Start as 'entering' — we know requestFullscreen was just called
   const [state, setState] = useState(() =>
-    document.fullscreenElement ? 'active' : 'idle'
+    document.fullscreenElement ? 'active' : 'entering'
   );
   const timerRef = useRef(null);
 
-  // If we mounted in 'idle' it means fullscreen wasn't yet active — wait briefly
-  // for a pending fullscreenchange (called just before mount) before showing button.
   useEffect(() => {
-    if (state !== 'idle') return;
+    if (state !== 'entering') return;
 
     const onFullscreenChange = () => {
       if (document.fullscreenElement) {
@@ -45,11 +49,13 @@ function FullscreenGate({ children, reportViolation }) {
     };
     document.addEventListener('fullscreenchange', onFullscreenChange);
 
-    // Give it 1.5s for a pending request to land before showing manual button
     timerRef.current = setTimeout(() => {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
-      if (!document.fullscreenElement) setState('needs_click');
-    }, 1500);
+      if (!document.fullscreenElement) {
+        reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'timeout' });
+        setState('blocked');
+      }
+    }, 3000);
 
     return () => {
       clearTimeout(timerRef.current);
@@ -57,53 +63,50 @@ function FullscreenGate({ children, reportViolation }) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const enterManually = useCallback(() => {
-    setState('requested');
-    const onFullscreenChange = () => {
-      if (document.fullscreenElement) {
-        clearTimeout(timerRef.current);
-        setState('active');
-        document.removeEventListener('fullscreenchange', onFullscreenChange);
-      }
+  // Also watch for the user manually exiting fullscreen before they even start
+  useEffect(() => {
+    if (state !== 'active') return;
+    const onExit = () => {
+      if (!document.fullscreenElement) setState('exited');
     };
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-    document.documentElement.requestFullscreen().catch(() => {
-      clearTimeout(timerRef.current);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-      reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'api_rejected' });
-      setState('blocked');
-    });
-    timerRef.current = setTimeout(() => {
-      if (!document.fullscreenElement) {
-        document.removeEventListener('fullscreenchange', onFullscreenChange);
-        reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'timeout' });
-        setState('blocked');
-      }
-    }, 4000);
-  }, [reportViolation]);
+    document.addEventListener('fullscreenchange', onExit);
+    return () => document.removeEventListener('fullscreenchange', onExit);
+  }, [state]);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  if (state === 'active' || state === 'blocked') return children;
+  const retryFullscreen = useCallback(() => {
+    setState('entering');
+    document.documentElement.requestFullscreen().catch(() => {
+      reportViolation('fullscreen_enforce', 'FULLSCREEN_BLOCKED', { reason: 'api_rejected' });
+      setState('blocked');
+    });
+  }, [reportViolation]);
 
-  if (state === 'idle' || state === 'requested') {
+  if (state === 'active') return children;
+
+  if (state === 'entering') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 20 }}>
-        <Spin size="large" />
-        <p style={{ margin: 0, color: '#666' }}>{t('proctoring.fullscreen.entering')}</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 20, background: '#000' }}>
+        <Spin size="large" style={{ color: '#fff' }} />
+        <p style={{ margin: 0, color: '#ccc', fontSize: 15 }}>{t('proctoring.fullscreen.entering')}</p>
       </div>
     );
   }
 
-  // 'needs_click' — fullscreen wasn't granted automatically, ask manually
+  // blocked or exited — hard block, exam never shown
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 20, background: '#f5f5f5' }}>
-      <FullscreenOutlined style={{ fontSize: 48, color: '#1677ff' }} />
-      <p style={{ fontSize: 16, textAlign: 'center', maxWidth: 340, margin: 0 }}>
-        {t('proctoring.fullscreen.required')}
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 20, background: '#1a1a1a', padding: 24 }}>
+      <FullscreenOutlined style={{ fontSize: 56, color: '#faad14' }} />
+      <p style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: 0, textAlign: 'center' }}>
+        {t('proctoring.fullscreen.blockedTitle')}
       </p>
-      <Button type="primary" size="large" onClick={enterManually} icon={<FullscreenOutlined />}>
-        {t('proctoring.fullscreen.button')}
+      <p style={{ fontSize: 14, color: '#aaa', maxWidth: 380, textAlign: 'center', margin: 0 }}>
+        {t('proctoring.fullscreen.blockedDesc')}
+      </p>
+      <Button type="primary" size="large" onClick={retryFullscreen} icon={<FullscreenOutlined />}
+        style={{ marginTop: 8 }}>
+        {t('proctoring.fullscreen.retryButton')}
       </Button>
     </div>
   );
@@ -122,8 +125,14 @@ function ProctoringWarningScreen({ ruleSet, fullscreenRequired, onAcknowledge })
   const autoSubmit = ruleSet?.escalation?.auto_submit_on_lock;
   const webcamOn = ruleSet?.webcam_required;
 
+  // This is the ONLY click that enters fullscreen.
+  // Called synchronously inside the button's onClick so the browser honours
+  // requestFullscreen() as a direct user gesture — no async batching.
   const handleAcknowledge = useCallback(() => {
     if (fullscreenRequired) {
+      // requestFullscreen must be called synchronously in a user-gesture handler.
+      // We call onAcknowledge() immediately after so FullscreenGate mounts while
+      // the fullscreen transition is still in progress and catches the event.
       document.documentElement.requestFullscreen().catch(() => {});
     }
     onAcknowledge();
@@ -207,9 +216,12 @@ function ProctoringWarningScreen({ ruleSet, fullscreenRequired, onAcknowledge })
               disabled={!checked}
               onClick={handleAcknowledge}
               block
+              icon={fullscreenRequired ? <FullscreenOutlined /> : undefined}
               style={{ fontWeight: 600, fontSize: 15 }}
             >
-              {t('proctoring.warning.acknowledgeButton')}
+              {fullscreenRequired
+                ? t('proctoring.warning.acknowledgeButtonFullscreen')
+                : t('proctoring.warning.acknowledgeButton')}
             </Button>
           </div>
         </div>
