@@ -235,6 +235,8 @@ class QuizResponse(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = None
     exam_results_email: Optional[str] = None
+    # Proctoring
+    proctoring_policy: Optional[dict] = None
 
     class Config:
         from_attributes = True
