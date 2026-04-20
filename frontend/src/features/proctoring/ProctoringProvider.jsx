@@ -87,8 +87,20 @@ export function ProctoringProvider({ quizId, sessionToken, children }) {
     [isLocked, sessionToken, ruleSet]
   );
 
-  // While loading OR when disabled: render children immediately with a no-op context
-  if (!ruleSet || !ruleSet.enabled) {
+  // While loading: block children behind a spinner so the exam never renders
+  // before proctoring config is confirmed. This prevents a race where a fast user
+  // (or one who blocks the config request) bypasses the gate entirely.
+  if (!ruleSet) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 40, height: 40, border: '4px solid #f0f0f0', borderTop: '4px solid #1677ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Config loaded but proctoring disabled for this quiz — pass through with no-op context
+  if (!ruleSet.enabled) {
     return (
       <ProctoringCtx.Provider value={{
         resolvedRules: [],
