@@ -380,7 +380,8 @@ class QuizBuilderServiceAsync:
             title=request.title,
             description=request.description,
             quiz_type=q_type,
-            status=QuizStatus.DRAFT
+            status=QuizStatus.DRAFT,
+            proctoring_policy=request.proctoring_policy
         )
 
         # Offline poll fields

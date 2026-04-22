@@ -78,6 +78,7 @@ async def get_poll_info(db: AsyncSession, slug: str) -> OfflinePollInfoResponse:
 
     status = _poll_status(quiz)
     return OfflinePollInfoResponse(
+        quiz_id=quiz.id,
         slug=slug,
         title=quiz.title,
         description=quiz.description,

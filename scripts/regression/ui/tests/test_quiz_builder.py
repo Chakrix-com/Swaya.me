@@ -143,11 +143,68 @@ def test_create_test_persistence_ui(page: Page):
     page.wait_for_url("**/edit")
     
     # Check header says 'Edit Test'
-    expect(page.locator('h1, span:has-text("Edit Test")')).to_be_visible()
+    expect(page.locator('text=Edit Test')).to_be_visible()
     
     # Check persistence tag 'Test'
     expect(page.locator('.ant-tag:has-text("Test")')).to_be_visible()
     print(f"✓ Created test {title} successfully persisted as Exam type in UI")
+
+def test_proctoring_settings_persistence(page: Page):
+    """Verify proctoring settings can be enabled and persisted in Quiz Builder."""
+    page.goto(f"{BASE_URL}/login")
+    page.fill("input#login_email", HOST_EMAIL)
+    page.fill("input#login_password", HOST_PASSWORD)
+    page.click('button:has-text("Sign In")')
+    page.wait_for_url(f"{BASE_URL}/dashboard")
+
+    # Click 'Create Test'
+    page.click('button:has-text("Create Test")')
+    page.wait_for_url("**/quiz/new?type=exam")
+    
+    title = f"Proctoring UI Test {os.getpid()}"
+    page.fill("input#title", title)
+    page.click('button.ant-btn-primary:has-text("Create Test")')
+    page.wait_for_url("**/edit")
+
+    # Find Proctoring Settings section
+    # Title is "Security & Proctoring" (based on i18n key proctoring.settings.title)
+    proctoring_section = page.locator('div.ant-card').filter(has_text="Security & Proctoring").last
+    expect(proctoring_section).to_be_visible(timeout=10000)
+
+    # Enable proctoring switch
+    # The switch is next to "Enable Proctoring" (proctoring.settings.enableLabel)
+    enable_switch = proctoring_section.locator('button[role="switch"]').first
+    enable_switch.click()
+    
+    # Wait for settings to expand
+    expect(page.locator('text=Standard')).to_be_visible()
+    
+    # Click "Standard" preset
+    # It's a div with text "Standard"
+    page.click('div:has-text("Standard")')
+    
+    # Change lock threshold
+    # InputNumber for lock_on_violation_count
+    lock_input = page.locator('input.ant-input-number-input').first
+    lock_input.fill("5")
+    
+    # Save the quiz
+    # The button text for exams is "Save Settings"
+    page.click('button:has-text("Save Settings")')
+    page.wait_for_timeout(2000) # Give it time to save
+    
+    # Reload and verify
+    page.reload()
+    page.wait_for_load_state("networkidle")
+    
+    expect(page.locator('div.ant-card').filter(has_text="Security & Proctoring").last).to_be_visible()
+    # Check if switch is still enabled
+    expect(page.locator('button[role="switch"]').first).to_have_attribute("aria-checked", "true")
+    
+    # Check if lock threshold persisted
+    expect(page.locator('input.ant-input-number-input').first).to_have_value("5")
+    
+    print(f"✓ Proctoring settings for {title} successfully persisted")
 
 if __name__ == "__main__":
     pytest.main([__file__, "-s", "--headed"])

@@ -4,9 +4,10 @@ import {
   Card, Button, Typography, Space, Progress, Radio, Input, Spin,
   Alert, Tag, Divider, Row, Col, message
 } from 'antd'
-import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, ClockCircleOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { offlinePollAPI } from '../../services/api'
+import { ProctoringProvider, ProctoringGate } from '../proctoring'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import PromoCard from '../../components/PromoCard'
@@ -355,10 +356,12 @@ export default function OfflinePollSession() {
     const isBlocked = question.is_required && !hasAnswer
 
     return (
-      <div className="offline-poll-session">
-        <PublicBrandHeader />
-        <div className="offline-poll-session__content">
-        <Card style={cardStyle}>
+      <ProctoringProvider quizId={pollInfo?.quiz_id} sessionToken={sessionToken}>
+        <ProctoringGate>
+          <div className="offline-poll-session">
+            <PublicBrandHeader />
+            <div className="offline-poll-session__content">
+            <Card style={cardStyle}>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             {/* Progress */}
             <Text type="secondary">
@@ -519,6 +522,8 @@ export default function OfflinePollSession() {
         </Card>
         </div>
       </div>
+        </ProctoringGate>
+      </ProctoringProvider>
     )
   }
 

@@ -110,7 +110,13 @@ def main():
     check(r.status_code == 200, f"app feedback admin failed: {r.status_code} {r.text[:200]}")
     print(f"OK: admin app feedback  count={len(r.json().get('items', []))}")
 
+    # 12. Proctoring Rules
+    r = s.get(f"{BASE_URL}/proctoring/rules", timeout=20)
+    check(r.status_code == 200, f"proctoring rules failed: {r.status_code} {r.text[:200]}")
+    print(f"OK: admin proctoring rules  count={len(r.json())}")
+
     print("\nOK: admin_api_coverage — all steps passed")
+
 
 
 if __name__ == "__main__":

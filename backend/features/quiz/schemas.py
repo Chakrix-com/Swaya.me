@@ -174,6 +174,8 @@ class QuizCreate(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
+    # Proctoring
+    proctoring_policy: Optional[dict] = None
 
     @model_validator(mode='after')
     def validate_offline_poll_fields(self):
@@ -528,6 +530,7 @@ FolderResponse.model_rebuild()
 # Offline Poll Schemas
 class OfflinePollInfoResponse(BaseModel):
     """Public info about an offline poll (no auth required)"""
+    quiz_id: Optional[int] = None
     slug: str
     title: str
     description: Optional[str] = None

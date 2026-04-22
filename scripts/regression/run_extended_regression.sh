@@ -30,6 +30,8 @@ run_step "extended_wordcloud_e2e"       "$ROOT_DIR/backend/.venv/bin/python" "$R
 run_step "extended_wordcloud_regular"   "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_word_cloud_e2e.py" --user-email "$REGULAR_USER_EMAIL" --user-password "$REGULAR_USER_PASSWORD" || FAILED=1
 run_step "extended_offline_poll_e2e"    "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_offline_poll_e2e.py"                                                             || FAILED=1
 run_step "extended_exam_e2e"            "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_exam_e2e.py"                                                                     || FAILED=1
+run_step "extended_proctoring_e2e"      "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_proctoring_e2e.py"                                                               || FAILED=1
+run_step "extended_ai_features"         "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/scripts/regression/test_ai_features.py"                                               || FAILED=1
 run_step "extended_rich_text_e2e"       "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_rich_text_regression.py"                                                         || FAILED=1
 run_step "extended_dark_mode"           "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_dark_mode_regression.py"                                                         || FAILED=1
 

@@ -13,7 +13,7 @@ from core.config.settings import settings
 logger = logging.getLogger(__name__)
 
 # Generous timeout — CPU inference is slower than GPU
-TIMEOUT = httpx.Timeout(120.0, connect=5.0)
+TIMEOUT = httpx.Timeout(300.0, connect=10.0)
 
 
 class OllamaError(Exception):
@@ -39,6 +39,8 @@ async def _generate(prompt: str, model: str, temperature: float = 0.7, max_token
             resp.raise_for_status()
         except httpx.ConnectError:
             raise OllamaError(f"Cannot connect to ollama daemon at {settings.ollama.base_url}")
+        except httpx.ReadTimeout:
+            raise OllamaError(f"Ollama request timed out after {TIMEOUT.read}s")
         except httpx.HTTPStatusError as e:
             raise OllamaError(f"Ollama returned HTTP {e.response.status_code}")
     return resp.json()["response"]
@@ -90,13 +92,18 @@ Requirements:
     raw = await _generate(prompt, model, max_tokens=2048)
     try:
         data = _parse_json(raw)
-        questions = data["questions"]
-    except (json.JSONDecodeError, KeyError) as e:
+        questions = data.get("questions")
+        if questions is None:
+            raise OllamaError("Model output missing 'questions' key")
+    except (json.JSONDecodeError, ValueError) as e:
         logger.warning("Failed to parse questions from model output: %s | raw: %s", e, raw[:200])
         raise OllamaError("Model returned malformed JSON — try again")
 
     # Sanitise and validate each question
     result = []
+    if not isinstance(questions, list):
+        raise OllamaError("Model returned 'questions' but it is not a list")
+
     for q in questions:
         opts = q.get("options", [])
         idx = q.get("correct_answer_index", 0)
