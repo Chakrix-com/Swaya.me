@@ -33,7 +33,7 @@ class ProctoringContextResolver:
         context: ProctoringContext,
         quiz_proctoring_policy: dict | None,
         db: AsyncSession,
-        redis,
+        redis: "RedisClient",
     ) -> ResolvedRuleSet:
         if not context.host_enabled:
             return ResolvedRuleSet(
@@ -58,7 +58,7 @@ class ProctoringContextResolver:
         merged = self._merge(platform_rules, tenant_overrides, quiz_policy, context)
 
         try:
-            await redis.setex(cache_key, 3600, merged.model_dump_json())
+            await redis.set(cache_key, merged.model_dump_json(), expire=3600)
         except Exception:
             pass
 

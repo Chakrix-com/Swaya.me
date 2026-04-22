@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 from pathlib import Path
-import shutil, os
+import shutil, os, json
 
+from core.config.settings import settings
 from persistence.database_async import get_async_db
-from shared.utils.redis_client import redis_client
+from shared.utils.redis_client import redis_client, get_redis, RedisClient
 from core.auth.dependencies import get_current_user, CurrentUser
 from persistence.models.quiz import Quiz, QuizType
 from persistence.models.core import Tenant
@@ -29,10 +30,6 @@ from features.proctoring.honeypot_service import honeypot_service
 router = APIRouter(prefix="/proctoring", tags=["proctoring"])
 
 
-def _get_redis():
-    return redis_client.client
-
-
 async def _resolve_context(quiz: Quiz, tenant: Tenant) -> ProctoringContext:
     policy = quiz.proctoring_policy or {}
     return ProctoringContext(
@@ -49,6 +46,7 @@ async def init_session(
     body: SessionInitRequest,
     request: Request,
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — participant initializes proctoring session."""
     # Resolve quiz and participant from request
@@ -93,7 +91,7 @@ async def init_session(
         webcam_granted=body.webcam_granted,
         session_token=session_token,
         db=db,
-        redis=_get_redis(),
+        redis=redis,
     )
 
 
@@ -117,6 +115,7 @@ async def get_config(
     quiz_id: int,
     request: Request,
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — get resolved rule set for a quiz."""
     session_token = request.headers.get("X-Session-Token", "")
@@ -130,7 +129,7 @@ async def get_config(
     tenant = tenant_result.scalar_one_or_none()
 
     context = await _resolve_context(quiz, tenant)
-    rule_set = await svc.get_config(quiz_id, quiz.tenant_id, context, quiz.proctoring_policy, db, _get_redis())
+    rule_set = await svc.get_config(quiz_id, quiz.tenant_id, context, quiz.proctoring_policy, db, redis)
 
     # Include honeypot config if session_token present
     honeypot_config = None
@@ -143,7 +142,7 @@ async def get_config(
         if participant:
             honeypot_rule = next((r for r in rule_set.rules if r.rule_id == "honeypot_traps"), None)
             if honeypot_rule:
-                honeypot_config = await honeypot_service.generate(quiz_id, participant.id, "mcq", _get_redis())
+                honeypot_config = await honeypot_service.generate(quiz_id, participant.id, "mcq", redis)
 
     return {**rule_set.model_dump(), "honeypot_config": honeypot_config}
 
@@ -152,10 +151,11 @@ async def get_config(
 async def log_event(
     body: ViolationEventRequest,
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — log a proctoring violation event."""
     return await svc.log_violation(
-        body.session_token, body.rule_id, body.event_type, body.metadata, db, _get_redis()
+        body.session_token, body.rule_id, body.event_type, body.metadata, db, redis
     )
 
 
@@ -165,12 +165,13 @@ async def honeypot_endpoint(
     trap: Optional[str] = Query(None),
     t: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — silent honeypot; always returns 200."""
     try:
         session_token = request.headers.get("X-Session-Token", "")
         if session_token and trap:
-            await honeypot_service.validate_hit(session_token, trap, db, _get_redis())
+            await honeypot_service.validate_hit(session_token, trap, db, redis)
     except Exception:
         pass
     return JSONResponse(content={})
@@ -180,12 +181,12 @@ async def honeypot_endpoint(
 async def answer_timing(
     body: AnswerTimingRequest,
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — validate that participant spent enough time on answer."""
     redis_data = None
     try:
-        import json
-        raw = await _get_redis().get(f"proctor:session:{body.session_token}")
+        raw = await redis.get(f"proctor:session:{body.session_token}")
         if raw:
             redis_data = json.loads(raw)
     except Exception:
@@ -227,7 +228,7 @@ async def answer_timing(
     if body.elapsed_ms < min_ms:
         await svc.log_violation(
             body.session_token, "answer_timing_enforce", "ANSWER_TOO_FAST",
-            {"elapsed_ms": body.elapsed_ms, "min_ms": min_ms}, db, _get_redis()
+            {"elapsed_ms": body.elapsed_ms, "min_ms": min_ms}, db, redis
         )
         wait_ms = min_ms - body.elapsed_ms
         return AnswerTimingResponse(accepted=False, reason="Answer submitted too quickly", wait_ms=wait_ms)
@@ -239,9 +240,10 @@ async def answer_timing(
 async def ingest_biometrics(
     body: BiometricSample,
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — receive behavioral biometric batch."""
-    await svc.ingest_biometric_sample(body.session_token, body, db, _get_redis())
+    await svc.ingest_biometric_sample(body.session_token, body, db, redis)
     return {"ok": True}
 
 
@@ -250,14 +252,14 @@ async def upload_snapshot(
     request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Public — participant webcam snapshot upload (session token via header)."""
     session_token = request.headers.get("X-Session-Token", "")
     redis_data = None
     if session_token:
         try:
-            import json
-            raw = await _get_redis().get(f"proctor:session:{session_token}")
+            raw = await redis.get(f"proctor:session:{session_token}")
             if raw:
                 redis_data = json.loads(raw)
         except Exception:
@@ -266,7 +268,8 @@ async def upload_snapshot(
     quiz_id = redis_data.get("quiz_id", 0) if redis_data else 0
     participant_id = redis_data.get("participant_id", 0) if redis_data else 0
 
-    snap_dir = Path(f"/home/vinay/Swaya.me/backend/uploads/proctoring/{quiz_id}/{participant_id}")
+    uploads_base = Path(settings.app.uploads_base_dir)
+    snap_dir = uploads_base / "proctoring" / str(quiz_id) / str(participant_id)
     snap_dir.mkdir(parents=True, exist_ok=True)
 
     filename = file.filename or f"snap_{__import__('time').time_ns()}.jpg"
@@ -275,6 +278,9 @@ async def upload_snapshot(
     try:
         with open(dest, "wb") as f:
             shutil.copyfileobj(file.file, f)
+        # Increment server-side receipt counter
+        if session_token:
+            await svc.record_snapshot_receipt(session_token, redis)
     except Exception:
         pass
 
@@ -303,9 +309,10 @@ async def lock_session(
     session_token: str,
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Admin — manually lock a participant session."""
-    await svc.lock_session(session_token, "ADMIN_LOCK", db, _get_redis())
+    await svc.lock_session(session_token, "ADMIN_LOCK", db, redis)
     await db.commit()
     return {"ok": True}
 
@@ -315,9 +322,10 @@ async def unlock_session(
     session_token: str,
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
 ):
     """Admin — unlock a participant session."""
-    await svc.unlock_session(session_token, db, _get_redis())
+    await svc.unlock_session(session_token, db, redis)
     return {"ok": True}
 
 

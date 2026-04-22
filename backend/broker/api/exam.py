@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
+from shared.utils.redis_client import get_redis, RedisClient
 from features.quiz.schemas import (
     ExamInfoResponse,
     ExamStartRequest,
@@ -16,7 +17,7 @@ from features.quiz.schemas import (
     ExamPublishResponse,
 )
 from features.quiz import exam_service_async as svc
-from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError
+from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
 from core.auth.dependencies import get_current_user, CurrentUser
 
 router = APIRouter(tags=["exam"])
@@ -52,12 +53,19 @@ async def save_answer(slug: str, body: ExamAnswerRequest, db: AsyncSession = Dep
 
 
 @router.post("/e/{slug}/submit", response_model=ExamSubmitResponse)
-async def submit_exam(slug: str, body: ExamSubmitRequest, db: AsyncSession = Depends(get_async_db)):
+async def submit_exam(
+    slug: str,
+    body: ExamSubmitRequest,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis)
+):
     """Public — submit exam; score and return full result."""
     try:
-        return await svc.submit_exam(db, slug, body.session_token)
+        return await svc.submit_exam(db, slug, body.session_token, redis=redis)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ProctoringViolationError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @router.post("/e/{slug}/result", response_model=ExamSubmitResponse)

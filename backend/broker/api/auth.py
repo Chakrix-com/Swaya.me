@@ -2,8 +2,9 @@
 Authentication API endpoints
 """
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from shared.utils.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def register(
-    request: UserRegisterRequest,
+    request: Request,
+    body: UserRegisterRequest,
     db: AsyncSession = Depends(get_async_db)
 ):
     """
@@ -35,7 +38,7 @@ async def register(
     - Returns JWT access token
     """
     try:
-        return await register_user(db, request)
+        return await register_user(db, body)
     except DuplicateUserError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -44,8 +47,10 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def login(
-    request: UserLoginRequest,
+    request: Request,
+    body: UserLoginRequest,
     db: AsyncSession = Depends(get_async_db)
 ):
     """
@@ -55,7 +60,7 @@ async def login(
     - Returns JWT access token valid for 24 hours
     """
     try:
-        return await login_user(db, request)
+        return await login_user(db, body)
     except (InvalidCredentialsError, TenantNotFoundError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -238,15 +243,17 @@ from core.auth.schemas import ForgotPasswordRequest, ResetPasswordRequest
 from core.auth.service_async import request_password_reset, execute_password_reset
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
+@limiter.limit("3/minute")
 async def forgot_password(
-    request: ForgotPasswordRequest,
+    request: Request,
+    body: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Request a password reset email
     Always returns 200 OK to prevent email enumeration
     """
-    await request_password_reset(db, request.email)
+    await request_password_reset(db, body.email)
     return {"message": "If that email exists in our system, a password reset link has been sent."}
 
 

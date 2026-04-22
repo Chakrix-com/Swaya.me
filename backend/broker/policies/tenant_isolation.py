@@ -1,23 +1,27 @@
 """
 Middleware for tenant context and isolation
 """
-from fastapi import Request, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import Request
 from typing import Optional
+from contextvars import ContextVar
 
-from persistence.database import get_db
-from persistence.models.core import Tenant
+# ContextVar for thread-safe request-scoped tenant_id
+_tenant_id_ctx: ContextVar[Optional[int]] = ContextVar('tenant_id', default=None)
 
 
 class TenantContext:
-    """Global tenant context for request"""
+    """Request-scoped tenant context for current request"""
     
-    def __init__(self):
-        self.tenant_id: Optional[int] = None
-        self.tenant: Optional[Tenant] = None
+    @property
+    def tenant_id(self) -> Optional[int]:
+        return _tenant_id_ctx.get()
+    
+    @tenant_id.setter
+    def tenant_id(self, value: Optional[int]):
+        _tenant_id_ctx.set(value)
 
 
-# Request-scoped tenant context
+# Global proxy for request-scoped context
 tenant_context = TenantContext()
 
 
@@ -26,9 +30,8 @@ async def tenant_isolation_middleware(request: Request, call_next):
     Middleware to extract and validate tenant context from JWT
     Ensures all database queries are scoped to tenant
     """
-    # Reset context for each request
-    tenant_context.tenant_id = None
-    tenant_context.tenant = None
+    # Reset context for each request (implicitly handled by ContextVar but explicit for clarity)
+    _tenant_id_ctx.set(None)
     
     # Extract tenant_id from token if present
     auth_header = request.headers.get("Authorization")
@@ -37,7 +40,9 @@ async def tenant_isolation_middleware(request: Request, call_next):
         try:
             from core.security.jwt import decode_access_token
             payload = decode_access_token(token)
-            tenant_context.tenant_id = payload.get("tenant_id")
+            tenant_id = payload.get("tenant_id")
+            if tenant_id:
+                _tenant_id_ctx.set(int(tenant_id))
         except Exception:
             pass
     

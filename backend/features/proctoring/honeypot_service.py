@@ -16,7 +16,7 @@ DECOY_LABELS = [
 
 class HoneypotService:
 
-    async def generate(self, quiz_id: int, participant_id: int, question_type: str, redis) -> dict:
+    async def generate(self, quiz_id: int, participant_id: int, question_type: str, redis: "RedisClient") -> dict:
         config = {
             "hidden_field_name": f"confirm_{secrets.token_hex(4)}",
             "decoy_endpoint_param": secrets.token_hex(8),
@@ -27,7 +27,7 @@ class HoneypotService:
 
         try:
             key = f"proctor:honeypot:{quiz_id}:{participant_id}"
-            await redis.setex(key, 86400, json.dumps(config))
+            await redis.set_json(key, config, expire=86400)
         except Exception:
             pass
 
@@ -38,7 +38,7 @@ class HoneypotService:
         session_token: str,
         trap_type: str,
         db,
-        redis,
+        redis: "RedisClient",
     ) -> None:
         from features.proctoring import proctoring_service_async as svc
         event_type_map = {

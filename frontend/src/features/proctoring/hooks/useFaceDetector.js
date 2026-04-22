@@ -16,10 +16,13 @@ export function useFaceDetector({ videoRef, config, reportViolation, enabled }) 
         // Lazy-load mediapipe only when webcam is actually required
         const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
         const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
+          '/mediapipe/wasm'
         );
         detectorRef.current = await FaceDetector.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite', delegate: 'GPU' },
+          baseOptions: { 
+            modelAssetPath: '/mediapipe/models/blaze_face_short_range.tflite', 
+            delegate: 'GPU' 
+          },
           runningMode: 'VIDEO',
           minDetectionConfidence: 0.5,
         });

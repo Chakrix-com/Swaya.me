@@ -5,23 +5,19 @@ import logging
 from typing import Optional, Dict, Any
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+from core.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 # Configure FastMail
 try:
     conf = ConnectionConfig(
-        MAIL_USERNAME=os.getenv("SMTP_USER", ""),
-        MAIL_PASSWORD=os.getenv("SMTP_PASSWORD", ""),
-        MAIL_FROM=os.getenv("SMTP_FROM_EMAIL", "info@chakrix.com"),
-        MAIL_PORT=int(os.getenv("SMTP_PORT", 465)),
-        MAIL_SERVER=os.getenv("SMTP_HOST", "smtp.titan.email"),
-        MAIL_FROM_NAME=os.getenv("SMTP_FROM_NAME", "Swayame"),
+        MAIL_USERNAME=settings.smtp.user,
+        MAIL_PASSWORD=settings.smtp.password,
+        MAIL_FROM=settings.smtp.from_email,
+        MAIL_PORT=settings.smtp.port,
+        MAIL_SERVER=settings.smtp.host,
+        MAIL_FROM_NAME=settings.smtp.from_name,
         MAIL_STARTTLS=False,
         MAIL_SSL_TLS=True,
         USE_CREDENTIALS=True,
@@ -29,7 +25,7 @@ try:
     )
     
     # Check if SMTP is configured
-    smtp_enabled = bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
+    smtp_enabled = bool(settings.smtp.host and settings.smtp.user and settings.smtp.password)
     
     if not smtp_enabled:
         logger.warning("SMTP configuration is incomplete. Emails will only be logged, not sent.")
@@ -41,8 +37,6 @@ except Exception as e:
 # Initialize FastMail
 fast_mail = FastMail(conf) if conf and smtp_enabled else None
 
-
-from core.config.settings import settings
 
 async def send_verification_email(email: EmailStr, token: str, name: Optional[str] = None) -> bool:
     """
@@ -273,7 +267,7 @@ async def send_email(subject: str, recipients: list[EmailStr], html_body: str) -
     except Exception as e:
         logger.error(f"Failed to send email to {recipients}: {e}")
         # In development, don't fail registering just because email fails
-        if os.getenv("ENVIRONMENT") == "development":
+        if settings.app.environment == "development":
             logger.info(f"Development fallback: Simulated email sending because real sending failed.")
             return True
         return False

@@ -22,7 +22,7 @@ Detected strictly from code evidence (imports, config, usage). No assumptions ma
 | **uvicorn + uvloop** | HIGH | `requirements.txt` → `uvicorn==0.24.0`, `uvloop==0.22.1` |
 | **APScheduler (AsyncIO)** | HIGH | `core/stats/scheduler.py` → `from apscheduler.schedulers.asyncio import AsyncIOScheduler` |
 | **slowapi** (rate limiting) | HIGH | `requirements.txt` → `slowapi==0.1.9` |
-| **python-socketio** | HIGH | `requirements.txt` → `python-socketio==5.16.1`; `.venv` contains `socketio/` package |
+| **python-socketio** | NOT ACTIVE (REMOVED) | Removed from `requirements.txt` as it was unused; `routes.py` has zero socketio routes |
 | **openpyxl** | HIGH | `features/quiz/import_service.py` → `import openpyxl` |
 | **wordcloud + Pillow** | HIGH | `features/quiz/export_service.py` → `from wordcloud import WordCloud`; `pillow==12.1.1` |
 | **reportlab** | HIGH | `requirements.txt` → `reportlab==4.2.5`; referenced in `export_service.py` |

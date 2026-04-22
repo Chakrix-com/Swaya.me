@@ -7,11 +7,15 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from core.config.settings import settings
 from persistence.models.app_feedback import AppFeedback  # noqa: F401
 from broker.api.routes import api_router
 from shared.utils.redis_client import redis_client
+from shared.utils.rate_limiter import limiter
 from broker.policies.tenant_isolation import tenant_isolation_middleware
 from core.stats.scheduler import start_scheduler, stop_scheduler
 
@@ -30,12 +34,13 @@ async def lifespan(app: FastAPI):
     print("✓  Redis connected")
     
     # Ensure uploads directory exists
-    uploads_dir = Path("/home/vinay/Swaya.me/backend/uploads/images")
+    uploads_base = Path(settings.app.uploads_base_dir)
+    uploads_dir = uploads_base / "images"
     uploads_dir.mkdir(parents=True, exist_ok=True)
     print(f"✓  Uploads directory ready: {uploads_dir}")
     
     # Ensure temp directory exists
-    temp_dir = Path("/home/vinay/Swaya.me/backend/uploads/temp")
+    temp_dir = uploads_base / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
     print(f"✓  Temp directory ready: {temp_dir}")
     
@@ -58,6 +63,17 @@ async def lifespan(app: FastAPI):
         print("✓  Proctoring rules seeded")
     except Exception as e:
         print(f"⚠  Proctoring rules seed skipped: {e}")
+    
+    # Check Ollama connectivity
+    try:
+        from core.ai.ollama_service import list_available_models
+        models = await list_available_models()
+        if models:
+            print(f"✓  Ollama connected ({len(models)} models available)")
+        else:
+            print(f"⚠  Ollama connected but no models found at {settings.ollama.base_url}")
+    except Exception as e:
+        print(f"⚠  Ollama unreachable at {settings.ollama.base_url}: {e}")
     
     yield
     
@@ -104,11 +120,16 @@ def create_application() -> FastAPI:
     # Tenant isolation middleware
     app.middleware("http")(tenant_isolation_middleware)
 
+    # Rate Limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
     
     # Mount static files for uploads (must be after API routes)
-    uploads_path = Path("/home/vinay/Swaya.me/backend/uploads")
+    uploads_path = Path(settings.app.uploads_base_dir)
     if uploads_path.exists():
         app.mount("/api/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
 

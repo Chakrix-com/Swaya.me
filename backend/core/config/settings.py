@@ -78,6 +78,7 @@ class AppSettings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     environment: str = Field(default="production", alias="ENVIRONMENT")
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
+    uploads_base_dir: str = Field(default="/home/vinay/Swaya.me/backend/uploads", alias="UPLOADS_BASE_DIR")
     allowed_origins: List[str] = Field(
         default=["http://localhost:3000"], 
         alias="ALLOWED_ORIGINS"
@@ -102,6 +103,35 @@ class GoogleSettings(BaseSettings):
     )
 
 
+class SMTPSettings(BaseSettings):
+    """Email SMTP configuration"""
+    host: str = Field(default="smtp.titan.email", alias="SMTP_HOST")
+    port: int = Field(default=465, alias="SMTP_PORT")
+    user: str = Field(default="", alias="SMTP_USER")
+    password: str = Field(default="", alias="SMTP_PASSWORD")
+    from_email: str = Field(default="info@chakrix.com", alias="SMTP_FROM_EMAIL")
+    from_name: str = Field(default="Swayame", alias="SMTP_FROM_NAME")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+
+class OllamaSettings(BaseSettings):
+    """Ollama AI service configuration"""
+    base_url: str = Field(default="http://127.0.0.1:11434", alias="OLLAMA_BASE_URL")
+    model: str = Field(default="qwen2.5:3b", alias="OLLAMA_MODEL")
+    fallback_model: str = Field(default="llama3.2:1b", alias="OLLAMA_FALLBACK_MODEL")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
@@ -109,6 +139,8 @@ class Settings(BaseSettings):
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     app: AppSettings = Field(default_factory=AppSettings)
     google: GoogleSettings = Field(default_factory=GoogleSettings)
+    smtp: SMTPSettings = Field(default_factory=SMTPSettings)
+    ollama: OllamaSettings = Field(default_factory=OllamaSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from persistence.models.core import Tenant, TierConfiguration, TierEnum
+from persistence.models.quiz import Participant
 from shared.utils.redis_client import RedisClient
 
 
@@ -98,7 +99,20 @@ class TierService:
         # Get current participant count from Redis
         key = f"session:{session_id}:participants:count"
         count = await self.redis.get(key)
-        current_count = int(count) if count else 0
+        
+        if count is None:
+            # Fallback to DB if Redis key is missing (e.g. after restart)
+            result = await db.execute(
+                select(func.count(Participant.id)).filter(
+                    Participant.session_id == session_id,
+                    Participant.is_active == True
+                )
+            )
+            current_count = result.scalar() or 0
+            # Repopulate Redis cache (24h TTL)
+            await self.redis.set(key, str(current_count), expire=86400)
+        else:
+            current_count = int(count)
         
         return current_count < max_participants
     

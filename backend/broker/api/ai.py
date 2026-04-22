@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from core.auth.dependencies import require_admin, get_current_user, CurrentUser
+from core.config.settings import settings
 from core.ai.ollama_service import (
     generate_questions,
     generate_distractors,
@@ -14,8 +15,6 @@ from core.ai.ollama_service import (
     rewrite_text,
     list_available_models,
     OllamaError,
-    DEFAULT_MODEL,
-    FALLBACK_MODEL,
 )
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -75,7 +74,7 @@ class ModelsResponse(BaseModel):
 async def get_models(current_user: CurrentUser = Depends(require_admin)):
     """List available ollama models on this server."""
     models = await list_available_models()
-    return ModelsResponse(models=models, default_model=DEFAULT_MODEL)
+    return ModelsResponse(models=models, default_model=settings.ollama.model)
 
 
 @router.post("/generate/questions", response_model=GenerateQuestionsResponse)
@@ -85,10 +84,11 @@ async def api_generate_questions(
 ):
     """
     Generate MCQ quiz questions for a given topic.
-    Returns questions with 4 options each and the correct answer index.
+    - Returns questions with 4 options each and the correct answer index.
     """
-    model = req.model or DEFAULT_MODEL
+    model = req.model or settings.ollama.model
     try:
+
         questions = await generate_questions(
             topic=req.topic,
             count=req.count,
@@ -119,7 +119,7 @@ async def api_generate_distractors(
     Generate plausible wrong answer options (distractors) for an MCQ question.
     Useful when you already have a question and correct answer but need the wrong options.
     """
-    model = req.model or DEFAULT_MODEL
+    model = req.model or settings.ollama.model
     try:
         distractors = await generate_distractors(
             question=req.question,
@@ -142,7 +142,7 @@ async def api_generate_poll_prompt(
     Generate a short open-ended word cloud poll question for a given topic.
     Designed to elicit single/two-word responses from the audience.
     """
-    model = req.model or DEFAULT_MODEL
+    model = req.model or settings.ollama.model
     try:
         prompt = await generate_poll_prompt(
             topic=req.topic,
@@ -173,7 +173,7 @@ async def api_rewrite(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Rewrite a piece of text to be clearer and better suited for a quiz context."""
-    model = req.model or FALLBACK_MODEL
+    model = req.model or settings.ollama.fallback_model
     try:
         rewritten = await rewrite_text(
             text=req.text,

@@ -8,12 +8,9 @@ import re
 from typing import Any
 
 import httpx
+from core.config.settings import settings
 
 logger = logging.getLogger(__name__)
-
-OLLAMA_BASE_URL = "http://127.0.0.1:11434"
-DEFAULT_MODEL = "qwen2.5:3b"
-FALLBACK_MODEL = "llama3.2:1b"
 
 # Generous timeout — CPU inference is slower than GPU
 TIMEOUT = httpx.Timeout(120.0, connect=5.0)
@@ -38,10 +35,10 @@ async def _generate(prompt: str, model: str, temperature: float = 0.7, max_token
         payload["format"] = fmt
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         try:
-            resp = await client.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload)
+            resp = await client.post(f"{settings.ollama.base_url}/api/generate", json=payload)
             resp.raise_for_status()
         except httpx.ConnectError:
-            raise OllamaError("Cannot connect to ollama daemon at 127.0.0.1:11434")
+            raise OllamaError(f"Cannot connect to ollama daemon at {settings.ollama.base_url}")
         except httpx.HTTPStatusError as e:
             raise OllamaError(f"Ollama returned HTTP {e.response.status_code}")
     return resp.json()["response"]
@@ -63,7 +60,7 @@ async def generate_questions(
     topic: str,
     count: int = 5,
     language: str = "en",
-    model: str = DEFAULT_MODEL,
+    model: str = None,
 ) -> list[dict]:
     """
     Generate MCQ quiz questions for a given topic.
@@ -71,6 +68,8 @@ async def generate_questions(
     Returns a list of dicts:
         [{"text": str, "options": [str, str, str, str], "correct_answer_index": int}, ...]
     """
+    if model is None:
+        model = settings.ollama.model
     count = min(max(count, 1), 10)  # clamp 1-10
 
     prompt = f"""You are a quiz generator. Output ONLY valid JSON, no explanations, no markdown.
@@ -119,13 +118,15 @@ async def generate_distractors(
     question: str,
     correct_answer: str,
     count: int = 3,
-    model: str = DEFAULT_MODEL,
+    model: str = None,
 ) -> list[str]:
     """
     Generate plausible-but-wrong MCQ distractors for a given question + correct answer.
 
     Returns a list of distractor strings.
     """
+    if model is None:
+        model = settings.ollama.model
     count = min(max(count, 1), 5)
 
     prompt = f"""For the following quiz question, generate {count} plausible but incorrect answer options (distractors).
@@ -157,13 +158,15 @@ Rules:
 async def generate_poll_prompt(
     topic: str,
     language: str = "en",
-    model: str = DEFAULT_MODEL,
+    model: str = None,
 ) -> str:
     """
     Generate a short, open-ended word cloud poll question for a given topic.
 
     Returns a single question string.
     """
+    if model is None:
+        model = settings.ollama.model
     prompt = f"""Generate a single short, open-ended poll question suitable for a live audience word cloud activity.
 Topic: "{topic}"
 Language: {language}
@@ -188,13 +191,15 @@ async def rewrite_text(
     text: str,
     context: str = "quiz question",
     language: str = "en",
-    model: str = FALLBACK_MODEL,
+    model: str = None,
 ) -> str:
     """
     Rewrite the given text to be clearer and better suited for the quiz context.
     Uses the fast 1B model by default for low latency.
     Returns the rewritten string.
     """
+    if model is None:
+        model = settings.ollama.fallback_model
     prompt = (
         f"Fix spelling, grammar, and phrasing of the text below for use as a {context}. "
         f"Write in {language}. Return ONLY the corrected text, nothing else.\n\n"
@@ -237,7 +242,7 @@ async def grade_text_answer(participant_answer: str, expected_answer: str) -> bo
         "Reply with exactly one word: YES or NO."
     )
     try:
-        raw = await _generate(prompt, FALLBACK_MODEL, temperature=0.0, max_tokens=4, fmt="")
+        raw = await _generate(prompt, settings.ollama.fallback_model, temperature=0.0, max_tokens=4, fmt="")
         verdict = raw.strip().split()[0].upper() if raw.strip() else "NO"
         return verdict == "YES"
     except Exception:
@@ -268,7 +273,7 @@ async def list_available_models() -> list[str]:
     """Return names of models currently pulled in ollama."""
     async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as client:
         try:
-            resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            resp = await client.get(f"{settings.ollama.base_url}/api/tags")
             resp.raise_for_status()
             return [m["name"] for m in resp.json().get("models", [])]
         except Exception:

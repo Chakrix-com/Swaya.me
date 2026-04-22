@@ -187,9 +187,10 @@ Key naming convention from codebase: `{domain}:{entity_id}:{property}`.
 
 ## 5. Known Gaps (NOT DERIVABLE FROM CODE — handle with care)
 
-- **Real-time audience updates**: `python-socketio` is in requirements but has zero active routes. How `AudienceSession.jsx` receives question advance events is not provable from reviewed code. Do NOT assume Socket.IO is live.
-- **Exam time enforcement**: Server-side time limit check in `submit_exam()` is not confirmed in reviewed code. Treat time enforcement as frontend-only until proven otherwise.
+- **Real-time audience updates**: `python-socketio` is in requirements but has zero active routes. `AudienceSession.jsx:73-81` uses 2-second HTTP polling (`loadResults`) for session state updates.
+- **Exam time enforcement**: Enforced server-side in `exam_service_async.py:197-202` — raises HTTP 410 if `elapsed > limit`.
 - **Duplicate answer prevention**: No DB unique constraint on `(participant_id, question_id)`. Race condition possible under concurrent submissions. Do NOT rely on application-level SELECT-then-INSERT alone for correctness guarantees.
 - **Proctoring bypass**: All face detection runs in the browser via MediaPipe (loaded from external CDN). Server receives only what the client reports. No server-side verification exists in reviewed code.
 - **Ollama dependency**: AI features require `ollama` daemon running at `http://127.0.0.1:11434` with `qwen2.5:3b` model pre-pulled. Not health-checked at startup. Silent 503 if unavailable.
 - **Tier counters after Redis flush**: `session:{id}:participants:count` in Redis is the source of truth for participant limits. If Redis is restarted, counters reset to 0 — tier limits are bypassable until the next join repopulates the counter.
+- **Concurrent-Safe Session Restart**: `session_service_async.py:594-621` invalidates participants in DB and evicts tokens from Redis on session start.

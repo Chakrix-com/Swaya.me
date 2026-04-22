@@ -194,6 +194,9 @@ class Answer(Base, TimestampMixin):
     Answer - participant's response to a question
     """
     __tablename__ = "answers"
+    __table_args__ = (
+        UniqueConstraint('participant_id', 'question_id', name='uq_answer_participant_question'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=False)
@@ -232,6 +235,9 @@ class QuizFeedback(Base, TimestampMixin, TenantMixin):
     Feedback submitted by participants or authenticated users for a quiz/session
     """
     __tablename__ = "quiz_feedback"
+    __table_args__ = (
+        UniqueConstraint('participant_id', 'session_id', name='uq_feedback_participant_session'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False, index=True)

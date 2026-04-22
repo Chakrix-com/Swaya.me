@@ -8,8 +8,11 @@ from alembic import context
 # Import settings and models
 from core.config.settings import settings
 from persistence.database import Base
-from persistence.models.core import Tenant, User, Event, TierConfiguration
-from persistence.models.quiz import Quiz, Question, QuizSession, Participant, Answer
+from persistence.models.core import Tenant, User, Event, UserActivity, TierConfiguration, LanguageUsageEvent
+from persistence.models.quiz import Quiz, QuizFolder, Question, QuizSession, Participant, Answer, SessionQuestionTiming, QuizFeedback
+from persistence.models.stats import StatsSnapshot
+from persistence.models.proctoring import PlatformProctoringRule, TenantProctoringPolicy, ProctoringSession, ProctoringEvent
+from persistence.models.app_feedback import AppFeedback
 
 # Alembic Config object
 config = context.config

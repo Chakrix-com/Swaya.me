@@ -56,3 +56,8 @@ class TierLimitExceededError(Exception):
 class ContentFilterError(Exception):
     """Submitted content failed the profanity/content filter"""
     pass
+
+
+class ProctoringViolationError(Exception):
+    """Proctoring requirement not met or violation detected"""
+    pass

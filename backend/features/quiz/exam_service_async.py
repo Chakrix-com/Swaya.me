@@ -28,7 +28,7 @@ from features.quiz.schemas import (
     ExamQuestionAnalytics,
     ExamPublishResponse,
 )
-from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError
+from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
 from core.auth.dependencies import CurrentUser
 from core.storage import ImageService
 
@@ -269,6 +269,7 @@ async def submit_exam(
     db: AsyncSession,
     slug: str,
     session_token: str,
+    redis=None,
 ) -> ExamSubmitResponse:
     """Public — submit the exam, calculate score, return breakdown."""
     result = await db.execute(
@@ -279,6 +280,18 @@ async def submit_exam(
     quiz = result.scalar_one_or_none()
     if not quiz:
         raise QuizNotFoundError("Exam not found")
+
+    # Verify proctoring requirements (e.g., webcam snapshots) if enabled
+    policy = quiz.proctoring_policy or {}
+    if policy.get("enabled") and redis:
+        from features.proctoring.proctoring_service_async import get_snapshot_count
+        count = await get_snapshot_count(session_token, redis)
+        if count == 0:
+
+            logger.warning(f"Exam submission rejected for {session_token}: no snapshots received despite proctoring enabled")
+            raise ProctoringViolationError(
+                "Proctoring requirement not met: no webcam snapshots received during the session."
+            )
 
     participant = await _get_active_participant(db, quiz, session_token)
 

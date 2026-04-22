@@ -1,5 +1,9 @@
 """
-Database connection and session management
+Database connection and session management (Sync)
+
+WARNING: This module provides synchronous database access. 
+It is intended ONLY for Alembic migrations and one-off maintenance scripts.
+All application code MUST use persistence.database_async instead.
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base

@@ -1,7 +1,7 @@
 """
 Proctoring domain models
 """
-from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Enum as SQLEnum, Text, JSON
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Enum as SQLEnum, Text, JSON, ForeignKey
 from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
 import sqlalchemy as sa
 
@@ -30,7 +30,7 @@ class TenantProctoringPolicy(Base):
     __tablename__ = "tenant_proctoring_policies"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
+    tenant_id = Column(Integer, ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     rule_id = Column(String(64), nullable=False)
     enabled_for = Column(JSON, nullable=False)
     config_override = Column(JSON, nullable=True)
@@ -43,9 +43,9 @@ class ProctoringSession(Base):
     __tablename__ = "proctoring_sessions"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    participant_id = Column(Integer, nullable=False, index=True)
-    quiz_id = Column(Integer, nullable=False, index=True)
-    tenant_id = Column(Integer, nullable=False)
+    participant_id = Column(Integer, ForeignKey('participants.id', ondelete='CASCADE'), nullable=False, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False, index=True)
+    tenant_id = Column(Integer, ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False)
     active_rule_set = Column(JSON, nullable=False)
     violation_count = Column(Integer, nullable=False, default=0, server_default='0')
     integrity_score = Column(Integer, nullable=False, default=100, server_default='100')
@@ -64,9 +64,9 @@ class ProctoringEvent(Base):
     __tablename__ = "proctoring_events"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    quiz_id = Column(Integer, nullable=False)
-    tenant_id = Column(Integer, nullable=False)
-    participant_id = Column(Integer, nullable=False)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False)
+    tenant_id = Column(Integer, ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False)
+    participant_id = Column(Integer, ForeignKey('participants.id', ondelete='CASCADE'), nullable=False)
     session_token = Column(String(255), nullable=False, index=True)
     rule_id = Column(String(64), nullable=True)
     event_type = Column(String(64), nullable=False)

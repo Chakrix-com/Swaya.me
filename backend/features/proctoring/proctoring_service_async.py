@@ -21,7 +21,7 @@ def _session_key(token: str) -> str:
     return f"proctor:session:{token}"
 
 
-async def _get_redis_session(redis, token: str) -> dict | None:
+async def _get_redis_session(redis: "RedisClient", token: str) -> dict | None:
     try:
         raw = await redis.get(_session_key(token))
         if raw:
@@ -31,9 +31,9 @@ async def _get_redis_session(redis, token: str) -> dict | None:
     return None
 
 
-async def _set_redis_session(redis, token: str, data: dict) -> None:
+async def _set_redis_session(redis: "RedisClient", token: str, data: dict) -> None:
     try:
-        await redis.setex(_session_key(token), REDIS_SESSION_TTL, json.dumps(data))
+        await redis.set_json(_session_key(token), data, expire=REDIS_SESSION_TTL)
     except Exception:
         pass
 
@@ -50,7 +50,7 @@ async def init_session(
     webcam_granted: bool,
     session_token: str,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> SessionInitResponse:
     rule_set = await _resolver.resolve(context, quiz_proctoring_policy, db, redis)
     lock_threshold = rule_set.escalation.get("lock_on_violation_count", 3)
@@ -116,13 +116,27 @@ async def update_webcam_granted(session_token: str, db: AsyncSession) -> bool:
     return True
 
 
+async def record_snapshot_receipt(session_token: str, redis: "RedisClient") -> None:
+    """Increment the received snapshot counter for this session."""
+    key = f"proctor:snapshots:{session_token}"
+    await redis.increment(key)
+    await redis.expire(key, REDIS_SESSION_TTL)
+
+
+async def get_snapshot_count(session_token: str, redis: "RedisClient") -> int:
+    """Return the number of snapshots received for this session."""
+    key = f"proctor:snapshots:{session_token}"
+    val = await redis.get(key)
+    return int(val) if val else 0
+
+
 async def get_config(
     quiz_id: int,
     tenant_id: int,
     context: ProctoringContext,
     quiz_proctoring_policy: dict | None,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> ResolvedRuleSet:
     return await _resolver.resolve(context, quiz_proctoring_policy, db, redis)
 
@@ -133,7 +147,7 @@ async def log_violation(
     event_type: str,
     metadata: dict,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> ViolationEventResponse:
     redis_data = await _get_redis_session(redis, session_token)
     if not redis_data:
@@ -217,7 +231,7 @@ async def lock_session(
     session_token: str,
     reason: str,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
     redis_data: dict | None = None,
 ) -> None:
     if redis_data is None:
@@ -256,7 +270,7 @@ async def lock_session(
 async def unlock_session(
     session_token: str,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> None:
     redis_data = await _get_redis_session(redis, session_token)
     if redis_data is None:
@@ -296,7 +310,7 @@ async def check_integrity(
     fingerprint: str,
     ip: str,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> dict:
     redis_data = await _get_redis_session(redis, session_token)
     if not redis_data:
@@ -360,7 +374,7 @@ async def ingest_biometric_sample(
     session_token: str,
     sample,
     db: AsyncSession,
-    redis,
+    redis: "RedisClient",
 ) -> None:
     from features.proctoring.integrity_scorer import IntegrityScorer
 

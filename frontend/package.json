@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "mkdir -p public/mediapipe/wasm public/mediapipe/models && curl -L https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm/vision_wasm_internal.wasm -o public/mediapipe/wasm/vision_wasm_internal.wasm && curl -L https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm/vision_wasm_internal.js -o public/mediapipe/wasm/vision_wasm_internal.js && curl -L https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite -o public/mediapipe/models/blaze_face_short_range.tflite"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
