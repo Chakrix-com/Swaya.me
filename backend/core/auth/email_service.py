@@ -111,7 +111,7 @@ WELCOME_EMAIL_HTML = """\
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Swaya.me Beta</title>
+  <title>Welcome to Swaya.me</title>
   <style>
     body {{ margin: 0; padding: 0; background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; }}
     .wrapper {{ max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
@@ -136,49 +136,69 @@ WELCOME_EMAIL_HTML = """\
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>Welcome to Swaya.me Beta!</h1>
-      <p>Your account is verified and ready to go.</p>
+      <h1>You're in. Let's run something.</h1>
+      <p>Your Swaya.me account is ready.</p>
     </div>
     <div class="body">
       <p class="greeting">Hi {name},</p>
       <p class="intro">
-        You're all set. Here's everything you can do with
-        <strong>Swaya.me Beta</strong> right now:
+        Welcome to Swaya.me. Here's the full picture of what you can do from day one:
       </p>
       <ul class="feature-list">
         <li>
           <span class="feature-icon">🎯</span>
           <span class="feature-text">
             <strong>Live Quiz</strong>
-            <span>Create a quiz, share a join code, and run it live — audience answers in real time from any device.</span>
+            <span>Share a join code — your audience answers MCQs in real time and the leaderboard updates live.</span>
           </span>
         </li>
         <li>
           <span class="feature-icon">📊</span>
           <span class="feature-text">
             <strong>Live Poll</strong>
-            <span>Run an instant live poll and watch results update on screen as your audience responds.</span>
+            <span>Run instant polls with word clouds, rating scales, open-ended, or one-word answers — results animate on screen.</span>
           </span>
         </li>
         <li>
           <span class="feature-icon">📋</span>
           <span class="feature-text">
             <strong>Offline Poll</strong>
-            <span>No live session needed — share a link and collect responses at your own pace.</span>
+            <span>No live session needed. Share a link and collect responses at any pace.</span>
           </span>
         </li>
         <li>
           <span class="feature-icon">📝</span>
           <span class="feature-text">
             <strong>Test / Exam</strong>
-            <span>Set a time limit, enable negative marking, and let Swaya score submissions automatically.</span>
+            <span>Schedule a timed exam with negative marking, fullscreen enforcement, and automatic scoring.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🔒</span>
+          <span class="feature-text">
+            <strong>Proctoring</strong>
+            <span>Webcam monitoring, tab-switch detection, and session locking — for exams that need to be fair.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">📂</span>
+          <span class="feature-text">
+            <strong>Import from Excel</strong>
+            <span>Bulk-upload questions from a spreadsheet. Download the template, fill it in, and you're done.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🗂️</span>
+          <span class="feature-text">
+            <strong>Templates &amp; Folders</strong>
+            <span>Save any quiz as a reusable template. Organise everything into folders.</span>
           </span>
         </li>
         <li>
           <span class="feature-icon">✍️</span>
           <span class="feature-text">
             <strong>Rich Text Questions</strong>
-            <span>Format questions with bold, italic, code blocks, tables, headings, colours, and more.</span>
+            <span>Bold, italic, code blocks, tables, headings, colours — questions can be fully formatted.</span>
           </span>
         </li>
         <li>
@@ -189,32 +209,32 @@ WELCOME_EMAIL_HTML = """\
           </span>
         </li>
         <li>
-          <span class="feature-icon">🌙</span>
+          <span class="feature-icon">📈</span>
           <span class="feature-text">
-            <strong>Dark / Light Mode</strong>
-            <span>Switch themes on every page, including participant and join screens.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">💬</span>
-          <span class="feature-text">
-            <strong>Feedback Button</strong>
-            <span>A floating button on every page — click it to send us feedback or report a bug instantly.</span>
+            <strong>Session History &amp; Export</strong>
+            <span>Every past session is saved. Download results as a spreadsheet anytime.</span>
           </span>
         </li>
         <li>
           <span class="feature-icon">🌐</span>
           <span class="feature-text">
             <strong>11 Languages</strong>
-            <span>The full app is available in English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, and Russian.</span>
+            <span>English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, and Russian.</span>
+          </span>
+        </li>
+        <li>
+          <span class="feature-icon">🌙</span>
+          <span class="feature-text">
+            <strong>Dark / Light Mode</strong>
+            <span>Switch themes on every screen — host, participant, and join views.</span>
           </span>
         </li>
       </ul>
       <div class="cta-wrap">
-        <a class="cta" href="https://www.swaya.me">Go to Dashboard →</a>
+        <a class="cta" href="https://www.swaya.me">Open Dashboard →</a>
       </div>
       <p style="font-size:14px; color:#555; text-align:center; margin-top:20px; line-height:1.6;">
-        Thanks for joining Swaya.me Beta.<br>
+        Thanks for joining Swaya.me.<br>
         Your feedback helps us build something great.
       </p>
     </div>
@@ -231,11 +251,11 @@ WELCOME_EMAIL_HTML = """\
 
 
 async def send_welcome_email(email: str, name: Optional[str] = None) -> bool:
-    """Send a welcome email after a user verifies their email address."""
+    """Send a welcome email after a new user account is created."""
     recipient_name = (name or email.split('@')[0]).strip().split()[0]
     html_content = WELCOME_EMAIL_HTML.format(name=recipient_name)
     return await send_email(
-        subject="Welcome to Swaya.me Beta — here's what you can do",
+        subject="Welcome to Swaya.me — here's what you can do",
         recipients=[email],
         html_body=html_content,
     )

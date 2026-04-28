@@ -77,6 +77,7 @@ class AppSettings(BaseSettings):
     reload: bool = Field(default=False, alias="RELOAD")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     environment: str = Field(default="production", alias="ENVIRONMENT")
+    login_rate_limit: str = Field(default="10/minute", alias="LOGIN_RATE_LIMIT")
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     uploads_base_dir: str = Field(default="/home/vinay/Swaya.me/backend/uploads", alias="UPLOADS_BASE_DIR")
     allowed_origins: List[str] = Field(

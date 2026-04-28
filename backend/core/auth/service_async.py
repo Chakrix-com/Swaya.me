@@ -19,7 +19,7 @@ from shared.exceptions.auth import (
     EmailNotVerifiedError
 )
 import secrets
-from core.auth.email_service import send_verification_email
+from core.auth.email_service import send_verification_email, send_welcome_email
 
 DEMO_LOGIN_BYPASS_EMAIL = "demo@swaya.me"
 
@@ -274,6 +274,8 @@ async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict
     email = profile.get('email', '')
     name = profile.get('name') or email.split('@')[0]
 
+    is_new_user = False
+
     # Find by oauth identity first
     stmt = select(User).where(User.oauth_provider == provider, User.oauth_provider_id == provider_id)
     result = await db.execute(stmt)
@@ -291,6 +293,7 @@ async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict
             await db.flush()
         else:
             # Create new tenant + user
+            is_new_user = True
             email_local = email.split('@')[0]
             base_name = name.strip() or email_local
             tenant_name = f"{base_name}'s Workspace"
@@ -336,6 +339,14 @@ async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict
     user.last_login_at = datetime.now(timezone.utc)
     user.login_count = (user.login_count or 0) + 1
     await db.commit()
+
+    if is_new_user:
+        import logging
+        _logger = logging.getLogger(__name__)
+        try:
+            await send_welcome_email(user.email, user.full_name)
+        except Exception as e:
+            _logger.error(f"Failed to send welcome email to {user.email}: {e}")
 
     access_token = create_access_token(data={
         "sub": str(user.id),

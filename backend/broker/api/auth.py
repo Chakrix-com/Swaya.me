@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared.utils.rate_limiter import limiter
+from core.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("10/minute")
+@limiter.limit(lambda: settings.app.login_rate_limit)
 async def login(
     request: Request,
     body: UserLoginRequest,

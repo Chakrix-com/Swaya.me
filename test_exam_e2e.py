@@ -112,9 +112,19 @@ def find_published_exam(token):
                 continue
 
             slug = quiz.get("slug") or quiz.get("exam_url", "").split("/")[-1]
-            if slug:
-                log(f"Found active published test: id={quiz['id']} slug={slug}", "SUCCESS")
-                return quiz["id"], slug
+            if not slug:
+                continue
+
+            # Fetch detail to check if proctoring is enabled — skip proctored exams
+            detail = requests.get(f"{API_BASE_URL}/quizzes/{quiz['id']}", headers=headers, verify=False, timeout=20)
+            if detail.status_code == 200:
+                policy = detail.json().get("proctoring_policy") or {}
+                if policy.get("enabled"):
+                    log(f"Skipping exam {quiz['id']}: proctoring enabled", "INFO")
+                    continue
+
+            log(f"Found active published test: id={quiz['id']} slug={slug}", "SUCCESS")
+            return quiz["id"], slug
     raise RuntimeError("No published exam/test found. Please publish at least one test in the dashboard.")
 
 
