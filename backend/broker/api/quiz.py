@@ -487,7 +487,7 @@ async def finalize_import(
         data = await request.json()
         if not data.get("canImport"):
             raise HTTPException(status_code=400, detail="Import data is invalid or has errors.")
-        
+
         quiz = await service.create_from_import(db, data, current_user)
         # Reload with questions eagerly to avoid lazy-load in async context
         result = await db.execute(
@@ -498,6 +498,8 @@ async def finalize_import(
         quiz = result.scalar_one()
         builder_service = await get_quiz_service()
         return builder_service._to_quiz_response(quiz)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to finalize import: {str(e)}")
 
