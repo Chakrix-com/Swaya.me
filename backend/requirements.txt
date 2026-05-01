@@ -92,3 +92,4 @@ zope.event==6.1
 zope.interface==8.2
 wordcloud
 httpx==0.27.0
+fastapi-mail==1.6.2
