@@ -2145,11 +2145,22 @@ export default function QuizBuilder() {
           </Tooltip>
         )}
         {quiz && quiz.status === 'ready' && isOfflinePoll && (
-          <Button
-            onClick={() => navigate(`/quiz/${id}/offline-results`)}
-          >
-            {t('offlinePoll.viewResults', 'View Results')}
-          </Button>
+          <>
+            <Button
+              onClick={() => navigate(`/quiz/${id}/offline-results`)}
+            >
+              {t('offlinePoll.viewResults', 'View Results')}
+            </Button>
+            <Tooltip title={t('tooltip.unpublishQuiz')}>
+              <Button
+                type="default"
+                onClick={handleUnpublish}
+                loading={loading}
+              >
+                {t('quiz.unpublishPoll')}
+              </Button>
+            </Tooltip>
+          </>
         )}
         {quiz && quiz.status === 'ready' && isExam && quiz.exam_slug && (
           <Tooltip title={t('tooltip.copyShareLink')}>
