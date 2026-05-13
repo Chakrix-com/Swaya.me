@@ -1651,7 +1651,20 @@ export default function QuizBuilder() {
     delete values.exam_time_limit_minutes
     // Include proctoring policy in the same save (single unified request)
     if (id && proctoringPolicy !== null && (isExam || quiz?.quiz_type === 'offline_poll')) {
-      values.proctoring_policy = proctoringPolicy
+      // Normalise: write explicit { enabled: false } for every known rule that wasn't toggled on,
+      // so the backend context_resolver never falls back to the permissive platform default.
+      const ALL_RULE_IDS = [
+        'fullscreen_enforce', 'tab_switch_detect', 'copy_paste_block', 'multi_tab_detect',
+        'right_click_block', 'bot_signal_detect', 'honeypot_traps', 'question_randomization',
+        'option_randomization', 'answer_timing_enforce', 'behavioral_biometrics',
+        'browser_fingerprint_bind', 'ip_bind', 'steg_watermark', 'devtools_detect',
+        'webcam_monitoring', 'canvas_rendering',
+      ]
+      const normalised = { ...proctoringPolicy, rules: { ...proctoringPolicy.rules } }
+      for (const rid of ALL_RULE_IDS) {
+        if (!normalised.rules[rid]) normalised.rules[rid] = { enabled: false }
+      }
+      values.proctoring_policy = normalised
     }
     try {
       if (id) {

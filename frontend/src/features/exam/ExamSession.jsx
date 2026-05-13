@@ -15,7 +15,7 @@ import {
   QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
   TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined
 } from '@ant-design/icons'
-import { examAPI } from '../../services/api'
+import { examAPI, proctoringAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import PromoCard from '../../components/PromoCard'
@@ -66,17 +66,206 @@ function StatusScreen({ info }) {
   return null
 }
 
+// Proctoring rule IDs that map to i18n keys
+const PROCTORING_RULE_IDS = [
+  'tab_switch_detect', 'copy_paste_block', 'right_click_block',
+  'fullscreen_enforce', 'multi_tab_detect', 'devtools_detect',
+  'bot_signal_detect', 'webcam_monitoring',
+]
+
 // ── Start Screen ─────────────────────────────────────────────────────────────
 
-function StartScreen({ info, onStart, loading }) {
+function StartScreen({ info, proctoringConfig, onStart, loading }) {
   const { t } = useTranslation()
   const [form] = Form.useForm()
-
-  const handleSubmit = (values) => {
-    onStart(values.display_name.trim())
-  }
+  const [otpStep, setOtpStep] = useState('form') // 'form' | 'otp'
+  const [sentEmail, setSentEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [otpError, setOtpError] = useState('')
+  const [acknowledged, setAcknowledged] = useState(false)
+  const cooldownRef = useRef(null)
 
   const timeLimitMins = info.time_limit_seconds ? Math.floor(info.time_limit_seconds / 60) : null
+
+  const activeRuleIds = proctoringConfig
+    ? (proctoringConfig.rules || []).map((r) => r.rule_id).filter((id) => PROCTORING_RULE_IDS.includes(id))
+    : []
+  const webcamOn = proctoringConfig?.webcam_required
+  const hasProctoringRules = activeRuleIds.length > 0 || webcamOn
+
+  const startCooldown = () => {
+    setResendCooldown(60)
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((c) => {
+        if (c <= 1) { clearInterval(cooldownRef.current); return 0 }
+        return c - 1
+      })
+    }, 1000)
+  }
+
+  useEffect(() => () => clearInterval(cooldownRef.current), [])
+
+  const handleSendOtp = async (values) => {
+    setSendingOtp(true)
+    setOtpError('')
+    try {
+      await examAPI.requestOtp(info.exam_slug || window.location.pathname.split('/').pop(), {
+        display_name: values.display_name.trim(),
+        email: values.email.trim().toLowerCase(),
+      })
+      setDisplayName(values.display_name.trim())
+      setSentEmail(values.email.trim().toLowerCase())
+      setOtpStep('otp')
+      startCooldown()
+    } catch (err) {
+      const detail = err.response?.data?.detail || ''
+      if (err.response?.status === 429) {
+        setOtpError(t('exam.otpRateLimited'))
+      } else {
+        setOtpError(detail || t('common.error'))
+      }
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  const handleVerifyOtp = async (values) => {
+    setOtpError('')
+    onStart(displayName, sentEmail, values.otp.trim())
+  }
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return
+    setSendingOtp(true)
+    setOtpError('')
+    try {
+      await examAPI.requestOtp(info.exam_slug || window.location.pathname.split('/').pop(), {
+        display_name: displayName,
+        email: sentEmail,
+      })
+      startCooldown()
+    } catch (err) {
+      const detail = err.response?.data?.detail || ''
+      setOtpError(err.response?.status === 429 ? t('exam.otpRateLimited') : detail || t('common.error'))
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  const examStatsBlock = (
+    <Row gutter={[16, 16]}>
+      <Col span={8}>
+        <Statistic title={t('quiz.questions')} value={info.question_count} prefix={<QuestionCircleOutlined />} />
+      </Col>
+      {timeLimitMins && (
+        <Col span={8}>
+          <Statistic title={t('exam.timeLimitMinutes')} value={timeLimitMins} suffix="min" prefix={<ClockCircleOutlined />} />
+        </Col>
+      )}
+      {info.ends_at && (
+        <Col span={8}>
+          <Statistic
+            title={t('exam.closesOn', { date: '' })}
+            value={dayjs(info.ends_at).format('HH:mm, DD MMM')}
+            prefix={<ClockCircleOutlined />}
+          />
+        </Col>
+      )}
+    </Row>
+  )
+
+  const scoringBlock = (
+    <div>
+      <Text strong style={{ display: 'block', marginBottom: 8 }}>
+        <InfoCircleOutlined style={{ marginRight: 6 }} />
+        {t('exam.scoringRules')}
+      </Text>
+      <Space wrap>
+        <Tag icon={<PlusCircleOutlined />} color="success" style={{ fontSize: 13, padding: '3px 10px' }}>
+          {t('exam.pointsForCorrect', { points: info.points_per_correct })}
+        </Tag>
+        {info.negative_points_per_wrong > 0 ? (
+          <Tag icon={<MinusCircleOutlined />} color="error" style={{ fontSize: 13, padding: '3px 10px' }}>
+            {t('exam.penaltyForWrong', { points: info.negative_points_per_wrong })}
+          </Tag>
+        ) : (
+          <Tag icon={<CheckCircleOutlined />} color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
+            {t('exam.noPenalty')}
+          </Tag>
+        )}
+        <Tag color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
+          {t('exam.zeroForUnanswered')}
+        </Tag>
+      </Space>
+      {info.scoring_varies && (
+        <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
+          {t('exam.pointsVary')}
+        </Text>
+      )}
+    </div>
+  )
+
+  if (otpStep === 'otp') {
+    return (
+      <Card style={{ maxWidth: 600, margin: '0 auto' }} bordered={false}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div>
+            <Title level={3} style={{ marginBottom: 4 }}>{info.title}</Title>
+          </div>
+          <Alert
+            type="success"
+            showIcon
+            message={t('exam.otpSent', { email: sentEmail })}
+          />
+          {otpError && <Alert type="error" showIcon message={otpError} />}
+          <Form layout="vertical" onFinish={handleVerifyOtp}>
+            <Form.Item
+              name="otp"
+              label={t('exam.otpLabel')}
+              rules={[
+                { required: true, message: t('exam.otpRequired') },
+                { len: 6, message: t('exam.otpLength') },
+              ]}
+            >
+              <Input
+                placeholder={t('exam.otpPlaceholder')}
+                size="large"
+                maxLength={6}
+                autoFocus
+                style={{ letterSpacing: 8, fontSize: 20, textAlign: 'center' }}
+              />
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={loading}
+                icon={<ArrowRightOutlined />}
+              >
+                {t('exam.verifyAndStart')}
+              </Button>
+            </Form.Item>
+          </Form>
+          <div style={{ textAlign: 'center' }}>
+            <Button
+              type="link"
+              disabled={resendCooldown > 0 || sendingOtp}
+              onClick={handleResend}
+              loading={sendingOtp}
+            >
+              {resendCooldown > 0
+                ? t('exam.resendCooldown', { seconds: resendCooldown })
+                : t('exam.resendOtp')}
+            </Button>
+          </div>
+        </Space>
+      </Card>
+    )
+  }
 
   return (
     <Card style={{ maxWidth: 600, margin: '0 auto' }} bordered={false}>
@@ -86,67 +275,11 @@ function StartScreen({ info, onStart, loading }) {
           {info.description && <Paragraph type="secondary">{info.description}</Paragraph>}
         </div>
 
-        {/* Exam stats */}
-        <Row gutter={[16, 16]}>
-          <Col span={8}>
-            <Statistic
-              title={t('quiz.questions')}
-              value={info.question_count}
-              prefix={<QuestionCircleOutlined />}
-            />
-          </Col>
-          {timeLimitMins && (
-            <Col span={8}>
-              <Statistic
-                title={t('exam.timeLimitMinutes')}
-                value={timeLimitMins}
-                suffix="min"
-                prefix={<ClockCircleOutlined />}
-              />
-            </Col>
-          )}
-          {info.ends_at && (
-            <Col span={8}>
-              <Statistic
-                title={t('exam.closesOn', { date: '' })}
-                value={dayjs(info.ends_at).format('HH:mm, DD MMM')}
-                prefix={<ClockCircleOutlined />}
-              />
-            </Col>
-          )}
-        </Row>
+        {examStatsBlock}
 
         <Divider style={{ margin: '4px 0' }} />
 
-        {/* Scoring rules */}
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            <InfoCircleOutlined style={{ marginRight: 6 }} />
-            {t('exam.scoringRules')}
-          </Text>
-          <Space wrap>
-            <Tag icon={<PlusCircleOutlined />} color="success" style={{ fontSize: 13, padding: '3px 10px' }}>
-              {t('exam.pointsForCorrect', { points: info.points_per_correct })}
-            </Tag>
-            {info.negative_points_per_wrong > 0 ? (
-              <Tag icon={<MinusCircleOutlined />} color="error" style={{ fontSize: 13, padding: '3px 10px' }}>
-                {t('exam.penaltyForWrong', { points: info.negative_points_per_wrong })}
-              </Tag>
-            ) : (
-              <Tag icon={<CheckCircleOutlined />} color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
-                {t('exam.noPenalty')}
-              </Tag>
-            )}
-            <Tag color="default" style={{ fontSize: 13, padding: '3px 10px' }}>
-              {t('exam.zeroForUnanswered')}
-            </Tag>
-          </Space>
-          {info.scoring_varies && (
-            <Text type="secondary" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
-              {t('exam.pointsVary')}
-            </Text>
-          )}
-        </div>
+        {scoringBlock}
 
         {/* Time warnings */}
         {(info.has_per_question_timers || timeLimitMins) && (
@@ -166,7 +299,48 @@ function StartScreen({ info, onStart, loading }) {
           />
         )}
 
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        {/* Proctoring rules preview */}
+        {hasProctoringRules && (
+          <div style={{
+            background: '#fff7f7',
+            border: '1px solid #fca5a5',
+            borderRadius: 8,
+            padding: '16px 20px',
+          }}>
+            <Text strong style={{ display: 'block', marginBottom: 10, color: '#dc2626' }}>
+              <span role="img" aria-label="warning" style={{ marginRight: 6 }}>⚠️</span>
+              {t('exam.proctoringNoticeTitle')}
+            </Text>
+            {webcamOn && (
+              <div style={{ marginBottom: 10, fontSize: 13, color: '#92400e', background: '#fef3c7', borderRadius: 6, padding: '8px 12px' }}>
+                {t('proctoring.warning.webcamNotice')}
+              </div>
+            )}
+            <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {activeRuleIds.map((ruleId) => (
+                <li key={ruleId} style={{ fontSize: 13, color: '#374151' }}>
+                  {t(`proctoring.warning.rules.${ruleId}`)}
+                </li>
+              ))}
+            </ul>
+            <div style={{ marginTop: 12 }}>
+              <input
+                type="checkbox"
+                id="proctor-ack"
+                checked={acknowledged}
+                onChange={(e) => setAcknowledged(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              <label htmlFor="proctor-ack" style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                {t('proctoring.warning.checkboxLabel')}
+              </label>
+            </div>
+          </div>
+        )}
+
+        {otpError && <Alert type="error" showIcon message={otpError} />}
+
+        <Form form={form} layout="vertical" onFinish={handleSendOtp}>
           <Form.Item
             name="display_name"
             label={t('exam.enterName')}
@@ -179,16 +353,32 @@ function StartScreen({ info, onStart, loading }) {
               autoFocus
             />
           </Form.Item>
+          <Form.Item
+            name="email"
+            label={t('exam.emailLabel')}
+            rules={[
+              { required: true, message: t('exam.emailRequired') },
+              { type: 'email', message: t('exam.emailInvalid') },
+            ]}
+          >
+            <Input
+              placeholder={t('exam.emailPlaceholder')}
+              size="large"
+              maxLength={255}
+              type="email"
+            />
+          </Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
             <Button
               type="primary"
               htmlType="submit"
               size="large"
               block
-              loading={loading}
+              loading={sendingOtp}
+              disabled={hasProctoringRules && !acknowledged}
               icon={<ArrowRightOutlined />}
             >
-              {t('exam.startExam')}
+              {t('exam.sendOtp')}
             </Button>
           </Form.Item>
         </Form>
@@ -434,6 +624,7 @@ export default function ExamSession() {
   const [examInfo, setExamInfo] = useState(null)
   const [examResult, setExamResult] = useState(null)
   const [error, setError] = useState(null)
+  const [proctoringConfig, setProctoringConfig] = useState(null)
 
   // Exam state
   const [sessionToken, setSessionToken] = useState(null)
@@ -460,6 +651,15 @@ export default function ExamSession() {
         const res = await examAPI.getInfo(slug)
         setExamInfo(res.data)
         if (res.data.status === 'open') {
+          // Fetch proctoring config so StartScreen can show the rules preview
+          if (res.data.quiz_id) {
+            try {
+              const pcRes = await proctoringAPI.getConfig(res.data.quiz_id)
+              setProctoringConfig(pcRes.data)
+            } catch {
+              // Non-fatal; proctoring config may not exist for all exams
+            }
+          }
           setPhase('start')
         } else {
           setPhase('status')
@@ -571,10 +771,10 @@ export default function ExamSession() {
 
   // ── Start exam ────────────────────────────────────────────────────────────
 
-  const handleStart = async (displayName) => {
+  const handleStart = async (displayName, email, otp) => {
     setStarting(true)
     try {
-      const res = await examAPI.start(slug, { display_name: displayName })
+      const res = await examAPI.start(slug, { display_name: displayName, email, otp })
       const data = res.data
       setSessionToken(data.session_token)
       setStartedAt(data.started_at)
@@ -705,12 +905,17 @@ export default function ExamSession() {
         )}
 
         {phase === 'start' && examInfo && (
-          <StartScreen info={examInfo} onStart={handleStart} loading={starting} />
+          <StartScreen
+            info={examInfo}
+            proctoringConfig={proctoringConfig}
+            onStart={handleStart}
+            loading={starting}
+          />
         )}
 
         {phase === 'taking' && questions.length > 0 && (
           <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken}>
-            <ProctoringGate>
+            <ProctoringGate initialWarned={!!proctoringConfig}>
               <QuestionScreen
                 question={questions[currentIdx]}
                 questionIndex={currentIdx}

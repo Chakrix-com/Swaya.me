@@ -224,6 +224,7 @@ export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offli
 // Exam API
 export const examAPI = {
   getInfo: (slug) => api.get(`/e/${slug}`),
+  requestOtp: (slug, data) => api.post(`/e/${slug}/request-otp`, data),
   start: (slug, data) => api.post(`/e/${slug}/start`, data),
   saveAnswer: (slug, data) => api.post(`/e/${slug}/answer`, data),
   submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),

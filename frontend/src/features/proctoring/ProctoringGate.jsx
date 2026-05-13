@@ -294,10 +294,10 @@ function WebcamPip({ stream }) {
   );
 }
 
-export function ProctoringGate({ children }) {
+export function ProctoringGate({ children, initialWarned = false }) {
   const { t } = useTranslation();
   const { resolvedRules, webcamRequired, reportViolation, sessionToken, ruleSet } = useProctoringContext();
-  const [warned, setWarned] = useState(false);
+  const [warned, setWarned] = useState(initialWarned);
   const [stream, setStream] = useState(null);
   const [identityDone, setIdentityDone] = useState(!webcamRequired);
 

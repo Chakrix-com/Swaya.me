@@ -1,7 +1,7 @@
 """
 Pydantic schemas for Quiz feature
 """
-from pydantic import BaseModel, Field, validator, model_validator
+from pydantic import BaseModel, Field, EmailStr, validator, model_validator
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -620,9 +620,17 @@ class ExamInfoResponse(BaseModel):
     scoring_varies: bool = False      # True if questions have different point values
 
 
-class ExamStartRequest(BaseModel):
-    """Start an exam (participant)"""
+class ExamOtpRequest(BaseModel):
+    """Request an OTP be sent to participant's email"""
     display_name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+
+
+class ExamStartRequest(BaseModel):
+    """Start an exam (participant) — requires OTP verification"""
+    display_name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
 
 
 class ExamQuestionResponse(BaseModel):
@@ -691,6 +699,7 @@ class ExamLeaderboardEntry(BaseModel):
     """Single entry in host's exam leaderboard"""
     rank: int
     display_name: str
+    email: Optional[str] = None
     score: int
     max_score: int
     percentage: float

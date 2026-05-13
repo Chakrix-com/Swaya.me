@@ -8,6 +8,7 @@ from persistence.database_async import get_async_db
 from shared.utils.redis_client import get_redis, RedisClient
 from features.quiz.schemas import (
     ExamInfoResponse,
+    ExamOtpRequest,
     ExamStartRequest,
     ExamStartResponse,
     ExamAnswerRequest,
@@ -23,6 +24,20 @@ from core.auth.dependencies import get_current_user, CurrentUser
 router = APIRouter(tags=["exam"])
 
 
+@router.post("/e/{slug}/request-otp")
+async def request_exam_otp(
+    slug: str,
+    body: ExamOtpRequest,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis),
+):
+    """Public — send a 6-digit OTP to the participant's email before exam start."""
+    try:
+        return await svc.request_exam_otp(db, slug, body.display_name, body.email, redis)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @router.get("/e/{slug}", response_model=ExamInfoResponse)
 async def get_exam_info(slug: str, db: AsyncSession = Depends(get_async_db)):
     """Public — get info about an exam (status, dates, question count)."""
@@ -33,10 +48,15 @@ async def get_exam_info(slug: str, db: AsyncSession = Depends(get_async_db)):
 
 
 @router.post("/e/{slug}/start", response_model=ExamStartResponse)
-async def start_exam(slug: str, body: ExamStartRequest, db: AsyncSession = Depends(get_async_db)):
-    """Public — start exam; returns all questions and session_token."""
+async def start_exam(
+    slug: str,
+    body: ExamStartRequest,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis),
+):
+    """Public — start exam; verifies OTP, returns all questions and session_token."""
     try:
-        return await svc.start_exam(db, slug, body.display_name)
+        return await svc.start_exam(db, slug, body.display_name, body.email, body.otp, redis)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -4,6 +4,7 @@ All operations are async. Public endpoints do not require authentication.
 """
 import logging
 import os
+import random
 import secrets
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -109,10 +110,64 @@ async def get_exam_info(db: AsyncSession, slug: str) -> ExamInfoResponse:
     )
 
 
+async def request_exam_otp(
+    db: AsyncSession,
+    slug: str,
+    display_name: str,
+    email: str,
+    redis,
+) -> dict:
+    """Public — generate and email a 6-digit OTP. Rate-limited to 3 requests per email per 10 min."""
+    from core.auth.email_service import send_email
+
+    result = await db.execute(select(Quiz).filter(Quiz.exam_slug == slug))
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise QuizNotFoundError("Exam not found")
+
+    status = _exam_status(quiz)
+    if status not in ("open",):
+        raise HTTPException(status_code=410, detail="Exam is not currently open")
+
+    email_lower = email.lower()
+    rate_key = f"exam_otp_rate:{slug}:{email_lower}"
+    count = await redis.increment(rate_key)
+    if count == 1:
+        await redis.expire(rate_key, 600)
+    if count > 3:
+        raise HTTPException(status_code=429, detail="Too many OTP requests. Please wait 10 minutes.")
+
+    otp = str(random.randint(100000, 999999))
+    otp_key = f"exam_otp:{slug}:{email_lower}"
+    await redis.set_json(otp_key, {"otp": otp, "display_name": display_name}, expire=600)
+
+    html_body = f"""
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
+      <h2 style="color:#1677ff">Your Exam OTP</h2>
+      <p>Hi {display_name},</p>
+      <p>Use the code below to start your exam <strong>{quiz.title}</strong>:</p>
+      <div style="font-size:36px;font-weight:bold;letter-spacing:10px;text-align:center;
+                  padding:20px;background:#f5f5f5;border-radius:8px;margin:20px 0">
+        {otp}
+      </div>
+      <p style="color:#888;font-size:13px">This code expires in 10 minutes. Do not share it.</p>
+    </div>
+    """
+    await send_email(
+        subject=f"Your exam OTP — {quiz.title}",
+        recipients=[email],
+        html_body=html_body,
+    )
+    return {"sent": True}
+
+
 async def start_exam(
     db: AsyncSession,
     slug: str,
     display_name: str,
+    email: str,
+    otp: str,
+    redis,
 ) -> ExamStartResponse:
     """
     Public — create a new participant session and return all questions.
@@ -135,6 +190,14 @@ async def start_exam(
     if status != "open":
         raise HTTPException(status_code=410, detail="Exam is not available")
 
+    # Verify OTP
+    email_lower = email.lower()
+    otp_key = f"exam_otp:{slug}:{email_lower}"
+    stored = await redis.get_json(otp_key)
+    if not stored or stored.get("otp") != otp:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    await redis.delete(otp_key)
+
     questions = sorted(quiz.questions, key=lambda q: q.order)
     now = _utcnow()
 
@@ -142,6 +205,7 @@ async def start_exam(
     participant = Participant(
         session_id=quiz.exam_session_id,
         display_name=display_name,
+        email=email,
         session_token=new_token,
         is_active=True,
         started_at=now,
@@ -527,6 +591,7 @@ async def get_exam_results(
 
         leaderboard_entries.append({
             "display_name": p.display_name or "Anonymous",
+            "email": p.email,
             "score": score,
             "correct": correct,
             "time_taken": time_taken,
@@ -541,6 +606,7 @@ async def get_exam_results(
         leaderboard.append(ExamLeaderboardEntry(
             rank=rank,
             display_name=entry["display_name"],
+            email=entry["email"],
             score=entry["score"],
             max_score=max_score,
             percentage=round((entry["score"] / max_score * 100) if max_score > 0 else 0.0, 2),

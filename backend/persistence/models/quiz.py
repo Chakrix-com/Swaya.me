@@ -177,6 +177,7 @@ class Participant(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=False)
     display_name = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=True)
     session_token = Column(String(255), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     completed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)

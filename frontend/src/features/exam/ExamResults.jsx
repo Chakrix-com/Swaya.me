@@ -47,10 +47,11 @@ export default function ExamResults() {
   const handleExportCsv = () => {
     if (!results) return
     const rows = [
-      ['Rank', 'Name', 'Score', 'Max Score', '%', 'Correct', 'Time (s)', 'Completed At'],
+      ['Rank', 'Name', 'Email', 'Score', 'Max Score', '%', 'Correct', 'Time (s)', 'Completed At'],
       ...results.leaderboard.map(e => [
         e.rank,
         e.display_name,
+        e.email || '',
         e.score,
         e.max_score,
         e.percentage,
@@ -103,6 +104,11 @@ export default function ExamResults() {
       title: t('exam.nameCol'),
       dataIndex: 'display_name',
       render: (name) => <Text strong>{name}</Text>
+    },
+    {
+      title: t('exam.emailCol'),
+      dataIndex: 'email',
+      render: (email) => email ? <Text type="secondary" style={{ fontSize: 12 }}>{email}</Text> : <Text type="secondary">—</Text>
     },
     {
       title: t('exam.scoreCol'),
