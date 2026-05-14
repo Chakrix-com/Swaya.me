@@ -78,6 +78,7 @@ const PROCTORING_RULE_IDS = [
 function StartScreen({ info, proctoringConfig, onStart, loading }) {
   const { t } = useTranslation()
   const [form] = Form.useForm()
+  const requireEmail = !!info.require_email
   const [otpStep, setOtpStep] = useState('form') // 'form' | 'otp'
   const [sentEmail, setSentEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -340,7 +341,11 @@ function StartScreen({ info, proctoringConfig, onStart, loading }) {
 
         {otpError && <Alert type="error" showIcon message={otpError} />}
 
-        <Form form={form} layout="vertical" onFinish={handleSendOtp}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={requireEmail ? handleSendOtp : (values) => onStart(values.display_name.trim(), null, null)}
+        >
           <Form.Item
             name="display_name"
             label={t('exam.enterName')}
@@ -353,32 +358,34 @@ function StartScreen({ info, proctoringConfig, onStart, loading }) {
               autoFocus
             />
           </Form.Item>
-          <Form.Item
-            name="email"
-            label={t('exam.emailLabel')}
-            rules={[
-              { required: true, message: t('exam.emailRequired') },
-              { type: 'email', message: t('exam.emailInvalid') },
-            ]}
-          >
-            <Input
-              placeholder={t('exam.emailPlaceholder')}
-              size="large"
-              maxLength={255}
-              type="email"
-            />
-          </Form.Item>
+          {requireEmail && (
+            <Form.Item
+              name="email"
+              label={t('exam.emailLabel')}
+              rules={[
+                { required: true, message: t('exam.emailRequired') },
+                { type: 'email', message: t('exam.emailInvalid') },
+              ]}
+            >
+              <Input
+                placeholder={t('exam.emailPlaceholder')}
+                size="large"
+                maxLength={255}
+                type="email"
+              />
+            </Form.Item>
+          )}
           <Form.Item style={{ marginBottom: 0 }}>
             <Button
               type="primary"
               htmlType="submit"
               size="large"
               block
-              loading={sendingOtp}
+              loading={requireEmail ? sendingOtp : loading}
               disabled={hasProctoringRules && !acknowledged}
               icon={<ArrowRightOutlined />}
             >
-              {t('exam.sendOtp')}
+              {requireEmail ? t('exam.sendOtp') : t('exam.startExam')}
             </Button>
           </Form.Item>
         </Form>
@@ -773,8 +780,11 @@ export default function ExamSession() {
 
   const handleStart = async (displayName, email, otp) => {
     setStarting(true)
+    const body = { display_name: displayName }
+    if (email) body.email = email
+    if (otp) body.otp = otp
     try {
-      const res = await examAPI.start(slug, { display_name: displayName, email, otp })
+      const res = await examAPI.start(slug, body)
       const data = res.data
       setSessionToken(data.session_token)
       setStartedAt(data.started_at)

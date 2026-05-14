@@ -95,6 +95,7 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     exam_time_limit_seconds = Column(Integer, nullable=True)
     exam_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
     exam_results_email = Column(String(255), nullable=True)
+    exam_require_email = Column(Boolean, default=False, nullable=False, server_default="0")
 
     # Proctoring
     proctoring_policy = Column(JSON, nullable=True)

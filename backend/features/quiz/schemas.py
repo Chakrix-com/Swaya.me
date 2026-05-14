@@ -174,6 +174,7 @@ class QuizCreate(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
+    exam_require_email: Optional[bool] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
 
@@ -204,6 +205,7 @@ class QuizUpdate(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
+    exam_require_email: Optional[bool] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
 
@@ -237,6 +239,7 @@ class QuizResponse(BaseModel):
     exam_end_at: Optional[datetime] = None
     exam_time_limit_seconds: Optional[int] = None
     exam_results_email: Optional[str] = None
+    exam_require_email: bool = False
     # Proctoring
     proctoring_policy: Optional[dict] = None
 
@@ -614,10 +617,11 @@ class ExamInfoResponse(BaseModel):
     question_count: int = 0
     time_limit_seconds: Optional[int] = None
     has_per_question_timers: bool = False
+    require_email: bool = False
     # Scoring summary
-    points_per_correct: int = 1       # most common points value across questions
-    negative_points_per_wrong: int = 0  # most common negative_points value
-    scoring_varies: bool = False      # True if questions have different point values
+    points_per_correct: int = 1
+    negative_points_per_wrong: int = 0
+    scoring_varies: bool = False
 
 
 class ExamOtpRequest(BaseModel):
@@ -627,10 +631,10 @@ class ExamOtpRequest(BaseModel):
 
 
 class ExamStartRequest(BaseModel):
-    """Start an exam (participant) — requires OTP verification"""
+    """Start an exam (participant). email+otp required only when exam.require_email is True."""
     display_name: str = Field(..., min_length=1, max_length=100)
-    email: EmailStr
-    otp: str = Field(..., min_length=6, max_length=6)
+    email: Optional[EmailStr] = None
+    otp: Optional[str] = Field(None, min_length=6, max_length=6)
 
 
 class ExamQuestionResponse(BaseModel):

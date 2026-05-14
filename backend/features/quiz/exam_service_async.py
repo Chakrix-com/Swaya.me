@@ -104,6 +104,7 @@ async def get_exam_info(db: AsyncSession, slug: str) -> ExamInfoResponse:
         question_count=len(quiz.questions),
         time_limit_seconds=quiz.exam_time_limit_seconds,
         has_per_question_timers=has_per_q_timers,
+        require_email=bool(quiz.exam_require_email),
         points_per_correct=most_common_points,
         negative_points_per_wrong=most_common_neg,
         scoring_varies=scoring_varies,
@@ -124,6 +125,9 @@ async def request_exam_otp(
     quiz = result.scalar_one_or_none()
     if not quiz:
         raise QuizNotFoundError("Exam not found")
+
+    if not quiz.exam_require_email:
+        raise HTTPException(status_code=400, detail="Email verification is not enabled for this exam")
 
     status = _exam_status(quiz)
     if status not in ("open",):
@@ -165,8 +169,8 @@ async def start_exam(
     db: AsyncSession,
     slug: str,
     display_name: str,
-    email: str,
-    otp: str,
+    email: Optional[str],
+    otp: Optional[str],
     redis,
 ) -> ExamStartResponse:
     """
@@ -190,13 +194,18 @@ async def start_exam(
     if status != "open":
         raise HTTPException(status_code=410, detail="Exam is not available")
 
-    # Verify OTP
-    email_lower = email.lower()
-    otp_key = f"exam_otp:{slug}:{email_lower}"
-    stored = await redis.get_json(otp_key)
-    if not stored or stored.get("otp") != otp:
-        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
-    await redis.delete(otp_key)
+    # Verify OTP when the exam requires email verification
+    verified_email = None
+    if quiz.exam_require_email:
+        if not email or not otp:
+            raise HTTPException(status_code=400, detail="Email and OTP are required for this exam")
+        email_lower = email.lower()
+        otp_key = f"exam_otp:{slug}:{email_lower}"
+        stored = await redis.get_json(otp_key)
+        if not stored or stored.get("otp") != otp:
+            raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+        await redis.delete(otp_key)
+        verified_email = email
 
     questions = sorted(quiz.questions, key=lambda q: q.order)
     now = _utcnow()
@@ -205,7 +214,7 @@ async def start_exam(
     participant = Participant(
         session_id=quiz.exam_session_id,
         display_name=display_name,
-        email=email,
+        email=verified_email,
         session_token=new_token,
         is_active=True,
         started_at=now,

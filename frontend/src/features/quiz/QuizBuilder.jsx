@@ -1231,6 +1231,7 @@ export default function QuizBuilder() {
         exam_end_at: response.data.exam_end_at ? dayjs(response.data.exam_end_at) : undefined,
         exam_time_limit_minutes: response.data.exam_time_limit_seconds ? Math.floor(response.data.exam_time_limit_seconds / 60) : undefined,
         exam_results_email: response.data.exam_results_email || undefined,
+        exam_require_email: response.data.exam_require_email || false,
       })
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
@@ -1405,6 +1406,19 @@ export default function QuizBuilder() {
             label={t('exam.timeLimitMinutes')}
           >
             <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="exam_require_email" valuePropName="checked">
+            <Switch checkedChildren={t('exam.requireEmailOn')} unCheckedChildren={t('exam.requireEmailOff')} />
+          </Form.Item>
+          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.exam_require_email !== cur.exam_require_email}>
+            {({ getFieldValue }) => getFieldValue('exam_require_email') && (
+              <Alert
+                type="info"
+                showIcon
+                message={t('exam.requireEmailHint')}
+                style={{ marginTop: -8 }}
+              />
+            )}
           </Form.Item>
         </Space>
       )}
