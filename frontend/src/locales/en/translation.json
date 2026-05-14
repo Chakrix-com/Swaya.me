@@ -1526,7 +1526,7 @@
     "numberOfQuestions": "Number of questions",
     "questionCount_one": "{{count}} question",
     "questionCount_other": "{{count}} questions",
-    "generating": "Generating… (this can take ~30–60s on CPU)",
+    "generating": "Generating with Gemini AI…",
     "generate": "Generate",
     "suggest": "Suggest",
     "back": "← Back",
@@ -1536,8 +1536,12 @@
     "addToQuiz_other": "Add {{count}} questions to quiz",
     "addedSuccess_one": "Added {{count}} question to quiz",
     "addedSuccess_other": "Added {{count}} questions to quiz",
-    "noQuestionsGenerated": "No questions were generated. Try a different topic.",
-    "generationFailed": "Generation failed. Please try again."
+    "noQuestionsGenerated": "No questions were generated. Try refining your prompt.",
+    "generationFailed": "Generation failed. Please check your prompt and try again.",
+    "promptLabel": "Describe your questions",
+    "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
+    "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
+    "questionCountHint": "max 50"
   },
   "offlinePoll": {
     "typeLabel": "Poll",

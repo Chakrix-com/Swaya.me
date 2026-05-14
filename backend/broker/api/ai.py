@@ -1,5 +1,5 @@
 """
-AI generation endpoints — powered by local ollama models.
+AI generation endpoints — question generation via Google Gemini; other AI via local ollama.
 Restricted to admin and super_admin roles.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,13 +9,13 @@ from typing import Optional
 from core.auth.dependencies import require_admin, get_current_user, CurrentUser
 from core.config.settings import settings
 from core.ai.ollama_service import (
-    generate_questions,
     generate_distractors,
     generate_poll_prompt,
     rewrite_text,
     list_available_models,
     OllamaError,
 )
+from core.ai.gemini_service import generate_questions as gemini_generate_questions, GeminiError
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -23,10 +23,12 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 # ─── Request / Response schemas ───────────────────────────────────────────────
 
 class GenerateQuestionsRequest(BaseModel):
-    topic: str = Field(..., min_length=3, max_length=200, description="Subject or topic for the questions")
-    count: int = Field(5, ge=1, le=10, description="Number of questions to generate")
+    prompt: str = Field(..., min_length=10, max_length=5000, description="Detailed description of the questions to generate")
+    count: int = Field(5, ge=1, le=100, description="Number of questions to generate")
     language: str = Field("en", max_length=10, description="Language code, e.g. en, hi, fr")
-    model: Optional[str] = Field(None, description="Ollama model name (defaults to qwen2.5:3b)")
+    # Legacy field — ignored, kept for backward compatibility
+    topic: Optional[str] = Field(None, description="Deprecated: use prompt instead")
+    model: Optional[str] = Field(None, description="Ignored — Gemini model is used")
 
 
 class GeneratedQuestion(BaseModel):
@@ -83,30 +85,31 @@ async def api_generate_questions(
     current_user: CurrentUser = Depends(require_admin),
 ):
     """
-    Generate MCQ quiz questions for a given topic.
-    - Returns questions with 4 options each and the correct answer index.
+    Generate MCQ quiz questions using Google Gemini from a detailed user prompt.
+    Returns questions with 4 options each and the correct answer index.
     """
-    model = req.model or settings.ollama.model
+    # Support legacy callers that send topic instead of prompt
+    prompt = req.prompt or req.topic or ""
+    if not prompt.strip():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="prompt is required")
     try:
-
-        questions = await generate_questions(
-            topic=req.topic,
+        questions = await gemini_generate_questions(
+            prompt=prompt.strip(),
             count=req.count,
             language=req.language,
-            model=model,
         )
-    except OllamaError as e:
+    except GeminiError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
 
     if not questions:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Model did not return any valid questions — try a different topic or model",
+            detail="No valid questions were generated — try refining your prompt",
         )
 
     return GenerateQuestionsResponse(
         questions=[GeneratedQuestion(**q) for q in questions],
-        model=model,
+        model=settings.gemini.model,
     )
 
 

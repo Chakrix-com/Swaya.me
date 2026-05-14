@@ -1131,6 +1131,6 @@ class SessionServiceAsync:
             status=session.status,
             current_question_index=session.current_question_index,
             current_question_status=session.current_question_status,
-            join_code=event.join_code if event else "",
+            join_code=(event.join_code or "") if event else "",
             participant_count=participant_count
         )

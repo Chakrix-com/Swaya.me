@@ -2066,7 +2066,7 @@ export default function QuizBuilder() {
     setAiError(null)
     try {
       const res = await aiAPI.generateQuestions({
-        topic: aiTopic.trim(),
+        prompt: aiTopic.trim(),
         count: aiCount,
         language: i18n.language,
       })
@@ -2571,29 +2571,37 @@ export default function QuizBuilder() {
         open={aiModalOpen}
         onCancel={() => { setAiModalOpen(false); setAiStep('input'); setAiPreview([]); setAiError(null) }}
         footer={null}
-        width={600}
+        width={680}
       >
         {aiStep === 'input' && (
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
             <div>
-              <Text strong>{t('ai.topicLabel')}</Text>
-              <Input
-                placeholder={t('ai.topicPlaceholder')}
+              <Text strong>{t('ai.promptLabel')}</Text>
+              <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 6 }}>
+                {t('ai.promptHint')}
+              </Text>
+              <Input.TextArea
+                placeholder={t('ai.promptPlaceholder')}
                 value={aiTopic}
                 onChange={e => setAiTopic(e.target.value)}
-                onPressEnter={handleAiGenerate}
-                style={{ marginTop: 4 }}
+                rows={9}
+                autoSize={{ minRows: 9, maxRows: 16 }}
+                style={{ marginTop: 2, fontFamily: 'inherit', fontSize: 14 }}
                 autoFocus
+                showCount
+                maxLength={5000}
               />
             </div>
-            <div>
-              <Text strong>{t('ai.numberOfQuestions')}</Text>
-              <Select
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.numberOfQuestions')}</Text>
+              <InputNumber
+                min={1}
+                max={50}
                 value={aiCount}
-                onChange={setAiCount}
-                style={{ display: 'block', marginTop: 4 }}
-                options={[1,2,3,4,5].map(n => ({ value: n, label: t('ai.questionCount', { count: n }) }))}
+                onChange={v => setAiCount(v || 5)}
+                style={{ width: 100 }}
               />
+              <Text type="secondary" style={{ fontSize: 12 }}>{t('ai.questionCountHint')}</Text>
             </div>
             {aiError && <Alert type="error" message={aiError} showIcon />}
             <Button
@@ -2601,8 +2609,9 @@ export default function QuizBuilder() {
               icon={<ThunderboltOutlined />}
               block
               loading={aiGenerating}
-              disabled={!aiTopic.trim()}
+              disabled={!aiTopic.trim() || aiGenerating}
               onClick={handleAiGenerate}
+              size="large"
             >
               {aiGenerating ? t('ai.generating') : t('ai.generate')}
             </Button>

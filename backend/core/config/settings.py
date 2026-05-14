@@ -133,6 +133,19 @@ class OllamaSettings(BaseSettings):
     )
 
 
+class GeminiSettings(BaseSettings):
+    """Google Gemini AI configuration"""
+    key: str = Field(default="", alias="GEMINI_KEY")
+    model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL_COMPLEX")
+    timeout_seconds: int = Field(default=60, alias="GEMINI_TIMEOUT_SECONDS")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
@@ -142,6 +155,7 @@ class Settings(BaseSettings):
     google: GoogleSettings = Field(default_factory=GoogleSettings)
     smtp: SMTPSettings = Field(default_factory=SMTPSettings)
     ollama: OllamaSettings = Field(default_factory=OllamaSettings)
+    gemini: GeminiSettings = Field(default_factory=GeminiSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",

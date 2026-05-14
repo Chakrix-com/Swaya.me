@@ -695,6 +695,8 @@ class QuizBuilderServiceAsync:
             quiz.exam_time_limit_seconds = request.exam_time_limit_seconds
         if request.exam_results_email is not None:
             quiz.exam_results_email = request.exam_results_email
+        if request.exam_require_email is not None:
+            quiz.exam_require_email = request.exam_require_email
 
         # Proctoring policy
         if request.proctoring_policy is not None:
