@@ -131,47 +131,52 @@ def test_proctoring_e2e():
         time.sleep(5)
         driver.save_screenshot("/tmp/proctor_01_start.png")
 
-        # ── Step 2: Enter name and start ──
-        log("\n--- STEP 2: Enter name and start ---")
+        # ── Step 2: Verify proctoring rules shown on start screen + acknowledge ──
+        log("\n--- STEP 2: Verify proctoring rules on start screen and acknowledge ---")
         name_input = wait_for(driver, By.CSS_SELECTOR, "input[type='text']", name="name input")
         name_input.send_keys("Proctor Tester")
 
-        start_btn = wait_for(driver, By.XPATH, "//button[contains(., 'Start')]", clickable=True, name="start button")
-        start_btn.click()
-        time.sleep(3)
-        driver.save_screenshot("/tmp/proctor_02_gate.png")
-
-        # ── Step 3: Verify Proctoring Gate ──
-        log("\n--- STEP 3: Verify Proctoring Gate ---")
-        # Check for title like "Proctoring Protocol" or "Exam Integrity"
+        # Proctoring rules preview + acknowledgment checkbox are now inline on the start screen
         body_text = driver.find_element(By.TAG_NAME, "body").text
-        # Based on i18n keys: proctoring.warning.title
-        # Check for title like "Proctoring Protocol" or "Integrity Protocol"
         body_text_lower = body_text.lower()
-        # Expected text: "Proctoring Protocol" or "Integrity Protocol" or "Proctored"
-        if not any(k in body_text_lower for k in ["protocol", "proctoring", "proctored", "integrity", "rules"]):
-            log(f"Actual body text: {body_text}", "ERROR")
-            raise AssertionError("Proctoring gate not visible after clicking Start")
-        log("Proctoring Gate visible", "SUCCESS")
+        if not any(k in body_text_lower for k in ["proctoring", "integrity", "monitoring", "rules", "fullscreen"]):
+            raise AssertionError(f"No proctoring notice on start screen. Body: {body_text[:300]}")
+        log("Proctoring notice visible on start screen", "SUCCESS")
 
-        # Check for rule list
-        assert any(k in body_text for k in ["Fullscreen", "Tab", "violations"]), \
-            "Proctoring rules not listed on gate"
-        log("Proctoring rules listed", "SUCCESS")
+        # The submit button must be DISABLED until the acknowledgment checkbox is checked
+        start_btn_before = driver.find_element(By.XPATH, "//button[@type='submit']")
+        assert start_btn_before.get_attribute("disabled") is not None, \
+            "Submit button should be disabled before acknowledgment"
+        log("Submit button correctly disabled before acknowledgment", "SUCCESS")
 
-        # ── Step 4: Acknowledge rules ──
-        log("\n--- STEP 4: Acknowledge rules ---")
-        # Find checkbox
-        checkbox = wait_for(driver, By.CSS_SELECTOR, "input[type='checkbox']", name="acknowledge checkbox")
-        driver.execute_script("arguments[0].click();", checkbox)
-        
-        # Click "I understand and I'm ready to begin"
-        # proctoring.warning.acknowledgeButton
-        ack_btn = wait_for(driver, By.XPATH, 
-                           "//button[contains(., 'understand') or contains(., 'Begin') or contains(., 'Acknowledge')]", 
-                           clickable=True, name="acknowledge button")
-        ack_btn.click()
+        # Check the acknowledgment checkbox
+        ack_checkbox = wait_for(driver, By.ID, "proctor-ack", name="ack checkbox")
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'})", ack_checkbox)
+        driver.execute_script("arguments[0].click()", ack_checkbox)
+        time.sleep(0.3)
+        log("Acknowledgment checkbox checked", "SUCCESS")
+
+        # Now the button should be enabled
+        start_btn = wait_for(driver, By.XPATH, "//button[@type='submit']", clickable=True, name="start button")
+        assert start_btn.get_attribute("disabled") is None, \
+            "Submit button still disabled after acknowledgment"
+        log("Submit button enabled after acknowledgment", "SUCCESS")
+
+        # ── Step 3: Start exam — goes directly to proctoring setup (no duplicate warning screen) ──
+        log("\n--- STEP 3: Click Start, verify no duplicate warning screen ---")
+        driver.execute_script("arguments[0].click()", start_btn)
         time.sleep(3)
+        driver.save_screenshot("/tmp/proctor_02_after_start.png")
+
+        body_text = driver.find_element(By.TAG_NAME, "body").text
+        # Should NOT see the old full-page red warning (that was the duplicate screen)
+        # Should see webcam / fullscreen gate instead
+        still_on_start = "Enter your full name" in body_text or "Send OTP" in body_text
+        assert not still_on_start, "Still on start screen after clicking Start"
+        log("Advanced past start screen", "SUCCESS")
+
+        # ── Step 4: (renamed from Step 4) — no separate warning screen to dismiss ──
+        log("\n--- STEP 4: Proctoring gate (webcam/fullscreen) shown directly ---")
         driver.save_screenshot("/tmp/proctor_03_fullscreen_gate.png")
 
         # ── Step 5: Verify Fullscreen Gate (Blocked state) ──
