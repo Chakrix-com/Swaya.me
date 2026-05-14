@@ -1529,7 +1529,7 @@ export default function QuizBuilder() {
                   {isOfflinePoll && question.is_required && (
                     <Tag color="red">{t('offlinePoll.required', 'Required')}</Tag>
                   )}
-                  <Text strong>{question.text.replace(/<[^>]*>/g, '')}</Text>
+                  <Text strong>{stripHtml(question.text).slice(0, 80) || t('quiz.untitled', 'Untitled')}</Text>
                 </Space>
               }
               extra={
@@ -1605,6 +1605,7 @@ export default function QuizBuilder() {
                 </Space>
               ) : (
                 <Space direction="vertical" style={{ width: '100%' }}>
+                  <RichTextRenderer content={question.text} />
                   {(() => {
                     const fallbackOptions = [
                       question.option_a,
@@ -1633,9 +1634,10 @@ export default function QuizBuilder() {
                     return mcqOptions.map((opt, idx) => {
                       const letter = String.fromCharCode(65 + idx)
                       return (
-                        <div key={`${question.id}-opt-${idx}`}>
-                          <Text>{letter}: {opt}</Text>
-                          {!isPoll && idx === correctIndex && <Tag color="green" style={{ marginLeft: 8 }}>{t('quiz.correct')}</Tag>}
+                        <div key={`${question.id}-opt-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                          <Text style={{ whiteSpace: 'nowrap', paddingTop: 2 }}>{letter}:</Text>
+                          <RichTextRenderer content={opt} style={{ flex: 1 }} />
+                          {!isPoll && idx === correctIndex && <Tag color="green" style={{ flexShrink: 0 }}>{t('quiz.correct')}</Tag>}
                         </div>
                       )
                     })

@@ -701,7 +701,7 @@ class ExamSubmitResponse(BaseModel):
 
 class ExamLeaderboardEntry(BaseModel):
     """Single entry in host's exam leaderboard"""
-    rank: int
+    rank: Optional[int] = None
     display_name: str
     email: Optional[str] = None
     score: int
@@ -711,6 +711,7 @@ class ExamLeaderboardEntry(BaseModel):
     time_taken_seconds: Optional[float] = None
     completed_at: Optional[datetime] = None
     is_abandoned: bool = False
+    is_completed: bool = False
 
 
 class ExamQuestionAnalytics(BaseModel):

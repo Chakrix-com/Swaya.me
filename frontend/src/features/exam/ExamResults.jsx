@@ -12,14 +12,16 @@ import {
 import {
   TrophyOutlined, DownloadOutlined, ArrowLeftOutlined,
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined, SyncOutlined
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { examAPI } from '../../services/api'
 import dayjs from 'dayjs'
 import { ViolationReport } from './ViolationReport'
+import RichTextRenderer from '../quiz/components/RichTextRenderer'
 
 const { Title, Text } = Typography
+const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
 export default function ExamResults() {
   const { id } = useParams()
@@ -94,16 +96,16 @@ export default function ExamResults() {
       title: t('exam.rankCol'),
       dataIndex: 'rank',
       width: 60,
-      render: (rank) => (
-        rank <= 3
-          ? <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
-          : <Text>{rank}</Text>
-      )
+      render: (rank, row) => {
+        if (!row.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">In Progress</Tag>
+        if (rank <= 3) return <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
+        return <Text>{rank}</Text>
+      }
     },
     {
       title: t('exam.nameCol'),
       dataIndex: 'display_name',
-      render: (name) => <Text strong>{name}</Text>
+      render: (name, row) => <Text strong style={row.is_completed ? {} : { color: '#8c8c8c' }}>{name}</Text>
     },
     {
       title: t('exam.emailCol'),
@@ -113,29 +115,31 @@ export default function ExamResults() {
     {
       title: t('exam.scoreCol'),
       dataIndex: 'score',
-      render: (score, row) => (
+      render: (score, row) => row.is_completed ? (
         <Space>
           <Text strong style={{ color: '#1890ff' }}>{score}</Text>
           <Text type="secondary">/ {row.max_score}</Text>
         </Space>
-      )
+      ) : <Text type="secondary">—</Text>
     },
     {
       title: t('exam.percentCol'),
       dataIndex: 'percentage',
-      render: (pct) => (
+      render: (pct, row) => row.is_completed ? (
         <Progress
           percent={pct}
           size="small"
           strokeColor={pct >= 70 ? '#52c41a' : pct >= 40 ? '#faad14' : '#ff4d4f'}
           style={{ width: 100 }}
         />
-      )
+      ) : <Text type="secondary">—</Text>
     },
     {
       title: t('exam.correctAnswers'),
       dataIndex: 'correct_count',
-      render: (count) => <Tag color="success" icon={<CheckCircleOutlined />}>{count}</Tag>
+      render: (count, row) => row.is_completed
+        ? <Tag color="success" icon={<CheckCircleOutlined />}>{count}</Tag>
+        : <Text type="secondary">—</Text>
     },
     {
       title: t('exam.timeTakenCol'),
@@ -248,12 +252,12 @@ export default function ExamResults() {
         style={{ marginBottom: 24 }}
       >
         {results.leaderboard.length === 0 ? (
-          <Text type="secondary">{t('exam.noParticipants')}</Text>
+          <Text type="secondary">{t('exam.noParticipantsYet', 'No one has started this exam yet.')}</Text>
         ) : (
           <Table
             dataSource={results.leaderboard}
             columns={leaderboardColumns}
-            rowKey="rank"
+            rowKey={(r, i) => r.rank ?? `ip-${i}`}
             pagination={results.leaderboard.length > 20 ? { pageSize: 20 } : false}
             size="small"
           />
@@ -264,7 +268,10 @@ export default function ExamResults() {
       <Card title={t('exam.questionAnalytics')}>
         {results.question_analytics.map((qa, idx) => (
           <div key={qa.question_id} style={{ marginBottom: 32 }}>
-            <Title level={5}>Q{idx + 1}: {qa.question_text}</Title>
+            <Space align="start" style={{ marginBottom: 8 }}>
+              <Text strong style={{ whiteSpace: 'nowrap' }}>Q{idx + 1}.</Text>
+              <RichTextRenderer content={qa.question_text} />
+            </Space>
             <Row align="middle" gutter={16} style={{ marginBottom: 8 }}>
               <Col>
                 <Tag color={qa.percent_correct >= 70 ? 'success' : qa.percent_correct >= 40 ? 'warning' : 'error'}>
@@ -279,17 +286,21 @@ export default function ExamResults() {
             {qa.options && qa.answer_distribution && (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
-                  data={qa.options.map((opt, i) => ({
-                    name: opt.length > 20 ? opt.slice(0, 20) + '…' : opt,
-                    count: qa.answer_distribution[i] || 0,
-                    isCorrect: i === qa.correct_answer_index,
-                  }))}
+                  data={qa.options.map((opt, i) => {
+                    const plain = stripHtml(opt)
+                    return {
+                      name: plain.length > 24 ? plain.slice(0, 24) + '…' : plain,
+                      fullText: plain,
+                      count: qa.answer_distribution[i] || 0,
+                      isCorrect: i === qa.correct_answer_index,
+                    }
+                  })}
                   margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis allowDecimals={false} />
-                  <RechartTooltip />
+                  <RechartTooltip formatter={(value, name, props) => [value, props.payload.fullText]} />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {qa.options.map((_, i) => (
                       <Cell

@@ -575,13 +575,12 @@ async def get_exam_results(
     for a in all_answers:
         answers_by_participant.setdefault(a.participant_id, {})[a.question_id] = a
 
-    # Build leaderboard from completed participants
-    leaderboard_entries = []
+    # Build leaderboard — completed participants ranked, then in-progress at the bottom
+    completed_entries = []
+    in_progress_entries = []
     score_sum = 0
 
     for p in participants:
-        if not p.completed_at:
-            continue
         p_answers = answers_by_participant.get(p.id, {})
         score = 0
         correct = 0
@@ -593,25 +592,31 @@ async def get_exam_results(
             elif ans and ans.is_correct is False:
                 score -= q.negative_points
         score = max(0, score)
-        score_sum += score
         time_taken = None
         if p.started_at and p.completed_at:
             time_taken = (p.completed_at - p.started_at).total_seconds()
 
-        leaderboard_entries.append({
+        entry = {
             "display_name": p.display_name or "Anonymous",
             "email": p.email,
             "score": score,
             "correct": correct,
             "time_taken": time_taken,
             "completed_at": p.completed_at,
-        })
+            "is_abandoned": p.is_abandoned,
+            "is_completed": p.completed_at is not None,
+        }
+        if p.completed_at:
+            score_sum += score
+            completed_entries.append(entry)
+        else:
+            in_progress_entries.append(entry)
 
-    # Sort by score desc, then time asc
-    leaderboard_entries.sort(key=lambda x: (-x["score"], x["time_taken"] or 9999999))
+    # Sort completed by score desc, then time asc
+    completed_entries.sort(key=lambda x: (-x["score"], x["time_taken"] or 9999999))
 
     leaderboard = []
-    for rank, entry in enumerate(leaderboard_entries, start=1):
+    for rank, entry in enumerate(completed_entries, start=1):
         leaderboard.append(ExamLeaderboardEntry(
             rank=rank,
             display_name=entry["display_name"],
@@ -622,7 +627,22 @@ async def get_exam_results(
             correct_count=entry["correct"],
             time_taken_seconds=entry["time_taken"],
             completed_at=entry["completed_at"],
-            is_abandoned=False,
+            is_abandoned=entry["is_abandoned"],
+            is_completed=True,
+        ))
+    for entry in in_progress_entries:
+        leaderboard.append(ExamLeaderboardEntry(
+            rank=None,
+            display_name=entry["display_name"],
+            email=entry["email"],
+            score=0,
+            max_score=max_score,
+            percentage=0.0,
+            correct_count=0,
+            time_taken_seconds=None,
+            completed_at=None,
+            is_abandoned=entry["is_abandoned"],
+            is_completed=False,
         ))
 
     avg_score = round(score_sum / total_completed, 2) if total_completed > 0 else 0.0
