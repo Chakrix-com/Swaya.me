@@ -15,7 +15,12 @@ from core.config.settings import settings
 logger = logging.getLogger(__name__)
 
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-TIMEOUT = httpx.Timeout(120.0, connect=10.0)
+
+
+def _get_timeout() -> httpx.Timeout:
+    """Build httpx.Timeout from settings so GEMINI_TIMEOUT_SECONDS in .env is respected."""
+    secs = float(settings.gemini.timeout_seconds or 120)
+    return httpx.Timeout(secs, connect=10.0)
 
 # Map configured model names to the API-level model IDs that are available.
 # The user's .env may have old/preview names; we normalise to known-working IDs.
@@ -154,14 +159,14 @@ User instructions:
         "contents": [{"parts": [{"text": user_message}], "role": "user"}],
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 16384,
+            "maxOutputTokens": 65536,
             "responseMimeType": "application/json",
         },
     }
 
     url = f"{GEMINI_BASE}/{model}:generateContent?key={key}"
 
-    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=_get_timeout()) as client:
         try:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()
@@ -186,7 +191,10 @@ User instructions:
             raise GeminiError("Gemini response missing 'questions' list")
     except (json.JSONDecodeError, ValueError) as e:
         logger.warning("Failed to parse Gemini JSON: %s | raw: %.300s", e, raw)
-        raise GeminiError("Gemini returned malformed JSON — try again")
+        raise GeminiError(
+            "Gemini response was truncated (output too long). "
+            "Try reducing the number of questions or simplifying your prompt."
+        )
 
     result = []
     for q in questions_raw:
