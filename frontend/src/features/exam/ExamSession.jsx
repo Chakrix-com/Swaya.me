@@ -75,7 +75,7 @@ const PROCTORING_RULE_IDS = [
 
 // ── Start Screen ─────────────────────────────────────────────────────────────
 
-function StartScreen({ info, proctoringConfig, onStart, loading }) {
+function StartScreen({ info, proctoringConfig, onStart, loading, startError = null, onClearStartError }) {
   const { t } = useTranslation()
   const [form] = Form.useForm()
   const requireEmail = !!info.require_email
@@ -220,7 +220,9 @@ function StartScreen({ info, proctoringConfig, onStart, loading }) {
             showIcon
             message={t('exam.otpSent', { email: sentEmail })}
           />
-          {otpError && <Alert type="error" showIcon message={otpError} />}
+          {(startError || otpError) && (
+            <Alert type="error" showIcon message={startError || otpError} />
+          )}
           <Form layout="vertical" onFinish={handleVerifyOtp}>
             <Form.Item
               name="otp"
@@ -236,6 +238,7 @@ function StartScreen({ info, proctoringConfig, onStart, loading }) {
                 maxLength={6}
                 autoFocus
                 style={{ letterSpacing: 8, fontSize: 20, textAlign: 'center' }}
+                onChange={() => { if (startError) onClearStartError?.() }}
               />
             </Form.Item>
             <Form.Item style={{ marginBottom: 8 }}>
@@ -631,6 +634,7 @@ export default function ExamSession() {
   const [examInfo, setExamInfo] = useState(null)
   const [examResult, setExamResult] = useState(null)
   const [error, setError] = useState(null)
+  const [startError, setStartError] = useState(null) // inline error on the start screen (e.g. wrong OTP)
   const [proctoringConfig, setProctoringConfig] = useState(null)
 
   // Exam state
@@ -798,9 +802,13 @@ export default function ExamSession() {
       setPhase('taking')
     } catch (err) {
       const detail = err.response?.data?.detail || ''
-      if (err.response?.status === 403 || detail.includes('abandoned') || detail.includes('already')) {
+      const status  = err.response?.status
+      if (status === 403 || detail.includes('abandoned') || detail.includes('already')) {
         setError(t('exam.alreadyAttempted'))
         setPhase('error')
+      } else if (status === 400 && (detail.toLowerCase().includes('otp') || detail.toLowerCase().includes('email'))) {
+        // OTP or email error — show inline, keep the user on the start/OTP screen
+        setStartError(detail)
       } else {
         setError(detail || t('common.error'))
         setPhase('error')
@@ -920,6 +928,8 @@ export default function ExamSession() {
             proctoringConfig={proctoringConfig}
             onStart={handleStart}
             loading={starting}
+            startError={startError}
+            onClearStartError={() => setStartError(null)}
           />
         )}
 

@@ -115,12 +115,16 @@ def find_published_exam(token):
             if not slug:
                 continue
 
-            # Fetch detail to check if proctoring is enabled — skip proctored exams
+            # Fetch detail to check if proctoring or email OTP is enabled — skip both for the classic flow test
             detail = requests.get(f"{API_BASE_URL}/quizzes/{quiz['id']}", headers=headers, verify=False, timeout=20)
             if detail.status_code == 200:
-                policy = detail.json().get("proctoring_policy") or {}
+                detail_json = detail.json()
+                policy = detail_json.get("proctoring_policy") or {}
                 if policy.get("enabled"):
                     log(f"Skipping exam {quiz['id']}: proctoring enabled", "INFO")
+                    continue
+                if detail_json.get("exam_require_email"):
+                    log(f"Skipping exam {quiz['id']}: email OTP required (use test_exam_otp_e2e.py)", "INFO")
                     continue
 
             log(f"Found active published test: id={quiz['id']} slug={slug}", "SUCCESS")
@@ -175,12 +179,20 @@ def test_exam_flow():
         name_input.clear()
         name_input.send_keys("Regression Tester")
 
+        # Acknowledge proctoring rules if the checkbox is present
+        ack_boxes = driver.find_elements(By.ID, "proctor-ack")
+        if ack_boxes:
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'})", ack_boxes[0])
+            if not ack_boxes[0].is_selected():
+                driver.execute_script("arguments[0].click()", ack_boxes[0])
+            log("Proctoring acknowledgment checked", "INFO")
+
         start_btn = wait_for_any(driver, [
             (By.XPATH, "//button[contains(., 'Start Test')]"),
             (By.XPATH, "//button[contains(., 'Start Exam')]"),
             (By.XPATH, "//button[contains(., 'Start')]"),
         ], clickable=True, name="start button")
-        start_btn.click()
+        driver.execute_script("arguments[0].click()", start_btn)
         time.sleep(3)
         driver.save_screenshot("/tmp/exam_02_question1.png")
         log("Started test", "SUCCESS")

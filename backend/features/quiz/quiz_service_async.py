@@ -1059,5 +1059,6 @@ class QuizBuilderServiceAsync:
             exam_end_at=getattr(quiz, 'exam_end_at', None),
             exam_time_limit_seconds=getattr(quiz, 'exam_time_limit_seconds', None),
             exam_results_email=getattr(quiz, 'exam_results_email', None),
+            exam_require_email=bool(getattr(quiz, 'exam_require_email', False)),
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
         )
