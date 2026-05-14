@@ -52,6 +52,7 @@ import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
 import RichTextEditor from './components/RichTextEditor'
+import RichTextRenderer from './components/RichTextRenderer'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
@@ -2636,14 +2637,23 @@ export default function QuizBuilder() {
                   />
                 }
               >
-                <Text strong>{q.text}</Text>
-                <div style={{ marginTop: 8 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                  <RichTextRenderer content={q.text} />
+                </div>
+                <div>
                   {q.options.map((opt, oi) => (
-                    <div key={oi}>
-                      <Text type={oi === q.correct_answer_index ? 'success' : 'secondary'}>
-                        {String.fromCharCode(65 + oi)}: {opt}
-                        {oi === q.correct_answer_index && !isPoll && <Tag color="green" style={{ marginLeft: 6 }}>{t('ai.correct')}</Tag>}
-                      </Text>
+                    <div key={oi} style={{
+                      display: 'flex', alignItems: 'baseline', gap: 4,
+                      color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
+                      marginBottom: 2,
+                    }}>
+                      <span style={{ flexShrink: 0, fontWeight: 500 }}>
+                        {String.fromCharCode(65 + oi)}:
+                      </span>
+                      <RichTextRenderer content={opt} style={{ flex: 1 }} />
+                      {oi === q.correct_answer_index && !isPoll && (
+                        <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
+                      )}
                     </div>
                   ))}
                 </div>

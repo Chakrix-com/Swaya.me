@@ -2,6 +2,7 @@
 Gemini AI service — question generation via Google Gemini REST API.
 Uses httpx directly to avoid SDK version dependency issues.
 """
+import html
 import json
 import logging
 import re
@@ -45,6 +46,68 @@ def _parse_json(raw: str) -> Any:
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw)
+
+
+def _md_to_html(text: str) -> str:
+    """
+    Convert markdown code syntax (as returned by Gemini) to HTML
+    for storage and rendering by RichTextRenderer.
+
+    Handles:
+      - Fenced code blocks: ```lang\\ncode\\n``` → <pre><code class="language-lang">…</code></pre>
+      - Inline code: `expr` → <code>expr</code>
+      - Bold: **text** → <strong>text</strong>
+      - Paragraph/newline structure when code blocks are present
+    """
+    if not text:
+        return text
+
+    # Check if text has any markdown we care about before doing any work
+    has_fence = '```' in text
+    has_inline = re.search(r'`[^`\n]+`', text)
+    has_bold = '**' in text
+
+    if not has_fence and not has_inline and not has_bold:
+        return text  # plain text — leave untouched
+
+    # Split on fenced code blocks, preserving them as alternating non-code / code parts
+    fence_re = re.compile(r'```([\w]*)\n([\s\S]*?)```', re.DOTALL)
+    parts = fence_re.split(text)
+    # split produces: [before, lang, code, between, lang, code, …, after]
+
+    result_parts: list[str] = []
+    i = 0
+    while i < len(parts):
+        if i % 3 == 0:
+            # Plain text segment — apply inline transforms
+            segment = parts[i]
+            # HTML-escape first so Gemini can't inject arbitrary markup
+            segment = html.escape(segment)
+            # Inline code (content was already escaped above)
+            segment = re.sub(r'`([^`\n]+)`', lambda m: f'<code>{m.group(1)}</code>', segment)
+            # Bold
+            segment = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', segment)
+            # Wrap double-newline paragraphs if there's structural content
+            if has_fence:
+                paras = segment.strip().split('\n\n')
+                if len(paras) > 1:
+                    segment = ''.join(
+                        f'<p>{p.replace(chr(10), "<br>")}</p>' for p in paras if p.strip()
+                    )
+                else:
+                    segment = segment.replace('\n', '<br>') if segment.strip() else segment
+            result_parts.append(segment)
+        elif i % 3 == 1:
+            # Language label from the split group
+            lang = parts[i].strip().lower()
+        else:
+            # Code content
+            code = html.escape(parts[i].rstrip('\n'))
+            lang_attr = f' class="language-{lang}"' if lang else ''
+            result_parts.append(f'<pre><code{lang_attr}>{code}</code></pre>')
+        i += 1
+
+    return ''.join(result_parts)
 
 
 async def generate_questions(
@@ -138,8 +201,8 @@ User instructions:
         except (TypeError, ValueError):
             idx = 0
         result.append({
-            "text": str(q["text"]),
-            "options": [str(o) for o in opts[:4]],
+            "text": _md_to_html(str(q["text"])),
+            "options": [_md_to_html(str(o)) for o in opts[:4]],
             "correct_answer_index": idx if 0 <= idx <= 3 else 0,
         })
 
