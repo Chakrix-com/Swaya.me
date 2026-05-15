@@ -356,11 +356,11 @@ async def submit_exam(
 
     # Verify proctoring requirements (e.g., webcam snapshots) if enabled
     policy = quiz.proctoring_policy or {}
-    if policy.get("enabled") and redis:
+    webcam_enabled = policy.get("rules", {}).get("webcam_monitoring", {}).get("enabled", False)
+    if policy.get("enabled") and webcam_enabled and redis:
         from features.proctoring.proctoring_service_async import get_snapshot_count
         count = await get_snapshot_count(session_token, redis)
         if count == 0:
-
             logger.warning(f"Exam submission rejected for {session_token}: no snapshots received despite proctoring enabled")
             raise ProctoringViolationError(
                 "Proctoring requirement not met: no webcam snapshots received during the session."
