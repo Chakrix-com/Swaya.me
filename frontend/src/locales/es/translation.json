@@ -321,7 +321,16 @@
     "importError": "Error al importar el cuestionario",
     "finalizeImport": "Finalizar importación",
     "importPreview": "Vista previa de importación",
-    "excelHint": "Haga clic o arrastre el archivo aquí para validar. Compatible con un solo archivo .xlsx."
+    "excelHint": "Haga clic o arrastre el archivo aquí para validar. Compatible con un solo archivo .xlsx.",
+    "answerExplanation": "Explicación de respuesta (opcional)",
+    "answerExplanationTooltip": "Se muestra a los participantes después de enviar el examen.",
+    "answerExplanationPlaceholder": "Explica por qué la respuesta correcta es correcta…",
+    "fillOnline": "Rellenar en línea",
+    "invalidFile": "Formato de archivo no válido",
+    "noQuestionsFound": "No se encontraron preguntas en el archivo",
+    "validating": "Validando...",
+    "startDateRequired": "La fecha de inicio es obligatoria para encuestas sin conexión",
+    "endDateRequired": "La fecha de finalización es obligatoria para encuestas sin conexión"
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",
@@ -1580,7 +1589,8 @@
     "pollDescription": "Descripción",
     "enterPollDescription": "Ingresa una descripción (opcional)",
     "questionCount": "{{total}} preguntas",
-    "typeInfo": "No se necesita anfitrión en vivo. Comparte un enlace — la audiencia responde a su propio ritmo. Los resultados se acumulan con el tiempo."
+    "typeInfo": "No se necesita anfitrión en vivo. Comparte un enlace — la audiencia responde a su propio ritmo. Los resultados se acumulan con el tiempo.",
+    "completionRate": "Tasa de finalización"
   },
   "exam": {
     "typeLabel": "Prueba",
@@ -1697,7 +1707,15 @@
     "saveSettingsHint": "Guarda la programación, puntuación y configuración de seguridad en un clic.",
     "liveEditBannerTitle": "Este examen está activo",
     "liveEditBannerDesc": "La programación, puntuación y configuración de seguridad pueden actualizarse. Las preguntas están bloqueadas — desactiva el examen para editarlas.",
-    "questionsLockedNotice": "Las preguntas están bloqueadas mientras el examen esté activo."
+    "questionsLockedNotice": "Las preguntas están bloqueadas mientras el examen esté activo.",
+    "downloadReport": "Descargar informe PDF",
+    "inProgress": "En progreso",
+    "aiAnalysisTitle": "Análisis de IA",
+    "aiAnalyseButton": "Analizar con IA",
+    "aiReanalyseButton": "Volver a analizar",
+    "aiAnalysing": "Analizando…",
+    "aiAnalysingMessage": "Analizando resultados con Gemini AI…",
+    "aiAnalysisUnavailable": "El análisis estará disponible cuando al menos un participante haya enviado."
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",
@@ -1853,6 +1871,36 @@
       "summary": "{{warnings}} advertencia(s), luego bloqueado en infracción #{{lockAt}}",
       "autoSubmitOn": "Envío automático ACTIVADO.",
       "autoSubmitOff": "Envío automático DESACTIVADO."
+    },
+    "identityCapture": {
+      "title": "Verificación de identidad",
+      "stepFaceCapture": "Captura de rostro",
+      "stepReady": "Listo",
+      "instruction": "Coloque su rostro claramente en el marco y luego haga clic en Capturar.",
+      "captureButton": "Capturar foto",
+      "verified": "Identidad verificada. Estás listo para comenzar.",
+      "startExam": "Iniciar examen"
     }
+  },
+  "richText": {
+    "italic": "Cursiva",
+    "underline": "Subrayado",
+    "strikethrough": "Tachado",
+    "inlineCode": "Código en línea",
+    "superscript": "Superíndice",
+    "subscript": "Subíndice",
+    "textColour": "Color de texto",
+    "highlight": "Resaltar",
+    "alignLeft": "Alinear a la izquierda",
+    "alignCenter": "Centrar",
+    "alignRight": "Alinear a la derecha",
+    "justify": "Justificar",
+    "bulletList": "Lista de viñetas",
+    "orderedList": "Lista numerada",
+    "taskList": "Lista de tareas",
+    "blockquote": "Cita en bloque",
+    "horizontalRule": "Línea horizontal",
+    "insertTable": "Insertar tabla",
+    "codeBlock": "Bloque de código"
   }
 }

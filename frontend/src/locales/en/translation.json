@@ -325,7 +325,12 @@
     "invalidFile": "Invalid file format",
     "canImport": "Ready to Import",
     "hasErrors": "Correct Errors to Import",
-    "excelHint": "Click or drag file to this area to validate. Support for single .xlsx file."
+    "excelHint": "Click or drag file to this area to validate. Support for single .xlsx file.",
+    "answerExplanation": "Answer Explanation (optional)",
+    "answerExplanationTooltip": "Shown to participants after they submit the exam.",
+    "answerExplanationPlaceholder": "Explain why the correct answer is correct…",
+    "startDateRequired": "Start date is required for offline polls",
+    "endDateRequired": "End date is required for offline polls"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -1584,7 +1589,8 @@
     "pollDescription": "Description",
     "enterPollDescription": "Enter description (optional)",
     "questionCount": "{{total}} questions",
-    "typeInfo": "No live host needed. Share a link — audience responds at their own pace. Results accumulate over time."
+    "typeInfo": "No live host needed. Share a link — audience responds at their own pace. Results accumulate over time.",
+    "completionRate": "Completion rate"
   },
   "exam": {
     "typeLabel": "Test",
@@ -1701,7 +1707,15 @@
     "saveSettingsHint": "Saves schedule, scoring, and security settings in one click.",
     "liveEditBannerTitle": "This exam is currently live",
     "liveEditBannerDesc": "Schedule, scoring, and security settings can be updated and take effect immediately. Questions are locked — deactivate the exam to add or edit questions.",
-    "questionsLockedNotice": "Questions are locked while the exam is active. Click \"Deactivate Exam\" in the top bar to edit questions."
+    "questionsLockedNotice": "Questions are locked while the exam is active. Click \"Deactivate Exam\" in the top bar to edit questions.",
+    "downloadReport": "Download PDF Report",
+    "inProgress": "In Progress",
+    "aiAnalysisTitle": "AI Analysis",
+    "aiAnalyseButton": "Analyse with AI",
+    "aiReanalyseButton": "Re-analyse",
+    "aiAnalysing": "Analysing…",
+    "aiAnalysingMessage": "Analysing results with Gemini AI…",
+    "aiAnalysisUnavailable": "Analysis is available once at least one participant has submitted."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -1857,6 +1871,36 @@
       "summary": "With these settings: participant gets {{warnings}} warning(s), then locked on violation #{{lockAt}}",
       "autoSubmitOn": "Auto-submit is ON — their answers at the time of lock will be submitted automatically.",
       "autoSubmitOff": "Auto-submit is OFF — a locked participant's answers will not be submitted unless they manually submitted before being locked."
+    },
+    "identityCapture": {
+      "title": "Identity Verification",
+      "stepFaceCapture": "Face Capture",
+      "stepReady": "Ready",
+      "instruction": "Position your face clearly in the frame, then click Capture.",
+      "captureButton": "Capture Photo",
+      "verified": "Identity verified. You're ready to begin.",
+      "startExam": "Start Exam"
     }
+  },
+  "richText": {
+    "italic": "Italic",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "inlineCode": "Inline code",
+    "superscript": "Superscript",
+    "subscript": "Subscript",
+    "textColour": "Text colour",
+    "highlight": "Highlight",
+    "alignLeft": "Align left",
+    "alignCenter": "Align centre",
+    "alignRight": "Align right",
+    "justify": "Justify",
+    "bulletList": "Bullet list",
+    "orderedList": "Ordered list",
+    "taskList": "Task list",
+    "blockquote": "Blockquote",
+    "horizontalRule": "Horizontal rule",
+    "insertTable": "Insert table",
+    "codeBlock": "Code block"
   }
 }

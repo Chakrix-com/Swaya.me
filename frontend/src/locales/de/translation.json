@@ -321,7 +321,16 @@
     "importError": "Quiz-Import fehlgeschlagen",
     "finalizeImport": "Import abschließen",
     "importPreview": "Import-Vorschau",
-    "excelHint": "Datei hier klicken oder hineinziehen. Einzelne .xlsx-Datei wird unterstützt."
+    "excelHint": "Datei hier klicken oder hineinziehen. Einzelne .xlsx-Datei wird unterstützt.",
+    "answerExplanation": "Antwortbegründung (optional)",
+    "answerExplanationTooltip": "Wird den Teilnehmern nach der Abgabe der Prüfung angezeigt.",
+    "answerExplanationPlaceholder": "Erklären Sie, warum die richtige Antwort korrekt ist…",
+    "fillOnline": "Online ausfüllen",
+    "invalidFile": "Ungültiges Dateiformat",
+    "noQuestionsFound": "Keine Fragen in der Datei gefunden",
+    "validating": "Wird überprüft...",
+    "startDateRequired": "Startdatum ist für Offline-Umfragen erforderlich",
+    "endDateRequired": "Enddatum ist für Offline-Umfragen erforderlich"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -842,7 +851,8 @@
       "privacyLink": "Datenschutzrichtlinie",
       "termsLink": "Nutzungsbedingungen",
       "aboutLink": "Über uns",
-      "contactLink": "Kontakt"
+      "contactLink": "Kontakt",
+      "helpLink": "Hilfe"
     },
     "about": {
       "title": "Über Swaya.me",
@@ -1579,7 +1589,8 @@
     "pollDescription": "Beschreibung",
     "enterPollDescription": "Beschreibung eingeben (optional)",
     "questionCount": "{{total}} Fragen",
-    "typeInfo": "Kein Live-Host erforderlich. Link teilen — Publikum antwortet in eigenem Tempo. Ergebnisse sammeln sich über Zeit an."
+    "typeInfo": "Kein Live-Host erforderlich. Link teilen — Publikum antwortet in eigenem Tempo. Ergebnisse sammeln sich über Zeit an.",
+    "completionRate": "Abschlussquote"
   },
   "exam": {
     "typeLabel": "Test",
@@ -1696,7 +1707,15 @@
     "saveSettingsHint": "Speichert Zeitplan, Bewertung und Sicherheitseinstellungen mit einem Klick.",
     "liveEditBannerTitle": "Diese Prüfung ist derzeit aktiv",
     "liveEditBannerDesc": "Zeitplan, Bewertung und Sicherheitseinstellungen können aktualisiert werden. Fragen sind gesperrt — deaktivieren Sie die Prüfung, um Fragen zu bearbeiten.",
-    "questionsLockedNotice": "Fragen sind gesperrt, während die Prüfung aktiv ist."
+    "questionsLockedNotice": "Fragen sind gesperrt, während die Prüfung aktiv ist.",
+    "downloadReport": "PDF-Bericht herunterladen",
+    "inProgress": "Läuft",
+    "aiAnalysisTitle": "KI-Analyse",
+    "aiAnalyseButton": "Mit KI analysieren",
+    "aiReanalyseButton": "Erneut analysieren",
+    "aiAnalysing": "Analysiere…",
+    "aiAnalysingMessage": "Ergebnisse werden mit Gemini AI analysiert…",
+    "aiAnalysisUnavailable": "Die Analyse ist verfügbar, sobald mindestens ein Teilnehmer eingereicht hat."
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",
@@ -1852,6 +1871,36 @@
       "summary": "{{warnings}} Warnung(en), dann Sperre bei Verstoß #{{lockAt}}",
       "autoSubmitOn": "Automatisches Einreichen AN.",
       "autoSubmitOff": "Automatisches Einreichen AUS."
+    },
+    "identityCapture": {
+      "title": "Identitätsverifizierung",
+      "stepFaceCapture": "Gesicht aufnehmen",
+      "stepReady": "Bereit",
+      "instruction": "Platzieren Sie Ihr Gesicht deutlich im Rahmen und klicken Sie dann auf Aufnehmen.",
+      "captureButton": "Foto aufnehmen",
+      "verified": "Identität bestätigt. Sie können beginnen.",
+      "startExam": "Prüfung starten"
     }
+  },
+  "richText": {
+    "italic": "Kursiv",
+    "underline": "Unterstreichen",
+    "strikethrough": "Durchgestrichen",
+    "inlineCode": "Inline-Code",
+    "superscript": "Hochgestellt",
+    "subscript": "Tiefgestellt",
+    "textColour": "Textfarbe",
+    "highlight": "Hervorheben",
+    "alignLeft": "Linksbündig",
+    "alignCenter": "Zentriert",
+    "alignRight": "Rechtsbündig",
+    "justify": "Blocksatz",
+    "bulletList": "Aufzählungsliste",
+    "orderedList": "Nummerierte Liste",
+    "taskList": "Aufgabenliste",
+    "blockquote": "Blockzitat",
+    "horizontalRule": "Horizontale Linie",
+    "insertTable": "Tabelle einfügen",
+    "codeBlock": "Codeblock"
   }
 }

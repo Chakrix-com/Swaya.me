@@ -321,7 +321,16 @@
     "importError": "ક્વિઝ આયાત નિષ્ફળ",
     "finalizeImport": "આયાત પૂર્ણ કરો",
     "importPreview": "આયાત પૂર્વાવલોકન",
-    "excelHint": "ફાઇલ ક્લિક કરો અથવા અહીં ખેંચો. એક .xlsx ફાઇલ સમર્થિત."
+    "excelHint": "ફાઇલ ક્લિક કરો અથવા અહીં ખેંચો. એક .xlsx ફાઇલ સમર્થિત.",
+    "answerExplanation": "જવાબ સ્પષ્ટીકરણ (વૈકલ્પિક)",
+    "answerExplanationTooltip": "સહભાગીઓ પરીક્ષા સબમિટ કર્યા પછી બતાવવામાં આવે છે.",
+    "answerExplanationPlaceholder": "સાચો જવાબ શા માટે સાચો છે તે સ્પષ્ટ કરો…",
+    "fillOnline": "ઓનલાઇન ભરો",
+    "invalidFile": "અમાન્ય ફાઇલ ફોર્મેટ",
+    "noQuestionsFound": "ફાઇલમાં કોઈ પ્રશ્નો મળ્યા નથી",
+    "validating": "ચકાસણી કરવામાં આવી રહી છે...",
+    "startDateRequired": "ઑફ્લાઇન મતો માટે પ્રારંભ તારીખ જરૂરી છે",
+    "endDateRequired": "ઑફ્લાઇન મતો માટે સમાપ્તિ તારીખ જરૂરી છે"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -1580,7 +1589,8 @@
     "pollDescription": "वर्णन",
     "enterPollDescription": "वर्णन दाखल करो (वैकल्पिक)",
     "questionCount": "{{total}} પ્રશ્નો",
-    "typeInfo": "કોઈ લાઇવ હોસ્ટ જরૂરી નથી. લિંક શેર કરો — પ્રેક્ષકો પોતાની ગતિએ જવાબ આપે છે. પરિણામો સમય સાથે એકઠા થાય છે."
+    "typeInfo": "કોઈ લાઇવ હોસ્ટ જরૂરી નથી. લિંક શેર કરો — પ્રેક્ષકો પોતાની ગતિએ જવાબ આપે છે. પરિણામો સમય સાથે એકઠા થાય છે.",
+    "completionRate": "પૂર્ણ કરવાનો દર"
   },
   "exam": {
     "typeLabel": "ટેસ્ટ",
@@ -1697,7 +1707,15 @@
     "saveSettingsHint": "શેડ્યૂલ, સ્કોરિંગ અને સુરક્ષા સેટિંગ્સ એક ક્લિકમાં સેવ કરે છે.",
     "liveEditBannerTitle": "આ પરીક્ષા હાલ લાઇવ છે",
     "liveEditBannerDesc": "શેડ્યૂલ, સ્કોરિંગ અને સુરક્ષા સેટિંગ્સ અપડેટ કરી શકાય છે. પ્રશ્નો લૉક છે — પ્રશ્નો સંપાદિત કરવા પરીક્ષા નિષ્ક્રિય કરો.",
-    "questionsLockedNotice": "પરીક્ષા સક્રિય હોય ત્યારે પ્રશ્નો લૉક રહે છે."
+    "questionsLockedNotice": "પરીક્ષા સક્રિય હોય ત્યારે પ્રશ્નો લૉક રહે છે.",
+    "downloadReport": "PDF રિપોર્ટ ડાઉનલોડ કરો",
+    "inProgress": "ચાલુ છે",
+    "aiAnalysisTitle": "AI વિશ્લેષણ",
+    "aiAnalyseButton": "AI સાથે વિશ્લેષણ કરો",
+    "aiReanalyseButton": "ફરીથી વિશ્લેષણ કરો",
+    "aiAnalysing": "વિશ્લેષણ કરવામાં આવી રહ્યું છે…",
+    "aiAnalysingMessage": "Gemini AI સાથે પરિણામોનું વિશ્લેષણ કરવામાં આવી રહ્યું છે…",
+    "aiAnalysisUnavailable": "ઓછામાં ઓછા એક સહભાગી સબમિટ કર્યા પછી વિશ્લેષણ ઉપલબ્ધ છે."
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",
@@ -1853,6 +1871,36 @@
       "summary": "{{warnings}} ચેતવણી(ઓ) મળ્યા પછી ઉલ્લંઘન #{{lockAt}} પર લૉક",
       "autoSubmitOn": "ઑટો-સબ્મિટ ઓન.",
       "autoSubmitOff": "ઑટો-સબ્મિટ ઑફ."
+    },
+    "identityCapture": {
+      "title": "ઓળખ ચકાસણી",
+      "stepFaceCapture": "ચહેરો કૅપ્ચર",
+      "stepReady": "તૈયાર",
+      "instruction": "તમારા ચહેરાને ફ્રેમમાં સ્પષ્ટ રીતે રાખો, પછી કૅપ્ચર ક્લિક કરો.",
+      "captureButton": "ફોટો કૅપ્ચર કરો",
+      "verified": "ઓળખ ચકાસવામાં આવી. તમે શરૂ કરવા તૈયાર છો.",
+      "startExam": "પરીક્ષા શરૂ કરો"
     }
+  },
+  "richText": {
+    "italic": "ઇટાલિક",
+    "underline": "અન્ડરલાઇન",
+    "strikethrough": "સ્ટ્રાઇકથ્રૂ",
+    "inlineCode": "ઇનલાઇન કોડ",
+    "superscript": "સુપરસ્ક્રિપ્ટ",
+    "subscript": "સબસ્ક્રિપ્ટ",
+    "textColour": "ટેક્સ્ટ રંગ",
+    "highlight": "હાઇલાઇટ",
+    "alignLeft": "ડાબે ગોઠવો",
+    "alignCenter": "કેન્દ્રમાં ગોઠવો",
+    "alignRight": "જમણે ગોઠવો",
+    "justify": "ગોઠવો",
+    "bulletList": "બુલેટ સૂચિ",
+    "orderedList": "ક્રમ સૂચિ",
+    "taskList": "કાર્ય સૂચિ",
+    "blockquote": "બ્લૉકકૉટ",
+    "horizontalRule": "આડી રેખા",
+    "insertTable": "ટેબલ દાખલ કરો",
+    "codeBlock": "કોડ બ્લૉક"
   }
 }

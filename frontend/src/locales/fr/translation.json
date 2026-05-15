@@ -323,7 +323,16 @@
     "importError": "Échec de l'importation du quiz",
     "finalizeImport": "Finaliser l'importation",
     "importPreview": "Aperçu de l'importation",
-    "excelHint": "Cliquez ou faites glisser le fichier ici pour valider. Un seul fichier .xlsx pris en charge."
+    "excelHint": "Cliquez ou faites glisser le fichier ici pour valider. Un seul fichier .xlsx pris en charge.",
+    "answerExplanation": "Explication de la réponse (facultatif)",
+    "answerExplanationTooltip": "Affiché aux participants après la soumission de l'examen.",
+    "answerExplanationPlaceholder": "Expliquez pourquoi la bonne réponse est correcte…",
+    "fillOnline": "Remplir en ligne",
+    "invalidFile": "Format de fichier invalide",
+    "noQuestionsFound": "Aucune question trouvée dans le fichier",
+    "validating": "Validation en cours...",
+    "startDateRequired": "La date de début est requise pour les sondages hors ligne",
+    "endDateRequired": "La date de fin est requise pour les sondages hors ligne"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -1582,7 +1591,8 @@
     "pollDescription": "Description",
     "enterPollDescription": "Saisissez une description (optionnel)",
     "questionCount": "{{total}} questions",
-    "typeInfo": "Pas besoin d'hôte en direct. Partagez un lien — le public répond à son rythme. Les résultats s'accumulent au fil du temps."
+    "typeInfo": "Pas besoin d'hôte en direct. Partagez un lien — le public répond à son rythme. Les résultats s'accumulent au fil du temps.",
+    "completionRate": "Taux de complétion"
   },
   "exam": {
     "typeLabel": "Test",
@@ -1699,7 +1709,15 @@
     "saveSettingsHint": "Enregistre le calendrier, la notation et les paramètres de sécurité en un clic.",
     "liveEditBannerTitle": "Cet examen est actuellement en cours",
     "liveEditBannerDesc": "Le calendrier, la notation et les paramètres de sécurité peuvent être mis à jour. Les questions sont verrouillées — désactivez l'examen pour les modifier.",
-    "questionsLockedNotice": "Les questions sont verrouillées pendant que l'examen est actif."
+    "questionsLockedNotice": "Les questions sont verrouillées pendant que l'examen est actif.",
+    "downloadReport": "Télécharger le rapport PDF",
+    "inProgress": "En cours",
+    "aiAnalysisTitle": "Analyse IA",
+    "aiAnalyseButton": "Analyser avec l'IA",
+    "aiReanalyseButton": "Ré-analyser",
+    "aiAnalysing": "Analyse en cours…",
+    "aiAnalysingMessage": "Analyse des résultats avec Gemini AI…",
+    "aiAnalysisUnavailable": "L'analyse est disponible dès qu'au moins un participant a soumis."
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",
@@ -1855,6 +1873,36 @@
       "summary": "{{warnings}} avertissement(s), puis verrouillé à l'infraction #{{lockAt}}",
       "autoSubmitOn": "Soumission automatique ACTIVÉE.",
       "autoSubmitOff": "Soumission automatique DÉSACTIVÉE."
+    },
+    "identityCapture": {
+      "title": "Vérification d'identité",
+      "stepFaceCapture": "Capture du visage",
+      "stepReady": "Prêt",
+      "instruction": "Positionnez clairement votre visage dans le cadre, puis cliquez sur Capturer.",
+      "captureButton": "Capturer la photo",
+      "verified": "Identité vérifiée. Vous êtes prêt à commencer.",
+      "startExam": "Démarrer l'examen"
     }
+  },
+  "richText": {
+    "italic": "Italique",
+    "underline": "Souligné",
+    "strikethrough": "Barré",
+    "inlineCode": "Code en ligne",
+    "superscript": "Exposant",
+    "subscript": "Indice",
+    "textColour": "Couleur du texte",
+    "highlight": "Surligner",
+    "alignLeft": "Aligner à gauche",
+    "alignCenter": "Centrer",
+    "alignRight": "Aligner à droite",
+    "justify": "Justifier",
+    "bulletList": "Liste à puces",
+    "orderedList": "Liste ordonnée",
+    "taskList": "Liste de tâches",
+    "blockquote": "Bloc de citation",
+    "horizontalRule": "Ligne horizontale",
+    "insertTable": "Insérer un tableau",
+    "codeBlock": "Bloc de code"
   }
 }
