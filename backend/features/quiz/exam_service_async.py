@@ -426,6 +426,23 @@ async def submit_exam(
     participant.completed_at = _utcnow()
     await db.commit()
 
+    # Fire results email asynchronously if participant provided a verified email
+    if participant.email:
+        import asyncio
+        from core.auth.email_service import send_exam_result_email
+        asyncio.create_task(send_exam_result_email(
+            email=participant.email,
+            name=participant.display_name,
+            quiz_title=quiz.title,
+            total_score=total_score,
+            max_score=max_score,
+            percentage=percentage,
+            correct_count=correct_count,
+            wrong_count=wrong_count,
+            unanswered_count=unanswered_count,
+            question_results=question_results,
+        ))
+
     return ExamSubmitResponse(
         total_score=total_score,
         max_score=max_score,
