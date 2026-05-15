@@ -857,7 +857,7 @@ const QuestionForm = ({
                 >
                   {t('ai.suggest')}
                 </Button>
-                <Button size="small" onClick={() => { setAiSuggestOpen(false); setAiSuggestTopic('') }}>Cancel</Button>
+                <Button size="small" onClick={() => { setAiSuggestOpen(false); setAiSuggestTopic('') }}>{t('common.cancel')}</Button>
               </Space>
             )}
           </>
@@ -1317,7 +1317,7 @@ export default function QuizBuilder() {
           <Form.Item
             name="offline_start_at"
             label={t('offlinePoll.startDate', 'Start Date & Time')}
-            rules={[{ required: isOfflinePoll, message: 'Start date is required for offline polls' }]}
+            rules={[{ required: isOfflinePoll, message: t('quiz.startDateRequired') }]}
           >
             <DatePicker
               showTime
@@ -1336,7 +1336,7 @@ export default function QuizBuilder() {
           <Form.Item
             name="offline_end_at"
             label={t('offlinePoll.endDate', 'End Date & Time')}
-            rules={[{ required: isOfflinePoll, message: 'End date is required for offline polls' }]}
+            rules={[{ required: isOfflinePoll, message: t('quiz.endDateRequired') }]}
           >
             <DatePicker
               showTime

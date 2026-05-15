@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 import { Button, Steps, Alert } from 'antd';
 import { CameraOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 export function ExamIdentityCapture({ stream, onComplete, requirePhotoId }) {
+  const { t } = useTranslation();
   const videoRef = useRef();
   const [step, setStep] = useState(0);
   const [captured, setCaptured] = useState(false);
@@ -41,12 +43,12 @@ export function ExamIdentityCapture({ stream, onComplete, requirePhotoId }) {
       }}
     >
       <div style={{ maxWidth: 520, width: '100%' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Identity Verification</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: 24 }}>{t('proctoring.identityCapture.title')}</h2>
         <Steps
           current={step}
           items={[
-            { title: 'Face Capture', icon: <CameraOutlined /> },
-            { title: 'Ready', icon: <CheckCircleOutlined /> },
+            { title: t('proctoring.identityCapture.stepFaceCapture'), icon: <CameraOutlined /> },
+            { title: t('proctoring.identityCapture.stepReady'), icon: <CheckCircleOutlined /> },
           ]}
           style={{ marginBottom: 32 }}
         />
@@ -54,7 +56,7 @@ export function ExamIdentityCapture({ stream, onComplete, requirePhotoId }) {
         {step === 0 && (
           <div style={{ textAlign: 'center' }}>
             <Alert
-              message="Position your face clearly in the frame, then click Capture."
+              message={t('proctoring.identityCapture.instruction')}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -96,7 +98,7 @@ export function ExamIdentityCapture({ stream, onComplete, requirePhotoId }) {
               onClick={capture}
               style={{ marginTop: 16 }}
             >
-              Capture Photo
+              {t('proctoring.identityCapture.captureButton')}
             </Button>
           </div>
         )}
@@ -104,9 +106,9 @@ export function ExamIdentityCapture({ stream, onComplete, requirePhotoId }) {
         {step === 1 && (
           <div style={{ textAlign: 'center' }}>
             <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a' }} />
-            <h3 style={{ marginTop: 12 }}>Identity verified. You're ready to begin.</h3>
+            <h3 style={{ marginTop: 12 }}>{t('proctoring.identityCapture.verified')}</h3>
             <Button type="primary" size="large" onClick={onComplete} style={{ marginTop: 16 }}>
-              Start Exam
+              {t('proctoring.identityCapture.startExam')}
             </Button>
           </div>
         )}

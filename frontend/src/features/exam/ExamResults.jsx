@@ -115,7 +115,7 @@ export default function ExamResults() {
       dataIndex: 'rank',
       width: 60,
       render: (rank, row) => {
-        if (!row.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">In Progress</Tag>
+        if (!row.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
         if (rank <= 3) return <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
         return <Text>{rank}</Text>
       }
@@ -341,7 +341,7 @@ export default function ExamResults() {
         title={
           <Space>
             <RobotOutlined />
-            <span>AI Analysis</span>
+            <span>{t('exam.aiAnalysisTitle')}</span>
           </Space>
         }
         extra={
@@ -352,19 +352,19 @@ export default function ExamResults() {
             loading={analysing}
             disabled={results.total_completed === 0}
           >
-            {analysing ? 'Analysing…' : analysis ? 'Re-analyse' : 'Analyse with AI'}
+            {analysing ? t('exam.aiAnalysing') : analysis ? t('exam.aiReanalyseButton') : t('exam.aiAnalyseButton')}
           </Button>
         }
       >
         {results.total_completed === 0 && !analysing && !analysis && (
-          <Text type="secondary">Analysis is available once at least one participant has submitted.</Text>
+          <Text type="secondary">{t('exam.aiAnalysisUnavailable')}</Text>
         )}
         {analysisError && <Alert type="error" message={analysisError} style={{ marginBottom: 12 }} />}
         {analysing && (
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <Spin size="large" />
             <div style={{ marginTop: 12 }}>
-              <Text type="secondary">Analysing results with Gemini AI…</Text>
+              <Text type="secondary">{t('exam.aiAnalysingMessage')}</Text>
             </div>
           </div>
         )}

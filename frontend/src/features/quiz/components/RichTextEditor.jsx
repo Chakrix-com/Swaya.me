@@ -230,17 +230,17 @@ export default function RichTextEditor({
             <Divider />
 
             {/* Text formatting */}
-            <ToolbarBtn active={editor.isActive('bold')} tooltip="Bold" onClick={() => editor.chain().focus().toggleBold().run()}><BoldOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('italic')} tooltip="Italic" onClick={() => editor.chain().focus().toggleItalic().run()}><ItalicOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('underline')} tooltip="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('strike')} tooltip="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()}><StrikethroughOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('code')} tooltip="Inline code" onClick={() => editor.chain().focus().toggleCode().run()}><CodeOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('bold')} tooltip={t('quiz.boldTooltip')} onClick={() => editor.chain().focus().toggleBold().run()}><BoldOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('italic')} tooltip={t('richText.italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><ItalicOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('underline')} tooltip={t('richText.underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('strike')} tooltip={t('richText.strikethrough')} onClick={() => editor.chain().focus().toggleStrike().run()}><StrikethroughOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('code')} tooltip={t('richText.inlineCode')} onClick={() => editor.chain().focus().toggleCode().run()}><CodeOutlined /></ToolbarBtn>
 
             <Divider />
 
             {/* Superscript / Subscript */}
-            <ToolbarBtn active={editor.isActive('superscript')} tooltip="Superscript" onClick={() => editor.chain().focus().toggleSuperscript().run()}><span style={{ fontWeight: 700, fontSize: 11 }}>x²</span></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('subscript')} tooltip="Subscript" onClick={() => editor.chain().focus().toggleSubscript().run()}><span style={{ fontWeight: 700, fontSize: 11 }}>x₂</span></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('superscript')} tooltip={t('richText.superscript')} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span style={{ fontWeight: 700, fontSize: 11 }}>x²</span></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('subscript')} tooltip={t('richText.subscript')} onClick={() => editor.chain().focus().toggleSubscript().run()}><span style={{ fontWeight: 700, fontSize: 11 }}>x₂</span></ToolbarBtn>
 
             <Divider />
 
@@ -257,7 +257,7 @@ export default function RichTextEditor({
                 </div>
               }
             >
-              <Tooltip title="Text colour">
+              <Tooltip title={t('richText.textColour')}>
                 <Button type="text" size="small" className="rte-toolbar-btn">
                   <span style={{ fontWeight: 700, borderBottom: `3px solid ${editor.getAttributes('textStyle').color || '#000'}` }}>A</span>
                 </Button>
@@ -277,7 +277,7 @@ export default function RichTextEditor({
                 </div>
               }
             >
-              <Tooltip title="Highlight">
+              <Tooltip title={t('richText.highlight')}>
                 <Button type="text" size="small" className="rte-toolbar-btn">
                   <span style={{ background: '#ffd700', padding: '0 2px', fontWeight: 700 }}>H</span>
                 </Button>
@@ -287,25 +287,25 @@ export default function RichTextEditor({
             <Divider />
 
             {/* Alignment */}
-            <ToolbarBtn active={editor.isActive({ textAlign: 'left' })} tooltip="Align left" onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeftOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} tooltip="Align centre" onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenterOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive({ textAlign: 'right' })} tooltip="Align right" onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRightOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive({ textAlign: 'justify' })} tooltip="Justify" onClick={() => editor.chain().focus().setTextAlign('justify').run()}><MenuOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive({ textAlign: 'left' })} tooltip={t('richText.alignLeft')} onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeftOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} tooltip={t('richText.alignCenter')} onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenterOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive({ textAlign: 'right' })} tooltip={t('richText.alignRight')} onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRightOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive({ textAlign: 'justify' })} tooltip={t('richText.justify')} onClick={() => editor.chain().focus().setTextAlign('justify').run()}><MenuOutlined /></ToolbarBtn>
 
             <Divider />
 
             {/* Lists */}
-            <ToolbarBtn active={editor.isActive('bulletList')} tooltip="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()}><UnorderedListOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('orderedList')} tooltip="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()}><OrderedListOutlined /></ToolbarBtn>
-            <ToolbarBtn active={editor.isActive('taskList')} tooltip="Task list" onClick={() => editor.chain().focus().toggleTaskList().run()}><CheckSquareOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('bulletList')} tooltip={t('richText.bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><UnorderedListOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('orderedList')} tooltip={t('richText.orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><OrderedListOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('taskList')} tooltip={t('richText.taskList')} onClick={() => editor.chain().focus().toggleTaskList().run()}><CheckSquareOutlined /></ToolbarBtn>
 
             <Divider />
 
             {/* Blocks */}
-            <ToolbarBtn active={editor.isActive('blockquote')} tooltip="Blockquote" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+            <ToolbarBtn active={editor.isActive('blockquote')} tooltip={t('richText.blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
               <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1 }}>"</span>
             </ToolbarBtn>
-            <ToolbarBtn active={false} tooltip="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><MinusOutlined /></ToolbarBtn>
+            <ToolbarBtn active={false} tooltip={t('richText.horizontalRule')} onClick={() => editor.chain().focus().setHorizontalRule().run()}><MinusOutlined /></ToolbarBtn>
 
             <Divider />
 
@@ -313,7 +313,7 @@ export default function RichTextEditor({
             <ToolbarBtn active={editor.isActive('link')} tooltip="Link" onClick={setLink}><LinkOutlined /></ToolbarBtn>
 
             {/* Table */}
-            <ToolbarBtn active={editor.isActive('table')} tooltip="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('table')} tooltip={t('richText.insertTable')} onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableOutlined /></ToolbarBtn>
 
             <Divider />
 
@@ -325,7 +325,7 @@ export default function RichTextEditor({
               onChange={handleLangChange}
               options={CODE_LANGUAGES}
             />
-            <ToolbarBtn active={editor.isActive('codeBlock')} tooltip="Code block" onClick={() => editor.chain().focus().setCodeBlock({ language: selectedLang }).run()}><CodeOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('codeBlock')} tooltip={t('richText.codeBlock')} onClick={() => editor.chain().focus().setCodeBlock({ language: selectedLang }).run()}><CodeOutlined /></ToolbarBtn>
           </>
         )}
       </div>

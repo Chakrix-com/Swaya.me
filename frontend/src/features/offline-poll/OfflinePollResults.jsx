@@ -102,7 +102,7 @@ export default function OfflinePollResults() {
             </Col>
             <Col xs={24} sm={8}>
               <div>
-                <Text type="secondary">Completion rate</Text>
+                <Text type="secondary">{t('offlinePoll.completionRate')}</Text>
                 <Progress percent={completionRate} size="small" />
               </div>
             </Col>
