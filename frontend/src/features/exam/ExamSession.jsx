@@ -641,21 +641,23 @@ function ScoreScreen({ result, quizTitle, onBack }) {
     const rows = result.question_results.map((qr, idx) => {
       const isCorrect = qr.is_correct === true
       const isWrong = qr.is_correct === false
-      const yourAnswer = qr.participant_answer != null ? (qr.options?.[qr.participant_answer] ?? '--') : '—'
-      const correctAnswer = qr.correct_answer_index != null ? (qr.options?.[qr.correct_answer_index] ?? '--') : '—'
-      const status = isCorrect ? '✓ Correct' : isWrong ? '✗ Wrong' : '— Skipped'
+      const yourAnswer = qr.participant_answer != null ? (qr.options?.[qr.participant_answer] ?? '-') : '-'
+      const correctAnswer = qr.correct_answer_index != null ? (qr.options?.[qr.correct_answer_index] ?? '-') : '-'
+      // Use ASCII-safe status strings — jsPDF Helvetica does not support Unicode symbols
+      const status = isCorrect ? 'Correct' : isWrong ? 'Wrong' : 'Skipped'
       return [
         `Q${idx + 1}`,
         stripHtml(qr.question_text),
         stripHtml(yourAnswer),
         stripHtml(correctAnswer),
         status,
-        qr.answer_explanation || '—',
+        stripHtml(qr.answer_explanation || '-'),
       ]
     })
 
     autoTable(doc, {
       startY: summaryY + 36,
+      margin: { left: margin, right: margin },
       head: [['#', 'Question', 'Your Answer', 'Correct Answer', 'Result', 'Explanation']],
       body: rows,
       styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
@@ -665,16 +667,20 @@ function ScoreScreen({ result, quizTitle, onBack }) {
         1: { cellWidth: 130 },
         2: { cellWidth: 90 },
         3: { cellWidth: 90 },
-        4: { cellWidth: 60 },
-        5: { cellWidth: 110 },
+        4: { cellWidth: 55 },
+        5: { cellWidth: 'auto' },
       },
       didParseCell: (data) => {
         if (data.section === 'body') {
           const status = data.row.cells[4]?.raw || ''
-          if (status.startsWith('✓')) {
+          if (status === 'Correct') {
             data.cell.styles.fillColor = [236, 255, 236]
-          } else if (status.startsWith('✗')) {
+            if (data.column.index === 4) data.cell.styles.textColor = [56, 142, 13]
+          } else if (status === 'Wrong') {
             data.cell.styles.fillColor = [255, 236, 236]
+            if (data.column.index === 4) data.cell.styles.textColor = [207, 19, 34]
+          } else {
+            if (data.column.index === 4) data.cell.styles.textColor = [140, 140, 140]
           }
         }
       },
