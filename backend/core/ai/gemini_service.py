@@ -115,6 +115,109 @@ def _md_to_html(text: str) -> str:
     return ''.join(result_parts)
 
 
+async def analyze_exam_results(results: dict) -> str:
+    """
+    Analyse exam results quantitatively and qualitatively via Gemini.
+    Returns a markdown string.
+    """
+    key = settings.gemini.key
+    if not key:
+        raise GeminiError("GEMINI_KEY is not set in .env")
+
+    model = _resolve_model(settings.gemini.model or _DEFAULT_MODEL)
+
+    # Build compact stats block
+    total_started = results.get("total_started", 0)
+    total_completed = results.get("total_completed", 0)
+    total_abandoned = results.get("total_abandoned", 0)
+    avg_score = results.get("average_score", 0)
+    max_score = results.get("max_score", 0)
+
+    leaderboard = results.get("leaderboard", [])
+    scores = [e["score"] for e in leaderboard if e.get("is_completed")]
+    times = [e["time_taken_seconds"] for e in leaderboard if e.get("is_completed") and e.get("time_taken_seconds")]
+
+    score_min = min(scores) if scores else 0
+    score_max = max(scores) if scores else 0
+    avg_time_min = round(sum(times) / len(times) / 60, 1) if times else None
+    pass_threshold = max_score * 0.6
+
+    q_analytics = results.get("question_analytics", [])
+    q_lines = []
+    for i, q in enumerate(q_analytics):
+        import re as _re
+        plain_text = _re.sub(r'<[^>]+>', '', q.get("question_text", ""))[:120]
+        dist = q.get("answer_distribution", [])
+        opts = q.get("options", [])
+        opt_dist = ""
+        for j, (o, c) in enumerate(zip(opts, dist)):
+            plain_opt = _re.sub(r'<[^>]+>', '', o)[:40]
+            marker = " ✓" if j == q.get("correct_answer_index") else ""
+            opt_dist += f"    {chr(65+j)}: {plain_opt}{marker} ({c} responses)\n"
+        q_lines.append(
+            f"Q{i+1} [{q.get('percent_correct', 0):.0f}% correct, {q.get('total_answers',0)} responses]: {plain_text}\n{opt_dist}"
+        )
+
+    stats_block = f"""Quiz: "{results.get('quiz_title', 'Exam')}"
+Participants: {total_started} started | {total_completed} completed | {total_abandoned} abandoned
+Scores: avg {avg_score}/{max_score} ({round(avg_score/max_score*100) if max_score else 0}%) | min {score_min} | max {score_max}
+Pass threshold (60%): {pass_threshold:.0f} pts | Passed: {sum(1 for s in scores if s >= pass_threshold)}/{len(scores)}
+{"Avg time: " + str(avg_time_min) + " min" if avg_time_min else ""}
+
+Per-question breakdown:
+{chr(10).join(q_lines)}"""
+
+    prompt = f"""You are an expert educational analyst. Analyse the following exam results and produce a clear, structured report in markdown.
+
+{stats_block}
+
+Your report MUST contain exactly these sections:
+## 1. Score Summary
+Quantitative overview: average, median (estimate from distribution), pass rate, score spread.
+
+## 2. Question Difficulty Ranking
+List questions from hardest to easiest with % correct. Highlight any question where < 40% got it right (needs review) or > 90% got it right (possibly too easy).
+
+## 3. Common Mistake Patterns
+For the hardest questions, which wrong answer was most chosen and what misconception does that suggest?
+
+## 4. Qualitative Insights
+What topics or skills are participants weakest/strongest in, based on the question content and results?
+
+## 5. Recommendations
+Concrete actionable suggestions: which topics need more training, which questions should be revised, any anomalies to investigate.
+
+Be concise. Use bullet points. Do not repeat raw numbers already obvious from the dashboard."""
+
+    payload = {
+        "system_instruction": {"parts": [{"text": "You are an expert educational analyst. Output clean markdown only — no preamble, no trailing commentary."}]},
+        "contents": [{"parts": [{"text": prompt}], "role": "user"}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 8192,
+        },
+    }
+
+    url = f"{GEMINI_BASE}/{model}:generateContent?key={key}"
+
+    async with httpx.AsyncClient(timeout=_get_timeout()) as client:
+        try:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise GeminiError(f"Gemini API returned HTTP {e.response.status_code}: {e.response.text[:200]}")
+        except httpx.ConnectError:
+            raise GeminiError("Cannot connect to Gemini API — check network")
+        except httpx.ReadTimeout:
+            raise GeminiError("Gemini request timed out")
+
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError) as e:
+        raise GeminiError(f"Unexpected Gemini response structure: {e}")
+
+
 async def generate_questions(
     prompt: str,
     count: int = 5,

@@ -149,6 +149,7 @@ const QuestionForm = ({
         max_time_seconds: question.max_time_seconds ?? null,
         negative_points: question.negative_points ?? 0,
         is_required: question.is_required ?? false,
+        answer_explanation: question.answer_explanation ?? '',
       }
       if (question.question_type === 'mcq') {
         const existingOptionCount = question.options?.length || 2
@@ -933,6 +934,19 @@ const QuestionForm = ({
           </>
         )}
 
+        <Form.Item
+          name="answer_explanation"
+          label={t('quiz.answerExplanation', 'Answer Explanation (optional)')}
+          tooltip={t('quiz.answerExplanationTooltip', 'Shown to participants only after they submit the exam.')}
+        >
+          <Input.TextArea
+            placeholder={t('quiz.answerExplanationPlaceholder', 'Explain why the correct answer is correct…')}
+            maxLength={1000}
+            showCount
+            autoSize={{ minRows: 2, maxRows: 5 }}
+          />
+        </Form.Item>
+
         <Space style={{ marginTop: 28 }}>
           <Button
             type="primary"
@@ -1642,6 +1656,13 @@ export default function QuizBuilder() {
                       )
                     })
                   })()}
+                  {question.answer_explanation && (
+                    <div style={{ marginTop: 4, padding: '6px 10px', background: '#fffbe6', borderLeft: '3px solid #faad14', borderRadius: 4 }}>
+                      <Text style={{ fontSize: 12 }}>
+                        <strong>💡 {t('quiz.answerExplanation', 'Explanation')}:</strong> {question.answer_explanation}
+                      </Text>
+                    </div>
+                  )}
                 </Space>
               )}
             </Card>
@@ -1724,6 +1745,7 @@ export default function QuizBuilder() {
         max_time_seconds: values.max_time_seconds ?? null,
         negative_points: values.negative_points ?? 0,
         is_required: values.is_required ?? false,
+        answer_explanation: values.answer_explanation || null,
       }
 
       // Add options for choice-based question types
@@ -1762,7 +1784,7 @@ export default function QuizBuilder() {
         questionData.options = null
         questionData.correct_answer_index = null
       }
-      
+
       console.log('Adding question with data:', questionData)
       const response = await questionAPI.add(id, questionData)
       const newQuestion = response.data
@@ -1902,6 +1924,7 @@ export default function QuizBuilder() {
         max_time_seconds: values.max_time_seconds ?? null,
         negative_points: values.negative_points ?? 0,
         is_required: values.is_required ?? false,
+        answer_explanation: values.answer_explanation || null,
       }
 
       // Add options for choice-based question types
@@ -1940,7 +1963,7 @@ export default function QuizBuilder() {
         questionData.options = null
         questionData.correct_answer_index = null
       }
-      
+
       await questionAPI.update(questionId, questionData)
       message.success(t('quiz.updateQuestionSuccess'))
       loadQuiz()

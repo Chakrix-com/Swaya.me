@@ -1038,6 +1038,7 @@ class QuizBuilderServiceAsync:
                     points=q.points,
                     max_time_seconds=q.max_time_seconds,
                     negative_points=getattr(q, 'negative_points', 0) or 0,
+                    answer_explanation=q.answer_explanation,
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],

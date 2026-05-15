@@ -1,0 +1,7 @@
+.ai-analysis-content h2 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+.ai-analysis-content h3 { font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+.ai-analysis-content ul, .ai-analysis-content ol { padding-left: 20px; margin: 6px 0 12px; }
+.ai-analysis-content li { margin-bottom: 4px; line-height: 1.6; }
+.ai-analysis-content p { margin: 0 0 10px; line-height: 1.7; }
+.ai-analysis-content strong { font-weight: 600; }
+.ai-analysis-content code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 13px; }

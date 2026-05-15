@@ -12,13 +12,15 @@ import {
 import {
   TrophyOutlined, DownloadOutlined, ArrowLeftOutlined,
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined,
-  ClockCircleOutlined, SyncOutlined
+  ClockCircleOutlined, SyncOutlined, RobotOutlined
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { examAPI } from '../../services/api'
 import dayjs from 'dayjs'
 import { ViolationReport } from './ViolationReport'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import ReactMarkdown from 'react-markdown'
+import './ExamResults.css'
 
 const { Title, Text } = Typography
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
@@ -31,6 +33,9 @@ export default function ExamResults() {
   const [loading, setLoading] = useState(true)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
+  const [analysis, setAnalysis] = useState(null)
+  const [analysing, setAnalysing] = useState(false)
+  const [analysisError, setAnalysisError] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +50,19 @@ export default function ExamResults() {
     }
     load()
   }, [id, t])
+
+  const handleAnalyse = async () => {
+    setAnalysing(true)
+    setAnalysisError(null)
+    try {
+      const res = await examAPI.analyzeResults(id)
+      setAnalysis(res.data.analysis)
+    } catch (err) {
+      setAnalysisError(err.response?.data?.detail || 'AI analysis failed. Please try again.')
+    } finally {
+      setAnalysing(false)
+    }
+  }
 
   const handleExportCsv = () => {
     if (!results) return
@@ -315,6 +333,46 @@ export default function ExamResults() {
             {idx < results.question_analytics.length - 1 && <Divider />}
           </div>
         ))}
+      </Card>
+
+      {/* AI Analysis panel */}
+      <Card
+        style={{ marginBottom: 24 }}
+        title={
+          <Space>
+            <RobotOutlined />
+            <span>AI Analysis</span>
+          </Space>
+        }
+        extra={
+          <Button
+            type="primary"
+            icon={<RobotOutlined />}
+            onClick={handleAnalyse}
+            loading={analysing}
+            disabled={results.total_completed === 0}
+          >
+            {analysing ? 'Analysing…' : analysis ? 'Re-analyse' : 'Analyse with AI'}
+          </Button>
+        }
+      >
+        {results.total_completed === 0 && !analysing && !analysis && (
+          <Text type="secondary">Analysis is available once at least one participant has submitted.</Text>
+        )}
+        {analysisError && <Alert type="error" message={analysisError} style={{ marginBottom: 12 }} />}
+        {analysing && (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <Spin size="large" />
+            <div style={{ marginTop: 12 }}>
+              <Text type="secondary">Analysing results with Gemini AI…</Text>
+            </div>
+          </div>
+        )}
+        {analysis && !analysing && (
+          <div className="ai-analysis-content">
+            <ReactMarkdown>{analysis}</ReactMarkdown>
+          </div>
+        )}
       </Card>
 
       <ViolationReport quizId={id} />

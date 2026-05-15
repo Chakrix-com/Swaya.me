@@ -19,7 +19,8 @@ from features.quiz.schemas import (
 )
 from features.quiz import exam_service_async as svc
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
-from core.auth.dependencies import get_current_user, CurrentUser
+from core.auth.dependencies import get_current_user, CurrentUser, require_admin
+from core.ai.gemini_service import analyze_exam_results, GeminiError
 
 router = APIRouter(tags=["exam"])
 
@@ -110,6 +111,31 @@ async def get_exam_results(
         raise HTTPException(status_code=404, detail=str(e))
     except QuizValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/quiz/{quiz_id}/analyze-results")
+async def analyze_exam_results_endpoint(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(require_admin),
+):
+    """Authenticated host — AI analysis of exam results via Gemini."""
+    try:
+        results = await svc.get_exam_results(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if results.total_completed == 0:
+        raise HTTPException(status_code=400, detail="No completed participants yet — analysis requires at least one submission.")
+
+    try:
+        analysis = await analyze_exam_results(results.model_dump())
+    except GeminiError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    return {"analysis": analysis}
 
 
 @router.post("/quizzes/{quiz_id}/publish-exam", response_model=ExamPublishResponse)

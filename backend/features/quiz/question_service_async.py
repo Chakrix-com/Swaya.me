@@ -112,6 +112,7 @@ class QuestionServiceAsync:
             max_time_seconds=request.max_time_seconds,
             negative_points=request.negative_points,
             is_required=request.is_required,
+            answer_explanation=request.answer_explanation,
             order=next_order
         )
         
@@ -174,6 +175,8 @@ class QuestionServiceAsync:
             question.negative_points = request.negative_points
         if "is_required" in request.model_fields_set:
             question.is_required = request.is_required
+        if "answer_explanation" in request.model_fields_set:
+            question.answer_explanation = request.answer_explanation
 
         await db.commit()
         await db.refresh(question)
@@ -294,4 +297,5 @@ class QuestionServiceAsync:
             max_time_seconds=question.max_time_seconds,
             negative_points=getattr(question, 'negative_points', 0) or 0,
             is_required=getattr(question, 'is_required', False) or False,
+            answer_explanation=question.answer_explanation,
         )

@@ -143,7 +143,8 @@ class Question(Base, TimestampMixin):
     max_time_seconds = Column(Integer, nullable=True)
     negative_points = Column(Integer, nullable=False, default=0, server_default="0")
     is_required = Column(Boolean, nullable=False, default=False, server_default="0")
-    
+    answer_explanation = Column(Text, nullable=True)
+
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
     answers = relationship("Answer", back_populates="question")

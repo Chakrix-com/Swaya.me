@@ -230,6 +230,7 @@ export const examAPI = {
   submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),
   getMyResult: (slug, sessionToken) => api.post(`/e/${slug}/result`, { session_token: sessionToken }),
   getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),
+  analyzeResults: (quizId) => api.post(`/quiz/${quizId}/analyze-results`),
   publish: (quizId) => api.post(`/quizzes/${quizId}/publish-exam`),
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
 }

@@ -70,6 +70,7 @@ class QuestionCreate(BaseModel):
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
     negative_points: int = Field(default=0, ge=0)
     is_required: bool = Field(default=False)
+    answer_explanation: Optional[str] = Field(None, max_length=5000)
 
     @validator('text')
     def no_dangerous_html(cls, v):
@@ -132,6 +133,7 @@ class QuestionUpdate(BaseModel):
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
     negative_points: Optional[int] = Field(default=None, ge=0)
     is_required: Optional[bool] = None
+    answer_explanation: Optional[str] = Field(None, max_length=5000)
 
 
 class QuestionResponse(BaseModel):
@@ -148,6 +150,7 @@ class QuestionResponse(BaseModel):
     max_time_seconds: Optional[int] = None
     negative_points: int = 0
     is_required: bool = False
+    answer_explanation: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -686,6 +689,7 @@ class ExamQuestionResult(BaseModel):
     points_earned: int = 0
     points_possible: int = 1
     negative_points_applied: int = 0
+    answer_explanation: Optional[str] = None
 
 
 class ExamSubmitResponse(BaseModel):

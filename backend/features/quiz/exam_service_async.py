@@ -416,6 +416,7 @@ async def submit_exam(
             points_earned=points_earned,
             points_possible=q.points,
             negative_points_applied=neg_applied,
+            answer_explanation=q.answer_explanation,
         ))
 
     # Floor at 0
@@ -510,6 +511,7 @@ async def get_my_result(
             points_earned=points_earned,
             points_possible=q.points,
             negative_points_applied=neg_applied,
+            answer_explanation=q.answer_explanation,
         ))
 
     total_score = max(0, total_score)
