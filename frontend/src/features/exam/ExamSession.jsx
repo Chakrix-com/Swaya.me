@@ -785,11 +785,13 @@ function ScoreScreen({ result, quizTitle, onBack }) {
         })}
       </Card>
 
-      <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <Button icon={<DownloadOutlined />} type="primary" onClick={handleDownloadPdf}>
           {t('exam.downloadReport', 'Download PDF Report')}
         </Button>
-        <Button onClick={onBack}>{t('exam.backToDashboard')}</Button>
+        <Button icon={<CloseCircleOutlined />} onClick={() => { window.close(); setTimeout(() => onBack(), 300) }}>
+          {t('exam.closeWindow', 'Close')}
+        </Button>
       </div>
       <PromoCard />
     </div>

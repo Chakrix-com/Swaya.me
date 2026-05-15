@@ -1724,7 +1724,8 @@
     "aiReanalyseButton": "Ré-analyser",
     "aiAnalysing": "Analyse en cours…",
     "aiAnalysingMessage": "Analyse des résultats avec Gemini AI…",
-    "aiAnalysisUnavailable": "L'analyse est disponible dès qu'au moins un participant a soumis."
+    "aiAnalysisUnavailable": "L'analyse est disponible dès qu'au moins un participant a soumis.",
+    "closeWindow": "Fermer"
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",

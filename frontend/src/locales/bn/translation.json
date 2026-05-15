@@ -1722,7 +1722,8 @@
     "aiReanalyseButton": "পুনরায় বিশ্লেষণ করুন",
     "aiAnalysing": "বিশ্লেষণ করা হচ্ছে…",
     "aiAnalysingMessage": "Gemini AI দিয়ে ফলাফল বিশ্লেষণ করা হচ্ছে…",
-    "aiAnalysisUnavailable": "কমপক্ষে একজন অংশগ্রহণকারী জমা দিলে বিশ্লেষণ পাওয়া যাবে।"
+    "aiAnalysisUnavailable": "কমপক্ষে একজন অংশগ্রহণকারী জমা দিলে বিশ্লেষণ পাওয়া যাবে।",
+    "closeWindow": "বন্ধ করুন"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",

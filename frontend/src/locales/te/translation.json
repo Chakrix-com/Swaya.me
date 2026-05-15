@@ -1722,7 +1722,8 @@
     "aiReanalyseButton": "మళ్ళీ విశ్లేషించండి",
     "aiAnalysing": "విశ్లేషిస్తోంది…",
     "aiAnalysingMessage": "Gemini AI తో ఫలితాలను విశ్లేషిస్తోంది…",
-    "aiAnalysisUnavailable": "కనీసం ఒక పాల్గొనేవారు సమర్పించిన తర్వాత విశ్లేషణ అందుబాటులో ఉంటుంది."
+    "aiAnalysisUnavailable": "కనీసం ఒక పాల్గొనేవారు సమర్పించిన తర్వాత విశ్లేషణ అందుబాటులో ఉంటుంది.",
+    "closeWindow": "మూసివేయి"
   },
   "appFeedback": {
     "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",

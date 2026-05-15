@@ -1722,7 +1722,8 @@
     "aiReanalyseButton": "மீண்டும் பகுப்பாய்வு செய்யவும்",
     "aiAnalysing": "பகுப்பாய்வு செய்கிறது…",
     "aiAnalysingMessage": "Gemini AI மூலம் முடிவுகளை பகுப்பாய்வு செய்கிறது…",
-    "aiAnalysisUnavailable": "குறைந்தது ஒரு பங்கேற்பாளர் சமர்ப்பித்தால் பகுப்பாய்வு கிடைக்கும்."
+    "aiAnalysisUnavailable": "குறைந்தது ஒரு பங்கேற்பாளர் சமர்ப்பித்தால் பகுப்பாய்வு கிடைக்கும்.",
+    "closeWindow": "மூடு"
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",

@@ -1722,7 +1722,8 @@
     "aiReanalyseButton": "Повторный анализ",
     "aiAnalysing": "Анализируется…",
     "aiAnalysingMessage": "Анализируются результаты с помощью Gemini AI…",
-    "aiAnalysisUnavailable": "Анализ доступен после того, как хотя бы один участник отправил ответы."
+    "aiAnalysisUnavailable": "Анализ доступен после того, как хотя бы один участник отправил ответы.",
+    "closeWindow": "Закрыть"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

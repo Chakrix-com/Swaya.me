@@ -1722,7 +1722,8 @@
     "aiReanalyseButton": "पुनः विश्लेषण करें",
     "aiAnalysing": "विश्लेषण हो रहा है…",
     "aiAnalysingMessage": "Gemini AI से परिणाम विश्लेषण हो रहा है…",
-    "aiAnalysisUnavailable": "विश्लेषण तब उपलब्ध होगा जब कम से कम एक प्रतिभागी ने जमा किया हो।"
+    "aiAnalysisUnavailable": "विश्लेषण तब उपलब्ध होगा जब कम से कम एक प्रतिभागी ने जमा किया हो।",
+    "closeWindow": "बंद करें"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",
