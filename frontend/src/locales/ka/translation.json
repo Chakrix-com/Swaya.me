@@ -17,7 +17,10 @@
     "actions": "ქმედებები",
     "beta": "ಬೀಟಾ",
     "betaAriaLabel": "ಬೀಟಾ ಆವೃತ್ತಿ",
-    "update": "ನವೀಕರಿಸಿ"
+    "update": "ನವೀಕರಿಸಿ",
+    "or": "ಅಥವಾ",
+    "clear": "ತೆರವುಗೊಳಿಸಿ",
+    "live": "LIVE"
   },
   "auth": {
     "login": "ಲಾಗಿನ್",
@@ -80,7 +83,8 @@
     "emailRequired": "ಇಮೇಲ್ ಅಗತ್ಯವಿದೆ",
     "emailInvalid": "ದಯವಿಟ್ಟು ಮಾನ್ಯ ಇಮೇಲ್ ನಮೂದಿಸಿ",
     "passwordRequired": "ಪಾಸ್‌ವರ್ಡ್ ಅಗತ್ಯವಿದೆ",
-    "continueWithGoogle": "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಯಿರಿ"
+    "continueWithGoogle": "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಯಿರಿ",
+    "forgotPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?"
   },
   "quiz": {
     "myQuizzes": "ನನ್ನ ಪ್ರಶ್ನೋತ್ತರಿ",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "ಫೈಲ್‌ನಲ್ಲಿ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
     "validating": "ಮೌಲ್ಯೀಕರಿಸಲಾಗುತ್ತಿದೆ...",
     "startDateRequired": "ಆಫ್‌ಲೈನ್ ಮತಗಣನೆಗಳಿಗೆ ಪ್ರಾರಂಭ ದಿನಾಂಕ ಅಗತ್ಯ",
-    "endDateRequired": "ಆಫ್‌ಲೈನ್ ಮತಗಣನೆಗಳಿಗೆ ಅಂತಿಮ ದಿನಾಂಕ ಅಗತ್ಯ"
+    "endDateRequired": "ಆಫ್‌ಲೈನ್ ಮತಗಣನೆಗಳಿಗೆ ಅಂತಿಮ ದಿನಾಂಕ ಅಗತ್ಯ",
+    "importValidated": "{{filename}} ಯಶಸ್ವಿಯಾಗಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.",
+    "importValidateFailed": "{{filename}} ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ: {{error}}",
+    "aiAddFailed": "ಪ್ರಶ್ನೆಗಳನ್ನು ಸೇರಿಸಲು ವಿಫಲವಾಗಿದೆ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",
@@ -1901,6 +1908,11 @@
     "blockquote": "ಬ್ಲಾಕ್‌ಕೋಟ್",
     "horizontalRule": "ಅಡ್ಡ ರೇಖೆ",
     "insertTable": "ಟೇಬಲ್ ಸೇರಿಸಿ",
-    "codeBlock": "ಕೋಡ್ ಬ್ಲಾಕ್"
+    "codeBlock": "ಕೋಡ್ ಬ್ಲಾಕ್",
+    "normal": "ಸಾಮಾನ್ಯ",
+    "heading1": "ಶೀರ್ಷಿಕೆ 1",
+    "heading2": "ಶೀರ್ಷಿಕೆ 2",
+    "heading3": "ಶೀರ್ಷಿಕೆ 3",
+    "heading4": "ಶೀರ್ಷಿಕೆ 4"
   }
 }

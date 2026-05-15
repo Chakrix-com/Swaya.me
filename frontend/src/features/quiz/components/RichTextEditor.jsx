@@ -52,14 +52,6 @@ const CODE_LANGUAGES = [
   { value: 'css',        label: 'CSS' },
 ]
 
-const HEADING_OPTIONS = [
-  { value: 0, label: 'Normal' },
-  { value: 1, label: 'Heading 1' },
-  { value: 2, label: 'Heading 2' },
-  { value: 3, label: 'Heading 3' },
-  { value: 4, label: 'Heading 4' },
-]
-
 const COLORS = [
   '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#ffffff',
   '#ff0000', '#ff4500', '#ff8c00', '#ffd700', '#008000', '#0000ff', '#4b0082', '#800080',
@@ -99,6 +91,13 @@ export default function RichTextEditor({
   showCode = true,
 }) {
   const { t } = useTranslation()
+  const headingOptions = [
+    { value: 0, label: t('richText.normal') },
+    { value: 1, label: t('richText.heading1') },
+    { value: 2, label: t('richText.heading2') },
+    { value: 3, label: t('richText.heading3') },
+    { value: 4, label: t('richText.heading4') },
+  ]
   const [selectedLang, setSelectedLang] = useState('python')
   const [isEmpty, setIsEmpty] = useState(true)
   const lastEmitted = useRef(value || '')
@@ -224,7 +223,7 @@ export default function RichTextEditor({
               size="small"
               value={getHeadingValue()}
               onChange={setHeading}
-              options={HEADING_OPTIONS}
+              options={headingOptions}
             />
 
             <Divider />
@@ -253,7 +252,7 @@ export default function RichTextEditor({
                     <div key={c} onClick={() => editor.chain().focus().setColor(c).run()}
                       style={{ width: 18, height: 18, background: c, borderRadius: 3, cursor: 'pointer', border: '1px solid #ccc' }} />
                   ))}
-                  <Button size="small" style={{ marginTop: 4, width: '100%' }} onClick={() => editor.chain().focus().unsetColor().run()}>Clear</Button>
+                  <Button size="small" style={{ marginTop: 4, width: '100%' }} onClick={() => editor.chain().focus().unsetColor().run()}>{t('common.clear')}</Button>
                 </div>
               }
             >
@@ -273,7 +272,7 @@ export default function RichTextEditor({
                     <div key={c} onClick={() => editor.chain().focus().toggleHighlight({ color: c }).run()}
                       style={{ width: 18, height: 18, background: c, borderRadius: 3, cursor: 'pointer', border: '1px solid #ccc' }} />
                   ))}
-                  <Button size="small" style={{ marginTop: 4, width: '100%' }} onClick={() => editor.chain().focus().unsetHighlight().run()}>Clear</Button>
+                  <Button size="small" style={{ marginTop: 4, width: '100%' }} onClick={() => editor.chain().focus().unsetHighlight().run()}>{t('common.clear')}</Button>
                 </div>
               }
             >

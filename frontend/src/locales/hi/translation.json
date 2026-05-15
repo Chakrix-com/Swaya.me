@@ -17,7 +17,10 @@
     "actions": "क्रियाएँ",
     "beta": "बीटा",
     "betaAriaLabel": "बीटा संस्करण",
-    "update": "अपडेट करें"
+    "update": "अपडेट करें",
+    "or": "या",
+    "clear": "साफ करें",
+    "live": "LIVE"
   },
   "auth": {
     "login": "लॉगिन",
@@ -80,7 +83,8 @@
     "emailRequired": "ईमेल आवश्यक है",
     "emailInvalid": "कृपया एक वैध ईमेल दर्ज करें",
     "passwordRequired": "पासवर्ड आवश्यक है",
-    "continueWithGoogle": "Google से जारी रखें"
+    "continueWithGoogle": "Google से जारी रखें",
+    "forgotPassword": "पासवर्ड भूल गए?"
   },
   "quiz": {
     "myQuizzes": "मेरी क्विज़",
@@ -330,7 +334,10 @@
     "answerExplanationTooltip": "प्रतिभागियों को परीक्षा सबमिट करने के बाद दिखाया जाता है।",
     "answerExplanationPlaceholder": "बताएं कि सही उत्तर क्यों सही है…",
     "startDateRequired": "ऑफलाइन पोल के लिए प्रारंभ तिथि आवश्यक है",
-    "endDateRequired": "ऑफलाइन पोल के लिए समाप्ति तिथि आवश्यक है"
+    "endDateRequired": "ऑफलाइन पोल के लिए समाप्ति तिथि आवश्यक है",
+    "importValidated": "{{filename}} सफलतापूर्वक सत्यापित हुआ।",
+    "importValidateFailed": "{{filename}} सत्यापन विफल: {{error}}",
+    "aiAddFailed": "प्रश्न जोड़ने में विफल"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",
@@ -1901,6 +1908,11 @@
     "blockquote": "ब्लॉककोट",
     "horizontalRule": "क्षैतिज रेखा",
     "insertTable": "तालिका डालें",
-    "codeBlock": "कोड ब्लॉक"
+    "codeBlock": "कोड ब्लॉक",
+    "normal": "सामान्य",
+    "heading1": "शीर्षक 1",
+    "heading2": "शीर्षक 2",
+    "heading3": "शीर्षक 3",
+    "heading4": "शीर्षक 4"
   }
 }

@@ -17,7 +17,10 @@
     "actions": "ક્રિયાઓ",
     "beta": "બીટા",
     "betaAriaLabel": "બીટા સંસ્કરણ",
-    "update": "અપડેટ કરો"
+    "update": "અપડેટ કરો",
+    "or": "અથવા",
+    "clear": "સાફ કરો",
+    "live": "LIVE"
   },
   "auth": {
     "login": "લૉગઇન",
@@ -80,7 +83,8 @@
     "emailRequired": "ઈમેઈલ જરૂરી છે",
     "emailInvalid": "કૃપા કરી માન્ય ઈમેઈલ દાખલ કરો",
     "passwordRequired": "પાસવર્ડ જરૂરી છે",
-    "continueWithGoogle": "Google સાથે ચાલુ રાખો"
+    "continueWithGoogle": "Google સાથે ચાલુ રાખો",
+    "forgotPassword": "પાસવર્ડ ભૂલી ગયા?"
   },
   "quiz": {
     "myQuizzes": "મારા ક્વિઝ",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "ફાઇલમાં કોઈ પ્રશ્નો મળ્યા નથી",
     "validating": "ચકાસણી કરવામાં આવી રહી છે...",
     "startDateRequired": "ઑફ્લાઇન મતો માટે પ્રારંભ તારીખ જરૂરી છે",
-    "endDateRequired": "ઑફ્લાઇન મતો માટે સમાપ્તિ તારીખ જરૂરી છે"
+    "endDateRequired": "ઑફ્લાઇન મતો માટે સમાપ્તિ તારીખ જરૂરી છે",
+    "importValidated": "{{filename}} સફળતાપૂર્વક ચકાસવામાં આવ્યું.",
+    "importValidateFailed": "{{filename}} ચકાસણી નિષ્ફળ: {{error}}",
+    "aiAddFailed": "પ્રશ્નો ઉમેરવામાં નિષ્ફળ"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -1901,6 +1908,11 @@
     "blockquote": "બ્લૉકકૉટ",
     "horizontalRule": "આડી રેખા",
     "insertTable": "ટેબલ દાખલ કરો",
-    "codeBlock": "કોડ બ્લૉક"
+    "codeBlock": "કોડ બ્લૉક",
+    "normal": "સામાન્ય",
+    "heading1": "શીર્ષક ૧",
+    "heading2": "શીર્ષક ૨",
+    "heading3": "શીર્ષક ૩",
+    "heading4": "શીર્ષક ૪"
   }
 }

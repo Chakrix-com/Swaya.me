@@ -17,7 +17,10 @@
     "actions": "Actions",
     "beta": "Bêta",
     "betaAriaLabel": "Version bêta",
-    "update": "Mettre à jour"
+    "update": "Mettre à jour",
+    "or": "ou",
+    "clear": "Effacer",
+    "live": "LIVE"
   },
   "auth": {
     "login": "Connexion",
@@ -80,7 +83,8 @@
     "emailRequired": "L'email est requis",
     "emailInvalid": "Veuillez saisir un email valide",
     "passwordRequired": "Le mot de passe est requis",
-    "continueWithGoogle": "Continuer avec Google"
+    "continueWithGoogle": "Continuer avec Google",
+    "forgotPassword": "Mot de passe oublié ?"
   },
   "quiz": {
     "myQuizzes": "Mes quiz",
@@ -332,7 +336,10 @@
     "noQuestionsFound": "Aucune question trouvée dans le fichier",
     "validating": "Validation en cours...",
     "startDateRequired": "La date de début est requise pour les sondages hors ligne",
-    "endDateRequired": "La date de fin est requise pour les sondages hors ligne"
+    "endDateRequired": "La date de fin est requise pour les sondages hors ligne",
+    "importValidated": "{{filename}} validé avec succès.",
+    "importValidateFailed": "{{filename}} échec de la validation: {{error}}",
+    "aiAddFailed": "Impossible d'ajouter les questions"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -1903,6 +1910,11 @@
     "blockquote": "Bloc de citation",
     "horizontalRule": "Ligne horizontale",
     "insertTable": "Insérer un tableau",
-    "codeBlock": "Bloc de code"
+    "codeBlock": "Bloc de code",
+    "normal": "Normal",
+    "heading1": "Titre 1",
+    "heading2": "Titre 2",
+    "heading3": "Titre 3",
+    "heading4": "Titre 4"
   }
 }

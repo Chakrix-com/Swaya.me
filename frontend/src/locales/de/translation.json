@@ -17,7 +17,10 @@
     "actions": "Aktionen",
     "beta": "Beta",
     "betaAriaLabel": "Beta-Version",
-    "update": "Aktualisieren"
+    "update": "Aktualisieren",
+    "or": "oder",
+    "clear": "Löschen",
+    "live": "LIVE"
   },
   "auth": {
     "login": "Anmelden",
@@ -80,7 +83,8 @@
     "emailRequired": "E-Mail ist erforderlich",
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail ein",
     "passwordRequired": "Passwort ist erforderlich",
-    "continueWithGoogle": "Mit Google fortfahren"
+    "continueWithGoogle": "Mit Google fortfahren",
+    "forgotPassword": "Passwort vergessen?"
   },
   "quiz": {
     "myQuizzes": "Meine Quizze",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "Keine Fragen in der Datei gefunden",
     "validating": "Wird überprüft...",
     "startDateRequired": "Startdatum ist für Offline-Umfragen erforderlich",
-    "endDateRequired": "Enddatum ist für Offline-Umfragen erforderlich"
+    "endDateRequired": "Enddatum ist für Offline-Umfragen erforderlich",
+    "importValidated": "{{filename}} erfolgreich validiert.",
+    "importValidateFailed": "{{filename}} Validierung fehlgeschlagen: {{error}}",
+    "aiAddFailed": "Fragen konnten nicht hinzugefügt werden"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -1901,6 +1908,11 @@
     "blockquote": "Blockzitat",
     "horizontalRule": "Horizontale Linie",
     "insertTable": "Tabelle einfügen",
-    "codeBlock": "Codeblock"
+    "codeBlock": "Codeblock",
+    "normal": "Normal",
+    "heading1": "Überschrift 1",
+    "heading2": "Überschrift 2",
+    "heading3": "Überschrift 3",
+    "heading4": "Überschrift 4"
   }
 }

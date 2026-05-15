@@ -17,7 +17,10 @@
     "actions": "অ্যাকশন",
     "beta": "বেটা",
     "betaAriaLabel": "বেটা সংস্করণ",
-    "update": "আপডেট করুন"
+    "update": "আপডেট করুন",
+    "or": "অথবা",
+    "clear": "মুছুন",
+    "live": "LIVE"
   },
   "auth": {
     "login": "লগইন",
@@ -80,7 +83,8 @@
     "emailRequired": "ইমেইল আবশ্যক",
     "emailInvalid": "একটি বৈধ ইমেইল দিন",
     "passwordRequired": "পাসওয়ার্ড আবশ্যক",
-    "continueWithGoogle": "Google দিয়ে চালিয়ে যান"
+    "continueWithGoogle": "Google দিয়ে চালিয়ে যান",
+    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?"
   },
   "quiz": {
     "myQuizzes": "আমার প্রশ্নোত্তর",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "ফাইলে কোনো প্রশ্ন পাওয়া যায়নি",
     "validating": "যাচাই করা হচ্ছে...",
     "startDateRequired": "অফলাইন পোলের জন্য শুরুর তারিখ প্রয়োজন",
-    "endDateRequired": "অফলাইন পোলের জন্য শেষ তারিখ প্রয়োজন"
+    "endDateRequired": "অফলাইন পোলের জন্য শেষ তারিখ প্রয়োজন",
+    "importValidated": "{{filename}} সফলভাবে যাচাই হয়েছে।",
+    "importValidateFailed": "{{filename}} যাচাই ব্যর্থ: {{error}}",
+    "aiAddFailed": "প্রশ্ন যোগ করতে ব্যর্থ"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",
@@ -1901,6 +1908,11 @@
     "blockquote": "ব্লককোট",
     "horizontalRule": "অনুভূমিক রেখা",
     "insertTable": "টেবিল যোগ করুন",
-    "codeBlock": "কোড ব্লক"
+    "codeBlock": "কোড ব্লক",
+    "normal": "সাধারণ",
+    "heading1": "শিরোনাম ১",
+    "heading2": "শিরোনাম ২",
+    "heading3": "শিরোনাম ৩",
+    "heading4": "শিরোনাম ৪"
   }
 }

@@ -1125,10 +1125,10 @@ export default function QuizBuilder() {
         setIsValidating(true)
         const response = await quizAPI.validateImport(info.file.originFileObj || info.file)
         setImportData(response.data)
-        message.success(`${info.file.name} validated successfully.`)
+        message.success(t('quiz.importValidated', { filename: info.file.name }))
       } catch (error) {
         console.error('Validation error:', error)
-        message.error(`${info.file.name} validation failed: ${error.response?.data?.detail || error.message}`)
+        message.error(t('quiz.importValidateFailed', { filename: info.file.name, error: error.response?.data?.detail || error.message }))
       } finally {
         setIsValidating(false)
       }
@@ -2132,7 +2132,7 @@ export default function QuizBuilder() {
       setAiPreview([])
       await loadQuiz()
     } catch (err) {
-      message.error(err.response?.data?.detail || 'Failed to add questions')
+      message.error(err.response?.data?.detail || t('quiz.aiAddFailed'))
     } finally {
       setAiAdding(false)
     }

@@ -17,7 +17,10 @@
     "actions": "செயல்கள்",
     "beta": "பீட்டா",
     "betaAriaLabel": "பீட்டா பதிப்பு",
-    "update": "புதுப்பி"
+    "update": "புதுப்பி",
+    "or": "அல்லது",
+    "clear": "அழி",
+    "live": "LIVE"
   },
   "auth": {
     "login": "உள்நுழைക",
@@ -80,7 +83,8 @@
     "emailRequired": "மின்னஞ்சல் தேவை",
     "emailInvalid": "செல்லுபடியான மின்னஞ்சலை உள்ளிடவும்",
     "passwordRequired": "கடவுச்சொல் தேவை",
-    "continueWithGoogle": "Google மூலம் தொடரவும்"
+    "continueWithGoogle": "Google மூலம் தொடரவும்",
+    "forgotPassword": "கடவுச்சொல் மறந்துவிட்டீர்களா?"
   },
   "quiz": {
     "myQuizzes": "என் வினாடி வினா",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "கோப்பில் கேள்விகள் எதுவும் இல்லை",
     "validating": "சரிபார்க்கிறது...",
     "startDateRequired": "ஆஃப்லைன் வாக்கெடுப்புகளுக்கு தொடக்க தேதி தேவை",
-    "endDateRequired": "ஆஃப்லைன் வாக்கெடுப்புகளுக்கு முடிவு தேதி தேவை"
+    "endDateRequired": "ஆஃப்லைன் வாக்கெடுப்புகளுக்கு முடிவு தேதி தேவை",
+    "importValidated": "{{filename}} வெற்றிகரமாக சரிபார்க்கப்பட்டது.",
+    "importValidateFailed": "{{filename}} சரிபார்ப்பு தோல்வியடைந்தது: {{error}}",
+    "aiAddFailed": "கேள்விகளை சேர்க்க முடியவில்லை"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",
@@ -1901,6 +1908,11 @@
     "blockquote": "மேற்கோள் தொகுதி",
     "horizontalRule": "கிடை கோடு",
     "insertTable": "அட்டவணை செருகவும்",
-    "codeBlock": "குறியீடு தொகுதி"
+    "codeBlock": "குறியீடு தொகுதி",
+    "normal": "சாதாரண",
+    "heading1": "தலைப்பு 1",
+    "heading2": "தலைப்பு 2",
+    "heading3": "தலைப்பு 3",
+    "heading4": "தலைப்பு 4"
   }
 }

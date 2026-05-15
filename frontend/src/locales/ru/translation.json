@@ -17,7 +17,10 @@
     "actions": "Действия",
     "beta": "Бета",
     "betaAriaLabel": "Бета-версия",
-    "update": "Обновить"
+    "update": "Обновить",
+    "or": "или",
+    "clear": "Очистить",
+    "live": "LIVE"
   },
   "auth": {
     "login": "Вход",
@@ -80,7 +83,8 @@
     "emailRequired": "Электронная почта обязательна",
     "emailInvalid": "Пожалуйста, введите действительный email",
     "passwordRequired": "Пароль обязателен",
-    "continueWithGoogle": "Продолжить с Google"
+    "continueWithGoogle": "Продолжить с Google",
+    "forgotPassword": "Забыли пароль?"
   },
   "quiz": {
     "myQuizzes": "Мои викторины",
@@ -330,7 +334,10 @@
     "noQuestionsFound": "В файле не найдено вопросов",
     "validating": "Проверка...",
     "startDateRequired": "Дата начала обязательна для офлайн-опросов",
-    "endDateRequired": "Дата окончания обязательна для офлайн-опросов"
+    "endDateRequired": "Дата окончания обязательна для офлайн-опросов",
+    "importValidated": "{{filename}} успешно проверен.",
+    "importValidateFailed": "{{filename}} ошибка проверки: {{error}}",
+    "aiAddFailed": "Не удалось добавить вопросы"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",
@@ -1901,6 +1908,11 @@
     "blockquote": "Цитата",
     "horizontalRule": "Горизонтальная линия",
     "insertTable": "Вставить таблицу",
-    "codeBlock": "Блок кода"
+    "codeBlock": "Блок кода",
+    "normal": "Обычный",
+    "heading1": "Заголовок 1",
+    "heading2": "Заголовок 2",
+    "heading3": "Заголовок 3",
+    "heading4": "Заголовок 4"
   }
 }

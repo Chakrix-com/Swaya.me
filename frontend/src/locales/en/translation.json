@@ -17,7 +17,10 @@
     "actions": "Actions",
     "beta": "Beta",
     "betaAriaLabel": "Beta version",
-    "update": "Update"
+    "update": "Update",
+    "or": "or",
+    "clear": "Clear",
+    "live": "LIVE"
   },
   "auth": {
     "login": "Login",
@@ -80,7 +83,8 @@
     "emailRequired": "Email is required",
     "emailInvalid": "Please enter a valid email",
     "passwordRequired": "Password is required",
-    "continueWithGoogle": "Continue with Google"
+    "continueWithGoogle": "Continue with Google",
+    "forgotPassword": "Forgot Password?"
   },
   "quiz": {
     "myQuizzes": "My Quizzes",
@@ -330,7 +334,10 @@
     "answerExplanationTooltip": "Shown to participants after they submit the exam.",
     "answerExplanationPlaceholder": "Explain why the correct answer is correct…",
     "startDateRequired": "Start date is required for offline polls",
-    "endDateRequired": "End date is required for offline polls"
+    "endDateRequired": "End date is required for offline polls",
+    "importValidated": "{{filename}} validated successfully.",
+    "importValidateFailed": "{{filename}} validation failed: {{error}}",
+    "aiAddFailed": "Failed to add questions"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -1901,6 +1908,11 @@
     "blockquote": "Blockquote",
     "horizontalRule": "Horizontal rule",
     "insertTable": "Insert table",
-    "codeBlock": "Code block"
+    "codeBlock": "Code block",
+    "normal": "Normal",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "heading4": "Heading 4"
   }
 }

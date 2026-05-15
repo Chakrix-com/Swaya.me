@@ -116,7 +116,7 @@ function Login() {
 
             <div style={{ textAlign: 'right', marginBottom: '24px', marginTop: '-12px' }}>
               <Link to="/forgot-password" style={{ color: 'var(--visitor-accent)' }}>
-                Forgot Password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
 
@@ -135,7 +135,7 @@ function Login() {
 
             <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', gap: 8 }}>
               <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
-              <span style={{ color: 'var(--visitor-text-secondary)', fontSize: 12 }}>or</span>
+              <span style={{ color: 'var(--visitor-text-secondary)', fontSize: 12 }}>{t('common.or')}</span>
               <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
             </div>
 

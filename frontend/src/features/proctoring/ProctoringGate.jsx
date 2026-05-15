@@ -239,6 +239,7 @@ function ProctoringWarningScreen({ ruleSet, fullscreenRequired, onAcknowledge })
 }
 
 function WebcamPip({ stream }) {
+  const { t } = useTranslation();
   const pipRef = useRef(null);
 
   useEffect(() => {
@@ -288,7 +289,7 @@ function WebcamPip({ stream }) {
           display: 'inline-block',
           boxShadow: '0 0 4px #52c41a',
         }} />
-        <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>LIVE</span>
+        <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, letterSpacing: 0.5 }}>{t('common.live')}</span>
       </div>
     </div>
   );
