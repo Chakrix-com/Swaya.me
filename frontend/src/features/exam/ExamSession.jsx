@@ -315,23 +315,51 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
             borderRadius: 8,
             padding: '16px 20px',
           }}>
-            <Text strong style={{ display: 'block', marginBottom: 10, color: '#dc2626' }}>
+            {/* Title + subtitle */}
+            <Text strong style={{ display: 'block', fontSize: 14, color: '#dc2626' }}>
               <span role="img" aria-label="warning" style={{ marginRight: 6 }}>⚠️</span>
-              {t('exam.proctoringNoticeTitle')}
+              {t('proctoring.warning.title')}
             </Text>
+            <Text style={{ display: 'block', fontSize: 13, color: '#6b7280', marginTop: 2, marginBottom: 10 }}>
+              {t('proctoring.warning.subtitle')}
+            </Text>
+
+            {/* Webcam notice */}
             {webcamOn && (
               <div style={{ marginBottom: 10, fontSize: 13, color: '#92400e', background: '#fef3c7', borderRadius: 6, padding: '8px 12px' }}>
                 {t('proctoring.warning.webcamNotice')}
               </div>
             )}
-            <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 5 }}>
+
+            {/* Violations list */}
+            <Text style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              {t('proctoring.warning.violationsTitle')}
+            </Text>
+            <ul style={{ margin: '0 0 10px', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {activeRuleIds.map((ruleId) => (
                 <li key={ruleId} style={{ fontSize: 13, color: '#374151' }}>
                   {t(`proctoring.warning.rules.${ruleId}`)}
                 </li>
               ))}
             </ul>
-            <div style={{ marginTop: 12 }}>
+
+            {/* Lock + auto-submit warning */}
+            {proctoringConfig?.escalation?.lock_on_violation_count > 0 && (
+              <div style={{ fontSize: 13, color: '#7f1d1d', background: '#fee2e2', borderRadius: 6, padding: '8px 12px', marginBottom: 10 }}>
+                {t('proctoring.warning.lockMessage', { count: proctoringConfig.escalation.lock_on_violation_count })}
+                {proctoringConfig.escalation.auto_submit_on_lock
+                  ? t('proctoring.warning.autoSubmit')
+                  : t('proctoring.warning.noAutoSubmit')}
+              </div>
+            )}
+
+            {/* All violations logged */}
+            <Text style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+              {t('proctoring.warning.allLogged')}
+            </Text>
+
+            {/* Acknowledgement checkbox */}
+            <div>
               <input
                 type="checkbox"
                 id="proctor-ack"
