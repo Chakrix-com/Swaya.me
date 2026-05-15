@@ -278,7 +278,7 @@ cmd_promote_live() {
     sudo systemctl restart "$LIVE_SERVICE"
 
     nginx_reload
-    sleep 3
+    sleep 8
 
     # 10. Health check — auto-rollback on failure
     if ! health_check "www.swaya.me" 8000 "www.swaya.me"; then
@@ -349,7 +349,7 @@ _restore_release() {
     info "Restarting live backend..."
     sudo systemctl restart "$LIVE_SERVICE"
     nginx_reload
-    sleep 3
+    sleep 8
 
     if health_check "www.swaya.me" 8000 "www.swaya.me"; then
         success "Rollback to $tag complete."
