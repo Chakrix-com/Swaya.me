@@ -153,6 +153,13 @@ WELCOME_EMAIL_HTML = """\
           </span>
         </li>
         <li>
+          <span class="feature-icon">⚡</span>
+          <span class="feature-text">
+            <strong>Generate with AI</strong>
+            <span>Describe what you want and AI builds your quiz questions — with options and explanations — in seconds.</span>
+          </span>
+        </li>
+        <li>
           <span class="feature-icon">📊</span>
           <span class="feature-text">
             <strong>Live Poll</strong>
@@ -255,7 +262,7 @@ async def send_welcome_email(email: str, name: Optional[str] = None) -> bool:
     recipient_name = (name or email.split('@')[0]).strip().split()[0]
     html_content = WELCOME_EMAIL_HTML.format(name=recipient_name)
     return await send_email(
-        subject="Welcome to Swaya.me — here's what you can do",
+        subject="Welcome to Swaya.me — here's everything you can do",
         recipients=[email],
         html_body=html_content,
     )
