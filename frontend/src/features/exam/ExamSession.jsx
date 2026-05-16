@@ -87,6 +87,8 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
   const [otpError, setOtpError] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
   const cooldownRef = useRef(null)
+  const nameValue = Form.useWatch('display_name', form)
+  const emailValue = Form.useWatch('email', form)
 
   const timeLimitMins = info.time_limit_seconds ? Math.floor(info.time_limit_seconds / 60) : null
 
@@ -413,7 +415,11 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
               size="large"
               block
               loading={requireEmail ? sendingOtp : loading}
-              disabled={hasProctoringRules && !acknowledged}
+              disabled={
+                !nameValue?.trim() ||
+                (requireEmail && !emailValue?.trim()) ||
+                (hasProctoringRules && !acknowledged)
+              }
               icon={<ArrowRightOutlined />}
             >
               {requireEmail ? t('exam.sendOtp') : t('exam.startExam')}
