@@ -87,7 +87,7 @@ async def get_models(current_user: CurrentUser = Depends(require_admin)):
 @router.post("/generate/questions", response_model=GenerateQuestionsResponse)
 async def api_generate_questions(
     req: GenerateQuestionsRequest,
-    current_user: CurrentUser = Depends(require_admin),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Generate MCQ quiz questions using Google Gemini from a detailed user prompt.
@@ -132,7 +132,7 @@ async def api_generate_questions(
 @router.post("/generate/options", response_model=GenerateDistractorsResponse)
 async def api_generate_distractors(
     req: GenerateDistractorsRequest,
-    current_user: CurrentUser = Depends(require_admin),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Generate plausible wrong answer options (distractors) for an MCQ question.
@@ -155,7 +155,7 @@ async def api_generate_distractors(
 @router.post("/generate/poll-prompt", response_model=GeneratePollPromptResponse)
 async def api_generate_poll_prompt(
     req: GeneratePollPromptRequest,
-    current_user: CurrentUser = Depends(require_admin),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Generate a short open-ended word cloud poll question for a given topic.
