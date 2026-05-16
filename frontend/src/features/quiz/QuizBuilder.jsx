@@ -1248,6 +1248,7 @@ export default function QuizBuilder() {
         exam_time_limit_minutes: response.data.exam_time_limit_seconds ? Math.floor(response.data.exam_time_limit_seconds / 60) : undefined,
         exam_results_email: response.data.exam_results_email || undefined,
         exam_require_email: response.data.exam_require_email || false,
+        exam_allowed_domains: response.data.exam_allowed_domains || undefined,
       })
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
@@ -1428,12 +1429,22 @@ export default function QuizBuilder() {
           </Form.Item>
           <Form.Item noStyle shouldUpdate={(prev, cur) => prev.exam_require_email !== cur.exam_require_email}>
             {({ getFieldValue }) => getFieldValue('exam_require_email') && (
-              <Alert
-                type="info"
-                showIcon
-                message={t('exam.requireEmailHint')}
-                style={{ marginTop: -8 }}
-              />
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Alert
+                  type="info"
+                  showIcon
+                  message={t('exam.requireEmailHint')}
+                  style={{ marginTop: -8 }}
+                />
+                <Form.Item
+                  name="exam_allowed_domains"
+                  label={t('exam.allowedDomains', 'Allowed email domains (optional)')}
+                  extra={t('exam.allowedDomainsHint', 'Comma-separated domains, e.g. natwest.com, rbs.com — leave blank to allow any email')}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input placeholder="natwest.com, rbs.com" />
+                </Form.Item>
+              </Space>
             )}
           </Form.Item>
         </Space>

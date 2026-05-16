@@ -1730,7 +1730,9 @@
     "aiAnalysingMessage": "Gemini AI से परिणाम विश्लेषण हो रहा है…",
     "aiAnalysisUnavailable": "विश्लेषण तब उपलब्ध होगा जब कम से कम एक प्रतिभागी ने जमा किया हो।",
     "closeWindow": "बंद करें",
-    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
+    "allowedDomains": "अनुमत ईमेल डोमेन (वैकल्पिक)",
+    "allowedDomainsHint": "अल्पविराम से अलग डोमेन, जैसे natwest.com, rbs.com — किसी भी ईमेल की अनुमति देने के लिए खाली छोड़ें"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",

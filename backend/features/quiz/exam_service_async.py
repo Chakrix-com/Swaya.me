@@ -135,6 +135,17 @@ async def request_exam_otp(
         raise HTTPException(status_code=410, detail="Exam is not currently open")
 
     email_lower = email.lower()
+
+    if quiz.exam_allowed_domains:
+        allowed = [d.strip().lower().lstrip('@') for d in quiz.exam_allowed_domains.split(',') if d.strip()]
+        email_domain = email_lower.split('@')[-1]
+        if allowed and email_domain not in allowed:
+            domain_list = ', '.join(f'@{d}' for d in allowed)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Only {domain_list} email addresses are accepted for this exam"
+            )
+
     rate_key = f"exam_otp_rate:{slug}:{email_lower}"
     count = await redis.increment(rate_key)
     if count == 1:

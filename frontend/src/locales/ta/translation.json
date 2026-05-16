@@ -1730,7 +1730,9 @@
     "aiAnalysingMessage": "Gemini AI மூலம் முடிவுகளை பகுப்பாய்வு செய்கிறது…",
     "aiAnalysisUnavailable": "குறைந்தது ஒரு பங்கேற்பாளர் சமர்ப்பித்தால் பகுப்பாய்வு கிடைக்கும்.",
     "closeWindow": "மூடு",
-    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
+    "allowedDomains": "அனுமதிக்கப்பட்ட மின்னஞ்சல் டொமைன்கள் (விரும்பினால்)",
+    "allowedDomainsHint": "கமா-பிரிக்கப்பட்ட டொமைன்கள், எ.கா. natwest.com, rbs.com — எந்த மின்னஞ்சலையும் அனுமதிக்க காலியாக விடவும்"
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",

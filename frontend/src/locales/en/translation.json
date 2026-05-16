@@ -1715,6 +1715,8 @@
     "requireEmailOn": "Email verification ON",
     "requireEmailOff": "Email verification OFF",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
+    "allowedDomains": "Allowed email domains (optional)",
+    "allowedDomainsHint": "Comma-separated domains, e.g. natwest.com, rbs.com — leave blank to allow any email",
     "saveSettings": "Save Settings",
     "saveSettingsHint": "Saves schedule, scoring, and security settings in one click.",
     "liveEditBannerTitle": "This exam is currently live",

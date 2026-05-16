@@ -1730,7 +1730,9 @@
     "aiAnalysingMessage": "Анализируются результаты с помощью Gemini AI…",
     "aiAnalysisUnavailable": "Анализ доступен после того, как хотя бы один участник отправил ответы.",
     "closeWindow": "Закрыть",
-    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
+    "allowedDomains": "Разрешённые домены электронной почты (необязательно)",
+    "allowedDomainsHint": "Домены, разделённые запятыми, напр. natwest.com, rbs.com — оставьте пустым, чтобы разрешить любой адрес"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

@@ -1732,7 +1732,9 @@
     "aiAnalysingMessage": "Analyse des résultats avec Gemini AI…",
     "aiAnalysisUnavailable": "L'analyse est disponible dès qu'au moins un participant a soumis.",
     "closeWindow": "Fermer",
-    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
+    "allowedDomains": "Domaines e-mail autorisés (optionnel)",
+    "allowedDomainsHint": "Domaines séparés par des virgules, ex. natwest.com, rbs.com — laisser vide pour autoriser tout e-mail"
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",

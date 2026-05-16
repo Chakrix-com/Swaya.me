@@ -96,6 +96,7 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     exam_session_id = Column(Integer, ForeignKey('quiz_sessions.id'), nullable=True)
     exam_results_email = Column(String(255), nullable=True)
     exam_require_email = Column(Boolean, default=False, nullable=False, server_default="0")
+    exam_allowed_domains = Column(Text, nullable=True)
     exam_participant_emails_sent = Column(Boolean, default=False, nullable=False, server_default="0")
 
     # Proctoring

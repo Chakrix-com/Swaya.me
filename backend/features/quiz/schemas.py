@@ -178,6 +178,7 @@ class QuizCreate(BaseModel):
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
     exam_require_email: Optional[bool] = None
+    exam_allowed_domains: Optional[str] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
 
@@ -209,6 +210,7 @@ class QuizUpdate(BaseModel):
     exam_time_limit_seconds: Optional[int] = Field(None, ge=60)
     exam_results_email: Optional[str] = Field(None, max_length=255)
     exam_require_email: Optional[bool] = None
+    exam_allowed_domains: Optional[str] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
 
@@ -243,6 +245,7 @@ class QuizResponse(BaseModel):
     exam_time_limit_seconds: Optional[int] = None
     exam_results_email: Optional[str] = None
     exam_require_email: bool = False
+    exam_allowed_domains: Optional[str] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
 

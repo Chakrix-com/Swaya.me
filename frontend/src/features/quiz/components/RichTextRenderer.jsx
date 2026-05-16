@@ -34,7 +34,7 @@ export default function RichTextRenderer({ content, isDark = false, className = 
 
   useEffect(() => {
     if (!ref.current) return
-    const blocks = ref.current.querySelectorAll('pre code[class*="language-"]')
+    const blocks = ref.current.querySelectorAll('pre code')
     blocks.forEach(block => {
       // Skip blocks already processed by Tiptap/lowlight (they have hljs spans)
       if (block.querySelector('span')) return
