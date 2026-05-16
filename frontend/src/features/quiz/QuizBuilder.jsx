@@ -1456,7 +1456,7 @@ export default function QuizBuilder() {
         />
       )}
 
-      {!isLive && editingQuestion !== 'new' && (
+      {!isLive && editingQuestion !== 'new' && !isPoll && (
         <Button
           icon={<ThunderboltOutlined />}
           onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
