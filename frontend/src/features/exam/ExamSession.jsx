@@ -417,7 +417,7 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
               loading={requireEmail ? sendingOtp : loading}
               disabled={
                 !nameValue?.trim() ||
-                (requireEmail && !emailValue?.trim()) ||
+                (requireEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue?.trim() ?? '')) ||
                 (hasProctoringRules && !acknowledged)
               }
               icon={<ArrowRightOutlined />}
