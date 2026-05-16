@@ -1011,6 +1011,7 @@ export default function QuizBuilder() {
   const isPoll = quiz?.quiz_type === 'poll' || quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'poll') || (!quiz && initialQuizType === 'offline_poll')
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
   const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
+  const isLiveMode = quiz?.status === 'ready'
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
 
@@ -2104,7 +2105,11 @@ export default function QuizBuilder() {
       setAiPreview(questions)
       setAiStep('preview')
     } catch (err) {
-      setAiError(err.response?.data?.detail || t('ai.generationFailed'))
+      const detail = err.response?.data?.detail
+      setAiError(
+        detail === '__PROMPT_NOT_FOR_QUIZ__' ? t('ai.promptNotForQuiz')
+        : detail || t('ai.generationFailed')
+      )
     } finally {
       setAiGenerating(false)
     }
@@ -2121,6 +2126,7 @@ export default function QuizBuilder() {
           text: q.text,
           options: q.options,
           correct_answer_index: isPoll ? null : q.correct_answer_index,
+          answer_explanation: q.explanation || null,
           points: 1,
           max_time_seconds: null,
         })
@@ -2457,24 +2463,16 @@ export default function QuizBuilder() {
               <Tag color={quiz.quiz_type === 'exam' ? 'volcano' : quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
                 {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
               </Tag>
-              {quiz.status === 'ready' && !isOfflinePoll && (
-                <Tag color="red">
-                  {isExam ? t('exam.unpublishMessage', 'Click "Deactivate Exam" above to edit') : isPoll ? t('quiz.unpublishPollMessage', 'Click "Unpublish Poll" above to edit') : (t('quiz.unpublishMessage') || 'Click "Unpublish Quiz" above to edit')}
-                </Tag>
-              )}
-              <Text type="secondary">
-                {questions.length} {questions.length === 1 ? t('quiz.question') : t('quiz.questions')}
-              </Text>
             </Space>
           )}
 
-          <div style={{ 
-            marginBottom: 24, 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            backgroundColor: token.colorFillAlter, 
-            padding: '16px', 
+          <div style={{
+            marginBottom: 24,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: token.colorFillAlter,
+            padding: '16px',
             borderRadius: token.borderRadiusLG,
             border: `1px solid ${token.colorBorderSecondary}`
           }}>
@@ -2491,52 +2489,61 @@ export default function QuizBuilder() {
             )}
           </div>
 
-          {/* Live exam banner — shown when exam is published/active */}
-          {quiz?.status === 'ready' && isExam && (
-            <Alert
-              type="warning"
-              showIcon
-              style={{ marginBottom: 16 }}
-              message={t('exam.liveEditBannerTitle')}
-              description={t('exam.liveEditBannerDesc')}
-            />
-          )}
-
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSaveQuiz}
+          {/* Settings Card — save button in header, live-mode alert inside */}
+          <Card
+            title={t('quiz.settingsCardTitle')}
+            style={{ marginBottom: 24 }}
+            extra={
+              !isLiveMode && (
+                <Button
+                  type="primary"
+                  onClick={() => form.submit()}
+                  icon={<SaveOutlined />}
+                  loading={loading}
+                >
+                  {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
+                </Button>
+              )
+            }
           >
-            {renderQuizSettings()}
-          </Form>
-
-          {/* Proctoring settings — above questions so security is configured before publish */}
-          {id && (isExam || isOfflinePoll) && proctoringPolicy !== null && (
-            <ProctoringSettings
-              quizId={parseInt(id)}
-              quizType={quiz?.quiz_type}
-              tenantTier={currentUser?.tier || 'free'}
-              currentPolicy={proctoringPolicy}
-              onChange={(p) => setProctoringPolicy(p)}
-            />
-          )}
-
-          <div style={{ marginTop: 20, marginBottom: 24 }}>
-            <Button
-              type="primary"
-              onClick={() => form.submit()}
-              icon={<SaveOutlined />}
-              loading={loading}
-              style={{ minWidth: 160 }}
-            >
-              {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
-            </Button>
-            {(isExam || isOfflinePoll) && (
-              <Text type="secondary" style={{ marginLeft: 12, fontSize: 13 }}>
-                {t('exam.saveSettingsHint')}
-              </Text>
+            {isLiveMode && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message={isExam ? t('exam.liveEditBannerTitle') : t('quiz.settingsLocked')}
+                description={isExam ? t('exam.settingsLockedDesc') : t('quiz.settingsLockedDesc')}
+                action={
+                  <Button size="small" loading={loading} onClick={handleUnpublish}>
+                    {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+                  </Button>
+                }
+              />
             )}
-          </div>
+
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSaveQuiz}
+              disabled={isLiveMode}
+            >
+              {renderQuizSettings()}
+            </Form>
+
+            {!isLiveMode && id && (isExam || isOfflinePoll) && proctoringPolicy !== null && (
+              <ProctoringSettings
+                quizId={parseInt(id)}
+                quizType={quiz?.quiz_type}
+                tenantTier={currentUser?.tier || 'free'}
+                currentPolicy={proctoringPolicy}
+                onChange={(p) => setProctoringPolicy(p)}
+              />
+            )}
+          </Card>
+
+          <Divider orientation="left" style={{ marginTop: 8, marginBottom: 16 }}>
+            {t('quiz.questionsSection')} ({questions.length})
+          </Divider>
 
           {renderQuestionsList()}
         </Card>

@@ -93,6 +93,10 @@
     "createQuiz": "Create Online Quiz",
     "createPoll": "Create Online Poll",
     "editQuiz": "Edit Quiz",
+    "settingsCardTitle": "Settings",
+    "settingsLocked": "Settings are read-only",
+    "settingsLockedDesc": "This quiz/poll is live. Unpublish it to make changes to settings.",
+    "questionsSection": "Questions",
     "createNewQuiz": "Create New Quiz",
     "quizTitle": "Quiz Title",
     "quizDescription": "Description",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "Added {{count}} questions to quiz",
     "noQuestionsGenerated": "No questions were generated. Try refining your prompt.",
     "generationFailed": "Generation failed. Please check your prompt and try again.",
+    "promptNotForQuiz": "Your prompt does not seem to be about a quiz topic. Please describe a subject, skill, or topic you want test questions on.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "Save Settings",
     "saveSettingsHint": "Saves schedule, scoring, and security settings in one click.",
     "liveEditBannerTitle": "This exam is currently live",
-    "liveEditBannerDesc": "Schedule, scoring, and security settings can be updated and take effect immediately. Questions are locked — deactivate the exam to add or edit questions.",
+    "liveEditBannerDesc": "This exam is active. Deactivate it to edit settings, questions, or scheduling.",
+    "settingsLockedDesc": "This exam is active. Deactivate it to edit settings, questions, or scheduling.",
     "questionsLockedNotice": "Questions are locked while the exam is active. Click \"Deactivate Exam\" in the top bar to edit questions.",
     "downloadReport": "Download PDF Report",
     "inProgress": "In Progress",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "Analysing…",
     "aiAnalysingMessage": "Analysing results with Gemini AI…",
     "aiAnalysisUnavailable": "Analysis is available once at least one participant has submitted.",
-    "closeWindow": "Close"
+    "closeWindow": "Close",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

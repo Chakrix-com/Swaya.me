@@ -2,6 +2,7 @@
 Exam Service — handles self-paced, scored exam participation.
 All operations are async. Public endpoints do not require authentication.
 """
+import asyncio
 import logging
 import os
 import random
@@ -425,23 +426,6 @@ async def submit_exam(
 
     participant.completed_at = _utcnow()
     await db.commit()
-
-    # Fire results email asynchronously if participant provided a verified email
-    if participant.email:
-        import asyncio
-        from core.auth.email_service import send_exam_result_email
-        asyncio.create_task(send_exam_result_email(
-            email=participant.email,
-            name=participant.display_name,
-            quiz_title=quiz.title,
-            total_score=total_score,
-            max_score=max_score,
-            percentage=percentage,
-            correct_count=correct_count,
-            wrong_count=wrong_count,
-            unanswered_count=unanswered_count,
-            question_results=question_results,
-        ))
 
     return ExamSubmitResponse(
         total_score=total_score,
@@ -875,3 +859,111 @@ async def send_results_email(quiz_id: int) -> None:
         logger.info(f"Exam results email sent to {quiz.exam_results_email} for quiz {quiz_id}")
     except Exception as e:
         logger.error(f"Failed to send exam results email for quiz {quiz_id}: {e}", exc_info=True)
+
+
+async def send_participant_results_emails(quiz_id: int) -> list:
+    """Nightly batch — emails detailed results to every completed participant of a quiz.
+
+    Returns a list of dicts for any per-participant failures:
+        [{"email": "...", "error": "..."}]
+    Raises on quiz-level failures (DB errors etc.) so the caller can track them.
+    """
+    from persistence.database_async import AsyncSessionLocal
+    from core.auth.email_service import send_exam_result_email
+
+    logger.info(f"Sending participant results emails for quiz {quiz_id}")
+    failures = []
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Quiz).options(selectinload(Quiz.questions)).filter(Quiz.id == quiz_id)
+        )
+        quiz = result.scalar_one_or_none()
+        if not quiz:
+            logger.warning(f"Quiz {quiz_id} not found for participant emails")
+            return failures
+
+        p_result = await db.execute(
+            select(Participant).filter(
+                Participant.session_id == quiz.exam_session_id,
+                Participant.completed_at.isnot(None),
+                Participant.email.isnot(None),
+            )
+        )
+        participants = p_result.scalars().all()
+        if not participants:
+            logger.info(f"No completed participants with emails for quiz {quiz_id}")
+            return failures
+
+        questions = sorted(quiz.questions, key=lambda q: q.order)
+
+        for participant in participants:
+            try:
+                a_result = await db.execute(
+                    select(Answer).filter(
+                        Answer.participant_id == participant.id,
+                        Answer.session_id == quiz.exam_session_id,
+                    )
+                )
+                answers_by_qid = {a.question_id: a for a in a_result.scalars().all()}
+
+                question_results = []
+                total_score = max_score = correct_count = wrong_count = unanswered_count = 0
+
+                for q in questions:
+                    max_score += q.points
+                    answer = answers_by_qid.get(q.id)
+                    participant_ans = answer.selected_option_index if answer else None
+                    is_correct = answer.is_correct if answer else None
+                    points_earned = neg_applied = 0
+
+                    if participant_ans is None:
+                        unanswered_count += 1
+                    elif is_correct:
+                        correct_count += 1
+                        points_earned = q.points
+                        total_score += q.points
+                    else:
+                        wrong_count += 1
+                        neg_applied = q.negative_points
+                        total_score -= q.negative_points
+
+                    question_results.append(ExamQuestionResult(
+                        question_id=q.id,
+                        question_text=q.text,
+                        options=q.options,
+                        correct_answer_index=q.correct_answer_index,
+                        participant_answer=participant_ans,
+                        is_correct=is_correct,
+                        points_earned=points_earned,
+                        points_possible=q.points,
+                        negative_points_applied=neg_applied,
+                        answer_explanation=q.answer_explanation,
+                    ))
+
+                total_score = max(0, total_score)
+                percentage = round((total_score / max_score * 100) if max_score > 0 else 0.0, 2)
+
+                await send_exam_result_email(
+                    email=participant.email,
+                    name=participant.display_name,
+                    quiz_title=quiz.title,
+                    total_score=total_score,
+                    max_score=max_score,
+                    percentage=percentage,
+                    correct_count=correct_count,
+                    wrong_count=wrong_count,
+                    unanswered_count=unanswered_count,
+                    question_results=question_results,
+                )
+                logger.info(f"Sent results email to participant {participant.id} for quiz {quiz_id}")
+                await asyncio.sleep(0.5)  # throttle: ~120 emails/min, within Titan SMTP limits
+            except Exception as e:
+                err_str = str(e)
+                logger.error(
+                    f"Failed to send results email to participant {participant.id}: {err_str}",
+                    exc_info=True,
+                )
+                failures.append({"email": participant.email, "error": err_str})
+
+    return failures

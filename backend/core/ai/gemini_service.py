@@ -115,6 +115,68 @@ def _md_to_html(text: str) -> str:
     return ''.join(result_parts)
 
 
+async def validate_quiz_prompt(prompt: str, language: str = "en") -> tuple[bool, str]:
+    """
+    Fast guard using the cheap model: returns (True, "") if the prompt is suitable
+    for quiz generation, or (False, reason) if it is off-topic or inappropriate.
+    Fails open on any error so legitimate users are never blocked.
+    """
+    key = settings.gemini.key
+    if not key:
+        return True, ""
+
+    model = _resolve_model(settings.gemini.model_fast or _DEFAULT_MODEL)
+
+    system_instruction = (
+        "You are a content validator for an online quiz platform. "
+        "Decide whether a user's request is suitable for generating quiz or test questions. "
+        "Output ONLY valid JSON — nothing else."
+    )
+
+    user_message = f"""Determine whether the following prompt is appropriate for generating educational quiz or test questions.
+
+A VALID prompt:
+- Describes a topic, subject, concept, or skill (e.g. "Python decorators", "World War II causes", "HR interview questions")
+- Could reasonably produce factual, conceptual, or applied questions
+
+An INVALID prompt:
+- Asks for something unrelated to quizzes (recipes, creative writing, code programs, personal advice, jokes, etc.)
+- Is offensive, harmful, or inappropriate
+- Is pure gibberish or not a recognisable human language
+
+Output format (strict JSON):
+{{"valid": true}} if valid
+{{"valid": false, "reason": "<one concise sentence explaining why, written in language code: {language}>"}} if invalid
+
+User's prompt:
+{prompt}"""
+
+    payload = {
+        "system_instruction": {"parts": [{"text": system_instruction}]},
+        "contents": [{"parts": [{"text": user_message}], "role": "user"}],
+        "generationConfig": {
+            "temperature": 0,
+            "maxOutputTokens": 256,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    url = f"{GEMINI_BASE}/{model}:generateContent?key={key}"
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(15.0, connect=5.0)) as client:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+        data = resp.json()
+        raw = data["candidates"][0]["content"]["parts"][0]["text"]
+        parsed = _parse_json(raw)
+        if parsed.get("valid") is False:
+            return False, str(parsed.get("reason", ""))
+        return True, ""
+    except Exception:
+        return True, ""
+
+
 async def analyze_exam_results(results: dict) -> str:
     """
     Analyse exam results quantitatively and qualitatively via Gemini.
@@ -237,20 +299,28 @@ async def generate_questions(
     count = max(1, count)
 
     system_instruction = (
-        "You are an expert quiz generator. "
+        "You are an expert quiz generator for an online quiz platform. "
         "Follow the user's instructions exactly when creating questions. "
-        "Output ONLY valid JSON — no markdown, no explanations, nothing else."
+        "Output ONLY valid JSON — no markdown fences, no prose, nothing else.\n\n"
+        "Field requirements for every question:\n"
+        "- text: the question text. Use HTML for formatting where helpful: "
+        "<strong>, <em>, <code>, <pre><code class=\"language-X\">...</code></pre>.\n"
+        "- options: an array of 2 to 10 distinct answer choices. "
+        "Each option may also use HTML formatting.\n"
+        "- correct_answer_index: 0-based index of the single correct option.\n"
+        "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
+        "and why the main wrong answers are incorrect. No HTML in explanation."
     )
 
     user_message = f"""Generate exactly {count} multiple-choice questions based on the instructions below.
-Write all questions and answer options in language code: {language}.
+Write all questions, options, and explanations in language code: {language}.
 
 Output format (strict JSON, no other text):
-{{"questions": [{{"text": "<question>", "options": ["<A>", "<B>", "<C>", "<D>"], "correct_answer_index": <0|1|2|3>}}]}}
+{{"questions": [{{"text": "<question>", "options": ["<A>", "<B>", "..."], "correct_answer_index": 0, "explanation": "<why correct is right and why wrong answers are wrong>"}}]}}
 
 Rules:
-- Each question must have exactly 4 distinct answer options.
-- correct_answer_index is 0-based (0 = first option is correct).
+- Each question must have between 2 and 10 distinct answer options.
+- correct_answer_index is 0-based.
 - Wrong options must be plausible but clearly incorrect.
 - Output exactly {count} questions, no more, no less.
 
@@ -305,16 +375,19 @@ User instructions:
         idx = q.get("correct_answer_index", 0)
         if not q.get("text") or len(opts) < 2:
             continue
-        while len(opts) < 4:
-            opts.append("")
+        opts = opts[:10]  # cap at platform maximum
         try:
             idx = int(idx)
         except (TypeError, ValueError):
             idx = 0
+        if not (0 <= idx < len(opts)):
+            idx = 0
+        explanation = q.get("explanation") or ""
         result.append({
             "text": _md_to_html(str(q["text"])),
-            "options": [_md_to_html(str(o)) for o in opts[:4]],
-            "correct_answer_index": idx if 0 <= idx <= 3 else 0,
+            "options": [_md_to_html(str(o)) for o in opts],
+            "correct_answer_index": idx,
+            "explanation": _md_to_html(explanation) if explanation else None,
         })
 
     return result

@@ -93,6 +93,10 @@
     "createQuiz": "Créer un quiz en ligne",
     "createPoll": "Créer un sondage en ligne",
     "editQuiz": "Modifier le quiz",
+    "settingsCardTitle": "Paramètres",
+    "settingsLocked": "Les paramètres sont en lecture seule",
+    "settingsLockedDesc": "Ce quiz/sondage est en direct. Dépubliez-le pour modifier les paramètres.",
+    "questionsSection": "Questions",
     "createNewQuiz": "Créer un nouveau questionnaire",
     "quizTitle": "Titre du quiz",
     "quizDescription": "Description",
@@ -1552,6 +1556,7 @@
     "addedSuccess_other": "{{count}} questions ajoutées",
     "noQuestionsGenerated": "Aucune question générée. Essayez un autre sujet.",
     "generationFailed": "Génération échouée. Réessayez.",
+    "promptNotForQuiz": "Votre invite ne semble pas concerner un sujet de quiz. Décrivez un thème, une compétence ou un sujet sur lequel vous souhaitez des questions.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1715,7 +1720,8 @@
     "saveSettings": "Enregistrer les paramètres",
     "saveSettingsHint": "Enregistre le calendrier, la notation et les paramètres de sécurité en un clic.",
     "liveEditBannerTitle": "Cet examen est actuellement en cours",
-    "liveEditBannerDesc": "Le calendrier, la notation et les paramètres de sécurité peuvent être mis à jour. Les questions sont verrouillées — désactivez l'examen pour les modifier.",
+    "liveEditBannerDesc": "Cet examen est actif. Désactivez-le pour modifier les paramètres, les questions ou la planification.",
+    "settingsLockedDesc": "Cet examen est actif. Désactivez-le pour modifier les paramètres, les questions ou la planification.",
     "questionsLockedNotice": "Les questions sont verrouillées pendant que l'examen est actif.",
     "downloadReport": "Télécharger le rapport PDF",
     "inProgress": "En cours",
@@ -1725,7 +1731,8 @@
     "aiAnalysing": "Analyse en cours…",
     "aiAnalysingMessage": "Analyse des résultats avec Gemini AI…",
     "aiAnalysisUnavailable": "L'analyse est disponible dès qu'au moins un participant a soumis.",
-    "closeWindow": "Fermer"
+    "closeWindow": "Fermer",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",

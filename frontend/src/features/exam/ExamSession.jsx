@@ -14,18 +14,14 @@ import {
   ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
   QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
   TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined,
-  DownloadOutlined
 } from '@ant-design/icons'
 import { examAPI, proctoringAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
-import dayjs from 'dayjs'
 import { ProctoringProvider, ProctoringGate } from '../proctoring'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import swayaLogo from '../../assets/logo.png'
+import dayjs from 'dayjs'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -354,23 +350,9 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
             )}
 
             {/* All violations logged */}
-            <Text style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 12 }}>
+            <Text style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
               {t('proctoring.warning.allLogged')}
             </Text>
-
-            {/* Acknowledgement checkbox */}
-            <div>
-              <input
-                type="checkbox"
-                id="proctor-ack"
-                checked={acknowledged}
-                onChange={(e) => setAcknowledged(e.target.checked)}
-                style={{ marginRight: 8 }}
-              />
-              <label htmlFor="proctor-ack" style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
-                {t('proctoring.warning.checkboxLabel')}
-              </label>
-            </div>
           </div>
         )}
 
@@ -408,6 +390,22 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
                 maxLength={255}
                 type="email"
               />
+            </Form.Item>
+          )}
+          {hasProctoringRules && (
+            <Form.Item style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  id="proctor-ack"
+                  checked={acknowledged}
+                  onChange={(e) => setAcknowledged(e.target.checked)}
+                  style={{ marginTop: 3, flexShrink: 0 }}
+                />
+                <label htmlFor="proctor-ack" style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                  {t('proctoring.warning.checkboxLabel')}
+                </label>
+              </div>
             </Form.Item>
           )}
           <Form.Item style={{ marginBottom: 0 }}>
@@ -574,225 +572,28 @@ function QuestionScreen({
 
 // ── Score Screen ─────────────────────────────────────────────────────────────
 
-function ScoreScreen({ result, quizTitle, onBack }) {
+function ScoreScreen({ result, quizTitle, participantEmail, onBack }) {
   const { t } = useTranslation()
-
-  const handleDownloadPdf = () => {
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-    const pageWidth = doc.internal.pageSize.getWidth()
-    const pageHeight = doc.internal.pageSize.getHeight()
-    const margin = 40
-    const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
-
-    // ── Brand bar (top) ──────────────────────────────────────────────────────
-    // Blue background strip
-    doc.setFillColor(24, 144, 255)
-    doc.rect(0, 0, pageWidth, 52, 'F')
-
-    // Logo (square, left-aligned inside bar)
-    doc.addImage(swayaLogo, 'PNG', margin, 8, 36, 36)
-
-    // "Swaya.me" wordmark next to logo
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(18)
-    doc.setTextColor(255, 255, 255)
-    doc.text('Swaya.me', margin + 44, 32)
-
-    // URL flush-right inside bar
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    doc.setTextColor(220, 236, 255)
-    doc.text('www.swaya.me', pageWidth - margin, 32, { align: 'right' })
-
-    // ── Report heading ───────────────────────────────────────────────────────
-    doc.setTextColor(30, 30, 30)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(16)
-    doc.text('Exam Report', pageWidth / 2, 80, { align: 'center' })
-
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(12)
-    doc.setTextColor(60, 60, 60)
-    doc.text(quizTitle || '', pageWidth / 2, 98, { align: 'center' })
-
-    doc.setFontSize(9)
-    doc.setTextColor(140, 140, 140)
-    doc.text(dayjs().format('DD MMM YYYY, HH:mm'), pageWidth / 2, 112, { align: 'center' })
-
-    // Divider
-    doc.setDrawColor(220, 220, 220)
-    doc.line(margin, 120, pageWidth - margin, 120)
-
-    // ── Score summary ────────────────────────────────────────────────────────
-    doc.setTextColor(30, 30, 30)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    const summaryY = 138
-    doc.text(`Score: ${result.total_score} / ${result.max_score}  (${result.percentage}%)`, margin, summaryY)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.setTextColor(80, 80, 80)
-    doc.text(
-      `Correct: ${result.correct_count}   Wrong: ${result.wrong_count}   Unanswered: ${result.unanswered_count}`,
-      margin, summaryY + 16,
-    )
-
-    // ── Question table ───────────────────────────────────────────────────────
-    const rows = result.question_results.map((qr, idx) => {
-      const isCorrect = qr.is_correct === true
-      const isWrong = qr.is_correct === false
-      const yourAnswer = qr.participant_answer != null ? (qr.options?.[qr.participant_answer] ?? '-') : '-'
-      const correctAnswer = qr.correct_answer_index != null ? (qr.options?.[qr.correct_answer_index] ?? '-') : '-'
-      // Use ASCII-safe status strings — jsPDF Helvetica does not support Unicode symbols
-      const status = isCorrect ? 'Correct' : isWrong ? 'Wrong' : 'Skipped'
-      return [
-        `Q${idx + 1}`,
-        stripHtml(qr.question_text),
-        stripHtml(yourAnswer),
-        stripHtml(correctAnswer),
-        status,
-        stripHtml(qr.answer_explanation || '-'),
-      ]
-    })
-
-    autoTable(doc, {
-      startY: summaryY + 36,
-      margin: { left: margin, right: margin },
-      head: [['#', 'Question', 'Your Answer', 'Correct Answer', 'Result', 'Explanation']],
-      body: rows,
-      styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
-      headStyles: { fillColor: [24, 144, 255], textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 24 },
-        1: { cellWidth: 130 },
-        2: { cellWidth: 90 },
-        3: { cellWidth: 90 },
-        4: { cellWidth: 55 },
-        5: { cellWidth: 'auto' },
-      },
-      didParseCell: (data) => {
-        if (data.section === 'body') {
-          const status = data.row.cells[4]?.raw || ''
-          if (status === 'Correct') {
-            data.cell.styles.fillColor = [236, 255, 236]
-            if (data.column.index === 4) data.cell.styles.textColor = [56, 142, 13]
-          } else if (status === 'Wrong') {
-            data.cell.styles.fillColor = [255, 236, 236]
-            if (data.column.index === 4) data.cell.styles.textColor = [207, 19, 34]
-          } else {
-            if (data.column.index === 4) data.cell.styles.textColor = [140, 140, 140]
-          }
-        }
-      },
-      // Footer on every page
-      didDrawPage: (data) => {
-        doc.setFontSize(8)
-        doc.setTextColor(180, 180, 180)
-        doc.setFont('helvetica', 'normal')
-        doc.text(
-          `Generated by Swaya.me  •  www.swaya.me`,
-          pageWidth / 2,
-          pageHeight - 18,
-          { align: 'center' },
-        )
-        doc.text(
-          `Page ${data.pageNumber}`,
-          pageWidth - margin,
-          pageHeight - 18,
-          { align: 'right' },
-        )
-      },
-    })
-
-    const safeName = (quizTitle || 'exam').replace(/[^a-z0-9]/gi, '-').toLowerCase()
-    doc.save(`exam-report-${safeName}-${dayjs().format('YYYYMMDD')}.pdf`)
-  }
-
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <Card style={{ marginBottom: 16, textAlign: 'center' }} bordered={false}>
-        <TrophyOutlined style={{ fontSize: 48, color: '#faad14', marginBottom: 12 }} />
-        <Title level={2}>{t('exam.yourScore')}</Title>
-        <Title level={1} style={{ color: '#1890ff', marginTop: 0 }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', textAlign: 'center', paddingTop: 40 }}>
+      <Card bordered={false}>
+        <TrophyOutlined style={{ fontSize: 56, color: '#faad14', marginBottom: 16 }} />
+        <Title level={2} style={{ marginBottom: 4 }}>{t('exam.yourScore')}</Title>
+        <Title level={1} style={{ color: '#1890ff', marginTop: 0, marginBottom: 24 }}>
           {result.total_score} / {result.max_score}
         </Title>
-        <Title level={3} style={{ color: '#52c41a' }}>
-          {result.percentage}%
-        </Title>
-        <Row gutter={24} justify="center" style={{ marginTop: 16 }}>
-          <Col>
-            <Statistic title={t('exam.correctAnswers')} value={result.correct_count} valueStyle={{ color: '#52c41a' }} prefix={<CheckCircleOutlined />} />
-          </Col>
-          <Col>
-            <Statistic title={t('exam.wrongAnswers')} value={result.wrong_count} valueStyle={{ color: '#ff4d4f' }} prefix={<CloseCircleOutlined />} />
-          </Col>
-          <Col>
-            <Statistic title={t('exam.unanswered')} value={result.unanswered_count} valueStyle={{ color: '#8c8c8c' }} />
-          </Col>
-        </Row>
-      </Card>
-
-      <Card title={t('exam.perQuestionBreakdown')} bordered={false}>
-        {result.question_results.map((qr, idx) => {
-          const isCorrect = qr.is_correct === true
-          const isWrong = qr.is_correct === false
-          const isSkipped = qr.participant_answer == null
-
-          return (
-            <div key={qr.question_id} style={{
-              padding: '12px 0',
-              borderBottom: idx < result.question_results.length - 1 ? '1px solid var(--ctrl-divider, #f0f0f0)' : 'none'
-            }}>
-              <Row justify="space-between" align="top">
-                <Col flex="auto">
-                  <Text strong>Q{idx + 1}: {qr.question_text}</Text>
-                  <div style={{ marginTop: 6 }}>
-                    {!isSkipped && (
-                      <Text type="secondary">
-                        {t('exam.yourAnswer')}: {qr.options?.[qr.participant_answer] ?? '--'}
-                      </Text>
-                    )}
-                    {isWrong && (
-                      <div>
-                        <Text type="danger">
-                          {t('exam.correctAnswer')}: {qr.options?.[qr.correct_answer_index] ?? '--'}
-                        </Text>
-                      </div>
-                    )}
-                    {qr.answer_explanation && (
-                      <div style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontStyle: 'italic' }}>
-                          💡 {qr.answer_explanation}
-                        </Text>
-                      </div>
-                    )}
-                  </div>
-                </Col>
-                <Col>
-                  <Space direction="vertical" align="end">
-                    {isCorrect && <Tag color="success">+{qr.points_earned}</Tag>}
-                    {isWrong && qr.negative_points_applied > 0 && <Tag color="error">-{qr.negative_points_applied}</Tag>}
-                    {isWrong && qr.negative_points_applied === 0 && <Tag color="error">0</Tag>}
-                    {isSkipped && <Tag color="default">0</Tag>}
-                    {isCorrect && <CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                    {isWrong && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
-                    {isSkipped && <Text type="secondary">–</Text>}
-                  </Space>
-                </Col>
-              </Row>
-            </div>
-          )
-        })}
-      </Card>
-
-      <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <Button icon={<DownloadOutlined />} type="primary" onClick={handleDownloadPdf}>
-          {t('exam.downloadReport', 'Download PDF Report')}
-        </Button>
+        {participantEmail && (
+          <Alert
+            type="info"
+            showIcon
+            message={t('exam.reportPendingEmail')}
+            style={{ marginBottom: 24, textAlign: 'left' }}
+          />
+        )}
         <Button icon={<CloseCircleOutlined />} onClick={() => { window.close(); setTimeout(() => onBack(), 300) }}>
           {t('exam.closeWindow', 'Close')}
         </Button>
-      </div>
+      </Card>
       <PromoCard />
     </div>
   )
@@ -808,6 +609,7 @@ export default function ExamSession() {
   const [phase, setPhase] = useState('loading') // loading | status | start | taking | score | error
   const [examInfo, setExamInfo] = useState(null)
   const [examResult, setExamResult] = useState(null)
+  const [participantEmail, setParticipantEmail] = useState(null)
   const [error, setError] = useState(null)
   const [startError, setStartError] = useState(null) // inline error on the start screen (e.g. wrong OTP)
   const [proctoringConfig, setProctoringConfig] = useState(null)
@@ -966,6 +768,7 @@ export default function ExamSession() {
       const res = await examAPI.start(slug, body)
       const data = res.data
       setSessionToken(data.session_token)
+      setParticipantEmail(email || null)
       setStartedAt(data.started_at)
       setQuestions(data.questions)
       setCurrentIdx(0)
@@ -1130,7 +933,7 @@ export default function ExamSession() {
         )}
 
         {phase === 'score' && examResult && (
-          <ScoreScreen result={examResult} quizTitle={examInfo?.title} onBack={() => navigate('/')} />
+          <ScoreScreen result={examResult} quizTitle={examInfo?.title} participantEmail={participantEmail} onBack={() => navigate('/')} />
         )}
       </div>
     </div>

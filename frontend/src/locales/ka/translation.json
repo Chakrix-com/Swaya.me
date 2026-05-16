@@ -90,6 +90,10 @@
     "myQuizzes": "ನನ್ನ ಪ್ರಶ್ನೋತ್ತರಿ",
     "createQuiz": "ಆನ್‌ಲೈನ್ ಕ್ವಿಜ್ ರಚಿಸಿ",
     "editQuiz": "ಪ್ರಶ್ನೋತ್ತರಿ ಸಂಪಾದನೆ ಮಾಡಿ",
+    "settingsCardTitle": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+    "settingsLocked": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಓದಲಷ್ಟೇ",
+    "settingsLockedDesc": "ಈ ಕ್ವಿಜ್/ಪೋಲ್ ನೇರವಾಗಿ ಇದೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಬದಲಾಯಿಸಲು ಅದನ್ನು ಅನ್‌ಪಬ್ಲಿಷ್ ಮಾಡಿ.",
+    "questionsSection": "ಪ್ರಶ್ನೆಗಳು",
     "createNewQuiz": "ಹೊಸ ಪ್ರಶ್ನೋತ್ತರಿ ರಚಿಸಿ",
     "quizTitle": "ಪ್ರಶ್ನೋತ್ತರಿ ಶೀರ್ಷಿಕೆ",
     "quizDescription": "ವಿವರಣೆ",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "{{count}} ಪ್ರಶ್ನೆಗಳನ್ನು ಸೇರಿಸಲಾಗಿದೆ",
     "noQuestionsGenerated": "ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಲಾಗಲಿಲ್ಲ. ಬೇರೆ ವಿಷಯ ಪ್ರಯತ್ನಿಸಿ.",
     "generationFailed": "ರಚಿಸುವಿಕೆ ವಿಫಲವಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "promptNotForQuiz": "ನಿಮ್ಮ ಪ್ರಾಂಪ್ಟ್ ಕ್ವಿಜ್ ವಿಷಯಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ನೀವು ಪ್ರಶ್ನೆಗಳನ್ನು ಬಯಸುವ ವಿಷಯ, ಕೌಶಲ್ಯ ಅಥವಾ ಅಧ್ಯಾಯವನ್ನು ವಿವರಿಸಿ.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",
     "saveSettingsHint": "ವೇಳಾಪಟ್ಟಿ, ಸ್ಕೋರಿಂಗ್ ಮತ್ತು ಭದ್ರತಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಒಂದೇ ಕ್ಲಿಕ್‌ನಲ್ಲಿ ಉಳಿಸುತ್ತದೆ.",
     "liveEditBannerTitle": "ಈ ಪರೀಕ್ಷೆ ಈಗ ನೇರ ಪ್ರಸಾರದಲ್ಲಿದೆ",
-    "liveEditBannerDesc": "ವೇಳಾಪಟ್ಟಿ, ಸ್ಕೋರಿಂಗ್ ಮತ್ತು ಭದ್ರತಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ನವೀಕರಿಸಬಹುದು. ಪ್ರಶ್ನೆಗಳು ಲಾಕ್ ಆಗಿವೆ — ಪ್ರಶ್ನೆಗಳನ್ನು ತಿದ್ದಲು ಪರೀಕ್ಷೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ.",
+    "liveEditBannerDesc": "ಈ ಪರೀಕ್ಷೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳು, ಪ್ರಶ್ನೆಗಳು ಅಥವಾ ವೇಳಾಪಟ್ಟಿ ತಿದ್ದಲು ಅದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ.",
+    "settingsLockedDesc": "ಈ ಪರೀಕ್ಷೆ ಸಕ್ರಿಯವಾಗಿದೆ. ಸೆಟ್ಟಿಂಗ್‌ಗಳು, ಪ್ರಶ್ನೆಗಳು ಅಥವಾ ವೇಳಾಪಟ್ಟಿ ತಿದ್ದಲು ಅದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ.",
     "questionsLockedNotice": "ಪರೀಕ್ಷೆ ಸಕ್ರಿಯವಾಗಿರುವಾಗ ಪ್ರಶ್ನೆಗಳು ಲಾಕ್ ಆಗಿರುತ್ತವೆ.",
     "downloadReport": "PDF ವರದಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
     "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ…",
     "aiAnalysingMessage": "Gemini AI ಯೊಂದಿಗೆ ಫಲಿತಾಂಶಗಳನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ…",
     "aiAnalysisUnavailable": "ಕನಿಷ್ಠ ಒಬ್ಬ ಭಾಗವಹಿಸುವವರು ಸಲ್ಲಿಸಿದ ನಂತರ ವಿಶ್ಲೇಷಣೆ ಲಭ್ಯವಿರುತ್ತದೆ.",
-    "closeWindow": "ಮುಚ್ಚಿರಿ"
+    "closeWindow": "ಮುಚ್ಚಿರಿ",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",

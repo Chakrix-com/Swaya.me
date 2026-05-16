@@ -90,6 +90,10 @@
     "myQuizzes": "મારા ક્વિઝ",
     "createQuiz": "ઓનલાઇન ક્વિઝ બનાવો",
     "editQuiz": "ક્વિઝ સંપાદિત કરો",
+    "settingsCardTitle": "સેટિંગ્સ",
+    "settingsLocked": "સેટિંગ્સ ફક્ત-વાંચવા-લાયક છે",
+    "settingsLockedDesc": "આ ક્વિઝ/પોલ લાઇવ છે. સેટિંગ્સ બદલવા માટે તેને અનપ્રકાશ કરો.",
+    "questionsSection": "પ્રશ્નો",
     "createNewQuiz": "નવો ક્વિઝ બનાવો",
     "quizTitle": "ક્વિઝનું શીર્ષક",
     "quizDescription": "વર્ણન",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "{{count}} પ્રશ્નો ઉમેર્યા",
     "noQuestionsGenerated": "કોઈ પ્રશ્ન ઉત્પન્ન થયા નહીં. અન્ય વિષય અજમાવો.",
     "generationFailed": "ઉત્પન્ન કરવામાં નિષ્ફળ. ફરી પ્રયાસ કરો.",
+    "promptNotForQuiz": "તમારો પ્રોમ્પ્ટ ક્વિઝ વિષય વિશે નથી લાગતો. કૃપા કરીને તે વિષય, કૌશલ્ય અથવા ટોપિક વર્ણવો જેના પર તમે પ્રશ્નો ઇચ્છો.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "સેટિંગ્સ સેવ કરો",
     "saveSettingsHint": "શેડ્યૂલ, સ્કોરિંગ અને સુરક્ષા સેટિંગ્સ એક ક્લિકમાં સેવ કરે છે.",
     "liveEditBannerTitle": "આ પરીક્ષા હાલ લાઇવ છે",
-    "liveEditBannerDesc": "શેડ્યૂલ, સ્કોરિંગ અને સુરક્ષા સેટિંગ્સ અપડેટ કરી શકાય છે. પ્રશ્નો લૉક છે — પ્રશ્નો સંપાદિત કરવા પરીક્ષા નિષ્ક્રિય કરો.",
+    "liveEditBannerDesc": "આ પરીક્ષા સક્રિય છે. સેટિંગ્સ, પ્રશ્નો અથવા સ્કેજ્યૂલ સંપાદિત કરવા માટે તેને નિષ્ક્રિય કરો.",
+    "settingsLockedDesc": "આ પરીક્ષા સક્રિય છે. સેટિંગ્સ, પ્રશ્નો અથવા સ્કેજ્યૂલ સંપાદિત કરવા માટે તેને નિષ્ક્રિય કરો.",
     "questionsLockedNotice": "પરીક્ષા સક્રિય હોય ત્યારે પ્રશ્નો લૉક રહે છે.",
     "downloadReport": "PDF રિપોર્ટ ડાઉનલોડ કરો",
     "inProgress": "ચાલુ છે",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "વિશ્લેષણ કરવામાં આવી રહ્યું છે…",
     "aiAnalysingMessage": "Gemini AI સાથે પરિણામોનું વિશ્લેષણ કરવામાં આવી રહ્યું છે…",
     "aiAnalysisUnavailable": "ઓછામાં ઓછા એક સહભાગી સબમિટ કર્યા પછી વિશ્લેષણ ઉપલબ્ધ છે.",
-    "closeWindow": "બંધ કરો"
+    "closeWindow": "બંધ કરો",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",

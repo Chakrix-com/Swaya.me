@@ -15,7 +15,11 @@ from core.ai.ollama_service import (
     list_available_models,
     OllamaError,
 )
-from core.ai.gemini_service import generate_questions as gemini_generate_questions, GeminiError
+from core.ai.gemini_service import (
+    generate_questions as gemini_generate_questions,
+    validate_quiz_prompt,
+    GeminiError,
+)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -35,6 +39,7 @@ class GeneratedQuestion(BaseModel):
     text: str
     options: list[str]
     correct_answer_index: int
+    explanation: Optional[str] = None
 
 
 class GenerateQuestionsResponse(BaseModel):
@@ -92,6 +97,17 @@ async def api_generate_questions(
     prompt = req.prompt or req.topic or ""
     if not prompt.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="prompt is required")
+
+    # Step 1: fast guard — check the prompt is appropriate for quiz generation
+    valid, reason = await validate_quiz_prompt(prompt.strip(), language=req.language)
+    if not valid:
+        # Use Gemini's localised reason when available; sentinel triggers frontend i18n fallback
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=reason or "__PROMPT_NOT_FOR_QUIZ__",
+        )
+
+    # Step 2: generate questions with enriched context
     try:
         questions = await gemini_generate_questions(
             prompt=prompt.strip(),

@@ -90,6 +90,10 @@
     "myQuizzes": "నా క్విజ్‌లు",
     "createQuiz": "ఆన్‌లైన్ క్విజ్ సృష్టించు",
     "editQuiz": "క్విజ్ సవరించు",
+    "settingsCardTitle": "సెట్టింగులు",
+    "settingsLocked": "సెట్టింగులు చదవడానికి మాత్రమే",
+    "settingsLockedDesc": "ఈ క్విజ్/పోల్ లైవ్‌లో ఉంది. సెట్టింగులు మార్చడానికి దాన్ని అన్‌పబ్లిష్ చేయండి.",
+    "questionsSection": "ప్రశ్నలు",
     "createNewQuiz": "కొత్త క్విజ్ సృష్టించు",
     "quizTitle": "క్విజ్ శీర్షిక",
     "quizDescription": "వివరణ",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "{{count}} ప్రశ్నలు జోడించబడ్డాయి",
     "noQuestionsGenerated": "ప్రశ్నలు రూపొందించబడలేదు. వేరే విషయం ప్రయత్నించండి.",
     "generationFailed": "రూపొందించడం విఫలమైంది. మళ్ళీ ప్రయత్నించండి.",
+    "promptNotForQuiz": "మీ ప్రాంప్ట్ క్విజ్ విషయానికి సంబంధించినది కాదు అనిపిస్తోంది. మీకు ప్రశ్నలు కావాల్సిన సబ్జెక్ట్, నైపుణ్యం లేదా అంశాన్ని వివరించండి.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "సెట్టింగులు సేవ్ చేయండి",
     "saveSettingsHint": "షెడ్యూల్, స్కోరింగ్ మరియు భద్రత సెట్టింగులను ఒక్క క్లిక్‌లో సేవ్ చేస్తుంది.",
     "liveEditBannerTitle": "ఈ పరీక్ష ప్రస్తుతం లైవ్‌లో ఉంది",
-    "liveEditBannerDesc": "షెడ్యూల్, స్కోరింగ్ మరియు భద్రత సెట్టింగులను నవీకరించవచ్చు. ప్రశ్నలు లాక్ చేయబడ్డాయి — ప్రశ్నలు సవరించడానికి పరీక్షను నిష్క్రియం చేయండి.",
+    "liveEditBannerDesc": "ఈ పరీక్ష యాక్టివ్‌గా ఉంది. సెట్టింగులు, ప్రశ్నలు లేదా షెడ్యూల్ సవరించడానికి దాన్ని నిష్క్రియం చేయండి.",
+    "settingsLockedDesc": "ఈ పరీక్ష యాక్టివ్‌గా ఉంది. సెట్టింగులు, ప్రశ్నలు లేదా షెడ్యూల్ సవరించడానికి దాన్ని నిష్క్రియం చేయండి.",
     "questionsLockedNotice": "పరీక్ష సక్రియంగా ఉన్నప్పుడు ప్రశ్నలు లాక్ చేయబడతాయి.",
     "downloadReport": "PDF నివేదికను డౌన్‌లోడ్ చేయండి",
     "inProgress": "పురోగతిలో ఉంది",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "విశ్లేషిస్తోంది…",
     "aiAnalysingMessage": "Gemini AI తో ఫలితాలను విశ్లేషిస్తోంది…",
     "aiAnalysisUnavailable": "కనీసం ఒక పాల్గొనేవారు సమర్పించిన తర్వాత విశ్లేషణ అందుబాటులో ఉంటుంది.",
-    "closeWindow": "మూసివేయి"
+    "closeWindow": "మూసివేయి",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",

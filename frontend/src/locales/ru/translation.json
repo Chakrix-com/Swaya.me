@@ -93,6 +93,10 @@
     "createQuiz": "Создать онлайн-викторину",
     "createPoll": "Создать онлайн-опрос",
     "editQuiz": "Редактировать викторину",
+    "settingsCardTitle": "Настройки",
+    "settingsLocked": "Настройки доступны только для чтения",
+    "settingsLockedDesc": "Этот тест/опрос активен. Отзовите публикацию, чтобы изменить настройки.",
+    "questionsSection": "Вопросы",
     "createNewQuiz": "Создать новую викторину",
     "quizTitle": "Название викторины",
     "quizDescription": "Описание",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "Добавлено {{count}} вопроса",
     "noQuestionsGenerated": "Вопросы не созданы. Попробуйте другую тему.",
     "generationFailed": "Создание не удалось. Попробуйте снова.",
+    "promptNotForQuiz": "Ваш запрос не похож на тему для викторины. Пожалуйста, опишите предмет, навык или тему, по которым вы хотите получить вопросы.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "Сохранить настройки",
     "saveSettingsHint": "Сохраняет расписание, оценки и настройки безопасности одним кликом.",
     "liveEditBannerTitle": "Этот экзамен сейчас активен",
-    "liveEditBannerDesc": "Расписание, оценки и настройки безопасности можно обновить. Вопросы заблокированы — деактивируйте экзамен для редактирования.",
+    "liveEditBannerDesc": "Этот экзамен активен. Деактивируйте его, чтобы изменить настройки, вопросы или расписание.",
+    "settingsLockedDesc": "Этот экзамен активен. Деактивируйте его, чтобы изменить настройки, вопросы или расписание.",
     "questionsLockedNotice": "Вопросы заблокированы, пока экзамен активен.",
     "downloadReport": "Скачать PDF-отчёт",
     "inProgress": "В процессе",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "Анализируется…",
     "aiAnalysingMessage": "Анализируются результаты с помощью Gemini AI…",
     "aiAnalysisUnavailable": "Анализ доступен после того, как хотя бы один участник отправил ответы.",
-    "closeWindow": "Закрыть"
+    "closeWindow": "Закрыть",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

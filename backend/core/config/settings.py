@@ -137,6 +137,7 @@ class GeminiSettings(BaseSettings):
     """Google Gemini AI configuration"""
     key: str = Field(default="", alias="GEMINI_KEY")
     model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL_COMPLEX")
+    model_fast: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL_FAST")
     timeout_seconds: int = Field(default=60, alias="GEMINI_TIMEOUT_SECONDS")
 
     model_config = SettingsConfigDict(

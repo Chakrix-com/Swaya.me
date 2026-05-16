@@ -90,6 +90,10 @@
     "myQuizzes": "என் வினாடி வினா",
     "createQuiz": "ஆன்லைன் வினாடி வினா உருவாக்கவும்",
     "editQuiz": "வினாடி வினா தொகுக்கவும்",
+    "settingsCardTitle": "அமைப்புகள்",
+    "settingsLocked": "அமைப்புகள் படிக்க மட்டுமே",
+    "settingsLockedDesc": "இந்த வினாடி வினா/கருத்துக் கணிப்பு நேரடியாக உள்ளது. அமைப்புகளை மாற்ற அதை திரும்பப் பெறுங்கள்.",
+    "questionsSection": "கேள்விகள்",
     "createNewQuiz": "புதிய வினாடி வினா உருவாக்கவும்",
     "quizTitle": "வினாடி வினாவின் பெயர்",
     "quizDescription": "விளக்கம்",
@@ -1550,6 +1554,7 @@
     "addedSuccess_other": "{{count}} கேள்விகள் சேர்க்கப்பட்டன",
     "noQuestionsGenerated": "கேள்விகள் உருவாக்கப்படவில்லை. வேறு தலைப்பை முயற்சிக்கவும்.",
     "generationFailed": "உருவாக்கல் தோல்வி. மீண்டும் முயற்சிக்கவும்.",
+    "promptNotForQuiz": "உங்கள் கோரிக்கை வினாடி-வினா தலைப்பு பற்றியதாக இல்லை என்று தோன்றுகிறது. நீங்கள் கேள்விகள் விரும்பும் பாடம், திறன் அல்லது தலைப்பை விவரிக்கவும்.",
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
@@ -1713,7 +1718,8 @@
     "saveSettings": "அமைப்புகளை சேமி",
     "saveSettingsHint": "ஒரு கிளிக்கில் அட்டவணை, மதிப்பெண் மற்றும் பாதுகாப்பு அமைப்புகளை சேமிக்கிறது.",
     "liveEditBannerTitle": "இந்த தேர்வு தற்போது நேரடியில் உள்ளது",
-    "liveEditBannerDesc": "அட்டவணை, மதிப்பெண் மற்றும் பாதுகாப்பு அமைப்புகளை புதுப்பிக்கலாம். கேள்விகள் பூட்டப்பட்டுள்ளன — கேள்விகளை திருத்த தேர்வை செயலிழக்க செய்யுங்கள்.",
+    "liveEditBannerDesc": "இந்த தேர்வு செயல்பாட்டில் உள்ளது. அமைப்புகள், கேள்விகள் அல்லது நேரவரிசையை திருத்த அதை செயலிழக்க செய்யுங்கள்.",
+    "settingsLockedDesc": "இந்த தேர்வு செயல்பாட்டில் உள்ளது. அமைப்புகள், கேள்விகள் அல்லது நேரவரிசையை திருத்த அதை செயலிழக்க செய்யுங்கள்.",
     "questionsLockedNotice": "தேர்வு செயலில் இருக்கும்போது கேள்விகள் பூட்டப்பட்டுள்ளன.",
     "downloadReport": "PDF அறிக்கையை பதிவிறக்கவும்",
     "inProgress": "நடைபெறுகிறது",
@@ -1723,7 +1729,8 @@
     "aiAnalysing": "பகுப்பாய்வு செய்கிறது…",
     "aiAnalysingMessage": "Gemini AI மூலம் முடிவுகளை பகுப்பாய்வு செய்கிறது…",
     "aiAnalysisUnavailable": "குறைந்தது ஒரு பங்கேற்பாளர் சமர்ப்பித்தால் பகுப்பாய்வு கிடைக்கும்.",
-    "closeWindow": "மூடு"
+    "closeWindow": "மூடு",
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",
