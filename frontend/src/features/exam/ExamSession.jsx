@@ -393,20 +393,18 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
             </Form.Item>
           )}
           {hasProctoringRules && (
-            <Form.Item style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  id="proctor-ack"
-                  checked={acknowledged}
-                  onChange={(e) => setAcknowledged(e.target.checked)}
-                  style={{ marginTop: 3, flexShrink: 0 }}
-                />
-                <label htmlFor="proctor-ack" style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
-                  {t('proctoring.warning.checkboxLabel')}
-                </label>
-              </div>
-            </Form.Item>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16 }}>
+              <input
+                type="checkbox"
+                id="proctor-ack"
+                checked={acknowledged}
+                onChange={(e) => setAcknowledged(e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0 }}
+              />
+              <label htmlFor="proctor-ack" style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                {t('proctoring.warning.checkboxLabel')}
+              </label>
+            </div>
           )}
           <Form.Item style={{ marginBottom: 0 }}>
             <Button
