@@ -347,10 +347,15 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
     webcam_required = False
     if quiz and quiz.proctoring_policy:
         policy = quiz.proctoring_policy
-        webcam_required = policy.get("enabled", False) and any(
-            r.get("rule_id") == "webcam_monitoring"
-            for r in policy.get("rules", [])
-        )
+        rules = policy.get("rules", {})
+        # rules may be a dict {rule_id: config} or a list [{rule_id, ...}]
+        if isinstance(rules, dict):
+            wc = rules.get("webcam_monitoring", {})
+            webcam_required = policy.get("enabled", False) and wc.get("enabled", False)
+        else:
+            webcam_required = policy.get("enabled", False) and any(
+                r.get("rule_id") == "webcam_monitoring" for r in rules
+            )
 
     participant_ids_from_sessions = set(session_by_participant.keys())
     extra_participant_ids: set[int] = set()
