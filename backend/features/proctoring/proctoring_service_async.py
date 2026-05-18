@@ -329,6 +329,9 @@ async def check_integrity(
 
 
 async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -> list[dict]:
+    from persistence.models.quiz import Quiz, QuizSession, Participant
+
+    # Fetch proctoring sessions (may be empty if session/init was never called)
     sessions_result = await db.execute(
         select(ProctoringSession).where(
             ProctoringSession.quiz_id == quiz_id,
@@ -336,26 +339,61 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
         )
     )
     sessions = sessions_result.scalars().all()
+    session_by_participant = {s.participant_id: s for s in sessions}
+
+    # Fall back to all completed exam participants when no proctoring sessions exist
+    quiz_result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
+    quiz = quiz_result.scalar_one_or_none()
+    webcam_required = False
+    if quiz and quiz.proctoring_policy:
+        policy = quiz.proctoring_policy
+        webcam_required = policy.get("enabled", False) and any(
+            r.get("rule_id") == "webcam_monitoring"
+            for r in policy.get("rules", [])
+        )
+
+    participant_ids_from_sessions = set(session_by_participant.keys())
+    extra_participant_ids: set[int] = set()
+
+    if quiz:
+        qs_result = await db.execute(
+            select(QuizSession).where(QuizSession.quiz_id == quiz_id)
+        )
+        quiz_sessions = qs_result.scalars().all()
+        for qs in quiz_sessions:
+            p_result = await db.execute(
+                select(Participant).where(
+                    Participant.session_id == qs.id,
+                    Participant.completed_at.isnot(None),
+                )
+            )
+            for p in p_result.scalars().all():
+                if p.id not in participant_ids_from_sessions:
+                    extra_participant_ids.add(p.id)
+
+    all_participant_ids = list(participant_ids_from_sessions) + list(extra_participant_ids)
 
     report = []
-    for sess in sessions:
+    for pid in all_participant_ids:
+        sess = session_by_participant.get(pid)
+
         events_result = await db.execute(
             select(ProctoringEvent).where(
-                ProctoringEvent.participant_id == sess.participant_id,
+                ProctoringEvent.participant_id == pid,
                 ProctoringEvent.quiz_id == quiz_id,
             ).order_by(ProctoringEvent.occurred_at)
         )
         events = events_result.scalars().all()
 
         report.append({
-            "participant_id": sess.participant_id,
-            "integrity_score": sess.integrity_score,
-            "violation_count": sess.violation_count,
-            "is_locked": sess.is_locked,
-            "lock_reason": sess.lock_reason,
-            "webcam_required": sess.webcam_required,
-            "webcam_granted": sess.webcam_granted,
-            "session_started_at": sess.session_started_at.isoformat() if sess.session_started_at else None,
+            "participant_id": pid,
+            "integrity_score": sess.integrity_score if sess else 100,
+            "violation_count": sess.violation_count if sess else len(events),
+            "is_locked": sess.is_locked if sess else False,
+            "lock_reason": sess.lock_reason if sess else None,
+            "webcam_required": sess.webcam_required if sess else webcam_required,
+            "webcam_granted": sess.webcam_granted if sess else None,
+            "session_started_at": sess.session_started_at.isoformat() if sess and sess.session_started_at else None,
             "events": [
                 {
                     "event_type": e.event_type,
