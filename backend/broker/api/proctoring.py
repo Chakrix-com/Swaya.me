@@ -268,6 +268,25 @@ async def upload_snapshot(
     quiz_id = redis_data.get("quiz_id", 0) if redis_data else 0
     participant_id = redis_data.get("participant_id", 0) if redis_data else 0
 
+    # DB fallback: when Redis has no session data, resolve IDs from the participants table
+    if (not quiz_id or not participant_id) and session_token:
+        try:
+            from persistence.models.quiz import Participant, QuizSession
+            part_result = await db.execute(
+                select(Participant).where(Participant.session_token == session_token)
+            )
+            participant_row = part_result.scalar_one_or_none()
+            if participant_row:
+                participant_id = participant_row.id
+                sess_result = await db.execute(
+                    select(QuizSession).where(QuizSession.id == participant_row.session_id)
+                )
+                quiz_session = sess_result.scalar_one_or_none()
+                if quiz_session:
+                    quiz_id = quiz_session.quiz_id
+        except Exception:
+            pass
+
     uploads_base = Path(settings.app.uploads_base_dir)
     snap_dir = uploads_base / "proctoring" / str(quiz_id) / str(participant_id)
     snap_dir.mkdir(parents=True, exist_ok=True)
@@ -302,6 +321,38 @@ async def get_report(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     return await svc.get_violation_report(quiz_id, current_user.tenant_id, db)
+
+
+@router.get("/snapshots/{quiz_id}/{participant_id}")
+async def list_snapshots(
+    quiz_id: int,
+    participant_id: int,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Admin — list webcam snapshot URLs for a participant."""
+    result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
+    quiz = result.scalar_one_or_none()
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    snap_dir = Path(settings.app.uploads_base_dir) / "proctoring" / str(quiz_id) / str(participant_id)
+    if not snap_dir.exists():
+        return {"snapshots": []}
+
+    snapshots = []
+    for f in sorted(snap_dir.glob("*.jpg")):
+        try:
+            ts_ms = int(f.stem.split("_")[1])
+        except (IndexError, ValueError):
+            ts_ms = 0
+        snapshots.append({
+            "url": f"/api/uploads/proctoring/{quiz_id}/{participant_id}/{f.name}",
+            "filename": f.name,
+            "timestamp_ms": ts_ms,
+        })
+
+    return {"snapshots": snapshots}
 
 
 @router.post("/lock/{session_token}")
