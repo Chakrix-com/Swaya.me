@@ -295,7 +295,7 @@ function WebcamPip({ stream }) {
   );
 }
 
-export function ProctoringGate({ children, initialWarned = false }) {
+export function ProctoringGate({ children, initialWarned = false, examDurationSeconds, captureRef }) {
   const { t } = useTranslation();
   const { resolvedRules, webcamRequired, reportViolation, sessionToken, ruleSet } = useProctoringContext();
   const [warned, setWarned] = useState(initialWarned);
@@ -328,6 +328,8 @@ export function ProctoringGate({ children, initialWarned = false }) {
     reportViolation,
     enabled: !!stream && webcamRequired,
     sessionToken,
+    examDurationSeconds,
+    captureRef,
   });
 
   useFaceDetector({
@@ -375,7 +377,7 @@ export function ProctoringGate({ children, initialWarned = false }) {
     <>
       <ProctoringModuleActivator />
       {webcamRequired && (
-        <video ref={videoRef} style={{ display: 'none' }} muted playsInline />
+        <video ref={videoRef} muted playsInline style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
       )}
       {webcamRequired && <WebcamPip stream={stream} />}
       {children}
