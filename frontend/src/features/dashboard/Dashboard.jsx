@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { ProCard } from '@ant-design/pro-components'
@@ -38,6 +38,7 @@ function Dashboard() {
   const ROOT_FOLDER_KEY = 'swayame-root'
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const dispatch = useDispatch()
   const { quizzes } = useSelector((state) => state.quiz)
   const { user } = useSelector((state) => state.auth)
@@ -56,7 +57,10 @@ function Dashboard() {
   const [folders, setFolders] = useState([])
   const [foldersLoading, setFoldersLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
-  const [selectedFolderId, setSelectedFolderId] = useState(undefined)
+  const [selectedFolderId, setSelectedFolderId] = useState(() => {
+    const raw = new URLSearchParams(window.location.search).get('folder')
+    return raw ? Number(raw) : undefined
+  })
   const [folderModalOpen, setFolderModalOpen] = useState(false)
   const [folderSubmitting, setFolderSubmitting] = useState(false)
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false)
@@ -186,6 +190,7 @@ function Dashboard() {
       await quizAPI.deleteFolder(selectedFolderId)
       message.success(t('dashboard.folderDeleted', { defaultValue: 'Folder deleted' }))
       setSelectedFolderId(undefined)
+      setSearchParams({}, { replace: true })
       await loadFolders()
       await loadQuizzes()
     } catch (error) {
@@ -716,9 +721,12 @@ function Dashboard() {
                   const selectedKey = keys[0]
                   if (!selectedKey || selectedKey === ROOT_FOLDER_KEY) {
                     setSelectedFolderId(undefined)
+                    setSearchParams({}, { replace: true })
                     return
                   }
-                  setSelectedFolderId(Number(selectedKey))
+                  const id = Number(selectedKey)
+                  setSelectedFolderId(id)
+                  setSearchParams({ folder: id }, { replace: true })
                 }}
                 defaultExpandAll
                 className="dashboard-folder-tree"
