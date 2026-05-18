@@ -1697,6 +1697,7 @@ export default function QuizBuilder() {
       exam_start_at: rawValues.exam_start_at?.toISOString() ?? null,
       exam_end_at: rawValues.exam_end_at?.toISOString() ?? null,
       exam_time_limit_seconds: timeLimitMins ? Number(timeLimitMins) * 60 : null,
+      exam_allowed_domains: rawValues.exam_allowed_domains?.trim() || null,
     }
     delete values.exam_time_limit_minutes
     // Include proctoring policy in the same save (single unified request)

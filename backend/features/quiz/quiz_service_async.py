@@ -697,6 +697,8 @@ class QuizBuilderServiceAsync:
             quiz.exam_results_email = request.exam_results_email
         if request.exam_require_email is not None:
             quiz.exam_require_email = request.exam_require_email
+        if request.exam_allowed_domains is not None:
+            quiz.exam_allowed_domains = request.exam_allowed_domains or None
 
         # Proctoring policy
         if request.proctoring_policy is not None:
@@ -1063,5 +1065,6 @@ class QuizBuilderServiceAsync:
             exam_time_limit_seconds=getattr(quiz, 'exam_time_limit_seconds', None),
             exam_results_email=getattr(quiz, 'exam_results_email', None),
             exam_require_email=bool(getattr(quiz, 'exam_require_email', False)),
+            exam_allowed_domains=getattr(quiz, 'exam_allowed_domains', None),
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
         )
