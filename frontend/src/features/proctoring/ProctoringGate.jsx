@@ -373,18 +373,26 @@ export function ProctoringGate({ children, initialWarned = false, examDurationSe
   }
 
   // 4. Fullscreen gate + exam
-  const content = (
+  // The hidden capture video must live OUTSIDE FullscreenGate — FullscreenGate
+  // delays rendering its children until fullscreen is confirmed, so if the video
+  // were inside it, videoRef.current would be null when useWebcamMonitor's effect
+  // first runs (stream already set), and srcObject would never be assigned.
+  const examContent = (
     <>
       <ProctoringModuleActivator />
-      {webcamRequired && (
-        <video ref={videoRef} muted playsInline style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
-      )}
       {webcamRequired && <WebcamPip stream={stream} />}
       {children}
     </>
   );
 
-  return fullscreenRequired
-    ? <FullscreenGate reportViolation={reportViolation}>{content}</FullscreenGate>
-    : content;
+  return (
+    <>
+      {webcamRequired && (
+        <video ref={videoRef} muted playsInline style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
+      )}
+      {fullscreenRequired
+        ? <FullscreenGate reportViolation={reportViolation}>{examContent}</FullscreenGate>
+        : examContent}
+    </>
+  );
 }
