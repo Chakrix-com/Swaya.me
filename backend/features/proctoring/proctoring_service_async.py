@@ -378,9 +378,16 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
 
     all_participant_ids = list(participant_ids_from_sessions) + list(extra_participant_ids)
 
+    # Load all participant rows so we can include name + email in the report
+    all_participants_result = await db.execute(
+        select(Participant).where(Participant.id.in_(all_participant_ids))
+    )
+    participant_by_id = {p.id: p for p in all_participants_result.scalars().all()}
+
     report = []
     for pid in all_participant_ids:
         sess = session_by_participant.get(pid)
+        participant = participant_by_id.get(pid)
 
         events_result = await db.execute(
             select(ProctoringEvent).where(
@@ -392,6 +399,8 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
 
         report.append({
             "participant_id": pid,
+            "display_name": participant.display_name if participant else None,
+            "email": participant.email if participant else None,
             "integrity_score": sess.integrity_score if sess else 100,
             "violation_count": sess.violation_count if sess else len(events),
             "is_locked": sess.is_locked if sess else False,

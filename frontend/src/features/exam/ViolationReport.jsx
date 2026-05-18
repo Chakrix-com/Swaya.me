@@ -3,9 +3,9 @@
  */
 import { useState, useEffect } from 'react';
 import {
-  Card, Table, Tag, Badge, Modal, Button, Space, Typography, Spin, Alert, Timeline
+  Card, Table, Tag, Badge, Modal, Button, Space, Typography, Spin, Alert, Timeline, Image
 } from 'antd';
-import { LockOutlined, UnlockOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { LockOutlined, UnlockOutlined, WarningOutlined, CheckCircleOutlined, CameraOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { proctoringAPI } from '../../services/api';
 import dayjs from 'dayjs';
@@ -31,6 +31,8 @@ export function ViolationReport({ quizId }) {
   const [proctoringEnabled, setProctoringEnabled] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [snapshots, setSnapshots] = useState([]);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   const load = async () => {
@@ -97,8 +99,14 @@ export function ViolationReport({ quizId }) {
   const columns = [
     {
       title: t('proctoring.report.participant'),
-      dataIndex: 'participant_id',
-      render: (id) => <Text>#{id}</Text>,
+      render: (_, entry) => (
+        <div>
+          <Text strong>{entry.display_name || `#${entry.participant_id}`}</Text>
+          {entry.email && (
+            <div style={{ fontSize: 12, color: '#888' }}>{entry.email}</div>
+          )}
+        </div>
+      ),
     },
     {
       title: t('proctoring.report.integrityScore'),
@@ -133,7 +141,15 @@ export function ViolationReport({ quizId }) {
       title: t('proctoring.report.actions'),
       render: (_, entry) => (
         <Space>
-          <Button size="small" onClick={() => setSelectedEntry(entry)}>
+          <Button size="small" onClick={() => {
+            setSelectedEntry(entry);
+            setSnapshots([]);
+            setSnapshotsLoading(true);
+            proctoringAPI.getSnapshots(quizId, entry.participant_id)
+              .then(res => setSnapshots(res.data.snapshots || []))
+              .catch(() => setSnapshots([]))
+              .finally(() => setSnapshotsLoading(false));
+          }}>
             {t('proctoring.report.viewDetail')}
           </Button>
           {entry.is_locked ? (
@@ -163,33 +179,85 @@ export function ViolationReport({ quizId }) {
       </Card>
 
       <Modal
-        title={t('proctoring.report.timeline', { id: selectedEntry?.participant_id })}
+        title={<Space><CameraOutlined /> {selectedEntry?.display_name || `#${selectedEntry?.participant_id}`}{selectedEntry?.email ? ` — ${selectedEntry.email}` : ''}</Space>}
         open={!!selectedEntry}
-        onCancel={() => setSelectedEntry(null)}
+        onCancel={() => { setSelectedEntry(null); setSnapshots([]); }}
         footer={null}
-        width={600}
+        width={700}
       >
         {selectedEntry && (
-          <Timeline
-            items={selectedEntry.events.map((e) => ({
-              color: e.event_type.includes('LOCK') ? 'red' : e.event_type.includes('HONEYPOT') ? 'red' : 'orange',
-              children: (
-                <div>
-                  <Text strong>{e.event_type}</Text>
-                  {e.rule_id && <Text type="secondary"> ({e.rule_id})</Text>}
-                  <br />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {e.occurred_at ? dayjs(e.occurred_at).format('HH:mm:ss') : ''}
-                  </Text>
-                  {e.metadata && Object.keys(e.metadata).length > 0 && (
-                    <pre style={{ fontSize: 11, marginTop: 4, color: '#666' }}>
-                      {JSON.stringify(e.metadata, null, 2)}
-                    </pre>
-                  )}
+          <>
+            {/* Webcam snapshot filmstrip */}
+            <div style={{ marginBottom: 20 }}>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                <CameraOutlined /> Webcam Snapshots ({snapshotsLoading ? '…' : snapshots.length})
+              </Text>
+              {snapshotsLoading ? (
+                <Spin size="small" />
+              ) : snapshots.length === 0 ? (
+                <Alert message="No snapshots recorded for this participant" type="warning" showIcon style={{ marginBottom: 8 }} />
+              ) : (
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+                  <Image.PreviewGroup>
+                    {snapshots.map((snap) => {
+                      // Highlight if a violation event occurred within 60s of this snapshot
+                      const snapTime = snap.timestamp_ms;
+                      const nearViolation = selectedEntry.events.some((e) => {
+                        if (!e.occurred_at) return false;
+                        const evtMs = dayjs(e.occurred_at).valueOf();
+                        return Math.abs(evtMs - snapTime) < 60000;
+                      });
+                      return (
+                        <div key={snap.filename} style={{ flexShrink: 0, textAlign: 'center' }}>
+                          <Image
+                            src={snap.url}
+                            width={100}
+                            height={75}
+                            style={{
+                              objectFit: 'cover',
+                              border: nearViolation ? '2px solid #ff4d4f' : '2px solid #d9d9d9',
+                              borderRadius: 4,
+                            }}
+                            preview={{ src: snap.url }}
+                          />
+                          <div style={{ fontSize: 10, color: nearViolation ? '#ff4d4f' : '#999', marginTop: 2 }}>
+                            {snap.timestamp_ms ? dayjs(snap.timestamp_ms).format('HH:mm:ss') : ''}
+                            {nearViolation && ' ⚠'}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </Image.PreviewGroup>
                 </div>
-              ),
-            }))}
-          />
+              )}
+            </div>
+
+            {/* Violation event timeline */}
+            {selectedEntry.events.length === 0 ? (
+              <Alert message="No violation events recorded" type="success" showIcon />
+            ) : (
+              <Timeline
+                items={selectedEntry.events.map((e) => ({
+                  color: e.event_type.includes('LOCK') ? 'red' : e.event_type.includes('HONEYPOT') ? 'red' : 'orange',
+                  children: (
+                    <div>
+                      <Text strong>{e.event_type}</Text>
+                      {e.rule_id && <Text type="secondary"> ({e.rule_id})</Text>}
+                      <br />
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {e.occurred_at ? dayjs(e.occurred_at).format('HH:mm:ss') : ''}
+                      </Text>
+                      {e.metadata && Object.keys(e.metadata).length > 0 && (
+                        <pre style={{ fontSize: 11, marginTop: 4, color: '#666' }}>
+                          {JSON.stringify(e.metadata, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ),
+                }))}
+              />
+            )}
+          </>
         )}
       </Modal>
     </>
