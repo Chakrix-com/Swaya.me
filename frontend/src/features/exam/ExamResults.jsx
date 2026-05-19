@@ -7,23 +7,44 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Table, Space, Tag, Statistic,
-  Row, Col, Progress, Alert, Spin, Divider, Tooltip
+  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input
 } from 'antd'
+const { TextArea } = Input
 import {
   TrophyOutlined, DownloadOutlined, ArrowLeftOutlined,
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined,
-  ClockCircleOutlined, SyncOutlined, RobotOutlined
+  ClockCircleOutlined, SyncOutlined, RobotOutlined, FilePdfOutlined
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { examAPI } from '../../services/api'
 import dayjs from 'dayjs'
 import { ViolationReport } from './ViolationReport'
+import { exportExamResultsPDF } from './exportPDF'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import ReactMarkdown from 'react-markdown'
 import './ExamResults.css'
 
 const { Title, Text } = Typography
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
+
+const DEFAULT_AI_PROMPT = `Your report MUST contain exactly these sections:
+
+## 1. Score Summary
+Quantitative overview: average, median (estimate from distribution), pass rate, score spread.
+
+## 2. Question Difficulty Ranking
+List questions from hardest to easiest with % correct. Highlight any question where < 40% got it right (needs review) or > 90% got it right (possibly too easy).
+
+## 3. Common Mistake Patterns
+For the hardest questions, which wrong answer was most chosen and what misconception does that suggest?
+
+## 4. Qualitative Insights
+What topics or skills are participants weakest/strongest in, based on the question content and results?
+
+## 5. Recommendations
+Concrete actionable suggestions: which topics need more training, which questions should be revised, any anomalies to investigate.
+
+Be concise. Use bullet points. Do not repeat raw numbers already obvious from the dashboard.`
 
 export default function ExamResults() {
   const { id } = useParams()
@@ -36,6 +57,8 @@ export default function ExamResults() {
   const [analysis, setAnalysis] = useState(null)
   const [analysing, setAnalysing] = useState(false)
   const [analysisError, setAnalysisError] = useState(null)
+  const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
+  const [downloadingPDF, setDownloadingPDF] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -55,12 +78,22 @@ export default function ExamResults() {
     setAnalysing(true)
     setAnalysisError(null)
     try {
-      const res = await examAPI.analyzeResults(id)
+      const res = await examAPI.analyzeResults(id, customPrompt.trim())
       setAnalysis(res.data.analysis)
     } catch (err) {
       setAnalysisError(err.response?.data?.detail || 'AI analysis failed. Please try again.')
     } finally {
       setAnalysing(false)
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!results) return
+    setDownloadingPDF(true)
+    try {
+      await exportExamResultsPDF(results, analysis)
+    } finally {
+      setDownloadingPDF(false)
     }
   }
 
@@ -179,9 +212,17 @@ export default function ExamResults() {
   return (
     <div style={{ padding: 24 }}>
       {/* Header */}
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/quiz/${id}/edit`)}>
           {t('common.back', 'Back')}
+        </Button>
+        <Button
+          icon={<FilePdfOutlined />}
+          onClick={handleDownloadPDF}
+          loading={downloadingPDF}
+          disabled={!results}
+        >
+          {analysis ? 'Download PDF Report (with AI)' : 'Download PDF Report'}
         </Button>
       </Space>
 
@@ -345,17 +386,35 @@ export default function ExamResults() {
           </Space>
         }
         extra={
-          <Button
-            type="primary"
-            icon={<RobotOutlined />}
-            onClick={handleAnalyse}
-            loading={analysing}
-            disabled={results.total_completed === 0}
-          >
-            {analysing ? t('exam.aiAnalysing') : analysis ? t('exam.aiReanalyseButton') : t('exam.aiAnalyseButton')}
-          </Button>
+          <Space>
+            {analysis && (
+              <Button
+                icon={<FilePdfOutlined />}
+                onClick={handleDownloadPDF}
+                loading={downloadingPDF}
+              >
+                Download PDF
+              </Button>
+            )}
+            <Button
+              type="primary"
+              icon={<RobotOutlined />}
+              onClick={handleAnalyse}
+              loading={analysing}
+              disabled={results.total_completed === 0}
+            >
+              {analysing ? t('exam.aiAnalysing') : analysis ? t('exam.aiReanalyseButton') : t('exam.aiAnalyseButton')}
+            </Button>
+          </Space>
         }
       >
+        <TextArea
+          rows={8}
+          value={customPrompt}
+          onChange={(e) => setCustomPrompt(e.target.value)}
+          disabled={analysing || results.total_completed === 0}
+          style={{ marginBottom: 12, fontFamily: 'monospace', fontSize: 13 }}
+        />
         {results.total_completed === 0 && !analysing && !analysis && (
           <Text type="secondary">{t('exam.aiAnalysisUnavailable')}</Text>
         )}

@@ -1,7 +1,7 @@
 """
 Exam API — public and authenticated endpoints for exam participation and results.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
@@ -16,6 +16,7 @@ from features.quiz.schemas import (
     ExamSubmitResponse,
     ExamResultsResponse,
     ExamPublishResponse,
+    AnalyzeResultsRequest,
 )
 from features.quiz import exam_service_async as svc
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
@@ -116,6 +117,7 @@ async def get_exam_results(
 @router.post("/quiz/{quiz_id}/analyze-results")
 async def analyze_exam_results_endpoint(
     quiz_id: int,
+    body: AnalyzeResultsRequest = Body(default=AnalyzeResultsRequest()),
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(require_admin),
 ):
@@ -131,7 +133,7 @@ async def analyze_exam_results_endpoint(
         raise HTTPException(status_code=400, detail="No completed participants yet — analysis requires at least one submission.")
 
     try:
-        analysis = await analyze_exam_results(results.model_dump())
+        analysis = await analyze_exam_results(results.model_dump(), body.custom_prompt)
     except GeminiError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

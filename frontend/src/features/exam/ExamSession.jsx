@@ -618,6 +618,9 @@ export default function ExamSession() {
   const [startError, setStartError] = useState(null) // inline error on the start screen (e.g. wrong OTP)
   const [proctoringConfig, setProctoringConfig] = useState(null)
 
+  // Ref populated by ProctoringGate/useWebcamMonitor — called just before submit to capture final snapshot
+  const captureSnapshotRef = useRef(null)
+
   // Exam state
   const [sessionToken, setSessionToken] = useState(null)
   const [startedAt, setStartedAt] = useState(null)
@@ -859,6 +862,8 @@ export default function ExamSession() {
             question_id: q.id,
             selected_option_index: optIdx,
           })
+          // Final webcam snapshot before submit
+          captureSnapshotRef.current?.()
           // Submit
           const res = await examAPI.submit(slug, sessionToken)
           stopGlobalTimer()
@@ -917,7 +922,7 @@ export default function ExamSession() {
 
         {phase === 'taking' && questions.length > 0 && (
           <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken}>
-            <ProctoringGate initialWarned={!!proctoringConfig}>
+            <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
               <QuestionScreen
                 question={questions[currentIdx]}
                 questionIndex={currentIdx}

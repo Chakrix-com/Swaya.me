@@ -276,6 +276,53 @@ def _strip_html(text: str) -> str:
     return re.sub(r'\s+', ' ', clean).strip()
 
 
+def _html_for_email(text: str) -> str:
+    """
+    Convert stored rich-text HTML to email-safe HTML.
+    - Strips class/style/event attributes (email clients ignore them anyway)
+    - Adds inline styles to <pre>/<code> so code blocks render in email
+    - Allows: <strong>, <em>, <b>, <i>, <br>, <p>, <ul>, <ol>, <li>, <code>, <pre>
+    - Strips everything else
+    """
+    import re, html as _html_mod
+    if not text:
+        return ''
+
+    # Replace <pre><code ...>…</code></pre> with styled version before stripping attrs
+    def style_pre(m: re.Match) -> str:
+        code = m.group(1)
+        return (
+            '<pre style="background:#f6f8fa;border:1px solid #e8e8e8;border-radius:5px;'
+            'padding:10px 14px;font-family:\'Courier New\',Courier,monospace;font-size:12px;'
+            'line-height:1.5;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">'
+            f'<code style="font-family:\'Courier New\',Courier,monospace;">{code}</code></pre>'
+        )
+    text = re.sub(r'<pre[^>]*><code[^>]*>([\s\S]*?)</code></pre>', style_pre, text, flags=re.IGNORECASE)
+
+    # Inline <code> outside <pre>
+    text = re.sub(
+        r'<code(?![^>]*style)[^>]*>',
+        '<code style="background:#f6f8fa;padding:1px 5px;border-radius:3px;'
+        'font-family:\'Courier New\',Courier,monospace;font-size:12px;">',
+        text, flags=re.IGNORECASE
+    )
+
+    # Strip all attributes from remaining allowed tags (keeps the tag, drops attrs)
+    ALLOWED = {'strong', 'em', 'b', 'i', 'br', 'p', 'ul', 'ol', 'li', 'code', 'pre'}
+    def clean_tag(m: re.Match) -> str:
+        slash = m.group(1) or ''
+        tag = m.group(2).lower()
+        rest = m.group(3)
+        if tag in ALLOWED:
+            # Keep pre/code as-is (already inlined styles above); strip attrs from others
+            if tag in ('pre', 'code'):
+                return m.group(0)
+            return f'<{slash}{tag}>'
+        return ''
+    text = re.sub(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>', clean_tag, text)
+    return text
+
+
 def _score_colour(pct: float) -> str:
     if pct >= 70:
         return '#389e0d'
@@ -295,8 +342,13 @@ async def send_exam_result_email(
     wrong_count: int,
     unanswered_count: int,
     question_results: list,
+    started_at=None,
+    completed_at=None,
+    time_taken_seconds: float | None = None,
+    ai_summary: str | None = None,
 ) -> bool:
     """Send a branded results email to the participant after exam submission."""
+    import html as _html_mod
     recipient = (name or email.split('@')[0]).strip().split()[0]
     score_colour = _score_colour(percentage)
     pct_int = int(round(percentage))
@@ -330,18 +382,43 @@ async def send_exam_result_email(
   </tr>
 </table>"""
 
+    # ── Exam meta row (date / time / duration) ──────────────────────────────
+    import datetime as _dt
+    meta_parts = []
+    if started_at:
+        try:
+            dt = started_at if isinstance(started_at, _dt.datetime) else _dt.datetime.fromisoformat(str(started_at).replace('Z', '+00:00'))
+            meta_parts.append(f"<strong>Date:</strong> {dt.strftime('%d %b %Y')}")
+            meta_parts.append(f"<strong>Started:</strong> {dt.strftime('%H:%M')} UTC")
+        except Exception:
+            pass
+    if completed_at:
+        try:
+            dt2 = completed_at if isinstance(completed_at, _dt.datetime) else _dt.datetime.fromisoformat(str(completed_at).replace('Z', '+00:00'))
+            meta_parts.append(f"<strong>Submitted:</strong> {dt2.strftime('%H:%M')} UTC")
+        except Exception:
+            pass
+    if time_taken_seconds is not None:
+        m, s = divmod(int(time_taken_seconds), 60)
+        meta_parts.append(f"<strong>Duration:</strong> {m}m {s}s")
+
+    meta_row = ''
+    if meta_parts:
+        meta_row = f"""
+<div style="background:#f0f5ff;border:1px solid #d6e4ff;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:#555;line-height:1.8;">
+  {'&nbsp;&nbsp;·&nbsp;&nbsp;'.join(meta_parts)}
+</div>"""
+
     # ── Per-question rows ────────────────────────────────────────────────────
     q_rows = ''
     for i, qr in enumerate(question_results, 1):
-        q_text = _strip_html(qr.question_text)
-        if len(q_text) > 160:
-            q_text = q_text[:157] + '…'
+        q_text = _html_for_email(qr.question_text or '')
 
         options = qr.options or []
         correct_idx = qr.correct_answer_index
         participant_idx = qr.participant_answer
         is_correct = qr.is_correct
-        explanation = _strip_html(qr.answer_explanation or '')
+        explanation = _html_for_email(qr.answer_explanation or '')
 
         if participant_idx is None:
             status_badge = '<span style="background:#f5f5f5;color:#595959;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">SKIPPED</span>'
@@ -354,10 +431,8 @@ async def send_exam_result_email(
             neg = qr.negative_points_applied
             pts_label = f'<span style="color:#cf1322;font-size:12px;font-weight:600;">{("-"+str(neg)) if neg else "0"} pts</span>'
 
-        your_ans = options[participant_idx] if participant_idx is not None and participant_idx < len(options) else '—'
-        correct_ans = options[correct_idx] if correct_idx is not None and correct_idx < len(options) else '—'
-        your_ans = _strip_html(your_ans)
-        correct_ans = _strip_html(correct_ans)
+        your_ans = _html_for_email(options[participant_idx]) if participant_idx is not None and participant_idx < len(options) else '—'
+        correct_ans = _html_for_email(options[correct_idx]) if correct_idx is not None and correct_idx < len(options) else '—'
 
         answer_row = ''
         if participant_idx is not None:
@@ -369,7 +444,7 @@ async def send_exam_result_email(
 
         explanation_row = ''
         if explanation:
-            explanation_row = f'<div style="margin-top:5px;font-size:12px;color:#666;font-style:italic;">💡 {explanation}</div>'
+            explanation_row = f'<div style="margin-top:8px;font-size:12px;color:#555;background:#fffbe6;border-left:3px solid #faad14;padding:8px 10px;border-radius:0 4px 4px 0;">💡 {explanation}</div>'
 
         row_bg = '#ffffff' if i % 2 == 1 else '#fafafa'
         q_rows += f"""
@@ -377,8 +452,8 @@ async def send_exam_result_email(
   <td style="padding:14px 16px;background:{row_bg};border-bottom:1px solid #f0f0f0;vertical-align:top;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="font-size:12px;color:#8c8c8c;font-weight:700;width:28px;vertical-align:top;padding-top:1px;">Q{i}</td>
-        <td style="font-size:13px;color:#1a1a1a;line-height:1.5;">{q_text}</td>
+        <td style="font-size:12px;color:#8c8c8c;font-weight:700;width:28px;vertical-align:top;padding-top:2px;">Q{i}</td>
+        <td style="font-size:13px;color:#1a1a1a;line-height:1.6;">{q_text}</td>
         <td style="white-space:nowrap;padding-left:12px;text-align:right;vertical-align:top;">{status_badge}</td>
       </tr>
       <tr>
@@ -389,8 +464,19 @@ async def send_exam_result_email(
   </td>
 </tr>"""
 
+    # ── AI summary section ───────────────────────────────────────────────────
+    ai_section = ''
+    if ai_summary:
+        ai_section = f"""
+    <!-- AI Summary -->
+    <tr><td style="padding:0 32px 32px;">
+      <div style="background:#f0f5ff;border:1px solid #d6e4ff;border-radius:10px;padding:24px;">
+        {ai_summary}
+      </div>
+    </td></tr>"""
+
     # ── Full template ────────────────────────────────────────────────────────
-    safe_title = quiz_title.replace('<', '&lt;').replace('>', '&gt;')
+    safe_title = _html_mod.escape(quiz_title)
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -417,21 +503,25 @@ async def send_exam_result_email(
     </td></tr>
 
     <!-- Body -->
-    <tr><td style="padding:32px;">
-      <p style="font-size:16px;margin:0 0 24px;color:#1a1a1a;">Hi <strong>{recipient}</strong>, here are your results.</p>
+    <tr><td style="padding:32px 32px 24px;">
+      <p style="font-size:16px;margin:0 0 24px;color:#1a1a1a;">Hi <strong>{_html_mod.escape(recipient)}</strong>, here are your results.</p>
 
       {score_card}
 
+      {meta_row}
+
       <!-- Question breakdown -->
       <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Question Breakdown</div>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;margin-bottom:32px;">
         {q_rows}
       </table>
 
-      <div style="text-align:center;margin-top:32px;">
+      <div style="text-align:center;margin-bottom:0;">
         <a href="https://www.swaya.me" style="display:inline-block;background:#1677ff;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:600;">Go to Swaya.me</a>
       </div>
     </td></tr>
+
+    {ai_section}
 
     <!-- Footer -->
     <tr><td style="background:#fafafa;border-top:1px solid #f0f0f0;padding:18px 32px;text-align:center;">

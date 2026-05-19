@@ -230,7 +230,8 @@ export const examAPI = {
   submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),
   getMyResult: (slug, sessionToken) => api.post(`/e/${slug}/result`, { session_token: sessionToken }),
   getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),
-  analyzeResults: (quizId) => api.post(`/quiz/${quizId}/analyze-results`),
+  analyzeResults: (quizId, customPrompt) =>
+    api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}),
   publish: (quizId) => api.post(`/quizzes/${quizId}/publish-exam`),
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
 }
@@ -282,6 +283,7 @@ export const proctoringAPI = {
   answerTiming: (body) => api.post('/proctoring/answer-timing', body),
   biometrics: (body) => api.post('/proctoring/biometrics', body),
   getReport: (quizId) => api.get(`/proctoring/report/${quizId}`),
+  getSnapshots: (quizId, participantId) => api.get(`/proctoring/snapshots/${quizId}/${participantId}`),
   lockSession: (token) => api.post(`/proctoring/lock/${token}`),
   unlockSession: (token) => api.post(`/proctoring/unlock/${token}`),
   getPlatformRules: () => api.get('/proctoring/admin/rules'),

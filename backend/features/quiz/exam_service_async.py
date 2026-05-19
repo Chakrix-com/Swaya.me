@@ -366,17 +366,16 @@ async def submit_exam(
     if not quiz:
         raise QuizNotFoundError("Exam not found")
 
-    # Verify proctoring requirements (e.g., webcam snapshots) if enabled
+    # Check proctoring — log a warning but never block submission.
+    # Blocking here would leave answers saved but completed_at unset, permanently
+    # stranding the participant as "in progress" with no recovery path.
     policy = quiz.proctoring_policy or {}
     webcam_enabled = policy.get("rules", {}).get("webcam_monitoring", {}).get("enabled", False)
     if policy.get("enabled") and webcam_enabled and redis:
         from features.proctoring.proctoring_service_async import get_snapshot_count
         count = await get_snapshot_count(session_token, redis)
         if count == 0:
-            logger.warning(f"Exam submission rejected for {session_token}: no snapshots received despite proctoring enabled")
-            raise ProctoringViolationError(
-                "Proctoring requirement not met: no webcam snapshots received during the session."
-            )
+            logger.warning(f"Proctoring flag for {session_token}: no webcam snapshots received — submission accepted, host review required")
 
     participant = await _get_active_participant(db, quiz, session_token)
 
@@ -955,6 +954,33 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                 total_score = max(0, total_score)
                 percentage = round((total_score / max_score * 100) if max_score > 0 else 0.0, 2)
 
+                # Time taken
+                time_taken_seconds = None
+                if participant.started_at and participant.completed_at:
+                    delta = participant.completed_at - participant.started_at
+                    time_taken_seconds = delta.total_seconds()
+
+                # AI personal summary — fail silently so email still sends
+                ai_summary = None
+                try:
+                    from core.ai.gemini_service import generate_participant_summary, GeminiError
+                    ai_summary = await generate_participant_summary(
+                        name=participant.display_name or '',
+                        quiz_title=quiz.title,
+                        total_score=total_score,
+                        max_score=max_score,
+                        percentage=percentage,
+                        correct_count=correct_count,
+                        wrong_count=wrong_count,
+                        unanswered_count=unanswered_count,
+                        time_taken_seconds=time_taken_seconds,
+                        started_at=participant.started_at.isoformat() if participant.started_at else None,
+                        completed_at=participant.completed_at.isoformat() if participant.completed_at else None,
+                        question_results=question_results,
+                    )
+                except Exception as ai_err:
+                    logger.warning(f"AI summary skipped for participant {participant.id}: {ai_err}")
+
                 await send_exam_result_email(
                     email=participant.email,
                     name=participant.display_name,
@@ -966,6 +992,10 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                     wrong_count=wrong_count,
                     unanswered_count=unanswered_count,
                     question_results=question_results,
+                    started_at=participant.started_at,
+                    completed_at=participant.completed_at,
+                    time_taken_seconds=time_taken_seconds,
+                    ai_summary=ai_summary,
                 )
                 logger.info(f"Sent results email to participant {participant.id} for quiz {quiz_id}")
                 await asyncio.sleep(0.5)  # throttle: ~120 emails/min, within Titan SMTP limits

@@ -3,8 +3,10 @@ Proctoring service — session management and violation tracking.
 """
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from core.config.settings import settings
 
 from persistence.models.proctoring import ProctoringSession, ProctoringEvent
 from features.proctoring.schemas import (
@@ -328,6 +330,11 @@ async def check_integrity(
     return {"ok": len(issues) == 0, "issues": issues}
 
 
+def _has_snapshots(quiz_id: int, participant_id: int) -> bool:
+    snap_dir = Path(settings.app.uploads_base_dir) / "proctoring" / str(quiz_id) / str(participant_id)
+    return snap_dir.is_dir() and any(snap_dir.glob("*.jpg"))
+
+
 async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -> list[dict]:
     from persistence.models.quiz import Quiz, QuizSession, Participant
 
@@ -360,9 +367,12 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
     participant_ids_from_sessions = set(session_by_participant.keys())
     extra_participant_ids: set[int] = set()
 
-    if quiz:
+    if quiz and quiz.exam_session_id:
         qs_result = await db.execute(
-            select(QuizSession).where(QuizSession.quiz_id == quiz_id)
+            select(QuizSession).where(
+                QuizSession.quiz_id == quiz_id,
+                QuizSession.id == quiz.exam_session_id,
+            )
         )
         quiz_sessions = qs_result.scalars().all()
         for qs in quiz_sessions:
@@ -406,7 +416,7 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
             "is_locked": sess.is_locked if sess else False,
             "lock_reason": sess.lock_reason if sess else None,
             "webcam_required": sess.webcam_required if sess else webcam_required,
-            "webcam_granted": sess.webcam_granted if sess else None,
+            "webcam_granted": sess.webcam_granted if sess else _has_snapshots(quiz_id, pid),
             "session_started_at": sess.session_started_at.isoformat() if sess and sess.session_started_at else None,
             "events": [
                 {

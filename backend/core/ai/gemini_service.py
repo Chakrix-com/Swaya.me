@@ -177,7 +177,119 @@ User's prompt:
         return True, ""
 
 
-async def analyze_exam_results(results: dict) -> str:
+async def generate_participant_summary(
+    name: str,
+    quiz_title: str,
+    total_score: int,
+    max_score: int,
+    percentage: float,
+    correct_count: int,
+    wrong_count: int,
+    unanswered_count: int,
+    time_taken_seconds: float | None,
+    started_at: str | None,
+    completed_at: str | None,
+    question_results: list,
+) -> str:
+    """
+    Generate a personalised AI summary for a participant's exam result.
+    Returns an HTML string (safe for email insertion).
+    Fails silently — caller should catch GeminiError and skip the section.
+    """
+    key = settings.gemini.key
+    if not key:
+        raise GeminiError("GEMINI_KEY is not set in .env")
+
+    model = _resolve_model(settings.gemini.model_fast or _DEFAULT_MODEL)
+
+    import re as _re
+
+    def _plain(t: str) -> str:
+        return _re.sub(r'<[^>]+>', '', t or '').strip()
+
+    pct_int = int(round(percentage))
+    time_str = ""
+    if time_taken_seconds is not None:
+        m, s = divmod(int(time_taken_seconds), 60)
+        time_str = f"{m}m {s}s"
+
+    q_lines = []
+    for i, qr in enumerate(question_results, 1):
+        status = "correct" if qr.is_correct else ("skipped" if qr.participant_answer is None else "wrong")
+        opts = qr.options or []
+        your_ans = _plain(opts[qr.participant_answer]) if qr.participant_answer is not None and qr.participant_answer < len(opts) else "—"
+        correct_ans = _plain(opts[qr.correct_answer_index]) if qr.correct_answer_index is not None and qr.correct_answer_index < len(opts) else "—"
+        q_lines.append(
+            f"Q{i} [{status}]: {_plain(qr.question_text)[:120]} | Your answer: {your_ans} | Correct: {correct_ans}"
+        )
+
+    stats = f"""Participant: {name or 'Candidate'}
+Exam: {quiz_title}
+Score: {total_score}/{max_score} ({pct_int}%)
+Correct: {correct_count} | Wrong: {wrong_count} | Skipped: {unanswered_count}
+Time taken: {time_str or 'unknown'}
+Started: {started_at or 'unknown'} | Completed: {completed_at or 'unknown'}
+
+Per-question detail:
+{chr(10).join(q_lines)}"""
+
+    prompt = f"""You are an expert coach writing a personalised performance report for a candidate who just completed an online screening exam.
+
+{stats}
+
+Write a warm, encouraging yet honest personal summary in HTML (no <html>/<body> wrapper, just inner content). Use this structure exactly:
+
+<h3 style="color:#1677ff;margin:0 0 12px;">Your Performance Summary</h3>
+<p>One opening sentence addressing the candidate by first name, acknowledging their score warmly.</p>
+
+<h4 style="margin:16px 0 6px;color:#1a1a1a;">Strengths</h4>
+<ul>2-3 bullet points about what they did well, based on which questions they got right</ul>
+
+<h4 style="margin:16px 0 6px;color:#1a1a1a;">Areas to Improve</h4>
+<ul>2-3 bullet points about topics or question types where they struggled, specific to wrong/skipped answers</ul>
+
+<h4 style="margin:16px 0 6px;color:#1a1a1a;">How to Improve</h4>
+<ul>2-3 concrete, actionable study suggestions based on the specific weak areas identified</ul>
+
+<h4 style="margin:16px 0 6px;color:#1a1a1a;">Time & Pacing</h4>
+<p>One sentence on their time management. Was it fast, slow, or well-paced for the number of questions?</p>
+
+<p style="margin-top:16px;color:#595959;font-size:13px;">One closing sentence of encouragement.</p>
+
+Rules:
+- Address the candidate by first name throughout
+- Be specific to their actual answers — don't be generic
+- Keep it concise and easy to read
+- Output ONLY the HTML fragment above, nothing else"""
+
+    payload = {
+        "system_instruction": {"parts": [{"text": "You are an expert coach. Output only the HTML fragment requested — no markdown, no prose outside the HTML."}]},
+        "contents": [{"parts": [{"text": prompt}], "role": "user"}],
+        "generationConfig": {
+            "temperature": 0.5,
+            "maxOutputTokens": 2048,
+        },
+    }
+
+    url = f"{GEMINI_BASE}/{model}:generateContent?key={key}"
+
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+        try:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise GeminiError(f"Gemini API returned HTTP {e.response.status_code}: {e.response.text[:200]}")
+        except (httpx.ConnectError, httpx.ReadTimeout) as e:
+            raise GeminiError(f"Gemini request failed: {e}")
+
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except (KeyError, IndexError) as e:
+        raise GeminiError(f"Unexpected Gemini response structure: {e}")
+
+
+async def analyze_exam_results(results: dict, custom_prompt: str | None = None) -> str:
     """
     Analyse exam results quantitatively and qualitatively via Gemini.
     Returns a markdown string.
@@ -229,11 +341,7 @@ Pass threshold (60%): {pass_threshold:.0f} pts | Passed: {sum(1 for s in scores 
 Per-question breakdown:
 {chr(10).join(q_lines)}"""
 
-    prompt = f"""You are an expert educational analyst. Analyse the following exam results and produce a clear, structured report in markdown.
-
-{stats_block}
-
-Your report MUST contain exactly these sections:
+    default_instructions = """Your report MUST contain exactly these sections:
 ## 1. Score Summary
 Quantitative overview: average, median (estimate from distribution), pass rate, score spread.
 
@@ -250,6 +358,14 @@ What topics or skills are participants weakest/strongest in, based on the questi
 Concrete actionable suggestions: which topics need more training, which questions should be revised, any anomalies to investigate.
 
 Be concise. Use bullet points. Do not repeat raw numbers already obvious from the dashboard."""
+
+    instructions = custom_prompt.strip() if custom_prompt and custom_prompt.strip() else default_instructions
+
+    prompt = f"""You are an expert educational analyst. Analyse the following exam results and produce a clear, structured report in markdown.
+
+{stats_block}
+
+{instructions}"""
 
     payload = {
         "system_instruction": {"parts": [{"text": "You are an expert educational analyst. Output clean markdown only — no preamble, no trailing commentary."}]},
