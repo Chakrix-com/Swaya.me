@@ -464,7 +464,13 @@ class QuizBuilderServiceAsync:
             response_rows = await db.execute(
                 select(QuizSession.quiz_id, func.count(Participant.id).label("cnt"))
                 .join(Participant, Participant.session_id == QuizSession.id)
-                .filter(QuizSession.quiz_id.in_(quiz_ids))
+                .join(Quiz, Quiz.id == QuizSession.quiz_id)
+                .filter(
+                    QuizSession.quiz_id.in_(quiz_ids),
+                    # For exam quizzes: only count from the designated exam session
+                    # For regular quizzes: count from all sessions
+                    (Quiz.exam_session_id.is_(None)) | (QuizSession.id == Quiz.exam_session_id),
+                )
                 .group_by(QuizSession.quiz_id)
             )
             response_count_map = {row.quiz_id: row.cnt for row in response_rows}
