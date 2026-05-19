@@ -19,6 +19,7 @@ from persistence.models.quiz import (
     TemplateScope,
     QuizSession,
     QuizSessionStatus,
+    Participant,
 )
 from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
@@ -456,7 +457,18 @@ class QuizBuilderServiceAsync:
             row.quiz_id: row.active_session_id
             for row in active_session_rows
         }
-        
+
+        quiz_ids = [q.id for q in quizzes]
+        response_count_map: dict[int, int] = {}
+        if quiz_ids:
+            response_rows = await db.execute(
+                select(QuizSession.quiz_id, func.count(Participant.id).label("cnt"))
+                .join(Participant, Participant.session_id == QuizSession.id)
+                .filter(QuizSession.quiz_id.in_(quiz_ids))
+                .group_by(QuizSession.quiz_id)
+            )
+            response_count_map = {row.quiz_id: row.cnt for row in response_rows}
+
         return [
             QuizListResponse(
                 id=q.id,
@@ -469,6 +481,7 @@ class QuizBuilderServiceAsync:
                 is_template=q.is_template,
                 template_scope=q.template_scope,
                 question_count=len(q.questions),
+                response_count=response_count_map.get(q.id, 0),
                 has_active_session=q.id in active_session_map,
                 active_session_id=active_session_map.get(q.id),
                 created_at=q.created_at.isoformat(),

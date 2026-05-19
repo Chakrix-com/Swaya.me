@@ -820,6 +820,11 @@ function Dashboard() {
                       defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
                     })}
                   </span>
+                  {quiz.response_count > 0 && (
+                    <span style={{ color: '#8c8c8c' }}>
+                      · {quiz.response_count} {t('quiz.responses', { defaultValue: 'responses' })}
+                    </span>
+                  )}
                   {quiz.folder_path && (
                     <Tag color="cyan">
                       {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}

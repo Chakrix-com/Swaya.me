@@ -265,6 +265,7 @@ class QuizListResponse(BaseModel):
     is_template: bool = False
     template_scope: TemplateScopeEnum = TemplateScopeEnum.TENANT
     question_count: int
+    response_count: int = 0
     has_active_session: bool = False
     active_session_id: Optional[int] = None
     created_at: str
@@ -679,6 +680,11 @@ class ExamAnswerRequest(BaseModel):
 class ExamSubmitRequest(BaseModel):
     """Submit the exam"""
     session_token: str
+
+
+class AnalyzeResultsRequest(BaseModel):
+    """Optional custom prompt for AI analysis"""
+    custom_prompt: Optional[str] = None
 
 
 class ExamQuestionResult(BaseModel):
