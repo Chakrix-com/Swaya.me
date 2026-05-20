@@ -86,17 +86,14 @@ high_load_test_output.log
 # User uploads (runtime data, not source)
 backend/uploads/proctoring/
 
-# Generated media / video factory output
-video_factory/*.mp4
-video_factory/*.mp3
-video_factory/*.mp3
-video_factory/segments/
-video_factory/__pycache__/
+# Removed top-level directories
+video_factory/
+bin/
 
-# video_factory binaries (download separately — not committed to git)
-video_factory/bin/ffmpeg
-video_factory/bin/ffprobe
-video_factory/bin/qt-faststart
+# Data / test artifacts
+*.xlsx
+CAPACITY_SUMMARY.txt
+screenshots/
 
 # Load test HTML reports
 live_quiz_load_report*.html
