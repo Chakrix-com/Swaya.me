@@ -163,7 +163,7 @@ if [ $ISSUES -eq 0 ]; then
     echo -e "${GREEN}✅ All checks passed!${NC}"
     echo ""
     echo "You can now start the backend:"
-    echo "  cd /home/vinay/Swaya.me/backend"
+    echo "  cd /path/to/backend"
     echo "  uvicorn main:app --host 0.0.0.0 --port 8000"
     exit 0
 else

@@ -5,10 +5,10 @@ Targets all is_active=TRUE, is_email_verified=TRUE users in the production datab
 
 Usage:
   # Dry run — no emails sent, just prints recipients and preview
-  ENV_FILE=/www/wwwroot/swaya-live/backend/.env PYTHONPATH=. .venv/bin/python3 scripts/send_proctoring_announcement.py --dry-run
+  ENV_FILE=/path/to/backend/.env PYTHONPATH=. .venv/bin/python3 scripts/send_proctoring_announcement.py --dry-run
 
   # Live send
-  ENV_FILE=/www/wwwroot/swaya-live/backend/.env PYTHONPATH=. .venv/bin/python3 scripts/send_proctoring_announcement.py
+  ENV_FILE=/path/to/backend/.env PYTHONPATH=. .venv/bin/python3 scripts/send_proctoring_announcement.py
 """
 
 import asyncio
