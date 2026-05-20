@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '/home/vinay/Swaya.me/backend')
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all models to avoid FK errors
 from persistence.models.core import Tenant, User, Event

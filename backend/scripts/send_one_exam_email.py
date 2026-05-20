@@ -6,12 +6,14 @@ import asyncio
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault("ENV_FILE", "/www/wwwroot/swaya-live/backend/.env")
+_backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _backend_dir)
+_env_file = os.path.join(_backend_dir, ".env")
+os.environ.setdefault("ENV_FILE", _env_file)
 
-# Load production .env before importing settings
+# Load .env before importing settings
 from dotenv import load_dotenv
-load_dotenv("/www/wwwroot/swaya-live/backend/.env", override=True)
+load_dotenv(_env_file, override=True)
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
