@@ -250,7 +250,7 @@ cmd_promote_live() {
     # 5. Update pip dependencies if requirements changed
     if ! diff -q "$DEV_BACKEND/requirements.txt" "$BACKUP_DIR/backend_$tag/requirements.txt" &>/dev/null 2>&1; then
         info "requirements.txt changed — installing dependencies..."
-        "$LIVE_VENV/bin/pip" install -r "$LIVE_BACKEND/requirements.txt" -q
+        "$LIVE_VENV/bin/pip" install --no-deps -r "$LIVE_BACKEND/requirements.txt" -q
         success "Dependencies updated."
     else
         info "requirements.txt unchanged — skipping pip install."
