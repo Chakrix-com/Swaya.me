@@ -82,6 +82,7 @@ high_load_test_output.log
 
 # Session state files (temporary)
 .copilot/
+.claude/
 
 # User uploads (runtime data, not source)
 backend/uploads/proctoring/
