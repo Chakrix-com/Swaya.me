@@ -66,6 +66,9 @@ frontend/build/
 frontend/.vite/
 frontend/.turbo
 
+# Local deploy script (contains server-specific paths — use deploy_template.sh)
+deploy.sh
+
 # Misc
 .mypy_cache/
 .dmypy.json
