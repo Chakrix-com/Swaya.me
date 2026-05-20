@@ -18,8 +18,8 @@ class ImageService:
     MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
     OPTIMIZED_MAX_DIMENSION = 1920  # Resize oversized images to screen-friendly dimensions
     
-    UPLOAD_BASE_DIR = Path("/home/vinay/Swaya.me/backend/uploads/images")
-    TEMP_BASE_DIR = Path("/home/vinay/Swaya.me/backend/uploads/temp")
+    UPLOAD_BASE_DIR = Path(__file__).parents[2] / "uploads" / "images"
+    TEMP_BASE_DIR = Path(__file__).parents[2] / "uploads" / "temp"
     
     @classmethod
     def validate_image(cls, file: UploadFile) -> bool:

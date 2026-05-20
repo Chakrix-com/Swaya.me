@@ -79,7 +79,7 @@ class AppSettings(BaseSettings):
     environment: str = Field(default="production", alias="ENVIRONMENT")
     login_rate_limit: str = Field(default="10/minute", alias="LOGIN_RATE_LIMIT")
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
-    uploads_base_dir: str = Field(default="/home/vinay/Swaya.me/backend/uploads", alias="UPLOADS_BASE_DIR")
+    uploads_base_dir: str = Field(default="./uploads", alias="UPLOADS_BASE_DIR")
     allowed_origins: List[str] = Field(
         default=["http://localhost:3000"], 
         alias="ALLOWED_ORIGINS"

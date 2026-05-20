@@ -2,6 +2,7 @@
 Excel Import/Export Service - Logic for handling bulk quiz data via XLSX
 """
 import io
+from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -56,7 +57,7 @@ class ExcelImportService:
 
     @staticmethod
     def get_template_path() -> str:
-        return "/home/vinay/Swaya.me/Swaya_me_Test_Template.xlsx"
+        return str(Path(__file__).parents[3] / "Swaya_me_Test_Template.xlsx")
 
     @staticmethod
     def _char_to_index(char: str) -> Optional[int]:
