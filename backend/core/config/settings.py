@@ -106,12 +106,12 @@ class GoogleSettings(BaseSettings):
 
 class SMTPSettings(BaseSettings):
     """Email SMTP configuration"""
-    host: str = Field(default="smtp.titan.email", alias="SMTP_HOST")
+    host: str = Field(default="", alias="SMTP_HOST")
     port: int = Field(default=465, alias="SMTP_PORT")
     user: str = Field(default="", alias="SMTP_USER")
     password: str = Field(default="", alias="SMTP_PASSWORD")
-    from_email: str = Field(default="info@chakrix.com", alias="SMTP_FROM_EMAIL")
-    from_name: str = Field(default="Swayame", alias="SMTP_FROM_NAME")
+    from_email: str = Field(default="", alias="SMTP_FROM_EMAIL")
+    from_name: str = Field(default="Swaya", alias="SMTP_FROM_NAME")
 
     model_config = SettingsConfigDict(
         env_file=".env",
