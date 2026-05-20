@@ -2,7 +2,7 @@
 # generate_audio.sh
 mkdir -p assets/audio/en
 
-API_KEY="REDACTED_ELEVENLABS_API_KEY"
+API_KEY="${ELEVENLABS_API_KEY:?Set ELEVENLABS_API_KEY env var before running}"
 VOICE_ID="qagSPKU8Dk70OM7QuI3u"
 
 generate_scene_audio() {
