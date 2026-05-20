@@ -3,6 +3,7 @@ import logo from '../assets/logo.png'
 import { Typography, Button } from 'antd'
 import { SunOutlined, MoonOutlined } from '@ant-design/icons'
 import BetaBadge from './BetaBadge'
+import OpenSourceBadge from './OpenSourceBadge'
 import LanguageSwitcher from './LanguageSwitcher'
 import { VisitorThemeContext } from '../App'
 import './PublicBrandHeader.css'
@@ -20,6 +21,7 @@ export default function PublicBrandHeader() {
         <BetaBadge />
       </div>
       <div className="public-brand-header__actions">
+        <OpenSourceBadge />
         <Button
           type="text"
           icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}

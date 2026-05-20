@@ -62,6 +62,7 @@ import LanguageSwitcher from './components/LanguageSwitcher'
 import GlobalOverlay from './components/GlobalOverlay'
 import StatsPanel from './components/StatsPanel'
 import BetaBadge from './components/BetaBadge'
+import OpenSourceBadge from './components/OpenSourceBadge'
 import logo from './assets/logo.png'
 import './App.css'
 
@@ -150,6 +151,7 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
           <img src={logo} alt="Swaya.me Logo" style={{ height: 'auto', maxHeight: '32px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }} />
           <span>Swaya.me</span>
           <BetaBadge />
+          <OpenSourceBadge />
         </span>
       )}
       layout="mix"

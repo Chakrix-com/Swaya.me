@@ -1,0 +1,22 @@
+.open-source-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--visitor-text-secondary, #666);
+  text-decoration: none;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.open-source-badge:hover {
+  color: var(--visitor-text-primary, #1a1a1a);
+}
+
+[data-theme="dark"] .open-source-badge {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="dark"] .open-source-badge:hover {
+  color: rgba(255, 255, 255, 0.9);
+}

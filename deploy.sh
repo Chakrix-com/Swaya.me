@@ -287,6 +287,12 @@ cmd_promote_live() {
         return 1
     fi
 
+    # 11. Push branch + release tag to GitHub
+    info "Pushing branch '$branch' and tag '$tag' to GitHub..."
+    git -C "$DEV_ROOT" push origin "$branch"
+    git -C "$DEV_ROOT" push origin "$tag"
+    success "GitHub updated → branch '$branch' + tag '$tag'"
+
     success "Live promotion complete → https://www.swaya.me"
     echo -e "  ${CYAN}Release tag:${RESET} $tag"
     echo -e "  ${CYAN}SHA:${RESET}         $short ($branch)"
