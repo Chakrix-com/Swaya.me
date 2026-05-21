@@ -94,6 +94,9 @@ backend/uploads/proctoring/
 video_factory/
 bin/
 
+# Specs runtime (local prompts/drafts, not for version control)
+specs/runtime/
+
 # Data / test artifacts
 *.xlsx
 CAPACITY_SUMMARY.txt
