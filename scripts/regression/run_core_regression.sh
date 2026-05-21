@@ -17,7 +17,7 @@ FAILED=0
 
 run_step "core_smoke_suite"        bash "$SCRIPT_DIR/run_smoke.sh"                                                                       || FAILED=1
 run_step "core_smoke_routes"       bash "$SCRIPT_DIR/smoke_routes.sh"                                                                    || FAILED=1
-run_step "core_leaderboard_timing" "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_leaderboard_timing.py"                           || FAILED=1
+run_step "core_leaderboard_timing" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_leaderboard_timing.py"                         || FAILED=1
 run_step "core_regular_user_flows" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_regular_user_flows.py"                         || FAILED=1
 run_step "core_folders_templates"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_folders_templates.py"                          || FAILED=1
 run_step "core_offline_poll"       "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_offline_poll_lifecycle.py"                     || FAILED=1

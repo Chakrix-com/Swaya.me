@@ -63,7 +63,7 @@ def main():
     # 2. POST /ai/generate/questions
     log("Testing /ai/generate/questions...")
     r = api_request(s, "POST", f"{BASE_URL}/ai/generate/questions", json={
-        "topic": "Python Programming",
+        "prompt": "Generate questions about Python Programming basics including variables, loops, and functions",
         "count": 2,
         "language": "en"
     }, timeout=300) # Generous timeout for LLM
@@ -88,8 +88,8 @@ def main():
         "question": "What is the capital of France?",
         "correct_answer": "Paris",
         "count": 3
-    }, timeout=60)
-    
+    }, timeout=300)
+
     if r.status_code == 200:
         distractors = r.json().get("distractors", [])
         if len(distractors) == 3:
@@ -108,7 +108,7 @@ def main():
     r = api_request(s, "POST", f"{BASE_URL}/ai/generate/poll-prompt", json={
         "topic": "Climate Change",
         "language": "en"
-    }, timeout=60)
+    }, timeout=300)
     
     if r.status_code == 200:
         prompt = r.json().get("prompt")

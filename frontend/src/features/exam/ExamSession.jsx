@@ -637,6 +637,8 @@ export default function ExamSession() {
 
   const [starting, setStarting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [recoveryToken, setRecoveryToken] = useState(null)
+  const [recovering, setRecovering] = useState(false)
 
   // ── Load exam info ────────────────────────────────────────────────────────
 
@@ -656,6 +658,16 @@ export default function ExamSession() {
             }
           }
           setPhase('start')
+          // Check for an interrupted session from a previous tab crash
+          try {
+            const saved = localStorage.getItem(`exam_session_${slug}`)
+            if (saved) {
+              const { sessionToken: tok } = JSON.parse(saved)
+              if (tok) setRecoveryToken(tok)
+            }
+          } catch {
+            localStorage.removeItem(`exam_session_${slug}`)
+          }
         } else {
           setPhase('status')
         }
@@ -755,6 +767,7 @@ export default function ExamSession() {
     if (!sessionToken) return
     try {
       const res = await examAPI.submit(slug, sessionToken)
+      try { localStorage.removeItem(`exam_session_${slug}`) } catch {}
       setExamResult(res.data)
       setPhase('score')
     } catch {
@@ -775,6 +788,7 @@ export default function ExamSession() {
       const res = await examAPI.start(slug, body)
       const data = res.data
       setSessionToken(data.session_token)
+      try { localStorage.setItem(`exam_session_${slug}`, JSON.stringify({ sessionToken: data.session_token })) } catch {}
       setParticipantEmail(email || null)
       setStartedAt(data.started_at)
       setQuestions(data.questions)
@@ -866,6 +880,7 @@ export default function ExamSession() {
           captureSnapshotRef.current?.()
           // Submit
           const res = await examAPI.submit(slug, sessionToken)
+          try { localStorage.removeItem(`exam_session_${slug}`) } catch {}
           stopGlobalTimer()
           stopQuestionTimer()
           setExamResult(res.data)
@@ -878,6 +893,23 @@ export default function ExamSession() {
         }
       }
     })
+  }
+
+  // ── Crash recovery submit ────────────────────────────────────────────────
+
+  const handleRecoverySubmit = async () => {
+    setRecovering(true)
+    try {
+      const res = await examAPI.submit(slug, recoveryToken)
+      localStorage.removeItem(`exam_session_${slug}`)
+      setExamResult(res.data)
+      setPhase('score')
+    } catch {
+      localStorage.removeItem(`exam_session_${slug}`)
+      setRecoveryToken(null)
+    } finally {
+      setRecovering(false)
+    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -907,6 +939,26 @@ export default function ExamSession() {
 
         {phase === 'status' && examInfo && (
           <StatusScreen info={examInfo} />
+        )}
+
+        {phase === 'start' && recoveryToken && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message={t('exam.recoveryTitle')}
+            description={t('exam.recoveryDesc')}
+            action={
+              <Space>
+                <Button size="small" type="primary" loading={recovering} onClick={handleRecoverySubmit}>
+                  {t('exam.recoverySubmit')}
+                </Button>
+                <Button size="small" onClick={() => { localStorage.removeItem(`exam_session_${slug}`); setRecoveryToken(null) }}>
+                  {t('common.dismiss')}
+                </Button>
+              </Space>
+            }
+          />
         )}
 
         {phase === 'start' && examInfo && (

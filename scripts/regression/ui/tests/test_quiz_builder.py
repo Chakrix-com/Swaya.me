@@ -185,8 +185,10 @@ def test_proctoring_settings_persistence(page: Page):
     
     # Change lock threshold
     # InputNumber for lock_on_violation_count
-    lock_input = page.locator('input.ant-input-number-input').first
+    lock_input = proctoring_section.locator('input.ant-input-number-input').first
+    lock_input.click(click_count=3)
     lock_input.fill("5")
+    lock_input.press("Tab")  # commit the value before saving
     
     # Save the quiz
     # The button text for exams is "Save Settings"
@@ -197,12 +199,13 @@ def test_proctoring_settings_persistence(page: Page):
     page.reload()
     page.wait_for_load_state("networkidle")
     
-    expect(page.locator('div.ant-card').filter(has_text="Security & Proctoring").last).to_be_visible()
-    # Check if switch is still enabled
-    expect(page.locator('button[role="switch"]').first).to_have_attribute("aria-checked", "true")
-    
+    proctoring_card = page.locator('div.ant-card').filter(has_text="Security & Proctoring").last
+    expect(proctoring_card).to_be_visible()
+    # Check if proctoring enable switch is still on
+    expect(proctoring_card.locator('button[role="switch"]').first).to_have_attribute("aria-checked", "true")
+
     # Check if lock threshold persisted
-    expect(page.locator('input.ant-input-number-input').first).to_have_value("5")
+    expect(proctoring_card.locator('input.ant-input-number-input').first).to_have_value("5")
     
     print(f"✓ Proctoring settings for {title} successfully persisted")
 

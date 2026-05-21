@@ -16,13 +16,14 @@ export function useWebcamMonitor({ stream, config, reportViolation, enabled, ses
   }, []);
 
   const captureNow = useCallback(() => {
-    if (!videoNodeRef.current) return;
+    const vid = videoNodeRef.current;
+    if (!vid || vid.readyState < 2) return;
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 320;
       canvas.height = 240;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoNodeRef.current, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
         if (!blob) return;
         const form = new FormData();

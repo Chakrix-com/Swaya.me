@@ -14,8 +14,8 @@ export REGULAR_USER_PASSWORD="${REGULAR_USER_PASSWORD:-RegTest2026!}"
 
 FAILED=0
 
-run_step "smoke_api_flow"           bash "$ROOT_DIR/test_api_flow.sh"                                                    || FAILED=1
-run_step "smoke_session_lifecycle"  "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_session_lifecycle.py"           || FAILED=1
+run_step "smoke_api_flow"           bash "$SCRIPT_DIR/test_api_flow.sh"                                                  || FAILED=1
+run_step "smoke_session_lifecycle"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_session_lifecycle.py"         || FAILED=1
 run_step "smoke_regular_user_login" bash -c '
   TOKEN=$(curl -sf -X POST "$BASE_URL/auth/login" \
     -H "Content-Type: application/json" \

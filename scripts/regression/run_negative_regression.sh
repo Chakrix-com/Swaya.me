@@ -15,7 +15,7 @@ export REGULAR_USER_PASSWORD="${REGULAR_USER_PASSWORD:-RegTest2026!}"
 FAILED=0
 
 run_step "negative_security_checks"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/negative_checks.py"                          || FAILED=1
-run_step "negative_xss_guard"        "$ROOT_DIR/backend/.venv/bin/python" "$ROOT_DIR/test_rich_text_regression.py" --xss-only       || FAILED=1
+run_step "negative_xss_guard"        "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_rich_text_regression.py" --xss-only      || FAILED=1
 run_step "negative_role_boundaries"  "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/negative_role_boundary_checks.py"            || FAILED=1
 run_step "negative_tenant_isolation" "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_tenant_isolation.py"                    || FAILED=1
 run_step "negative_rate_limiting"    "$ROOT_DIR/backend/.venv/bin/python" "$SCRIPT_DIR/test_rate_limiting.py"                              || FAILED=1

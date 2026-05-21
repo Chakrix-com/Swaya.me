@@ -388,7 +388,7 @@ export function ProctoringGate({ children, initialWarned = false, examDurationSe
   return (
     <>
       {webcamRequired && (
-        <video ref={videoRef} muted playsInline style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
+        <video ref={videoRef} muted playsInline style={{ position: 'fixed', top: -9999, left: -9999, width: 320, height: 240, visibility: 'hidden', pointerEvents: 'none' }} />
       )}
       {fullscreenRequired
         ? <FullscreenGate reportViolation={reportViolation}>{examContent}</FullscreenGate>

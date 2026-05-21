@@ -283,7 +283,9 @@ async def _get_active_participant(
     if quiz.exam_time_limit_seconds and participant.started_at:
         elapsed = (_utcnow() - participant.started_at).total_seconds()
         if elapsed > quiz.exam_time_limit_seconds:
-            # Auto-submit
+            if not participant.completed_at:
+                participant.completed_at = _utcnow()
+                await db.commit()
             raise HTTPException(status_code=410, detail="Exam time limit exceeded")
 
     return participant
