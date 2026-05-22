@@ -531,7 +531,7 @@ function QuestionScreen({
                         style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 4 }}
                       />
                     )}
-                    {opt?.startsWith('<')
+                    {opt?.includes('</')
                       ? <span dangerouslySetInnerHTML={{ __html: opt }} />
                       : opt}
                   </Space>
