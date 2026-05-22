@@ -243,8 +243,8 @@ async def ingest_biometrics(
     redis: RedisClient = Depends(get_redis)
 ):
     """Public — receive behavioral biometric batch."""
-    await svc.ingest_biometric_sample(body.session_token, body, db, redis)
-    return {"ok": True}
+    is_locked = await svc.ingest_biometric_sample(body.session_token, body, db, redis)
+    return {"ok": True, "is_locked": is_locked}
 
 
 @router.post("/snapshot")

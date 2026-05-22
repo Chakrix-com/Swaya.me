@@ -63,5 +63,6 @@ export function useProctoringModule() {
     sessionToken,
     config: getConfig(resolvedRules, 'behavioral_biometrics'),
     enabled: enabled && hasRule(resolvedRules, 'behavioral_biometrics'),
+    onLockDetected: () => reportViolation('behavioral_biometrics', 'LOW_INTEGRITY_SCORE', {}),
   });
 }

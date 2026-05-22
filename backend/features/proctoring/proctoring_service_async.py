@@ -437,12 +437,15 @@ async def ingest_biometric_sample(
     sample,
     db: AsyncSession,
     redis: "RedisClient",
-) -> None:
+) -> bool:
+    """Returns True if the session was locked as a result of this sample."""
     from features.proctoring.integrity_scorer import IntegrityScorer
 
     redis_data = await _get_redis_session(redis, session_token)
-    if not redis_data or redis_data.get("is_locked"):
-        return
+    if not redis_data:
+        return False
+    if redis_data.get("is_locked"):
+        return True
 
     current_score = redis_data.get("integrity_score", 100)
     new_score = IntegrityScorer().score(sample, current_score)
@@ -459,8 +462,11 @@ async def ingest_biometric_sample(
     if sess:
         sess.integrity_score = new_score
 
+    locked = False
     if new_score < 40:
-        await log_violation(session_token, "behavioral_biometrics", "LOW_INTEGRITY_SCORE",
+        violation_result = await log_violation(session_token, "behavioral_biometrics", "LOW_INTEGRITY_SCORE",
                             {"score": new_score}, db, redis)
+        locked = violation_result.is_locked
 
     await db.commit()
+    return locked

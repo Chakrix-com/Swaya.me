@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import api from '../../../services/api';
 
-export function useBehavioralCollector({ sessionToken, config, enabled }) {
+export function useBehavioralCollector({ sessionToken, config, enabled, onLockDetected }) {
   const buffer = useRef({
     mouse: [],
     keys: [],
@@ -51,7 +51,8 @@ export function useBehavioralCollector({ sessionToken, config, enabled }) {
       buffer.current = { mouse: [], keys: [], scrolls: [], backspaces: 0, firstInteraction: null };
 
       try {
-        await api.post('/proctoring/biometrics', sample);
+        const res = await api.post('/proctoring/biometrics', sample);
+        if (res.data?.is_locked && onLockDetected) onLockDetected();
       } catch (_) {}
     }, batchInterval);
 
