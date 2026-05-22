@@ -770,8 +770,7 @@ export default function ExamSession() {
       try { localStorage.removeItem(`exam_session_${slug}`) } catch {}
       setExamResult(res.data)
       setPhase('score')
-    } catch {
-      // If already submitted, just show error
+    } catch (err) {
       setPhase('error')
       setError(t('exam.sessionExpired'))
     }
@@ -973,7 +972,7 @@ export default function ExamSession() {
         )}
 
         {phase === 'taking' && questions.length > 0 && (
-          <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken}>
+          <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken} onAutoSubmit={handleAutoSubmit}>
             <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
               <QuestionScreen
                 question={questions[currentIdx]}

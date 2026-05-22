@@ -20,7 +20,7 @@ export function useProctoringContext() {
   return useContext(ProctoringCtx);
 }
 
-export function ProctoringProvider({ quizId, sessionToken, children }) {
+export function ProctoringProvider({ quizId, sessionToken, onAutoSubmit, children }) {
   const [ruleSet, setRuleSet] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
   const [violationsLeft, setViolationsLeft] = useState(null);
@@ -73,8 +73,9 @@ export function ProctoringProvider({ quizId, sessionToken, children }) {
         if (data.is_locked) {
           lockReasonRef.current = event_type;
           setIsLocked(true);
-          if (ruleSet?.escalation?.auto_submit_on_lock) {
+          if (ruleSet?.escalation?.auto_submit_on_lock && onAutoSubmit) {
             autoSubmitRef.current = true;
+            onAutoSubmit();
           }
         } else if (!data.silent) {
           setViolationsLeft(data.violations_remaining);
@@ -84,7 +85,7 @@ export function ProctoringProvider({ quizId, sessionToken, children }) {
         // Non-fatal
       }
     },
-    [isLocked, sessionToken, ruleSet]
+    [isLocked, sessionToken, ruleSet, onAutoSubmit]
   );
 
   // While loading: block children behind a spinner so the exam never renders
@@ -144,7 +145,7 @@ export function ProctoringProvider({ quizId, sessionToken, children }) {
           onDismiss={() => setWarningActive(false)}
         />
       )}
-      {children}
+      {!isLocked && children}
     </ProctoringCtx.Provider>
   );
 }

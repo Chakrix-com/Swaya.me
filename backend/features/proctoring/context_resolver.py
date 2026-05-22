@@ -43,7 +43,10 @@ class ProctoringContextResolver:
                 webcam_required=False,
             )
 
-        cache_key = f"proctor:rules:{context.quiz_id}:{_context_hash(context)}"
+        policy_hash = hashlib.md5(
+            json.dumps(quiz_proctoring_policy or {}, sort_keys=True).encode()
+        ).hexdigest()[:8]
+        cache_key = f"proctor:rules:{context.quiz_id}:{_context_hash(context)}:{policy_hash}"
         try:
             cached = await redis.get(cache_key)
             if cached:
