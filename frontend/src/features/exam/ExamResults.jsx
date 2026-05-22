@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Table, Space, Tag, Statistic,
-  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input
+  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, Modal, List
 } from 'antd'
 const { TextArea } = Input
 import {
@@ -59,6 +59,24 @@ export default function ExamResults() {
   const [analysisError, setAnalysisError] = useState(null)
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
+  const [participantDetail, setParticipantDetail] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
+
+  const handleRowClick = async (record) => {
+    if (!record.participant_id) return
+    setDetailOpen(true)
+    setDetailLoading(true)
+    setParticipantDetail(null)
+    try {
+      const res = await examAPI.getParticipantDetail(id, record.participant_id)
+      setParticipantDetail(res.data)
+    } catch (_) {
+      setParticipantDetail(null)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -316,9 +334,13 @@ export default function ExamResults() {
           <Table
             dataSource={results.leaderboard}
             columns={leaderboardColumns}
-            rowKey={(r, i) => r.rank ?? `ip-${i}`}
+            rowKey={(r, i) => r.participant_id ?? `ip-${i}`}
             pagination={results.leaderboard.length > 20 ? { pageSize: 20 } : false}
             size="small"
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+              style: record.is_completed ? { cursor: 'pointer' } : {},
+            })}
           />
         )}
       </Card>
@@ -435,6 +457,99 @@ export default function ExamResults() {
       </Card>
 
       <ViolationReport quizId={id} />
+
+      <Modal
+        open={detailOpen}
+        onCancel={() => setDetailOpen(false)}
+        footer={null}
+        width={760}
+        title={
+          participantDetail
+            ? `${participantDetail.display_name}${participantDetail.email ? ` — ${participantDetail.email}` : ''}`
+            : 'Participant Detail'
+        }
+        destroyOnClose
+      >
+        {detailLoading && (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <Spin size="large" />
+          </div>
+        )}
+        {!detailLoading && participantDetail && (
+          <>
+            <Space wrap style={{ marginBottom: 16 }}>
+              <Tag color="blue">{participantDetail.score} / {participantDetail.max_score} pts</Tag>
+              <Tag color={participantDetail.percentage >= 70 ? 'success' : participantDetail.percentage >= 40 ? 'warning' : 'error'}>
+                {participantDetail.percentage}%
+              </Tag>
+              <Tag color="green" icon={<CheckCircleOutlined />}>{participantDetail.correct_count} correct</Tag>
+              <Tag color="red" icon={<CloseCircleOutlined />}>{participantDetail.wrong_count} wrong</Tag>
+              {participantDetail.unanswered_count > 0 && (
+                <Tag color="default">{participantDetail.unanswered_count} unanswered</Tag>
+              )}
+              {participantDetail.time_taken_seconds != null && (
+                <Tag icon={<ClockCircleOutlined />}>
+                  {Math.floor(participantDetail.time_taken_seconds / 60)}m {Math.round(participantDetail.time_taken_seconds % 60)}s
+                </Tag>
+              )}
+            </Space>
+            <List
+              dataSource={participantDetail.questions}
+              renderItem={(q, idx) => {
+                const answered = q.participant_answer != null
+                const color = q.is_correct === true ? '#f6ffed' : q.is_correct === false ? '#fff2f0' : '#fafafa'
+                const borderColor = q.is_correct === true ? '#b7eb8f' : q.is_correct === false ? '#ffa39e' : '#d9d9d9'
+                return (
+                  <List.Item style={{ display: 'block', padding: '10px 0' }}>
+                    <div style={{ background: color, border: `1px solid ${borderColor}`, borderRadius: 6, padding: '10px 14px' }}>
+                      <Space align="start" style={{ width: '100%' }}>
+                        {q.is_correct === true
+                          ? <CheckCircleOutlined style={{ color: '#52c41a', marginTop: 3 }} />
+                          : q.is_correct === false
+                          ? <CloseCircleOutlined style={{ color: '#ff4d4f', marginTop: 3 }} />
+                          : <span style={{ color: '#bbb', marginTop: 3 }}>–</span>
+                        }
+                        <div style={{ flex: 1 }}>
+                          <Text strong>Q{idx + 1}. </Text>
+                          <Text>{stripHtml(q.question_text)}</Text>
+                          {q.options && (
+                            <div style={{ marginTop: 6 }}>
+                              {q.options.map((opt, i) => {
+                                const isChosen = i === q.participant_answer
+                                const isCorrect = i === q.correct_answer_index
+                                return (
+                                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                    <span style={{
+                                      fontWeight: isCorrect ? 700 : 400,
+                                      color: isCorrect ? '#389e0d' : isChosen ? '#cf1322' : '#595959',
+                                    }}>
+                                      {String.fromCharCode(65 + i)}. {stripHtml(opt)}
+                                    </span>
+                                    {isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>Correct</Tag>}
+                                    {isChosen && !isCorrect && <Tag color="error" style={{ margin: 0, fontSize: 11 }}>Their answer</Tag>}
+                                    {isChosen && isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>Their answer</Tag>}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                          {!answered && <Text type="secondary" style={{ fontSize: 12 }}>Not answered</Text>}
+                          <div style={{ marginTop: 4 }}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{q.points_earned} / {q.points_possible} pts</Text>
+                          </div>
+                        </div>
+                      </Space>
+                    </div>
+                  </List.Item>
+                )
+              }}
+            />
+          </>
+        )}
+        {!detailLoading && !participantDetail && (
+          <Alert type="error" message="Could not load participant detail." />
+        )}
+      </Modal>
     </div>
   )
 }

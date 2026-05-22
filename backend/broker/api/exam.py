@@ -17,6 +17,7 @@ from features.quiz.schemas import (
     ExamResultsResponse,
     ExamPublishResponse,
     AnalyzeResultsRequest,
+    ParticipantDetailResponse,
 )
 from features.quiz import exam_service_async as svc
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
@@ -108,6 +109,22 @@ async def get_exam_results(
     """Authenticated host — full results: leaderboard + per-question analytics."""
     try:
         return await svc.get_exam_results(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/quiz/{quiz_id}/exam-results/participant/{participant_id}", response_model=ParticipantDetailResponse)
+async def get_participant_detail(
+    quiz_id: int,
+    participant_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — per-question breakdown for a single participant."""
+    try:
+        return await svc.get_participant_detail(db, quiz_id, participant_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except QuizValidationError as e:

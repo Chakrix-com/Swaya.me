@@ -230,6 +230,7 @@ export const examAPI = {
   submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),
   getMyResult: (slug, sessionToken) => api.post(`/e/${slug}/result`, { session_token: sessionToken }),
   getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),
+  getParticipantDetail: (quizId, participantId) => api.get(`/quiz/${quizId}/exam-results/participant/${participantId}`),
   analyzeResults: (quizId, customPrompt) =>
     api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}),
   publish: (quizId) => api.post(`/quizzes/${quizId}/publish-exam`),

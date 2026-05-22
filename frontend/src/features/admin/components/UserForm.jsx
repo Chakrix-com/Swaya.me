@@ -42,11 +42,12 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
 
       if (isEditing) {
         // Update existing user
+        const originalTier = user.tier ? user.tier.toLowerCase() : undefined;
         const updates = {
           full_name: values.full_name,
           role: values.role,
           is_active: values.is_active,
-          ...(isSuperAdmin && values.tier ? { tier: values.tier } : {}),
+          ...(isSuperAdmin && values.tier && values.tier !== originalTier ? { tier: values.tier } : {}),
         };
 
         await dispatch(updateUser({ userId: user.id, updates })).unwrap();

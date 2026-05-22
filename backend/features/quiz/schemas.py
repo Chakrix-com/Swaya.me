@@ -714,6 +714,7 @@ class ExamSubmitResponse(BaseModel):
 
 class ExamLeaderboardEntry(BaseModel):
     """Single entry in host's exam leaderboard"""
+    participant_id: Optional[int] = None
     rank: Optional[int] = None
     display_name: str
     email: Optional[str] = None
@@ -725,6 +726,35 @@ class ExamLeaderboardEntry(BaseModel):
     completed_at: Optional[datetime] = None
     is_abandoned: bool = False
     is_completed: bool = False
+
+
+class ParticipantQuestionResult(BaseModel):
+    """Per-question result for a single participant (host view)"""
+    question_id: int
+    order: int
+    question_text: str
+    options: Optional[List[str]] = None
+    correct_answer_index: Optional[int] = None
+    participant_answer: Optional[int] = None
+    is_correct: Optional[bool] = None
+    points_earned: int = 0
+    points_possible: int = 1
+
+
+class ParticipantDetailResponse(BaseModel):
+    """Full per-participant breakdown for host"""
+    participant_id: int
+    display_name: str
+    email: Optional[str] = None
+    score: int
+    max_score: int
+    percentage: float
+    correct_count: int
+    wrong_count: int
+    unanswered_count: int
+    time_taken_seconds: Optional[float] = None
+    completed_at: Optional[datetime] = None
+    questions: List[ParticipantQuestionResult]
 
 
 class ExamQuestionAnalytics(BaseModel):

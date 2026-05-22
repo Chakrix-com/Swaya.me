@@ -29,6 +29,8 @@ from features.quiz.schemas import (
     ExamLeaderboardEntry,
     ExamQuestionAnalytics,
     ExamPublishResponse,
+    ParticipantDetailResponse,
+    ParticipantQuestionResult,
 )
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
 from core.auth.dependencies import CurrentUser
@@ -612,6 +614,7 @@ async def get_exam_results(
             time_taken = (p.completed_at - p.started_at).total_seconds()
 
         entry = {
+            "participant_id": p.id,
             "display_name": p.display_name or "Anonymous",
             "email": p.email,
             "score": score,
@@ -633,6 +636,7 @@ async def get_exam_results(
     leaderboard = []
     for rank, entry in enumerate(completed_entries, start=1):
         leaderboard.append(ExamLeaderboardEntry(
+            participant_id=entry["participant_id"],
             rank=rank,
             display_name=entry["display_name"],
             email=entry["email"],
@@ -647,6 +651,7 @@ async def get_exam_results(
         ))
     for entry in in_progress_entries:
         leaderboard.append(ExamLeaderboardEntry(
+            participant_id=entry["participant_id"],
             rank=None,
             display_name=entry["display_name"],
             email=entry["email"],
@@ -707,6 +712,97 @@ async def get_exam_results(
         max_score=max_score,
         leaderboard=leaderboard,
         question_analytics=question_analytics,
+    )
+
+
+async def get_participant_detail(
+    db: AsyncSession,
+    quiz_id: int,
+    participant_id: int,
+    current_user: CurrentUser,
+) -> ParticipantDetailResponse:
+    """Auth-required — per-participant question breakdown for host."""
+    result = await db.execute(
+        select(Quiz)
+        .options(selectinload(Quiz.questions))
+        .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+    )
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise QuizNotFoundError("Exam not found")
+
+    if not quiz.exam_session_id:
+        raise QuizValidationError("Exam has not been published yet")
+
+    part_result = await db.execute(
+        select(Participant).filter(
+            Participant.id == participant_id,
+            Participant.session_id == quiz.exam_session_id,
+        )
+    )
+    participant = part_result.scalar_one_or_none()
+    if not participant:
+        raise QuizNotFoundError("Participant not found")
+
+    answers_result = await db.execute(
+        select(Answer).filter(
+            Answer.session_id == quiz.exam_session_id,
+            Answer.participant_id == participant_id,
+        )
+    )
+    answers = {a.question_id: a for a in answers_result.scalars().all()}
+
+    questions = sorted(quiz.questions, key=lambda q: q.order)
+    max_score = sum(q.points for q in questions)
+
+    score = 0
+    correct = wrong = unanswered = 0
+    question_results = []
+
+    for q in questions:
+        ans = answers.get(q.id)
+        points_earned = 0
+        if ans and ans.is_correct:
+            points_earned = q.points
+            score += points_earned
+            correct += 1
+        elif ans and ans.is_correct is False:
+            points_earned = -q.negative_points
+            score -= q.negative_points
+            wrong += 1
+        elif ans is None:
+            unanswered += 1
+
+        question_results.append(ParticipantQuestionResult(
+            question_id=q.id,
+            order=q.order,
+            question_text=q.text,
+            options=q.options,
+            correct_answer_index=q.correct_answer_index,
+            participant_answer=ans.selected_option_index if ans else None,
+            is_correct=ans.is_correct if ans else None,
+            points_earned=max(0, points_earned),
+            points_possible=q.points,
+        ))
+
+    score = max(0, score)
+    time_taken = None
+    if participant.started_at and participant.completed_at:
+        time_taken = (participant.completed_at - participant.started_at).total_seconds()
+
+    return ParticipantDetailResponse(
+        participant_id=participant.id,
+        display_name=participant.display_name or "Anonymous",
+        email=participant.email,
+        score=score,
+        max_score=max_score,
+        percentage=round((score / max_score * 100) if max_score > 0 else 0.0, 2),
+        correct_count=correct,
+        wrong_count=wrong,
+        unanswered_count=unanswered,
+        time_taken_seconds=time_taken,
+        completed_at=participant.completed_at,
+        questions=question_results,
     )
 
 
