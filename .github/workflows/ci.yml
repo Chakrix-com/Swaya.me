@@ -70,7 +70,7 @@ jobs:
       - name: Run tests
         run: |
           cd backend
-          pytest --tb=short -q
+          pytest --tb=short -q || ([ $? -eq 5 ] && echo "No tests collected — skipping")
 
   frontend:
     name: Frontend lint & build
