@@ -1736,7 +1736,18 @@
     "aiAnalysingMessage": "Analysing results with Gemini AI…",
     "aiAnalysisUnavailable": "Analysis is available once at least one participant has submitted.",
     "closeWindow": "Close",
-    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends."
+    "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
+    "integrityMergedTag": "Integrity merged",
+    "adjScoreCol": "Adj. Score",
+    "adjRankCol": "Adj. Rank",
+    "adjScoreFormula": "= Score × (Integrity / 100).",
+    "adjRankFormula": "uses this weighted score.",
+    "adjArrowsNote": "Arrows show change vs Marks Rank.",
+    "btnAnswers": "Answers",
+    "adjRankUp": "Up {{delta}} from marks rank",
+    "adjRankDown": "Down {{delta}} from marks rank",
+    "lockSession": "Lock Session",
+    "unlockSession": "Unlock Session"
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

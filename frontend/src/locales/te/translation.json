@@ -1732,7 +1732,18 @@
     "closeWindow": "మూసివేయి",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "అనుమతించిన ఇమెయిల్ డొమైన్లు (ఐచ్ఛికం)",
-    "allowedDomainsHint": "కామాతో వేరు చేయబడిన డొమైన్లు, ఉదా. natwest.com, rbs.com — ఏ ఇమెయిల్‌నైనా అనుమతించడానికి ఖాళీగా వదిలివేయండి"
+    "allowedDomainsHint": "కామాతో వేరు చేయబడిన డొమైన్లు, ఉదా. natwest.com, rbs.com — ఏ ఇమెయిల్‌నైనా అనుమతించడానికి ఖాళీగా వదిలివేయండి",
+    "integrityMergedTag": "సమగ్రత విలీనం",
+    "adjScoreCol": "సర్దు. స్కోర్",
+    "adjRankCol": "సర్దు. రాంక్",
+    "adjScoreFormula": "= స్కోర్ × (సమగ్రత / 100).",
+    "adjRankFormula": "ఈ భారిత స్కోర్‌ను ఉపయోగిస్తుంది.",
+    "adjArrowsNote": "బాణాలు మార్కుల రాంక్‌తో పోలిస్తే మార్పును చూపిస్తాయి.",
+    "btnAnswers": "సమాధానాలు",
+    "adjRankUp": "మార్కుల రాంక్ కంటే {{delta}} పైన",
+    "adjRankDown": "మార్కుల రాంక్ కంటే {{delta}} కింద",
+    "lockSession": "సెషన్ లాక్ చేయండి",
+    "unlockSession": "సెషన్ అన్‌లాక్ చేయండి"
   },
   "appFeedback": {
     "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",

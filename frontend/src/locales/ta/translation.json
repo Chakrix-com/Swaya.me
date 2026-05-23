@@ -1732,7 +1732,18 @@
     "closeWindow": "மூடு",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "அனுமதிக்கப்பட்ட மின்னஞ்சல் டொமைன்கள் (விரும்பினால்)",
-    "allowedDomainsHint": "கமா-பிரிக்கப்பட்ட டொமைன்கள், எ.கா. natwest.com, rbs.com — எந்த மின்னஞ்சலையும் அனுமதிக்க காலியாக விடவும்"
+    "allowedDomainsHint": "கமா-பிரிக்கப்பட்ட டொமைன்கள், எ.கா. natwest.com, rbs.com — எந்த மின்னஞ்சலையும் அனுமதிக்க காலியாக விடவும்",
+    "integrityMergedTag": "ஒருமைப்பாடு இணைக்கப்பட்டது",
+    "adjScoreCol": "சரி. மதிப்பு",
+    "adjRankCol": "சரி. தரவரிசை",
+    "adjScoreFormula": "= மதிப்பு × (ஒருமைப்பாடு / 100).",
+    "adjRankFormula": "இந்த எடை மதிப்பைப் பயன்படுத்துகிறது.",
+    "adjArrowsNote": "அம்புகள் மதிப்பு தரவரிசையிலிருந்து மாற்றத்தைக் காட்டுகின்றன.",
+    "btnAnswers": "விடைகள்",
+    "adjRankUp": "மதிப்பு தரவரிசையிலிருந்து {{delta}} மேலே",
+    "adjRankDown": "மதிப்பு தரவரிசையிலிருந்து {{delta}} கீழே",
+    "lockSession": "அமர்வை பூட்டு",
+    "unlockSession": "அமர்வை திற"
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",

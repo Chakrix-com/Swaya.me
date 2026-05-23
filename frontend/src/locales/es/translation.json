@@ -1732,7 +1732,18 @@
     "closeWindow": "Cerrar",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "Dominios de correo permitidos (opcional)",
-    "allowedDomainsHint": "Dominios separados por comas, p. ej. natwest.com, rbs.com — deje en blanco para permitir cualquier correo"
+    "allowedDomainsHint": "Dominios separados por comas, p. ej. natwest.com, rbs.com — deje en blanco para permitir cualquier correo",
+    "integrityMergedTag": "Integridad integrada",
+    "adjScoreCol": "Punt. ajust.",
+    "adjRankCol": "Rango ajust.",
+    "adjScoreFormula": "= Puntuación × (Integridad / 100).",
+    "adjRankFormula": "utiliza esta puntuación ponderada.",
+    "adjArrowsNote": "Las flechas muestran el cambio respecto al rango por notas.",
+    "btnAnswers": "Respuestas",
+    "adjRankUp": "{{delta}} posición(es) arriba del rango por notas",
+    "adjRankDown": "{{delta}} posición(es) debajo del rango por notas",
+    "lockSession": "Bloquear sesión",
+    "unlockSession": "Desbloquear sesión"
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",

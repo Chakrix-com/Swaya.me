@@ -1732,7 +1732,18 @@
     "closeWindow": "Закрыть",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "Разрешённые домены электронной почты (необязательно)",
-    "allowedDomainsHint": "Домены, разделённые запятыми, напр. natwest.com, rbs.com — оставьте пустым, чтобы разрешить любой адрес"
+    "allowedDomainsHint": "Домены, разделённые запятыми, напр. natwest.com, rbs.com — оставьте пустым, чтобы разрешить любой адрес",
+    "integrityMergedTag": "Честность объединена",
+    "adjScoreCol": "Скор. баллы",
+    "adjRankCol": "Скор. рейтинг",
+    "adjScoreFormula": "= Баллы × (Честность / 100).",
+    "adjRankFormula": "использует этот взвешенный балл.",
+    "adjArrowsNote": "Стрелки показывают изменение относительно рейтинга по баллам.",
+    "btnAnswers": "Ответы",
+    "adjRankUp": "На {{delta}} выше рейтинга по баллам",
+    "adjRankDown": "На {{delta}} ниже рейтинга по баллам",
+    "lockSession": "Заблокировать сессию",
+    "unlockSession": "Разблокировать сессию"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

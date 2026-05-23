@@ -1732,7 +1732,18 @@
     "closeWindow": "বন্ধ করুন",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "অনুমোদিত ইমেইল ডোমেইন (ঐচ্ছিক)",
-    "allowedDomainsHint": "কমা-বিভক্ত ডোমেইন, যেমন natwest.com, rbs.com — যেকোনো ইমেইল অনুমতি দিতে খালি রাখুন"
+    "allowedDomainsHint": "কমা-বিভক্ত ডোমেইন, যেমন natwest.com, rbs.com — যেকোনো ইমেইল অনুমতি দিতে খালি রাখুন",
+    "integrityMergedTag": "সততা একীভূত",
+    "adjScoreCol": "সামঞ্জ. স্কোর",
+    "adjRankCol": "সামঞ্জ. র‍্যাংক",
+    "adjScoreFormula": "= স্কোর × (সততা / 100).",
+    "adjRankFormula": "এই ভারিত স্কোর ব্যবহার করে।",
+    "adjArrowsNote": "তীরচিহ্ন নম্বর র‍্যাংকের তুলনায় পরিবর্তন দেখায়।",
+    "btnAnswers": "উত্তর",
+    "adjRankUp": "নম্বর র‍্যাংক থেকে {{delta}} উপরে",
+    "adjRankDown": "নম্বর র‍্যাংক থেকে {{delta}} নিচে",
+    "lockSession": "সেশন লক করুন",
+    "unlockSession": "সেশন আনলক করুন"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",

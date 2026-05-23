@@ -290,12 +290,12 @@ export default function ExamResults() {
           : <Text>{adjRank}</Text>
         }
         {delta > 0 && (
-          <Tooltip title={`Up ${delta} from marks rank`}>
+          <Tooltip title={t('exam.adjRankUp', { delta })}>
             <Text style={{ color: '#52c41a', fontSize: 11 }}><ArrowUpOutlined />{delta}</Text>
           </Tooltip>
         )}
         {delta < 0 && (
-          <Tooltip title={`Down ${Math.abs(delta)} from marks rank`}>
+          <Tooltip title={t('exam.adjRankDown', { delta: Math.abs(delta) })}>
             <Text style={{ color: '#ff4d4f', fontSize: 11 }}><ArrowDownOutlined />{Math.abs(delta)}</Text>
           </Tooltip>
         )}
@@ -362,7 +362,7 @@ export default function ExamResults() {
 
   const proctoringColumns = [
     {
-      title: 'Integrity',
+      title: t('proctoring.report.integrityScore'),
       dataIndex: 'integrity_score',
       width: 90,
       render: (score) => score != null
@@ -371,7 +371,7 @@ export default function ExamResults() {
       sorter: (a, b) => (a.integrity_score ?? 101) - (b.integrity_score ?? 101),
     },
     {
-      title: 'Adj. Score',
+      title: t('exam.adjScoreCol'),
       dataIndex: 'adjusted_score',
       width: 90,
       render: (val, row) => row.is_completed
@@ -380,14 +380,14 @@ export default function ExamResults() {
       sorter: (a, b) => (b.adjusted_score ?? -1) - (a.adjusted_score ?? -1),
     },
     {
-      title: 'Adj. Rank',
+      title: t('exam.adjRankCol'),
       dataIndex: 'adjusted_rank',
       width: 90,
       render: (adjRank, row) => adjRankCell(adjRank, row),
       sorter: (a, b) => (a.adjusted_rank ?? 9999) - (b.adjusted_rank ?? 9999),
     },
     {
-      title: 'Violations',
+      title: t('proctoring.report.violations'),
       dataIndex: 'violation_count',
       width: 80,
       render: (count) => count == null ? <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
@@ -397,25 +397,25 @@ export default function ExamResults() {
       sorter: (a, b) => (b.violation_count ?? -1) - (a.violation_count ?? -1),
     },
     {
-      title: 'Status',
+      title: t('proctoring.report.status'),
       width: 90,
       render: (_, row) => {
         if (!row._integrityEntry) return <Tag color="default">—</Tag>
-        if (row.is_locked) return <Tag color="red" icon={<LockOutlined />}>Locked</Tag>
-        if (row.violation_count > 0) return <Tag color="orange" icon={<WarningOutlined />}>Flagged</Tag>
-        return <Tag color="green" icon={<CheckCircleOutlined />}>Clean</Tag>
+        if (row.is_locked) return <Tag color="red" icon={<LockOutlined />}>{t('proctoring.report.locked')}</Tag>
+        if (row.violation_count > 0) return <Tag color="orange" icon={<WarningOutlined />}>{t('proctoring.report.flagged')}</Tag>
+        return <Tag color="green" icon={<CheckCircleOutlined />}>{t('proctoring.report.clean')}</Tag>
       },
     },
   ]
 
   const actionColumn = {
-    title: 'Actions',
+    title: t('proctoring.report.actions'),
     width: 140,
     render: (_, row) => (
       <Space size={4}>
         {row.is_completed && (
           <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>
-            Answers
+            {t('exam.btnAnswers')}
           </Button>
         )}
         {row._integrityEntry && (
@@ -424,7 +424,7 @@ export default function ExamResults() {
             icon={<CameraOutlined />}
             onClick={(e) => { e.stopPropagation(); handleViewProctoring(row) }}
           >
-            Integrity
+            {t('exam.integrityMergedTag')}
           </Button>
         )}
       </Space>
@@ -532,7 +532,7 @@ export default function ExamResults() {
             {t('exam.leaderboard')}
             {hasProcData && (
               <Tag color="purple" style={{ marginLeft: 8 }}>
-                Integrity merged
+                {t('exam.integrityMergedTag')}
               </Tag>
             )}
           </Space>
@@ -551,9 +551,9 @@ export default function ExamResults() {
             style={{ marginBottom: 12 }}
             message={
               <span>
-                <strong>Adj. Score</strong> = Score × (Integrity / 100). &nbsp;
-                <strong>Adj. Rank</strong> uses this weighted score. &nbsp;
-                Arrows show change vs Marks Rank.
+                <strong>{t('exam.adjScoreCol')}</strong> {t('exam.adjScoreFormula')} &nbsp;
+                <strong>{t('exam.adjRankCol')}</strong> {t('exam.adjRankFormula')} &nbsp;
+                {t('exam.adjArrowsNote')}
               </span>
             }
           />
@@ -797,7 +797,7 @@ export default function ExamResults() {
                   onClick={() => handleUnlock(selectedProctoring)}
                   loading={proActionLoading}
                 >
-                  Unlock Session
+                  {t('exam.unlockSession')}
                 </Button>
               ) : (
                 <Button
@@ -806,7 +806,7 @@ export default function ExamResults() {
                   onClick={() => handleLock(selectedProctoring)}
                   loading={proActionLoading}
                 >
-                  Lock Session
+                  {t('exam.lockSession')}
                 </Button>
               )}
             </Space>

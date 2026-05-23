@@ -1732,7 +1732,18 @@
     "closeWindow": "ಮುಚ್ಚಿರಿ",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "ಅನುಮತಿಸಲಾದ ಇಮೇಲ್ ಡೊಮೇನ್‌ಗಳು (ಐಚ್ಛಿಕ)",
-    "allowedDomainsHint": "ಅಲ್ಪವಿರಾಮದಿಂದ ಪ್ರತ್ಯೇಕಿಸಲಾದ ಡೊಮೇನ್‌ಗಳು, ಉದಾ. natwest.com, rbs.com — ಯಾವುದೇ ಇಮೇಲ್ ಅನ್ನು ಅನುಮತಿಸಲು ಖಾಲಿ ಬಿಡಿ"
+    "allowedDomainsHint": "ಅಲ್ಪವಿರಾಮದಿಂದ ಪ್ರತ್ಯೇಕಿಸಲಾದ ಡೊಮೇನ್‌ಗಳು, ಉದಾ. natwest.com, rbs.com — ಯಾವುದೇ ಇಮೇಲ್ ಅನ್ನು ಅನುಮತಿಸಲು ಖಾಲಿ ಬಿಡಿ",
+    "integrityMergedTag": "ಸಮಗ್ರತೆ ವಿಲೀನ",
+    "adjScoreCol": "ಸರಿ. ಅಂಕ",
+    "adjRankCol": "ಸರಿ. ಶ್ರೇಣಿ",
+    "adjScoreFormula": "= ಅಂಕ × (ಸಮಗ್ರತೆ / 100).",
+    "adjRankFormula": "ಈ ತೂಕದ ಅಂಕವನ್ನು ಬಳಸುತ್ತದೆ.",
+    "adjArrowsNote": "ಬಾಣಗಳು ಅಂಕ ಶ್ರೇಣಿ ವಿರುದ್ಧ ಬದಲಾವಣೆ ತೋರಿಸುತ್ತವೆ.",
+    "btnAnswers": "ಉತ್ತರಗಳು",
+    "adjRankUp": "ಅಂಕ ಶ್ರೇಣಿಗಿಂತ {{delta}} ಮೇಲೆ",
+    "adjRankDown": "ಅಂಕ ಶ್ರೇಣಿಗಿಂತ {{delta}} ಕೆಳಗೆ",
+    "lockSession": "ಸೆಷನ್ ಲಾಕ್ ಮಾಡಿ",
+    "unlockSession": "ಸೆಷನ್ ಅನ್‌ಲಾಕ್ ಮಾಡಿ"
   },
   "appFeedback": {
     "floatButtonTooltip": "ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",

@@ -1734,7 +1734,18 @@
     "closeWindow": "Fermer",
     "reportPendingEmail": "Your detailed test report will be sent to your email once the exam period ends.",
     "allowedDomains": "Domaines e-mail autorisés (optionnel)",
-    "allowedDomainsHint": "Domaines séparés par des virgules, ex. natwest.com, rbs.com — laisser vide pour autoriser tout e-mail"
+    "allowedDomainsHint": "Domaines séparés par des virgules, ex. natwest.com, rbs.com — laisser vide pour autoriser tout e-mail",
+    "integrityMergedTag": "Intégrité fusionnée",
+    "adjScoreCol": "Score adj.",
+    "adjRankCol": "Rang adj.",
+    "adjScoreFormula": "= Score × (Intégrité / 100).",
+    "adjRankFormula": "utilise ce score pondéré.",
+    "adjArrowsNote": "Les flèches indiquent le changement par rapport au rang par notes.",
+    "btnAnswers": "Réponses",
+    "adjRankUp": "{{delta}} position(s) au-dessus du rang par notes",
+    "adjRankDown": "{{delta}} position(s) en dessous du rang par notes",
+    "lockSession": "Verrouiller la session",
+    "unlockSession": "Déverrouiller la session"
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",
