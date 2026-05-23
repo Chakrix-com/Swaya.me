@@ -2,23 +2,25 @@
  * ExamResults — host-facing results dashboard
  * Route: /quiz/:id/exam-results (authenticated)
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Table, Space, Tag, Statistic,
-  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, Modal, List
+  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, Modal, List,
+  Badge, Timeline, Image
 } from 'antd'
 const { TextArea } = Input
 import {
   TrophyOutlined, DownloadOutlined, ArrowLeftOutlined,
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined,
-  ClockCircleOutlined, SyncOutlined, RobotOutlined, FilePdfOutlined
+  ClockCircleOutlined, SyncOutlined, RobotOutlined, FilePdfOutlined,
+  LockOutlined, UnlockOutlined, WarningOutlined, CameraOutlined,
+  ArrowUpOutlined, ArrowDownOutlined
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
-import { examAPI } from '../../services/api'
+import { examAPI, proctoringAPI } from '../../services/api'
 import dayjs from 'dayjs'
-import { ViolationReport } from './ViolationReport'
 import { exportExamResultsPDF } from './exportPDF'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import ReactMarkdown from 'react-markdown'
@@ -26,6 +28,12 @@ import './ExamResults.css'
 
 const { Title, Text } = Typography
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
+
+function integrityColor(score) {
+  if (score >= 70) return '#52c41a'
+  if (score >= 40) return '#faad14'
+  return '#ff4d4f'
+}
 
 const DEFAULT_AI_PROMPT = `Your report MUST contain exactly these sections:
 
@@ -53,18 +61,28 @@ export default function ExamResults() {
 
   const [loading, setLoading] = useState(true)
   const [results, setResults] = useState(null)
+  const [violationData, setViolationData] = useState([])
+  const [proctoringEnabled, setProctoringEnabled] = useState(false)
   const [error, setError] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [analysing, setAnalysing] = useState(false)
   const [analysisError, setAnalysisError] = useState(null)
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
+
+  // Participant exam-detail modal
   const [participantDetail, setParticipantDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const handleRowClick = async (record) => {
-    if (!record.participant_id) return
+  // Proctoring detail modal
+  const [selectedProctoring, setSelectedProctoring] = useState(null)
+  const [proSnapshots, setProSnapshots] = useState([])
+  const [proSnapshotsLoading, setProSnapshotsLoading] = useState(false)
+  const [proActionLoading, setProActionLoading] = useState(false)
+
+  const handleRowDetailClick = async (record) => {
+    if (!record.participant_id || !record.is_completed) return
     setDetailOpen(true)
     setDetailLoading(true)
     setParticipantDetail(null)
@@ -78,11 +96,54 @@ export default function ExamResults() {
     }
   }
 
+  const handleViewProctoring = (entry) => {
+    setSelectedProctoring(entry)
+    setProSnapshots([])
+    setProSnapshotsLoading(true)
+    proctoringAPI.getSnapshots(id, entry.participant_id)
+      .then(res => setProSnapshots(res.data.snapshots || []))
+      .catch(() => setProSnapshots([]))
+      .finally(() => setProSnapshotsLoading(false))
+  }
+
+  const handleLock = async (entry) => {
+    setProActionLoading(true)
+    try {
+      const token = entry._integrityEntry?.events?.[0]?.session_token
+      if (token) await proctoringAPI.lockSession(token)
+      // Refresh proctoring data
+      const res = await proctoringAPI.getReport(id).catch(() => ({ data: [] }))
+      setViolationData(res.data || [])
+      if (selectedProctoring?.participant_id === entry.participant_id) {
+        setSelectedProctoring(prev => ({ ...prev, is_locked: true }))
+      }
+    } catch (_) {} finally { setProActionLoading(false) }
+  }
+
+  const handleUnlock = async (entry) => {
+    setProActionLoading(true)
+    try {
+      const token = entry._integrityEntry?.events?.[0]?.session_token
+      if (token) await proctoringAPI.unlockSession(token)
+      const res = await proctoringAPI.getReport(id).catch(() => ({ data: [] }))
+      setViolationData(res.data || [])
+      if (selectedProctoring?.participant_id === entry.participant_id) {
+        setSelectedProctoring(prev => ({ ...prev, is_locked: false }))
+      }
+    } catch (_) {} finally { setProActionLoading(false) }
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await examAPI.getResults(id)
-        setResults(res.data)
+        const [examRes, reportRes, configRes] = await Promise.all([
+          examAPI.getResults(id),
+          proctoringAPI.getReport(id).catch(() => ({ data: [] })),
+          fetch(`/api/v1/proctoring/config/${id}`).then(r => r.json()).catch(() => null),
+        ])
+        setResults(examRes.data)
+        setViolationData(reportRes.data || [])
+        setProctoringEnabled(configRes?.enabled ?? false)
       } catch (err) {
         setError(err.response?.data?.detail || t('common.error'))
       } finally {
@@ -115,21 +176,72 @@ export default function ExamResults() {
     }
   }
 
+  // Merge leaderboard with proctoring data and compute both rankings
+  const mergedParticipants = useMemo(() => {
+    if (!results?.leaderboard) return []
+    const integrityMap = {}
+    ;(violationData || []).forEach(v => { integrityMap[v.participant_id] = v })
+
+    const merged = results.leaderboard.map((p, i) => {
+      const integrity = integrityMap[p.participant_id] ?? null
+      const integrityScore = integrity?.integrity_score ?? null
+      const adjustedScore = p.is_completed
+        ? (integrityScore != null ? Math.round(p.score * (integrityScore / 100) * 10) / 10 : p.score)
+        : null
+      return {
+        ...p,
+        marks_rank: p.rank ?? (i + 1),
+        integrity_score: integrityScore,
+        violation_count: integrity?.violation_count ?? null,
+        is_locked: integrity?.is_locked ?? false,
+        webcam_required: integrity?.webcam_required ?? null,
+        webcam_granted: integrity?.webcam_granted ?? null,
+        adjusted_score: adjustedScore,
+        _integrityEntry: integrity,
+      }
+    })
+
+    // Adjusted rank — only among completed participants
+    const completed = merged.filter(p => p.is_completed)
+    const byAdjusted = [...completed].sort((a, b) =>
+      b.adjusted_score - a.adjusted_score ||
+      (a.time_taken_seconds ?? Infinity) - (b.time_taken_seconds ?? Infinity)
+    )
+    const adjRankMap = {}
+    byAdjusted.forEach((p, i) => { adjRankMap[p.participant_id] = i + 1 })
+
+    return merged.map(p => ({
+      ...p,
+      adjusted_rank: p.is_completed ? (adjRankMap[p.participant_id] ?? null) : null,
+    }))
+  }, [results, violationData])
+
   const handleExportCsv = () => {
     if (!results) return
+    const hasProcData = proctoringEnabled || violationData.length > 0
+    const headers = ['Marks Rank', 'Name', 'Email', 'Score', 'Max Score', '%', 'Time (s)']
+    if (hasProcData) headers.push('Integrity Score', 'Adjusted Score', 'Adjusted Rank', 'Violations', 'Locked')
     const rows = [
-      ['Rank', 'Name', 'Email', 'Score', 'Max Score', '%', 'Correct', 'Time (s)', 'Completed At'],
-      ...results.leaderboard.map(e => [
-        e.rank,
-        e.display_name,
-        e.email || '',
-        e.score,
-        e.max_score,
-        e.percentage,
-        e.correct_count,
-        e.time_taken_seconds != null ? Math.round(e.time_taken_seconds) : '',
-        e.completed_at ? dayjs(e.completed_at).format('YYYY-MM-DD HH:mm:ss') : '',
-      ])
+      headers,
+      ...mergedParticipants.map(e => {
+        const base = [
+          e.marks_rank ?? '',
+          e.display_name,
+          e.email || '',
+          e.score,
+          e.max_score,
+          e.percentage,
+          e.time_taken_seconds != null ? Math.round(e.time_taken_seconds) : '',
+        ]
+        if (hasProcData) base.push(
+          e.integrity_score ?? 'N/A',
+          e.adjusted_score ?? '',
+          e.adjusted_rank ?? '',
+          e.violation_count ?? 0,
+          e.is_locked ? 'Yes' : 'No',
+        )
+        return base
+      })
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -160,30 +272,61 @@ export default function ExamResults() {
     )
   }
 
-  const leaderboardColumns = [
+  const hasProcData = proctoringEnabled || violationData.length > 0
+
+  const rankCell = (rank, record) => {
+    if (!record.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
+    if (rank <= 3) return <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
+    return <Text>{rank}</Text>
+  }
+
+  const adjRankCell = (adjRank, record) => {
+    if (!record.is_completed || adjRank == null) return '—'
+    const delta = record.marks_rank - adjRank
+    return (
+      <Space size={2}>
+        {adjRank <= 3
+          ? <TrophyOutlined style={{ color: adjRank === 1 ? '#faad14' : adjRank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
+          : <Text>{adjRank}</Text>
+        }
+        {delta > 0 && (
+          <Tooltip title={`Up ${delta} from marks rank`}>
+            <Text style={{ color: '#52c41a', fontSize: 11 }}><ArrowUpOutlined />{delta}</Text>
+          </Tooltip>
+        )}
+        {delta < 0 && (
+          <Tooltip title={`Down ${Math.abs(delta)} from marks rank`}>
+            <Text style={{ color: '#ff4d4f', fontSize: 11 }}><ArrowDownOutlined />{Math.abs(delta)}</Text>
+          </Tooltip>
+        )}
+      </Space>
+    )
+  }
+
+  const baseColumns = [
     {
       title: t('exam.rankCol'),
-      dataIndex: 'rank',
-      width: 60,
-      render: (rank, row) => {
-        if (!row.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
-        if (rank <= 3) return <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
-        return <Text>{rank}</Text>
-      }
+      dataIndex: 'marks_rank',
+      width: 70,
+      fixed: 'left',
+      render: (rank, row) => rankCell(rank, row),
     },
     {
       title: t('exam.nameCol'),
       dataIndex: 'display_name',
-      render: (name, row) => <Text strong style={row.is_completed ? {} : { color: '#8c8c8c' }}>{name}</Text>
-    },
-    {
-      title: t('exam.emailCol'),
-      dataIndex: 'email',
-      render: (email) => email ? <Text type="secondary" style={{ fontSize: 12 }}>{email}</Text> : <Text type="secondary">—</Text>
+      width: 180,
+      fixed: 'left',
+      render: (name, row) => (
+        <div>
+          <Text strong style={row.is_completed ? {} : { color: '#8c8c8c' }}>{name}</Text>
+          {row.email && <div style={{ fontSize: 11, color: '#888' }}>{row.email}</div>}
+        </div>
+      ),
     },
     {
       title: t('exam.scoreCol'),
       dataIndex: 'score',
+      width: 110,
       render: (score, row) => row.is_completed ? (
         <Space>
           <Text strong style={{ color: '#1890ff' }}>{score}</Text>
@@ -194,6 +337,7 @@ export default function ExamResults() {
     {
       title: t('exam.percentCol'),
       dataIndex: 'percentage',
+      width: 130,
       render: (pct, row) => row.is_completed ? (
         <Progress
           percent={pct}
@@ -204,15 +348,9 @@ export default function ExamResults() {
       ) : <Text type="secondary">—</Text>
     },
     {
-      title: t('exam.correctAnswers'),
-      dataIndex: 'correct_count',
-      render: (count, row) => row.is_completed
-        ? <Tag color="success" icon={<CheckCircleOutlined />}>{count}</Tag>
-        : <Text type="secondary">—</Text>
-    },
-    {
       title: t('exam.timeTakenCol'),
       dataIndex: 'time_taken_seconds',
+      width: 100,
       render: (secs) => {
         if (secs == null) return '—'
         const m = Math.floor(secs / 60)
@@ -220,12 +358,85 @@ export default function ExamResults() {
         return <Text><ClockCircleOutlined style={{ marginRight: 4 }} />{m}m {s}s</Text>
       }
     },
+  ]
+
+  const proctoringColumns = [
     {
-      title: t('exam.completedAtCol'),
-      dataIndex: 'completed_at',
-      render: (dt) => dt ? dayjs(dt).format('HH:mm, DD MMM') : '—'
+      title: 'Integrity',
+      dataIndex: 'integrity_score',
+      width: 90,
+      render: (score) => score != null
+        ? <Badge count={score} style={{ backgroundColor: integrityColor(score) }} overflowCount={100} />
+        : <Text type="secondary" style={{ fontSize: 12 }}>N/A</Text>,
+      sorter: (a, b) => (a.integrity_score ?? 101) - (b.integrity_score ?? 101),
+    },
+    {
+      title: 'Adj. Score',
+      dataIndex: 'adjusted_score',
+      width: 90,
+      render: (val, row) => row.is_completed
+        ? <Text style={{ color: '#722ed1' }}>{val}</Text>
+        : '—',
+      sorter: (a, b) => (b.adjusted_score ?? -1) - (a.adjusted_score ?? -1),
+    },
+    {
+      title: 'Adj. Rank',
+      dataIndex: 'adjusted_rank',
+      width: 90,
+      render: (adjRank, row) => adjRankCell(adjRank, row),
+      sorter: (a, b) => (a.adjusted_rank ?? 9999) - (b.adjusted_rank ?? 9999),
+    },
+    {
+      title: 'Violations',
+      dataIndex: 'violation_count',
+      width: 80,
+      render: (count) => count == null ? <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
+        : count > 0
+          ? <Tag color="orange" icon={<WarningOutlined />}>{count}</Tag>
+          : <Tag color="success">0</Tag>,
+      sorter: (a, b) => (b.violation_count ?? -1) - (a.violation_count ?? -1),
+    },
+    {
+      title: 'Status',
+      width: 90,
+      render: (_, row) => {
+        if (!row._integrityEntry) return <Tag color="default">—</Tag>
+        if (row.is_locked) return <Tag color="red" icon={<LockOutlined />}>Locked</Tag>
+        if (row.violation_count > 0) return <Tag color="orange" icon={<WarningOutlined />}>Flagged</Tag>
+        return <Tag color="green" icon={<CheckCircleOutlined />}>Clean</Tag>
+      },
     },
   ]
+
+  const actionColumn = {
+    title: 'Actions',
+    width: 140,
+    render: (_, row) => (
+      <Space size={4}>
+        {row.is_completed && (
+          <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>
+            Answers
+          </Button>
+        )}
+        {row._integrityEntry && (
+          <Button
+            size="small"
+            icon={<CameraOutlined />}
+            onClick={(e) => { e.stopPropagation(); handleViewProctoring(row) }}
+          >
+            Integrity
+          </Button>
+        )}
+      </Space>
+    ),
+  }
+
+  const tableColumns = hasProcData
+    ? [...baseColumns, ...proctoringColumns, actionColumn]
+    : [...baseColumns, { ...actionColumn, render: (_, row) => row.is_completed
+        ? <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>Answers</Button>
+        : null
+      }]
 
   return (
     <div style={{ padding: 24 }}>
@@ -313,12 +524,17 @@ export default function ExamResults() {
         </Col>
       </Row>
 
-      {/* Leaderboard */}
+      {/* Unified leaderboard + integrity table */}
       <Card
         title={
           <Space>
             <TrophyOutlined />
             {t('exam.leaderboard')}
+            {hasProcData && (
+              <Tag color="purple" style={{ marginLeft: 8 }}>
+                Integrity merged
+              </Tag>
+            )}
           </Space>
         }
         extra={
@@ -328,19 +544,30 @@ export default function ExamResults() {
         }
         style={{ marginBottom: 24 }}
       >
-        {results.leaderboard.length === 0 ? (
+        {hasProcData && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={
+              <span>
+                <strong>Adj. Score</strong> = Score × (Integrity / 100). &nbsp;
+                <strong>Adj. Rank</strong> uses this weighted score. &nbsp;
+                Arrows show change vs Marks Rank.
+              </span>
+            }
+          />
+        )}
+        {mergedParticipants.length === 0 ? (
           <Text type="secondary">{t('exam.noParticipantsYet', 'No one has started this exam yet.')}</Text>
         ) : (
           <Table
-            dataSource={results.leaderboard}
-            columns={leaderboardColumns}
+            dataSource={mergedParticipants}
+            columns={tableColumns}
             rowKey={(r, i) => r.participant_id ?? `ip-${i}`}
-            pagination={results.leaderboard.length > 20 ? { pageSize: 20 } : false}
+            pagination={mergedParticipants.length > 20 ? { pageSize: 20 } : false}
             size="small"
-            onRow={(record) => ({
-              onClick: () => handleRowClick(record),
-              style: record.is_completed ? { cursor: 'pointer' } : {},
-            })}
+            scroll={{ x: 'max-content' }}
           />
         )}
       </Card>
@@ -456,8 +683,7 @@ export default function ExamResults() {
         )}
       </Card>
 
-      <ViolationReport quizId={id} />
-
+      {/* Participant exam-detail modal */}
       <Modal
         open={detailOpen}
         onCancel={() => setDetailOpen(false)}
@@ -548,6 +774,116 @@ export default function ExamResults() {
         )}
         {!detailLoading && !participantDetail && (
           <Alert type="error" message="Could not load participant detail." />
+        )}
+      </Modal>
+
+      {/* Proctoring detail modal */}
+      <Modal
+        title={
+          <Space>
+            <CameraOutlined />
+            {selectedProctoring?.display_name || `#${selectedProctoring?.participant_id}`}
+            {selectedProctoring?.email ? ` — ${selectedProctoring.email}` : ''}
+          </Space>
+        }
+        open={!!selectedProctoring}
+        onCancel={() => { setSelectedProctoring(null); setProSnapshots([]) }}
+        footer={
+          selectedProctoring && (
+            <Space>
+              {selectedProctoring.is_locked ? (
+                <Button
+                  icon={<UnlockOutlined />}
+                  onClick={() => handleUnlock(selectedProctoring)}
+                  loading={proActionLoading}
+                >
+                  Unlock Session
+                </Button>
+              ) : (
+                <Button
+                  danger
+                  icon={<LockOutlined />}
+                  onClick={() => handleLock(selectedProctoring)}
+                  loading={proActionLoading}
+                >
+                  Lock Session
+                </Button>
+              )}
+            </Space>
+          )
+        }
+        width={700}
+      >
+        {selectedProctoring && (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                <CameraOutlined /> Webcam Snapshots ({proSnapshotsLoading ? '…' : proSnapshots.length})
+              </Text>
+              {proSnapshotsLoading ? (
+                <Spin size="small" />
+              ) : proSnapshots.length === 0 ? (
+                <Alert message="No snapshots recorded for this participant" type="warning" showIcon style={{ marginBottom: 8 }} />
+              ) : (
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+                  <Image.PreviewGroup>
+                    {proSnapshots.map((snap) => {
+                      const snapTime = snap.timestamp_ms
+                      const nearViolation = selectedProctoring._integrityEntry?.events?.some((e) => {
+                        if (!e.occurred_at) return false
+                        const evtMs = dayjs(e.occurred_at).valueOf()
+                        return Math.abs(evtMs - snapTime) < 60000
+                      })
+                      return (
+                        <div key={snap.filename} style={{ flexShrink: 0, textAlign: 'center' }}>
+                          <Image
+                            src={snap.url}
+                            width={100}
+                            height={75}
+                            style={{
+                              objectFit: 'cover',
+                              border: nearViolation ? '2px solid #ff4d4f' : '2px solid #d9d9d9',
+                              borderRadius: 4,
+                            }}
+                            preview={{ src: snap.url }}
+                          />
+                          <div style={{ fontSize: 10, color: nearViolation ? '#ff4d4f' : '#999', marginTop: 2 }}>
+                            {snap.timestamp_ms ? dayjs(snap.timestamp_ms).format('HH:mm:ss') : ''}
+                            {nearViolation && ' ⚠'}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </Image.PreviewGroup>
+                </div>
+              )}
+            </div>
+
+            {(!selectedProctoring._integrityEntry?.events || selectedProctoring._integrityEntry.events.length === 0) ? (
+              <Alert message="No violation events recorded" type="success" showIcon />
+            ) : (
+              <Timeline
+                items={selectedProctoring._integrityEntry.events.map((e) => ({
+                  color: e.event_type.includes('LOCK') ? 'red' : e.event_type.includes('HONEYPOT') ? 'red' : 'orange',
+                  children: (
+                    <div>
+                      <Text strong>{e.event_type}</Text>
+                      {e.rule_id && <Text type="secondary"> ({e.rule_id})</Text>}
+                      <br />
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {e.occurred_at ? dayjs(e.occurred_at).format('HH:mm:ss') : ''}
+                      </Text>
+                      {e.metadata && Object.keys(e.metadata).length > 0 && (
+                        <pre style={{ fontSize: 11, marginTop: 4, color: '#666' }}>
+                          {JSON.stringify(e.metadata, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ),
+                }))}
+              />
+            )}
+          </>
         )}
       </Modal>
     </div>
