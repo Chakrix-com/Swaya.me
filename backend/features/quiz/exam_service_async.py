@@ -312,6 +312,15 @@ async def save_answer(
     # Allow saving answers even after window closes (grace for last question)
     participant = await _get_active_participant(db, quiz, session_token)
 
+    # Block answer saves if proctoring has locked the session
+    from persistence.models.proctoring import ProctoringSession
+    ps_result = await db.execute(
+        select(ProctoringSession).where(ProctoringSession.participant_id == participant.id)
+    )
+    ps = ps_result.scalar_one_or_none()
+    if ps and ps.is_locked:
+        raise HTTPException(status_code=423, detail="Session is locked")
+
     # Load question
     q_result = await db.execute(
         select(Question).filter(

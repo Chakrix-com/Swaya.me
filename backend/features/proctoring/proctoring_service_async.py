@@ -98,7 +98,7 @@ async def init_session(
     }
     await _set_redis_session(redis, session_token, redis_data)
 
-    return SessionInitResponse(session_token=session_token, rule_set=rule_set)
+    return SessionInitResponse(session_token=session_token, rule_set=rule_set, is_locked=sess.is_locked)
 
 
 async def update_webcam_granted(session_token: str, db: AsyncSession) -> bool:

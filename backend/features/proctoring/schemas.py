@@ -39,6 +39,7 @@ class SessionInitRequest(BaseModel):
 class SessionInitResponse(BaseModel):
     session_token: str
     rule_set: ResolvedRuleSet
+    is_locked: bool = False
 
 
 class ViolationEventRequest(BaseModel):

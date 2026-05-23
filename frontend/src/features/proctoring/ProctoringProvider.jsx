@@ -41,7 +41,9 @@ export function ProctoringProvider({ quizId, sessionToken, onAutoSubmit, childre
         setRuleSet(data);
         if (data.honeypot_config) setHoneypotConfig(data.honeypot_config);
 
-        // Init the proctoring session in Redis+DB as soon as config confirms proctoring is on
+        // Init the proctoring session in Redis+DB as soon as config confirms proctoring is on.
+        // The response includes is_locked — if the session was already locked (e.g. after a
+        // page reload), enforce the lock immediately so the candidate cannot continue.
         if (data.enabled && sessionToken) {
           api.post(
             '/proctoring/session/init',
@@ -52,7 +54,16 @@ export function ProctoringProvider({ quizId, sessionToken, onAutoSubmit, childre
               webcam_granted: false,
             },
             { headers: { 'X-Session-Token': sessionToken } }
-          ).catch(() => {});
+          ).then((initRes) => {
+            if (initRes.data?.is_locked) {
+              lockReasonRef.current = 'SESSION_ALREADY_LOCKED';
+              setIsLocked(true);
+              if (data.escalation?.auto_submit_on_lock && onAutoSubmit) {
+                autoSubmitRef.current = true;
+                onAutoSubmit();
+              }
+            }
+          }).catch(() => {});
         }
       })
       .catch(() => {
