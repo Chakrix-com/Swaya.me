@@ -276,7 +276,6 @@ export default function ExamResults() {
 
   const rankCell = (rank, record) => {
     if (!record.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
-    if (rank <= 3) return <TrophyOutlined style={{ color: rank === 1 ? '#faad14' : rank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
     return <Text>{rank}</Text>
   }
 
@@ -285,10 +284,7 @@ export default function ExamResults() {
     const delta = record.marks_rank - adjRank
     return (
       <Space size={2}>
-        {adjRank <= 3
-          ? <TrophyOutlined style={{ color: adjRank === 1 ? '#faad14' : adjRank === 2 ? '#8c8c8c' : '#cd7f32', fontSize: 18 }} />
-          : <Text>{adjRank}</Text>
-        }
+        <Text>{adjRank}</Text>
         {delta > 0 && (
           <Tooltip title={t('exam.adjRankUp', { delta })}>
             <Text style={{ color: '#52c41a', fontSize: 11 }}><ArrowUpOutlined />{delta}</Text>
@@ -309,6 +305,8 @@ export default function ExamResults() {
       dataIndex: 'marks_rank',
       width: 70,
       fixed: 'left',
+      defaultSortOrder: 'ascend',
+      sorter: (a, b) => (a.marks_rank ?? 9999) - (b.marks_rank ?? 9999),
       render: (rank, row) => rankCell(rank, row),
     },
     {
@@ -327,6 +325,7 @@ export default function ExamResults() {
       title: t('exam.scoreCol'),
       dataIndex: 'score',
       width: 110,
+      sorter: (a, b) => (b.score ?? -1) - (a.score ?? -1),
       render: (score, row) => row.is_completed ? (
         <Space>
           <Text strong style={{ color: '#1890ff' }}>{score}</Text>
