@@ -1743,7 +1743,10 @@
     "adjRankUp": "{{delta}} posición(es) arriba del rango por notas",
     "adjRankDown": "{{delta}} posición(es) debajo del rango por notas",
     "lockSession": "Bloquear sesión",
-    "unlockSession": "Desbloquear sesión"
+    "unlockSession": "Desbloquear sesión",
+    "noViolationEvents": "No se registraron eventos de violación",
+    "biometricEventsTitle": "Integridad reducida por análisis de comportamiento",
+    "biometricEventsDesc": "No se detectaron violaciones explícitas, pero la biometría conductual (ritmo de escritura, patrones del ratón) redujo la puntuación de integridad de este participante a {{score}}. No se registran eventos individuales hasta que la puntuación baje de 40."
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",

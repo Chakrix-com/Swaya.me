@@ -1747,7 +1747,10 @@
     "adjRankUp": "Up {{delta}} from marks rank",
     "adjRankDown": "Down {{delta}} from marks rank",
     "lockSession": "Lock Session",
-    "unlockSession": "Unlock Session"
+    "unlockSession": "Unlock Session",
+    "noViolationEvents": "No violation events recorded",
+    "biometricEventsTitle": "Integrity reduced by behavioral analysis",
+    "biometricEventsDesc": "No explicit violations were detected, but behavioral biometrics (typing rhythm, mouse patterns) reduced this participant's integrity score to {{score}}. No individual events are logged until the score drops below 40."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

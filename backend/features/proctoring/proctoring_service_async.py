@@ -462,11 +462,22 @@ async def ingest_biometric_sample(
     if sess:
         sess.integrity_score = new_score
 
+    # Log an event each time the score crosses a threshold for the first time
+    # (current_score >= threshold > new_score means we just crossed it downward)
+    _BIOMETRIC_THRESHOLDS = [
+        (90, "BIOMETRIC_ANOMALY_MILD"),
+        (70, "BIOMETRIC_ANOMALY"),
+        (40, "LOW_INTEGRITY_SCORE"),
+    ]
     locked = False
-    if new_score < 40:
-        violation_result = await log_violation(session_token, "behavioral_biometrics", "LOW_INTEGRITY_SCORE",
-                            {"score": new_score}, db, redis)
-        locked = violation_result.is_locked
+    for threshold, event_type in _BIOMETRIC_THRESHOLDS:
+        if new_score < threshold <= current_score:
+            violation_result = await log_violation(
+                session_token, "behavioral_biometrics", event_type,
+                {"score": new_score}, db, redis,
+            )
+            if event_type == "LOW_INTEGRITY_SCORE":
+                locked = violation_result.is_locked
 
     await db.commit()
     return locked

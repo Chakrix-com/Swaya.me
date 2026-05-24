@@ -1743,7 +1743,10 @@
     "adjRankUp": "{{delta}} Position(en) über dem Notenrang",
     "adjRankDown": "{{delta}} Position(en) unter dem Notenrang",
     "lockSession": "Sitzung sperren",
-    "unlockSession": "Sitzung entsperren"
+    "unlockSession": "Sitzung entsperren",
+    "noViolationEvents": "Keine Verstöße aufgezeichnet",
+    "biometricEventsTitle": "Integrität durch Verhaltensanalyse reduziert",
+    "biometricEventsDesc": "Es wurden keine expliziten Verstöße erkannt, aber verhaltensbiometrische Daten (Tipprhythmus, Mausbewegungen) haben den Integritätswert dieses Teilnehmers auf {{score}} reduziert. Einzelereignisse werden erst protokolliert, wenn der Wert unter 40 fällt."
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",

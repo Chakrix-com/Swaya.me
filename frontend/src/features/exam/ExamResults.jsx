@@ -859,7 +859,16 @@ export default function ExamResults() {
             </div>
 
             {(!selectedProctoring._integrityEntry?.events || selectedProctoring._integrityEntry.events.length === 0) ? (
-              <Alert message="No violation events recorded" type="success" showIcon />
+              selectedProctoring.integrity_score != null && selectedProctoring.integrity_score < 100 ? (
+                <Alert
+                  message={t('exam.biometricEventsTitle')}
+                  description={t('exam.biometricEventsDesc', { score: selectedProctoring.integrity_score })}
+                  type="warning"
+                  showIcon
+                />
+              ) : (
+                <Alert message={t('exam.noViolationEvents')} type="success" showIcon />
+              )
             ) : (
               <Timeline
                 items={selectedProctoring._integrityEntry.events.map((e) => ({
