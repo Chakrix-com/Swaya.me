@@ -18,6 +18,28 @@ _resolver = ProctoringContextResolver()
 
 REDIS_SESSION_TTL = 86400  # 24 hours
 
+# How many integrity points each explicit violation costs.
+# Only events listed here deduct from integrity_score; all others cost 5.
+_VIOLATION_SCORE_DEDUCTIONS: dict[str, int] = {
+    "FAST_FIRST_ANSWER": 10,
+    "TAB_SWITCH": 10,
+    "COPY": 15,
+    "PASTE": 15,
+    "CUT": 10,
+    "RIGHT_CLICK_ATTEMPT": 5,
+    "FULLSCREEN_EXIT": 15,
+    "FULLSCREEN_BLOCKED": 10,
+    "DEVTOOLS_OPEN": 15,
+    "FACE_NOT_DETECTED": 10,
+    "MULTIPLE_FACES_DETECTED": 15,
+    "WEBCAM_PERMISSION_DENIED": 20,
+}
+
+# Biometric-only event types — excluded from violation_count and backfill recalculation
+_BIOMETRIC_EVENT_TYPES = frozenset({
+    "BIOMETRIC_ANOMALY_MILD", "BIOMETRIC_ANOMALY", "LOW_INTEGRITY_SCORE",
+})
+
 
 def _session_key(token: str) -> str:
     return f"proctor:session:{token}"
@@ -195,17 +217,33 @@ async def _check_escalation(
         "WEBCAM_STREAM_ENDED",
     }
 
-    # Immediate lock events
+    # Immediate lock events — integrity score collapses to 0
     if event_type in lock_events:
         await lock_session(session_token, event_type, db, redis, redis_data=redis_data)
+        redis_data["integrity_score"] = 0
+        await _set_redis_session(redis, session_token, redis_data)
+        result = await db.execute(
+            select(ProctoringSession).where(
+                ProctoringSession.participant_id == redis_data["participant_id"],
+                ProctoringSession.quiz_id == redis_data["quiz_id"],
+            )
+        )
+        sess = result.scalar_one_or_none()
+        if sess:
+            sess.integrity_score = 0
         return ViolationEventResponse(logged=True, is_locked=True, violations_remaining=0, silent=True)
+
+    # Deduct from integrity score — capped at 0, never below
+    deduction = _VIOLATION_SCORE_DEDUCTIONS.get(event_type, 5)
+    new_integrity = max(0, redis_data.get("integrity_score", 100) - deduction)
 
     lock_threshold = redis_data.get("lock_threshold", 3)
     new_count = redis_data.get("violation_count", 0) + 1
     redis_data["violation_count"] = new_count
+    redis_data["integrity_score"] = new_integrity
     await _set_redis_session(redis, session_token, redis_data)
 
-    # Update DB violation count
+    # Update DB violation count + integrity score
     result = await db.execute(
         select(ProctoringSession).where(
             ProctoringSession.participant_id == redis_data["participant_id"],
@@ -215,6 +253,7 @@ async def _check_escalation(
     sess = result.scalar_one_or_none()
     if sess:
         sess.violation_count = new_count
+        sess.integrity_score = new_integrity
 
     if new_count >= lock_threshold:
         await lock_session(session_token, "MAX_VIOLATIONS_REACHED", db, redis, redis_data=redis_data)
@@ -438,46 +477,51 @@ async def ingest_biometric_sample(
     db: AsyncSession,
     redis: "RedisClient",
 ) -> bool:
-    """Returns True if the session was locked as a result of this sample."""
-    from features.proctoring.integrity_scorer import IntegrityScorer
+    """Returns True if the session was locked as a result of this sample.
 
+    Integrity score is driven by explicit, logged violations only.
+    The only biometric signal retained here is time-to-first-interaction < 1s,
+    which is logged as FAST_FIRST_ANSWER but does NOT count toward the lock
+    threshold (it's a soft indicator, not a hard rule violation).
+    """
     redis_data = await _get_redis_session(redis, session_token)
     if not redis_data:
         return False
     if redis_data.get("is_locked"):
         return True
 
-    current_score = redis_data.get("integrity_score", 100)
-    new_score = IntegrityScorer().score(sample, current_score)
-    redis_data["integrity_score"] = new_score
-    await _set_redis_session(redis, session_token, redis_data)
+    # Fast first interaction — < 1 second from question display to first input.
+    # Logged as an explicit event with metadata so hosts can review it.
+    # Does NOT increment violation_count (not a lock-contributing violation).
+    if 0 < sample.time_to_first_interaction_ms < 1000:
+        redis_data_current = await _get_redis_session(redis, session_token)
+        if redis_data_current and not redis_data_current.get("is_locked"):
+            deduction = _VIOLATION_SCORE_DEDUCTIONS["FAST_FIRST_ANSWER"]
+            new_integrity = max(0, redis_data_current.get("integrity_score", 100) - deduction)
+            redis_data_current["integrity_score"] = new_integrity
+            await _set_redis_session(redis, session_token, redis_data_current)
 
-    result = await db.execute(
-        select(ProctoringSession).where(
-            ProctoringSession.participant_id == redis_data["participant_id"],
-            ProctoringSession.quiz_id == redis_data["quiz_id"],
-        )
-    )
-    sess = result.scalar_one_or_none()
-    if sess:
-        sess.integrity_score = new_score
-
-    # Log an event each time the score crosses a threshold for the first time
-    # (current_score >= threshold > new_score means we just crossed it downward)
-    _BIOMETRIC_THRESHOLDS = [
-        (90, "BIOMETRIC_ANOMALY_MILD"),
-        (70, "BIOMETRIC_ANOMALY"),
-        (40, "LOW_INTEGRITY_SCORE"),
-    ]
-    locked = False
-    for threshold, event_type in _BIOMETRIC_THRESHOLDS:
-        if new_score < threshold <= current_score:
-            violation_result = await log_violation(
-                session_token, "behavioral_biometrics", event_type,
-                {"score": new_score}, db, redis,
+            event = ProctoringEvent(
+                quiz_id=redis_data_current["quiz_id"],
+                tenant_id=redis_data_current["tenant_id"],
+                participant_id=redis_data_current["participant_id"],
+                session_token=session_token,
+                rule_id="behavioral_biometrics",
+                event_type="FAST_FIRST_ANSWER",
+                occurred_at=datetime.now(timezone.utc),
+                event_metadata={"time_to_first_interaction_ms": sample.time_to_first_interaction_ms},
             )
-            if event_type == "LOW_INTEGRITY_SCORE":
-                locked = violation_result.is_locked
+            db.add(event)
+
+            result = await db.execute(
+                select(ProctoringSession).where(
+                    ProctoringSession.participant_id == redis_data_current["participant_id"],
+                    ProctoringSession.quiz_id == redis_data_current["quiz_id"],
+                )
+            )
+            sess = result.scalar_one_or_none()
+            if sess:
+                sess.integrity_score = new_integrity
 
     await db.commit()
-    return locked
+    return False
