@@ -1746,7 +1746,12 @@
     "unlockSession": "அமர்வை திற",
     "noViolationEvents": "மீறல் நிகழ்வுகள் பதிவு செய்யப்படவில்லை",
     "biometricEventsTitle": "நடத்தை பகுப்பாய்வால் நேர்மை குறைந்தது",
-    "biometricEventsDesc": "வெளிப்படையான மீறல்கள் எதுவும் கண்டறியப்படவில்லை, ஆனால் நடத்தை உயிரியல் அளவீடுகள் (தட்டச்சு தாளம், சுட்டி வடிவங்கள்) இந்த பங்கேற்பாளரின் நேர்மை மதிப்பெண்ணை {{score}} ஆக குறைத்தன. மதிப்பெண் 40க்கு கீழே வரும் வரை தனிப்பட்ட நிகழ்வுகள் பதிவு செய்யப்படாது."
+    "biometricEventsDesc": "வெளிப்படையான மீறல்கள் எதுவும் கண்டறியப்படவில்லை, ஆனால் நடத்தை உயிரியல் அளவீடுகள் (தட்டச்சு தாளம், சுட்டி வடிவங்கள்) இந்த பங்கேற்பாளரின் நேர்மை மதிப்பெண்ணை {{score}} ஆக குறைத்தன. மதிப்பெண் 40க்கு கீழே வரும் வரை தனிப்பட்ட நிகழ்வுகள் பதிவு செய்யப்படாது.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",

@@ -1746,7 +1746,12 @@
     "unlockSession": "સત્ર અનલૉક કરો",
     "noViolationEvents": "કોઈ ઉલ્લંઘન ઘટनाઓ નોંધાઈ નથી",
     "biometricEventsTitle": "વ્યવહારિક વિશ્લેષણ દ્વારા અખંડિતતા ઘટી",
-    "biometricEventsDesc": "કોઈ સ્પષ્ટ ઉલ્લંઘન ન મળ્યા, પરંતુ વ્યવહારિક બાયોમેટ્રિક્સ (ટાઇપિંગ લય, માઉસ પ્રેટ્સ) આ સહભાગીના અખંડિતતા સ્કોરને {{score}} પર ઘટાડ્યો. સ્કોર 40 ની નીચે ન જાય ત્યાં સુધી વ્યક્તિગત ઘટनाઓ નોંધાતી નથી."
+    "biometricEventsDesc": "કોઈ સ્પષ્ટ ઉલ્લંઘન ન મળ્યા, પરંતુ વ્યવહારિક બાયોમેટ્રિક્સ (ટાઇપિંગ લય, માઉસ પ્રેટ્સ) આ સહભાગીના અખંડિતતા સ્કોરને {{score}} પર ઘટાડ્યો. સ્કોર 40 ની નીચે ન જાય ત્યાં સુધી વ્યક્તિગત ઘટनाઓ નોંધાતી નથી.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",

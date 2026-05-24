@@ -570,16 +570,22 @@ async def get_exam_results(
     if quiz.quiz_type != QuizType.EXAM:
         raise QuizValidationError("Quiz is not an exam")
 
-    if not quiz.exam_session_id:
-        raise QuizValidationError("Exam has not been published yet")
+    # Build the full list of session IDs: current + all historical batches
+    all_session_ids = []
+    if quiz.exam_session_id:
+        all_session_ids.append(quiz.exam_session_id)
+    all_session_ids += [e['session_id'] for e in (quiz.linked_exam_session_ids or [])]
+
+    if not all_session_ids:
+        raise QuizValidationError("Exam has no session data")
 
     questions = sorted(quiz.questions, key=lambda q: q.order)
     max_score = sum(q.points for q in questions)
 
-    # Load all participants
+    # Load all participants across all batches
     participants_result = await db.execute(
         select(Participant).filter(
-            Participant.session_id == quiz.exam_session_id,
+            Participant.session_id.in_(all_session_ids),
         )
     )
     participants = participants_result.scalars().all()
@@ -588,10 +594,10 @@ async def get_exam_results(
     total_completed = sum(1 for p in participants if p.completed_at)
     total_abandoned = sum(1 for p in participants if p.is_abandoned)
 
-    # Load all answers for this session
+    # Load all answers across all batches
     answers_result = await db.execute(
         select(Answer).filter(
-            Answer.session_id == quiz.exam_session_id,
+            Answer.session_id.in_(all_session_ids),
         )
     )
     all_answers = answers_result.scalars().all()
@@ -740,13 +746,18 @@ async def get_participant_detail(
     if not quiz:
         raise QuizNotFoundError("Exam not found")
 
-    if not quiz.exam_session_id:
-        raise QuizValidationError("Exam has not been published yet")
+    all_session_ids = []
+    if quiz.exam_session_id:
+        all_session_ids.append(quiz.exam_session_id)
+    all_session_ids += [e['session_id'] for e in (quiz.linked_exam_session_ids or [])]
+
+    if not all_session_ids:
+        raise QuizValidationError("Exam has no session data")
 
     part_result = await db.execute(
         select(Participant).filter(
             Participant.id == participant_id,
-            Participant.session_id == quiz.exam_session_id,
+            Participant.session_id.in_(all_session_ids),
         )
     )
     participant = part_result.scalar_one_or_none()
@@ -755,7 +766,7 @@ async def get_participant_detail(
 
     answers_result = await db.execute(
         select(Answer).filter(
-            Answer.session_id == quiz.exam_session_id,
+            Answer.session_id.in_(all_session_ids),
             Answer.participant_id == participant_id,
         )
     )
@@ -819,6 +830,7 @@ async def publish_exam(
     db: AsyncSession,
     quiz_id: int,
     current_user: CurrentUser,
+    fresh_start: bool = False,
 ) -> ExamPublishResponse:
     """Auth-required — publish an exam: create session, generate slug."""
     from apscheduler.triggers.date import DateTrigger
@@ -850,6 +862,26 @@ async def publish_exam(
 
     if not quiz.questions:
         raise QuizValidationError("Exam must have at least one question")
+
+    current_max_score = sum(q.points for q in quiz.questions)
+
+    # If a previous session exists from unpublish, carry it forward or discard
+    if quiz.exam_session_id:
+        if fresh_start:
+            quiz.linked_exam_session_ids = None
+        else:
+            prev_entries = quiz.linked_exam_session_ids or []
+            # Guard: if any previously linked session had a different max_score,
+            # the quiz has been materially changed and merging leaderboards is unsafe.
+            if any(e['max_score'] != current_max_score for e in prev_entries):
+                raise InvalidQuizStatusError(
+                    "Questions have changed since the last session. "
+                    "Use fresh_start=true to start a new leaderboard."
+                )
+            quiz.linked_exam_session_ids = prev_entries + [
+                {"session_id": quiz.exam_session_id, "max_score": current_max_score}
+            ]
+        quiz.exam_session_id = None
 
     # Generate unique slug
     slug = None
@@ -923,8 +955,18 @@ async def unpublish_exam(
     if quiz.quiz_type != QuizType.EXAM:
         raise InvalidQuizStatusError("Quiz is not an exam")
 
+    # End the current session so no new participants can join via the old slug,
+    # but keep exam_session_id on the quiz so results remain accessible and
+    # republishing can carry it forward into linked_exam_session_ids.
+    if quiz.exam_session_id:
+        sess_res = await db.execute(
+            select(QuizSession).filter(QuizSession.id == quiz.exam_session_id)
+        )
+        old_session = sess_res.scalar_one_or_none()
+        if old_session and old_session.status != QuizSessionStatus.ENDED:
+            old_session.status = QuizSessionStatus.ENDED
+
     quiz.exam_slug = None
-    quiz.exam_session_id = None
     quiz.status = QuizStatus.DRAFT
     await db.commit()
     return {"unpublished": True}
@@ -1000,9 +1042,14 @@ async def send_participant_results_emails(quiz_id: int) -> list:
             logger.warning(f"Quiz {quiz_id} not found for participant emails")
             return failures
 
+        all_session_ids = []
+        if quiz.exam_session_id:
+            all_session_ids.append(quiz.exam_session_id)
+        all_session_ids += [e['session_id'] for e in (quiz.linked_exam_session_ids or [])]
+
         p_result = await db.execute(
             select(Participant).filter(
-                Participant.session_id == quiz.exam_session_id,
+                Participant.session_id.in_(all_session_ids),
                 Participant.completed_at.isnot(None),
                 Participant.email.isnot(None),
             )
@@ -1019,7 +1066,7 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                 a_result = await db.execute(
                     select(Answer).filter(
                         Answer.participant_id == participant.id,
-                        Answer.session_id == quiz.exam_session_id,
+                        Answer.session_id.in_(all_session_ids),
                     )
                 )
                 answers_by_qid = {a.question_id: a for a in a_result.scalars().all()}

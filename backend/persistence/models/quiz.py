@@ -98,6 +98,7 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     exam_require_email = Column(Boolean, default=False, nullable=False, server_default="0")
     exam_allowed_domains = Column(Text, nullable=True)
     exam_participant_emails_sent = Column(Boolean, default=False, nullable=False, server_default="0")
+    linked_exam_session_ids = Column(JSON, nullable=True)
 
     # Proctoring
     proctoring_policy = Column(JSON, nullable=True)

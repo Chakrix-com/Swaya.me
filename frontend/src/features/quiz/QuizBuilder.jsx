@@ -1008,6 +1008,7 @@ export default function QuizBuilder() {
   const [movingImages, setMovingImages] = useState(false)
   const [pollLinkModal, setPollLinkModal] = useState({ open: false, url: '' })
   const [examLinkModal, setExamLinkModal] = useState({ open: false, url: '' })
+  const [batchConfirmModal, setBatchConfirmModal] = useState({ open: false })
   const isPoll = quiz?.quiz_type === 'poll' || quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'poll') || (!quiz && initialQuizType === 'offline_poll')
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
   const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
@@ -2026,12 +2027,27 @@ export default function QuizBuilder() {
     }
   }
 
+  const _doPublishExam = async (freshStart) => {
+    setBatchConfirmModal({ open: false })
+    setLoading(true)
+    try {
+      const res = await examAPI.publish(id, freshStart)
+      setExamLinkModal({ open: true, url: res.data.exam_url })
+      await loadQuiz()
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('exam.publishError'))
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handlePublish = async () => {
     setLoading(true)
     try {
       // Automatically save current form values before publishing to ensure dates/settings are in the DB
       const currentValues = await form.validateFields()
-      
+
       // Serialize dayjs objects to ISO strings for the API (copied from handleSaveQuiz)
       const timeLimitMins = currentValues.exam_time_limit_minutes
       const saveValues = {
@@ -2049,13 +2065,19 @@ export default function QuizBuilder() {
         await quizAPI.update(id, saveValues)
       } else {
         const response = await quizAPI.create(saveValues)
-        // If it was a new quiz, we need the ID to publish, but this branch 
+        // If it was a new quiz, we need the ID to publish, but this branch
         // is unlikely as handlePublish is only shown when id exists and questions >= 1
         navigate(`/quiz/${response.data.id}/edit`)
         return // Stop here to let the navigation and state reload happen
       }
 
       if (isExam) {
+        if (quiz?.has_previous_session) {
+          // A previous batch exists — ask the host whether to continue or start fresh
+          setLoading(false)
+          setBatchConfirmModal({ open: true })
+          return
+        }
         const res = await examAPI.publish(id)
         setExamLinkModal({ open: true, url: res.data.exam_url })
         await loadQuiz()
@@ -2581,6 +2603,30 @@ export default function QuizBuilder() {
           >
             {pollLinkModal.url}
           </Text>
+        </Space>
+      </Modal>
+
+      {/* Batch continuity confirm modal */}
+      <Modal
+        title={t('exam.batchConfirmTitle')}
+        open={batchConfirmModal.open}
+        onCancel={() => setBatchConfirmModal({ open: false })}
+        footer={[
+          <Button key="fresh" danger onClick={() => _doPublishExam(true)} loading={loading}>
+            {t('exam.startFresh')}
+          </Button>,
+          <Button key="continue" type="primary" onClick={() => _doPublishExam(false)} loading={loading}>
+            {t('exam.continueLeaderboard')}
+          </Button>,
+        ]}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Alert
+            type="info"
+            showIcon
+            message={t('exam.batchConfirmDesc')}
+          />
+          <Text type="secondary">{t('exam.batchConfirmHint')}</Text>
         </Space>
       </Modal>
 

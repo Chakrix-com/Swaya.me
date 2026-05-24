@@ -1085,5 +1085,6 @@ class QuizBuilderServiceAsync:
             exam_results_email=getattr(quiz, 'exam_results_email', None),
             exam_require_email=bool(getattr(quiz, 'exam_require_email', False)),
             exam_allowed_domains=getattr(quiz, 'exam_allowed_domains', None),
+            has_previous_session=bool(getattr(quiz, 'exam_session_id', None)),
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
         )

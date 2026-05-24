@@ -1746,7 +1746,12 @@
     "unlockSession": "सत्र अनलॉक करें",
     "noViolationEvents": "कोई उल्लंघन घटना दर्ज नहीं",
     "biometricEventsTitle": "व्यवहार विश्लेषण द्वारा अखंडता कम हुई",
-    "biometricEventsDesc": "कोई स्पष्ट उल्लंघन नहीं पाया गया, लेकिन व्यवहार बायोमेट्रिक्स (टाइपिंग लय, माउस पैटर्न) ने इस प्रतिभागी का अखंडता स्कोर {{score}} कर दिया। 40 से नीचे जाने तक कोई व्यक्तिगत घटना दर्ज नहीं होती।"
+    "biometricEventsDesc": "कोई स्पष्ट उल्लंघन नहीं पाया गया, लेकिन व्यवहार बायोमेट्रिक्स (टाइपिंग लय, माउस पैटर्न) ने इस प्रतिभागी का अखंडता स्कोर {{score}} कर दिया। 40 से नीचे जाने तक कोई व्यक्तिगत घटना दर्ज नहीं होती।",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",

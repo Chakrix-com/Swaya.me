@@ -1,7 +1,7 @@
 """
 Exam API — public and authenticated endpoints for exam participation and results.
 """
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
@@ -160,12 +160,13 @@ async def analyze_exam_results_endpoint(
 @router.post("/quizzes/{quiz_id}/publish-exam", response_model=ExamPublishResponse)
 async def publish_exam(
     quiz_id: int,
+    fresh_start: bool = Query(False),
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Authenticated host — publish exam: generate slug + create session."""
     try:
-        return await svc.publish_exam(db, quiz_id, current_user)
+        return await svc.publish_exam(db, quiz_id, current_user, fresh_start=fresh_start)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except (QuizValidationError, InvalidQuizStatusError) as e:

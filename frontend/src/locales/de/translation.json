@@ -1746,7 +1746,12 @@
     "unlockSession": "Sitzung entsperren",
     "noViolationEvents": "Keine Verstöße aufgezeichnet",
     "biometricEventsTitle": "Integrität durch Verhaltensanalyse reduziert",
-    "biometricEventsDesc": "Es wurden keine expliziten Verstöße erkannt, aber verhaltensbiometrische Daten (Tipprhythmus, Mausbewegungen) haben den Integritätswert dieses Teilnehmers auf {{score}} reduziert. Einzelereignisse werden erst protokolliert, wenn der Wert unter 40 fällt."
+    "biometricEventsDesc": "Es wurden keine expliziten Verstöße erkannt, aber verhaltensbiometrische Daten (Tipprhythmus, Mausbewegungen) haben den Integritätswert dieses Teilnehmers auf {{score}} reduziert. Einzelereignisse werden erst protokolliert, wenn der Wert unter 40 fällt.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",

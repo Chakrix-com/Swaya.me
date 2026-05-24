@@ -1750,7 +1750,12 @@
     "unlockSession": "Unlock Session",
     "noViolationEvents": "No violation events recorded",
     "biometricEventsTitle": "Integrity reduced by behavioral analysis",
-    "biometricEventsDesc": "No explicit violations were detected, but behavioral biometrics (typing rhythm, mouse patterns) reduced this participant's integrity score to {{score}}. No individual events are logged until the score drops below 40."
+    "biometricEventsDesc": "No explicit violations were detected, but behavioral biometrics (typing rhythm, mouse patterns) reduced this participant's integrity score to {{score}}. No individual events are logged until the score drops below 40.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

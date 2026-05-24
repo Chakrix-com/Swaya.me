@@ -1746,7 +1746,12 @@
     "unlockSession": "సెషన్ అన్‌లాక్ చేయండి",
     "noViolationEvents": "ఉల్లంఘన సంఘటనలు నమోదు కాలేదు",
     "biometricEventsTitle": "ప్రవర్తన విశ్లేషణ ద్వారా సమగ్రత తగ్గింది",
-    "biometricEventsDesc": "స్పష్టమైన ఉల్లంఘనలు ఏవీ గుర్తించబడలేదు, కానీ ప్రవర్తన బయోమెట్రిక్స్ (టైపింగ్ రిథమ్, మౌస్ నమూనాలు) ఈ పాల్గొనేవారి సమగ్రత స్కోర్‌ను {{score}} కి తగ్గించాయి. స్కోర్ 40 కంటే తక్కువ పడిపోయే వరకు వ్యక్తిగత సంఘటనలు నమోదు కావు."
+    "biometricEventsDesc": "స్పష్టమైన ఉల్లంఘనలు ఏవీ గుర్తించబడలేదు, కానీ ప్రవర్తన బయోమెట్రిక్స్ (టైపింగ్ రిథమ్, మౌస్ నమూనాలు) ఈ పాల్గొనేవారి సమగ్రత స్కోర్‌ను {{score}} కి తగ్గించాయి. స్కోర్ 40 కంటే తక్కువ పడిపోయే వరకు వ్యక్తిగత సంఘటనలు నమోదు కావు.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",

@@ -246,6 +246,7 @@ class QuizResponse(BaseModel):
     exam_results_email: Optional[str] = None
     exam_require_email: bool = False
     exam_allowed_domains: Optional[str] = None
+    has_previous_session: bool = False
     # Proctoring
     proctoring_policy: Optional[dict] = None
 

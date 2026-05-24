@@ -1746,7 +1746,12 @@
     "unlockSession": "Разблокировать сессию",
     "noViolationEvents": "Нарушений не зафиксировано",
     "biometricEventsTitle": "Целостность снижена поведенческим анализом",
-    "biometricEventsDesc": "Явных нарушений не обнаружено, но поведенческая биометрия (ритм набора текста, движения мыши) снизила оценку целостности участника до {{score}}. Отдельные события не регистрируются, пока оценка не опустится ниже 40."
+    "biometricEventsDesc": "Явных нарушений не обнаружено, но поведенческая биометрия (ритм набора текста, движения мыши) снизила оценку целостности участника до {{score}}. Отдельные события не регистрируются, пока оценка не опустится ниже 40.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

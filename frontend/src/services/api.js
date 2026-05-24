@@ -233,7 +233,7 @@ export const examAPI = {
   getParticipantDetail: (quizId, participantId) => api.get(`/quiz/${quizId}/exam-results/participant/${participantId}`),
   analyzeResults: (quizId, customPrompt) =>
     api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}),
-  publish: (quizId) => api.post(`/quizzes/${quizId}/publish-exam`),
+  publish: (quizId, freshStart = false) => api.post(`/quizzes/${quizId}/publish-exam`, null, { params: freshStart ? { fresh_start: true } : {} }),
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
 }
 

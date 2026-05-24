@@ -1746,7 +1746,12 @@
     "unlockSession": "সেশন আনলক করুন",
     "noViolationEvents": "কোনো লঙ্ঘন ঘটনা রেকর্ড করা হয়নি",
     "biometricEventsTitle": "আচরণগত বিশ্লেষণে সততা হ্রাস পেয়েছে",
-    "biometricEventsDesc": "কোনো সুস্পষ্ট লঙ্ঘন শনাক্ত হয়নি, তবে আচরণগত বায়োমেট্রিক্স (টাইপিং ছন্দ, মাউস প্যাটার্ন) এই অংশগ্রহণকারীর সততা স্কোর {{score}}-এ নামিয়ে এনেছে। স্কোর ৪০-এর নিচে না নামা পর্যন্ত পৃথক ঘটনা লগ হয় না।"
+    "biometricEventsDesc": "কোনো সুস্পষ্ট লঙ্ঘন শনাক্ত হয়নি, তবে আচরণগত বায়োমেট্রিক্স (টাইপিং ছন্দ, মাউস প্যাটার্ন) এই অংশগ্রহণকারীর সততা স্কোর {{score}}-এ নামিয়ে এনেছে। স্কোর ৪০-এর নিচে না নামা পর্যন্ত পৃথক ঘটনা লগ হয় না।",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",

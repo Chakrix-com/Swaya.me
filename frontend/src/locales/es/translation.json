@@ -1746,7 +1746,12 @@
     "unlockSession": "Desbloquear sesión",
     "noViolationEvents": "No se registraron eventos de violación",
     "biometricEventsTitle": "Integridad reducida por análisis de comportamiento",
-    "biometricEventsDesc": "No se detectaron violaciones explícitas, pero la biometría conductual (ritmo de escritura, patrones del ratón) redujo la puntuación de integridad de este participante a {{score}}. No se registran eventos individuales hasta que la puntuación baje de 40."
+    "biometricEventsDesc": "No se detectaron violaciones explícitas, pero la biometría conductual (ritmo de escritura, patrones del ratón) redujo la puntuación de integridad de este participante a {{score}}. No se registran eventos individuales hasta que la puntuación baje de 40.",
+    "batchConfirmTitle": "Previous Batch Detected",
+    "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
+    "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
+    "continueLeaderboard": "Continue Leaderboard",
+    "startFresh": "Start Fresh"
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",
