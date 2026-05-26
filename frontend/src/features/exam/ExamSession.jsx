@@ -636,6 +636,8 @@ export default function ExamSession() {
   const [questionSecondsLeft, setQuestionSecondsLeft] = useState(null)
   const globalTimerRef = useRef(null)
   const questionTimerRef = useRef(null)
+  // Ref so the timer interval always calls the latest handleAutoSubmit (avoids stale closure)
+  const handleAutoSubmitRef = useRef(null)
 
   const [starting, setStarting] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -706,8 +708,7 @@ export default function ExamSession() {
       setGlobalSecondsLeft(prev => {
         if (prev <= 1) {
           stopGlobalTimer()
-          // Auto-submit
-          handleAutoSubmit()
+          handleAutoSubmitRef.current?.()
           return 0
         }
         return prev - 1
@@ -780,6 +781,9 @@ export default function ExamSession() {
       setPhase('timesup')
     }
   }, [sessionToken, slug, stopGlobalTimer, stopQuestionTimer])
+
+  // Keep ref pointing at latest handleAutoSubmit so the timer interval is never stale
+  useEffect(() => { handleAutoSubmitRef.current = handleAutoSubmit }, [handleAutoSubmit])
 
   // ── Start exam ────────────────────────────────────────────────────────────
 
