@@ -612,7 +612,7 @@ export default function ExamSession() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const [phase, setPhase] = useState('loading') // loading | status | start | taking | score | error
+  const [phase, setPhase] = useState('loading') // loading | status | start | taking | submitting | score | timesup | error
   const [examInfo, setExamInfo] = useState(null)
   const [examResult, setExamResult] = useState(null)
   const [participantEmail, setParticipantEmail] = useState(null)
@@ -767,16 +767,19 @@ export default function ExamSession() {
 
   const handleAutoSubmit = useCallback(async () => {
     if (!sessionToken) return
+    setPhase('submitting')  // unmount ProctoringProvider before async call
+    stopGlobalTimer()
+    stopQuestionTimer()
     try {
       const res = await examAPI.submit(slug, sessionToken)
       try { localStorage.removeItem(`exam_session_${slug}`) } catch {}
       setExamResult(res.data)
       setPhase('score')
     } catch (err) {
-      setPhase('error')
-      setError(t('exam.sessionExpired'))
+      // 410 = server already marked completed_at; network errors = same treatment
+      setPhase('timesup')
     }
-  }, [sessionToken, slug, t])
+  }, [sessionToken, slug, stopGlobalTimer, stopQuestionTimer])
 
   // ── Start exam ────────────────────────────────────────────────────────────
 
@@ -867,6 +870,9 @@ export default function ExamSession() {
       okText: t('common.submit'),
       cancelText: t('common.cancel'),
       onOk: async () => {
+        setPhase('submitting')  // unmount ProctoringProvider before async calls
+        stopGlobalTimer()
+        stopQuestionTimer()
         setSaving(true)
         try {
           // Save current answer first
@@ -882,8 +888,6 @@ export default function ExamSession() {
           // Submit
           const res = await examAPI.submit(slug, sessionToken)
           try { localStorage.removeItem(`exam_session_${slug}`) } catch {}
-          stopGlobalTimer()
-          stopQuestionTimer()
           setExamResult(res.data)
           setPhase('score')
         } catch (err) {
@@ -992,6 +996,29 @@ export default function ExamSession() {
               />
             </ProctoringGate>
           </ProctoringProvider>
+        )}
+
+        {phase === 'submitting' && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <ClockCircleOutlined style={{ fontSize: 56, color: '#faad14', marginBottom: 16 }} />
+            <Title level={3}>{t('exam.timesUpTitle')}</Title>
+            <Paragraph type="secondary">{t('exam.timesUpSubmitting')}</Paragraph>
+            <Spin size="large" />
+          </div>
+        )}
+
+        {phase === 'timesup' && (
+          <Result
+            icon={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+            title={t('exam.timesUpTitle')}
+            subTitle={t('exam.timesUpError')}
+            extra={
+              <Button type="primary" icon={<CloseCircleOutlined />}
+                onClick={() => { window.close(); setTimeout(() => navigate('/'), 300) }}>
+                {t('exam.closeWindow')}
+              </Button>
+            }
+          />
         )}
 
         {phase === 'score' && examResult && (
