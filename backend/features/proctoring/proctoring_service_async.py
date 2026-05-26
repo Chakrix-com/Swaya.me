@@ -406,18 +406,20 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
     participant_ids_from_sessions = set(session_by_participant.keys())
     extra_participant_ids: set[int] = set()
 
-    if quiz and quiz.exam_session_id:
-        qs_result = await db.execute(
-            select(QuizSession).where(
-                QuizSession.quiz_id == quiz_id,
-                QuizSession.id == quiz.exam_session_id,
-            )
-        )
-        quiz_sessions = qs_result.scalars().all()
-        for qs in quiz_sessions:
+    if quiz:
+        # Collect all session IDs: current + all linked batches
+        all_session_ids = []
+        if quiz.exam_session_id:
+            all_session_ids.append(quiz.exam_session_id)
+        for entry in (quiz.linked_exam_session_ids or []):
+            sid = entry.get("session_id") if isinstance(entry, dict) else entry
+            if sid:
+                all_session_ids.append(sid)
+
+        if all_session_ids:
             p_result = await db.execute(
                 select(Participant).where(
-                    Participant.session_id == qs.id,
+                    Participant.session_id.in_(all_session_ids),
                     Participant.completed_at.isnot(None),
                 )
             )
