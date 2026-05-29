@@ -1,7 +1,7 @@
 """
 Exam API — public and authenticated endpoints for exam participation and results.
 """
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -165,12 +165,13 @@ class SendParticipantEmailsBody(BaseModel):
 @router.post("/quiz/{quiz_id}/send-participant-emails")
 async def send_participant_emails_now(
     quiz_id: int,
+    background_tasks: BackgroundTasks,
     body: SendParticipantEmailsBody = Body(default=SendParticipantEmailsBody()),
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(require_admin),
 ):
-    """Authenticated host — immediately send result emails to all completed participants
-    and mark the quiz so the nightly batch skips it."""
+    """Authenticated host — queue result emails for all completed participants in the
+    background and mark the quiz so the nightly batch skips it. Returns immediately."""
     from persistence.models.quiz import Quiz
     from sqlalchemy import select
 
@@ -181,19 +182,18 @@ async def send_participant_emails_now(
     if quiz.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=403, detail="Not authorised")
 
-    failures = await svc.send_participant_results_emails(
-        quiz_id, sender_name=body.sender_name or None
-    )
-
-    # Mark as sent so the nightly scheduler won't re-send
+    # Mark as sent immediately — scheduler won't re-send even if background task is slow
     quiz.exam_participant_emails_sent = True
     await db.commit()
 
-    return {
-        "sent": True,
-        "failures": failures,
-        "failure_count": len(failures),
-    }
+    # Send emails in the background so this request returns instantly
+    background_tasks.add_task(
+        svc.send_participant_results_emails,
+        quiz_id,
+        sender_name=body.sender_name or None,
+    )
+
+    return {"sent": True, "queued": True}
 
 
 @router.post("/quizzes/{quiz_id}/publish-exam", response_model=ExamPublishResponse)

@@ -189,18 +189,13 @@ export default function ExamResults() {
       onOk: async () => {
         setSendingEmails(true)
         try {
-          const res = await examAPI.sendParticipantEmails(id, senderName.trim() || null)
-          const failures = res.data?.failure_count ?? 0
-          if (failures > 0) {
-            Modal.warning({ title: 'Sent with some failures', content: `${failures} email(s) failed to send. The rest were delivered.` })
-          } else {
-            Modal.success({ title: 'Emails sent', content: 'All participants have been emailed their results.' })
-          }
+          await examAPI.sendParticipantEmails(id, senderName.trim() || null)
+          Modal.success({ title: 'Emails queued', content: 'Result emails are being sent to all participants.' })
           // Refresh results so the button flips to "Emails Sent ✓"
           const updated = await examAPI.getResults(id)
           setResults(updated.data)
         } catch {
-          Modal.error({ title: 'Failed', content: 'Could not send emails. Please try again.' })
+          Modal.error({ title: 'Failed', content: 'Could not queue emails. Please try again.' })
         } finally {
           setSendingEmails(false)
         }
@@ -349,7 +344,14 @@ export default function ExamResults() {
       render: (name, row) => (
         <div>
           <Text strong style={row.is_completed ? {} : { color: '#8c8c8c' }}>{name}</Text>
-          {row.email && <div style={{ fontSize: 11, color: '#888' }}>{row.email}</div>}
+          {row.email && (
+            <div style={{ fontSize: 11, color: '#888' }}>
+              {row.email}
+              {results?.participant_emails_sent && row.is_completed && (
+                <MailOutlined style={{ marginLeft: 5, color: '#52c41a', fontSize: 10 }} title="Result email sent" />
+              )}
+            </div>
+          )}
         </div>
       ),
     },
