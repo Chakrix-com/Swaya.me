@@ -70,6 +70,7 @@ export default function ExamResults() {
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
   const [sendingEmails, setSendingEmails] = useState(false)
+  const [senderName, setSenderName] = useState('')
 
   // Participant exam-detail modal
   const [participantDetail, setParticipantDetail] = useState(null)
@@ -179,15 +180,16 @@ export default function ExamResults() {
 
   const handleSendEmails = () => {
     const completed = results?.total_completed ?? 0
+    const nameLabel = senderName.trim() || 'Swaya.me'
     Modal.confirm({
       title: 'Send results to participants?',
-      content: `This will email personalised results (score, question breakdown, proctoring summary) to all ${completed} completed participant${completed !== 1 ? 's' : ''}. This cannot be undone.`,
+      content: `This will email personalised results (score, question breakdown, proctoring summary) to all ${completed} completed participant${completed !== 1 ? 's' : ''}. Emails will be sent from "${nameLabel}". This cannot be undone.`,
       okText: 'Send Now',
       cancelText: 'Cancel',
       onOk: async () => {
         setSendingEmails(true)
         try {
-          const res = await examAPI.sendParticipantEmails(id)
+          const res = await examAPI.sendParticipantEmails(id, senderName.trim() || null)
           const failures = res.data?.failure_count ?? 0
           if (failures > 0) {
             Modal.warning({ title: 'Sent with some failures', content: `${failures} email(s) failed to send. The rest were delivered.` })
@@ -482,6 +484,15 @@ export default function ExamResults() {
         >
           {analysis ? 'Download PDF Report (with AI)' : 'Download PDF Report'}
         </Button>
+        {!results?.participant_emails_sent && (
+          <Input
+            placeholder="Sender name (default: Swaya.me)"
+            value={senderName}
+            onChange={e => setSenderName(e.target.value)}
+            style={{ width: 220 }}
+            disabled={sendingEmails}
+          />
+        )}
         <Button
           icon={<MailOutlined />}
           type={results?.participant_emails_sent ? 'default' : 'primary'}

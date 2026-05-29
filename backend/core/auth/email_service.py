@@ -352,6 +352,7 @@ async def send_exam_result_email(
     violation_count: int = 0,
     is_locked: bool = False,
     violation_types: list | None = None,
+    sender_name: str | None = None,
 ) -> bool:
     """Send a branded results email to the participant after exam submission."""
     import html as _html_mod
@@ -359,229 +360,262 @@ async def send_exam_result_email(
     score_colour = _score_colour(percentage)
     pct_int = int(round(percentage))
 
-    # ── Score card ──────────────────────────────────────────────────────────
-    score_card = f"""
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+    # ── Helpers ──────────────────────────────────────────────────────────────
+    import datetime as _dt
+
+    def _fmt_time(s):
+        if s is None: return '—'
+        m, sec = divmod(int(s), 60)
+        h, m = divmod(m, 60)
+        return f'{h}h {m}m {sec}s' if h else f'{m}m {sec}s'
+
+    def _fmt_date(dt):
+        if dt is None: return '—'
+        try:
+            d = dt if isinstance(dt, _dt.datetime) else _dt.datetime.fromisoformat(str(dt).replace('Z', '+00:00'))
+            return d.strftime('%d %b %Y')
+        except Exception:
+            return '—'
+
+    def _fmt_clock(dt):
+        if dt is None: return '—'
+        try:
+            d = dt if isinstance(dt, _dt.datetime) else _dt.datetime.fromisoformat(str(dt).replace('Z', '+00:00'))
+            return d.strftime('%H:%M UTC')
+        except Exception:
+            return '—'
+
+    # Score band colours
+    if pct_int >= 70:
+        band_dark, band_mid, band_light = '#1a7f37', '#2ea043', '#dcfce7'
+    elif pct_int >= 40:
+        band_dark, band_mid, band_light = '#9a3412', '#c2410c', '#fff7ed'
+    else:
+        band_dark, band_mid, band_light = '#991b1b', '#dc2626', '#fef2f2'
+
+    # ── Score hero ───────────────────────────────────────────────────────────
+    score_hero = f"""
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
   <tr>
-    <td align="center" style="background:#fafafa;border:1px solid #f0f0f0;border-radius:10px;padding:28px 16px;">
-      <div style="font-size:56px;font-weight:800;color:{score_colour};line-height:1;">{pct_int}%</div>
-      <div style="font-size:16px;color:#555;margin-top:6px;font-weight:500;">{total_score} / {max_score} pts</div>
-    </td>
-  </tr>
-</table>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
-  <tr>
-    <td align="center" width="33%" style="padding:12px 8px;background:#f6ffed;border-radius:8px;border:1px solid #b7eb8f;">
-      <div style="font-size:22px;font-weight:700;color:#389e0d;">{correct_count}</div>
-      <div style="font-size:12px;color:#52c41a;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Correct</div>
-    </td>
-    <td width="8"></td>
-    <td align="center" width="33%" style="padding:12px 8px;background:#fff2f0;border-radius:8px;border:1px solid #ffccc7;">
-      <div style="font-size:22px;font-weight:700;color:#cf1322;">{wrong_count}</div>
-      <div style="font-size:12px;color:#ff4d4f;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Wrong</div>
-    </td>
-    <td width="8"></td>
-    <td align="center" width="33%" style="padding:12px 8px;background:#f5f5f5;border-radius:8px;border:1px solid #d9d9d9;">
-      <div style="font-size:22px;font-weight:700;color:#595959;">{unanswered_count}</div>
-      <div style="font-size:12px;color:#8c8c8c;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">Skipped</div>
+    <td align="center" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:16px;padding:36px 24px 28px;">
+      <!-- Big percentage -->
+      <div style="font-size:72px;font-weight:900;color:{band_mid};letter-spacing:-2px;line-height:1;">{pct_int}<span style="font-size:40px;font-weight:700;opacity:.85;">%</span></div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.6);margin-top:4px;letter-spacing:.3px;">{total_score} &nbsp;/&nbsp; {max_score} &nbsp;points</div>
+      <!-- Stats pills -->
+      <table cellpadding="0" cellspacing="0" border="0" style="margin:20px auto 0;">
+        <tr>
+          <td style="padding:0 6px;">
+            <div style="background:rgba(46,160,67,0.18);border:1px solid rgba(46,160,67,0.4);border-radius:999px;padding:6px 18px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#4ade80;line-height:1.1;">{correct_count}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Correct</div>
+            </div>
+          </td>
+          <td style="padding:0 6px;">
+            <div style="background:rgba(220,38,38,0.18);border:1px solid rgba(220,38,38,0.4);border-radius:999px;padding:6px 18px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#f87171;line-height:1.1;">{wrong_count}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Wrong</div>
+            </div>
+          </td>
+          <td style="padding:0 6px;">
+            <div style="background:rgba(148,163,184,0.18);border:1px solid rgba(148,163,184,0.3);border-radius:999px;padding:6px 18px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:#94a3b8;line-height:1.1;">{unanswered_count}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Skipped</div>
+            </div>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>"""
 
-    # ── Exam meta row (date / time / duration) ──────────────────────────────
-    import datetime as _dt
-    meta_parts = []
+    # ── Meta strip ───────────────────────────────────────────────────────────
+    meta_chips = []
     if started_at:
-        try:
-            dt = started_at if isinstance(started_at, _dt.datetime) else _dt.datetime.fromisoformat(str(started_at).replace('Z', '+00:00'))
-            meta_parts.append(f"<strong>Date:</strong> {dt.strftime('%d %b %Y')}")
-            meta_parts.append(f"<strong>Started:</strong> {dt.strftime('%H:%M')} UTC")
-        except Exception:
-            pass
+        meta_chips.append(f'<span style="color:#64748b;">&#128197;</span>&nbsp;{_fmt_date(started_at)}')
+        meta_chips.append(f'<span style="color:#64748b;">&#9200;</span>&nbsp;Started {_fmt_clock(started_at)}')
     if completed_at:
-        try:
-            dt2 = completed_at if isinstance(completed_at, _dt.datetime) else _dt.datetime.fromisoformat(str(completed_at).replace('Z', '+00:00'))
-            meta_parts.append(f"<strong>Submitted:</strong> {dt2.strftime('%H:%M')} UTC")
-        except Exception:
-            pass
+        meta_chips.append(f'Submitted {_fmt_clock(completed_at)}')
     if time_taken_seconds is not None:
-        m, s = divmod(int(time_taken_seconds), 60)
-        meta_parts.append(f"<strong>Duration:</strong> {m}m {s}s")
+        meta_chips.append(f'<span style="color:#64748b;">&#9203;</span>&nbsp;{_fmt_time(time_taken_seconds)}')
 
     meta_row = ''
-    if meta_parts:
+    if meta_chips:
+        chips_html = ''.join(
+            f'<td style="padding:0 4px;"><span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:5px 14px;font-size:12px;color:#475569;white-space:nowrap;">{c}</span></td>'
+            for c in meta_chips
+        )
         meta_row = f"""
-<div style="background:#f0f5ff;border:1px solid #d6e4ff;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:#555;line-height:1.8;">
-  {'&nbsp;&nbsp;·&nbsp;&nbsp;'.join(meta_parts)}
-</div>"""
+<table cellpadding="0" cellspacing="0" border="0" style="margin:16px auto 28px;"><tr>{chips_html}</tr></table>"""
 
-    # ── Attempt history (only when candidate sat the exam more than once) ───
+    # ── Attempt history ───────────────────────────────────────────────────────
     attempts_section = ''
     if attempt_count > 1 and all_attempts:
-        def _fmt_t(s):
-            if s is None: return '—'
-            m, sec = divmod(int(s), 60)
-            return f'{m}m {sec}s'
-        def _fmt_d(dt):
-            if dt is None: return '—'
-            try:
-                import datetime as _dt2
-                d = dt if isinstance(dt, _dt2.datetime) else _dt2.datetime.fromisoformat(str(dt).replace('Z','+00:00'))
-                return d.strftime('%d %b %Y')
-            except Exception:
-                return '—'
-
-        rows_html = ''
+        att_rows = ''
         for i, att in enumerate(all_attempts, 1):
-            badge = ' &nbsp;<span style="background:#1677ff;color:#fff;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700;">★ Best</span>' if i == 1 else ''
-            rows_html += f'''
-<tr style="background:{'#f0f5ff' if i==1 else ('#ffffff' if i%2==1 else '#fafafa')};">
-  <td style="padding:8px 12px;font-size:13px;color:#595959;text-align:center;">{i}</td>
-  <td style="padding:8px 12px;font-size:13px;color:#1a1a1a;">{_fmt_d(att.get("completed_at"))}{badge}</td>
-  <td style="padding:8px 12px;font-size:13px;color:#1a1a1a;text-align:center;font-weight:{'700' if i==1 else '400'};">{att.get("score",0)}&nbsp;/&nbsp;{att.get("max_score",max_score)}</td>
-  <td style="padding:8px 12px;font-size:13px;color:#595959;text-align:center;">{_fmt_t(att.get("time_taken_seconds"))}</td>
-</tr>'''
-
-        attempts_section = f'''
-<div style="margin-bottom:24px;">
-  <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
-    Your Attempts &nbsp;<span style="font-size:12px;font-weight:400;color:#8c8c8c;">({attempt_count} total)</span>
+            sc = att.get('score', 0)
+            mx = att.get('max_score', max_score)
+            pct_a = round(sc / mx * 100) if mx else 0
+            bg = '#f0fdf4' if i == 1 else ('#ffffff' if i % 2 == 1 else '#f8fafc')
+            best_tag = '&nbsp;<span style="background:#1677ff;color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700;vertical-align:middle;">BEST</span>' if i == 1 else ''
+            att_rows += f"""
+<tr style="background:{bg};">
+  <td style="padding:10px 16px;font-size:13px;color:#64748b;text-align:center;width:40px;border-bottom:1px solid #f1f5f9;">{i}</td>
+  <td style="padding:10px 16px;font-size:13px;color:#1e293b;border-bottom:1px solid #f1f5f9;">{_fmt_date(att.get('completed_at'))}{best_tag}</td>
+  <td style="padding:10px 16px;font-size:13px;color:#1e293b;font-weight:{'700' if i==1 else '400'};text-align:center;border-bottom:1px solid #f1f5f9;">{sc}&nbsp;/&nbsp;{mx}&nbsp;<span style="color:#94a3b8;font-size:11px;">({pct_a}%)</span></td>
+  <td style="padding:10px 16px;font-size:13px;color:#64748b;text-align:center;border-bottom:1px solid #f1f5f9;">{_fmt_time(att.get('time_taken_seconds'))}</td>
+</tr>"""
+        attempts_section = f"""
+<div style="margin-bottom:28px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+  <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+    <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.8px;">Attempt History</span>
+    <span style="font-size:11px;color:#94a3b8;margin-left:6px;">({attempt_count} attempts &mdash; breakdown below is for your best)</span>
   </div>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;">
-    <tr style="background:#f5f5f5;">
-      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">#</th>
-      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:left;">Date</th>
-      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">Score</th>
-      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">Time</th>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;font-weight:600;text-align:center;">#</th>
+      <th style="padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;font-weight:600;text-align:left;">Date</th>
+      <th style="padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;font-weight:600;text-align:center;">Score</th>
+      <th style="padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;font-weight:600;text-align:center;">Time</th>
     </tr>
-    {rows_html}
+    {att_rows}
   </table>
-  <div style="font-size:12px;color:#8c8c8c;margin-top:6px;font-style:italic;">
-    The question breakdown below shows your best attempt.
-  </div>
-</div>'''
+</div>"""
 
-    # ── Exam integrity section ────────────────────────────────────────────────
+    # ── Integrity section ─────────────────────────────────────────────────────
     integrity_section = ''
     if integrity_score is not None:
         VIOLATION_LABELS = {
             'TAB_SWITCH_DETECT': 'Tab switch',
             'FULLSCREEN_EXIT': 'Fullscreen exit',
             'DEVTOOLS_OPEN': 'DevTools opened',
-            'COPY_ATTEMPT': 'Copy/paste attempt',
+            'COPY_ATTEMPT': 'Copy / paste attempt',
             'WEBCAM_PERMISSION_DENIED': 'Webcam denied',
             'SESSION_LOCKED': 'Session locked',
             'LOW_INTEGRITY_SCORE': 'Integrity threshold breached',
         }
         if integrity_score >= 80:
-            score_bg, score_fg, score_border = '#f6ffed', '#389e0d', '#b7eb8f'
+            i_bg, i_fg, i_bar = '#f0fdf4', '#15803d', '#bbf7d0'
         elif integrity_score >= 50:
-            score_bg, score_fg, score_border = '#fffbe6', '#d48806', '#ffe58f'
+            i_bg, i_fg, i_bar = '#fffbeb', '#b45309', '#fde68a'
         else:
-            score_bg, score_fg, score_border = '#fff2f0', '#cf1322', '#ffccc7'
+            i_bg, i_fg, i_bar = '#fef2f2', '#b91c1c', '#fecaca'
 
-        vtypes = list(dict.fromkeys(violation_types or []))  # deduplicate, preserve order
+        vtypes = list(dict.fromkeys(violation_types or []))
         vtypes_clean = [VIOLATION_LABELS.get(v, v.replace('_', ' ').title()) for v in vtypes
                         if v not in ('SESSION_LOCKED', 'LOW_INTEGRITY_SCORE')]
-        violations_html = ''
-        if vtypes_clean:
-            tags = ''.join(
-                f'<span style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:4px;padding:2px 8px;font-size:11px;color:#595959;margin:2px 4px 2px 0;display:inline-block;">{v}</span>'
-                for v in vtypes_clean
-            )
-            violations_html = f'<div style="margin-top:8px;">{tags}</div>'
-
-        locked_html = ''
+        v_tags = ''.join(
+            f'<span style="display:inline-block;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:3px 10px;font-size:11px;color:#475569;margin:3px 4px 3px 0;">{v}</span>'
+            for v in vtypes_clean
+        )
+        locked_row = ''
         if is_locked:
-            locked_html = '<div style="margin-top:8px;font-size:12px;color:#cf1322;font-weight:600;">🔒 Your session was locked by the proctoring system.</div>'
+            locked_row = '<div style="margin-top:10px;font-size:12px;color:#b91c1c;font-weight:600;">&#128274; This session was locked by the proctoring system.</div>'
 
-        integrity_section = f'''
-<div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:8px;padding:14px 16px;margin-bottom:24px;">
-  <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Exam Integrity</div>
-  <table cellpadding="0" cellspacing="0" border="0"><tr>
-    <td style="padding-right:24px;">
-      <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px;">Integrity Score</div>
-      <div style="background:{score_bg};border:1px solid {score_border};border-radius:6px;padding:4px 14px;display:inline-block;">
-        <span style="font-size:20px;font-weight:800;color:{score_fg};">{integrity_score}</span>
-        <span style="font-size:11px;color:{score_fg};opacity:.8;">&nbsp;/ 100</span>
-      </div>
-    </td>
-    <td>
-      <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px;">Violations</div>
-      <div style="font-size:18px;font-weight:700;color:#595959;">{violation_count}</div>
-    </td>
-  </tr></table>
-  {violations_html}{locked_html}
-</div>'''
+        integrity_section = f"""
+<div style="margin-bottom:28px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+  <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+    <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.8px;">Exam Integrity</span>
+  </div>
+  <div style="padding:16px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="width:160px;vertical-align:top;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin-bottom:8px;">Integrity Score</div>
+        <div style="background:{i_bg};border:1px solid {i_bar};border-radius:10px;padding:10px 16px;display:inline-block;">
+          <span style="font-size:28px;font-weight:900;color:{i_fg};line-height:1;">{integrity_score}</span>
+          <span style="font-size:12px;color:{i_fg};opacity:.7;">&nbsp;/ 100</span>
+        </div>
+      </td>
+      <td style="vertical-align:top;padding-left:20px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin-bottom:8px;">Violations ({violation_count})</div>
+        <div>{v_tags if v_tags else '<span style="font-size:12px;color:#94a3b8;">None recorded</span>'}</div>
+        {locked_row}
+      </td>
+    </tr></table>
+  </div>
+</div>"""
 
-    # ── Per-question rows ────────────────────────────────────────────────────
-    q_rows = ''
+    # ── Question breakdown ────────────────────────────────────────────────────
+    q_cards = ''
     for i, qr in enumerate(question_results, 1):
-        q_text = _html_for_email(qr.question_text or '')
-
-        options = qr.options or []
+        q_text      = _html_for_email(qr.question_text or '')
+        options     = qr.options or []
         correct_idx = qr.correct_answer_index
-        participant_idx = qr.participant_answer
-        is_correct = qr.is_correct
+        p_idx       = qr.participant_answer
+        is_corr     = qr.is_correct
         explanation = _html_for_email(qr.answer_explanation or '')
 
-        if participant_idx is None:
-            status_badge = '<span style="background:#f5f5f5;color:#595959;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">SKIPPED</span>'
-            pts_label = ''
-        elif is_correct:
-            status_badge = '<span style="background:#f6ffed;color:#389e0d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid #b7eb8f;">&#10003; CORRECT</span>'
-            pts_label = f'<span style="color:#389e0d;font-size:12px;font-weight:600;">+{qr.points_earned} pts</span>'
+        if p_idx is None:
+            left_border = '#94a3b8'
+            badge = '<span style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px;">SKIPPED</span>'
+            pts_html = ''
+        elif is_corr:
+            left_border = '#16a34a'
+            badge = '<span style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px;">&#10003; CORRECT</span>'
+            pts_html = f'<span style="color:#15803d;font-size:12px;font-weight:700;">+{qr.points_earned} pts</span>'
         else:
-            status_badge = '<span style="background:#fff2f0;color:#cf1322;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid #ffccc7;">&#10007; WRONG</span>'
+            left_border = '#dc2626'
+            badge = '<span style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px;">&#10007; WRONG</span>'
             neg = qr.negative_points_applied
-            pts_label = f'<span style="color:#cf1322;font-size:12px;font-weight:600;">{("-"+str(neg)) if neg else "0"} pts</span>'
+            pts_html = f'<span style="color:#b91c1c;font-size:12px;font-weight:700;">{("-"+str(neg)) if neg else "0 pts"}</span>'
 
-        your_ans = _html_for_email(options[participant_idx]) if participant_idx is not None and participant_idx < len(options) else '—'
+        your_ans    = _html_for_email(options[p_idx]) if p_idx is not None and p_idx < len(options) else '—'
         correct_ans = _html_for_email(options[correct_idx]) if correct_idx is not None and correct_idx < len(options) else '—'
 
-        answer_row = ''
-        if participant_idx is not None:
-            your_colour = '#389e0d' if is_correct else '#cf1322'
-            answer_row = f'<div style="margin-top:6px;font-size:12px;color:#555;">Your answer: <strong style="color:{your_colour};">{your_ans}</strong>'
-            if not is_correct:
-                answer_row += f' &nbsp;·&nbsp; Correct: <strong style="color:#389e0d;">{correct_ans}</strong>'
-            answer_row += '</div>'
+        answer_line = ''
+        if p_idx is not None:
+            c = '#15803d' if is_corr else '#b91c1c'
+            answer_line = f'<div style="margin-top:8px;font-size:12px;color:#64748b;">Your answer: <strong style="color:{c};">{your_ans}</strong>'
+            if not is_corr:
+                answer_line += f'&nbsp;&nbsp;&#8594;&nbsp;&nbsp;Correct: <strong style="color:#15803d;">{correct_ans}</strong>'
+            answer_line += '</div>'
 
-        explanation_row = ''
+        exp_line = ''
         if explanation:
-            explanation_row = f'<div style="margin-top:8px;font-size:12px;color:#555;background:#fffbe6;border-left:3px solid #faad14;padding:8px 10px;border-radius:0 4px 4px 0;">💡 {explanation}</div>'
+            exp_line = f'<div style="margin-top:10px;font-size:12px;color:#475569;background:#fefce8;border-left:3px solid #eab308;padding:8px 12px;border-radius:0 6px 6px 0;line-height:1.6;">&#128161;&nbsp;{explanation}</div>'
 
-        row_bg = '#ffffff' if i % 2 == 1 else '#fafafa'
-        q_rows += f"""
+        pts_block = f'<div style="margin-top:6px;text-align:right;">{pts_html}</div>' if pts_html else ''
+
+        q_cards += f"""
 <tr>
-  <td style="padding:14px 16px;background:{row_bg};border-bottom:1px solid #f0f0f0;vertical-align:top;">
+  <td style="border-bottom:1px solid #f1f5f9;padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="font-size:12px;color:#8c8c8c;font-weight:700;width:28px;vertical-align:top;padding-top:2px;">Q{i}</td>
-        <td style="font-size:13px;color:#1a1a1a;line-height:1.6;">{q_text}</td>
-        <td style="white-space:nowrap;padding-left:12px;text-align:right;vertical-align:top;">{status_badge}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td colspan="2">{answer_row}{explanation_row}{'<div style="margin-top:4px;text-align:right;">'+pts_label+'</div>' if pts_label else ''}</td>
+        <td style="width:4px;background:{left_border};border-radius:0;" width="4">&nbsp;</td>
+        <td style="padding:14px 16px 14px 14px;vertical-align:top;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="vertical-align:top;">
+                <span style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-right:8px;">Q{i}</span>
+                <span style="font-size:13px;color:#1e293b;line-height:1.65;">{q_text}</span>
+                {answer_line}{exp_line}
+              </td>
+              <td style="vertical-align:top;padding-left:12px;white-space:nowrap;text-align:right;">
+                {badge}
+                {pts_block}
+              </td>
+            </tr>
+          </table>
+        </td>
       </tr>
     </table>
   </td>
 </tr>"""
 
-    # ── AI summary section ───────────────────────────────────────────────────
+    # ── AI summary ────────────────────────────────────────────────────────────
     ai_section = ''
     if ai_summary:
         ai_section = f"""
-    <!-- AI Summary -->
-    <tr><td style="padding:0 32px 32px;">
-      <div style="background:#f0f5ff;border:1px solid #d6e4ff;border-radius:10px;padding:24px;">
-        {ai_summary}
-      </div>
-    </td></tr>"""
+<div style="margin-bottom:28px;border:1px solid #bfdbfe;border-radius:12px;overflow:hidden;">
+  <div style="background:#eff6ff;padding:12px 16px;border-bottom:1px solid #bfdbfe;">
+    <span style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.8px;">&#129302; AI Performance Summary</span>
+  </div>
+  <div style="padding:16px 20px;font-size:13px;color:#1e293b;line-height:1.7;">{ai_summary}</div>
+</div>"""
 
-    # ── Full template ────────────────────────────────────────────────────────
+    # ── Full template ─────────────────────────────────────────────────────────
     safe_title = _html_mod.escape(quiz_title)
+    safe_recip = _html_mod.escape(recipient)
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -589,59 +623,101 @@ async def send_exam_result_email(
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Your results — {safe_title}</title>
 </head>
-<body style="margin:0;padding:0;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0f2f5;padding:32px 16px;">
-  <tr><td align="center">
-  <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#1e293b;">
 
-    <!-- Header -->
-    <tr><td style="background:#1677ff;padding:28px 32px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td>
-          <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">swaya<span style="font-weight:400;opacity:.85;">.me</span></div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:3px;">Exam Results</div>
-        </td>
-        <td align="right">
-          <div style="font-size:13px;color:rgba(255,255,255,0.75);">{safe_title}</div>
-        </td>
-      </tr></table>
-    </td></tr>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;padding:40px 16px 48px;">
+<tr><td align="center">
 
-    <!-- Body -->
-    <tr><td style="padding:32px 32px 24px;">
-      <p style="font-size:16px;margin:0 0 24px;color:#1a1a1a;">Hi <strong>{_html_mod.escape(recipient)}</strong>, here are your results.</p>
+<table width="600" cellpadding="0" cellspacing="0" border="0"
+       style="max-width:600px;width:100%;border-radius:20px;overflow:hidden;
+              box-shadow:0 4px 24px rgba(15,23,42,0.12);">
 
-      {score_card}
+  <!-- ═══ HEADER ═══ -->
+  <tr><td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1d4ed8 100%);padding:28px 32px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td>
+        <div style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">
+          swaya<span style="font-weight:300;color:rgba(255,255,255,0.7);">.me</span>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.2px;margin-top:4px;">Exam Results</div>
+      </td>
+      <td align="right">
+        <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;display:inline-block;">
+          <div style="font-size:12px;color:rgba(255,255,255,0.9);font-weight:600;">{safe_title}</div>
+        </div>
+      </td>
+    </tr></table>
+  </td></tr>
 
-      {meta_row}
+  <!-- ═══ WHITE CARD BODY ═══ -->
+  <tr><td style="background:#ffffff;padding:32px 32px 8px;">
 
-      {attempts_section}
+    <!-- Greeting -->
+    <p style="font-size:17px;margin:0 0 28px;color:#0f172a;font-weight:400;line-height:1.5;">
+      Hi <strong style="color:#1d4ed8;">{safe_recip}</strong>,<br/>
+      <span style="color:#475569;font-size:14px;">Here are your results for <strong style="color:#0f172a;">{safe_title}</strong>.</span>
+    </p>
 
-      {integrity_section}
+    <!-- Score hero -->
+    {score_hero}
 
-      <!-- Question breakdown -->
-      <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Question Breakdown</div>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;margin-bottom:32px;">
-        {q_rows}
-      </table>
+    <!-- Meta chips -->
+    {meta_row}
 
-      <div style="text-align:center;margin-bottom:0;">
-        <a href="https://www.swaya.me" style="display:inline-block;background:#1677ff;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:600;">Go to Swaya.me</a>
-      </div>
-    </td></tr>
+    <!-- Attempt history -->
+    {attempts_section}
 
+    <!-- Integrity -->
+    {integrity_section}
+
+    <!-- Question breakdown header -->
+    <div style="display:flex;align-items:center;margin-bottom:12px;">
+      <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.8px;">Question Breakdown</span>
+      <span style="flex:1;height:1px;background:#e2e8f0;margin-left:12px;display:inline-block;vertical-align:middle;"></span>
+    </div>
+
+    <!-- Question table -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:32px;">
+      {q_cards}
+    </table>
+
+    <!-- AI summary -->
     {ai_section}
 
-    <!-- Footer -->
-    <tr><td style="background:#fafafa;border-top:1px solid #f0f0f0;padding:18px 32px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;">
-        You received this because you participated in an exam on Swaya.me.<br/>
-        &copy; 2026 Swaya.me &nbsp;·&nbsp; <a href="https://www.swaya.me" style="color:#aaa;">www.swaya.me</a>
-      </p>
-    </td></tr>
+    <!-- CTA -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+      <tr><td align="center">
+        <a href="https://www.swaya.me"
+           style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#ffffff;
+                  text-decoration:none;padding:14px 40px;border-radius:999px;font-size:14px;
+                  font-weight:700;letter-spacing:.3px;box-shadow:0 4px 14px rgba(29,78,216,0.35);">
+          Visit Swaya.me &#8594;
+        </a>
+      </td></tr>
+    </table>
 
-  </table>
   </td></tr>
+
+  <!-- ═══ FOOTER ═══ -->
+  <tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td>
+        <div style="font-size:18px;font-weight:900;color:#94a3b8;letter-spacing:-0.3px;">
+          swaya<span style="font-weight:300;">.me</span>
+        </div>
+      </td>
+      <td align="right">
+        <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.7;text-align:right;">
+          You received this because you participated in an exam.<br/>
+          &copy; 2026 &nbsp;<a href="https://www.swaya.me" style="color:#64748b;text-decoration:none;">Swaya.me</a>
+        </p>
+      </td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr>
 </table>
 </body>
 </html>"""
@@ -650,22 +726,47 @@ async def send_exam_result_email(
         subject=f"Your results: {quiz_title} — {pct_int}%",
         recipients=[email],
         html_body=html,
+        sender_name=sender_name,
     )
 
 
-async def send_email(subject: str, recipients: list[EmailStr], html_body: str) -> bool:
+async def send_email(
+    subject: str,
+    recipients: list[EmailStr],
+    html_body: str,
+    sender_name: str | None = None,
+) -> bool:
     """
     Send an email using FastMail. If SMTP is not configured, logs the email content.
+    When sender_name is provided a temporary FastMail instance overrides the from-name.
     """
     if not smtp_enabled or not fast_mail:
-        # Fallback to logging for development
         logger.info(f"--- MOCK EMAIL ---")
         logger.info(f"To: {recipients}")
         logger.info(f"Subject: {subject}")
         logger.info(f"Body: {html_body}")
         logger.info(f"------------------")
         return True
-        
+
+    mailer = fast_mail
+    if sender_name and conf:
+        try:
+            override_conf = ConnectionConfig(
+                MAIL_USERNAME=settings.smtp.user,
+                MAIL_PASSWORD=settings.smtp.password,
+                MAIL_FROM=settings.smtp.from_email,
+                MAIL_PORT=settings.smtp.port,
+                MAIL_SERVER=settings.smtp.host,
+                MAIL_FROM_NAME=sender_name,
+                MAIL_STARTTLS=False,
+                MAIL_SSL_TLS=True,
+                USE_CREDENTIALS=True,
+                VALIDATE_CERTS=True,
+            )
+            mailer = FastMail(override_conf)
+        except Exception as cfg_err:
+            logger.warning(f"Could not create override mailer for sender_name={sender_name!r}: {cfg_err}")
+
     try:
         message = MessageSchema(
             subject=subject,
@@ -673,12 +774,11 @@ async def send_email(subject: str, recipients: list[EmailStr], html_body: str) -
             body=html_body,
             subtype=MessageType.html
         )
-        await fast_mail.send_message(message)
+        await mailer.send_message(message)
         logger.info(f"Email sent successfully to {recipients}")
         return True
     except Exception as e:
         logger.error(f"Failed to send email to {recipients}: {e}")
-        # In development, don't fail registering just because email fails
         if settings.app.environment == "development":
             logger.info(f"Development fallback: Simulated email sending because real sending failed.")
             return True

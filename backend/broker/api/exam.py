@@ -2,6 +2,7 @@
 Exam API — public and authenticated endpoints for exam participation and results.
 """
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
@@ -157,9 +158,14 @@ async def analyze_exam_results_endpoint(
     return {"analysis": analysis}
 
 
+class SendParticipantEmailsBody(BaseModel):
+    sender_name: str | None = None
+
+
 @router.post("/quiz/{quiz_id}/send-participant-emails")
 async def send_participant_emails_now(
     quiz_id: int,
+    body: SendParticipantEmailsBody = Body(default=SendParticipantEmailsBody()),
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(require_admin),
 ):
@@ -175,7 +181,9 @@ async def send_participant_emails_now(
     if quiz.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=403, detail="Not authorised")
 
-    failures = await svc.send_participant_results_emails(quiz_id)
+    failures = await svc.send_participant_results_emails(
+        quiz_id, sender_name=body.sender_name or None
+    )
 
     # Mark as sent so the nightly scheduler won't re-send
     quiz.exam_participant_emails_sent = True

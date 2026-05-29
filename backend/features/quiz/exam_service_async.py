@@ -1021,7 +1021,7 @@ async def send_results_email(quiz_id: int) -> None:
         logger.error(f"Failed to send exam results email for quiz {quiz_id}: {e}", exc_info=True)
 
 
-async def send_participant_results_emails(quiz_id: int) -> list:
+async def send_participant_results_emails(quiz_id: int, sender_name: str | None = None) -> list:
     """Emails detailed results to every completed participant of a quiz.
 
     One email per unique email address — if a candidate attempted multiple times,
@@ -1221,6 +1221,7 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                     violation_count=violation_count,
                     is_locked=is_locked,
                     violation_types=violation_types,
+                    sender_name=sender_name,
                 )
                 logger.info(f"Sent results email to {email_key} ({len(group)} attempt(s)) for quiz {quiz_id}")
                 await asyncio.sleep(0.5)  # throttle: ~120 emails/min
