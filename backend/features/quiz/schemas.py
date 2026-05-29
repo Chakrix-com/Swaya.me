@@ -785,3 +785,4 @@ class ExamResultsResponse(BaseModel):
     max_score: int
     leaderboard: List[ExamLeaderboardEntry]
     question_analytics: List[ExamQuestionAnalytics]
+    participant_emails_sent: bool = False

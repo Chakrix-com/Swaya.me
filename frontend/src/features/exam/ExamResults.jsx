@@ -16,7 +16,7 @@ import {
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined,
   ClockCircleOutlined, SyncOutlined, RobotOutlined, FilePdfOutlined,
   LockOutlined, UnlockOutlined, WarningOutlined, CameraOutlined,
-  ArrowUpOutlined, ArrowDownOutlined
+  ArrowUpOutlined, ArrowDownOutlined, MailOutlined
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { examAPI, proctoringAPI } from '../../services/api'
@@ -69,6 +69,7 @@ export default function ExamResults() {
   const [analysisError, setAnalysisError] = useState(null)
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
+  const [sendingEmails, setSendingEmails] = useState(false)
 
   // Participant exam-detail modal
   const [participantDetail, setParticipantDetail] = useState(null)
@@ -174,6 +175,35 @@ export default function ExamResults() {
     } finally {
       setDownloadingPDF(false)
     }
+  }
+
+  const handleSendEmails = () => {
+    const completed = results?.total_completed ?? 0
+    Modal.confirm({
+      title: 'Send results to participants?',
+      content: `This will email personalised results (score, question breakdown, proctoring summary) to all ${completed} completed participant${completed !== 1 ? 's' : ''}. This cannot be undone.`,
+      okText: 'Send Now',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        setSendingEmails(true)
+        try {
+          const res = await examAPI.sendParticipantEmails(id)
+          const failures = res.data?.failure_count ?? 0
+          if (failures > 0) {
+            Modal.warning({ title: 'Sent with some failures', content: `${failures} email(s) failed to send. The rest were delivered.` })
+          } else {
+            Modal.success({ title: 'Emails sent', content: 'All participants have been emailed their results.' })
+          }
+          // Refresh results so the button flips to "Emails Sent ✓"
+          const updated = await examAPI.getResults(id)
+          setResults(updated.data)
+        } catch {
+          Modal.error({ title: 'Failed', content: 'Could not send emails. Please try again.' })
+        } finally {
+          setSendingEmails(false)
+        }
+      },
+    })
   }
 
   // Merge leaderboard with proctoring data and compute both rankings
@@ -451,6 +481,15 @@ export default function ExamResults() {
           disabled={!results}
         >
           {analysis ? 'Download PDF Report (with AI)' : 'Download PDF Report'}
+        </Button>
+        <Button
+          icon={<MailOutlined />}
+          type={results?.participant_emails_sent ? 'default' : 'primary'}
+          onClick={handleSendEmails}
+          loading={sendingEmails}
+          disabled={!results || results.participant_emails_sent || sendingEmails}
+        >
+          {results?.participant_emails_sent ? 'Emails Sent ✓' : 'Send Results to Participants'}
         </Button>
       </Space>
 

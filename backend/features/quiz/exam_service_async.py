@@ -727,6 +727,7 @@ async def get_exam_results(
         max_score=max_score,
         leaderboard=leaderboard,
         question_analytics=question_analytics,
+        participant_emails_sent=bool(quiz.exam_participant_emails_sent),
     )
 
 
@@ -1021,14 +1022,19 @@ async def send_results_email(quiz_id: int) -> None:
 
 
 async def send_participant_results_emails(quiz_id: int) -> list:
-    """Nightly batch — emails detailed results to every completed participant of a quiz.
+    """Emails detailed results to every completed participant of a quiz.
+
+    One email per unique email address — if a candidate attempted multiple times,
+    they get a single email covering all attempts with the best attempt detailed.
 
     Returns a list of dicts for any per-participant failures:
         [{"email": "...", "error": "..."}]
     Raises on quiz-level failures (DB errors etc.) so the caller can track them.
     """
+    from collections import defaultdict
     from persistence.database_async import AsyncSessionLocal
     from core.auth.email_service import send_exam_result_email
+    from persistence.models.proctoring import ProctoringSession, ProctoringEvent
 
     logger.info(f"Sending participant results emails for quiz {quiz_id}")
     failures = []
@@ -1060,23 +1066,84 @@ async def send_participant_results_emails(quiz_id: int) -> list:
             return failures
 
         questions = sorted(quiz.questions, key=lambda q: q.order)
+        max_score = sum(q.points for q in questions)
 
-        for participant in participants:
+        # Fetch all answers in one query
+        all_pids = [p.id for p in participants]
+        all_answers_result = await db.execute(
+            select(Answer).filter(
+                Answer.participant_id.in_(all_pids),
+                Answer.session_id.in_(all_session_ids),
+            )
+        )
+        answers_by_pid: dict = defaultdict(dict)
+        for a in all_answers_result.scalars().all():
+            answers_by_pid[a.participant_id][a.question_id] = a
+
+        # Fetch proctoring data in bulk
+        ps_result = await db.execute(
+            select(ProctoringSession).filter(
+                ProctoringSession.quiz_id == quiz_id,
+                ProctoringSession.participant_id.in_(all_pids),
+            )
+        )
+        proctoring_by_pid = {ps.participant_id: ps for ps in ps_result.scalars().all()}
+
+        pe_result = await db.execute(
+            select(ProctoringEvent.participant_id, ProctoringEvent.event_type).filter(
+                ProctoringEvent.quiz_id == quiz_id,
+                ProctoringEvent.participant_id.in_(all_pids),
+            ).distinct()
+        )
+        violations_by_pid: dict = defaultdict(list)
+        for pid, etype in pe_result.all():
+            violations_by_pid[pid].append(etype)
+
+        def _score_for(p):
+            p_ans = answers_by_pid.get(p.id, {})
+            s = 0
+            for q in questions:
+                a = p_ans.get(q.id)
+                if a and a.is_correct:
+                    s += q.points
+                elif a and a.is_correct is False:
+                    s -= q.negative_points
+            return max(0, s)
+
+        def _time_for(p):
+            if p.started_at and p.completed_at:
+                return (p.completed_at - p.started_at).total_seconds()
+            return None
+
+        # Group by normalised email — one send per address
+        groups: dict = defaultdict(list)
+        for p in participants:
+            groups[(p.email or '').lower().strip()].append(p)
+
+        for email_key, group in groups.items():
+            # Pick best attempt: highest score, then shortest time
+            scored = [(p, _score_for(p), _time_for(p)) for p in group]
+            scored.sort(key=lambda x: (-x[1], x[2] or 9_999_999))
+            best_p, best_score, best_time = scored[0]
+
+            # Build all_attempts summary for multi-attempt email section
+            all_attempts = [
+                {
+                    "score": sc,
+                    "max_score": max_score,
+                    "time_taken_seconds": tt,
+                    "completed_at": p.completed_at,
+                }
+                for p, sc, tt in scored
+            ]
+
             try:
-                a_result = await db.execute(
-                    select(Answer).filter(
-                        Answer.participant_id == participant.id,
-                        Answer.session_id.in_(all_session_ids),
-                    )
-                )
-                answers_by_qid = {a.question_id: a for a in a_result.scalars().all()}
-
+                p_ans = answers_by_pid.get(best_p.id, {})
                 question_results = []
-                total_score = max_score = correct_count = wrong_count = unanswered_count = 0
+                correct_count = wrong_count = unanswered_count = 0
 
                 for q in questions:
-                    max_score += q.points
-                    answer = answers_by_qid.get(q.id)
+                    answer = p_ans.get(q.id)
                     participant_ans = answer.selected_option_index if answer else None
                     is_correct = answer.is_correct if answer else None
                     points_earned = neg_applied = 0
@@ -1086,11 +1153,9 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                     elif is_correct:
                         correct_count += 1
                         points_earned = q.points
-                        total_score += q.points
                     else:
                         wrong_count += 1
                         neg_applied = q.negative_points
-                        total_score -= q.negative_points
 
                     question_results.append(ExamQuestionResult(
                         question_id=q.id,
@@ -1105,60 +1170,66 @@ async def send_participant_results_emails(quiz_id: int) -> list:
                         answer_explanation=q.answer_explanation,
                     ))
 
-                total_score = max(0, total_score)
-                percentage = round((total_score / max_score * 100) if max_score > 0 else 0.0, 2)
+                percentage = round((best_score / max_score * 100) if max_score > 0 else 0.0, 2)
 
-                # Time taken
-                time_taken_seconds = None
-                if participant.started_at and participant.completed_at:
-                    delta = participant.completed_at - participant.started_at
-                    time_taken_seconds = delta.total_seconds()
+                # Proctoring data for best attempt's participant
+                ps = proctoring_by_pid.get(best_p.id)
+                integrity_score = ps.integrity_score if ps else None
+                violation_count = ps.violation_count if ps else 0
+                is_locked = bool(ps.is_locked) if ps else False
+                violation_types = violations_by_pid.get(best_p.id, [])
 
-                # AI personal summary — fail silently so email still sends
+                # AI personal summary — fail silently
                 ai_summary = None
                 try:
-                    from core.ai.gemini_service import generate_participant_summary, GeminiError
+                    from core.ai.gemini_service import generate_participant_summary
                     ai_summary = await generate_participant_summary(
-                        name=participant.display_name or '',
+                        name=best_p.display_name or '',
                         quiz_title=quiz.title,
-                        total_score=total_score,
+                        total_score=best_score,
                         max_score=max_score,
                         percentage=percentage,
                         correct_count=correct_count,
                         wrong_count=wrong_count,
                         unanswered_count=unanswered_count,
-                        time_taken_seconds=time_taken_seconds,
-                        started_at=participant.started_at.isoformat() if participant.started_at else None,
-                        completed_at=participant.completed_at.isoformat() if participant.completed_at else None,
+                        time_taken_seconds=best_time,
+                        started_at=best_p.started_at.isoformat() if best_p.started_at else None,
+                        completed_at=best_p.completed_at.isoformat() if best_p.completed_at else None,
                         question_results=question_results,
                     )
                 except Exception as ai_err:
-                    logger.warning(f"AI summary skipped for participant {participant.id}: {ai_err}")
+                    logger.warning(f"AI summary skipped for participant {best_p.id}: {ai_err}")
 
                 await send_exam_result_email(
-                    email=participant.email,
-                    name=participant.display_name,
+                    email=best_p.email,
+                    name=best_p.display_name,
                     quiz_title=quiz.title,
-                    total_score=total_score,
+                    total_score=best_score,
                     max_score=max_score,
                     percentage=percentage,
                     correct_count=correct_count,
                     wrong_count=wrong_count,
                     unanswered_count=unanswered_count,
                     question_results=question_results,
-                    started_at=participant.started_at,
-                    completed_at=participant.completed_at,
-                    time_taken_seconds=time_taken_seconds,
+                    started_at=best_p.started_at,
+                    completed_at=best_p.completed_at,
+                    time_taken_seconds=best_time,
                     ai_summary=ai_summary,
+                    attempt_count=len(group),
+                    all_attempts=all_attempts,
+                    integrity_score=integrity_score,
+                    violation_count=violation_count,
+                    is_locked=is_locked,
+                    violation_types=violation_types,
                 )
-                logger.info(f"Sent results email to participant {participant.id} for quiz {quiz_id}")
-                await asyncio.sleep(0.5)  # throttle: ~120 emails/min, within Titan SMTP limits
+                logger.info(f"Sent results email to {email_key} ({len(group)} attempt(s)) for quiz {quiz_id}")
+                await asyncio.sleep(0.5)  # throttle: ~120 emails/min
             except Exception as e:
                 err_str = str(e)
                 logger.error(
-                    f"Failed to send results email to participant {participant.id}: {err_str}",
+                    f"Failed to send results email to {email_key}: {err_str}",
                     exc_info=True,
                 )
-                failures.append({"email": participant.email, "error": err_str})
+                failures.append({"email": email_key, "error": err_str})
 
     return failures

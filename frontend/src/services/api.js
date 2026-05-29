@@ -235,6 +235,7 @@ export const examAPI = {
     api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}),
   publish: (quizId, freshStart = false) => api.post(`/quizzes/${quizId}/publish-exam`, null, { params: freshStart ? { fresh_start: true } : {} }),
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
+  sendParticipantEmails: (quizId) => api.post(`/quiz/${quizId}/send-participant-emails`),
 }
 
 // AI Generation API

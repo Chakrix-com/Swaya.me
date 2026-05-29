@@ -346,6 +346,12 @@ async def send_exam_result_email(
     completed_at=None,
     time_taken_seconds: float | None = None,
     ai_summary: str | None = None,
+    attempt_count: int = 1,
+    all_attempts: list | None = None,
+    integrity_score: int | None = None,
+    violation_count: int = 0,
+    is_locked: bool = False,
+    violation_types: list | None = None,
 ) -> bool:
     """Send a branded results email to the participant after exam submission."""
     import html as _html_mod
@@ -408,6 +414,105 @@ async def send_exam_result_email(
 <div style="background:#f0f5ff;border:1px solid #d6e4ff;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:#555;line-height:1.8;">
   {'&nbsp;&nbsp;·&nbsp;&nbsp;'.join(meta_parts)}
 </div>"""
+
+    # ── Attempt history (only when candidate sat the exam more than once) ───
+    attempts_section = ''
+    if attempt_count > 1 and all_attempts:
+        def _fmt_t(s):
+            if s is None: return '—'
+            m, sec = divmod(int(s), 60)
+            return f'{m}m {sec}s'
+        def _fmt_d(dt):
+            if dt is None: return '—'
+            try:
+                import datetime as _dt2
+                d = dt if isinstance(dt, _dt2.datetime) else _dt2.datetime.fromisoformat(str(dt).replace('Z','+00:00'))
+                return d.strftime('%d %b %Y')
+            except Exception:
+                return '—'
+
+        rows_html = ''
+        for i, att in enumerate(all_attempts, 1):
+            badge = ' &nbsp;<span style="background:#1677ff;color:#fff;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700;">★ Best</span>' if i == 1 else ''
+            rows_html += f'''
+<tr style="background:{'#f0f5ff' if i==1 else ('#ffffff' if i%2==1 else '#fafafa')};">
+  <td style="padding:8px 12px;font-size:13px;color:#595959;text-align:center;">{i}</td>
+  <td style="padding:8px 12px;font-size:13px;color:#1a1a1a;">{_fmt_d(att.get("completed_at"))}{badge}</td>
+  <td style="padding:8px 12px;font-size:13px;color:#1a1a1a;text-align:center;font-weight:{'700' if i==1 else '400'};">{att.get("score",0)}&nbsp;/&nbsp;{att.get("max_score",max_score)}</td>
+  <td style="padding:8px 12px;font-size:13px;color:#595959;text-align:center;">{_fmt_t(att.get("time_taken_seconds"))}</td>
+</tr>'''
+
+        attempts_section = f'''
+<div style="margin-bottom:24px;">
+  <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+    Your Attempts &nbsp;<span style="font-size:12px;font-weight:400;color:#8c8c8c;">({attempt_count} total)</span>
+  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;">
+    <tr style="background:#f5f5f5;">
+      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">#</th>
+      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:left;">Date</th>
+      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">Score</th>
+      <th style="padding:8px 12px;font-size:11px;color:#8c8c8c;font-weight:600;text-align:center;">Time</th>
+    </tr>
+    {rows_html}
+  </table>
+  <div style="font-size:12px;color:#8c8c8c;margin-top:6px;font-style:italic;">
+    The question breakdown below shows your best attempt.
+  </div>
+</div>'''
+
+    # ── Exam integrity section ────────────────────────────────────────────────
+    integrity_section = ''
+    if integrity_score is not None:
+        VIOLATION_LABELS = {
+            'TAB_SWITCH_DETECT': 'Tab switch',
+            'FULLSCREEN_EXIT': 'Fullscreen exit',
+            'DEVTOOLS_OPEN': 'DevTools opened',
+            'COPY_ATTEMPT': 'Copy/paste attempt',
+            'WEBCAM_PERMISSION_DENIED': 'Webcam denied',
+            'SESSION_LOCKED': 'Session locked',
+            'LOW_INTEGRITY_SCORE': 'Integrity threshold breached',
+        }
+        if integrity_score >= 80:
+            score_bg, score_fg, score_border = '#f6ffed', '#389e0d', '#b7eb8f'
+        elif integrity_score >= 50:
+            score_bg, score_fg, score_border = '#fffbe6', '#d48806', '#ffe58f'
+        else:
+            score_bg, score_fg, score_border = '#fff2f0', '#cf1322', '#ffccc7'
+
+        vtypes = list(dict.fromkeys(violation_types or []))  # deduplicate, preserve order
+        vtypes_clean = [VIOLATION_LABELS.get(v, v.replace('_', ' ').title()) for v in vtypes
+                        if v not in ('SESSION_LOCKED', 'LOW_INTEGRITY_SCORE')]
+        violations_html = ''
+        if vtypes_clean:
+            tags = ''.join(
+                f'<span style="background:#f5f5f5;border:1px solid #d9d9d9;border-radius:4px;padding:2px 8px;font-size:11px;color:#595959;margin:2px 4px 2px 0;display:inline-block;">{v}</span>'
+                for v in vtypes_clean
+            )
+            violations_html = f'<div style="margin-top:8px;">{tags}</div>'
+
+        locked_html = ''
+        if is_locked:
+            locked_html = '<div style="margin-top:8px;font-size:12px;color:#cf1322;font-weight:600;">🔒 Your session was locked by the proctoring system.</div>'
+
+        integrity_section = f'''
+<div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:8px;padding:14px 16px;margin-bottom:24px;">
+  <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Exam Integrity</div>
+  <table cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="padding-right:24px;">
+      <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px;">Integrity Score</div>
+      <div style="background:{score_bg};border:1px solid {score_border};border-radius:6px;padding:4px 14px;display:inline-block;">
+        <span style="font-size:20px;font-weight:800;color:{score_fg};">{integrity_score}</span>
+        <span style="font-size:11px;color:{score_fg};opacity:.8;">&nbsp;/ 100</span>
+      </div>
+    </td>
+    <td>
+      <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px;">Violations</div>
+      <div style="font-size:18px;font-weight:700;color:#595959;">{violation_count}</div>
+    </td>
+  </tr></table>
+  {violations_html}{locked_html}
+</div>'''
 
     # ── Per-question rows ────────────────────────────────────────────────────
     q_rows = ''
@@ -509,6 +614,10 @@ async def send_exam_result_email(
       {score_card}
 
       {meta_row}
+
+      {attempts_section}
+
+      {integrity_section}
 
       <!-- Question breakdown -->
       <div style="font-size:13px;font-weight:600;color:#595959;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Question Breakdown</div>

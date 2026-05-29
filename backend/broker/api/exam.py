@@ -157,6 +157,37 @@ async def analyze_exam_results_endpoint(
     return {"analysis": analysis}
 
 
+@router.post("/quiz/{quiz_id}/send-participant-emails")
+async def send_participant_emails_now(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(require_admin),
+):
+    """Authenticated host — immediately send result emails to all completed participants
+    and mark the quiz so the nightly batch skips it."""
+    from persistence.models.quiz import Quiz
+    from sqlalchemy import select
+
+    result = await db.execute(select(Quiz).filter(Quiz.id == quiz_id))
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    if quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorised")
+
+    failures = await svc.send_participant_results_emails(quiz_id)
+
+    # Mark as sent so the nightly scheduler won't re-send
+    quiz.exam_participant_emails_sent = True
+    await db.commit()
+
+    return {
+        "sent": True,
+        "failures": failures,
+        "failure_count": len(failures),
+    }
+
+
 @router.post("/quizzes/{quiz_id}/publish-exam", response_model=ExamPublishResponse)
 async def publish_exam(
     quiz_id: int,
