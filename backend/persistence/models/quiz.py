@@ -189,6 +189,7 @@ class Participant(Base, TimestampMixin):
     started_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
     last_activity_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
     is_abandoned = Column(Boolean, default=False, nullable=False, server_default="0")
+    result_email_sent = Column(Boolean, default=False, nullable=False, server_default="0")
 
     # Relationships
     session = relationship("QuizSession", back_populates="participants")

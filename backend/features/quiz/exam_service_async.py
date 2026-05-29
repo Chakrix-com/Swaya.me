@@ -912,6 +912,7 @@ async def publish_exam(
     quiz.exam_slug = slug
     quiz.exam_session_id = session.id
     quiz.status = QuizStatus.READY
+    quiz.exam_participant_emails_sent = False  # reset so new cohort can receive emails
     await db.commit()
 
     # Schedule results email if configured
@@ -1058,6 +1059,7 @@ async def send_participant_results_emails(quiz_id: int, sender_name: str | None 
                 Participant.session_id.in_(all_session_ids),
                 Participant.completed_at.isnot(None),
                 Participant.email.isnot(None),
+                Participant.result_email_sent == False,  # noqa: E712
             )
         )
         participants = p_result.scalars().all()
@@ -1223,6 +1225,10 @@ async def send_participant_results_emails(quiz_id: int, sender_name: str | None 
                     violation_types=violation_types,
                     sender_name=sender_name,
                 )
+                # Mark all attempts for this address as emailed
+                for p in group:
+                    p.result_email_sent = True
+                await db.commit()
                 logger.info(f"Sent results email to {email_key} ({len(group)} attempt(s)) for quiz {quiz_id}")
                 await asyncio.sleep(0.5)  # throttle: ~120 emails/min
             except Exception as e:
