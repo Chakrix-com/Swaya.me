@@ -1,7 +1,7 @@
 import { useState, createContext, useContext, useEffect, lazy, Suspense, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, theme as antTheme, Tooltip, Spin, Tag } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Dropdown, Space, Divider, Typography, theme as antTheme, Tooltip, Spin, Tag } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -19,6 +19,7 @@ import {
   MoonOutlined,
   LoadingOutlined,
   CrownOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -60,7 +61,8 @@ const TierManagement = lazy(() => import('./features/admin/TierManagement'))
 
 import LanguageSwitcher from './components/LanguageSwitcher'
 import GlobalOverlay from './components/GlobalOverlay'
-import StatsPanel from './components/StatsPanel'
+import SidebarFolderTree from './components/SidebarFolderTree'
+import SidebarLiveSessions from './components/SidebarLiveSessions'
 import BetaBadge from './components/BetaBadge'
 import OpenSourceBadge from './components/OpenSourceBadge'
 import logo from './assets/logo.png'
@@ -144,16 +146,12 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
   return (
     <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: onToggleVisitorTheme }}>
     <ProLayout
-      title="Swaya.me"
-      logo={null}
-      headerTitleRender={() => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-          <img src={logo} alt="Swaya.me Logo" style={{ height: 'auto', maxHeight: '32px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }} />
-          <span>Swaya.me</span>
-          <BetaBadge />
-          <OpenSourceBadge />
+      title={
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          Swaya.me <BetaBadge /> <OpenSourceBadge />
         </span>
-      )}
+      }
+      logo={<img src={logo} alt="Swaya.me" style={{ height: 26, width: 'auto', borderRadius: 4 }} />}
       layout="mix"
       splitMenus={false}
       contentWidth="Fluid"
@@ -161,7 +159,25 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
       fixSiderbar
       collapsed={collapsed}
       onCollapse={setCollapsed}
-      contentStyle={{ overflowX: 'hidden' }}
+      contentStyle={{ overflowX: 'hidden', padding: 0 }}
+      token={{
+        sider: {
+          colorMenuBackground: '#FFFFFF',
+          colorTextMenuSelected: '#6366F1',
+          colorBgMenuItemSelected: '#EEF2FF',
+          colorTextMenu: '#374151',
+          colorTextMenuTitle: '#111827',
+          colorTextMenuItemHover: '#6366F1',
+          colorBgMenuItemHover: '#F8FAFC',
+        },
+        header: {
+          colorBgHeader: '#FFFFFF',
+          colorHeaderTitle: '#111827',
+          colorTextMenu: '#374151',
+          colorTextMenuSelected: '#6366F1',
+          colorBgMenuItemSelected: '#EEF2FF',
+        },
+      }}
       location={{
         pathname: location.pathname,
       }}
@@ -173,55 +189,16 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
             name: t('common.dashboard'),
             icon: <DashboardOutlined />,
           },
-          {
-            path: '/plans',
-            name: t('dashboard.plansTab', 'User Plans'),
-            icon: <CrownOutlined />,
-          },
-          {
-            path: '/quiz/new',
-            name: t('quiz.createQuiz'),
-            icon: <PlusOutlined />,
-            hideInMenu: true,
-          },
-          {
-            path: '/quiz',
-            name: t('quiz.questions'),
-            icon: <QuestionCircleOutlined />,
-            hideInMenu: true,
-          },
-          ...(isAdmin ? [
-            {
-              path: '/admin/statistics',
-              name: t('admin.statistics'),
-              icon: <BarChartOutlined />,
-            },
-            {
-              path: '/admin/users',
-              name: t('admin.userManagement'),
-              icon: <TeamOutlined />,
-            },
-            ...(isSuperAdmin ? [{
-              path: '/admin/organizations',
-              name: t('admin.organizations'),
-              icon: <ApartmentOutlined />,
-            },
-            {
-              path: '/admin/platform-quizzes',
-              name: t('admin.platformQuizzes'),
-              icon: <AppstoreOutlined />,
-            },
-            {
-              path: '/admin/tier-management',
-              name: t('admin.tierManagement'),
-              icon: <SlidersOutlined />,
-            },
-            {
-              path: '/admin/feedback',
-              name: t('admin.feedback'),
-              icon: <MessageOutlined />,
-            }] : [])
-          ] : []),
+          // Hidden routes — still routable but not shown in sidebar
+          { path: '/plans',                    hideInMenu: true },
+          { path: '/quiz/new',                 hideInMenu: true },
+          { path: '/quiz',                     hideInMenu: true },
+          { path: '/admin/statistics',         hideInMenu: true },
+          { path: '/admin/users',              hideInMenu: true },
+          { path: '/admin/organizations',      hideInMenu: true },
+          { path: '/admin/platform-quizzes',   hideInMenu: true },
+          { path: '/admin/tier-management',    hideInMenu: true },
+          { path: '/admin/feedback',           hideInMenu: true },
         ],
       }}
       menuItemRender={(item, dom) => (
@@ -229,35 +206,112 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
           {dom}
         </div>
       )}
-      menuFooterRender={() => {
-        if (isAdmin && !collapsed) {
-          return <StatsPanel userRole={user?.role} />
-        }
-        return null
-      }}
+      menuFooterRender={() => !collapsed ? (
+        <>
+          <SidebarLiveSessions />
+          <SidebarFolderTree />
+        </>
+      ) : null}
       avatarProps={{
         src: null,
+        icon: <UserOutlined style={{ fontSize: 13 }} />,
+        style: { background: '#6366F1', color: '#fff', cursor: 'pointer', flexShrink: 0 },
         title: <span className="hide-on-mobile">{user?.full_name || user?.email || t('common.user')}</span>,
         size: 'small',
-        render: (props, dom) => {
-          return dom
-        },
+        render: (_props, dom) => (
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              items: [
+                {
+                  key: 'profile-label',
+                  type: 'group',
+                  label: (
+                    <div style={{ padding: '2px 0 6px' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>
+                        {user?.full_name || user?.email}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                        {user?.email}
+                      </div>
+                    </div>
+                  ),
+                },
+                { type: 'divider' },
+                {
+                  key: 'plans',
+                  icon: <CrownOutlined />,
+                  label: t('dashboard.plansTab', 'User Plans'),
+                  onClick: () => navigate('/plans'),
+                },
+                ...(isAdmin ? [
+                  { type: 'divider' },
+                  {
+                    key: 'statistics',
+                    icon: <BarChartOutlined />,
+                    label: t('admin.statistics', 'Statistics'),
+                    onClick: () => navigate('/admin/statistics'),
+                  },
+                  {
+                    key: 'users',
+                    icon: <TeamOutlined />,
+                    label: t('admin.userManagement', 'User Management'),
+                    onClick: () => navigate('/admin/users'),
+                  },
+                  ...(isSuperAdmin ? [
+                    {
+                      key: 'organizations',
+                      icon: <ApartmentOutlined />,
+                      label: t('admin.organizations', 'Organizations'),
+                      onClick: () => navigate('/admin/organizations'),
+                    },
+                    {
+                      key: 'platform-quizzes',
+                      icon: <AppstoreOutlined />,
+                      label: t('admin.platformQuizzes', 'Platform Quizzes'),
+                      onClick: () => navigate('/admin/platform-quizzes'),
+                    },
+                    {
+                      key: 'tier-management',
+                      icon: <SlidersOutlined />,
+                      label: t('admin.tierManagement', 'Tier Management'),
+                      onClick: () => navigate('/admin/tier-management'),
+                    },
+                    {
+                      key: 'feedback',
+                      icon: <MessageOutlined />,
+                      label: t('admin.feedback', 'Feedback'),
+                      onClick: () => navigate('/admin/feedback'),
+                    },
+                  ] : []),
+                ] : []),
+                { type: 'divider' },
+                {
+                  key: 'logout',
+                  icon: <LogoutOutlined />,
+                  label: t('tooltip.logout', 'Sign Out'),
+                  danger: true,
+                  onClick: handleLogout,
+                },
+              ],
+            }}
+          >
+            <span style={{ cursor: 'pointer' }}>{dom}</span>
+          </Dropdown>
+        ),
       }}
       actionsRender={() => [
-        <TierBadge key="tier" user={user} />,
-        <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
+        <span key="tier" className="header-action-desktop"><TierBadge user={user} /></span>,
+        <span key="language" className="header-action-desktop">
+          <Tooltip title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>
+        </span>,
         <Tooltip key="theme" title={t('tooltip.themeToggle')}>
           <Button
             type="text"
             icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
             onClick={onToggleVisitorTheme}
             style={{ fontSize: 16 }}
-          />
-        </Tooltip>,
-        <Tooltip key="logout" title={t('tooltip.logout')}>
-          <LogoutOutlined
-            onClick={handleLogout}
-            style={{ fontSize: 16, cursor: 'pointer' }}
           />
         </Tooltip>,
       ]}
@@ -416,7 +470,20 @@ function App() {
   return (
     <ConfigProvider
       locale={locale}
-      theme={{ algorithm: visitorTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm }}
+      theme={{
+        algorithm: visitorTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#6366F1',
+          colorSuccess: '#10B981',
+          colorWarning: '#F59E0B',
+          colorError: '#EF4444',
+          borderRadius: 12,
+          colorBgLayout: '#F8FAFC',
+          colorBgContainer: '#FFFFFF',
+          colorBorder: '#E5E7EB',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif",
+        },
+      }}
     >
       <AntApp>
         <Router>

@@ -271,8 +271,16 @@
   margin-top: 32px;
 }
 
+/* Hide username text on small screens */
 @media (max-width: 576px) {
   .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Hide tier badge + language switcher from header on tablet/mobile to avoid overflow */
+@media (max-width: 768px) {
+  .header-action-desktop {
     display: none !important;
   }
 }

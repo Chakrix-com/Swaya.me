@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
-import { ProCard } from '@ant-design/pro-components'
-import { Button, Tag, Space, Popconfirm, Tooltip, message, Row, Col, Card, Statistic, Modal, Table, Input, TreeSelect, Form, Tree, Progress, Alert } from 'antd'
+import {
+  Button, Tag, Space, Popconfirm, Tooltip, message,
+  Row, Col, Card, Modal, Input, TreeSelect, Form, Tree,
+  Progress, Table, Typography, Badge, Drawer, Dropdown,
+} from 'antd'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -24,48 +27,142 @@ import {
   FolderFilled,
   FolderOpenOutlined,
   FolderAddOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  InfoCircleOutlined,
+  MoreOutlined,
+  LinkOutlined,
+  FolderOutlined,
+  WifiOutlined,
+  EyeOutlined,
+  StopOutlined,
+  AppstoreOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
-import { setQuizzes } from '../../store/quizSlice'
-import { logout } from '../../store/authSlice'
+import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import './Dashboard.css'
 
+const { Title, Text } = Typography
+
+// ── Colour tokens (from ui-spec.md) ──────────────────────────────────────────
+const C = {
+  primary:  '#6366F1',
+  primary50: '#EEF2FF',
+  primary100: '#E0E7FF',
+  primary600: '#4F46E5',
+  success:  '#10B981',
+  warning:  '#F59E0B',
+  error:    '#EF4444',
+  blue:     '#3B82F6',
+  orange:   '#EA580C',
+  pink:     '#DB2777',
+  green:    '#059669',
+  text1:    '#111827',
+  text2:    '#374151',
+  text3:    '#6B7280',
+  bg:       '#F8FAFC',
+  bgCard:   '#FFFFFF',
+  border:   '#E5E7EB',
+}
+
+// ── Activity type config ──────────────────────────────────────────────────────
+const ACTIVITY_TYPES = [
+  {
+    key: 'quiz',
+    titleKey: 'quiz.createQuiz',
+    defaultTitle: 'Live Quiz',
+    descKey: 'tooltip.emptyStateQuizDesc',
+    defaultDesc: 'Run a quiz in real time.',
+    bg: C.primary50,
+    iconBg: '#FFFFFF',
+    iconColor: C.primary600,
+    Icon: ThunderboltOutlined,
+  },
+  {
+    key: 'exam',
+    titleKey: 'exam.createExam',
+    defaultTitle: 'Test / Exam',
+    descKey: 'tooltip.emptyStateExamDesc',
+    defaultDesc: 'Timed assessments with auto-grading.',
+    bg: '#ECFDF5',
+    iconBg: '#FFFFFF',
+    iconColor: C.green,
+    Icon: FileTextOutlined,
+  },
+  {
+    key: 'poll',
+    titleKey: 'quiz.createPoll',
+    defaultTitle: 'Live Poll',
+    descKey: 'tooltip.emptyStatePollDesc',
+    defaultDesc: 'Collect instant audience feedback.',
+    bg: '#FFF7ED',
+    iconBg: '#FFFFFF',
+    iconColor: C.orange,
+    Icon: BarChartOutlined,
+  },
+  {
+    key: 'offline_poll',
+    titleKey: 'offlinePoll.createOfflinePoll',
+    defaultTitle: 'Offline Poll',
+    descKey: 'tooltip.emptyStateOfflinePollDesc',
+    defaultDesc: 'Collect responses asynchronously.',
+    bg: '#FDF2F8',
+    iconBg: '#FFFFFF',
+    iconColor: C.pink,
+    Icon: AppstoreOutlined,
+  },
+]
+
+// ── Status tag config ─────────────────────────────────────────────────────────
+const STATUS_TAG = {
+  ready:    { bg: '#DCFCE7', color: '#166534', label: 'Ready' },
+  draft:    { bg: '#FEF3C7', color: '#92400E', label: 'Draft' },
+  archived: { bg: '#F3F4F6', color: '#374151', label: 'Completed' },
+}
+
+// ── Type tag colours ──────────────────────────────────────────────────────────
+const TYPE_TAG = {
+  quiz:         { bg: C.primary50,  color: C.primary600, label: 'Quiz' },
+  exam:         { bg: '#ECFDF5',    color: C.green,      label: 'Test' },
+  poll:         { bg: '#FFF7ED',    color: C.orange,     label: 'Poll' },
+  offline_poll: { bg: '#FDF2F8',    color: C.pink,       label: 'Offline Poll' },
+}
+
+const TEMPLATE_CACHE_KEY = 'templateQuizIds'
+
 function Dashboard() {
-  const TEMPLATE_CACHE_KEY = 'templateQuizIds'
-  const ROOT_FOLDER_KEY = 'swayame-root'
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const dispatch = useDispatch()
-  const { quizzes } = useSelector((state) => state.quiz)
-  const { user } = useSelector((state) => state.auth)
+  const { quizzes, folders } = useSelector((s) => s.quiz)
+  const { user } = useSelector((s) => s.auth)
+
   const [tierPlans, setTierPlans] = useState(null)
   const [bannerDismissed, setBannerDismissed] = useState(() => {
     const ts = localStorage.getItem('upgrade-banner-dismissed')
-    if (!ts) return false
-    return Date.now() - Number(ts) < 3 * 24 * 60 * 60 * 1000 // 3 days
+    return ts ? Date.now() - Number(ts) < 3 * 24 * 60 * 60 * 1000 : false
   })
+
   const [folderForm] = Form.useForm()
   const [renameFolderForm] = Form.useForm()
+
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [usingTemplateId, setUsingTemplateId] = useState(null)
-  const [folders, setFolders] = useState([])
+
   const [foldersLoading, setFoldersLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
-  const [selectedFolderId, setSelectedFolderId] = useState(() => {
-    const raw = new URLSearchParams(window.location.search).get('folder')
+  const [statusFilter, setStatusFilter] = useState(null)
+
+  const selectedFolderId = useMemo(() => {
+    const raw = searchParams.get('folder')
     return raw ? Number(raw) : undefined
-  })
+  }, [searchParams])
+
   const [folderModalOpen, setFolderModalOpen] = useState(false)
   const [folderSubmitting, setFolderSubmitting] = useState(false)
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false)
   const [renameFolderSubmitting, setRenameFolderSubmitting] = useState(false)
-  const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false)
 
   useEffect(() => {
     loadQuizzes()
@@ -75,28 +172,25 @@ function Dashboard() {
 
   useEffect(() => {
     document.body.classList.add('dashboard-scroll-active')
-    return () => {
-      document.body.classList.remove('dashboard-scroll-active')
-    }
+    return () => document.body.classList.remove('dashboard-scroll-active')
   }, [])
 
   const loadQuizzes = async () => {
     try {
-      const response = await quizAPI.list()
-      dispatch(setQuizzes(response.data))
-    } catch (error) {
-      console.error('Failed to load quizzes:', error)
+      const res = await quizAPI.list()
+      dispatch(setQuizzes(res.data))
+    } catch (e) {
+      console.error('Failed to load quizzes:', e)
     }
   }
 
   const loadFolders = async () => {
     setFoldersLoading(true)
     try {
-      const response = await quizAPI.listFolders()
-      setFolders(response.data || [])
-    } catch (error) {
-      console.error('Failed to load folders:', error)
-      setFolders([])
+      const res = await quizAPI.listFolders()
+      dispatch(setFolders(res.data || []))
+    } catch (e) {
+      dispatch(setFolders([]))
     } finally {
       setFoldersLoading(false)
     }
@@ -106,33 +200,20 @@ function Dashboard() {
     try {
       await quizAPI.delete(quizId)
       loadQuizzes()
-    } catch (error) {
-      console.error('Failed to delete quiz:', error)
+    } catch (e) {
+      console.error('Failed to delete quiz:', e)
     }
   }
 
   const handleDuplicateQuiz = async (quizId) => {
-    const extractErrorDetail = (err) => {
-      const detail = err?.response?.data?.detail
-      if (typeof detail === 'string') return detail
-      if (Array.isArray(detail) && detail.length > 0) {
-        return detail[0]?.msg || null
-      }
-      return null
-    }
-
     try {
-      const response = await quizAPI.duplicate(quizId)
+      const res = await quizAPI.duplicate(quizId)
       message.success(t('quiz.duplicateSuccess', { defaultValue: 'Quiz duplicated successfully' }))
       loadQuizzes()
-      navigate(`/quiz/${response.data.id}/edit`)
-    } catch (error) {
-      console.error('Failed to duplicate quiz:', error)
-      const detail = extractErrorDetail(error)
-      message.error(
-        detail ||
-        t('quiz.duplicateFailed', { defaultValue: 'Failed to duplicate quiz' })
-      )
+      navigate(`/quiz/${res.data.id}/edit`)
+    } catch (e) {
+      const detail = e?.response?.data?.detail
+      message.error((typeof detail === 'string' ? detail : null) || t('quiz.duplicateFailed', { defaultValue: 'Failed to duplicate quiz' }))
     }
   }
 
@@ -141,12 +222,8 @@ function Dashboard() {
       await sessionAPI.end(sessionId)
       message.success(t('quiz.activeSessionStopped', { defaultValue: 'Active session stopped' }))
       loadQuizzes()
-    } catch (error) {
-      console.error('Failed to stop active session:', error)
-      message.error(
-        error?.response?.data?.detail ||
-        t('quiz.failedToStopActiveSession', { defaultValue: 'Failed to stop active session' })
-      )
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('quiz.failedToStopActiveSession', { defaultValue: 'Failed to stop active session' }))
     }
   }
 
@@ -155,8 +232,8 @@ function Dashboard() {
       await quizAPI.assignFolder(quizId, folderId ?? null)
       message.success(t('dashboard.folderAssigned', { defaultValue: 'Folder updated' }))
       await loadQuizzes()
-    } catch (error) {
-      message.error(error?.response?.data?.detail || t('dashboard.folderAssignFailed', { defaultValue: 'Failed to update folder' }))
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('dashboard.folderAssignFailed', { defaultValue: 'Failed to update folder' }))
     }
   }
 
@@ -169,16 +246,13 @@ function Dashboard() {
     try {
       const values = await folderForm.validateFields()
       setFolderSubmitting(true)
-      await quizAPI.createFolder({
-        name: values.name,
-        parent_id: values.parent_id || null,
-      })
+      await quizAPI.createFolder({ name: values.name, parent_id: values.parent_id || null })
       message.success(t('dashboard.folderCreated', { defaultValue: 'Folder created' }))
       setFolderModalOpen(false)
       await loadFolders()
-    } catch (error) {
-      if (error?.errorFields) return
-      message.error(error?.response?.data?.detail || t('dashboard.folderCreateFailed', { defaultValue: 'Failed to create folder' }))
+    } catch (e) {
+      if (e?.errorFields) return
+      message.error(e?.response?.data?.detail || t('dashboard.folderCreateFailed', { defaultValue: 'Failed to create folder' }))
     } finally {
       setFolderSubmitting(false)
     }
@@ -189,12 +263,11 @@ function Dashboard() {
     try {
       await quizAPI.deleteFolder(selectedFolderId)
       message.success(t('dashboard.folderDeleted', { defaultValue: 'Folder deleted' }))
-      setSelectedFolderId(undefined)
       setSearchParams({}, { replace: true })
       await loadFolders()
       await loadQuizzes()
-    } catch (error) {
-      message.error(error?.response?.data?.detail || t('dashboard.folderDeleteFailed', { defaultValue: 'Failed to delete folder' }))
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('dashboard.folderDeleteFailed', { defaultValue: 'Failed to delete folder' }))
     }
   }
 
@@ -214,104 +287,45 @@ function Dashboard() {
       setRenameFolderModalOpen(false)
       await loadFolders()
       await loadQuizzes()
-    } catch (error) {
-      if (error?.errorFields) return
-      message.error(error?.response?.data?.detail || t('dashboard.folderRenameFailed', { defaultValue: 'Failed to rename folder' }))
+    } catch (e) {
+      if (e?.errorFields) return
+      message.error(e?.response?.data?.detail || t('dashboard.folderRenameFailed', { defaultValue: 'Failed to rename folder' }))
     } finally {
       setRenameFolderSubmitting(false)
     }
   }
 
   const handleToggleTemplate = async (quiz) => {
-    const nextTemplateState = !quiz.is_template
+    const next = !quiz.is_template
     try {
-      const response = await quizAPI.setTemplate(quiz.id, { is_template: nextTemplateState })
-      const updatedQuiz = response.data
-      const normalizedQuiz = {
-        ...quiz,
-        ...updatedQuiz,
-        is_template: typeof updatedQuiz?.is_template === 'boolean' ? updatedQuiz.is_template : nextTemplateState,
-      }
-      const nextQuizzes = (quizzes || []).map((q) => (q.id === normalizedQuiz.id ? { ...q, ...normalizedQuiz } : q))
-      dispatch(setQuizzes(nextQuizzes))
-      const cachedIds = new Set(
-        JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
-      )
-      if (normalizedQuiz.is_template) cachedIds.add(normalizedQuiz.id)
-      else cachedIds.delete(normalizedQuiz.id)
-      localStorage.setItem(TEMPLATE_CACHE_KEY, JSON.stringify(Array.from(cachedIds)))
-      setTemplates((prev) => {
-        const withoutCurrent = (prev || []).filter((tq) => tq.id !== normalizedQuiz.id)
-        if (!normalizedQuiz.is_template) return withoutCurrent
-        return [
-          {
-            id: normalizedQuiz.id,
-            title: normalizedQuiz.title,
-            quiz_type: normalizedQuiz.quiz_type || 'quiz',
-            template_scope: normalizedQuiz.template_scope || 'tenant',
-            question_count: normalizedQuiz.question_count || 0,
-            tenant_id: normalizedQuiz.tenant_id,
-          },
-          ...withoutCurrent,
-        ]
-      })
-      message.success(
-        quiz.is_template
-          ? t('quiz.templateUnsetSuccess', { defaultValue: 'Template removed' })
-          : t('quiz.templateSetSuccess', { defaultValue: 'Template set successfully' })
-      )
+      const res = await quizAPI.setTemplate(quiz.id, { is_template: next })
+      const updated = { ...quiz, ...res.data, is_template: typeof res.data?.is_template === 'boolean' ? res.data.is_template : next }
+      dispatch(setQuizzes((quizzes || []).map(q => q.id === updated.id ? { ...q, ...updated } : q)))
+      const cached = new Set(JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter(Number.isInteger))
+      updated.is_template ? cached.add(updated.id) : cached.delete(updated.id)
+      localStorage.setItem(TEMPLATE_CACHE_KEY, JSON.stringify([...cached]))
+      message.success(next ? t('quiz.templateSetSuccess', { defaultValue: 'Template set successfully' }) : t('quiz.templateUnsetSuccess', { defaultValue: 'Template removed' }))
       loadQuizzes()
-    } catch (error) {
-      message.error(error.response?.data?.detail || t('quiz.templateSetFailed', { defaultValue: 'Failed to update template status' }))
+    } catch (e) {
+      message.error(e.response?.data?.detail || t('quiz.templateSetFailed', { defaultValue: 'Failed to update template status' }))
     }
   }
 
   const openTemplateModal = async () => {
     setTemplateModalOpen(true)
     setTemplatesLoading(true)
-    const cachedTemplateIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
-    let myTemplates = (quizzes || []).filter((q) => q.is_template || cachedTemplateIds.includes(q.id))
-    setTemplates(
-      myTemplates.map((q) => ({
-        id: q.id,
-        title: q.title,
-        quiz_type: q.quiz_type || 'quiz',
-        template_scope: q.template_scope || 'tenant',
-        question_count: q.question_count || 0,
-        tenant_id: q.tenant_id,
-      }))
-    )
+    const cachedIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter(Number.isInteger)
+    setTemplates((quizzes || []).filter(q => q.is_template || cachedIds.includes(q.id)).map(q => ({
+      id: q.id, title: q.title, quiz_type: q.quiz_type || 'quiz',
+      template_scope: q.template_scope || 'tenant', question_count: q.question_count || 0,
+    })))
     try {
-      try {
-        const quizListResponse = await quizAPI.list()
-        const latestQuizzes = quizListResponse.data || []
-        dispatch(setQuizzes(latestQuizzes))
-        myTemplates = latestQuizzes.filter((q) => q.is_template || cachedTemplateIds.includes(q.id))
-      } catch (refreshError) {
-        // Keep existing local state as fallback.
-      }
-
-      let templateItems = []
-      try {
-        const response = await quizAPI.listTemplates()
-        templateItems = response.data || []
-      } catch (primaryError) {
-        const legacyResponse = await quizAPI.listTemplatesLegacy()
-        templateItems = legacyResponse.data || []
-      }
-
-      if (templateItems.length > 0) {
-        setTemplates(templateItems)
-      } else {
-        setTemplates(myTemplates)
-      }
-    } catch (error) {
-      if (myTemplates.length > 0) {
-        setTemplates(myTemplates)
-      } else {
-        message.error(error.response?.data?.detail || t('quiz.templateLoadFailed', { defaultValue: 'Failed to load templates' }))
-        setTemplates([])
-      }
+      let items = []
+      try { items = (await quizAPI.listTemplates()).data || [] }
+      catch { items = (await quizAPI.listTemplatesLegacy()).data || [] }
+      if (items.length > 0) setTemplates(items)
+    } catch (e) {
+      message.error(e.response?.data?.detail || t('quiz.templateLoadFailed', { defaultValue: 'Failed to load templates' }))
     } finally {
       setTemplatesLoading(false)
     }
@@ -320,161 +334,76 @@ function Dashboard() {
   const handleUseTemplate = async (templateId) => {
     setUsingTemplateId(templateId)
     try {
-      let response
-      try {
-        response = await quizAPI.useTemplate(templateId)
-      } catch (primaryError) {
-        response = await quizAPI.useTemplateLegacy(templateId)
-      }
+      let res
+      try { res = await quizAPI.useTemplate(templateId) }
+      catch { res = await quizAPI.useTemplateLegacy(templateId) }
       message.success(t('quiz.templateUseSuccess', { defaultValue: 'Template quiz created' }))
       setTemplateModalOpen(false)
       loadQuizzes()
-      navigate(`/quiz/${response.data.id}/edit`)
-    } catch (error) {
-      message.error(error.response?.data?.detail || t('quiz.templateUseFailed', { defaultValue: 'Failed to use template' }))
+      navigate(`/quiz/${res.data.id}/edit`)
+    } catch (e) {
+      message.error(e.response?.data?.detail || t('quiz.templateUseFailed', { defaultValue: 'Failed to use template' }))
     } finally {
       setUsingTemplateId(null)
     }
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'default',
-      ready: 'success',
-      archived: 'error',
-    }
-    return colors[status] || 'default'
-  }
-
-  const getStatusTranslation = (status) => {
-    const statusMap = {
-      draft: 'statusDraft',
-      ready: 'statusReady',
-      archived: 'statusArchived'
-    }
-    return t(`quiz.${statusMap[status] || 'statusDraft'}`)
-  }
-
-  const getQuizTypeColor = (quizType) => {
-    if (quizType === 'exam') return 'volcano'
-    if (quizType === 'offline_poll') return 'magenta'
-    if (quizType === 'poll') return 'purple'
-    return 'blue'
-  }
-  const getQuizTypeLabel = (quizType) => {
-    if (quizType === 'exam') return t('exam.typeLabel', 'Test')
-    if (quizType === 'offline_poll') return t('offlinePoll.typeLabel', 'Offline Poll')
-    if (quizType === 'poll') return t('quiz.poll', { defaultValue: 'Poll' })
-    return t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })
-  }
-
+  // ── Derived data ──────────────────────────────────────────────────────────
   const folderTreeData = useMemo(() => {
-    const mapNodes = (nodes) => (nodes || []).map((node) => ({
-      value: node.id,
-      title: node.name,
-      children: mapNodes(node.children || []),
-    }))
-    return mapNodes(folders)
+    const map = (nodes) => (nodes || []).map(n => ({ value: n.id, title: n.name, children: map(n.children || []) }))
+    return map(folders)
   }, [folders])
-
-  const folderNavTreeData = useMemo(() => {
-    const mapNodes = (nodes) => (nodes || []).map((node) => ({
-      key: String(node.id),
-      title: node.name,
-      icon: selectedFolderId === node.id ? <FolderOpenOutlined /> : <FolderFilled />,
-      children: mapNodes(node.children || []),
-    }))
-    return [{
-      key: ROOT_FOLDER_KEY,
-      title: t('common.appTitle'),
-      icon: <FolderOpenOutlined />,
-      children: mapNodes(folders),
-    }]
-  }, [folders, selectedFolderId])
 
   const selectedFolderName = useMemo(() => {
     const stack = [...folders]
-    while (stack.length > 0) {
-      const node = stack.pop()
-      if (!node) continue
-      if (node.id === selectedFolderId) return node.name
-      if (node.children?.length) stack.push(...node.children)
+    while (stack.length) {
+      const n = stack.pop()
+      if (!n) continue
+      if (n.id === selectedFolderId) return n.name
+      if (n.children?.length) stack.push(...n.children)
     }
     return null
   }, [folders, selectedFolderId])
 
   const filteredQuizzes = useMemo(() => {
     const term = searchText.trim().toLowerCase()
-    return (quizzes || []).filter((quiz) => {
-      const matchesSearch = !term || quiz.title.toLowerCase().includes(term)
-      const folderId = quiz.folder_id
-      const matchesFolder = selectedFolderId
-        ? Number(folderId) === Number(selectedFolderId)
-        : folderId == null
-      return matchesSearch && matchesFolder
+    return (quizzes || []).filter(q => {
+      const matchSearch = !term || q.title.toLowerCase().includes(term)
+      const matchFolder = selectedFolderId ? Number(q.folder_id) === Number(selectedFolderId) : q.folder_id == null
+      const matchStatus = !statusFilter || q.status === statusFilter
+      return matchSearch && matchFolder && matchStatus
     })
-  }, [quizzes, searchText, selectedFolderId])
+  }, [quizzes, searchText, selectedFolderId, statusFilter])
 
-  // Calculate quiz statistics
   const statistics = useMemo(() => {
-    const stats = {
-      total: quizzes.length,
+    const all = quizzes || []
+    return {
+      total: all.length,
       byStatus: {
-        draft: 0,
-        ready: 0,
-        archived: 0
+        ready: all.filter(q => q.status === 'ready').length,
+        draft: all.filter(q => q.status === 'draft').length,
+        archived: all.filter(q => q.status === 'archived').length,
       },
-      totalQuestions: 0
     }
+  }, [quizzes])
 
-    filteredQuizzes.forEach(quiz => {
-      // Count by status
-      if (quiz.status in stats.byStatus) {
-        stats.byStatus[quiz.status]++
-      }
-      // Count total questions
-      if (quiz.question_count) {
-        stats.totalQuestions += quiz.question_count
-      }
-    })
+  const activeSessions = useMemo(() => (quizzes || []).filter(q => q.has_active_session), [quizzes])
 
-    return stats
-  }, [filteredQuizzes])
-
-  const visibleTemplateData = (templates && templates.length > 0
-    ? templates
-    : (quizzes || [])
-        .filter((q) => {
-          const cachedTemplateIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter((id) => Number.isInteger(id))
-          return q.is_template || cachedTemplateIds.includes(q.id)
-        })
-        .map((q) => ({
-          id: q.id,
-          title: q.title,
-          quiz_type: q.quiz_type || 'quiz',
-          template_scope: q.template_scope || 'tenant',
-          question_count: q.question_count || 0,
-          tenant_id: q.tenant_id,
-        })))
+  const visibleTemplateData = useMemo(() => {
+    if (templates?.length) return templates
+    const cachedIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter(Number.isInteger)
+    return (quizzes || []).filter(q => q.is_template || cachedIds.includes(q.id))
+      .map(q => ({ id: q.id, title: q.title, quiz_type: q.quiz_type || 'quiz', template_scope: q.template_scope || 'tenant', question_count: q.question_count || 0 }))
+  }, [templates, quizzes])
 
   const TIER_ORDER = ['free', 'basic', 'pro', 'enterprise']
   const TIER_COLOR = { free: '#8c8c8c', basic: '#1677ff', pro: '#722ed1', enterprise: '#d48806' }
-  const TIER_GRADIENT = {
-    free:   'linear-gradient(135deg, #f5f5f5 0%, #e6f4ff 100%)',
-    basic:  'linear-gradient(135deg, #e6f4ff 0%, #f0f0ff 100%)',
-    pro:    'linear-gradient(135deg, #f9f0ff 0%, #fff0f6 100%)',
-  }
-
   const currentTier = user?.tier || 'free'
   const currentTierIdx = TIER_ORDER.indexOf(currentTier)
-  const nextTier = currentTierIdx >= 0 && currentTierIdx < TIER_ORDER.length - 1
-    ? TIER_ORDER[currentTierIdx + 1]
-    : null
+  const nextTier = currentTierIdx >= 0 && currentTierIdx < TIER_ORDER.length - 1 ? TIER_ORDER[currentTierIdx + 1] : null
   const nextPlan = tierPlans?.find(p => p.tier === nextTier)
   const currentPlan = tierPlans?.find(p => p.tier === currentTier)
-
   const showBanner = !bannerDismissed && nextTier && currentPlan
-
   const maxQ = currentPlan?.max_questions ?? 0
   const usedQ = statistics.total
   const qPct = maxQ > 0 ? Math.min(100, Math.round((usedQ / maxQ) * 100)) : 0
@@ -485,596 +414,679 @@ function Dashboard() {
     setBannerDismissed(true)
   }
 
+  // ── Table action helpers ──────────────────────────────────────────────────
+  const getPrimaryAction = (quiz) => {
+    if (quiz.has_active_session && quiz.active_session_id) return 'open'
+    if (quiz.status === 'ready' && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam') return 'launch'
+    if (quiz.status === 'draft') return 'edit'
+    if (quiz.quiz_type === 'exam') return 'exam_results'
+    if (quiz.quiz_type === 'offline_poll') return 'poll_results'
+    return 'edit'
+  }
+
+  const getTypeTag = (type) => {
+    const cfg = TYPE_TAG[type] || TYPE_TAG.quiz
+    return (
+      <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>
+        {cfg.label}
+      </Tag>
+    )
+  }
+
+  const getStatusTag = (status) => {
+    const cfg = STATUS_TAG[status] || STATUS_TAG.draft
+    return (
+      <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>
+        {cfg.label}
+      </Tag>
+    )
+  }
+
+  const getMoreMenuItems = (quiz) => [
+    {
+      key: 'edit',
+      label: t('common.edit', 'Edit'),
+      icon: <EditOutlined />,
+      onClick: () => navigate(`/quiz/${quiz.id}/edit`),
+    },
+    {
+      key: 'duplicate',
+      label: t('quiz.duplicate', 'Duplicate'),
+      icon: <CopyOutlined />,
+      onClick: () => handleDuplicateQuiz(quiz.id),
+    },
+    {
+      key: 'history',
+      label: t('quiz.history', 'History'),
+      icon: <HistoryOutlined />,
+      onClick: () => navigate(`/quiz/${quiz.id}/history`),
+    },
+    {
+      key: 'template',
+      label: quiz.is_template ? t('quiz.removeTemplate', 'Remove Template') : t('quiz.makeTemplate', 'Make Template'),
+      icon: <StarOutlined />,
+      onClick: () => handleToggleTemplate(quiz),
+    },
+    ...(quiz.quiz_type === 'exam' && quiz.exam_url ? [{
+      key: 'copy_exam',
+      label: t('exam.copyLink', 'Copy Exam Link'),
+      icon: <LinkOutlined />,
+      onClick: () => { navigator.clipboard.writeText(quiz.exam_url); message.success(t('exam.linkCopied', 'Link copied!')) },
+    }] : []),
+    ...(quiz.quiz_type === 'offline_poll' && quiz.poll_url ? [{
+      key: 'copy_poll',
+      label: t('offlinePoll.copyLink', 'Copy Poll Link'),
+      icon: <LinkOutlined />,
+      onClick: () => { navigator.clipboard.writeText(quiz.poll_url); message.success(t('offlinePoll.linkCopied', 'Link copied!')) },
+    }] : []),
+    ...(quiz.has_active_session && quiz.active_session_id ? [{
+      key: 'stop',
+      label: t('quiz.stopActiveSession', 'Stop Session'),
+      icon: <StopOutlined />,
+      danger: true,
+      onClick: () => {},
+    }] : []),
+    { type: 'divider' },
+    {
+      key: 'delete',
+      label: t('common.delete', 'Delete'),
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => {},
+    },
+  ]
+
+  // ── Table columns ─────────────────────────────────────────────────────────
+  const tableColumns = [
+    {
+      title: t('quiz.title', 'Name'),
+      dataIndex: 'title',
+      key: 'title',
+      ellipsis: true,
+      render: (text, record) => (
+        <div>
+          <div style={{ fontWeight: 600, color: C.text1, lineHeight: 1.4, cursor: 'pointer' }}
+            onClick={() => navigate(`/quiz/${record.id}/edit`)}
+          >
+            {text}
+          </div>
+          {record.has_active_session && (
+            <Badge status="processing" text={<span style={{ fontSize: 11, color: C.success }}>Live</span>} />
+          )}
+          {record.is_template && (
+            <Tag style={{ fontSize: 10, padding: '0 5px', marginLeft: 4, background: C.primary50, color: C.primary, border: 'none' }}>
+              Template
+            </Tag>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: t('dashboard.type', 'Type'),
+      dataIndex: 'quiz_type',
+      key: 'quiz_type',
+      width: 130,
+      render: (type) => getTypeTag(type),
+    },
+    {
+      title: t('quiz.status', 'Status'),
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status, record) => {
+        if (record.has_active_session) {
+          return <Tag style={{ background: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 6 }}>Live</Tag>
+        }
+        return getStatusTag(status)
+      },
+    },
+    {
+      title: t('quiz.questions', 'Questions'),
+      dataIndex: 'question_count',
+      key: 'question_count',
+      width: 100,
+      responsive: ['md'],
+      render: (count) => <span style={{ color: C.text3, fontSize: 13 }}>{count || 0}</span>,
+    },
+    {
+      title: t('dashboard.created', 'Created'),
+      dataIndex: 'created_at',
+      key: 'created_at',
+      width: 130,
+      responsive: ['lg'],
+      render: (date) => date
+        ? <span style={{ color: C.text3, fontSize: 12 }}>{new Date(date).toLocaleDateString()}</span>
+        : '—',
+    },
+    {
+      title: t('common.actions', 'Actions'),
+      key: 'actions',
+      width: 200,
+      render: (_, quiz) => {
+        const primaryAction = getPrimaryAction(quiz)
+        return (
+          <Space size={6}>
+            {primaryAction === 'launch' && (
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlayCircleOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/control`)}
+                style={{ background: C.success, borderColor: C.success }}
+              >
+                {t('quiz.startQuiz', 'Launch')}
+              </Button>
+            )}
+            {primaryAction === 'open' && (
+              <Button
+                type="primary"
+                size="small"
+                icon={<WifiOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/control`)}
+              >
+                {t('quiz.openRoom', 'Open Room')}
+              </Button>
+            )}
+            {primaryAction === 'edit' && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
+              >
+                {t('quiz.continue', 'Continue')}
+              </Button>
+            )}
+            {primaryAction === 'exam_results' && (
+              <Button
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)}
+              >
+                {t('exam.resultsTitle', 'Results')}
+              </Button>
+            )}
+            {primaryAction === 'poll_results' && (
+              <Button
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)}
+              >
+                {t('offlinePoll.viewResults', 'Results')}
+              </Button>
+            )}
+            {/* Wrap destructive actions in their own handlers via Dropdown onClick */}
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items: getMoreMenuItems(quiz).map(item => ({
+                  ...item,
+                  onClick: item.key === 'delete' ? undefined : item.onClick,
+                })),
+                onClick: async ({ key }) => {
+                  if (key === 'delete') {
+                    // handled separately via Popconfirm — skip
+                  }
+                },
+              }}
+              dropdownRender={(menu) => (
+                <div>
+                  {/* Render the dropdown, but intercept delete */}
+                  <div className="dashboard-more-menu">
+                    {getMoreMenuItems(quiz).map(item => {
+                      if (item.type === 'divider') return <div key="div" style={{ borderTop: `1px solid ${C.border}`, margin: '4px 0' }} />
+                      if (item.key === 'delete') {
+                        return (
+                          <Popconfirm
+                            key="delete"
+                            title={t('quiz.deleteConfirm', 'Delete this quiz?')}
+                            description={t('quiz.deleteWarning', 'This action cannot be undone.')}
+                            onConfirm={() => handleDeleteQuiz(quiz.id)}
+                            okText={t('common.delete', 'Delete')}
+                            okButtonProps={{ danger: true }}
+                            cancelText={t('common.cancel', 'Cancel')}
+                          >
+                            <div className="dashboard-more-menu-item dashboard-more-menu-item--danger">
+                              <DeleteOutlined />
+                              <span>{t('common.delete', 'Delete')}</span>
+                            </div>
+                          </Popconfirm>
+                        )
+                      }
+                      if (item.key === 'stop') {
+                        return (
+                          <Popconfirm
+                            key="stop"
+                            title={t('quiz.stopActiveSessionConfirm', 'Stop active session?')}
+                            description={t('quiz.stopQuizConfirm', 'This will end the session for all participants.')}
+                            onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
+                            okText={t('quiz.stopQuizOk', 'Yes, stop it')}
+                            okButtonProps={{ danger: true }}
+                            cancelText={t('common.cancel', 'Cancel')}
+                          >
+                            <div className="dashboard-more-menu-item dashboard-more-menu-item--danger">
+                              <StopOutlined />
+                              <span>{t('quiz.stopActiveSession', 'Stop Session')}</span>
+                            </div>
+                          </Popconfirm>
+                        )
+                      }
+                      return (
+                        <div
+                          key={item.key}
+                          className={`dashboard-more-menu-item${item.danger ? ' dashboard-more-menu-item--danger' : ''}`}
+                          onClick={item.onClick}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            >
+              <Button size="small" icon={<MoreOutlined />} />
+            </Dropdown>
+          </Space>
+        )
+      },
+    },
+  ]
+
+  // ── Hero illustration (abstract SVG) ──────────────────────────────────────
+  const HeroIllustration = (
+    <svg width="220" height="170" viewBox="0 0 220 170" fill="none" xmlns="http://www.w3.org/2000/svg" className="hero-illustration">
+      {/* Laptop base */}
+      <rect x="18" y="18" width="164" height="108" rx="10" fill="#C7D2FE" opacity="0.5" />
+      <rect x="26" y="26" width="148" height="92" rx="6" fill="#EEF2FF" />
+      {/* Screen content */}
+      <rect x="38" y="38" width="72" height="9" rx="4" fill="#6366F1" opacity="0.75" />
+      <rect x="38" y="54" width="48" height="7" rx="3" fill="#A5B4FC" opacity="0.9" />
+      <rect x="38" y="67" width="60" height="7" rx="3" fill="#A5B4FC" opacity="0.7" />
+      <rect x="38" y="80" width="42" height="7" rx="3" fill="#C7D2FE" opacity="0.8" />
+      <rect x="38" y="93" width="55" height="7" rx="3" fill="#C7D2FE" opacity="0.6" />
+      {/* Bar chart */}
+      <rect x="122" y="84" width="11" height="28" rx="3" fill="#6366F1" opacity="0.85" />
+      <rect x="138" y="68" width="11" height="44" rx="3" fill="#4F46E5" />
+      <rect x="154" y="76" width="11" height="36" rx="3" fill="#818CF8" opacity="0.8" />
+      {/* Status dot */}
+      <circle cx="128" cy="44" r="5" fill="#10B981" />
+      <rect x="136" y="40" width="28" height="8" rx="4" fill="#D1FAE5" />
+      {/* Laptop stand */}
+      <rect x="8" y="126" width="184" height="12" rx="5" fill="#C7D2FE" opacity="0.4" />
+      {/* Floating badges */}
+      <rect x="160" y="6" width="52" height="22" rx="8" fill="#FDF4FF" />
+      <circle cx="171" cy="17" r="5" fill="#DB2777" opacity="0.7" />
+      <rect x="179" y="13" width="25" height="8" rx="4" fill="#FBCFE8" />
+      <rect x="0" y="94" width="28" height="28" rx="8" fill="#ECFDF5" />
+      <rect x="6" y="100" width="16" height="7" rx="3" fill="#6EE7B7" />
+      <rect x="6" y="110" width="10" height="6" rx="3" fill="#A7F3D0" />
+    </svg>
+  )
+
   return (
     <div className="dashboard-scroll">
-      <div className="dashboard-page" style={{ padding: 24, overflowX: 'hidden' }}>
+      <div className="dashboard-page">
 
-      {/* Upgrade Banner */}
-      {showBanner && (
-        <div style={{
-          background: TIER_GRADIENT[currentTier] || '#f5f5f5',
-          border: `1px solid ${TIER_COLOR[nextTier] || '#d9d9d9'}`,
-          borderRadius: 10,
-          padding: '14px 20px',
-          marginBottom: 20,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}>
-          <ThunderboltOutlined style={{ fontSize: 22, color: TIER_COLOR[nextTier], flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: '#141414' }}>
-              {nearLimit
-                ? t('dashboard.upgradeBannerNearLimit', { pct: qPct })
-                : t('dashboard.upgradeBannerOnPlan')}
-              {!nearLimit && (
-                <Tag color={TIER_COLOR[currentTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11, margin: '0 4px' }}>
-                  {currentTier}
-                </Tag>
-              )}
-              {!nearLimit && t('dashboard.upgradeBannerPlan')}
+        {/* ── Hero Section ────────────────────────────────────────────────── */}
+        <div className="hero-section">
+          <div className="hero-content">
+            <div className="hero-left">
+              <Title level={2} style={{ color: C.text1, margin: 0, lineHeight: 1.2 }}>
+                {t('dashboard.welcomeBack', { name: user?.full_name?.split(' ')[0] || '', defaultValue: `Welcome back, ${user?.full_name?.split(' ')[0] || 'there'} 👋` })}
+              </Title>
+              <Text style={{ color: C.text3, fontSize: 16, display: 'block', marginTop: 8 }}>
+                {t('dashboard.heroSubtitle', 'Create quizzes, polls and assessments in minutes.')}
+              </Text>
+              <Space size={12} style={{ marginTop: 24 }} wrap>
+                <Dropdown
+                  menu={{
+                    items: ACTIVITY_TYPES.map(a => ({
+                      key: a.key,
+                      label: t(a.titleKey, a.defaultTitle),
+                      icon: <a.Icon />,
+                    })),
+                    onClick: ({ key }) => navigate(`/quiz/new?type=${key}`),
+                  }}
+                >
+                  <Button type="primary" size="large" icon={<PlusOutlined />}
+                    style={{ background: C.primary, borderColor: C.primary, fontWeight: 600, paddingInline: 24 }}>
+                    {t('dashboard.createNew', 'Create New')}
+                  </Button>
+                </Dropdown>
+                <Button size="large" onClick={openTemplateModal}
+                  style={{ color: C.text2, fontWeight: 500 }}>
+                  <StarOutlined /> {t('quiz.useTemplate', 'Use Template')}
+                </Button>
+              </Space>
             </div>
-            {nextPlan && (
-              <div style={{ fontSize: 13, color: '#434343' }}>
-                {t('dashboard.upgradeBannerNextTier', {
-                  tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1),
-                  participants: nextPlan.max_participants.toLocaleString(),
-                  questions: nextPlan.max_questions,
-                  sessions: nextPlan.max_concurrent_events,
-                })}
-              </div>
-            )}
-            {nearLimit && (
-              <Progress
-                percent={qPct}
-                size="small"
-                strokeColor={qPct >= 90 ? '#ff4d4f' : '#faad14'}
-                style={{ marginTop: 6, maxWidth: 260 }}
-                format={() => t('dashboard.upgradeBannerQuizUsage', { used: usedQ, max: maxQ })}
-              />
-            )}
+            <div className="hero-right">
+              {HeroIllustration}
+            </div>
           </div>
-          <Space>
-            <Button
-              type="primary"
-              icon={<ArrowUpOutlined />}
-              size="small"
-              href="mailto:info@chakrix.net?subject=Upgrade%20Enquiry"
-              style={{ background: TIER_COLOR[nextTier], borderColor: TIER_COLOR[nextTier] }}
-            >
-              {t('dashboard.upgradeBannerCta', { tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1) })}
-            </Button>
-            <Button
-              type="text"
-              icon={<CloseOutlined />}
-              size="small"
-              onClick={handleDismiss}
-              style={{ color: '#8c8c8c' }}
-            />
-          </Space>
         </div>
-      )}
 
-      {/* Statistics Cards */}
-      <Row gutter={[8, 8]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('admin.stats.totalQuizzes')}
-              value={statistics.total}
-              prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('dashboard.readyToLaunch', { defaultValue: 'Ready to Launch' })}
-              value={statistics.byStatus.ready}
-              prefix={<RocketOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('dashboard.drafts', { defaultValue: 'Drafts' })}
-              value={statistics.byStatus.draft}
-              prefix={<EditFilled />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title={t('dashboard.totalQuestions', { defaultValue: 'Total Questions' })}
-              value={statistics.totalQuestions}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+        {/* ── Create Activity Section ──────────────────────────────────── */}
+        <section className="section-block">
+          <Title level={5} style={{ color: C.text2, marginBottom: 16 }}>
+            {t('dashboard.createActivityTitle', 'What would you like to create today?')}
+          </Title>
+          <Row gutter={[16, 16]}>
+            {ACTIVITY_TYPES.map(type => (
+              <Col xs={12} sm={12} md={6} key={type.key}>
+                <Card
+                  hoverable
+                  onClick={() => navigate(`/quiz/new?type=${type.key}`)}
+                  style={{
+                    background: type.bg,
+                    border: 'none',
+                    borderRadius: 16,
+                    cursor: 'pointer',
+                    height: '100%',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  }}
+                  styles={{ body: { padding: 20 } }}
+                  className="activity-type-card"
+                >
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 14,
+                    background: type.iconBg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 14,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  }}>
+                    <type.Icon style={{ fontSize: 24, color: type.iconColor }} />
+                  </div>
+                  <div style={{ fontWeight: 700, color: C.text1, fontSize: 15, marginBottom: 6 }}>
+                    {t(type.titleKey, type.defaultTitle)}
+                  </div>
+                  <div style={{ color: C.text3, fontSize: 13, lineHeight: 1.5 }}>
+                    {t(type.descKey, type.defaultDesc)}
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </section>
 
-      <ProCard
-        style={{ overflowX: 'hidden' }}
-        extra={
-          <div className="dashboard-action-buttons">
-            <Tooltip title={t('tooltip.useTemplate')}>
-              <Button icon={<StarOutlined />} onClick={openTemplateModal}>
-                {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
-              </Button>
-            </Tooltip>
-            <Space size={4}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate('/quiz/new?type=quiz')}
-              >
-                {t('quiz.createQuiz')}
-              </Button>
-              <Tooltip title={t('quiz.quizTypeInfo')}>
-                <InfoCircleOutlined style={{ color: '#1677ff', cursor: 'pointer', fontSize: 14 }} />
-              </Tooltip>
-            </Space>
-            <Space size={4}>
-              <Button
-                type="primary"
-                icon={<BarChartOutlined />}
-                onClick={() => navigate('/quiz/new?type=poll')}
-                style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
-              >
-                {t('quiz.createPoll', { defaultValue: 'Create Poll' })}
-              </Button>
-              <Tooltip title={t('quiz.pollTypeInfo')}>
-                <InfoCircleOutlined style={{ color: '#722ed1', cursor: 'pointer', fontSize: 14 }} />
-              </Tooltip>
-            </Space>
-            <Space size={4}>
-              <Button
-                type="primary"
-                icon={<BarChartOutlined />}
-                onClick={() => navigate('/quiz/new?type=offline_poll')}
-                style={{ backgroundColor: '#eb2f96', borderColor: '#eb2f96' }}
-              >
-                {t('offlinePoll.createOfflinePoll', 'Create Poll')}
-              </Button>
-              <Tooltip title={t('offlinePoll.typeInfo')}>
-                <InfoCircleOutlined style={{ color: '#eb2f96', cursor: 'pointer', fontSize: 14 }} />
-              </Tooltip>
-            </Space>
-            <Space size={4}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate('/quiz/new?type=exam')}
-                style={{ backgroundColor: '#fa541c', borderColor: '#fa541c' }}
-              >
-                {t('exam.createExam', 'Create Test')}
-              </Button>
-              <Tooltip title={t('exam.typeInfo')}>
-                <InfoCircleOutlined style={{ color: '#fa541c', cursor: 'pointer', fontSize: 14 }} />
-              </Tooltip>
-            </Space>
-          </div>
-        }
-      >
-      <div className={`dashboard-explorer-layout${isExplorerCollapsed ? ' collapsed' : ''}`}>
-        {!isExplorerCollapsed ? (
-        <aside className="dashboard-folder-pane">
-          <div className="dashboard-folder-pane-header">
-            <span>{t('dashboard.foldersTitle', { defaultValue: 'Folders' })}</span>
-            <Space size={6}>
-              <Tooltip title={t('dashboard.newFolder', { defaultValue: 'New Folder' })}>
-                <Button
-                  size="small"
-                  shape="circle"
-                  icon={<FolderAddOutlined />}
-                  onClick={() => openCreateFolderModal(selectedFolderId || null)}
-                />
-              </Tooltip>
-              <Tooltip title={t('dashboard.renameFolder', { defaultValue: 'Rename Folder' })}>
-                <Button
-                  size="small"
-                  shape="circle"
-                  icon={<EditOutlined />}
-                  onClick={openRenameFolderModal}
-                  disabled={!selectedFolderId}
-                />
-              </Tooltip>
-              <Popconfirm
-                title={t('dashboard.deleteFolderConfirmTitle', { defaultValue: 'Delete selected folder?' })}
-                description={t('dashboard.deleteFolderConfirmDesc', { defaultValue: 'Subfolders and quizzes will be moved to parent/root.' })}
-                onConfirm={handleDeleteFolder}
-                okText={t('common.delete', { defaultValue: 'Delete' })}
-                cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
-                disabled={!selectedFolderId}
-              >
-                <Tooltip title={t('dashboard.deleteFolder', { defaultValue: 'Delete Folder' })}>
-                  <Button
-                    size="small"
-                    shape="circle"
-                    danger
-                    icon={<DeleteOutlined />}
-                    disabled={!selectedFolderId}
-                  />
-                </Tooltip>
-              </Popconfirm>
-            </Space>
-          </div>
-          <div className="dashboard-folder-tree-wrapper">
-            {foldersLoading ? (
-              <div style={{ color: '#888', padding: '8px 4px' }}>
-                {t('common.loading', { defaultValue: 'Loading...' })}
+        {/* ── Workflow Summary ─────────────────────────────────────────── */}
+        <section className="section-block">
+          <Row gutter={[16, 16]}>
+            {[
+              {
+                key: 'ready', title: t('dashboard.readyToLaunch', 'Ready to Launch'),
+                count: statistics.byStatus.ready, Icon: RocketOutlined,
+                desc: t('dashboard.readyDesc', 'Activities ready to run'),
+                bg: '#ECFDF5', accent: C.success,
+              },
+              {
+                key: 'draft', title: t('dashboard.inTheWorks', 'In the Works'),
+                count: statistics.byStatus.draft, Icon: EditFilled,
+                desc: t('dashboard.draftDesc', 'Draft activities'),
+                bg: '#FFF7ED', accent: C.warning,
+              },
+              {
+                key: 'archived', title: t('dashboard.pastSessions', 'Past Sessions'),
+                count: statistics.byStatus.archived, Icon: HistoryOutlined,
+                desc: t('dashboard.archivedDesc', 'Completed activities'),
+                bg: '#EFF6FF', accent: C.blue,
+              },
+            ].map(card => (
+              <Col xs={24} sm={8} key={card.key}>
+                <Card
+                  style={{
+                    background: card.bg, border: 'none', borderRadius: 16,
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                    outline: statusFilter === card.key ? `2px solid ${card.accent}` : 'none',
+                  }}
+                  styles={{ body: { padding: '20px 24px' } }}
+                  className="workflow-card"
+                  onClick={() => setStatusFilter(statusFilter === card.key ? null : card.key)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontSize: 36, fontWeight: 800, color: card.accent, lineHeight: 1 }}>
+                        {card.count}
+                      </div>
+                      <div style={{ fontWeight: 700, color: C.text1, marginTop: 4, fontSize: 15 }}>
+                        {card.title}
+                      </div>
+                      <div style={{ color: C.text3, fontSize: 12, marginTop: 3 }}>
+                        {card.desc}
+                      </div>
+                    </div>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}>
+                      <card.Icon style={{ fontSize: 20, color: card.accent }} />
+                    </div>
+                  </div>
+                  {statusFilter === card.key && (
+                    <div style={{ marginTop: 8, fontSize: 11, color: card.accent, fontWeight: 600 }}>
+                      Filtering by this status · click to clear
+                    </div>
+                  )}
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </section>
+
+        {/* ── Upgrade Banner ───────────────────────────────────────────── */}
+        {showBanner && (
+          <div className="upgrade-banner" style={{ '--tier-color': TIER_COLOR[nextTier] }}>
+            <ThunderboltOutlined style={{ fontSize: 22, color: TIER_COLOR[nextTier], flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: C.text1 }}>
+                {nearLimit
+                  ? t('dashboard.upgradeBannerNearLimit', { pct: qPct })
+                  : <>
+                      {t('dashboard.upgradeBannerOnPlan')}
+                      <Tag color={TIER_COLOR[nextTier]} style={{ textTransform: 'uppercase', fontWeight: 700, fontSize: 11, margin: '0 4px' }}>{currentTier}</Tag>
+                      {t('dashboard.upgradeBannerPlan')}
+                    </>}
               </div>
-            ) : (
-              <Tree
-                showIcon
-                showLine={{ showLeafIcon: false }}
-                treeData={folderNavTreeData}
-                selectedKeys={[selectedFolderId ? String(selectedFolderId) : ROOT_FOLDER_KEY]}
-                onSelect={(keys) => {
-                  const selectedKey = keys[0]
-                  if (!selectedKey || selectedKey === ROOT_FOLDER_KEY) {
-                    setSelectedFolderId(undefined)
-                    setSearchParams({}, { replace: true })
-                    return
-                  }
-                  const id = Number(selectedKey)
-                  setSelectedFolderId(id)
-                  setSearchParams({ folder: id }, { replace: true })
-                }}
-                defaultExpandAll
-                className="dashboard-folder-tree"
-              />
+              {nextPlan && (
+                <div style={{ fontSize: 13, color: '#434343' }}>
+                  {t('dashboard.upgradeBannerNextTier', {
+                    tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1),
+                    participants: nextPlan.max_participants.toLocaleString(),
+                    questions: nextPlan.max_questions,
+                    sessions: nextPlan.max_concurrent_events,
+                  })}
+                </div>
+              )}
+              {nearLimit && (
+                <Progress percent={qPct} size="small"
+                  strokeColor={qPct >= 90 ? '#ff4d4f' : '#faad14'}
+                  style={{ marginTop: 6, maxWidth: 260 }}
+                  format={() => t('dashboard.upgradeBannerQuizUsage', { used: usedQ, max: maxQ })} />
+              )}
+            </div>
+            <Space>
+              <Button type="primary" icon={<ArrowUpOutlined />} size="small"
+                href="mailto:info@chakrix.net?subject=Upgrade%20Enquiry"
+                style={{ background: TIER_COLOR[nextTier], borderColor: TIER_COLOR[nextTier] }}>
+                {t('dashboard.upgradeBannerCta', { tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1) })}
+              </Button>
+              <Button type="text" icon={<CloseOutlined />} size="small" onClick={handleDismiss} style={{ color: '#8c8c8c' }} />
+            </Space>
+          </div>
+        )}
+
+        {/* ── Activity Table + Live Sessions ──────────────────────────── */}
+        <section className="section-block explorer-section">
+          {/* Toolbar */}
+          <div className="explorer-toolbar">
+            <Input
+              prefix={<SearchOutlined style={{ color: C.text3 }} />}
+              allowClear
+              placeholder={t('dashboard.searchQuizzes', 'Search activities…')}
+              style={{ maxWidth: 300, borderRadius: 10 }}
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+            />
+
+            {statusFilter && (
+              <Tag
+                closable
+                onClose={() => setStatusFilter(null)}
+                style={{ background: C.primary50, color: C.primary, border: `1px solid ${C.primary100}`, borderRadius: 8, fontSize: 12 }}
+              >
+                Status: {statusFilter}
+              </Tag>
+            )}
+            {selectedFolderId && (
+              <Tag
+                closable
+                onClose={() => setSearchParams({}, { replace: true })}
+                style={{ background: '#FFF7ED', color: C.orange, border: 'none', borderRadius: 8, fontSize: 12 }}
+              >
+                <FolderFilled style={{ marginRight: 4 }} />{selectedFolderName}
+              </Tag>
             )}
           </div>
-        </aside>
-        ) : null}
-        <section className="dashboard-content-pane">
-          <Space wrap style={{ marginBottom: 16, width: '100%' }}>
-            <Tooltip title={isExplorerCollapsed
-              ? t('dashboard.expandFolders', { defaultValue: 'Show folders' })
-              : t('dashboard.collapseFolders', { defaultValue: 'Hide folders' })}
-            >
-              <Button
-                icon={isExplorerCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                onClick={() => setIsExplorerCollapsed((prev) => !prev)}
-              />
-            </Tooltip>
-            <Input.Search
-              className="dashboard-search-input"
-              allowClear
-              placeholder={t('dashboard.searchQuizzes', { defaultValue: 'Search quizzes/polls' })}
-              style={{ width: 'min(320px, 100%)' }}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-            {selectedFolderId ? (
-              <Tag color="blue">
-                {t('dashboard.inFolder', { defaultValue: 'In folder' })}: {selectedFolderName}
-              </Tag>
-            ) : null}
-          </Space>
-          <div style={{ width: '100%', overflow: 'hidden' }}>
-        {filteredQuizzes.length === 0 ? (
-          !searchText.trim() && !selectedFolderId ? (
-            <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{t('tooltip.emptyStateTitle')}</div>
-              <div style={{ color: '#888', marginBottom: 32, fontSize: 14 }}>{t('tooltip.emptyStateSubtitle')}</div>
-              <Row gutter={[16, 16]} justify="center">
-                {[
-                  { type: 'quiz', icon: '🎯', desc: t('tooltip.emptyStateQuizDesc'), color: '#1677ff' },
-                  { type: 'poll', icon: '📊', desc: t('tooltip.emptyStatePollDesc'), color: '#722ed1' },
-                  { type: 'offline_poll', icon: '📋', desc: t('tooltip.emptyStateOfflinePollDesc'), color: '#eb2f96' },
-                  { type: 'exam', icon: '📝', desc: t('tooltip.emptyStateExamDesc'), color: '#fa541c' },
-                ].map(({ type, icon, desc, color }) => (
-                  <Col xs={24} sm={12} md={6} key={type}>
-                    <Card
-                      hoverable
-                      onClick={() => navigate(`/quiz/new?type=${type}`)}
-                      style={{ borderTop: `3px solid ${color}`, cursor: 'pointer' }}
-                      bodyStyle={{ padding: '20px 16px', textAlign: 'center' }}
-                    >
-                      <div style={{ fontSize: 32, marginBottom: 8 }}>{icon}</div>
-                      <div style={{ fontSize: 13, color: '#444', lineHeight: 1.5 }}>{desc}</div>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
-              {t('quiz.noQuizzes') || 'No quizzes yet. Create your first quiz!'}
-            </div>
-          )
-        ) : filteredQuizzes.map((quiz, index) => (
-          <div
-            key={quiz.id}
-            className="quiz-item"
-          >
-            <div className="quiz-item-title">
-              <strong>{quiz.title}</strong>
-            </div>
-            <div className="quiz-item-body">
-              <div className="quiz-item-meta">
-                <Space>
-                  <Tag color={getQuizTypeColor(quiz.quiz_type)}>
-                    {getQuizTypeLabel(quiz.quiz_type)}
-                  </Tag>
-                  <Tag color={getStatusColor(quiz.status)}>{getStatusTranslation(quiz.status)}</Tag>
-                  {quiz.is_template && (
-                    <Tag color={quiz.template_scope === 'global' ? 'purple' : 'blue'}>
-                      {quiz.template_scope === 'global'
-                        ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
-                        : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
-                    </Tag>
-                  )}
-                  <span>
-                    {t('quiz.questionCount', {
-                      count: quiz.question_count || 0,
-                      defaultValue: `${quiz.question_count || 0} ${t('quiz.questions')}`,
-                    })}
-                  </span>
-                  {quiz.response_count > 0 && (
-                    <span style={{ color: '#8c8c8c' }}>
-                      · {quiz.response_count} {t('quiz.responses', { defaultValue: 'responses' })}
-                    </span>
-                  )}
-                  {quiz.folder_path && (
-                    <Tag color="cyan">
-                      {t('dashboard.folder', { defaultValue: 'Folder' })}: {quiz.folder_path}
-                    </Tag>
-                  )}
-                  {quiz.quiz_type === 'offline_poll' && quiz.offline_start_at && (
-                    <Tag color={(() => {
-                      const now = new Date()
-                      const start = new Date(quiz.offline_start_at)
-                      const end = quiz.offline_end_at ? new Date(quiz.offline_end_at) : null
-                      if (now < start) return 'blue'
-                      if (end && now > end) return 'default'
-                      return 'green'
-                    })()}>
-                      {(() => {
-                        const now = new Date()
-                        const start = new Date(quiz.offline_start_at)
-                        const end = quiz.offline_end_at ? new Date(quiz.offline_end_at) : null
-                        if (now < start) return t('offlinePoll.statusNotStarted', 'Not Started')
-                        if (end && now > end) return t('offlinePoll.statusClosed', 'Closed')
-                        return t('offlinePoll.statusActive', 'Active')
-                      })()}
-                    </Tag>
-                  )}
-                </Space>
-              </div>
-              <div className="quiz-item-actions">
-                <TreeSelect
-                  allowClear
-                  treeData={folderTreeData}
-                  value={quiz.folder_id ?? undefined}
-                  onChange={(value) => handleAssignFolder(quiz.id, value)}
-                  placeholder={t('dashboard.assignFolder', { defaultValue: 'Assign folder' })}
-                  style={{ minWidth: 180 }}
-                  treeDefaultExpandAll
+
+          {/* Content row */}
+          <div className="explorer-layout">
+            {/* Activity table */}
+            <div className="activity-pane">
+              {filteredQuizzes.length === 0 && !searchText.trim() && !selectedFolderId && !statusFilter ? (
+                /* Empty state */
+                <div className="empty-state">
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.text1, marginBottom: 8 }}>
+                    {t('tooltip.emptyStateTitle', 'Create your first activity')}
+                  </div>
+                  <div style={{ color: C.text3, marginBottom: 32, fontSize: 14 }}>
+                    {t('tooltip.emptyStateSubtitle', 'Pick an activity type to get started.')}
+                  </div>
+                  <Row gutter={[16, 16]} justify="center">
+                    {ACTIVITY_TYPES.map(type => (
+                      <Col xs={12} sm={12} md={6} key={type.key}>
+                        <Card hoverable onClick={() => navigate(`/quiz/new?type=${type.key}`)}
+                          style={{ borderTop: `3px solid ${type.iconColor}`, cursor: 'pointer', borderRadius: 12 }}
+                          styles={{ body: { padding: '20px 16px', textAlign: 'center' } }}
+                        >
+                          <type.Icon style={{ fontSize: 28, color: type.iconColor, marginBottom: 8 }} />
+                          <div style={{ fontWeight: 600, color: C.text1, marginBottom: 4 }}>{t(type.titleKey, type.defaultTitle)}</div>
+                          <div style={{ fontSize: 12, color: C.text3 }}>{t(type.descKey, type.defaultDesc)}</div>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              ) : (
+                <Table
+                  rowKey="id"
+                  dataSource={filteredQuizzes}
+                  columns={tableColumns}
+                  pagination={{
+                    pageSize: 12,
+                    showSizeChanger: false,
+                    showTotal: (total) => `${total} ${t('quiz.activities', 'activities')}`,
+                    style: { marginTop: 8 },
+                  }}
+                  size="middle"
+                  scroll={{ x: 600 }}
+                  style={{ background: C.bgCard, borderRadius: 12 }}
+                  rowClassName="activity-table-row"
+                  locale={{
+                    emptyText: (
+                      <div style={{ padding: '32px 16px', color: C.text3 }}>
+                        {t('quiz.noQuizzes', 'No activities found.')}
+                      </div>
+                    ),
+                  }}
                 />
-                <Tooltip title={quiz.is_template ? t('tooltip.removeTemplate') : t('tooltip.makeTemplate')}>
-                  <Button
-                    icon={<StarOutlined />}
-                    onClick={() => handleToggleTemplate(quiz)}
-                  >
-                    {quiz.is_template
-                      ? t('quiz.removeTemplate', { defaultValue: 'Remove Template' })
-                      : t('quiz.makeTemplate', { defaultValue: 'Make Template' })}
-                  </Button>
-                </Tooltip>
-                <Button
-                  icon={<CopyOutlined />}
-                  onClick={() => handleDuplicateQuiz(quiz.id)}
-                >
-                  {t('quiz.duplicate', { defaultValue: 'Duplicate' })}
-                </Button>
-                <Button
-                  icon={<EditOutlined />}
-                  onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
-                >
-                  {t('common.edit')}
-                </Button>
-                <Tooltip title={t('tooltip.quizHistory')}>
-                  <Button
-                    icon={<HistoryOutlined />}
-                    onClick={() => navigate(`/quiz/${quiz.id}/history`)}
-                  >
-                    {t('quiz.history')}
-                  </Button>
-                </Tooltip>
-                {quiz.has_active_session && quiz.active_session_id ? (
-                  <Popconfirm
-                    title={t('quiz.stopActiveSessionConfirm', { defaultValue: 'Stop active session?' })}
-                    description={t('quiz.stopQuizConfirm', { defaultValue: 'This will end the session for all participants. You cannot restart it.' })}
-                    onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
-                    okText={t('quiz.stopQuizOk', { defaultValue: 'Yes, stop it' })}
-                    cancelText={t('common.cancel')}
-                  >
-                    <Button danger icon={<CloseCircleOutlined />}>
-                      {t('quiz.stopActiveSession', { defaultValue: 'Stop Active Session' })}
-                    </Button>
-                  </Popconfirm>
-                ) : null}
-                {quiz.status === 'ready' && !quiz.has_active_session && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam' && (
-                  <Tooltip title={t('tooltip.startSession')}>
-                    <Button
-                      type="primary"
-                      icon={<PlayCircleOutlined />}
-                      onClick={() => navigate(`/quiz/${quiz.id}/control`)}
-                    >
-                      {t('quiz.startQuiz')}
-                    </Button>
-                  </Tooltip>
-                )}
-                {quiz.quiz_type === 'exam' && quiz.exam_url && (
-                  <Button
-                    icon={<CopyOutlined />}
-                    onClick={() => {
-                      navigator.clipboard.writeText(quiz.exam_url)
-                      message.success(t('exam.linkCopied', 'Link copied!'))
-                    }}
-                  >
-                    {t('exam.copyLink', 'Copy Link')}
-                  </Button>
-                )}
-                {quiz.quiz_type === 'exam' && quiz.status === 'ready' && (
-                  <Button
-                    onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)}
-                  >
-                    {t('exam.resultsTitle', 'Exam Results')}
-                  </Button>
-                )}
-                {quiz.quiz_type === 'offline_poll' && quiz.poll_url && (
-                  <Button
-                    icon={<CopyOutlined />}
-                    onClick={() => {
-                      navigator.clipboard.writeText(quiz.poll_url)
-                      message.success(t('offlinePoll.linkCopied', 'Link copied!'))
-                    }}
-                  >
-                    {t('offlinePoll.copyLink', 'Copy Link')}
-                  </Button>
-                )}
-                {quiz.quiz_type === 'offline_poll' && quiz.status === 'ready' && (
-                  <Button
-                    onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)}
-                  >
-                    {t('offlinePoll.viewResults', 'View Results')}
-                  </Button>
-                )}
-                <Popconfirm
-                  title={t('quiz.deleteConfirm')}
-                  description={t('quiz.deleteWarning')}
-                  onConfirm={() => handleDeleteQuiz(quiz.id)}
-                  okText={t('common.submit')}
-                  cancelText={t('common.cancel')}
-                >
-                  <Button danger icon={<DeleteOutlined />}>
-                    {t('common.delete')}
-                  </Button>
-                </Popconfirm>
-              </div>
+              )}
             </div>
+
           </div>
-        ))}
-      </div>
         </section>
-      </div>
-      </ProCard>
-      <Modal
-        title={t('dashboard.newFolder', { defaultValue: 'New Folder' })}
-        open={folderModalOpen}
-        onCancel={() => setFolderModalOpen(false)}
-        onOk={handleCreateFolder}
-        confirmLoading={folderSubmitting}
-      >
-        <Form form={folderForm} layout="vertical">
-          <Form.Item
-            name="name"
-            label={t('dashboard.folderName', { defaultValue: 'Folder name' })}
-            rules={[{ required: true, message: t('dashboard.folderNameRequired', { defaultValue: 'Folder name is required' }) }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="parent_id"
-            label={t('dashboard.parentFolder', { defaultValue: 'Parent folder' })}
-          >
-            <TreeSelect
-              allowClear
-              treeData={folderTreeData}
-              placeholder={t('dashboard.noParentRoot', { defaultValue: 'No parent (root)' })}
-              treeDefaultExpandAll
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
-      <Modal
-        title={t('dashboard.renameFolder', { defaultValue: 'Rename Folder' })}
-        open={renameFolderModalOpen}
-        onCancel={() => setRenameFolderModalOpen(false)}
-        onOk={handleRenameFolder}
-        confirmLoading={renameFolderSubmitting}
-      >
-        <Form form={renameFolderForm} layout="vertical">
-          <Form.Item
-            name="name"
-            label={t('dashboard.folderName', { defaultValue: 'Folder name' })}
-            rules={[{ required: true, message: t('dashboard.folderNameRequired', { defaultValue: 'Folder name is required' }) }]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-      <Modal
-        title={t('quiz.templateLibrary', { defaultValue: 'Template Library' })}
-        open={templateModalOpen}
-        onCancel={() => setTemplateModalOpen(false)}
-        footer={null}
-        width={900}
-      >
-        <Table
-          rowKey="id"
-          loading={templatesLoading}
-          dataSource={visibleTemplateData}
-          pagination={{ pageSize: 8 }}
-          columns={[
-            {
-              title: t('quiz.title', { defaultValue: 'Title' }),
-              dataIndex: 'title',
-            },
-            {
-              title: t('dashboard.type', { defaultValue: 'Type' }),
-              dataIndex: 'quiz_type',
-              width: 110,
-              render: (value) => (
-                <Tag color={getQuizTypeColor(value)}>
-                  {getQuizTypeLabel(value)}
-                </Tag>
-              ),
-            },
-            {
-              title: t('quiz.scope', { defaultValue: 'Scope' }),
-              dataIndex: 'template_scope',
-              width: 160,
-              render: (value) => (
-                <Tag color={value === 'global' ? 'purple' : 'blue'}>
-                  {value === 'global'
-                    ? t('quiz.globalTemplate', { defaultValue: 'Global Template' })
-                    : t('quiz.tenantTemplate', { defaultValue: 'Tenant Template' })}
-                </Tag>
-              ),
-            },
-            {
-              title: t('quiz.questions', { defaultValue: 'Questions' }),
-              dataIndex: 'question_count',
-              width: 120,
-            },
-            {
-              title: t('common.actions', { defaultValue: 'Actions' }),
-              width: 180,
-              render: (_, record) => (
-                <Button
-                  type="primary"
-                  loading={usingTemplateId === record.id}
-                  onClick={() => handleUseTemplate(record.id)}
-                >
-                  {t('quiz.useTemplate', { defaultValue: 'Use Template' })}
-                </Button>
-              ),
-            },
-          ]}
-        />
-      </Modal>
+
+        {/* ── Modals ──────────────────────────────────────────────────── */}
+        <Modal
+          title={t('dashboard.newFolder', 'New Folder')}
+          open={folderModalOpen}
+          onCancel={() => setFolderModalOpen(false)}
+          onOk={handleCreateFolder}
+          confirmLoading={folderSubmitting}
+        >
+          <Form form={folderForm} layout="vertical">
+            <Form.Item name="name" label={t('dashboard.folderName', 'Folder name')}
+              rules={[{ required: true, message: t('dashboard.folderNameRequired', 'Folder name is required') }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="parent_id" label={t('dashboard.parentFolder', 'Parent folder')}>
+              <TreeSelect allowClear treeData={folderTreeData}
+                placeholder={t('dashboard.noParentRoot', 'No parent (root)')} treeDefaultExpandAll />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title={t('dashboard.renameFolder', 'Rename Folder')}
+          open={renameFolderModalOpen}
+          onCancel={() => setRenameFolderModalOpen(false)}
+          onOk={handleRenameFolder}
+          confirmLoading={renameFolderSubmitting}
+        >
+          <Form form={renameFolderForm} layout="vertical">
+            <Form.Item name="name" label={t('dashboard.folderName', 'Folder name')}
+              rules={[{ required: true, message: t('dashboard.folderNameRequired', 'Folder name is required') }]}>
+              <Input />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title={t('quiz.templateLibrary', 'Template Library')}
+          open={templateModalOpen}
+          onCancel={() => setTemplateModalOpen(false)}
+          footer={null}
+          width={900}
+        >
+          <Table
+            rowKey="id"
+            loading={templatesLoading}
+            dataSource={visibleTemplateData}
+            pagination={{ pageSize: 8 }}
+            columns={[
+              { title: t('quiz.title', 'Title'), dataIndex: 'title' },
+              {
+                title: t('dashboard.type', 'Type'),
+                dataIndex: 'quiz_type',
+                width: 110,
+                render: v => getTypeTag(v),
+              },
+              {
+                title: t('quiz.scope', 'Scope'),
+                dataIndex: 'template_scope',
+                width: 160,
+                render: v => (
+                  <Tag color={v === 'global' ? 'purple' : 'blue'}>
+                    {v === 'global' ? t('quiz.globalTemplate', 'Global Template') : t('quiz.tenantTemplate', 'Tenant Template')}
+                  </Tag>
+                ),
+              },
+              { title: t('quiz.questions', 'Questions'), dataIndex: 'question_count', width: 120 },
+              {
+                title: t('common.actions', 'Actions'),
+                width: 180,
+                render: (_, rec) => (
+                  <Button type="primary" loading={usingTemplateId === rec.id}
+                    onClick={() => handleUseTemplate(rec.id)}>
+                    {t('quiz.useTemplate', 'Use Template')}
+                  </Button>
+                ),
+              },
+            ]}
+          />
+        </Modal>
+
       </div>
     </div>
   )

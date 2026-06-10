@@ -1,0 +1,53 @@
+.sidebar-folder-accordion {
+  border-top: 1px solid #E5E7EB;
+  padding: 4px 0;
+}
+
+.sidebar-folder-collapse .ant-collapse-header {
+  padding: 10px 16px !important;
+  color: #374151 !important;
+}
+
+.sidebar-folder-collapse .ant-collapse-content-box {
+  padding: 0 8px 8px !important;
+}
+
+.sidebar-folder-tree .ant-tree-node-content-wrapper {
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+
+.sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
+  background: #F8FAFC !important;
+}
+
+.sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: #EEF2FF !important;
+  color: #6366F1;
+  font-weight: 600;
+}
+
+.sidebar-folder-tree .ant-tree-title {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dark mode */
+[data-theme="dark"] .sidebar-folder-accordion {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .sidebar-folder-collapse .ant-collapse-header {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="dark"] .sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #818CF8;
+}

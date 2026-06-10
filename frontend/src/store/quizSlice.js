@@ -4,6 +4,8 @@ const initialState = {
   quizzes: [],
   currentQuiz: null,
   questions: [],
+  folders: [],
+  foldersVersion: 0,
   loading: false,
   error: null,
 }
@@ -14,6 +16,10 @@ export const quizSlice = createSlice({
   reducers: {
     setQuizzes: (state, action) => {
       state.quizzes = action.payload
+    },
+    setFolders: (state, action) => {
+      state.folders = action.payload
+      state.foldersVersion += 1
     },
     setCurrentQuiz: (state, action) => {
       state.currentQuiz = action.payload
@@ -40,14 +46,15 @@ export const quizSlice = createSlice({
   },
 })
 
-export const { 
-  setQuizzes, 
-  setCurrentQuiz, 
-  addQuestion, 
-  updateQuestion, 
+export const {
+  setQuizzes,
+  setFolders,
+  setCurrentQuiz,
+  addQuestion,
+  updateQuestion,
   deleteQuestion,
   setLoading,
-  setError 
+  setError
 } = quizSlice.actions
 
 export default quizSlice.reducer
