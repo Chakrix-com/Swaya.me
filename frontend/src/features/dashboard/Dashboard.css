@@ -177,42 +177,6 @@
   }
 }
 
-/* ── Dark mode overrides ────────────────────────────────────────────────── */
-[data-theme="dark"] .hero-section {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.08) 100%);
-}
-
-[data-theme="dark"] .explorer-section {
-  background: #1f1f1f;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .explorer-toolbar {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-
-[data-theme="dark"] .dashboard-more-menu {
-  background: #1f1f1f;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .dashboard-more-menu-item {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-[data-theme="dark"] .dashboard-more-menu-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-[data-theme="dark"] .activity-table-row:hover > td {
-  background: rgba(255, 255, 255, 0.04) !important;
-}
-
-[data-theme="dark"] .upgrade-banner {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-color: rgba(255, 255, 255, 0.1);
-}
 
 /* ── iOS scroll fix ──────────────────────────────────────────────────────── */
 @supports (-webkit-touch-callout: none) {

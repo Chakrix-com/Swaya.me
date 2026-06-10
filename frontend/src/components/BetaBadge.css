@@ -15,9 +15,3 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-
-.visitor-theme--dark .beta-badge {
-  border-color: rgba(24, 144, 255, 0.75);
-  background: rgba(24, 144, 255, 0.22);
-  color: #d9ebff;
-}

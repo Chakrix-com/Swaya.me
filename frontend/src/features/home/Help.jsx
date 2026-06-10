@@ -32,7 +32,6 @@ import {
 } from '@ant-design/icons'
 import logo from '../../assets/logo.png'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
-import ThemeToggleButton from '../../components/ThemeToggleButton'
 import './LegalPage.css'
 
 const { Header, Content, Footer } = Layout
@@ -281,7 +280,7 @@ function OpenQuestionCard({ text, tip }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function Help({ visitorTheme = 'light' }) {
+export default function Help() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const [expandedQTypes, setExpandedQTypes] = useState({})
@@ -289,10 +288,9 @@ export default function Help({ visitorTheme = 'light' }) {
 
   const normalizedLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]
   const screenshotLanguage = SCREENSHOT_LANGUAGES.includes(normalizedLanguage) ? normalizedLanguage : 'en'
-  const screenshotTheme = visitorTheme === 'dark' ? 'dark' : 'light'
   const getScreenshotPath = (sourcePath) => {
     const fileName = sourcePath.split('/').pop()
-    return `/assets/help-screens/${screenshotLanguage}/${screenshotTheme}/${fileName}?v=${SCREENSHOT_ASSET_VERSION}`
+    return `/assets/help-screens/${screenshotLanguage}/light/${fileName}?v=${SCREENSHOT_ASSET_VERSION}`
   }
 
   // Load translated data arrays
@@ -345,7 +343,6 @@ export default function Help({ visitorTheme = 'light' }) {
             <Text strong style={{ fontSize: 18 }}>Swaya.me</Text>
           </div>
           <Space size="middle">
-            <ThemeToggleButton />
             <LanguageSwitcher />
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>{t('pages.help.backToHome')}</Button>
           </Space>

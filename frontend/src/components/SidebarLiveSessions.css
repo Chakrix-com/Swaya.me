@@ -55,25 +55,3 @@
   margin-top: 2px;
 }
 
-/* Dark mode */
-[data-theme="dark"] .sidebar-live-accordion {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .sidebar-live-collapse .ant-collapse-header {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-[data-theme="dark"] .sidebar-live-item {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-[data-theme="dark"] .sidebar-live-title {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-[data-theme="dark"] .sidebar-live-count {
-  background: rgba(29, 78, 216, 0.25);
-  color: #93C5FD;
-}

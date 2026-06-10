@@ -1,7 +1,7 @@
 import { useState, createContext, useContext, useEffect, lazy, Suspense, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Dropdown, Space, Divider, Typography, theme as antTheme, Tooltip, Spin, Tag } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Dropdown, Space, Divider, Typography, Tooltip, Spin, Tag } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -15,8 +15,6 @@ import {
   MessageOutlined,
   AppstoreOutlined,
   SlidersOutlined,
-  SunOutlined,
-  MoonOutlined,
   LoadingOutlined,
   CrownOutlined,
   UserOutlined,
@@ -79,17 +77,7 @@ const localeMap = {
   gu: enUS,
 }
 
-const THEME_STORAGE_KEY = 'visitor-theme-preference'
-
-export const VisitorThemeContext = createContext({ theme: 'dark', toggle: () => {} })
-
-const getInitialVisitorTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
-  if (storedTheme === 'dark' || storedTheme === 'light') {
-    return storedTheme
-  }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
+export const VisitorThemeContext = createContext({ theme: 'light', toggle: () => {} })
 
 const TIER_COLORS = { free: 'default', basic: 'blue', pro: 'purple', enterprise: 'gold' }
 
@@ -127,7 +115,7 @@ function TierBadge({ user }) {
 }
 
 // Layout wrapper for authenticated routes
-function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
+function AuthenticatedLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useDispatch()
@@ -144,7 +132,6 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
   const isSuperAdmin = user?.role === 'super_admin'
 
   return (
-    <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: onToggleVisitorTheme }}>
     <ProLayout
       title={
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -306,14 +293,6 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
         <span key="language" className="header-action-desktop">
           <Tooltip title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>
         </span>,
-        <Tooltip key="theme" title={t('tooltip.themeToggle')}>
-          <Button
-            type="text"
-            icon={visitorTheme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-            onClick={onToggleVisitorTheme}
-            style={{ fontSize: 16 }}
-          />
-        </Tooltip>,
       ]}
       footerRender={() => (
         <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
@@ -331,22 +310,19 @@ function AuthenticatedLayout({ children, visitorTheme, onToggleVisitorTheme }) {
     >
       {children}
     </ProLayout>
-    </VisitorThemeContext.Provider>
   )
 }
 
 // Simple layout for public routes
-function PublicLayout({ children, visitorTheme, onToggleVisitorTheme }) {
+function PublicLayout({ children }) {
   return (
-    <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: onToggleVisitorTheme }}>
-      <div className={`visitor-theme visitor-theme--${visitorTheme}`}>
-        {children}
-      </div>
-    </VisitorThemeContext.Provider>
+    <div className="visitor-theme visitor-theme--light">
+      {children}
+    </div>
   )
 }
 
-function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
+function AppRoutes() {
   const { isAuthenticated } = useSelector((state) => state.auth)
   const location = useLocation()
 
@@ -358,15 +334,12 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
     location.pathname === '/help'
   ) {
     return (
-      <PublicLayout
-        visitorTheme={visitorTheme}
-        onToggleVisitorTheme={onToggleVisitorTheme}
-      >
+      <PublicLayout>
         <Routes>
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/about" element={<About />} />
-            <Route path="/help" element={<Help visitorTheme={visitorTheme} />} />
+          <Route path="/help" element={<Help />} />
         </Routes>
       </PublicLayout>
     )
@@ -381,10 +354,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
     location.pathname.startsWith('/e/')
   ) {
     return (
-      <PublicLayout
-        visitorTheme={visitorTheme}
-        onToggleVisitorTheme={onToggleVisitorTheme}
-      >
+      <PublicLayout>
         <Routes>
           <Route path="/join" element={<AudienceJoin />} />
           <Route path="/join/:joinCode" element={<AudienceJoin />} />
@@ -401,7 +371,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
   // Other public routes — only when not authenticated
   if (!isAuthenticated) {
     return (
-      <PublicLayout visitorTheme={visitorTheme} onToggleVisitorTheme={onToggleVisitorTheme}>
+      <PublicLayout>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -418,7 +388,7 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
 
   // Authenticated routes (with ProLayout)
   return (
-    <AuthenticatedLayout visitorTheme={visitorTheme} onToggleVisitorTheme={onToggleVisitorTheme}>
+    <AuthenticatedLayout>
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/plans" element={<UserPlans />} />
@@ -444,13 +414,8 @@ function AppRoutes({ visitorTheme, onToggleVisitorTheme }) {
 function App() {
   const { i18n } = useTranslation()
   const locale = localeMap[i18n.language] || enUS
-  const [visitorTheme, setVisitorTheme] = useState(getInitialVisitorTheme)
   const dispatch = useDispatch()
   const { isAuthenticated } = useSelector((state) => state.auth)
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = visitorTheme
-  }, [visitorTheme])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -459,19 +424,10 @@ function App() {
       .catch(() => {})
   }, [isAuthenticated])
 
-  const handleToggleVisitorTheme = () => {
-    setVisitorTheme((currentTheme) => {
-      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
-      localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-      return nextTheme
-    })
-  }
-
   return (
     <ConfigProvider
       locale={locale}
       theme={{
-        algorithm: visitorTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {
           colorPrimary: '#6366F1',
           colorSuccess: '#10B981',
@@ -492,11 +448,9 @@ function App() {
               <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
             </div>
           }>
-            <AppRoutes visitorTheme={visitorTheme} onToggleVisitorTheme={handleToggleVisitorTheme} />
+            <AppRoutes />
           </Suspense>
-          <VisitorThemeContext.Provider value={{ theme: visitorTheme, toggle: handleToggleVisitorTheme }}>
-            <GlobalOverlay />
-          </VisitorThemeContext.Provider>
+          <GlobalOverlay />
         </Router>
       </AntApp>
     </ConfigProvider>

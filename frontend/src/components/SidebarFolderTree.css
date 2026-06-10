@@ -34,20 +34,3 @@
   text-overflow: ellipsis;
 }
 
-/* Dark mode */
-[data-theme="dark"] .sidebar-folder-accordion {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .sidebar-folder-collapse .ant-collapse-header {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-[data-theme="dark"] .sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-
-[data-theme="dark"] .sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
-  background: rgba(99, 102, 241, 0.2) !important;
-  color: #818CF8;
-}
