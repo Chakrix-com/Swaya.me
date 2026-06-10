@@ -858,7 +858,7 @@
   "pages": {
     "legal": {
       "backToHome": "Volver al inicio",
-      "lastUpdated": "Última actualización: March 2026",
+      "lastUpdated": "Última actualización: junio de 2026",
       "privacyLink": "Política de privacidad",
       "termsLink": "Términos de servicio",
       "aboutLink": "Acerca de",
@@ -898,7 +898,14 @@
       "feature7": "Modo encuesta sin conexión — comparte encuestas sin organizar una sesión en vivo",
       "feature8": "Inicia sesión con Google o correo electrónico — rápido, sin fricciones",
       "feature9": "Interfaz en 11 idiomas: inglés, hindi, tamil, telugu, kannada, bengalí, gujarati, español, francés, alemán, ruso",
-      "feature10": "Planes escalonados para individuos, equipos y empresas (después de Beta)"
+      "feature10": "Planes escalonados para individuos, equipos y empresas (después de Beta)",
+      "feature11": "AI question generation — describe a topic and Gemini AI creates ready-to-use questions instantly",
+      "feature12": "Exam proctoring — optional webcam monitoring, fullscreen enforcement, and violation detection for Test sessions",
+      "feature13": "Templates and folder organisation — reuse content from the platform library and keep your activities neatly grouped",
+      "openSourceTitle": "Open Source",
+      "openSourceBody": "Swaya.me is open source, released under the Apache License 2.0. The full source code is publicly available on GitHub — you are free to self-host, fork, contribute, or build on it. Contributions and bug reports are welcome.",
+      "openSourceGithub": "Source code on GitHub:",
+      "openSourceLicense": "License:"
     },
     "privacy": {
       "title": "Política de privacidad",
@@ -934,7 +941,10 @@
       "s7Body": "Swaya.me no utiliza servicios de publicidad de terceros ni vende datos. Utilizamos servicios de infraestructura (alojamiento de servidores, base de datos) que procesan datos en nuestro nombre bajo acuerdos estándar de procesamiento de datos.",
       "s8Body": "Dependiendo de su jurisdicción, puede tener derechos para acceder, corregir o eliminar sus datos personales. Para ejercer estos derechos, contáctenos en",
       "s9Body": "Podemos actualizar esta Política de privacidad de vez en cuando. Cuando lo hagamos, actualizaremos la fecha de 'Última actualización' en la parte superior de esta página. Para cambios significativos, notificaremos a los usuarios registrados por correo electrónico.",
-      "s10Body": "Para cualquier pregunta o solicitud relacionada con la privacidad, contáctenos en"
+      "s10Body": "Para cualquier pregunta o solicitud relacionada con la privacidad, contáctenos en",
+      "s1Body4Label": "Proctoring data (Exam sessions only):",
+      "s1Body4": "When a host enables proctoring on an Exam (Test) session, periodic webcam snapshots are captured from participants' devices during the session for exam integrity purposes. Participants are shown an explicit notice and must grant camera access before joining a proctored session. These images are stored securely, are accessible only to the session host, and are not shared with any third party. They are deleted when the host removes the session history.",
+      "s2li6": "To support exam integrity where proctoring is enabled (webcam snapshots made available to the session host only)"
     },
     "terms": {
       "title": "Términos de servicio",
@@ -967,10 +977,11 @@
       "s6Body": "Nuestro objetivo es proporcionar un servicio confiable, pero no garantizamos disponibilidad ininterrumpida. Swaya.me puede no estar disponible de vez en cuando por mantenimiento o debido a factores fuera de nuestro control. Nos esforzaremos por notificar a los usuarios con anticipación sobre interrupciones planificadas.",
       "s7Body1": "En la máxima medida permitida por la ley, Swaya.me y sus operadores no son responsables de ningún daño indirecto, incidental, consecuente o punitivo derivado del uso de la plataforma.",
       "s7Body2": "Nuestra responsabilidad total hacia usted por cualquier reclamación derivada del uso de la plataforma no excederá la cantidad que nos haya pagado en los doce meses anteriores a la reclamación (o cero si está en un plan gratuito).",
-      "s8Body": "Swaya.me y su logotipo son propiedad de Chakrix. El software, el diseño y la marca de la plataforma están protegidos por las leyes de propiedad intelectual aplicables. No puede copiar, modificar ni distribuir nuestro software de plataforma o marca sin permiso previo por escrito.",
+      "s8Body": "El código fuente de la plataforma Swaya.me está publicado bajo la Licencia Apache 2.0 y está disponible libremente en GitHub. Puedes usar, copiar, modificar y distribuir el código fuente de acuerdo con dicha licencia. El nombre, logotipo y marca de Swaya.me son marcas registradas de Chakrix y no pueden utilizarse sin permiso previo por escrito, independientemente de la licencia de código abierto del código subyacente.",
       "s9Body": "Podemos actualizar estos Términos de servicio de vez en cuando. Notificaremos a los usuarios registrados por correo electrónico antes de que cambios significativos entren en vigor. El uso continuado de la plataforma tras los cambios constituye la aceptación de los términos actualizados.",
       "s10Body": "Estos Términos de servicio se rigen e interpretan de conformidad con las leyes de India. Cualquier disputa estará sujeta a la jurisdicción exclusiva de los tribunales de India.",
-      "s11Body": "Si tiene alguna pregunta sobre estos Términos de servicio, contáctenos en"
+      "s11Body": "Si tiene alguna pregunta sobre estos Términos de servicio, contáctenos en",
+      "s1Body3": "Certain Exam sessions may use optional proctoring features (webcam monitoring, fullscreen enforcement, and violation detection). Participants are shown an explicit notice and must grant camera access before joining a proctored session. By doing so, participants consent to the capture of periodic webcam snapshots for exam integrity purposes. Hosts are solely responsible for informing their participants about proctoring in advance and for complying with applicable laws regarding monitoring."
     },
     "help": {
       "backToHome": "Volver al inicio",

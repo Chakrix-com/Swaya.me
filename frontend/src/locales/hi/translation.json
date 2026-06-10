@@ -805,7 +805,7 @@
   "pages": {
     "legal": {
       "backToHome": "होम पर वापस जाएं",
-      "lastUpdated": "अंतिम अपडेट: मार्च 2026",
+      "lastUpdated": "अंतिम अपडेट: जून 2026",
       "privacyLink": "गोपनीयता नीति",
       "termsLink": "सेवा की शर्तें",
       "aboutLink": "हमारे बारे में",
@@ -845,7 +845,14 @@
       "feature7": "ऑफलाइन पोल मोड — लाइव सेशन के बिना पोल शेयर करें",
       "feature8": "Google या ईमेल से साइन इन — त्वरित, बिना किसी परेशानी के",
       "feature9": "11-भाषा इंटरफेस: अंग्रेज़ी, हिंदी, तमिल, तेलुगु, कन्नड़, बंगाली, गुजराती, स्पेनिश, फ्रेंच, जर्मन, रूसी",
-      "feature10": "व्यक्तियों, टीमों और उद्यमों के लिए टियर-आधारित योजनाएं (Beta के बाद)"
+      "feature10": "व्यक्तियों, टीमों और उद्यमों के लिए टियर-आधारित योजनाएं (Beta के बाद)",
+      "feature11": "AI question generation — describe a topic and Gemini AI creates ready-to-use questions instantly",
+      "feature12": "Exam proctoring — optional webcam monitoring, fullscreen enforcement, and violation detection for Test sessions",
+      "feature13": "Templates and folder organisation — reuse content from the platform library and keep your activities neatly grouped",
+      "openSourceTitle": "Open Source",
+      "openSourceBody": "Swaya.me is open source, released under the Apache License 2.0. The full source code is publicly available on GitHub — you are free to self-host, fork, contribute, or build on it. Contributions and bug reports are welcome.",
+      "openSourceGithub": "Source code on GitHub:",
+      "openSourceLicense": "License:"
     },
     "privacy": {
       "title": "गोपनीयता नीति",
@@ -881,7 +888,10 @@
       "s7Body": "Swaya.me तृतीय-पक्ष विज्ञापन सेवाओं का उपयोग नहीं करता और डेटा बेचता नहीं है। हम इन्फ्रास्ट्रक्चर सेवाओं (सर्वर होस्टिंग, डेटाबेस) का उपयोग करते हैं, जो मानक डेटा प्रोसेसिंग समझौतों के तहत हमारी ओर से डेटा प्रोसेस करती हैं।",
       "s8Body": "आपके अधिकार-क्षेत्र के अनुसार, आपको अपनी व्यक्तिगत जानकारी तक पहुंचने, उसे सही करने या हटाने का अधिकार हो सकता है। इन अधिकारों का उपयोग करने के लिए कृपया हमसे संपर्क करें",
       "s9Body": "हम समय-समय पर इस गोपनीयता नीति को अपडेट कर सकते हैं। जब हम ऐसा करेंगे, तो इस पेज के शीर्ष पर 'अंतिम अपडेट' तारीख बदल दी जाएगी। महत्वपूर्ण परिवर्तनों के लिए हम पंजीकृत उपयोगकर्ताओं को ईमेल द्वारा सूचित करेंगे।",
-      "s10Body": "गोपनीयता से संबंधित किसी भी प्रश्न या अनुरोध के लिए कृपया हमसे संपर्क करें"
+      "s10Body": "गोपनीयता से संबंधित किसी भी प्रश्न या अनुरोध के लिए कृपया हमसे संपर्क करें",
+      "s1Body4Label": "Proctoring data (Exam sessions only):",
+      "s1Body4": "When a host enables proctoring on an Exam (Test) session, periodic webcam snapshots are captured from participants' devices during the session for exam integrity purposes. Participants are shown an explicit notice and must grant camera access before joining a proctored session. These images are stored securely, are accessible only to the session host, and are not shared with any third party. They are deleted when the host removes the session history.",
+      "s2li6": "To support exam integrity where proctoring is enabled (webcam snapshots made available to the session host only)"
     },
     "terms": {
       "title": "सेवा की शर्तें",
@@ -914,10 +924,11 @@
       "s6Body": "हम विश्वसनीय सेवा देने का प्रयास करते हैं, लेकिन निर्बाध उपलब्धता की गारंटी नहीं देते। रखरखाव या हमारे नियंत्रण से बाहर कारणों की वजह से Swaya.me समय-समय पर उपलब्ध न हो सकता है। नियोजित डाउनटाइम की पूर्व सूचना देने का हम प्रयास करेंगे।",
       "s7Body1": "कानून द्वारा अनुमत अधिकतम सीमा तक, Swaya.me और उसके संचालक आपके प्लेटफ़ॉर्म उपयोग से उत्पन्न किसी भी अप्रत्यक्ष, आकस्मिक, परिणामी या दंडात्मक नुकसान के लिए जिम्मेदार नहीं होंगे।",
       "s7Body2": "प्लेटफ़ॉर्म उपयोग से उत्पन्न किसी भी दावे के लिए आपकी ओर हमारी कुल देनदारी उस राशि से अधिक नहीं होगी जो आपने दावे से पहले के बारह महीनों में हमें भुगतान की है (या यदि आप मुफ्त योजना पर हैं तो शून्य)।",
-      "s8Body": "Swaya.me और इसका लोगो Chakrix के स्वामित्व में हैं। प्लेटफ़ॉर्म सॉफ़्टवेयर, डिज़ाइन और ब्रांडिंग लागू बौद्धिक संपदा कानूनों से संरक्षित हैं। पूर्व लिखित अनुमति के बिना आप हमारे प्लेटफ़ॉर्म सॉफ़्टवेयर या ब्रांडिंग की प्रतिलिपि, संशोधन या वितरण नहीं कर सकते।",
+      "s8Body": "Swaya.me प्लेटफ़ॉर्म का सोर्स कोड Apache License 2.0 के तहत जारी किया गया है और GitHub पर स्वतंत्र रूप से उपलब्ध है। आप उस लाइसेंस के अनुसार सोर्स कोड का उपयोग, कॉपी, संशोधन और वितरण कर सकते हैं। Swaya.me का नाम, लोगो और ब्रांडिंग Chakrix के ट्रेडमार्क हैं और अंतर्निहित कोड पर ओपन-सोर्स लाइसेंस के बावजूद पूर्व लिखित अनुमति के बिना इनका उपयोग नहीं किया जा सकता।",
       "s9Body": "हम समय-समय पर इन सेवा शर्तों को अपडेट कर सकते हैं। महत्वपूर्ण बदलाव लागू होने से पहले हम पंजीकृत उपयोगकर्ताओं को ईमेल द्वारा सूचित करेंगे। बदलावों के बाद प्लेटफ़ॉर्म का निरंतर उपयोग अद्यतन शर्तों की स्वीकृति माना जाएगा।",
       "s10Body": "ये सेवा शर्तें भारत के कानूनों के अनुसार शासित और व्याख्यायित होंगी। किसी भी विवाद पर भारत की अदालतों का विशिष्ट अधिकार-क्षेत्र होगा।",
-      "s11Body": "यदि इन सेवा शर्तों के बारे में आपके कोई प्रश्न हैं, तो कृपया हमसे संपर्क करें"
+      "s11Body": "यदि इन सेवा शर्तों के बारे में आपके कोई प्रश्न हैं, तो कृपया हमसे संपर्क करें",
+      "s1Body3": "Certain Exam sessions may use optional proctoring features (webcam monitoring, fullscreen enforcement, and violation detection). Participants are shown an explicit notice and must grant camera access before joining a proctored session. By doing so, participants consent to the capture of periodic webcam snapshots for exam integrity purposes. Hosts are solely responsible for informing their participants about proctoring in advance and for complying with applicable laws regarding monitoring."
     },
     "help": {
       "backToHome": "होम पर वापस जाएं",
