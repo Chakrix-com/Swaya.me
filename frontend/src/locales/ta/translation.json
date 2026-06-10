@@ -805,7 +805,7 @@
   "pages": {
     "legal": {
       "backToHome": "முகப்புக்கு திரும்பு",
-      "lastUpdated": "கடைசியாக புதுப்பிக்கப்பட்டது: March 2026",
+      "lastUpdated": "கடைசியாக புதுப்பிக்கப்பட்டது: ஜூன் 2026",
       "privacyLink": "தனியுரிமைக் கொள்கை",
       "termsLink": "சேவை விதிமுறைகள்",
       "aboutLink": "பற்றி",
@@ -845,7 +845,14 @@
       "feature7": "ஆஃப்லைன் கருத்துக்கணிப்பு முறை — நேரடி அமர்வு இல்லாமல் கணிப்புகளை பகிரலாம்",
       "feature8": "Google அல்லது மின்னஞ்சல் மூலம் உள்நுழைக — விரைவு, எளிது",
       "feature9": "11 மொழி இடைமுகம்: ஆங்கிலம், இந்தி, தமிழ், தெலுங்கு, கன்னடம், வங்காளம், குஜராத்தி, ஸ்பானிஷ், பிரெஞ்சு, ஜெர்மன், ரஷ்யன்",
-      "feature10": "தனிநபர்கள், குழுக்கள் மற்றும் நிறுவனங்களுக்கான நிலை-அடிப்படையிலான திட்டங்கள் (Beta-க்கு பின்)"
+      "feature10": "தனிநபர்கள், குழுக்கள் மற்றும் நிறுவனங்களுக்கான நிலை-அடிப்படையிலான திட்டங்கள் (Beta-க்கு பின்)",
+      "feature11": "AI question generation — describe a topic and Gemini AI creates ready-to-use questions instantly",
+      "feature12": "Exam proctoring — optional webcam monitoring, fullscreen enforcement, and violation detection for Test sessions",
+      "feature13": "Templates and folder organisation — reuse content from the platform library and keep your activities neatly grouped",
+      "openSourceTitle": "Open Source",
+      "openSourceBody": "Swaya.me is open source, released under the Apache License 2.0. The full source code is publicly available on GitHub — you are free to self-host, fork, contribute, or build on it. Contributions and bug reports are welcome.",
+      "openSourceGithub": "Source code on GitHub:",
+      "openSourceLicense": "License:"
     },
     "privacy": {
       "title": "தனியுரிமைக் கொள்கை",
@@ -881,7 +888,10 @@
       "s7Body": "Swaya.me மூன்றாம் தரப்பு விளம்பர சேவைகளை பயன்படுத்துவதில்லை அல்லது தரவை விற்பதில்லை. நிலையான தரவு செயலாக்க ஒப்பந்தங்களின் கீழ் எங்கள் சார்பாக தரவை செயலாக்கும் உள்கட்டமைப்பு சேவைகளை (சேவையக ஹோஸ்டிங், தரவுத்தளம்) பயன்படுத்துகிறோம்.",
       "s8Body": "உங்கள் அதிகார வரம்பைப் பொறுத்து, உங்கள் தனிப்பட்ட தரவை அணுக, திருத்த அல்லது நீக்க உரிமைகள் இருக்கலாம். இந்த உரிமைகளை பயன்படுத்த, தயவுசெய்து எங்களை தொடர்புகொள்ளவும்",
       "s9Body": "நாம் அவ்வப்போது இந்த தனியுரிமைக் கொள்கையை புதுப்பிக்கலாம். புதுப்பிக்கும்போது, இந்தப் பக்கத்தின் மேலே உள்ள 'கடைசியாக புதுப்பிக்கப்பட்டது' தேதியை புதுப்பிப்போம். குறிப்பிடத்தக்க மாற்றங்களுக்கு, பதிவு செய்யப்பட்ட பயனர்களுக்கு மின்னஞ்சல் மூலம் அறிவிப்போம்.",
-      "s10Body": "எந்தவொரு தனியுரிமை தொடர்பான கேள்விகளுக்கும் அல்லது கோரிக்கைகளுக்கும், தயவுசெய்து எங்களை தொடர்புகொள்ளவும்"
+      "s10Body": "எந்தவொரு தனியுரிமை தொடர்பான கேள்விகளுக்கும் அல்லது கோரிக்கைகளுக்கும், தயவுசெய்து எங்களை தொடர்புகொள்ளவும்",
+      "s1Body4Label": "Proctoring data (Exam sessions only):",
+      "s1Body4": "When a host enables proctoring on an Exam (Test) session, periodic webcam snapshots are captured from participants' devices during the session for exam integrity purposes. Participants are shown an explicit notice and must grant camera access before joining a proctored session. These images are stored securely, are accessible only to the session host, and are not shared with any third party. They are deleted when the host removes the session history.",
+      "s2li6": "To support exam integrity where proctoring is enabled (webcam snapshots made available to the session host only)"
     },
     "help": {
       "backToHome": "முகப்புக்கு திரும்பு",
@@ -1469,10 +1479,11 @@
       "s6Body": "நாம் நம்பகமான சேவையை வழங்க இலக்கு கொண்டிருக்கிறோம், ஆனால் தொடர்ச்சியான கிடைக்கும் தன்மையை உறுதிப்படுத்தவில்லை. பராமரிப்பிற்காக அல்லது எங்கள் கட்டுப்பாட்டிற்கு வெளியே உள்ள காரணிகளால் Swaya.me அவ்வப்போது கிடைக்காமல் போகலாம். திட்டமிட்ட செயலிழப்பு பற்றி முன்கூட்டியே பயனர்களுக்கு அறிவிக்க முயற்சிப்போம்.",
       "s7Body1": "சட்டத்தால் அனுமதிக்கப்பட்ட அதிகபட்ச அளவிற்கு, Swaya.me மற்றும் அதன் இயக்குநர்கள் தளத்தை நீங்கள் பயன்படுத்துவதிலிருந்து எழும் எந்தவொரு மறைமுக, தற்செயலான, விளைவான அல்லது தண்டனை தொடர்பான சேதங்களுக்கும் பொறுப்பாவதில்லை.",
       "s7Body2": "தளத்தை பயன்படுத்துவதிலிருந்து எழும் எந்தவொரு கோரிக்கைக்கும் உங்களுக்கான எங்கள் மொத்த பொறுப்பு, கோரிக்கைக்கு முந்தைய பன்னிரண்டு மாதங்களில் நீங்கள் எங்களுக்கு செலுத்திய தொகையை தாண்டாது (அல்லது நீங்கள் இலவச திட்டத்தில் இருந்தால் பூஜ்யம்).",
-      "s8Body": "Swaya.me மற்றும் அதன் லோகோ Chakrix ஐ சொந்தமானது. தள மென்பொருள், வடிவமைப்பு மற்றும் பிராண்டிங் பொருந்தும் அறிவுசார் சொத்துரிமை சட்டங்களால் பாதுகாக்கப்படுகின்றன. முன் எழுத்துப்பூர்வ அனுமதியின்றி எங்கள் தள மென்பொருள் அல்லது பிராண்டிங்ஐ நகல் எடுக்கவோ, மாற்றவோ அல்லது விநியோகிக்கவோ கூடாது.",
+      "s8Body": "Swaya.me இயங்குதள மூலக்குறியீடு Apache License 2.0 இன் கீழ் வெளியிடப்பட்டுள்ளது மற்றும் GitHub இல் இலவசமாகக் கிடைக்கிறது. அந்த உரிமத்திற்கு இணங்க நீங்கள் மூலக்குறியீட்டைப் பயன்படுத்தலாம், நகலெடுக்கலாம், மாற்றலாம் மற்றும் விநியோகிக்கலாம். Swaya.me பெயர், லோகோ மற்றும் பிராண்டிங் Chakrix இன் வர்த்தக முத்திரைகள் மற்றும் அடிப்படைக் குறியீட்டில் திறந்த மூல உரிமம் இருந்தாலும் முன் எழுத்துப்பூர்வ அனுமதி இல்லாமல் பயன்படுத்த முடியாது.",
       "s9Body": "நாம் அவ்வப்போது இந்த சேவை விதிமுறைகளை புதுப்பிக்கலாம். முக்கியமான மாற்றங்கள் நடைமுறைக்கு வருவதற்கு முன்பு பதிவு செய்யப்பட்ட பயனர்களுக்கு மின்னஞ்சல் மூலம் அறிவிப்போம். மாற்றங்களுக்கு பிறகு தளத்தை தொடர்ந்து பயன்படுத்துவது புதுப்பிக்கப்பட்ட விதிமுறைகளின் ஏற்றுக்கொள்ளலை அமைக்கிறது.",
       "s10Body": "இந்த சேவை விதிமுறைகள் இந்தியாவின் சட்டங்களுக்கு இணங்க நிர்வகிக்கப்படுகின்றன மற்றும் விளக்கப்படுகின்றன. எந்தவொரு தகராறுகளும் இந்தியாவின் நீதிமன்றங்களின் பிரத்யேக அதிகார வரம்பிற்கு உட்பட்டதாக இருக்கும்.",
-      "s11Body": "இந்த சேவை விதிமுறைகள் பற்றி ஏதேனும் கேள்விகள் இருந்தால், தயவுசெய்து எங்களை தொடர்புகொள்ளவும்"
+      "s11Body": "இந்த சேவை விதிமுறைகள் பற்றி ஏதேனும் கேள்விகள் இருந்தால், தயவுசெய்து எங்களை தொடர்புகொள்ளவும்",
+      "s1Body3": "Certain Exam sessions may use optional proctoring features (webcam monitoring, fullscreen enforcement, and violation detection). Participants are shown an explicit notice and must grant camera access before joining a proctored session. By doing so, participants consent to the capture of periodic webcam snapshots for exam integrity purposes. Hosts are solely responsible for informing their participants about proctoring in advance and for complying with applicable laws regarding monitoring."
     }
   },
   "quizPresent": {
