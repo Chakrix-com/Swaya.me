@@ -41,6 +41,7 @@ export default function TermsOfService() {
           <Title level={3}>{t('pages.terms.s1')}</Title>
           <Paragraph>{t('pages.terms.s1Body1')}</Paragraph>
           <Paragraph>{t('pages.terms.s1Body2')}</Paragraph>
+          <Paragraph>{t('pages.terms.s1Body3')}</Paragraph>
 
           <Title level={3}>{t('pages.terms.s2')}</Title>
           <Paragraph>{t('pages.terms.s2Body')}</Paragraph>

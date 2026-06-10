@@ -48,6 +48,9 @@ export default function PrivacyPolicy() {
           <Paragraph>
             <strong>{t('pages.privacy.s1Body3Label')}</strong> {t('pages.privacy.s1Body3')}
           </Paragraph>
+          <Paragraph>
+            <strong>{t('pages.privacy.s1Body4Label')}</strong> {t('pages.privacy.s1Body4')}
+          </Paragraph>
 
           <Title level={3}>{t('pages.privacy.s2')}</Title>
           <Paragraph>{t('pages.privacy.s2Intro')}</Paragraph>
@@ -57,6 +60,7 @@ export default function PrivacyPolicy() {
             <li>{t('pages.privacy.s2li3')}</li>
             <li>{t('pages.privacy.s2li4')}</li>
             <li>{t('pages.privacy.s2li5')}</li>
+            <li>{t('pages.privacy.s2li6')}</li>
           </ul>
           <Paragraph>{t('pages.privacy.s2Note')}</Paragraph>
 

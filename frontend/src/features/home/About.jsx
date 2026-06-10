@@ -25,7 +25,7 @@ export default function About() {
 
   const useCases = [
     {
-      icon: <QuestionCircleOutlined style={{ fontSize: 36, color: '#1890ff' }} />,
+      icon: <QuestionCircleOutlined style={{ fontSize: 36, color: '#6366F1' }} />,
       title: t('pages.about.useCase1Title'),
       description: t('pages.about.useCase1Desc'),
     },
@@ -57,6 +57,9 @@ export default function About() {
     t('pages.about.feature8'),
     t('pages.about.feature9'),
     t('pages.about.feature10'),
+    t('pages.about.feature11'),
+    t('pages.about.feature12'),
+    t('pages.about.feature13'),
   ]
 
   return (
@@ -143,11 +146,11 @@ export default function About() {
           <Paragraph>{t('pages.about.contactBody')}</Paragraph>
           <Space direction="vertical" size={8}>
             <Space>
-              <MailOutlined style={{ color: '#1890ff' }} />
+              <MailOutlined style={{ color: '#6366F1' }} />
               <Text>{t('pages.about.contactGeneral')} <a href="mailto:info@chakrix.net">info@chakrix.net</a></Text>
             </Space>
             <Space>
-              <GlobalOutlined style={{ color: '#1890ff' }} />
+              <GlobalOutlined style={{ color: '#6366F1' }} />
               <Text>{t('pages.about.contactPlatform')} <a href="https://www.swaya.me" target="_blank" rel="noreferrer">www.swaya.me</a></Text>
             </Space>
           </Space>
