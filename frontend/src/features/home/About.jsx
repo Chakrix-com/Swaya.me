@@ -11,6 +11,8 @@ import {
   MailOutlined,
   GlobalOutlined,
   GiftOutlined,
+  GithubOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import logo from '../../assets/logo.png'
@@ -132,6 +134,28 @@ export default function About() {
           {/* Beta Status */}
           <Title level={2}>{t('pages.about.betaTitle')}</Title>
           <Paragraph>{t('pages.about.betaBody')}</Paragraph>
+
+          {/* Open Source */}
+          <Title level={2}>{t('pages.about.openSourceTitle')}</Title>
+          <Paragraph>{t('pages.about.openSourceBody')}</Paragraph>
+          <Space direction="vertical" size={8} style={{ marginBottom: 32 }}>
+            <Space>
+              <GithubOutlined style={{ color: '#6366F1' }} />
+              <Text>{t('pages.about.openSourceGithub')}{' '}
+                <a href="https://github.com/Chakrix-com/Swaya.me" target="_blank" rel="noopener noreferrer">
+                  github.com/Chakrix-com/Swaya.me
+                </a>
+              </Text>
+            </Space>
+            <Space>
+              <SafetyCertificateOutlined style={{ color: '#6366F1' }} />
+              <Text>{t('pages.about.openSourceLicense')}{' '}
+                <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">
+                  Apache License 2.0
+                </a>
+              </Text>
+            </Space>
+          </Space>
 
           {/* Key features */}
           <Title level={2}>{t('pages.about.featuresTitle')}</Title>
