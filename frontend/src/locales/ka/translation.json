@@ -843,7 +843,8 @@
     "pastSessions": "ಹಿಂದಿನ ಅಧಿವೇಶನಗಳು",
     "plansSubtitle": "ಸಕ್ರಿಯ ಚಂದಾದಾರಿಕೆ ಮತ್ತು ಸೌಲಭ್ಯ ಮಿತಿಗಳು",
     "readyDesc": "ಚಾಲನೆಗೆ ಸಿದ್ಧ ಚಟುವಟಿಕೆಗಳು",
-    "renameFolder": "ಫೋಲ್ಡರ್ ಮರುಹೆಸರಿಸಿ"
+    "renameFolder": "ಫೋಲ್ಡರ್ ಮರುಹೆಸರಿಸಿ",
+    "welcomeBack": "ಮರಳಿ ಸ್ವಾಗತ, {{name}} 👋"
   },
   "pages": {
     "legal": {

@@ -465,7 +465,8 @@
     "pastSessions": "Прошлые сессии",
     "plansSubtitle": "Активная подписка и ограничения функций",
     "readyDesc": "Мероприятия, готовые к запуску",
-    "renameFolder": "Переименовать папку"
+    "renameFolder": "Переименовать папку",
+    "welcomeBack": "С возвращением, {{name}} 👋"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",

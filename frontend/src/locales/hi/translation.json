@@ -843,7 +843,8 @@
     "pastSessions": "पिछले सत्र",
     "plansSubtitle": "सक्रिय सदस्यता और सुविधा सीमाएं",
     "readyDesc": "चलाने के लिए तैयार गतिविधियां",
-    "renameFolder": "फ़ोल्डर का नाम बदलें"
+    "renameFolder": "फ़ोल्डर का नाम बदलें",
+    "welcomeBack": "वापसी पर स्वागत है, {{name}} 👋"
   },
   "pages": {
     "legal": {

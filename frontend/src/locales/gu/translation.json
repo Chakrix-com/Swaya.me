@@ -843,7 +843,8 @@
     "pastSessions": "ભૂતકાળના સત્રો",
     "plansSubtitle": "સક્રિય સભ્યપદ અને સુવિધા મર્યાદાઓ",
     "readyDesc": "ચલાવવા માટે તૈયાર પ્રવૃત્તિઓ",
-    "renameFolder": "ફોલ્ડરનું નામ બદલો"
+    "renameFolder": "ફોલ્ડરનું નામ બદલો",
+    "welcomeBack": "પાછા સ્વાગત છે, {{name}} 👋"
   },
   "pages": {
     "legal": {

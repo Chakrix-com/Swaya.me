@@ -467,7 +467,8 @@
     "pastSessions": "Sessions passées",
     "plansSubtitle": "Abonnement actif et limites de fonctionnalités",
     "readyDesc": "Activités prêtes à lancer",
-    "renameFolder": "Renommer le dossier"
+    "renameFolder": "Renommer le dossier",
+    "welcomeBack": "Bon retour, {{name}} 👋"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
