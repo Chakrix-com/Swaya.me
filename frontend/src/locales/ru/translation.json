@@ -20,7 +20,11 @@
     "update": "Обновить",
     "or": "или",
     "clear": "Очистить",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "Назад",
+    "next": "Далее",
+    "responses": "ответы",
+    "typeHere": "Введите ваш ответ здесь..."
   },
   "auth": {
     "login": "Вход",
@@ -341,7 +345,20 @@
     "endDateRequired": "Дата окончания обязательна для офлайн-опросов",
     "importValidated": "{{filename}} успешно проверен.",
     "importValidateFailed": "{{filename}} ошибка проверки: {{error}}",
-    "aiAddFailed": "Не удалось добавить вопросы"
+    "aiAddFailed": "Не удалось добавить вопросы",
+    "activities": "мероприятия",
+    "continue": "Продолжить",
+    "editPoll": "Редактировать опрос",
+    "openRoom": "Открыть комнату",
+    "optionPlaceholder": "Введите текст варианта",
+    "optionRequired": "Вариант не может быть пустым",
+    "started": "Начато",
+    "timerEndOverrideDescription": "Для этого вопроса в данный момент работает таймер. Завершение сейчас отменит таймер и завершит сессию.",
+    "timerOverrideDescription": "У этого вопроса есть активный таймер. Продолжайте только если хотите отменить его сейчас.",
+    "timerOverrideOk": "Да, продолжить",
+    "timerOverrideTitle": "Пропустить этот вопрос с таймером досрочно?",
+    "untitled": "Без названия",
+    "validationError": "Проверьте все обязательные поля перед публикацией"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "Введите ваш ответ (максимум 100 символов)"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",
@@ -423,7 +441,31 @@
     "plansTab": "Тарифные планы",
     "currentPlan": "Текущий план",
     "upgradeTo": "Перейти на {{tier}}",
-    "plansNote": "Свяжитесь с info@chakrix.net для обновления плана."
+    "plansNote": "Свяжитесь с info@chakrix.net для обновления плана.",
+    "archivedDesc": "Завершённые мероприятия",
+    "createActivityTitle": "Что вы хотите создать сегодня?",
+    "createNew": "Создать новое",
+    "created": "Создано",
+    "draftDesc": "Черновики мероприятий",
+    "folderAssignFailed": "Не удалось обновить папку",
+    "folderAssigned": "Папка обновлена",
+    "folderCreateFailed": "Не удалось создать папку",
+    "folderCreated": "Папка создана",
+    "folderDeleteFailed": "Не удалось удалить папку",
+    "folderDeleted": "Папка удалена",
+    "folderName": "Название папки",
+    "folderNameRequired": "Название папки обязательно",
+    "folderRenameFailed": "Не удалось переименовать папку",
+    "folderRenamed": "Папка переименована",
+    "heroSubtitle": "Создавайте тесты, опросы и оценки за несколько минут.",
+    "inTheWorks": "В процессе",
+    "newFolder": "Новая папка",
+    "noParentRoot": "Нет родительской папки (корень)",
+    "parentFolder": "Родительская папка",
+    "pastSessions": "Прошлые сессии",
+    "plansSubtitle": "Активная подписка и ограничения функций",
+    "readyDesc": "Мероприятия, готовые к запуску",
+    "renameFolder": "Переименовать папку"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -476,7 +518,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "Закрыть это окно"
+    "closeWindow": "Закрыть это окно",
+    "brushColor": "Цвет кисти",
+    "brushSize": "Размер кисти",
+    "clear": "Очистить",
+    "clearWhiteboard": "Очистить доску",
+    "eraser": "Ластик",
+    "expandQr": "Нажмите для увеличения QR-кода",
+    "selectColor": "Выбрать цвет",
+    "toggleWhiteboard": "Переключить доску",
+    "whiteboard": "Доска"
   },
   "navigation": {
     "home": "Home",
@@ -833,7 +884,8 @@
       "button": "Присоединиться к викторине",
       "or": "ИЛИ",
       "createAccount": "Создать бесплатный аккаунт",
-      "existingUser": "У меня уже есть аккаунт"
+      "existingUser": "У меня уже есть аккаунт",
+      "freeTagline": "Бесплатно навсегда. Кредитная карта не требуется."
     },
     "features": {
       "title": "Почему выбирают Swaya.me?",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "Введите описание (необязательно)",
     "questionCount": "{{total}} вопросов",
     "typeInfo": "Живой хост не нужен. Поделитесь ссылкой — аудитория отвечает в своём темпе. Результаты накапливаются со временем.",
-    "completionRate": "Процент завершения"
+    "completionRate": "Процент завершения",
+    "required": "Обязательно",
+    "requiredTooltip": "Участники должны ответить на этот вопрос, прежде чем продолжить.",
+    "requiredWarning": "Этот вопрос обязателен. Пожалуйста, ответьте на него, чтобы продолжить."
   },
   "exam": {
     "typeLabel": "Тест",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "Ещё никто не начал этот экзамен."
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

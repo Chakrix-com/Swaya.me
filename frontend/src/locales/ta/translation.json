@@ -20,7 +20,11 @@
     "update": "புதுப்பி",
     "or": "அல்லது",
     "clear": "அழி",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "திரும்பு",
+    "next": "அடுத்து",
+    "responses": "பதில்கள்",
+    "typeHere": "உங்கள் பதிலை இங்கே தட்டச்சு செய்யுங்கள்..."
   },
   "auth": {
     "login": "உள்நுழைക",
@@ -341,7 +345,20 @@
     "endDateRequired": "ஆஃப்லைன் வாக்கெடுப்புகளுக்கு முடிவு தேதி தேவை",
     "importValidated": "{{filename}} வெற்றிகரமாக சரிபார்க்கப்பட்டது.",
     "importValidateFailed": "{{filename}} சரிபார்ப்பு தோல்வியடைந்தது: {{error}}",
-    "aiAddFailed": "கேள்விகளை சேர்க்க முடியவில்லை"
+    "aiAddFailed": "கேள்விகளை சேர்க்க முடியவில்லை",
+    "activities": "செயல்பாடுகள்",
+    "continue": "தொடர்",
+    "editPoll": "வாக்கெடுப்பு திருத்து",
+    "openRoom": "அறை திற",
+    "optionPlaceholder": "விருப்பத்தின் உரையை உள்ளிடுக",
+    "optionRequired": "விருப்பம் காலியாக இருக்க முடியாது",
+    "started": "தொடங்கியது",
+    "timerEndOverrideDescription": "இந்த கேள்விக்கு தற்போது ஒரு டைமர் இயங்குகிறது. இப்போது முடிக்கும்போது டைமரை மேலெழுதும் மற்றும் அமர்வை முடிக்கும்.",
+    "timerOverrideDescription": "இந்த கேள்வியில் செயல்பாட்டு டைமர் உள்ளது. இப்போது மேலெழுத விரும்பினால் மட்டுமே தொடரவும்.",
+    "timerOverrideOk": "ஆம், தொடர்",
+    "timerOverrideTitle": "இந்த நேரக் கட்டுப்படுத்தப்பட்ட கேள்வியை முன்கூட்டியே தவிர்க்கவா?",
+    "untitled": "தலைப்பிடப்படாதது",
+    "validationError": "வெளியிடுவதற்கு முன் அனைத்து தேவையான புலங்களையும் சரிபாருங்கள்"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "உங்கள் பதிலை உள்ளிடுக (அதிகபட்சம் 100 எழுத்துக்கள்)"
   },
   "navigation": {
     "home": "முகப்பு",
@@ -758,7 +776,8 @@
       "button": "வினாடி வினாவில் சேர",
       "or": "அல்லது",
       "createAccount": "இலவச கணக்கு உருவாக்கு",
-      "existingUser": "நான் ஏற்கனவே பயனர்"
+      "existingUser": "நான் ஏற்கனவே பயனர்",
+      "freeTagline": "என்றும் இலவசம். கிரெடிட் கார்டு தேவையில்லை."
     },
     "features": {
       "title": "ஏன் Swaya.me ஐ தேர்வு செய்ய வேண்டும்?",
@@ -800,7 +819,31 @@
     "plansTab": "பயனர் திட்டங்கள்",
     "currentPlan": "தற்போதைய திட்டம்",
     "upgradeTo": "{{tier}} க்கு மேம்படுத்து",
-    "plansNote": "உங்கள் திட்டத்தை மேம்படுத்த info@chakrix.net ஐ தொடர்பு கொள்ளுங்கள்."
+    "plansNote": "உங்கள் திட்டத்தை மேம்படுத்த info@chakrix.net ஐ தொடர்பு கொள்ளுங்கள்.",
+    "archivedDesc": "முடிந்த செயல்பாடுகள்",
+    "createActivityTitle": "இன்று நீங்கள் என்ன உருவாக்க விரும்புகிறீர்கள்?",
+    "createNew": "புதிதாக உருவாக்கு",
+    "created": "உருவாக்கப்பட்டது",
+    "draftDesc": "வரைவு செயல்பாடுகள்",
+    "folderAssignFailed": "கோப்புறையை புதுப்பிக்க முடியவில்லை",
+    "folderAssigned": "கோப்புறை புதுப்பிக்கப்பட்டது",
+    "folderCreateFailed": "கோப்புறை உருவாக்க முடியவில்லை",
+    "folderCreated": "கோப்புறை உருவாக்கப்பட்டது",
+    "folderDeleteFailed": "கோப்புறை நீக்க முடியவில்லை",
+    "folderDeleted": "கோப்புறை நீக்கப்பட்டது",
+    "folderName": "கோப்புறை பெயர்",
+    "folderNameRequired": "கோப்புறை பெயர் தேவை",
+    "folderRenameFailed": "கோப்புறையின் பெயரை மாற்ற முடியவில்லை",
+    "folderRenamed": "கோப்புறையின் பெயர் மாற்றப்பட்டது",
+    "heroSubtitle": "நிமிடங்களில் வினாடி வினாக்கள், வாக்கெடுப்புகள் மற்றும் மதிப்பீடுகளை உருவாக்குங்கள்.",
+    "inTheWorks": "செயல்பாட்டில்",
+    "newFolder": "புதிய கோப்புறை",
+    "noParentRoot": "பெற்றோர் இல்லை (மூல)",
+    "parentFolder": "பெற்றோர் கோப்புறை",
+    "pastSessions": "கடந்த அமர்வுகள்",
+    "plansSubtitle": "செயல்பாட்டு சந்தா மற்றும் அம்சக் கட்டுப்பாடுகள்",
+    "readyDesc": "இயக்கத் தயாரான செயல்பாடுகள்",
+    "renameFolder": "கோப்புறையின் பெயர் மாற்று"
   },
   "pages": {
     "legal": {
@@ -1537,7 +1580,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "இந்த சாளரத்தை மூடுங்கள்"
+    "closeWindow": "இந்த சாளரத்தை மூடுங்கள்",
+    "brushColor": "தூரிகை நிறம்",
+    "brushSize": "தூரிகை அளவு",
+    "clear": "அழி",
+    "clearWhiteboard": "வைட்போர்டை அழி",
+    "eraser": "அழிப்பான்",
+    "expandQr": "QR குறியீட்டை பெரிதாக்க கிளிக் செய்யுங்கள்",
+    "selectColor": "நிறம் தேர்ந்தெடு",
+    "toggleWhiteboard": "வைட்போர்டை மாற்று",
+    "whiteboard": "வைட்போர்டு"
   },
   "ai": {
     "generateWithAI": "AI மூலம் உருவாக்கு",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "விளக்கம் உள்ளிடவும் (விருப்பம்)",
     "questionCount": "{{total}} கேள்விகள்",
     "typeInfo": "நேரடி ஹோஸ்ட் தேவையில்லை. இணைப்பை பகிரவும் — பார்வையாளர்கள் தங்கள் வேகத்தில் பதில் அளிக்கிறார்கள். முடிவுகள் காலப்போக்கில் குவிகின்றன.",
-    "completionRate": "நிறைவு விகிதம்"
+    "completionRate": "நிறைவு விகிதம்",
+    "required": "தேவையான",
+    "requiredTooltip": "பங்கேற்பாளர்கள் தொடர்வதற்கு முன் இந்த கேள்விக்கு பதில் அளிக்க வேண்டும்.",
+    "requiredWarning": "இந்த கேள்வி தேவையான ஒன்று. தொடர்வதற்கு பதில் அளிக்கவும்."
   },
   "exam": {
     "typeLabel": "டெஸ்ட்",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "இன்னும் யாரும் இந்த தேர்வை தொடங்கவில்லை."
   },
   "appFeedback": {
     "floatButtonTooltip": "கருத்தை பகிரவும்",

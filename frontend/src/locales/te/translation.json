@@ -20,7 +20,11 @@
     "update": "అప్‌డేట్",
     "or": "లేదా",
     "clear": "క్లియర్",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "వెనుకకు",
+    "next": "తదుపరి",
+    "responses": "స్పందనలు",
+    "typeHere": "మీ సమాధానం ఇక్కడ టైప్ చేయండి..."
   },
   "auth": {
     "login": "లాగిన్",
@@ -341,7 +345,20 @@
     "endDateRequired": "ఆఫ్‌లైన్ పోల్‌లకు ముగింపు తేదీ అవసరం",
     "importValidated": "{{filename}} విజయవంతంగా ధృవీకరించబడింది.",
     "importValidateFailed": "{{filename}} ధృవీకరణ విఫలమైంది: {{error}}",
-    "aiAddFailed": "ప్రశ్నలు జోడించడం విఫలమైంది"
+    "aiAddFailed": "ప్రశ్నలు జోడించడం విఫలమైంది",
+    "activities": "కార్యకలాపాలు",
+    "continue": "కొనసాగించు",
+    "editPoll": "పోల్ సవరించు",
+    "openRoom": "గది తెరవు",
+    "optionPlaceholder": "ఆప్షన్ టెక్స్ట్ నమోదు చేయండి",
+    "optionRequired": "ఆప్షన్ ఖాళీగా ఉండకూడదు",
+    "started": "ప్రారంభమైంది",
+    "timerEndOverrideDescription": "ఈ ప్రశ్నకు ప్రస్తుతం టైమర్ నడుస్తోంది. ఇప్పుడు ముగించడం వల్ల టైమర్ ఓవర్‌రైడ్ అవుతుంది మరియు సెషన్ ముగుస్తుంది.",
+    "timerOverrideDescription": "ఈ ప్రశ్నలో సక్రియ టైమర్ ఉంది. మీరు ఇప్పుడు దాన్ని ఓవర్‌రైడ్ చేయాలనుకుంటే మాత్రమే కొనసాగించండి.",
+    "timerOverrideOk": "అవును, కొనసాగించు",
+    "timerOverrideTitle": "ఈ సమయ-పరిమిత ప్రశ్నను ముందే దాటిపోవాలా?",
+    "untitled": "శీర్షిక లేనిది",
+    "validationError": "ప్రచురించే ముందు అన్ని అవసరమైన ఫీల్డ్‌లను తనిఖీ చేయండి"
   },
   "audience": {
     "joinQuiz": "క్విజ్‌లో చేరండి",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "మీ సమాధానం నమోదు చేయండి (గరిష్టం 100 అక్షరాలు)"
   },
   "navigation": {
     "home": "హోమ్",
@@ -758,7 +776,8 @@
       "button": "క్విజ్‌లో చేరండి",
       "or": "లేదా",
       "createAccount": "ఉచిత ఖాతా సృష్టించండి",
-      "existingUser": "నేను ఇప్పటికే వినియోగదారిని"
+      "existingUser": "నేను ఇప్పటికే వినియోగదారిని",
+      "freeTagline": "శాశ్వతంగా ఉచితం. క్రెడిట్ కార్డు అవసరం లేదు."
     },
     "features": {
       "title": "Swaya.me ను ఎందుకు ఎంచుకోవాలి?",
@@ -800,7 +819,31 @@
     "plansTab": "వినియోగదారు ప్లాన్‌లు",
     "currentPlan": "ప్రస్తుత ప్లాన్",
     "upgradeTo": "{{tier}} కి అప్‌గ్రేడ్ చేయండి",
-    "plansNote": "మీ ప్లాన్ అప్‌గ్రేడ్ చేయడానికి info@chakrix.net కి సంప్రదించండి."
+    "plansNote": "మీ ప్లాన్ అప్‌గ్రేడ్ చేయడానికి info@chakrix.net కి సంప్రదించండి.",
+    "archivedDesc": "పూర్తైన కార్యకలాపాలు",
+    "createActivityTitle": "ఈరోజు మీరు ఏమి సృష్టించాలనుకుంటున్నారు?",
+    "createNew": "కొత్తది సృష్టించు",
+    "created": "సృష్టించబడింది",
+    "draftDesc": "డ్రాఫ్ట్ కార్యకలాపాలు",
+    "folderAssignFailed": "ఫోల్డర్ అప్‌డేట్ చేయడం విఫలమైంది",
+    "folderAssigned": "ఫోల్డర్ అప్‌డేట్ చేయబడింది",
+    "folderCreateFailed": "ఫోల్డర్ సృష్టించడం విఫలమైంది",
+    "folderCreated": "ఫోల్డర్ సృష్టించబడింది",
+    "folderDeleteFailed": "ఫోల్డర్ తొలగించడం విఫలమైంది",
+    "folderDeleted": "ఫోల్డర్ తొలగించబడింది",
+    "folderName": "ఫోల్డర్ పేరు",
+    "folderNameRequired": "ఫోల్డర్ పేరు అవసరం",
+    "folderRenameFailed": "ఫోల్డర్ పేరు మార్చడం విఫలమైంది",
+    "folderRenamed": "ఫోల్డర్ పేరు మార్చబడింది",
+    "heroSubtitle": "నిమిషాల్లో క్విజ్‌లు, పోల్‌లు మరియు అంచనాలు సృష్టించండి.",
+    "inTheWorks": "పని జరుగుతోంది",
+    "newFolder": "కొత్త ఫోల్డర్",
+    "noParentRoot": "పేరెంట్ లేదు (రూట్)",
+    "parentFolder": "పేరెంట్ ఫోల్డర్",
+    "pastSessions": "గత సెషన్లు",
+    "plansSubtitle": "సక్రియ సభ్యత్వం మరియు ఫీచర్ పరిమితులు",
+    "readyDesc": "అమలు చేయడానికి సిద్ధంగా ఉన్న కార్యకలాపాలు",
+    "renameFolder": "ఫోల్డర్ పేరు మార్చు"
   },
   "pages": {
     "legal": {
@@ -1537,7 +1580,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "ఈ విండోను మూసివేయండి"
+    "closeWindow": "ఈ విండోను మూసివేయండి",
+    "brushColor": "బ్రష్ రంగు",
+    "brushSize": "బ్రష్ పరిమాణం",
+    "clear": "క్లియర్",
+    "clearWhiteboard": "వైట్‌బోర్డ్ క్లియర్ చేయు",
+    "eraser": "ఎరేజర్",
+    "expandQr": "QR కోడ్ పెద్దది చేయడానికి క్లిక్ చేయండి",
+    "selectColor": "రంగు ఎంచుకోండి",
+    "toggleWhiteboard": "వైట్‌బోర్డ్ టోగుల్",
+    "whiteboard": "వైట్‌బోర్డ్"
   },
   "ai": {
     "generateWithAI": "AI తో రూపొందించు",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "వివరణ నమోదు చేయండి (ఐచ్ఛికం)",
     "questionCount": "{{total}} ప్రశ్నలు",
     "typeInfo": "లైవ్ హోస్ట్ అవసరం లేదు. లింక్ పంచుకోండి — ప్రేక్షకులు తమ వేగంలో సమాధానిస్తారు. ఫలితాలు కాలక్రమంలో పోగుపడతాయి.",
-    "completionRate": "పూర్తి రేటు"
+    "completionRate": "పూర్తి రేటు",
+    "required": "తప్పనిసరి",
+    "requiredTooltip": "పాల్గొనేవారు ముందుకు వెళ్ళే ముందు ఈ ప్రశ్నకు సమాధానం ఇవ్వాలి.",
+    "requiredWarning": "ఈ ప్రశ్న తప్పనిసరి. కొనసాగించడానికి దీనికి సమాధానం ఇవ్వండి."
   },
   "exam": {
     "typeLabel": "టెస్ట్",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "ఇంకా ఎవరూ ఈ పరీక్ష మొదలుపెట్టలేదు."
   },
   "appFeedback": {
     "floatButtonTooltip": "అభిప్రాయం పంచుకోండి",

@@ -20,7 +20,11 @@
     "update": "আপডেট করুন",
     "or": "অথবা",
     "clear": "মুছুন",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "পেছনে",
+    "next": "পরবর্তী",
+    "responses": "প্রতিক্রিয়া",
+    "typeHere": "এখানে আপনার উত্তর টাইপ করুন..."
   },
   "auth": {
     "login": "লগইন",
@@ -341,7 +345,20 @@
     "endDateRequired": "অফলাইন পোলের জন্য শেষ তারিখ প্রয়োজন",
     "importValidated": "{{filename}} সফলভাবে যাচাই হয়েছে।",
     "importValidateFailed": "{{filename}} যাচাই ব্যর্থ: {{error}}",
-    "aiAddFailed": "প্রশ্ন যোগ করতে ব্যর্থ"
+    "aiAddFailed": "প্রশ্ন যোগ করতে ব্যর্থ",
+    "activities": "কার্যক্রম",
+    "continue": "চালিয়ে যান",
+    "editPoll": "পোল সম্পাদনা করুন",
+    "openRoom": "রুম খুলুন",
+    "optionPlaceholder": "বিকল্পের টেক্সট লিখুন",
+    "optionRequired": "বিকল্প খালি রাখা যাবে না",
+    "started": "শুরু হয়েছে",
+    "timerEndOverrideDescription": "এই প্রশ্নের জন্য বর্তমানে একটি টাইমার চলছে। এখন শেষ করলে টাইমার ওভাররাইড হবে এবং সেশন শেষ হবে।",
+    "timerOverrideDescription": "এই প্রশ্নে একটি সক্রিয় টাইমার আছে। শুধুমাত্র যদি আপনি এটি এখন ওভাররাইড করতে চান তাহলে চালিয়ে যান।",
+    "timerOverrideOk": "হ্যাঁ, চালিয়ে যান",
+    "timerOverrideTitle": "এই সময়-নির্ধারিত প্রশ্নটি আগেভাগে এড়িয়ে যাবেন?",
+    "untitled": "শিরোনামহীন",
+    "validationError": "প্রকাশ করার আগে সকল প্রয়োজনীয় ক্ষেত্র পরীক্ষা করুন"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "আপনার উত্তর লিখুন (সর্বাধিক ১০০ অক্ষর)"
   },
   "navigation": {
     "home": "হোম",
@@ -758,7 +776,8 @@
       "button": "কুইজে যোগ দিন",
       "or": "অথবা",
       "createAccount": "ফ্রি অ্যাকাউন্ট খুলুন",
-      "existingUser": "আমি আগে থেকেই ব্যবহারকারী"
+      "existingUser": "আমি আগে থেকেই ব্যবহারকারী",
+      "freeTagline": "চিরকাল বিনামূল্যে। কোনো ক্রেডিট কার্ড প্রয়োজন নেই।"
     },
     "features": {
       "title": "কেন Swaya.me বেছে নেবেন?",
@@ -800,7 +819,31 @@
     "plansTab": "ব্যবহারকারী পরিকল্পনা",
     "currentPlan": "বর্তমান পরিকল্পনা",
     "upgradeTo": "{{tier}}-এ আপগ্রেড করুন",
-    "plansNote": "আপনার পরিকল্পনা আপগ্রেড করতে info@chakrix.net-এ যোগাযোগ করুন।"
+    "plansNote": "আপনার পরিকল্পনা আপগ্রেড করতে info@chakrix.net-এ যোগাযোগ করুন।",
+    "archivedDesc": "সম্পন্ন কার্যক্রম",
+    "createActivityTitle": "আজ আপনি কী তৈরি করতে চান?",
+    "createNew": "নতুন তৈরি করুন",
+    "created": "তৈরি হয়েছে",
+    "draftDesc": "খসড়া কার্যক্রম",
+    "folderAssignFailed": "ফোল্ডার আপডেট করতে ব্যর্থ হয়েছে",
+    "folderAssigned": "ফোল্ডার আপডেট হয়েছে",
+    "folderCreateFailed": "ফোল্ডার তৈরি করতে ব্যর্থ হয়েছে",
+    "folderCreated": "ফোল্ডার তৈরি হয়েছে",
+    "folderDeleteFailed": "ফোল্ডার মুছতে ব্যর্থ হয়েছে",
+    "folderDeleted": "ফোল্ডার মুছে ফেলা হয়েছে",
+    "folderName": "ফোল্ডারের নাম",
+    "folderNameRequired": "ফোল্ডারের নাম প্রয়োজন",
+    "folderRenameFailed": "ফোল্ডারের নাম পরিবর্তন করতে ব্যর্থ হয়েছে",
+    "folderRenamed": "ফোল্ডারের নাম পরিবর্তন হয়েছে",
+    "heroSubtitle": "মিনিটে কুইজ, পোল এবং মূল্যায়ন তৈরি করুন।",
+    "inTheWorks": "প্রগতিতে রয়েছে",
+    "newFolder": "নতুন ফোল্ডার",
+    "noParentRoot": "কোনো প্যারেন্ট নেই (রুট)",
+    "parentFolder": "প্যারেন্ট ফোল্ডার",
+    "pastSessions": "পূর্ববর্তী সেশন",
+    "plansSubtitle": "সক্রিয় সদস্যতা এবং ফিচার সীমা",
+    "readyDesc": "চালানোর জন্য প্রস্তুত কার্যক্রম",
+    "renameFolder": "ফোল্ডার পুনঃনামকরণ করুন"
   },
   "pages": {
     "legal": {
@@ -1537,7 +1580,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "এই উইন্ডো বন্ধ করুন"
+    "closeWindow": "এই উইন্ডো বন্ধ করুন",
+    "brushColor": "ব্রাশের রং",
+    "brushSize": "ব্রাশের আকার",
+    "clear": "মুছুন",
+    "clearWhiteboard": "হোয়াইটবোর্ড মুছুন",
+    "eraser": "ইরেজার",
+    "expandQr": "QR কোড বড় করতে ক্লিক করুন",
+    "selectColor": "রং নির্বাচন করুন",
+    "toggleWhiteboard": "হোয়াইটবোর্ড টগল করুন",
+    "whiteboard": "হোয়াইটবোর্ড"
   },
   "ai": {
     "generateWithAI": "AI দিয়ে তৈরি করুন",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "বিবরণ দিন (ঐচ্ছিক)",
     "questionCount": "{{total}} প্রশ্ন",
     "typeInfo": "কোনো লাইভ হোস্টের প্রয়োজন নেই। লিঙ্ক শেয়ার করুন — দর্শকরা তাদের নিজস্ব গতিতে সাড়া দেয়। ফলাফল সময়ের সাথে জমা হয়।",
-    "completionRate": "সমাপ্তির হার"
+    "completionRate": "সমাপ্তির হার",
+    "required": "প্রয়োজনীয়",
+    "requiredTooltip": "অংশগ্রহণকারীদের এগিয়ে যাওয়ার আগে এই প্রশ্নের উত্তর দিতে হবে।",
+    "requiredWarning": "এই প্রশ্নটি প্রয়োজনীয়। চালিয়ে যেতে এর উত্তর দিন।"
   },
   "exam": {
     "typeLabel": "টেস্ট",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "এখনও কেউ এই পরীক্ষা শুরু করেনি।"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",
