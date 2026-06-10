@@ -63,8 +63,8 @@ canvas {
   --visitor-page-bg: #f7f9ff;
   --visitor-text-primary: #152238;
   --visitor-text-secondary: #5a6780;
-  --visitor-accent: #316bff;
-  --visitor-accent-strong: #1849d6;
+  --visitor-accent: #6366F1;
+  --visitor-accent-strong: #4F46E5;
   --visitor-header-bg: rgba(255, 255, 255, 0.72);
   --visitor-header-border: rgba(66, 91, 145, 0.18);
   --visitor-panel-bg: #ffffff;
@@ -108,9 +108,9 @@ canvas {
   --ctrl-btn-text:            #152238;
   --ctrl-btn-border:          #d9d9d9;
   --ctrl-btn-hover-bg:        #f5f5f5;
-  --ctrl-btn-primary-bg:      #1677ff;
+  --ctrl-btn-primary-bg:      #6366F1;
   --ctrl-btn-primary-text:    #ffffff;
-  --ctrl-btn-primary-border:  #1677ff;
+  --ctrl-btn-primary-border:  #6366F1;
   --ctrl-btn-disabled-bg:     #f5f5f5;
   --ctrl-btn-disabled-text:   rgba(0, 0, 0, 0.25);
   --ctrl-btn-disabled-border: #d9d9d9;
@@ -120,8 +120,8 @@ canvas {
   --ctrl-input-placeholder:   rgba(0, 0, 0, 0.35);
   --ctrl-radio-option-bg:     #ffffff;
   --ctrl-radio-option-border: #d9d9d9;
-  --ctrl-radio-selected-bg:   #e6f7ff;
-  --ctrl-radio-selected-border: #1890ff;
+  --ctrl-radio-selected-bg:   #EEF2FF;
+  --ctrl-radio-selected-border: #6366F1;
   --ctrl-success-bg:          #f6ffed;
   --ctrl-success-border:      #52c41a;
   --ctrl-error-bg:            #fff1f0;
@@ -131,7 +131,7 @@ canvas {
   --ctrl-progress-track:      rgba(0, 0, 0, 0.08);
   --ctrl-tag-text:            #152238;
   --ctrl-alert-text:          #152238;
-  --ctrl-spinner:             #1677ff;
+  --ctrl-spinner:             #6366F1;
 }
 
 .visitor-theme--light .ant-divider-inner-text,

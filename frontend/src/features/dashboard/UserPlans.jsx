@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { Row, Col, Card, Tag, Space, Button } from 'antd'
-import { CheckCircleOutlined, ArrowUpOutlined } from '@ant-design/icons'
+import { Row, Col, Card, Tag, Space, Button, Typography } from 'antd'
+import { CheckCircleOutlined, ArrowUpOutlined, CrownOutlined } from '@ant-design/icons'
 import { authAPI } from '../../services/api'
 
+const { Title, Text } = Typography
+
 const TIER_ORDER = ['free', 'basic', 'pro', 'enterprise']
-const TIER_COLOR = { free: '#8c8c8c', basic: '#1677ff', pro: '#722ed1', enterprise: '#d48806' }
+const TIER_COLOR = { free: '#8c8c8c', basic: '#6366F1', pro: '#7C3AED', enterprise: '#D97706' }
 
 export default function UserPlans() {
   const { t } = useTranslation()
@@ -21,10 +23,19 @@ export default function UserPlans() {
   const currentTierIdx = TIER_ORDER.indexOf(currentTier)
 
   return (
-    <div style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '32px 24px', maxWidth: 1000, margin: '0 auto' }}>
+      {/* Page header */}
+      <div style={{ marginBottom: 32 }}>
+        <Space align="center" style={{ marginBottom: 4 }}>
+          <CrownOutlined style={{ fontSize: 20, color: '#6366F1' }} />
+          <Title level={3} style={{ margin: 0 }}>{t('dashboard.plansTab', 'Your Plan')}</Title>
+        </Space>
+        <Text type="secondary">{t('dashboard.plansSubtitle', 'Active subscription and feature limits')}</Text>
+      </div>
+
       {tierPlans ? (
         <>
-          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
             {TIER_ORDER.map(tier => {
               const plan = tierPlans.find(p => p.tier === tier)
               const isCurrentPlan = tier === currentTier
@@ -34,11 +45,15 @@ export default function UserPlans() {
                 <Col xs={24} sm={12} lg={6} key={tier}>
                   <Card
                     style={{
-                      borderColor: isCurrentPlan ? color : '#d9d9d9',
+                      borderColor: isCurrentPlan ? color : '#E5E7EB',
                       borderWidth: isCurrentPlan ? 2 : 1,
+                      borderRadius: 16,
                       height: '100%',
                       position: 'relative',
                       overflow: 'hidden',
+                      boxShadow: isCurrentPlan
+                        ? `0 4px 20px ${color}22`
+                        : '0 1px 4px rgba(0,0,0,0.06)',
                     }}
                   >
                     {isCurrentPlan && (
@@ -93,9 +108,9 @@ export default function UserPlans() {
               )
             })}
           </Row>
-          <div style={{ textAlign: 'center', color: '#8c8c8c', fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
             {t('dashboard.plansNote', 'Contact info@chakrix.net to upgrade your plan.')}
-          </div>
+          </Text>
         </>
       ) : (
         <div style={{ textAlign: 'center', padding: 40, color: '#8c8c8c' }}>

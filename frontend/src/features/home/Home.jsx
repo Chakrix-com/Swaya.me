@@ -35,7 +35,7 @@ const Home = () => {
 
   const features = [
     {
-      icon: <QuestionCircleOutlined style={{ fontSize: '48px', color: '#1890ff' }} />,
+      icon: <QuestionCircleOutlined style={{ fontSize: '48px', color: '#6366F1' }} />,
       title: t('home.features.createQuizzes'),
       description: t('home.features.createQuizzesDesc')
     },
@@ -104,39 +104,43 @@ const Home = () => {
                 {/* Quick Join Section */}
                 <Card className="quick-join-card" bordered={false}>
                   <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                    <div>
-                      <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: '12px' }}>
+                    <Space direction="vertical" size={12} style={{ width: '100%', alignItems: 'center' }}>
+                      <Space size="middle" wrap style={{ justifyContent: 'center' }}>
+                        <Button
+                          type="primary"
+                          size="large"
+                          icon={<UserAddOutlined />}
+                          onClick={() => navigate('/register')}
+                        >
+                          {t('home.quickJoin.createAccount')}
+                        </Button>
+                        <Button
+                          size="large"
+                          onClick={() => navigate('/login')}
+                        >
+                          {t('home.quickJoin.existingUser')}
+                        </Button>
+                      </Space>
+                      <Text type="secondary" style={{ fontSize: 13 }}>
+                        {t('home.quickJoin.freeTagline', 'Free forever. No credit card required.')}
+                      </Text>
+                    </Space>
+
+                    <Divider style={{ margin: '4px 0' }}>
+                      <Text type="secondary" style={{ fontSize: 13 }}>
                         <PlayCircleOutlined /> {t('home.quickJoin.title')}
                       </Text>
-                      <Input.Search
-                        size="large"
-                        placeholder={t('home.quickJoin.placeholder')}
-                        enterButton={t('home.quickJoin.button')}
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.replace(/\\D/g, '').slice(0, 6))}
-                        onSearch={handleJoinQuiz}
-                        style={{ maxWidth: '500px' }}
-                      />
-                    </div>
+                    </Divider>
 
-                    <Divider style={{ margin: '12px 0' }}>{t('home.quickJoin.or')}</Divider>
-
-                    <Space size="middle" wrap>
-                      <Button 
-                        type="primary" 
-                        size="large"
-                        icon={<UserAddOutlined />}
-                        onClick={() => navigate('/register')}
-                      >
-                        {t('home.quickJoin.createAccount')}
-                      </Button>
-                      <Button 
-                        size="large"
-                        onClick={() => navigate('/login')}
-                      >
-                        {t('home.quickJoin.existingUser')}
-                      </Button>
-                    </Space>
+                    <Input.Search
+                      size="large"
+                      placeholder={t('home.quickJoin.placeholder')}
+                      enterButton={t('home.quickJoin.button')}
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onSearch={handleJoinQuiz}
+                      style={{ maxWidth: '500px', margin: '0 auto', display: 'block' }}
+                    />
                   </Space>
                 </Card>
               </div>
