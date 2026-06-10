@@ -20,7 +20,11 @@
     "update": "Mettre à jour",
     "or": "ou",
     "clear": "Effacer",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "Retour",
+    "next": "Suivant",
+    "responses": "réponses",
+    "typeHere": "Tapez votre réponse ici..."
   },
   "auth": {
     "login": "Connexion",
@@ -343,7 +347,20 @@
     "endDateRequired": "La date de fin est requise pour les sondages hors ligne",
     "importValidated": "{{filename}} validé avec succès.",
     "importValidateFailed": "{{filename}} échec de la validation: {{error}}",
-    "aiAddFailed": "Impossible d'ajouter les questions"
+    "aiAddFailed": "Impossible d'ajouter les questions",
+    "activities": "activités",
+    "continue": "Continuer",
+    "editPoll": "Modifier le sondage",
+    "openRoom": "Ouvrir la salle",
+    "optionPlaceholder": "Entrez le texte de l'option",
+    "optionRequired": "L'option ne peut pas être vide",
+    "started": "Démarré",
+    "timerEndOverrideDescription": "Un minuteur est en cours pour cette question. Terminer maintenant annulera le minuteur et mettra fin à la session.",
+    "timerOverrideDescription": "Cette question a un minuteur actif. Continuez uniquement si vous souhaitez l'annuler maintenant.",
+    "timerOverrideOk": "Oui, continuer",
+    "timerOverrideTitle": "Passer cette question minutée en avance ?",
+    "untitled": "Sans titre",
+    "validationError": "Veuillez vérifier tous les champs obligatoires avant de publier"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -403,7 +420,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "Entrez votre réponse (100 caractères max)"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",
@@ -425,7 +443,31 @@
     "plansTab": "Plans utilisateur",
     "currentPlan": "Plan actuel",
     "upgradeTo": "Passer à {{tier}}",
-    "plansNote": "Contactez info@chakrix.net pour mettre à niveau votre plan."
+    "plansNote": "Contactez info@chakrix.net pour mettre à niveau votre plan.",
+    "archivedDesc": "Activités terminées",
+    "createActivityTitle": "Qu'aimeriez-vous créer aujourd'hui ?",
+    "createNew": "Créer nouveau",
+    "created": "Créé",
+    "draftDesc": "Activités en brouillon",
+    "folderAssignFailed": "Échec de la mise à jour du dossier",
+    "folderAssigned": "Dossier mis à jour",
+    "folderCreateFailed": "Échec de la création du dossier",
+    "folderCreated": "Dossier créé",
+    "folderDeleteFailed": "Échec de la suppression du dossier",
+    "folderDeleted": "Dossier supprimé",
+    "folderName": "Nom du dossier",
+    "folderNameRequired": "Le nom du dossier est requis",
+    "folderRenameFailed": "Échec du renommage du dossier",
+    "folderRenamed": "Dossier renommé",
+    "heroSubtitle": "Créez des quiz, sondages et évaluations en quelques minutes.",
+    "inTheWorks": "En cours",
+    "newFolder": "Nouveau dossier",
+    "noParentRoot": "Pas de dossier parent (racine)",
+    "parentFolder": "Dossier parent",
+    "pastSessions": "Sessions passées",
+    "plansSubtitle": "Abonnement actif et limites de fonctionnalités",
+    "readyDesc": "Activités prêtes à lancer",
+    "renameFolder": "Renommer le dossier"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -478,7 +520,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "Fermer cette fenêtre"
+    "closeWindow": "Fermer cette fenêtre",
+    "brushColor": "Couleur du pinceau",
+    "brushSize": "Taille du pinceau",
+    "clear": "Effacer",
+    "clearWhiteboard": "Effacer le tableau blanc",
+    "eraser": "Gomme",
+    "expandQr": "Cliquez pour agrandir le code QR",
+    "selectColor": "Sélectionner la couleur",
+    "toggleWhiteboard": "Basculer le tableau blanc",
+    "whiteboard": "Tableau blanc"
   },
   "navigation": {
     "home": "Home",
@@ -835,7 +886,8 @@
       "button": "Rejoindre le quiz",
       "or": "OU",
       "createAccount": "Créer un compte gratuit",
-      "existingUser": "J’ai déjà un compte"
+      "existingUser": "J’ai déjà un compte",
+      "freeTagline": "Gratuit pour toujours. Aucune carte de crédit requise."
     },
     "features": {
       "title": "Pourquoi choisir Swaya.me ?",
@@ -1615,7 +1667,10 @@
     "enterPollDescription": "Saisissez une description (optionnel)",
     "questionCount": "{{total}} questions",
     "typeInfo": "Pas besoin d'hôte en direct. Partagez un lien — le public répond à son rythme. Les résultats s'accumulent au fil du temps.",
-    "completionRate": "Taux de complétion"
+    "completionRate": "Taux de complétion",
+    "required": "Obligatoire",
+    "requiredTooltip": "Les participants doivent répondre à cette question avant de continuer.",
+    "requiredWarning": "Cette question est obligatoire. Veuillez y répondre pour continuer."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1767,7 +1822,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "Personne n'a encore commencé cet examen."
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",

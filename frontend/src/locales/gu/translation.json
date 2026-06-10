@@ -20,7 +20,11 @@
     "update": "અપડેટ કરો",
     "or": "અથવા",
     "clear": "સાફ કરો",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "પાછળ",
+    "next": "આગળ",
+    "responses": "પ્રતિભાવો",
+    "typeHere": "અહીં તમારો જવાબ ટાઇપ કરો..."
   },
   "auth": {
     "login": "લૉગઇન",
@@ -341,7 +345,20 @@
     "endDateRequired": "ઑફ્લાઇન મતો માટે સમાપ્તિ તારીખ જરૂરી છે",
     "importValidated": "{{filename}} સફળતાપૂર્વક ચકાસવામાં આવ્યું.",
     "importValidateFailed": "{{filename}} ચકાસણી નિષ્ફળ: {{error}}",
-    "aiAddFailed": "પ્રશ્નો ઉમેરવામાં નિષ્ફળ"
+    "aiAddFailed": "પ્રશ્નો ઉમેરવામાં નિષ્ફળ",
+    "activities": "પ્રવૃત્તિઓ",
+    "continue": "ચાલુ રાખો",
+    "editPoll": "પોલ સંપાદિત કરો",
+    "openRoom": "રૂમ ખોલો",
+    "optionPlaceholder": "વિકલ્પ ટેક્સ્ટ દાખલ કરો",
+    "optionRequired": "વિકલ્પ ખાલી ન હોઈ શકે",
+    "started": "શરૂ થયું",
+    "timerEndOverrideDescription": "આ પ્રશ્ન માટે હાલ ટાઇમર ચાલી રહ્યો છે. હવે સમાપ્ત કરવાથી ટાઇમર ઓવરરાઇડ થશે અને સત્ર સમાપ્ત થશે.",
+    "timerOverrideDescription": "આ પ્રશ્નમાં સક્રિય ટાઇમર છે. ફક્ત ત્યારે જ ચાલુ રાખો જ્યારે તમે તેને હવે ઓવરરાઇડ કરવા માંગો.",
+    "timerOverrideOk": "હા, ચાલુ રાખો",
+    "timerOverrideTitle": "આ સમય-મર્યાદિત પ્રશ્ન વહેલો છોડી દો?",
+    "untitled": "શીર્ષક વગરનું",
+    "validationError": "પ્રકાશિત કરતાં પહેલાં તમામ ફરજિયાત ક્ષેત્રો તપાસો"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "તમારો જવાબ દાખલ કરો (મહત્તમ 100 અક્ષરો)"
   },
   "navigation": {
     "home": "મુખ્ય",
@@ -758,7 +776,8 @@
       "button": "ક્વિઝમાં જોડાઓ",
       "or": "અથવા",
       "createAccount": "મફત એકાઉન્ટ બનાવો",
-      "existingUser": "હું પહેલાથી જ યુઝર છું"
+      "existingUser": "હું પહેલાથી જ યુઝર છું",
+      "freeTagline": "હંમેશ માટે મફત. કોઈ ક્રેડિટ કાર્ડ જરૂરી નથી."
     },
     "features": {
       "title": "Swaya.me કેમ પસંદ કરવું?",
@@ -800,7 +819,31 @@
     "plansTab": "વપરાશકર્તા યોજનાઓ",
     "currentPlan": "વર્તમાન યોજના",
     "upgradeTo": "{{tier}} પર અપગ્રેડ કરો",
-    "plansNote": "તમારી યોજના અપગ્રેડ કરવા માટે info@chakrix.net પર સંપર્ક કરો."
+    "plansNote": "તમારી યોજના અપગ્રેડ કરવા માટે info@chakrix.net પર સંપર્ક કરો.",
+    "archivedDesc": "પૂર્ણ થયેલી પ્રવૃત્તિઓ",
+    "createActivityTitle": "આજે તમે શું બનાવવા માંગો છો?",
+    "createNew": "નવું બનાવો",
+    "created": "બનાવ્યું",
+    "draftDesc": "ડ્રાફ્ટ પ્રવૃત્તિઓ",
+    "folderAssignFailed": "ફોલ્ડર અપડેટ કરવામાં નિષ્ફળ",
+    "folderAssigned": "ફોલ્ડર અપડેટ થયું",
+    "folderCreateFailed": "ફોલ્ડર બનાવવામાં નિષ્ફળ",
+    "folderCreated": "ફોલ્ડર બનાવ્યું",
+    "folderDeleteFailed": "ફોલ્ડર કાઢી નાખવામાં નિષ્ફળ",
+    "folderDeleted": "ફોલ્ડર કાઢી નાખ્યું",
+    "folderName": "ફોલ્ડરનું નામ",
+    "folderNameRequired": "ફોલ્ડરનું નામ જરૂરી છે",
+    "folderRenameFailed": "ફોલ્ડરનું નામ બદલવામાં નિષ્ફળ",
+    "folderRenamed": "ફોલ્ડરનું નામ બદલ્યું",
+    "heroSubtitle": "મિનિટોમાં ક્વિઝ, પોલ અને આકારણીઓ બનાવો.",
+    "inTheWorks": "ચાલી રહ્યું છે",
+    "newFolder": "નવું ફોલ્ડર",
+    "noParentRoot": "કોઈ પેરેન્ટ નહીં (રૂટ)",
+    "parentFolder": "પેરેન્ટ ફોલ્ડર",
+    "pastSessions": "ભૂતકાળના સત્રો",
+    "plansSubtitle": "સક્રિય સભ્યપદ અને સુવિધા મર્યાદાઓ",
+    "readyDesc": "ચલાવવા માટે તૈયાર પ્રવૃત્તિઓ",
+    "renameFolder": "ફોલ્ડરનું નામ બદલો"
   },
   "pages": {
     "legal": {
@@ -1537,7 +1580,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "આ વિન્ડો બંધ કરો"
+    "closeWindow": "આ વિન્ડો બંધ કરો",
+    "brushColor": "બ્રશ રંગ",
+    "brushSize": "બ્રશ કદ",
+    "clear": "સાફ",
+    "clearWhiteboard": "વ્હાઇટબોર્ડ સાફ કરો",
+    "eraser": "ઇરેઝર",
+    "expandQr": "QR કોડ મોટો કરવા ક્લિક કરો",
+    "selectColor": "રંગ પસંદ કરો",
+    "toggleWhiteboard": "વ્હાઇટબોર્ડ ટૉગલ",
+    "whiteboard": "વ્હાઇટબોર્ડ"
   },
   "ai": {
     "generateWithAI": "AI સાથે ઉત્પન્ન કરો",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "वर्णन दाखल करो (वैकल्पिक)",
     "questionCount": "{{total}} પ્રશ્નો",
     "typeInfo": "કોઈ લાઇવ હોસ્ટ જরૂરી નથી. લિંક શેર કરો — પ્રેક્ષકો પોતાની ગતિએ જવાબ આપે છે. પરિણામો સમય સાથે એકઠા થાય છે.",
-    "completionRate": "પૂર્ણ કરવાનો દર"
+    "completionRate": "પૂર્ણ કરવાનો દર",
+    "required": "જરૂરી",
+    "requiredTooltip": "સહભાગીઓએ આગળ જતાં પહેલાં આ પ્રશ્નનો જવાબ આપવો આવશ્યક છે.",
+    "requiredWarning": "આ પ્રશ્ન ફરજિયાત છે. ચાલુ રાખવા માટે તેનો જવાબ આપો."
   },
   "exam": {
     "typeLabel": "ટેસ્ટ",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "હજી સુધી કોઈએ આ પરીક્ષા શરૂ નથી કરી."
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",

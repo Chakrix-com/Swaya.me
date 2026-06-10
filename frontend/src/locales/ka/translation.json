@@ -20,7 +20,11 @@
     "update": "ನವೀಕರಿಸಿ",
     "or": "ಅಥವಾ",
     "clear": "ತೆರವುಗೊಳಿಸಿ",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "ಹಿಂದೆ",
+    "next": "ಮುಂದೆ",
+    "responses": "ಪ್ರತಿಕ್ರಿಯೆಗಳು",
+    "typeHere": "ನಿಮ್ಮ ಉತ್ತರ ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ..."
   },
   "auth": {
     "login": "ಲಾಗಿನ್",
@@ -341,7 +345,20 @@
     "endDateRequired": "ಆಫ್‌ಲೈನ್ ಮತಗಣನೆಗಳಿಗೆ ಅಂತಿಮ ದಿನಾಂಕ ಅಗತ್ಯ",
     "importValidated": "{{filename}} ಯಶಸ್ವಿಯಾಗಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.",
     "importValidateFailed": "{{filename}} ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ: {{error}}",
-    "aiAddFailed": "ಪ್ರಶ್ನೆಗಳನ್ನು ಸೇರಿಸಲು ವಿಫಲವಾಗಿದೆ"
+    "aiAddFailed": "ಪ್ರಶ್ನೆಗಳನ್ನು ಸೇರಿಸಲು ವಿಫಲವಾಗಿದೆ",
+    "activities": "ಚಟುವಟಿಕೆಗಳು",
+    "continue": "ಮುಂದುವರೆಸಿ",
+    "editPoll": "ಪೋಲ್ ಸಂಪಾದಿಸಿ",
+    "openRoom": "ಕೊಠಡಿ ತೆರೆಯಿರಿ",
+    "optionPlaceholder": "ಆಯ್ಕೆಯ ಪಠ್ಯ ನಮೂದಿಸಿ",
+    "optionRequired": "ಆಯ್ಕೆ ಖಾಲಿ ಇರಬಾರದು",
+    "started": "ಪ್ರಾರಂಭಿಸಲಾಗಿದೆ",
+    "timerEndOverrideDescription": "ಈ ಪ್ರಶ್ನೆಗೆ ಪ್ರಸ್ತುತ ಟೈಮರ್ ಚಾಲನೆಯಾಗುತ್ತಿದೆ. ಈಗ ಮುಗಿಸುವುದರಿಂದ ಟೈಮರ್ ಅನ್ನು ಅತಿಕ್ರಮಿಸಿ ಅಧಿವೇಶನ ಮುಗಿಯುತ್ತದೆ.",
+    "timerOverrideDescription": "ಈ ಪ್ರಶ್ನೆಯಲ್ಲಿ ಸಕ್ರಿಯ ಟೈಮರ್ ಇದೆ. ಈಗ ಅತಿಕ್ರಮಿಸಲು ಬಯಸಿದರೆ ಮಾತ್ರ ಮುಂದುವರೆಯಿರಿ.",
+    "timerOverrideOk": "ಹೌದು, ಮುಂದುವರೆಯಿರಿ",
+    "timerOverrideTitle": "ಈ ಸಮಯ-ನಿರ್ಬಂಧಿತ ಪ್ರಶ್ನೆಯನ್ನು ಮುಂಚಿತವಾಗಿ ಬಿಟ್ಟುಬಿಡಬೇಕೇ?",
+    "untitled": "ಶೀರ್ಷಿಕೆ ಇಲ್ಲ",
+    "validationError": "ಪ್ರಕಟಿಸುವ ಮೊದಲು ಎಲ್ಲಾ ಅಗತ್ಯ ಕ್ಷೇತ್ರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",
@@ -401,7 +418,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "ನಿಮ್ಮ ಉತ್ತರ ನಮೂದಿಸಿ (ಗರಿಷ್ಠ 100 ಅಕ್ಷರಗಳು)"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",
@@ -758,7 +776,8 @@
       "button": "ಕ್ವಿಜ್‌ಗೆ ಸೇರಿ",
       "or": "ಅಥವಾ",
       "createAccount": "ಉಚಿತ ಖಾತೆ ರಚಿಸಿ",
-      "existingUser": "ನಾನು ಈಗಾಗಲೇ ಬಳಕೆದಾರ"
+      "existingUser": "ನಾನು ಈಗಾಗಲೇ ಬಳಕೆದಾರ",
+      "freeTagline": "ಯಾವಾಗಲೂ ಉಚಿತ. ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್ ಅಗತ್ಯವಿಲ್ಲ."
     },
     "features": {
       "title": "Swaya.me ಯಾಕೆ ಆಯ್ಕೆ ಮಾಡಬೇಕು?",
@@ -800,7 +819,31 @@
     "plansTab": "ಬಳಕೆದಾರ ಯೋಜನೆಗಳು",
     "currentPlan": "ಪ್ರಸ್ತುತ ಯೋಜನೆ",
     "upgradeTo": "{{tier}} ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ",
-    "plansNote": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು info@chakrix.net ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
+    "plansNote": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು info@chakrix.net ಅನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+    "archivedDesc": "ಮುಗಿದ ಚಟುವಟಿಕೆಗಳು",
+    "createActivityTitle": "ಇಂದು ನೀವು ಏನು ರಚಿಸಲು ಬಯಸುತ್ತೀರಿ?",
+    "createNew": "ಹೊಸದನ್ನು ರಚಿಸಿ",
+    "created": "ರಚಿಸಲಾಗಿದೆ",
+    "draftDesc": "ಡ್ರಾಫ್ಟ್ ಚಟುವಟಿಕೆಗಳು",
+    "folderAssignFailed": "ಫೋಲ್ಡರ್ ನವೀಕರಿಸಲು ವಿಫಲವಾಯಿತು",
+    "folderAssigned": "ಫೋಲ್ಡರ್ ನವೀಕರಿಸಲಾಗಿದೆ",
+    "folderCreateFailed": "ಫೋಲ್ಡರ್ ರಚಿಸಲು ವಿಫಲವಾಯಿತು",
+    "folderCreated": "ಫೋಲ್ಡರ್ ರಚಿಸಲಾಗಿದೆ",
+    "folderDeleteFailed": "ಫೋಲ್ಡರ್ ಅಳಿಸಲು ವಿಫಲವಾಯಿತು",
+    "folderDeleted": "ಫೋಲ್ಡರ್ ಅಳಿಸಲಾಗಿದೆ",
+    "folderName": "ಫೋಲ್ಡರ್ ಹೆಸರು",
+    "folderNameRequired": "ಫೋಲ್ಡರ್ ಹೆಸರು ಅಗತ್ಯವಿದೆ",
+    "folderRenameFailed": "ಫೋಲ್ಡರ್ ಮರುಹೆಸರಿಸಲು ವಿಫಲವಾಯಿತು",
+    "folderRenamed": "ಫೋಲ್ಡರ್ ಮರುಹೆಸರಿಸಲಾಗಿದೆ",
+    "heroSubtitle": "ನಿಮಿಷಗಳಲ್ಲಿ ಕ್ವಿಜ್‌ಗಳು, ಪೋಲ್‌ಗಳು ಮತ್ತು ಮೌಲ್ಯಮಾಪನಗಳನ್ನು ರಚಿಸಿ.",
+    "inTheWorks": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+    "newFolder": "ಹೊಸ ಫೋಲ್ಡರ್",
+    "noParentRoot": "ಮೂಲ ಫೋಲ್ಡರ್ ಇಲ್ಲ (ರೂಟ್)",
+    "parentFolder": "ಮೂಲ ಫೋಲ್ಡರ್",
+    "pastSessions": "ಹಿಂದಿನ ಅಧಿವೇಶನಗಳು",
+    "plansSubtitle": "ಸಕ್ರಿಯ ಚಂದಾದಾರಿಕೆ ಮತ್ತು ಸೌಲಭ್ಯ ಮಿತಿಗಳು",
+    "readyDesc": "ಚಾಲನೆಗೆ ಸಿದ್ಧ ಚಟುವಟಿಕೆಗಳು",
+    "renameFolder": "ಫೋಲ್ಡರ್ ಮರುಹೆಸರಿಸಿ"
   },
   "pages": {
     "legal": {
@@ -1537,7 +1580,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "ಈ ವಿಂಡೋವನ್ನು ಮುಚ್ಚಿ"
+    "closeWindow": "ಈ ವಿಂಡೋವನ್ನು ಮುಚ್ಚಿ",
+    "brushColor": "ಬ್ರಷ್ ಬಣ್ಣ",
+    "brushSize": "ಬ್ರಷ್ ಗಾತ್ರ",
+    "clear": "ತೆರವು",
+    "clearWhiteboard": "ವೈಟ್‌ಬೋರ್ಡ್ ತೆರವು ಮಾಡಿ",
+    "eraser": "ಅಳಿಸುಕ",
+    "expandQr": "QR ಕೋಡ್ ಅನ್ನು ದೊಡ್ಡದು ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
+    "selectColor": "ಬಣ್ಣ ಆಯ್ಕೆ ಮಾಡಿ",
+    "toggleWhiteboard": "ವೈಟ್‌ಬೋರ್ಡ್ ಟಾಗಲ್",
+    "whiteboard": "ವೈಟ್‌ಬೋರ್ಡ್"
   },
   "ai": {
     "generateWithAI": "AI ಯಿಂದ ರಚಿಸಿ",
@@ -1613,7 +1665,10 @@
     "enterPollDescription": "ವಿವರಣೆ ನಮೂದಿಸಿ (ಐಚ್ಛಿಕ)",
     "questionCount": "{{total}} ಪ್ರಶ್ನೆಗಳು",
     "typeInfo": "ಲೈವ್ ಹೋಸ್ಟ್ ಅಗತ್ಯವಿಲ್ಲ. ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಿ — ಪ್ರೇಕ್ಷಕರು ತಮ್ಮ ವೇಗದಲ್ಲಿ ಉತ್ತರಿಸುತ್ತಾರೆ. ಫಲಿತಾಂಶಗಳು ಕಾಲಾನಂತರದಲ್ಲಿ ಸಂಗ್ರಹಗೊಳ್ಳುತ್ತವೆ.",
-    "completionRate": "ಪೂರ್ಣಗೊಳಿಸುವ ದರ"
+    "completionRate": "ಪೂರ್ಣಗೊಳಿಸುವ ದರ",
+    "required": "ಅಗತ್ಯ",
+    "requiredTooltip": "ಭಾಗವಹಿಸುವವರು ಮುಂದೆ ಹೋಗುವ ಮೊದಲು ಈ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಬೇಕು.",
+    "requiredWarning": "ಈ ಪ್ರಶ್ನೆ ಅಗತ್ಯ. ಮುಂದುವರೆಯಲು ಉತ್ತರಿಸಿ."
   },
   "exam": {
     "typeLabel": "ಟೆಸ್ಟ್",
@@ -1765,7 +1820,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "ಇನ್ನೂ ಯಾರೂ ಈ ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿಲ್ಲ."
   },
   "appFeedback": {
     "floatButtonTooltip": "ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",

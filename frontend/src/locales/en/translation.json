@@ -21,7 +21,12 @@
     "update": "Update",
     "or": "or",
     "clear": "Clear",
-    "live": "LIVE"
+    "live": "LIVE",
+    "back": "Back",
+    "langCode": "en",
+    "next": "Next",
+    "responses": "responses",
+    "typeHere": "Type your answer here..."
   },
   "auth": {
     "login": "Login",
@@ -342,7 +347,20 @@
     "endDateRequired": "End date is required for offline polls",
     "importValidated": "{{filename}} validated successfully.",
     "importValidateFailed": "{{filename}} validation failed: {{error}}",
-    "aiAddFailed": "Failed to add questions"
+    "aiAddFailed": "Failed to add questions",
+    "activities": "activities",
+    "continue": "Continue",
+    "editPoll": "Edit Poll",
+    "openRoom": "Open Room",
+    "optionPlaceholder": "Enter option text",
+    "optionRequired": "Option cannot be empty",
+    "started": "Started",
+    "timerEndOverrideDescription": "A timer is currently running for this question. Ending now will override the timer and end the session.",
+    "timerOverrideDescription": "This question has an active timer. Continue only if you want to override it now.",
+    "timerOverrideOk": "Yes, continue",
+    "timerOverrideTitle": "Skip this timed question early?",
+    "untitled": "Untitled",
+    "validationError": "Please check all required fields before publishing"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -402,7 +420,8 @@
     "ratingsCount_one": "{{count}} rating",
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
-    "leftSession": "You left the session"
+    "leftSession": "You left the session",
+    "enterWordCloudAnswer": "Enter your answer (max 100 characters)"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",
@@ -424,7 +443,31 @@
     "plansTab": "User Plans",
     "currentPlan": "Current Plan",
     "upgradeTo": "Upgrade to {{tier}}",
-    "plansNote": "Contact info@chakrix.net to upgrade your plan."
+    "plansNote": "Contact info@chakrix.net to upgrade your plan.",
+    "archivedDesc": "Completed activities",
+    "createActivityTitle": "What would you like to create today?",
+    "createNew": "Create New",
+    "created": "Created",
+    "draftDesc": "Draft activities",
+    "folderAssignFailed": "Failed to update folder",
+    "folderAssigned": "Folder updated",
+    "folderCreateFailed": "Failed to create folder",
+    "folderCreated": "Folder created",
+    "folderDeleteFailed": "Failed to delete folder",
+    "folderDeleted": "Folder deleted",
+    "folderName": "Folder name",
+    "folderNameRequired": "Folder name is required",
+    "folderRenameFailed": "Failed to rename folder",
+    "folderRenamed": "Folder renamed",
+    "heroSubtitle": "Create quizzes, polls and assessments in minutes.",
+    "inTheWorks": "In the Works",
+    "newFolder": "New Folder",
+    "noParentRoot": "No parent (root)",
+    "parentFolder": "Parent folder",
+    "pastSessions": "Past Sessions",
+    "plansSubtitle": "Active subscription and feature limits",
+    "readyDesc": "Activities ready to run",
+    "renameFolder": "Rename Folder"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -477,7 +520,16 @@
     "shareHostExperience": "Share your experience running this quiz",
     "end": "End",
     "continue": "Continue",
-    "closeWindow": "Close this window"
+    "closeWindow": "Close this window",
+    "brushColor": "Brush color",
+    "brushSize": "Brush size",
+    "clear": "Clear",
+    "clearWhiteboard": "Clear whiteboard",
+    "eraser": "Eraser",
+    "expandQr": "Click to enlarge QR code",
+    "selectColor": "Select color",
+    "toggleWhiteboard": "Toggle whiteboard",
+    "whiteboard": "Whiteboard"
   },
   "navigation": {
     "home": "Home",
@@ -834,7 +886,8 @@
       "button": "Join Quiz",
       "or": "OR",
       "createAccount": "Create Free Account",
-      "existingUser": "I'm Already a User"
+      "existingUser": "I'm Already a User",
+      "freeTagline": "Free forever. No credit card required."
     },
     "features": {
       "title": "Why Choose Swaya.me?",
@@ -1614,7 +1667,10 @@
     "enterPollDescription": "Enter description (optional)",
     "questionCount": "{{total}} questions",
     "typeInfo": "No live host needed. Share a link — audience responds at their own pace. Results accumulate over time.",
-    "completionRate": "Completion rate"
+    "completionRate": "Completion rate",
+    "required": "Required",
+    "requiredTooltip": "Participants must answer this question before they can proceed.",
+    "requiredWarning": "This question is required. Please answer it to continue."
   },
   "exam": {
     "typeLabel": "Test",
@@ -1769,7 +1825,8 @@
     "batchConfirmDesc": "Participants have already completed this exam in a previous session. You can continue with a combined leaderboard, or start fresh with a clean slate.",
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
-    "startFresh": "Start Fresh"
+    "startFresh": "Start Fresh",
+    "noParticipantsYet": "No one has started this exam yet."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
