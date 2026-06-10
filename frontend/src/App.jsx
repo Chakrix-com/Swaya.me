@@ -133,11 +133,12 @@ function AuthenticatedLayout({ children }) {
 
   return (
     <ProLayout
-      title={
+      title="Swaya.me"
+      headerTitleRender={(logo, title) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          Swaya.me <BetaBadge /> <OpenSourceBadge />
+          {logo}{title}<BetaBadge /><OpenSourceBadge />
         </span>
-      }
+      )}
       logo={<img src={logo} alt="Swaya.me" style={{ height: 26, width: 'auto', borderRadius: 4 }} />}
       layout="mix"
       splitMenus={false}
