@@ -290,9 +290,7 @@ function AuthenticatedLayout({ children }) {
       }}
       actionsRender={() => [
         <span key="tier" className="header-action-desktop"><TierBadge user={user} /></span>,
-        <span key="language" className="header-action-desktop">
-          <Tooltip title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>
-        </span>,
+        <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
       ]}
       footerRender={() => (
         <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
