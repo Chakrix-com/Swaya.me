@@ -843,7 +843,8 @@
     "pastSessions": "পূর্ববর্তী সেশন",
     "plansSubtitle": "সক্রিয় সদস্যতা এবং ফিচার সীমা",
     "readyDesc": "চালানোর জন্য প্রস্তুত কার্যক্রম",
-    "renameFolder": "ফোল্ডার পুনঃনামকরণ করুন"
+    "renameFolder": "ফোল্ডার পুনঃনামকরণ করুন",
+    "welcomeBack": "আবার স্বাগতম, {{name}} 👋"
   },
   "pages": {
     "legal": {

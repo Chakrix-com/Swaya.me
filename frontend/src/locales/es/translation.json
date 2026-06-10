@@ -465,7 +465,8 @@
     "pastSessions": "Sesiones pasadas",
     "plansSubtitle": "Suscripción activa y límites de funciones",
     "readyDesc": "Actividades listas para ejecutar",
-    "renameFolder": "Cambiar nombre de carpeta"
+    "renameFolder": "Cambiar nombre de carpeta",
+    "welcomeBack": "Bienvenido de nuevo, {{name}} 👋"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
