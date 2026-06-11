@@ -303,19 +303,8 @@ function AuthenticatedLayout({ children }) {
 
 // Simple layout for public routes
 function PublicLayout({ children }) {
-  const location = useLocation()
-  const { t } = useTranslation()
-  // Home has its own nav with ThemePicker; all other public pages need a floating one
-  const isHome = location.pathname === '/'
   return (
     <div className="visitor-theme visitor-theme--light">
-      {!isHome && (
-        <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 1100 }}>
-          <Tooltip title={t('tooltip.themePicker', 'Choose a UI theme')}>
-            <span><ThemePicker /></span>
-          </Tooltip>
-        </div>
-      )}
       {children}
     </div>
   )
