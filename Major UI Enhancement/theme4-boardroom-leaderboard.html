@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swaya — Boardroom theme · Results & Ranking</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F6F9;
+    --card: #FFFFFF;
+    --ink: #0A2540;
+    --ink-2: #14334F;
+    --text2: #33475B;
+    --muted: #5B6B7C;
+    --line: #DCE3EC;
+    --accent: #1E63E9;
+    --accent-strong: #1450C4;
+    --accent-soft: #E8F0FE;
+    --teal: #0D9488;
+    --gold: #B7791F;
+    --gold-soft: rgba(183,121,31,0.12);
+    --silver: #64748B;
+    --silver-soft: rgba(100,116,139,0.10);
+    --bronze: #92561F;
+    --bronze-soft: rgba(146,86,31,0.10);
+    --success: #15803D;
+    --success-soft: rgba(21,128,61,0.10);
+    --error: #B91C1C;
+    --error-soft: rgba(185,28,28,0.08);
+    --navy-grad: linear-gradient(160deg, #0A2540 0%, #0E3258 55%, #103A66 100%);
+    --shadow: 0 1px 2px rgba(10,37,64,.05), 0 8px 24px -12px rgba(10,37,64,.10);
+    --font-display: 'Sora', 'IBM Plex Sans', sans-serif;
+    --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', Menlo, monospace;
+    --r: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font-body); background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+
+  .btn { font-family:var(--font-body); font-weight:600; font-size:14px; border-radius:var(--r); padding:9px 16px; cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:8px; transition:all .15s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent-strong); }
+  .btn-outline { background:#fff; border-color:var(--line); color:var(--ink); }
+  .btn-outline:hover { border-color:var(--ink); }
+  .btn-outline-light { background:transparent; border-color:rgba(255,255,255,.3); color:#fff; }
+  .btn-outline-light:hover { border-color:#fff; }
+  .mono { font-family:var(--font-mono); }
+
+  /* ───── session header ───── */
+  .sess-head { background: var(--navy-grad); color:#fff; position:relative; overflow:hidden; }
+  .sess-head::before { content:''; position:absolute; inset:0;
+    background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size:56px 56px; }
+  .sess-inner { position:relative; padding: 30px 0 0; }
+  .crumb { font-size:13px; color:#7E99BC; margin-bottom: 16px; }
+  .crumb b { color:#C2D3E8; font-weight:500; }
+  .sess-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap: 24px; padding-bottom: 26px; }
+  .sess-title-row h1 { font-family:var(--font-display); font-size:30px; letter-spacing:-.8px; font-weight:700; }
+  .sess-meta { display:flex; gap:18px; margin-top:10px; font-size:13.5px; color:#9FB6D2; flex-wrap:wrap; }
+  .sess-meta .code { font-family:var(--font-mono); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); padding:2px 10px; border-radius:5px; color:#fff; font-weight:600; font-size:12.5px; }
+  .sess-actions { display:flex; gap:10px; flex-shrink:0; }
+  .schip { font-size:11.5px; font-weight:700; padding:4px 12px; border-radius:999px; background:var(--success-soft); color:#4ADE80; border:1px solid rgba(74,222,128,.3); letter-spacing:.5px; }
+
+  .statbar { position:relative; display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid rgba(255,255,255,.12); }
+  .sstat { padding: 18px 0 22px; }
+  .sstat + .sstat { border-left:1px solid rgba(255,255,255,.12); padding-left: 24px; }
+  .sstat b { font-family:var(--font-display); font-size:23px; font-weight:700; display:block; letter-spacing:-.5px; }
+  .sstat span { font-size:11.5px; color:#7E99BC; text-transform:uppercase; letter-spacing:1px; font-weight:500; }
+
+  /* ───── layout ───── */
+  .content { padding: 28px 0 64px; }
+  .grid { display:grid; grid-template-columns: 1fr 330px; gap:20px; align-items:start; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+  .card-head { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+  .card-head h3 { font-family:var(--font-display); font-size:16px; font-weight:700; letter-spacing:-.3px; }
+  .fchips { display:flex; gap:8px; }
+  .fchip { font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px; border:1px solid var(--line); color:var(--muted); cursor:pointer; }
+  .fchip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); text-align:left; padding:11px 20px; border-bottom:1px solid var(--line); font-weight:600; background:#FAFBFD; }
+  td { padding:13px 20px; border-bottom:1px solid #EEF2F7; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr.row:hover td { background:#F8FAFD; }
+  tr.r1 td:first-child { box-shadow: inset 3px 0 0 var(--gold); }
+  tr.r2 td:first-child { box-shadow: inset 3px 0 0 var(--silver); }
+  tr.r3 td:first-child { box-shadow: inset 3px 0 0 var(--bronze); }
+  .rank { font-family:var(--font-mono); font-weight:600; font-size:13px; color:var(--muted); width:52px; }
+  .medal { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:700; font-family:var(--font-mono); }
+  .m1 { background:var(--gold-soft); color:var(--gold); border:1px solid rgba(183,121,31,.35); }
+  .m2 { background:var(--silver-soft); color:var(--silver); border:1px solid rgba(100,116,139,.35); }
+  .m3 { background:var(--bronze-soft); color:var(--bronze); border:1px solid rgba(146,86,31,.35); }
+  .cand { display:flex; align-items:center; gap:11px; }
+  .cavatar { width:30px; height:30px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:inline-flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; flex-shrink:0; }
+  .cand b { font-weight:600; display:block; }
+  .cand span { font-size:11.5px; color:var(--muted); font-family:var(--font-mono); }
+  .scorecell { display:flex; align-items:center; gap:10px; min-width: 170px; }
+  .sbar { flex:1; height:7px; background:#EDF1F6; border-radius:99px; overflow:hidden; max-width:110px; }
+  .sbar i { display:block; height:100%; border-radius:99px; background:var(--accent); }
+  .sval { font-family:var(--font-mono); font-weight:600; font-size:13px; width:44px; text-align:right; }
+  .pct { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+  .time { font-family:var(--font-mono); font-size:12.5px; color:var(--text2); }
+  .flag { font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:4px; letter-spacing:.4px; }
+  .flag-ok { background:var(--success-soft); color:var(--success); }
+  .flag-warn { background:var(--gold-soft); color:var(--gold); }
+  .flag-bad { background:var(--error-soft); color:var(--error); }
+  .view { font-size:12.5px; font-weight:600; color:var(--accent); white-space:nowrap; }
+  .view:hover { color:var(--accent-strong); }
+
+  .table-foot { padding: 12px 20px; background:#FAFBFD; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; font-size:12.5px; color:var(--muted); }
+  .table-foot .mono { font-size:11.5px; font-weight:600; }
+
+  /* ───── side panels ───── */
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); margin-bottom:20px; }
+  .panel-head { padding:14px 18px; border-bottom:1px solid var(--line); font-family:var(--font-display); font-weight:700; font-size:14.5px; }
+  .panel-body { padding:16px 18px; }
+
+  /* distribution histogram */
+  .histo { display:flex; align-items:flex-end; gap:6px; height: 120px; padding: 4px 2px 0; }
+  .hbar { flex:1; background:var(--accent-soft); border-radius: 4px 4px 0 0; position:relative; }
+  .hbar.hot { background: var(--accent); }
+  .histo-x { display:flex; gap:6px; margin-top:8px; }
+  .histo-x span { flex:1; text-align:center; font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+  .histo-note { margin-top:12px; font-size:12.5px; color:var(--muted); line-height:1.5; }
+  .histo-note b { color:var(--ink); font-weight:600; }
+
+  /* topic breakdown */
+  .topic { margin-bottom: 13px; }
+  .topic:last-child { margin-bottom:0; }
+  .topic .t { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px; }
+  .topic .t b { font-weight:600; }
+  .topic .t span { font-family:var(--font-mono); font-size:11.5px; color:var(--muted); }
+  .tbar { height:7px; background:#EDF1F6; border-radius:99px; overflow:hidden; }
+  .tbar i { display:block; height:100%; border-radius:99px; }
+
+  /* integrity summary */
+  .integ-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-top:1px solid #EEF2F7; font-size:13px; }
+  .integ-row:first-child { border-top:none; padding-top:0; }
+  .integ-row .n { font-family:var(--font-mono); font-weight:600; font-size:13px; }
+
+  @media (max-width:1000px) {
+    .grid { grid-template-columns:1fr; }
+    .statbar { grid-template-columns:repeat(2,1fr); }
+    .sstat + .sstat { border-left:none; padding-left:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sess-head">
+  <div class="wrap sess-inner">
+    <div class="crumb">Acme Corp / Assessments / <b>Backend Engineer Screen · Round 1</b></div>
+    <div class="sess-title-row">
+      <div>
+        <h1>Results &amp; Ranking</h1>
+        <div class="sess-meta">
+          <span class="schip">SCORED</span>
+          <span>Closed today, 14:32 IST</span>
+          <span>60 min · 24 questions</span>
+          <span class="code">RX4-92K</span>
+        </div>
+      </div>
+      <div class="sess-actions">
+        <button class="btn btn-outline-light">⬇ PDF report</button>
+        <button class="btn btn-outline-light">⬇ Excel</button>
+        <button class="btn btn-primary">Shortlist top 10 →</button>
+      </div>
+    </div>
+    <div class="statbar">
+      <div class="sstat"><b>42 / 50</b><span>Attempted</span></div>
+      <div class="sstat"><b>74.2</b><span>Median score</span></div>
+      <div class="sstat"><b>92%</b><span>Completion</span></div>
+      <div class="sstat"><b>38:12</b><span>Median time</span></div>
+      <div class="sstat"><b>3</b><span>Integrity flags</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap content">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Candidate ranking</h3>
+        <div class="fchips">
+          <span class="fchip on">All 42</span>
+          <span class="fchip">Clear only</span>
+          <span class="fchip">Flagged 3</span>
+          <span class="fchip">Anonymise</span>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Rank</th><th>Candidate</th><th>Score</th><th>Percentile</th><th>Time</th><th>Integrity</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr class="row r1">
+            <td class="rank"><span class="medal m1">1</span></td>
+            <td><div class="cand"><span class="cavatar">AK</span><div><b>Aditi Krishnan</b><span>CAND-1027</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:94%"></i></span><span class="sval">94.0</span></div></td>
+            <td class="pct">P99</td>
+            <td class="time">41:08</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row r2">
+            <td class="rank"><span class="medal m2">2</span></td>
+            <td><div class="cand"><span class="cavatar">SM</span><div><b>Sahil Mehta</b><span>CAND-1004</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:89%"></i></span><span class="sval">89.0</span></div></td>
+            <td class="pct">P97</td>
+            <td class="time">36:54</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row r3">
+            <td class="rank"><span class="medal m3">3</span></td>
+            <td><div class="cand"><span class="cavatar">RO</span><div><b>Rita Okafor</b><span>CAND-1061</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:86%"></i></span><span class="sval">86.5</span></div></td>
+            <td class="pct">P95</td>
+            <td class="time">44:21</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row">
+            <td class="rank">4</td>
+            <td><div class="cand"><span class="cavatar">JW</span><div><b>James Wu</b><span>CAND-1042</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:81%"></i></span><span class="sval">81.0</span></div></td>
+            <td class="pct">P90</td>
+            <td class="time">29:47</td>
+            <td><span class="flag flag-warn">REVIEW</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row">
+            <td class="rank">5</td>
+            <td><div class="cand"><span class="cavatar">DP</span><div><b>Devika Pillai</b><span>CAND-1013</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:79%"></i></span><span class="sval">79.5</span></div></td>
+            <td class="pct">P88</td>
+            <td class="time">51:02</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row">
+            <td class="rank">6</td>
+            <td><div class="cand"><span class="cavatar">MT</span><div><b>Marco Tanaka</b><span>CAND-1058</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:77%"></i></span><span class="sval">77.0</span></div></td>
+            <td class="pct">P85</td>
+            <td class="time">39:33</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row">
+            <td class="rank">7</td>
+            <td><div class="cand"><span class="cavatar">NB</span><div><b>Nadia Boulos</b><span>CAND-1019</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:75%"></i></span><span class="sval">75.5</span></div></td>
+            <td class="pct">P82</td>
+            <td class="time">47:18</td>
+            <td><span class="flag flag-bad">FLAGGED</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+          <tr class="row">
+            <td class="rank">8</td>
+            <td><div class="cand"><span class="cavatar">VK</span><div><b>Vikram Kulkarni</b><span>CAND-1033</span></div></div></td>
+            <td><div class="scorecell"><span class="sbar"><i style="width:74%"></i></span><span class="sval">74.0</span></div></td>
+            <td class="pct">P80</td>
+            <td class="time">42:55</td>
+            <td><span class="flag flag-ok">CLEAR</span></td>
+            <td><a class="view" href="#">View report →</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-foot">
+        <span>Showing 1–8 of 42 · ranked by raw score, ties broken by time</span>
+        <span class="mono">AUDIT LOG: 318 EVENTS</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-head">Score distribution</div>
+        <div class="panel-body">
+          <div class="histo">
+            <div class="hbar" style="height:8%"></div>
+            <div class="hbar" style="height:14%"></div>
+            <div class="hbar" style="height:30%"></div>
+            <div class="hbar" style="height:52%"></div>
+            <div class="hbar hot" style="height:100%"></div>
+            <div class="hbar hot" style="height:78%"></div>
+            <div class="hbar" style="height:46%"></div>
+            <div class="hbar" style="height:22%"></div>
+          </div>
+          <div class="histo-x">
+            <span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>70</span><span>80</span><span>90+</span>
+          </div>
+          <p class="histo-note">Healthy spread, modal band <b>60–70</b>. A cut-off at <b>75</b> yields a shortlist of <b>11 candidates</b>.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Performance by topic</div>
+        <div class="panel-body">
+          <div class="topic">
+            <div class="t"><b>Data structures</b><span>avg 81%</span></div>
+            <div class="tbar"><i style="width:81%; background:var(--success)"></i></div>
+          </div>
+          <div class="topic">
+            <div class="t"><b>System design</b><span>avg 72%</span></div>
+            <div class="tbar"><i style="width:72%; background:var(--accent)"></i></div>
+          </div>
+          <div class="topic">
+            <div class="t"><b>Databases &amp; SQL</b><span>avg 68%</span></div>
+            <div class="tbar"><i style="width:68%; background:var(--accent)"></i></div>
+          </div>
+          <div class="topic">
+            <div class="t"><b>Concurrency</b><span>avg 44%</span></div>
+            <div class="tbar"><i style="width:44%; background:var(--gold)"></i></div>
+          </div>
+          <div class="topic">
+            <div class="t"><b>Networking</b><span>avg 39%</span></div>
+            <div class="tbar"><i style="width:39%; background:var(--error)"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Integrity summary</div>
+        <div class="panel-body">
+          <div class="integ-row"><span>Webcam snapshots captured</span><span class="n">1,008</span></div>
+          <div class="integ-row"><span>Focus-loss events</span><span class="n">27</span></div>
+          <div class="integ-row"><span>Candidates clear</span><span class="n" style="color:var(--success)">39</span></div>
+          <div class="integ-row"><span>Needs review</span><span class="n" style="color:var(--gold)">2</span></div>
+          <div class="integ-row"><span>Flagged</span><span class="n" style="color:var(--error)">1</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

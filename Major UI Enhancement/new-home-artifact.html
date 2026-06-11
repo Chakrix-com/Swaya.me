@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swaya — Run live quizzes your audience can't ignore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E0B33;
+  --ink-deep:#090724;
+  --surface:#1A1554;
+  --surface-2:#241D6B;
+  --line:rgba(255,255,255,.10);
+  --text:#F4F3FF;
+  --text-dim:#A9A4D9;
+  --amber:#FFB224;
+  --coral:#FF6B6B;
+  --sky:#5AB8FF;
+  --mint:#4ADE9E;
+  --radius:18px;
+  --font-display:"Bricolage Grotesque",sans-serif;
+  --font-body:"Hanken Grotesk",sans-serif;
+  --font-mono:"JetBrains Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+::selection{background:var(--amber);color:var(--ink)}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:6px}
+
+/* ambient backdrop */
+.backdrop{
+  position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(900px 500px at 80% -10%, rgba(90,184,255,.13), transparent 60%),
+    radial-gradient(800px 600px at -10% 30%, rgba(255,178,36,.09), transparent 55%),
+    var(--ink);
+}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* ── nav ───────────────────────── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 0;
+}
+.logo{
+  font-family:var(--font-display);font-weight:800;font-size:1.5rem;
+  letter-spacing:-.02em;text-decoration:none;display:flex;align-items:center;gap:10px;
+}
+.logo .dot{
+  width:12px;height:12px;border-radius:50%;background:var(--coral);
+  box-shadow:0 0 0 0 rgba(255,107,107,.5);
+  animation:pulse 2.2s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,107,107,.5)}
+  70%{box-shadow:0 0 0 12px rgba(255,107,107,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,107,107,0)}
+}
+.nav-links{display:flex;gap:28px;align-items:center;font-weight:500;font-size:.95rem}
+.nav-links a{text-decoration:none;color:var(--text-dim);transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.btn{
+  display:inline-block;border:none;border-radius:12px;
+  font-weight:700;font-size:1rem;text-decoration:none;
+  padding:13px 26px;transition:transform .15s,box-shadow .15s;
+}
+.btn-amber{background:var(--amber);color:var(--ink)}
+.btn-amber:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,178,36,.35)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line);padding:12px 25px}
+.btn-ghost:hover{border-color:rgba(255,255,255,.3)}
+.btn-sm{padding:9px 18px;font-size:.9rem}
+
+/* ── hero ───────────────────────── */
+.hero{
+  display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;
+  padding:64px 0 88px;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:.78rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--mint);
+  border:1px solid rgba(74,222,158,.3);border-radius:999px;
+  padding:6px 14px;margin-bottom:22px;
+}
+.eyebrow .live-dot{width:7px;height:7px;border-radius:50%;background:var(--mint);animation:pulse 1.8s infinite}
+h1{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(2.4rem,5vw,3.7rem);line-height:1.05;letter-spacing:-.025em;
+  margin-bottom:20px;
+}
+h1 .hl{color:var(--amber)}
+.hero p.lede{font-size:1.18rem;color:var(--text-dim);max-width:46ch;margin-bottom:32px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:34px}
+.join-strip{
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:14px 18px;max-width:420px;
+}
+.join-strip .label{font-size:.85rem;color:var(--text-dim);line-height:1.35}
+.join-code{
+  font-family:var(--font-mono);font-weight:700;font-size:1.35rem;letter-spacing:.18em;
+  color:var(--sky);background:rgba(90,184,255,.1);border-radius:8px;padding:6px 12px;
+  white-space:nowrap;
+}
+
+/* ── live demo card ───────────────────────── */
+.stage{
+  position:relative;
+}
+.session{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:26px;
+  box-shadow:0 30px 80px rgba(0,0,0,.45);
+}
+.session-top{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;
+  font-family:var(--font-mono);font-size:.78rem;color:var(--text-dim);
+}
+.session-top .live{
+  color:var(--coral);font-weight:700;display:flex;align-items:center;gap:7px;
+}
+.session-top .live::before{
+  content:"";width:8px;height:8px;border-radius:50%;background:var(--coral);
+  animation:pulse 1.6s infinite;
+}
+.q-text{
+  font-family:var(--font-display);font-weight:700;font-size:1.3rem;line-height:1.25;
+  margin-bottom:20px;min-height:3.2em;
+}
+.opt{margin-bottom:13px}
+.opt-row{display:flex;justify-content:space-between;font-size:.92rem;font-weight:600;margin-bottom:6px}
+.opt-row .count{font-family:var(--font-mono);font-size:.82rem;color:var(--text-dim)}
+.bar{
+  height:30px;background:rgba(255,255,255,.06);border-radius:9px;overflow:hidden;
+}
+.bar-fill{
+  height:100%;border-radius:9px;width:4%;
+  transition:width .7s cubic-bezier(.22,1,.36,1);
+}
+.opt:nth-child(1) .bar-fill{background:var(--coral)}
+.opt:nth-child(2) .bar-fill{background:var(--sky)}
+.opt:nth-child(3) .bar-fill{background:var(--amber)}
+.opt:nth-child(4) .bar-fill{background:var(--mint)}
+.session-bottom{
+  display:flex;justify-content:space-between;align-items:center;margin-top:20px;
+  padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--font-mono);font-size:.8rem;color:var(--text-dim);
+}
+#timer{color:var(--amber);font-weight:700}
+.toast{
+  position:absolute;top:-16px;right:-10px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
+  padding:8px 16px;font-size:.83rem;font-weight:600;
+  opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast .av{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:-4px;margin-right:7px;background:var(--sky)}
+
+/* ── sections ───────────────────────── */
+section{padding:80px 0}
+.sec-head{max-width:640px;margin-bottom:52px}
+.sec-eyebrow{
+  font-family:var(--font-mono);font-size:.75rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px;
+}
+h2{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.1;letter-spacing:-.02em;
+}
+.sec-head p{color:var(--text-dim);margin-top:14px;font-size:1.08rem}
+
+/* how it works — a real sequence */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.step{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:28px;position:relative;
+}
+.step .n{
+  font-family:var(--font-mono);font-weight:700;font-size:.8rem;
+  color:var(--ink);background:var(--amber);border-radius:8px;
+  display:inline-block;padding:4px 10px;margin-bottom:18px;
+}
+.step:nth-child(2) .n{background:var(--sky)}
+.step:nth-child(3) .n{background:var(--mint)}
+.step h3{font-family:var(--font-display);font-weight:700;font-size:1.2rem;margin-bottom:10px}
+.step p{color:var(--text-dim);font-size:.97rem}
+.step .mono{font-family:var(--font-mono);color:var(--sky);font-size:.9em}
+
+/* features */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{
+  border:1px solid var(--line);border-radius:var(--radius);padding:26px;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+  transition:border-color .2s,transform .2s;
+}
+.feat:hover{border-color:rgba(255,255,255,.22);transform:translateY(-3px)}
+.feat .ic{
+  width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;margin-bottom:16px;background:rgba(255,178,36,.14);
+}
+.feat:nth-child(3n+2) .ic{background:rgba(90,184,255,.14)}
+.feat:nth-child(3n) .ic{background:rgba(74,222,158,.14)}
+.feat h3{font-family:var(--font-display);font-weight:700;font-size:1.12rem;margin-bottom:8px}
+.feat p{color:var(--text-dim);font-size:.95rem}
+
+/* audience strip */
+.who{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+}
+.who-card{
+  border-radius:var(--radius);padding:30px;border:1px solid var(--line);
+}
+.who-card:nth-child(1){background:linear-gradient(160deg,rgba(255,107,107,.14),var(--surface))}
+.who-card:nth-child(2){background:linear-gradient(160deg,rgba(90,184,255,.14),var(--surface))}
+.who-card:nth-child(3){background:linear-gradient(160deg,rgba(255,178,36,.14),var(--surface))}
+.who-card .tag{
+  font-family:var(--font-mono);font-size:.72rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;
+}
+.who-card h3{font-family:var(--font-display);font-weight:700;font-size:1.25rem;margin-bottom:10px}
+.who-card p{color:var(--text-dim);font-size:.96rem}
+
+/* CTA */
+.cta{
+  text-align:center;background:var(--surface);border:1px solid var(--line);
+  border-radius:24px;padding:72px 32px;position:relative;overflow:hidden;
+}
+.cta::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(600px 300px at 50% -20%,rgba(255,178,36,.16),transparent 70%);
+  pointer-events:none;
+}
+.cta h2{margin-bottom:14px}
+.cta p{color:var(--text-dim);max-width:48ch;margin:0 auto 32px}
+
+footer{
+  padding:42px 0 56px;display:flex;justify-content:space-between;align-items:center;
+  color:var(--text-dim);font-size:.9rem;border-top:1px solid var(--line);margin-top:80px;
+}
+footer .links{display:flex;gap:22px}
+footer a{text-decoration:none;color:var(--text-dim)}
+footer a:hover{color:var(--text)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:44px;padding-top:36px}
+  .steps,.features,.who{grid-template-columns:1fr}
+  .nav-links{display:none}
+  section{padding:56px 0}
+}
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+
+<div class="wrap">
+  <nav>
+    <a class="logo" href="#"><span class="dot" aria-hidden="true"></span>Swaya</a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#who">Who it's for</a>
+      <a class="btn btn-amber btn-sm" href="#">Create a quiz</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Live right now</span>
+      <h1>Your audience, <span class="hl">answering</span> in seconds.</h1>
+      <p class="lede">Swaya turns any room — a classroom, a webinar, a town hall — into a live game. Make a quiz or poll, share a code, and watch every phone in the room light up. No app, no sign-up for participants.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-amber" href="#">Create your first quiz — free</a>
+        <a class="btn btn-ghost" href="#">Watch a 60-sec demo</a>
+      </div>
+      <div class="join-strip">
+        <span class="join-code" id="joincode">RX4-92K</span>
+        <span class="label">Participants type this code at <strong>swaya.me/join</strong> and they're in. That's the whole onboarding.</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="toast" id="toast"><span class="av" aria-hidden="true"></span><span id="toastname">Asha joined</span></div>
+      <div class="session" role="img" aria-label="A live Swaya quiz session showing votes arriving in real time">
+        <div class="session-top">
+          <span class="live">LIVE</span>
+          <span>Question <span id="qnum">3</span> of 10</span>
+        </div>
+        <div class="q-text" id="qtext">Which planet has the shortest day?</div>
+        <div id="opts">
+          <div class="opt"><div class="opt-row"><span class="opt-label">Jupiter</span><span class="count">0</span></div><div class="bar"><div class="bar-fill"></div></div></div>
+          <div class="opt"><div class="opt-row"><span class="opt-label">Mercury</span><span class="count">0</span></div><div class="bar"><div class="bar-fill"></div></div></div>
+          <div class="opt"><div class="opt-row"><span class="opt-label">Mars</span><span class="count">0</span></div><div class="bar"><div class="bar-fill"></div></div></div>
+          <div class="opt"><div class="opt-row"><span class="opt-label">Venus</span><span class="count">0</span></div><div class="bar"><div class="bar-fill"></div></div></div>
+        </div>
+        <div class="session-bottom">
+          <span><span id="pcount">112</span> answering</span>
+          <span id="timer">00:14</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="how">
+    <div class="sec-head">
+      <div class="sec-eyebrow">How it works</div>
+      <h2>Three steps from idea to a room full of raised phones</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="n">STEP 1</span>
+        <h3>Build your quiz</h3>
+        <p>Write questions in the editor, import from a spreadsheet, or generate a draft with AI. Set timers, points, and the order — done in minutes.</p>
+      </div>
+      <div class="step">
+        <span class="n">STEP 2</span>
+        <h3>Share the code</h3>
+        <p>Every session gets a short code like <span class="mono">RX4-92K</span>. Put it on the projector. Anyone with a browser joins instantly — phones, laptops, tablets.</p>
+      </div>
+      <div class="step">
+        <span class="n">STEP 3</span>
+        <h3>Go live</h3>
+        <p>Run it like a show. Answers stream in live, the leaderboard updates after every question, and you get a full report when it ends.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Features</div>
+      <h2>Built for the moment the room goes quiet and everyone taps</h2>
+    </div>
+    <div class="features">
+      <div class="feat"><div class="ic">⚡</div><h3>Real-time results</h3><p>Votes appear the instant they're cast. Bars race, leaderboards reshuffle, and the room reacts together.</p></div>
+      <div class="feat"><div class="ic">📱</div><h3>Zero-friction joining</h3><p>No app downloads, no participant accounts. A code and a browser are all anyone needs.</p></div>
+      <div class="feat"><div class="ic">🏆</div><h3>Live leaderboards</h3><p>Speed and accuracy both count. Reveal standings between questions to keep the energy up.</p></div>
+      <div class="feat"><div class="ic">📊</div><h3>Polls, not just quizzes</h3><p>Run opinion polls, word clouds, and quick pulse checks when there's no right answer — just a room to read.</p></div>
+      <div class="feat"><div class="ic">🌐</div><h3>Multilingual ready</h3><p>Write questions in any language — English, हिन्दी, or both side by side for mixed audiences.</p></div>
+      <div class="feat"><div class="ic">📈</div><h3>Session reports</h3><p>Per-question accuracy, per-participant scores, and exportable results the moment the session ends.</p></div>
+    </div>
+  </section>
+
+  <section id="who">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Who it's for</div>
+      <h2>Anywhere attention is the hardest thing in the room</h2>
+    </div>
+    <div class="who">
+      <div class="who-card">
+        <div class="tag">Classrooms</div>
+        <h3>Teachers & coaching institutes</h3>
+        <p>Turn revision into a game. Run chapter-end quizzes, spot weak topics from the report, and keep every student answering — not just the front row.</p>
+      </div>
+      <div class="who-card">
+        <div class="tag">Workplaces</div>
+        <h3>Trainers & team leads</h3>
+        <p>Check understanding mid-training, break the ice in all-hands, and replace "any questions?" silence with live, honest answers.</p>
+      </div>
+      <div class="who-card">
+        <div class="tag">Events</div>
+        <h3>Hosts & communities</h3>
+        <p>Quiz nights, fests, and webinars with hundreds of participants — everyone plays from their own phone, the big screen tells the story.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cta">
+      <h2>The next session could be yours</h2>
+      <p>Create a quiz now, share the code, and see your audience light up. Free to start — your first session takes five minutes to set up.</p>
+      <a class="btn btn-amber" href="#">Create a quiz — it's free</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Swaya.me</span>
+    <div class="links">
+      <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const questions = [
+    {q:"Which planet has the shortest day?", opts:["Jupiter","Mercury","Mars","Venus"], w:[0.55,0.2,0.15,0.1]},
+    {q:"In Python, what does len(\"swaya\") return?", opts:["4","5","6","Error"], w:[0.1,0.65,0.15,0.1]},
+    {q:"Which river is known as the 'Sorrow of Bihar'?", opts:["Gandak","Kosi","Son","Ghaghra"], w:[0.15,0.55,0.18,0.12]},
+    {q:"What does HTTP status 404 mean?", opts:["Server error","Forbidden","Not found","Timeout"], w:[0.12,0.13,0.6,0.15]}
+  ];
+  const names = ["Asha","Rohan","Meera","Kabir","Ananya","Dev","Priya","Imran","Tara","Vikram"];
+  const codes = ["RX4-92K","JM7-31Q","PL2-58A","KT9-04Z"];
+
+  const qtext = document.getElementById('qtext');
+  const qnum = document.getElementById('qnum');
+  const optEls = document.querySelectorAll('#opts .opt');
+  const pcount = document.getElementById('pcount');
+  const timerEl = document.getElementById('timer');
+  const toast = document.getElementById('toast');
+  const toastname = document.getElementById('toastname');
+  const joincode = document.getElementById('joincode');
+
+  let qi = 0, votes=[0,0,0,0], total=0, secs=14, participants=112, tick;
+
+  function loadQuestion(){
+    const q = questions[qi % questions.length];
+    qtext.textContent = q.q;
+    qnum.textContent = (qi % 10) + 3 > 10 ? ((qi%8)+1) : (qi%8)+3;
+    votes=[0,0,0,0]; total=0; secs=14;
+    optEls.forEach((el,i)=>{
+      el.querySelector('.opt-label').textContent = q.opts[i];
+      el.querySelector('.count').textContent = '0';
+      el.querySelector('.bar-fill').style.width = '3%';
+    });
+    joincode.textContent = codes[qi % codes.length];
+  }
+
+  function step(){
+    const q = questions[qi % questions.length];
+    // add a burst of votes
+    const burst = 3 + Math.floor(Math.random()*7);
+    for(let b=0;b<burst;b++){
+      const r = Math.random(); let acc=0, pick=0;
+      for(let i=0;i<4;i++){ acc+=q.w[i]; if(r<=acc){pick=i;break} }
+      votes[pick]++; total++;
+    }
+    optEls.forEach((el,i)=>{
+      el.querySelector('.count').textContent = votes[i];
+      const pct = total ? Math.max(3,(votes[i]/total)*100) : 3;
+      el.querySelector('.bar-fill').style.width = pct.toFixed(1)+'%';
+    });
+    // timer
+    secs--;
+    timerEl.textContent = '00:' + String(Math.max(0,secs)).padStart(2,'0');
+    // participants drift
+    if(Math.random()<0.35){
+      participants += Math.floor(Math.random()*3);
+      pcount.textContent = participants;
+      if(Math.random()<0.5){
+        toastname.textContent = names[Math.floor(Math.random()*names.length)] + ' joined';
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'), 1800);
+      }
+    }
+    if(secs<=0){ qi++; loadQuestion(); }
+  }
+
+  loadQuestion();
+  if(!reduced){
+    tick = setInterval(step, 900);
+  } else {
+    // static but meaningful state for reduced motion
+    votes=[34,61,18,9]; total=122;
+    optEls.forEach((el,i)=>{
+      el.querySelector('.count').textContent = votes[i];
+      el.querySelector('.bar-fill').style.width = ((votes[i]/total)*100).toFixed(1)+'%';
+    });
+  }
+})();
+</script>
+</body>
+</html>

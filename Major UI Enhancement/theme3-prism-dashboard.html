@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swaya — Dashboard (Prism theme mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,650;1,9..144,650&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7;
+  --card:#FFFFFF;
+  --ink:#171614;
+  --muted:#6E6A61;
+  --line:#E9E5DC;
+  --quiz:#FF4D6D;
+  --poll:#0E9BE9;
+  --test:#0FA873;
+  --opoll:#8B5CF6;
+  --beam:linear-gradient(90deg,var(--quiz),var(--opoll) 34%,var(--poll) 67%,var(--test));
+  --shadow:0 1px 2px rgba(23,22,20,.04), 0 10px 28px -14px rgba(23,22,20,.12);
+  --font-display:"Fraunces",Georgia,serif;
+  --font-body:"Inter",-apple-system,sans-serif;
+  --font-mono:"IBM Plex Mono",Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:14.5px;line-height:1.55}
+button{font-family:inherit;cursor:pointer}
+
+/* ── app chrome ── */
+.app{display:grid;grid-template-columns:228px 1fr;grid-template-rows:56px 1fr;height:100vh}
+header{
+  grid-column:1/3;display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border-bottom:1px solid var(--line);padding:0 20px;position:relative;
+}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--beam);opacity:.65}
+.logo{font-family:var(--font-display);font-weight:650;font-size:1.15rem;display:flex;align-items:center;gap:9px}
+.logo .prism{width:18px;height:18px;border-radius:5px;background:conic-gradient(from 210deg,var(--quiz),var(--opoll),var(--poll),var(--test),var(--quiz))}
+.h-right{display:flex;align-items:center;gap:14px;font-size:.86rem;color:var(--muted)}
+.tier{font-family:var(--font-mono);font-size:.68rem;font-weight:600;letter-spacing:.07em;border:1px solid var(--line);border-radius:7px;padding:3px 9px;color:#8a6d00;background:#FFF8E0}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.8rem}
+
+aside{background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;border-radius:10px;padding:9px 12px;
+  font-weight:500;color:var(--muted);font-size:.92rem;
+}
+.nav-item.active{background:#F4F1EA;color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--ink)}
+.nav-item:hover{background:#F8F6F0}
+.nav-sec{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:#A8A399;padding:16px 12px 6px}
+
+main{overflow-y:auto;padding:26px 30px}
+
+/* ── welcome hero ── */
+.hero{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  padding:28px 32px;margin-bottom:22px;position:relative;overflow:hidden;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+}
+.hero::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--beam)}
+.hero h1{font-family:var(--font-display);font-weight:650;font-size:1.7rem;letter-spacing:-.01em}
+.hero h1 em{font-style:italic;background:var(--beam);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);margin-top:4px}
+.hero-actions{display:flex;gap:10px;flex-shrink:0}
+.btn{
+  border:1.5px solid var(--ink);border-radius:11px;padding:10px 20px;font-weight:600;font-size:.92rem;
+  background:var(--ink);color:var(--paper);transition:transform .12s;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--ink)}
+
+/* ── create tiles ── */
+.sec-title{font-weight:600;color:var(--muted);font-size:.95rem;margin:0 0 12px 2px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.tile{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .15s;cursor:pointer;
+}
+.tile:hover{transform:translateY(-3px)}
+.tile::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.tile.quiz::before{background:var(--quiz)} .tile.test::before{background:var(--test)}
+.tile.poll::before{background:var(--poll)} .tile.opoll::before{background:var(--opoll)}
+.tile .ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:12px}
+.tile.quiz .ic{background:rgba(255,77,109,.1)} .tile.test .ic{background:rgba(15,168,115,.1)}
+.tile.poll .ic{background:rgba(14,155,233,.1)} .tile.opoll .ic{background:rgba(139,92,246,.1)}
+.tile h3{font-size:.97rem;font-weight:700;margin-bottom:4px}
+.tile p{color:var(--muted);font-size:.82rem;line-height:1.45}
+
+/* ── stat cards ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.stat{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+  box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:flex-start;
+}
+.stat .num{font-family:var(--font-display);font-weight:650;font-size:2.1rem;line-height:1}
+.stat.ready .num{color:var(--test)} .stat.works .num{color:var(--opoll)} .stat.past .num{color:var(--poll)}
+.stat .lbl{font-weight:700;margin-top:6px;font-size:.92rem}
+.stat .sub{color:var(--muted);font-size:.78rem;margin-top:2px}
+.stat .ic{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;background:#FAF8F3}
+
+/* ── activity table ── */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.toolbar{display:flex;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center}
+.search{
+  flex:0 0 280px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;
+  padding:8px 12px;color:#A8A399;font-size:.88rem;background:#FCFBF8;
+}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{
+  text-align:left;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  color:#A8A399;font-weight:600;padding:12px 18px;border-bottom:1px solid var(--line);
+}
+td{padding:13px 18px;border-bottom:1px solid #F2EFE8}
+tr:hover td{background:#FAF8F3}
+.t-title{font-weight:600}
+.chip{
+  display:inline-block;border-radius:7px;padding:2px 10px;font-size:.76rem;font-weight:600;
+}
+.chip.quiz{background:rgba(255,77,109,.1);color:#D62B4E} .chip.test{background:rgba(15,168,115,.1);color:#0B7A55}
+.chip.poll{background:rgba(14,155,233,.1);color:#0A77B4} .chip.opoll{background:rgba(139,92,246,.1);color:#6B3FD1}
+.chip.ready{background:rgba(15,168,115,.12);color:#0B7A55}
+.chip.draft{background:#FFF3D6;color:#8A6D00}
+.chip.live{background:var(--ink);color:var(--paper)}
+.chip.live::before{content:"●";color:var(--quiz);margin-right:5px}
+.act{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:5px 13px;font-weight:600;font-size:.8rem}
+.act:hover{border-color:var(--ink)}
+td .date{color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="logo"><span class="prism"></span>Swaya.me</span>
+    <div class="h-right">
+      <span class="tier">ENTERPRISE</span>
+      <span>English ▾</span>
+      <span title="Theme">◐</span>
+      <span class="avatar">D</span>
+    </div>
+  </header>
+
+  <aside>
+    <div class="nav-item active">▦&nbsp; Dashboard</div>
+    <div class="nav-item">▷&nbsp; Live sessions</div>
+    <div class="nav-item">▤&nbsp; Reports</div>
+    <div class="nav-sec">Folders</div>
+    <div class="nav-item">▸ Class 12 — Physics</div>
+    <div class="nav-item">▸ Hiring · C11</div>
+    <div class="nav-item">▸ All-hands</div>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>Welcome back, <em>Demo</em></h1>
+        <p>Create quizzes, polls and tests in minutes.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn">+ Create new</button>
+        <button class="btn btn-ghost">✦ Use template</button>
+      </div>
+    </div>
+
+    <p class="sec-title">What would you like to create today?</p>
+    <div class="tiles">
+      <div class="tile quiz"><div class="ic">⚡</div><h3>Live Quiz</h3><p>Real-time, host-controlled, with a leaderboard.</p></div>
+      <div class="tile test"><div class="ic">▣</div><h3>Test / Exam</h3><p>Timed, auto-scored, shareable via link.</p></div>
+      <div class="tile poll"><div class="ic">▥</div><h3>Live Poll</h3><p>Instant audience opinions and word clouds.</p></div>
+      <div class="tile opoll"><div class="ic">◫</div><h3>Offline Poll</h3><p>Share a link, collect responses anytime.</p></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat ready"><div><div class="num">176</div><div class="lbl">Ready to launch</div><div class="sub">Activities ready to run</div></div><div class="ic">🚀</div></div>
+      <div class="stat works"><div><div class="num">92</div><div class="lbl">In the works</div><div class="sub">Draft activities</div></div><div class="ic">✎</div></div>
+      <div class="stat past"><div><div class="num">38</div><div class="lbl">Past sessions</div><div class="sub">Completed activities</div></div><div class="ic">◷</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar"><div class="search">⌕&nbsp; Search activities…</div></div>
+      <table>
+        <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Questions</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td class="t-title">Friday All-Hands Icebreaker</td><td><span class="chip quiz">Quiz</span></td><td><span class="chip live">Live</span></td><td>10</td><td class="date">6/10/2026</td><td><button class="act">Control room</button></td></tr>
+          <tr><td class="t-title">C11 Backend Screening — Round 2</td><td><span class="chip test">Test</span></td><td><span class="chip ready">Ready</span></td><td>24</td><td class="date">6/08/2026</td><td><button class="act">Share link</button></td></tr>
+          <tr><td class="t-title">Ch. 7 Thermodynamics revision</td><td><span class="chip quiz">Quiz</span></td><td><span class="chip ready">Ready</span></td><td>15</td><td class="date">6/05/2026</td><td><button class="act">Start</button></td></tr>
+          <tr><td class="t-title">Town hall — budget priorities</td><td><span class="chip poll">Poll</span></td><td><span class="chip draft">Draft</span></td><td>6</td><td class="date">6/02/2026</td><td><button class="act">Continue</button></td></tr>
+          <tr><td class="t-title">Cafeteria menu feedback</td><td><span class="chip opoll">Offline Poll</span></td><td><span class="chip ready">Ready</span></td><td>4</td><td class="date">5/28/2026</td><td><button class="act">Share link</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>
