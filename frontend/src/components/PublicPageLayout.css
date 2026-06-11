@@ -15,6 +15,12 @@
   gap: 4px;
 }
 
+/* Keep ThemePicker visible on light visitor pages regardless of the active antd theme */
+.language-switcher-container .theme-picker-btn,
+.language-switcher-container .theme-picker-btn .anticon {
+  color: var(--visitor-text-primary, #152238) !important;
+}
+
 .public-beta-badge-container {
   position: absolute;
   top: 20px;

@@ -26,6 +26,12 @@
   height: 100%;
 }
 
+/* Keep ThemePicker icon visible on light visitor pages regardless of antd theme */
+.legal-header .theme-picker-btn,
+.legal-header .theme-picker-btn .anticon {
+  color: var(--visitor-text-primary, #152238) !important;
+}
+
 .legal-logo {
   display: flex;
   align-items: center;

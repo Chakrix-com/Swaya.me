@@ -39,7 +39,7 @@ const ThemePicker = () => {
 
   return (
     <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-      <Button type="text" icon={<BgColorsOutlined />} />
+      <Button type="text" icon={<BgColorsOutlined />} className="theme-picker-btn" />
     </Dropdown>
   )
 }
