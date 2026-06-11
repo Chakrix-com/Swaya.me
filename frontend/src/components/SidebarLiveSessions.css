@@ -1,5 +1,5 @@
 .sidebar-live-accordion {
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--sw-border);
   padding: 4px 0;
 }
 
@@ -11,8 +11,8 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: #DBEAFE;
-  color: #1D4ED8;
+  background: var(--sw-chip-live-bg);
+  color: var(--sw-chip-live-fg);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -20,7 +20,7 @@
 
 .sidebar-live-collapse .ant-collapse-header {
   padding: 10px 16px !important;
-  color: #374151 !important;
+  color: var(--sw-text2) !important;
 }
 
 .sidebar-live-collapse .ant-collapse-content-box {
@@ -34,16 +34,16 @@
 }
 
 .sidebar-live-item {
-  background: #F0FDF4;
+  background: var(--sw-chip-ready-bg);
   border-radius: 8px;
   padding: 10px 12px;
-  border: 1px solid #BBF7D0;
+  border: 1px solid var(--sw-border);
 }
 
 .sidebar-live-title {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--sw-text1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,7 +51,7 @@
 
 .sidebar-live-sub {
   font-size: 11px;
-  color: #6B7280;
+  color: var(--sw-text3);
   margin-top: 2px;
 }
 

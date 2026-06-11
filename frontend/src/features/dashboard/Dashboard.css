@@ -11,7 +11,7 @@
 
 /* ── Hero section ────────────────────────────────────────────────────────── */
 .hero-section {
-  background: linear-gradient(135deg, #EEF2FF 0%, #FDF4FF 100%);
+  background: var(--sw-hero-bg);
   border-radius: 20px;
   padding: 36px 44px;
   margin-bottom: 28px;
@@ -67,15 +67,15 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  background: linear-gradient(135deg, #f5f5f5 0%, #e6f4ff 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--sw-banner-bg);
+  border: 1px solid var(--sw-banner-border);
 }
 
 /* ── Explorer section ────────────────────────────────────────────────────── */
 .explorer-section {
-  background: #ffffff;
+  background: var(--sw-card);
   border-radius: 20px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--sw-border);
   overflow: hidden;
 }
 
@@ -84,7 +84,7 @@
   align-items: center;
   gap: 10px;
   padding: 16px 20px;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--sw-border);
   flex-wrap: wrap;
 }
 
@@ -100,7 +100,7 @@
 }
 
 .activity-table-row:hover > td {
-  background: #F8FAFC !important;
+  background: var(--sw-hover) !important;
 }
 
 
@@ -112,9 +112,9 @@
 
 /* ── More menu dropdown ──────────────────────────────────────────────────── */
 .dashboard-more-menu {
-  background: #ffffff;
+  background: var(--sw-card);
   border-radius: 12px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--sw-border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   padding: 6px;
   min-width: 180px;
@@ -128,20 +128,20 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
-  color: #374151;
+  color: var(--sw-text2);
   transition: background 0.1s;
 }
 
 .dashboard-more-menu-item:hover {
-  background: #F8FAFC;
+  background: var(--sw-hover);
 }
 
 .dashboard-more-menu-item--danger {
-  color: #EF4444;
+  color: var(--sw-error);
 }
 
 .dashboard-more-menu-item--danger:hover {
-  background: #FEF2F2;
+  background: color-mix(in srgb, var(--sw-error) 10%, transparent);
 }
 
 /* ── Mobile & tablet breakpoints ────────────────────────────────────────── */

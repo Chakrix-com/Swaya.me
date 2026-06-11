@@ -1,11 +1,11 @@
 .sidebar-folder-accordion {
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--sw-border);
   padding: 4px 0;
 }
 
 .sidebar-folder-collapse .ant-collapse-header {
   padding: 10px 16px !important;
-  color: #374151 !important;
+  color: var(--sw-text2) !important;
 }
 
 .sidebar-folder-collapse .ant-collapse-content-box {
@@ -18,12 +18,12 @@
 }
 
 .sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
-  background: #F8FAFC !important;
+  background: var(--sw-hover) !important;
 }
 
 .sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
-  background: #EEF2FF !important;
-  color: #6366F1;
+  background: var(--sw-primary-soft) !important;
+  color: var(--sw-primary);
   font-weight: 600;
 }
 

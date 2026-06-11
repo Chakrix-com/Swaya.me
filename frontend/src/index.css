@@ -155,3 +155,79 @@ canvas {
   margin: 0 auto;
   padding: 24px;
 }
+
+/* ── Host-app (--sw-*) token defaults — Classic Indigo baseline ─────────────
+   Funky-Studio and Perky-Game override these via themes.js cssVars.
+   applyTheme() uses removeProperty() for vars not in the active theme,
+   so these :root values act as the Classic Indigo fallback. */
+:root {
+  --sw-primary:         #6366F1;
+  --sw-primary-strong:  #4F46E5;
+  --sw-primary-soft:    #EEF2FF;
+  --sw-primary-border:  #C7D2FE;
+  --sw-success:         #10B981;
+  --sw-warning:         #F59E0B;
+  --sw-error:           #EF4444;
+  --sw-info:            #3B82F6;
+  --sw-text1:           #111827;
+  --sw-text2:           #374151;
+  --sw-text3:           #6B7280;
+  --sw-bg:              #F8FAFC;
+  --sw-card:            #FFFFFF;
+  --sw-border:          #E5E7EB;
+  --sw-hover:           #F8FAFC;
+  --sw-tile-quiz-bg:    #EEF2FF;
+  --sw-tile-quiz-fg:    #4F46E5;
+  --sw-tile-exam-bg:    #ECFDF5;
+  --sw-tile-exam-fg:    #059669;
+  --sw-tile-poll-bg:    #FFF7ED;
+  --sw-tile-poll-fg:    #EA580C;
+  --sw-tile-opoll-bg:   #FDF2F8;
+  --sw-tile-opoll-fg:   #DB2777;
+  --sw-tile-icon-bg:    #FFFFFF;
+  --sw-chip-ready-bg:   #DCFCE7;
+  --sw-chip-ready-fg:   #166534;
+  --sw-chip-draft-bg:   #FEF3C7;
+  --sw-chip-draft-fg:   #92400E;
+  --sw-chip-done-bg:    #F3F4F6;
+  --sw-chip-done-fg:    #374151;
+  --sw-chip-live-bg:    #DBEAFE;
+  --sw-chip-live-fg:    #1D4ED8;
+  --sw-stat-ready-bg:   #ECFDF5;
+  --sw-stat-works-bg:   #FFF7ED;
+  --sw-stat-past-bg:    #EFF6FF;
+  --sw-stat-icon-bg:    #FFFFFF;
+  --sw-hero-bg:         linear-gradient(135deg, #EEF2FF 0%, #FDF4FF 100%);
+  --sw-banner-bg:       linear-gradient(135deg, #f5f5f5 0%, #e6f4ff 100%);
+  --sw-banner-border:   #e2e8f0;
+}
+
+/* ── Public home page variable defaults (Classic Indigo / Prism palette) ────
+   Funky-Studio and Perky-Game override these via cssVars in themes.js.
+   All Home.css rules reference only these --pub-* vars — nothing hardcoded. */
+:root {
+  --pub-bg:          #FBFAF7;
+  --pub-card:        #FFFFFF;
+  --pub-ink:         #171614;
+  --pub-muted:       #6E6A61;
+  --pub-line:        #E9E5DC;
+  --pub-soft:        #F2EFE8;
+  --pub-primary:     #6366F1;
+  --pub-on-primary:  #FFFFFF;
+  --pub-quiz:        #FF4D6D;
+  --pub-poll:        #0E9BE9;
+  --pub-test:        #0FA873;
+  --pub-opoll:       #8B5CF6;
+  --pub-quiz-soft:   rgba(255, 77, 109, 0.10);
+  --pub-poll-soft:   rgba(14, 155, 233, 0.10);
+  --pub-test-soft:   rgba(15, 168, 115, 0.10);
+  --pub-opoll-soft:  rgba(139, 92, 246, 0.10);
+  --pub-beam:        linear-gradient(90deg, #FF4D6D, #8B5CF6 34%, #0E9BE9 67%, #0FA873);
+  --pub-shadow:      0 1px 2px rgba(23,22,20,.05), 0 12px 32px -12px rgba(23,22,20,.12);
+  --pub-cta-bg:      #171614;
+  --pub-cta-text:    #FBFAF7;
+  --pub-cta-muted:   #B9B5AB;
+  --pub-font-display: "Fraunces", Georgia, serif;
+  --pub-font-body:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pub-font-mono:   "IBM Plex Mono", Menlo, monospace;
+}

@@ -42,25 +42,25 @@ import './Dashboard.css'
 
 const { Title, Text } = Typography
 
-// ── Colour tokens (from ui-spec.md) ──────────────────────────────────────────
+// ── Colour tokens — CSS variable references so all themes work ───────────────
 const C = {
-  primary:  '#6366F1',
-  primary50: '#EEF2FF',
-  primary100: '#E0E7FF',
-  primary600: '#4F46E5',
-  success:  '#10B981',
-  warning:  '#F59E0B',
-  error:    '#EF4444',
-  blue:     '#3B82F6',
-  orange:   '#EA580C',
-  pink:     '#DB2777',
-  green:    '#059669',
-  text1:    '#111827',
-  text2:    '#374151',
-  text3:    '#6B7280',
-  bg:       '#F8FAFC',
-  bgCard:   '#FFFFFF',
-  border:   '#E5E7EB',
+  primary:   'var(--sw-primary)',
+  primary50: 'var(--sw-primary-soft)',
+  primary100:'var(--sw-primary-soft)',
+  primary600:'var(--sw-primary-strong)',
+  success:   'var(--sw-success)',
+  warning:   'var(--sw-warning)',
+  error:     'var(--sw-error)',
+  blue:      'var(--sw-info)',
+  orange:    'var(--sw-tile-poll-fg)',
+  pink:      'var(--sw-tile-opoll-fg)',
+  green:     'var(--sw-tile-exam-fg)',
+  text1:     'var(--sw-text1)',
+  text2:     'var(--sw-text2)',
+  text3:     'var(--sw-text3)',
+  bg:        'var(--sw-bg)',
+  bgCard:    'var(--sw-card)',
+  border:    'var(--sw-border)',
 }
 
 // ── Activity type config ──────────────────────────────────────────────────────
@@ -71,9 +71,9 @@ const ACTIVITY_TYPES = [
     defaultTitle: 'Live Quiz',
     descKey: 'tooltip.emptyStateQuizDesc',
     defaultDesc: 'Run a quiz in real time.',
-    bg: C.primary50,
-    iconBg: '#FFFFFF',
-    iconColor: C.primary600,
+    bg: 'var(--sw-tile-quiz-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-quiz-fg)',
     Icon: ThunderboltOutlined,
   },
   {
@@ -82,9 +82,9 @@ const ACTIVITY_TYPES = [
     defaultTitle: 'Test / Exam',
     descKey: 'tooltip.emptyStateExamDesc',
     defaultDesc: 'Timed assessments with auto-grading.',
-    bg: '#ECFDF5',
-    iconBg: '#FFFFFF',
-    iconColor: C.green,
+    bg: 'var(--sw-tile-exam-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-exam-fg)',
     Icon: FileTextOutlined,
   },
   {
@@ -93,9 +93,9 @@ const ACTIVITY_TYPES = [
     defaultTitle: 'Live Poll',
     descKey: 'tooltip.emptyStatePollDesc',
     defaultDesc: 'Collect instant audience feedback.',
-    bg: '#FFF7ED',
-    iconBg: '#FFFFFF',
-    iconColor: C.orange,
+    bg: 'var(--sw-tile-poll-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-poll-fg)',
     Icon: BarChartOutlined,
   },
   {
@@ -104,26 +104,26 @@ const ACTIVITY_TYPES = [
     defaultTitle: 'Offline Poll',
     descKey: 'tooltip.emptyStateOfflinePollDesc',
     defaultDesc: 'Collect responses asynchronously.',
-    bg: '#FDF2F8',
-    iconBg: '#FFFFFF',
-    iconColor: C.pink,
+    bg: 'var(--sw-tile-opoll-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-opoll-fg)',
     Icon: AppstoreOutlined,
   },
 ]
 
 // ── Status tag config ─────────────────────────────────────────────────────────
 const STATUS_TAG = {
-  ready:    { bg: '#DCFCE7', color: '#166534', label: 'Ready' },
-  draft:    { bg: '#FEF3C7', color: '#92400E', label: 'Draft' },
-  archived: { bg: '#F3F4F6', color: '#374151', label: 'Completed' },
+  ready:    { bg: 'var(--sw-chip-ready-bg)', color: 'var(--sw-chip-ready-fg)', label: 'Ready' },
+  draft:    { bg: 'var(--sw-chip-draft-bg)', color: 'var(--sw-chip-draft-fg)', label: 'Draft' },
+  archived: { bg: 'var(--sw-chip-done-bg)',  color: 'var(--sw-chip-done-fg)',  label: 'Completed' },
 }
 
 // ── Type tag colours ──────────────────────────────────────────────────────────
 const TYPE_TAG = {
-  quiz:         { bg: C.primary50,  color: C.primary600, label: 'Quiz' },
-  exam:         { bg: '#ECFDF5',    color: C.green,      label: 'Test' },
-  poll:         { bg: '#FFF7ED',    color: C.orange,     label: 'Poll' },
-  offline_poll: { bg: '#FDF2F8',    color: C.pink,       label: 'Offline Poll' },
+  quiz:         { bg: 'var(--sw-tile-quiz-bg)',  color: 'var(--sw-tile-quiz-fg)',  label: 'Quiz' },
+  exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  label: 'Test' },
+  poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  label: 'Poll' },
+  offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', label: 'Offline Poll' },
 }
 
 const TEMPLATE_CACHE_KEY = 'templateQuizIds'
@@ -535,7 +535,7 @@ function Dashboard() {
       width: 120,
       render: (status, record) => {
         if (record.has_active_session) {
-          return <Tag style={{ background: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 6 }}>Live</Tag>
+          return <Tag style={{ background: 'var(--sw-chip-live-bg)', color: 'var(--sw-chip-live-fg)', border: 'none', borderRadius: 6 }}>Live</Tag>
         }
         return getStatusTag(status)
       },
@@ -817,19 +817,19 @@ function Dashboard() {
                 key: 'ready', title: t('dashboard.readyToLaunch', 'Ready to Launch'),
                 count: statistics.byStatus.ready, Icon: RocketOutlined,
                 desc: t('dashboard.readyDesc', 'Activities ready to run'),
-                bg: '#ECFDF5', accent: C.success,
+                bg: 'var(--sw-stat-ready-bg)', accent: C.success,
               },
               {
                 key: 'draft', title: t('dashboard.inTheWorks', 'In the Works'),
                 count: statistics.byStatus.draft, Icon: EditFilled,
                 desc: t('dashboard.draftDesc', 'Draft activities'),
-                bg: '#FFF7ED', accent: C.warning,
+                bg: 'var(--sw-stat-works-bg)', accent: C.warning,
               },
               {
                 key: 'archived', title: t('dashboard.pastSessions', 'Past Sessions'),
                 count: statistics.byStatus.archived, Icon: HistoryOutlined,
                 desc: t('dashboard.archivedDesc', 'Completed activities'),
-                bg: '#EFF6FF', accent: C.blue,
+                bg: 'var(--sw-stat-past-bg)', accent: C.blue,
               },
             ].map(card => (
               <Col xs={24} sm={8} key={card.key}>
@@ -858,7 +858,7 @@ function Dashboard() {
                     </div>
                     <div style={{
                       width: 44, height: 44, borderRadius: 12,
-                      background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'var(--sw-stat-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     }}>
                       <card.Icon style={{ fontSize: 20, color: card.accent }} />
@@ -890,7 +890,7 @@ function Dashboard() {
                     </>}
               </div>
               {nextPlan && (
-                <div style={{ fontSize: 13, color: '#434343' }}>
+                <div style={{ fontSize: 13, color: 'var(--sw-text2)' }}>
                   {t('dashboard.upgradeBannerNextTier', {
                     tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1),
                     participants: nextPlan.max_participants.toLocaleString(),
@@ -912,7 +912,7 @@ function Dashboard() {
                 style={{ background: TIER_COLOR[nextTier], borderColor: TIER_COLOR[nextTier] }}>
                 {t('dashboard.upgradeBannerCta', { tier: nextTier.charAt(0).toUpperCase() + nextTier.slice(1) })}
               </Button>
-              <Button type="text" icon={<CloseOutlined />} size="small" onClick={handleDismiss} style={{ color: '#8c8c8c' }} />
+              <Button type="text" icon={<CloseOutlined />} size="small" onClick={handleDismiss} style={{ color: 'var(--sw-text3)' }} />
             </Space>
           </div>
         )}

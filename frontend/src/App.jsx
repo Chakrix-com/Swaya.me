@@ -23,6 +23,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { logout, refreshUser } from './store/authSlice'
 import { authAPI } from './services/api'
+import { applyTheme, getTheme } from './themes/themes'
+import ThemePicker from './components/ThemePicker'
+import './themes/funky-studio.css'
 
 // Essential public routes (eagerly loaded)
 import Home from './features/home/Home'
@@ -122,6 +125,8 @@ function AuthenticatedLayout({ children }) {
   const { user } = useSelector((state) => state.auth)
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
+  const themeId = useSelector((state) => state.theme.themeId)
+  const currentTheme = getTheme(themeId)
 
   const handleLogout = () => {
     dispatch(logout())
@@ -148,24 +153,7 @@ function AuthenticatedLayout({ children }) {
       collapsed={collapsed}
       onCollapse={setCollapsed}
       contentStyle={{ overflowX: 'hidden', padding: 0 }}
-      token={{
-        sider: {
-          colorMenuBackground: '#FFFFFF',
-          colorTextMenuSelected: '#6366F1',
-          colorBgMenuItemSelected: '#EEF2FF',
-          colorTextMenu: '#374151',
-          colorTextMenuTitle: '#111827',
-          colorTextMenuItemHover: '#6366F1',
-          colorBgMenuItemHover: '#F8FAFC',
-        },
-        header: {
-          colorBgHeader: '#FFFFFF',
-          colorHeaderTitle: '#111827',
-          colorTextMenu: '#374151',
-          colorTextMenuSelected: '#6366F1',
-          colorBgMenuItemSelected: '#EEF2FF',
-        },
-      }}
+      token={currentTheme.proLayout}
       location={{
         pathname: location.pathname,
       }}
@@ -203,7 +191,7 @@ function AuthenticatedLayout({ children }) {
       avatarProps={{
         src: null,
         icon: <UserOutlined style={{ fontSize: 13 }} />,
-        style: { background: '#6366F1', color: '#fff', cursor: 'pointer', flexShrink: 0 },
+        style: { background: currentTheme.antd.token.colorPrimary, color: currentTheme.onPrimary, cursor: 'pointer', flexShrink: 0 },
         title: <span className="hide-on-mobile">{user?.full_name || user?.email || t('common.user')}</span>,
         size: 'small',
         render: (_props, dom) => (
@@ -217,10 +205,10 @@ function AuthenticatedLayout({ children }) {
                   type: 'group',
                   label: (
                     <div style={{ padding: '2px 0 6px' }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--sw-text1)' }}>
                         {user?.full_name || user?.email}
                       </div>
-                      <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                      <div style={{ fontSize: 12, color: 'var(--sw-text3)', marginTop: 2 }}>
                         {user?.email}
                       </div>
                     </div>
@@ -291,10 +279,11 @@ function AuthenticatedLayout({ children }) {
       }}
       actionsRender={() => [
         <span key="tier" className="header-action-desktop"><TierBadge user={user} /></span>,
+        <Tooltip key="theme" title={t('tooltip.themePicker', 'Choose a UI theme')}><span><ThemePicker /></span></Tooltip>,
         <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
       ]}
       footerRender={() => (
-        <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid var(--sw-border)' }}>
           <Space split={<Divider type="vertical" />} wrap style={{ justifyContent: 'center' }}>
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>© 2026 Swaya.me. {t('home.footer.rights')}</Typography.Text>
             <Button type="link" size="small" onClick={() => navigate('/about')} style={{ padding: 0, fontSize: 12 }}>{t('pages.legal.aboutLink')}</Button>
@@ -314,8 +303,19 @@ function AuthenticatedLayout({ children }) {
 
 // Simple layout for public routes
 function PublicLayout({ children }) {
+  const location = useLocation()
+  const { t } = useTranslation()
+  // Home has its own nav with ThemePicker; all other public pages need a floating one
+  const isHome = location.pathname === '/'
   return (
     <div className="visitor-theme visitor-theme--light">
+      {!isHome && (
+        <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 1100 }}>
+          <Tooltip title={t('tooltip.themePicker', 'Choose a UI theme')}>
+            <span><ThemePicker /></span>
+          </Tooltip>
+        </div>
+      )}
       {children}
     </div>
   )
@@ -415,6 +415,12 @@ function App() {
   const locale = localeMap[i18n.language] || enUS
   const dispatch = useDispatch()
   const { isAuthenticated } = useSelector((state) => state.auth)
+  const themeId = useSelector((state) => state.theme.themeId)
+  const currentTheme = getTheme(themeId)
+
+  useEffect(() => {
+    applyTheme(currentTheme)
+  }, [themeId])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -424,22 +430,7 @@ function App() {
   }, [isAuthenticated])
 
   return (
-    <ConfigProvider
-      locale={locale}
-      theme={{
-        token: {
-          colorPrimary: '#6366F1',
-          colorSuccess: '#10B981',
-          colorWarning: '#F59E0B',
-          colorError: '#EF4444',
-          borderRadius: 12,
-          colorBgLayout: '#F8FAFC',
-          colorBgContainer: '#FFFFFF',
-          colorBorder: '#E5E7EB',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif",
-        },
-      }}
-    >
+    <ConfigProvider locale={locale} theme={currentTheme.antd}>
       <AntApp>
         <Router>
           <Suspense fallback={
