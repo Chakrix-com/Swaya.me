@@ -185,6 +185,7 @@
     "stopQuizTitle": "Quiz stoppen?",
     "stopQuizConfirm": "Dadurch wird die Sitzung für alle Teilnehmenden beendet. Sie kann nicht neu gestartet werden.",
     "stopQuizOk": "Ja, beenden",
+    "stopQuizSaved": "Ergebnisse werden im Verlauf gespeichert.",
     "status": "Status",
     "ready": "BEREIT",
     "created": "ERSTELLT",

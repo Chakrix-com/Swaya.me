@@ -185,6 +185,7 @@
     "stopQuizTitle": "¿Detener el cuestionario?",
     "stopQuizConfirm": "Esto finalizará la sesión para todos los participantes. No podrás reiniciarla.",
     "stopQuizOk": "Sí, detener",
+    "stopQuizSaved": "Los resultados se guardan en el historial.",
     "status": "Estado",
     "ready": "LISTO",
     "created": "CREADO",

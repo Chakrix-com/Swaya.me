@@ -187,6 +187,7 @@
     "stopQuizTitle": "Arrêter le questionnaire ?",
     "stopQuizConfirm": "Cela mettra fin à la session pour tous les participants. Vous ne pourrez pas la redémarrer.",
     "stopQuizOk": "Oui, arrêter",
+    "stopQuizSaved": "Les résultats sont sauvegardés dans l'historique.",
     "status": "Statut",
     "ready": "PRÊT",
     "created": "CRÉÉ",

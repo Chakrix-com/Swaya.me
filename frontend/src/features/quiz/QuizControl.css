@@ -1,14 +1,171 @@
-.quiz-control-page .quiz-control-topbar {
-  margin-bottom: 24px;
-  width: 100%;
-  justify-content: space-between;
+/* ── Cockpit two-pane layout ─────────────────────────────────────────────── */
+.quiz-cockpit {
+  display: flex;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  background: var(--sw-bg, #f5f5f5);
 }
 
-/* Keyboard shortcut badge inside buttons */
+.quiz-cockpit-stage {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quiz-cockpit-rail {
+  width: 280px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--sw-border, #f0f0f0);
+  background: var(--sw-surface, #fff);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+/* ── Stage: title row ────────────────────────────────────────────────────── */
+.qc-stage-title {
+  padding-bottom: 4px;
+}
+
+/* ── Stage: join bar ─────────────────────────────────────────────────────── */
+.qc-join-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--sw-surface, #fff);
+  border: 1px solid var(--sw-border, #f0f0f0);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.qc-join-code-block {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.qc-join-code {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: #3f8600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.qc-join-url-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.qc-join-qr {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.qc-join-qr:hover .qc-qr-expand {
+  opacity: 1;
+}
+
+.qc-qr-expand {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+/* ── Control rail: status ────────────────────────────────────────────────── */
+.qc-rail-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.qc-live-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f5222d;
+  animation: qc-live-pulse 1.6s ease-in-out infinite;
+  width: fit-content;
+}
+
+@keyframes qc-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Control rail: timer ─────────────────────────────────────────────────── */
+.qc-rail-timer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qc-timer-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Control rail: counts ────────────────────────────────────────────────── */
+.qc-rail-counts {
+  display: flex;
+  gap: 12px;
+}
+
+.qc-rail-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  background: var(--sw-bg, #f5f5f5);
+  border-radius: 6px;
+  padding: 8px 4px;
+}
+
+.qc-rail-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.qc-rail-stat-label {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Answered counter below Next ─────────────────────────────────────────── */
+.qc-answered-counter {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin-top: -4px;
+}
+
+/* ── Keyboard shortcut badge ─────────────────────────────────────────────── */
 .qc-kbd {
   display: inline-block;
-  padding: 1px 6px;
-  margin-left: 6px;
+  padding: 1px 5px;
+  margin-left: 5px;
   background: rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 4px;
@@ -21,6 +178,7 @@
   font-weight: 600;
 }
 
+/* ── Present button colour ───────────────────────────────────────────────── */
 .quiz-control-present-btn,
 .quiz-control-present-btn:hover,
 .quiz-control-present-btn:focus {
@@ -29,6 +187,7 @@
   color: #fff !important;
 }
 
+/* ── Leaderboard card (in stage pane) ────────────────────────────────────── */
 .quiz-control-leaderboard-card .ant-card-head-title {
   overflow: visible;
 }
@@ -37,22 +196,42 @@
   row-gap: 6px;
 }
 
-@media (max-width: 768px) {
-  .quiz-control-page {
-    padding: 12px !important;
+/* ── Mobile: stack layout ────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .quiz-cockpit {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 
-  .quiz-control-page .quiz-control-topbar {
-    justify-content: flex-start;
-    row-gap: 8px;
+  .quiz-cockpit-stage {
+    padding: 12px 14px;
   }
 
-  .quiz-control-page .quiz-control-topbar .ant-space-item {
+  .quiz-cockpit-rail {
     width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--sw-border, #f0f0f0);
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    gap: 8px;
   }
 
-  .quiz-control-page .quiz-control-topbar .ant-btn {
-    width: 100%;
+  .qc-rail-status,
+  .qc-rail-counts,
+  .qc-rail-timer {
+    flex: 1 1 120px;
+  }
+
+  .qc-join-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .qc-join-code {
+    font-size: 28px;
+    letter-spacing: 6px;
   }
 
   .quiz-control-leaderboard-card .ant-card-head {
@@ -63,14 +242,5 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-  }
-
-  .quiz-control-leaderboard-title {
-    width: 100%;
-    margin-right: 0;
-  }
-
-  .quiz-control-leaderboard-extra-btn {
-    width: 100%;
   }
 }

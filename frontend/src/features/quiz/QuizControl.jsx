@@ -9,8 +9,6 @@ import {
   Typography,
   Tag,
   Statistic,
-  Row,
-  Col,
   Progress,
   Rate,
   message,
@@ -18,7 +16,8 @@ import {
   Input,
   Table,
   Popconfirm,
-  Modal
+  Modal,
+  Divider,
 } from 'antd'
 import {
   PlayCircleOutlined,
@@ -33,7 +32,8 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   DesktopOutlined,
-  FullscreenOutlined
+  FullscreenOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -69,13 +69,12 @@ export default function QuizControl() {
 
   useEffect(() => {
     if (session) {
-      loadResults() // Immediate first load
-      const interval = setInterval(loadResults, 3000) // Refresh every 3 seconds
+      loadResults()
+      const interval = setInterval(loadResults, 3000)
       return () => clearInterval(interval)
     }
   }, [session])
 
-  // Keyboard shortcuts mirror the present screen — ref initialised here, populated below
   const kbRef = useRef({})
   useEffect(() => {
     const onKey = (e) => {
@@ -90,7 +89,6 @@ export default function QuizControl() {
       if (normalizedSessionStatus !== 'active') return
       if (loading) return
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
-        // Don't intercept Enter/Space when a Popconfirm button is focused
         if (e.target.closest?.('.ant-popover')) return
         e.preventDefault()
         handleAdvanceQuestion()
@@ -126,10 +124,7 @@ export default function QuizControl() {
       if (openSession) {
         setSession((prev) => {
           if (prev?.id === openSession.id) return prev
-          return {
-            ...prev,
-            ...openSession,
-          }
+          return { ...prev, ...openSession }
         })
       }
     } catch (error) {
@@ -144,8 +139,6 @@ export default function QuizControl() {
       const response = await sessionAPI.getResults(session.id)
       latestResults = response.data
       setResults(response.data)
-
-      // If current question is word cloud, fetch word cloud data
       if (['word_cloud', 'one_word'].includes(response.data.current_question?.question_type)) {
         loadWordCloudData(response.data.current_question.id)
       }
@@ -153,7 +146,6 @@ export default function QuizControl() {
       console.error(t('quiz.failedToLoadResults'), error)
     }
     if (latestResults?.quiz_type !== 'poll' && quiz?.quiz_type !== 'poll') {
-      // Leaderboard is non-critical — fetch independently so it never blocks results
       sessionAPI.getLeaderboard(session.id)
         .then(res => setLeaderboard(res.data))
         .catch(() => {})
@@ -166,10 +158,9 @@ export default function QuizControl() {
     if (!session) return
     try {
       const response = await questionAPI.getWordCloudResults(questionId, session.id)
-      // Transform dict {word: count} to array [{text, value}] for react-wordcloud
       const words = Object.entries(response.data.word_frequencies).map(([word, count]) => ({
         text: word,
-        value: count
+        value: count,
       }))
       setWordCloudData(words)
     } catch (error) {
@@ -228,7 +219,6 @@ export default function QuizControl() {
     )
   }
 
-  // Populate the keyboard-shortcut ref here, AFTER all const functions are defined
   kbRef.current = { session, results, loading, handleAdvanceQuestion, handleBackQuestion, handleOpenPresent }
 
   const handleToggleLeaderboard = async () => {
@@ -257,48 +247,22 @@ export default function QuizControl() {
 
   const getStatusTranslation = (status) => {
     if (!status) return t('quiz.ready')
-    const statusKey = status.toLowerCase()
-    return t(`quiz.${statusKey}`)
+    return t(`quiz.${status.toLowerCase()}`)
   }
 
   const getSessionStatusUi = (status) => {
     const normalized = typeof status === 'string' ? status.toLowerCase() : ''
     switch (normalized) {
       case 'active':
-        return {
-          label: t('quiz.active'),
-          valueColor: '#52c41a',
-          tagColor: 'green',
-          tagLabel: t('quiz.live'),
-        }
+        return { label: t('quiz.active'), valueColor: '#52c41a', tagColor: 'green', tagLabel: t('quiz.live') }
       case 'created':
-        return {
-          label: t('quiz.started', { defaultValue: 'Started' }),
-          valueColor: '#1677ff',
-          tagColor: 'blue',
-          tagLabel: t('quiz.started', { defaultValue: 'Started' }),
-        }
+        return { label: t('quiz.started', { defaultValue: 'Started' }), valueColor: '#1677ff', tagColor: 'blue', tagLabel: t('quiz.started', { defaultValue: 'Started' }) }
       case 'ended':
-        return {
-          label: t('quiz.ended'),
-          valueColor: '#fa8c16',
-          tagColor: 'orange',
-          tagLabel: t('quiz.ended'),
-        }
+        return { label: t('quiz.ended'), valueColor: '#fa8c16', tagColor: 'orange', tagLabel: t('quiz.ended') }
       case 'completed':
-        return {
-          label: t('quiz.completed'),
-          valueColor: '#722ed1',
-          tagColor: 'purple',
-          tagLabel: t('quiz.completed'),
-        }
+        return { label: t('quiz.completed'), valueColor: '#722ed1', tagColor: 'purple', tagLabel: t('quiz.completed') }
       default:
-        return {
-          label: getStatusTranslation(status),
-          valueColor: '#595959',
-          tagColor: 'default',
-          tagLabel: getStatusTranslation(status),
-        }
+        return { label: getStatusTranslation(status), valueColor: '#595959', tagColor: 'default', tagLabel: getStatusTranslation(status) }
     }
   }
 
@@ -308,30 +272,17 @@ export default function QuizControl() {
       message.error(t('quiz.noUrlToCopy'))
       return
     }
-
     const joinUrl = inputElement.value
-    
-    // Safari workaround: Create temporary textarea (not readonly)
     const textarea = document.createElement('textarea')
     textarea.value = joinUrl
-    textarea.style.position = 'fixed'
-    textarea.style.top = '0'
-    textarea.style.left = '0'
-    textarea.style.opacity = '0'
+    textarea.style.cssText = 'position:fixed;top:0;left:0;opacity:0'
     document.body.appendChild(textarea)
-    
     try {
-      // Focus and select the textarea
       textarea.focus()
       textarea.select()
       textarea.setSelectionRange(0, textarea.value.length)
-      
-      // Execute copy command
       const successful = document.execCommand('copy')
-      
-      // Clean up
       document.body.removeChild(textarea)
-      
       if (successful) {
         message.success(t('quiz.linkCopied'))
       } else {
@@ -363,6 +314,7 @@ export default function QuizControl() {
     }
   }
 
+  // ── Derived state ──────────────────────────────────────────────────────────
   const currentQuestion = results?.current_question
   const currentQuestionAnswerCount = Number(currentQuestion?.total_answers ?? 0)
   const visibleLeaderboard = (leaderboard && currentQuestionAnswerCount > 0)
@@ -375,38 +327,36 @@ export default function QuizControl() {
   const effectiveSessionStatus = results?.status || session?.status
   const normalizedSessionStatus = typeof effectiveSessionStatus === 'string' ? effectiveSessionStatus.toLowerCase() : ''
   const isSessionActive = normalizedSessionStatus === 'active'
+  const isSessionRunning = isSessionActive || normalizedSessionStatus === 'created'
+  const isLobby = session && !isSessionActive && normalizedSessionStatus === 'created' && (!results || results.current_question_index === -1)
+  const isComplete = session && results && !currentQuestion && results.current_question_index >= 0
   const sessionStatusUi = getSessionStatusUi(effectiveSessionStatus)
-  const presentLabel = t('quiz.presentView')
   const timedQuestionActive = Boolean(isSessionActive && currentQuestion?.max_time_seconds)
   const displayTimerRemaining = currentQuestion?.max_time_seconds
     ? (timerRemaining ?? Number(currentQuestion.max_time_seconds))
     : null
-  const presentImmersiveTooltip = t(
-    'quiz.presentImmersiveTooltip',
-    { defaultValue: 'Open immersive presenter mode in a new tab for audience-facing display.' }
-  )
+  const joinUrl = session ? `${window.location.origin}/join/${session.join_code}` : ''
+  const isLastQuestion = results && quiz && results.current_question_index >= (quiz.questions?.length - 1)
+  const canGoBack = results && results.current_question_index > 0
+  const joinCode = session ? String(session.join_code).replace(/,/g, '') : ''
+  const presentImmersiveTooltip = t('quiz.presentImmersiveTooltip', { defaultValue: 'Open immersive presenter mode in a new tab.' })
+  const totalJoined = results?.total_participants || 0
+  const answeredCount = currentQuestion?.total_answers || 0
 
   useEffect(() => {
     if (!currentQuestion?.max_time_seconds || !currentQuestion?.timer_started_at) {
       setTimerRemaining(null)
       return
     }
-
     const maxSeconds = Number(currentQuestion.max_time_seconds)
     const rawStartedAt = String(currentQuestion.timer_started_at)
     const startedAtIso = /Z$|[+-]\d{2}:\d{2}$/.test(rawStartedAt) ? rawStartedAt : `${rawStartedAt}Z`
     const startedAt = new Date(startedAtIso).getTime()
-    if (!maxSeconds || Number.isNaN(startedAt)) {
-      setTimerRemaining(null)
-      return
-    }
-
+    if (!maxSeconds || Number.isNaN(startedAt)) { setTimerRemaining(null); return }
     const updateRemaining = () => {
       const elapsed = Math.floor((Date.now() - startedAt) / 1000)
-      const next = Math.max(0, maxSeconds - elapsed)
-      setTimerRemaining(next)
+      setTimerRemaining(Math.max(0, maxSeconds - elapsed))
     }
-
     updateRemaining()
     const interval = setInterval(updateRemaining, 1000)
     return () => clearInterval(interval)
@@ -416,395 +366,237 @@ export default function QuizControl() {
     return <div style={{ padding: 24 }}>{t('common.loading')}</div>
   }
 
-  return (
-    <div className="quiz-control-page" style={{ padding: 24 }}>
-      <Space wrap className="quiz-control-topbar">
-        <Button
-          icon={<LeftOutlined />}
-          onClick={() => navigate('/dashboard')}
-        >
-          {t('quiz.backDashboard')}
+  // ── Reusable sub-renders ───────────────────────────────────────────────────
+
+  const nextButton = (
+    timedQuestionActive ? (
+      <Popconfirm
+        title={t('quiz.timerOverrideTitle', { defaultValue: 'Skip this timed question early?' })}
+        description={t('quiz.timerOverrideDescription', { defaultValue: 'This question has an active timer. Continue only if you want to override it now.' })}
+        onConfirm={handleAdvanceQuestion}
+        okText={t('quiz.timerOverrideOk', { defaultValue: 'Yes, continue' })}
+        cancelText={t('common.cancel')}
+        placement="left"
+      >
+        <Button type="primary" block size="large" icon={isLastQuestion ? <CheckCircleOutlined /> : <ArrowRightOutlined />} loading={loading}>
+          {isLastQuestion ? t('quiz.finish') : t('quiz.nextQuestion')} <kbd className="qc-kbd">{isLastQuestion ? '↵' : '→'}</kbd>
         </Button>
-        {session && (
-          <Tooltip title={presentImmersiveTooltip}>
-            <Button
-              type="primary"
-              className="quiz-control-present-btn"
-              icon={<DesktopOutlined />}
-              onClick={handleOpenPresent}
-            >
-              {presentLabel} <kbd className="qc-kbd">F5</kbd>
-            </Button>
-          </Tooltip>
-        )}
-        {session && (isSessionActive || normalizedSessionStatus === 'created') && (
-          <Popconfirm
-            title={t('quiz.stopQuizTitle')}
-            description={t('quiz.stopQuizConfirm')}
-            onConfirm={handleEndSession}
-            okText={t('quiz.stopQuizOk')}
-            cancelText={t('common.cancel')}
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title={t('tooltip.stopQuiz')}>
-              <Button
-                danger
-                icon={<CloseCircleOutlined />}
-                loading={loading}
-              >
-                {t('quiz.stopQuiz')}
-              </Button>
-            </Tooltip>
-          </Popconfirm>
-        )}
-      </Space>
+      </Popconfirm>
+    ) : (
+      <Button
+        type="primary"
+        block
+        size="large"
+        icon={isLastQuestion ? <CheckCircleOutlined /> : <ArrowRightOutlined />}
+        onClick={handleAdvanceQuestion}
+        loading={loading}
+      >
+        {isLastQuestion ? t('quiz.finish') : t('quiz.nextQuestion')} <kbd className="qc-kbd">{isLastQuestion ? '↵' : '→'}</kbd>
+      </Button>
+    )
+  )
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={24} md={24} lg={14} xl={14}>
-          <Card>
-            <Space direction="vertical" size={8} style={{ width: '100%' }}>
-              <Tag color={isPoll ? 'purple' : 'blue'} style={{ width: 'fit-content' }}>
-                {isPoll ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
-              </Tag>
-              <Title level={2} style={{ marginBottom: 0 }}>{quiz.title}</Title>
-            </Space>
-            {quiz.description && <Text type="secondary">{quiz.description}</Text>}
-          </Card>
-        </Col>
-        <Col xs={12} sm={12} md={12} lg={4} xl={4}>
-          <Card style={{ height: '100%' }}>
-            <div style={{ textAlign: 'center' }}>
-              <Statistic
-                title={t('quiz.participants')}
-                value={results?.total_participants || 0}
-                prefix={<TeamOutlined />}
-                valueStyle={{ fontSize: 28 }}
-              />
-            </div>
-          </Card>
-        </Col>
-        <Col xs={12} sm={12} md={12} lg={6} xl={6}>
-          <Card style={{ height: '100%', minHeight: 100 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 14, color: '#00000073', marginBottom: 8 }}>{t('quiz.status')}</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: sessionStatusUi.valueColor }}>
-                {sessionStatusUi.label}
-              </div>
-              {session && (
-                <Tag color={sessionStatusUi.tagColor} style={{ marginTop: 8 }}>
-                  {sessionStatusUi.tagLabel}
-                </Tag>
-              )}
-            </div>
-          </Card>
-        </Col>
-      </Row>
+  const stopButton = (
+    <Popconfirm
+      title={t('quiz.stopQuizTitle')}
+      description={
+        timedQuestionActive
+          ? t('quiz.timerEndOverrideDescription', { defaultValue: 'A timer is running. Ending now overrides it. Results are saved to History.' })
+          : t('quiz.stopQuizSaved', { defaultValue: 'Results are saved to History.' })
+      }
+      onConfirm={handleEndSession}
+      okText={t('quiz.stopQuizOk')}
+      cancelText={t('common.cancel')}
+      okButtonProps={{ danger: true }}
+      placement="left"
+    >
+      <Button danger block icon={<CloseCircleOutlined />} loading={loading}>
+        {t('quiz.stopQuiz')}
+      </Button>
+    </Popconfirm>
+  )
 
-      {!session ? (
-        <Card>
-          <Space direction="vertical" align="center" style={{ width: '100%' }}>
-            <Title level={3}>{t('quiz.readyToStart')}</Title>
-            <Text>{t('quiz.startSessionDesc')}</Text>
-            <Button
-              type="primary"
-              size="large"
-              icon={<PlayCircleOutlined />}
-              onClick={handleStartSession}
-              loading={loading}
-            >
-              {t('quiz.startSession')}
-            </Button>
-          </Space>
-        </Card>
+  // ── Leaderboard table (rendered in stage pane) ─────────────────────────────
+  const leaderboardCard = visibleLeaderboard && !isPoll && (
+    <Card
+      className="quiz-control-leaderboard-card"
+      title={
+        <Space wrap className="quiz-control-leaderboard-title">
+          <TrophyOutlined style={{ color: '#faad14' }} />
+          <span>{t('leaderboard.title')}</span>
+          {visibleLeaderboard.total_participants > 0 && (
+            <Tag color="blue">{visibleLeaderboard.total_participants} {t('quiz.participants')}</Tag>
+          )}
+          {visibleLeaderboard.mcq_question_count > 0 && <Tag color="default">{t('leaderboard.mcqOnly')}</Tag>}
+        </Space>
+      }
+    >
+      {visibleLeaderboard.entries.length === 0 ? (
+        <Text type="secondary">{t('leaderboard.noData')}</Text>
       ) : (
         <>
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col xs={24} lg={24}>
-              <Card title={t('quiz.joinInformation')}>
-                <Row gutter={16}>
-                  <Col xs={24} md={8} style={{ textAlign: 'center' }}>
-                    <div
-                      style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
-                      onClick={() => setQrModalOpen(true)}
-                      title={t('quizPresent.expandQr', { defaultValue: 'Click to enlarge QR code' })}
-                    >
-                      <QRCodeCanvas
-                        value={`${window.location.origin}/join/${session.join_code}`}
-                        size={160}
-                        level="H"
-                        includeMargin={true}
-                      />
-                      <span style={{
-                        position: 'absolute', bottom: 6, right: 6,
-                        background: 'rgba(0,0,0,0.45)', borderRadius: 4,
-                        color: '#fff', fontSize: 12, padding: '2px 5px', lineHeight: 1,
-                        pointerEvents: 'none',
-                      }}>
-                        <FullscreenOutlined />
-                      </span>
-                    </div>
-                    <Modal
-                      open={qrModalOpen}
-                      onCancel={() => setQrModalOpen(false)}
-                      footer={null}
-                      centered
-                      title={t('quiz.joinInformation')}
-                      width={480}
-                    >
-                      <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                        <QRCodeCanvas
-                          value={`${window.location.origin}/join/${session.join_code}`}
-                          size={380}
-                          level="H"
-                          includeMargin={true}
-                        />
-                        <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>
-                          {`${window.location.origin}/join/${session.join_code}`}
-                        </div>
-                      </div>
-                    </Modal>
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                      <div>
-                        <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-                          {t('quiz.joinUrl')}
-                        </Text>
-                        <Input
-                          id="join-url-input"
-                          value={`${window.location.origin}/join/${session.join_code}`}
-                          readOnly
-                          size="large"
-                          style={{ marginBottom: 8 }}
-                        />
-                        <Button
-                          type="primary"
-                          icon={<CopyOutlined />}
-                          onClick={copyJoinLink}
-                          block
-                        >
-                          {t('quiz.copyJoinLink')}
-                        </Button>
-                      </div>
-                    </Space>
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <div style={{ textAlign: 'center' }}>
-                      <Statistic
-                        title={t('quiz.joinCode')}
-                        value={session.join_code}
-                        formatter={(value) => String(value).replace(/,/g, '')}
-                        valueStyle={{ color: '#3f8600', fontSize: 32, fontWeight: 'bold' }}
-                      />
-                      <Text type="secondary" style={{ fontSize: 12 }}>{t('quiz.enterCodeAt')}</Text>
-                      <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{t('tooltip.sessionCode')}</div>
-                    </div>
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
-          </Row>
-
-          {visibleLeaderboard && !isPoll && (
-            <Card
-              className="quiz-control-leaderboard-card"
-              title={
-                <Space wrap className="quiz-control-leaderboard-title">
-                  <TrophyOutlined style={{ color: '#faad14' }} />
-                  <span>{t('leaderboard.title')}</span>
-                  {visibleLeaderboard.total_participants > 0 && (
-                    <Tag color="blue">{visibleLeaderboard.total_participants} {t('quiz.participants')}</Tag>
-                  )}
-                  {visibleLeaderboard.mcq_question_count > 0 && (
-                    <Tag color="default">{t('leaderboard.mcqOnly')}</Tag>
-                  )}
-                </Space>
-              }
-              extra={
-                <Button
-                  className="quiz-control-leaderboard-extra-btn"
-                  size="small"
-                  icon={results?.leaderboard_visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                  onClick={handleToggleLeaderboard}
-                >
-                  {results?.leaderboard_visible ? t('leaderboard.hideFromParticipants') : t('leaderboard.showToParticipants')}
-                </Button>
-              }
-              style={{ marginBottom: 24 }}
-            >
-              {visibleLeaderboard.entries.length === 0 ? (
-                <Text type="secondary">{t('leaderboard.noData')}</Text>
-              ) : (
-                <>
-                  <Table
-                    dataSource={visibleLeaderboard.entries.slice(0, 10)}
-                    rowKey="participant_id"
-                    pagination={false}
-                    size="small"
-                    columns={[
-                      {
-                        title: t('leaderboard.rank'),
-                        dataIndex: 'rank',
-                        width: 60,
-                        render: (rank) => {
-                          const colors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
-                          return (
-                            <Tag color={colors[rank] ? undefined : 'default'} style={colors[rank] ? { backgroundColor: colors[rank], color: '#000', borderColor: colors[rank] } : {}}>
-                              {rank}
-                            </Tag>
-                          )
-                        }
-                      },
-                      {
-                        title: t('leaderboard.participant'),
-                        dataIndex: 'display_name',
-                        ellipsis: true,
-                      },
-                      {
-                        title: visibleLeaderboard.mcq_question_count > 1 ? `${t('leaderboard.score')} / ${visibleLeaderboard.mcq_question_count}` : t('leaderboard.score'),
-                        dataIndex: 'score',
-                        width: 100,
-                        render: (score) => <Tag color="green">{score}</Tag>
-                      },
-                      {
-                        title: t('leaderboard.timeTaken'),
-                        dataIndex: 'time_taken_seconds',
-                        width: 90,
-                        render: (secs) => secs != null
-                          ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text>
-                          : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
-                      }
-                    ]}
-                  />
-                  {visibleLeaderboard.entries.length > 10 && (
-                    <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
-                      +{visibleLeaderboard.entries.length - 10} more participants
-                    </div>
-                  )}
-                </>
-              )}
-            </Card>
+          <Table
+            dataSource={visibleLeaderboard.entries.slice(0, 10)}
+            rowKey="participant_id"
+            pagination={false}
+            size="small"
+            columns={[
+              {
+                title: t('leaderboard.rank'),
+                dataIndex: 'rank',
+                width: 60,
+                render: (rank) => {
+                  const colors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
+                  return <Tag color={colors[rank] ? undefined : 'default'} style={colors[rank] ? { backgroundColor: colors[rank], color: '#000', borderColor: colors[rank] } : {}}>{rank}</Tag>
+                },
+              },
+              { title: t('leaderboard.participant'), dataIndex: 'display_name', ellipsis: true },
+              {
+                title: visibleLeaderboard.mcq_question_count > 1 ? `${t('leaderboard.score')} / ${visibleLeaderboard.mcq_question_count}` : t('leaderboard.score'),
+                dataIndex: 'score',
+                width: 100,
+                render: (score) => <Tag color="green">{score}</Tag>,
+              },
+              {
+                title: t('leaderboard.timeTaken'),
+                dataIndex: 'time_taken_seconds',
+                width: 90,
+                render: (secs) => secs != null ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text> : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>,
+              },
+            ]}
+          />
+          {visibleLeaderboard.entries.length > 10 && (
+            <div style={{ textAlign: 'center', marginTop: 8, color: '#888', fontSize: 12 }}>
+              +{visibleLeaderboard.entries.length - 10} more participants
+            </div>
           )}
+        </>
+      )}
+    </Card>
+  )
 
-          {currentQuestion ? (
-            <Card
-              title={
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Space>
-                    <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
-                    {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
-                    {currentQuestion.question_type === 'one_word' && <Tag color="volcano">{t('quiz.oneWord')}</Tag>}
-                    {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
-                    {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
-                    {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
-                    {currentQuestion.max_time_seconds ? <Tag color="orange">{t('quiz.timerTag', { seconds: currentQuestion.max_time_seconds })}</Tag> : null}
-                    <Tag color="green">{t('quiz.pointsTag', { points: currentQuestion.points || 1 })}</Tag>
-                  </Space>
-                  {currentQuestion.max_time_seconds ? (
-                    <Space direction="vertical" style={{ width: '100%' }} size={4}>
-                      <Text type="secondary">{t('quiz.timeLeft', { seconds: displayTimerRemaining })}</Text>
-                      <Progress
-                        percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
-                        size="small"
-                        status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
-                        showInfo={false}
-                      />
-                    </Space>
-                  ) : null}
-                  {currentQuestion.question_image_url && (
-                    <img 
-                      src={currentQuestion.question_image_url} 
-                      alt={t('quiz.question')} 
-                      style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '300px', 
-                        borderRadius: '8px',
-                        marginTop: '8px',
-                        display: 'block'
-                      }} 
-                    />
-                  )}
-                  <Text strong style={{ display: 'block', marginTop: currentQuestion.question_image_url ? '8px' : '0' }}>
-                    {currentQuestion.text}
-                  </Text>
-                </Space>
-              }
-              style={{ marginBottom: 24 }}
-            >
-              <Alert
-                message={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
+  // ── Main render ────────────────────────────────────────────────────────────
+  return (
+    <div className="quiz-cockpit">
 
+      {/* ════════════════ LEFT: STAGE PANE ════════════════ */}
+      <div className="quiz-cockpit-stage">
+
+        {/* Title row */}
+        <div className="qc-stage-title">
+          <Space>
+            <Tag color={isPoll ? 'purple' : 'blue'} style={{ margin: 0 }}>
+              {isPoll ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
+            </Tag>
+            <Title level={4} style={{ margin: 0 }}>{quiz.title}</Title>
+          </Space>
+          {quiz.description && <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>{quiz.description}</Text>}
+        </div>
+
+        {/* Join bar — pinned & visible once session exists */}
+        {session && (
+          <div className="qc-join-bar">
+            <div className="qc-join-code-block">
+              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>{t('quiz.joinCode')}</Text>
+              <div className="qc-join-code">{joinCode}</div>
+              <Text type="secondary" style={{ fontSize: 11 }}>swaya.me/join</Text>
+            </div>
+            <div className="qc-join-url-block">
+              <Input id="join-url-input" value={joinUrl} readOnly size="small" style={{ marginBottom: 6 }} />
+              <Button icon={<CopyOutlined />} onClick={copyJoinLink} size="small" block>
+                {t('quiz.copyJoinLink')}
+              </Button>
+            </div>
+            <div className="qc-join-qr" onClick={() => setQrModalOpen(true)} title={t('quizPresent.expandQr', { defaultValue: 'Click to enlarge QR code' })}>
+              <QRCodeCanvas value={joinUrl} size={80} level="H" includeMargin />
+              <span className="qc-qr-expand"><FullscreenOutlined /></span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Stage content ── */}
+        {!session ? (
+          /* No session yet — start panel */
+          <Card>
+            <Space direction="vertical" align="center" style={{ width: '100%', padding: '24px 0' }}>
+              <Title level={3}>{t('quiz.readyToStart')}</Title>
+              <Text>{t('quiz.startSessionDesc')}</Text>
+              <Button type="primary" size="large" icon={<PlayCircleOutlined />} onClick={handleStartSession} loading={loading}>
+                {t('quiz.startSession')}
+              </Button>
+            </Space>
+          </Card>
+
+        ) : isLobby ? (
+          /* Session created, waiting to start first question */
+          <Card>
+            <Space direction="vertical" align="center" style={{ width: '100%', padding: '24px 0' }}>
+              <Title level={4}>{t('quiz.readyToStartFirst')}</Title>
+              <Text>{t('quiz.clickAdvanceToStart')}</Text>
+              <Space>
+                <Tooltip title={presentImmersiveTooltip}>
+                  <Button type="primary" className="quiz-control-present-btn" icon={<DesktopOutlined />} onClick={handleOpenPresent}>
+                    {t('quiz.presentView')} <kbd className="qc-kbd">F5</kbd>
+                  </Button>
+                </Tooltip>
+              </Space>
+            </Space>
+          </Card>
+
+        ) : currentQuestion ? (
+          /* Active question */
+          <Card className="qc-question-card">
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {/* Question meta */}
+              <Space wrap>
+                <Tag color="blue">{t('quiz.questionOf')} {results.current_question_index + 1} {t('quiz.of')} {quiz.questions?.length}</Tag>
+                {currentQuestion.question_type === 'word_cloud' && <Tag color="purple">{t('quiz.wordCloud')}</Tag>}
+                {currentQuestion.question_type === 'one_word' && <Tag color="volcano">{t('quiz.oneWord')}</Tag>}
+                {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
+                {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
+                {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
+                {currentQuestion.max_time_seconds && <Tag color="orange">{t('quiz.timerTag', { seconds: currentQuestion.max_time_seconds })}</Tag>}
+                <Tag color="green">{t('quiz.pointsTag', { points: currentQuestion.points || 1 })}</Tag>
+              </Space>
+
+              {currentQuestion.question_image_url && (
+                <img src={currentQuestion.question_image_url} alt="" style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, display: 'block' }} />
+              )}
+
+              <Text strong style={{ fontSize: 16 }}>{currentQuestion.text}</Text>
+
+              <Alert message={`${answeredCount} ${t('quiz.responsesReceived')}`} type="info" showIcon />
+
+              {/* Question body */}
               {isWordCloudQuestion ? (
-                // Word Cloud Question View
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  <Alert
-                    message={t('quiz.wordCloudQuestion')}
-                    description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
-                    type="info"
-                    showIcon
-                  />
-                  
-                  {wordCloudData.length > 0 ? (
-                    <div style={{ 
-                      width: '100%', 
-                      height: '400px', 
-                      border: '1px solid #d9d9d9',
-                      borderRadius: '8px',
-                      padding: '16px',
-                      backgroundColor: '#fafafa'
-                    }}>
-                      <ReactWordcloud
-                        words={wordCloudData}
-                        options={{
-                          rotations: 2,
-                          rotationAngles: [0, 90],
-                          fontSizes: [20, 80],
-                          padding: 5,
-                          enableTooltip: true,
-                          deterministic: true,
-                          fontFamily: 'Arial',
-                          colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <Alert
-                      message={t('quizPresent.noResponsesYet', { defaultValue: 'No responses yet' })}
-                      description={t('quizPresent.wordCloudWillAppear', { defaultValue: 'Word cloud will appear once participants start submitting answers.' })}
-                      type="warning"
+                wordCloudData.length > 0 ? (
+                  <div style={{ width: '100%', height: 280, border: '1px solid #d9d9d9', borderRadius: 8, padding: 16, background: '#fafafa' }}>
+                    <ReactWordcloud
+                      words={wordCloudData}
+                      options={{ rotations: 2, rotationAngles: [0, 90], fontSizes: [20, 60], padding: 5, enableTooltip: true, deterministic: true, fontFamily: 'Arial', colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96'] }}
                     />
-                  )}
-                </Space>
+                  </div>
+                ) : (
+                  <Alert message={t('quizPresent.noResponsesYet', { defaultValue: 'No responses yet' })} description={t('quizPresent.wordCloudWillAppear', { defaultValue: 'Word cloud will appear once participants start submitting answers.' })} type="warning" />
+                )
               ) : isTextQuestion ? (
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  <Alert
-                    message={t('quizPresent.textResponseQuestion', { defaultValue: 'Text Response Question' })}
-                    description={`${currentQuestion.total_answers || 0} ${t('quiz.responsesReceived')}`}
-                    type="info"
-                    showIcon
-                  />
-                  {(currentQuestion.text_responses || []).length > 0 ? (
-                    <Card size="small" title={t('quizPresent.latestResponses', { defaultValue: 'Latest responses' })}>
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        {currentQuestion.text_responses.map((entry, idx) => (
-                          <div key={idx} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
-                            <Text strong>{entry.participant_name}</Text>
-                            <div><Text>{entry.text}</Text></div>
-                          </div>
-                        ))}
-                      </Space>
-                    </Card>
-                  ) : (
-                    <Text type="secondary">{t('quizPresent.noTextResponsesYet', { defaultValue: 'No text responses yet.' })}</Text>
-                  )}
-                </Space>
+                (currentQuestion.text_responses || []).length > 0 ? (
+                  <Card size="small" title={t('quizPresent.latestResponses', { defaultValue: 'Latest responses' })}>
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {currentQuestion.text_responses.map((entry, idx) => (
+                        <div key={idx} style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: 8 }}>
+                          <Text strong>{entry.participant_name}</Text>
+                          <div><Text>{entry.text}</Text></div>
+                        </div>
+                      ))}
+                    </Space>
+                  </Card>
+                ) : (
+                  <Text type="secondary">{t('quizPresent.noTextResponsesYet', { defaultValue: 'No text responses yet.' })}</Text>
+                )
               ) : (
-                // Option-based Question View (MCQ/Scale)
-                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                /* MCQ / Scale */
+                <Space direction="vertical" style={{ width: '100%' }}>
                   {currentQuestion.question_type === 'scale' ? (() => {
                     const dist = currentQuestion.answer_distribution || []
                     const totalAns = currentQuestion.total_answers || 0
@@ -812,181 +604,191 @@ export default function QuizControl() {
                     dist.forEach((count, idx) => { sum += count * (idx + 1) })
                     const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
                     return (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: 16 }}>
-                         <Text style={{ fontSize: 18 }}>Average Rating of {totalAns} Response{totalAns !== 1 ? 's' : ''}</Text>
-                         <Space align="baseline">
-                           <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
-                           <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
-                         </Space>
-                         <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 32, color: '#faad14' }} />
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', gap: 12 }}>
+                        <Text style={{ fontSize: 16 }}>Average: {totalAns} response{totalAns !== 1 ? 's' : ''}</Text>
+                        <Space align="baseline">
+                          <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
+                          <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
+                        </Space>
+                        <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 28, color: '#faad14' }} />
                       </div>
                     )
                   })() : (currentQuestion.options || []).map((opt, idx) => {
                     const total = currentQuestion.total_answers || 0
                     const count = currentQuestion.answer_distribution?.[idx] || 0
-                    const pct = ((count / total * 100) || 0)
+                    const pct = (count / total * 100) || 0
                     const letter = String.fromCharCode(65 + idx)
                     const isCorrect = currentQuestion.correct_answer === letter
                     return (
                       <div key={idx}>
-                        <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8, alignItems: 'flex-start' }}>
-                          <Space direction="vertical">
-                            <Text strong>{isOptionQuestion && currentQuestion.question_type === 'mcq' ? `${letter}: ${opt}` : opt}</Text>
-                          </Space>
-                          <Text>{count} {t('quiz.responses')} ({pct.toFixed(1)}%)</Text>
+                        <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 4, alignItems: 'flex-start' }}>
+                          <Text strong>{isOptionQuestion && currentQuestion.question_type === 'mcq' ? `${letter}: ${opt}` : opt}</Text>
+                          <Text type="secondary">{count} ({pct.toFixed(1)}%)</Text>
                         </Space>
-                        <Progress percent={pct} strokeColor={isCorrect ? '#52c41a' : '#1890ff'} />
+                        <Progress percent={pct} strokeColor={isCorrect ? '#52c41a' : '#1890ff'} size="small" showInfo={false} />
                       </div>
                     )
                   })}
-
-              {!isPoll && (currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'scale') && currentQuestion.correct_answer && (
-                <Alert
-                  message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
-                      description={
-                        currentQuestion.question_type === 'mcq'
-                          ? <span dangerouslySetInnerHTML={{ __html: currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || '' }} />
-                          : ''
-                      }
+                  {!isPoll && (currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'scale') && currentQuestion.correct_answer && (
+                    <Alert
+                      message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
+                      description={currentQuestion.question_type === 'mcq'
+                        ? <span dangerouslySetInnerHTML={{ __html: currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || '' }} />
+                        : ''}
                       type="success"
                       showIcon
                     />
                   )}
                 </Space>
               )}
+            </Space>
+          </Card>
 
-              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <Button
-                  type="default"
-                  size="large"
-                  icon={<LeftOutlined />}
-                  onClick={handleBackQuestion}
-                  loading={loading}
-                  disabled={results.current_question_index === 0}
-                >
-                  {t('quiz.previousQuestion')} <kbd className="qc-kbd">←</kbd>
-                </Button>
-                {timedQuestionActive ? (
-                  <Popconfirm
-                    title={t('quiz.timerOverrideTitle', { defaultValue: 'Skip this timed question early?' })}
-                    description={t('quiz.timerOverrideDescription', { defaultValue: 'This question has an active timer. Continue only if you want to override it now.' })}
-                    onConfirm={handleAdvanceQuestion}
-                    okText={t('quiz.timerOverrideOk', { defaultValue: 'Yes, continue' })}
-                    cancelText={t('common.cancel')}
-                  >
-                    <Button
-                      type="primary"
-                      size="large"
-                      icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
-                      loading={loading}
-                    >
-                      {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
-                      {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
-                    </Button>
-                  </Popconfirm>
-                ) : (
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={results.current_question_index < (quiz.questions?.length - 1) ? <ArrowRightOutlined /> : <CheckCircleOutlined />}
-                    onClick={handleAdvanceQuestion}
-                    loading={loading}
-                  >
-                    {results.current_question_index < (quiz.questions?.length - 1) ? t('quiz.nextQuestion') : t('quiz.finish')}
-                    {' '}<kbd className="qc-kbd">{results.current_question_index < (quiz.questions?.length - 1) ? '→' : '↵'}</kbd>
+        ) : isComplete ? (
+          /* All questions done, session still running */
+          <Card>
+            <Space direction="vertical" align="center" style={{ width: '100%', padding: '16px 0' }} size="large">
+              <Title level={4}>{t('quiz.sessionComplete')}</Title>
+              <Text>{t('quiz.allQuestionsAnswered')}</Text>
+              <Card size="small" style={{ width: '100%', maxWidth: 560 }}>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
+                  <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
+                  <TextArea
+                    rows={4}
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    maxLength={500}
+                    showCount
+                    disabled={feedbackSubmitted}
+                    placeholder={t('quizPresent.shareHostExperience', { defaultValue: 'Share your experience running this quiz' })}
+                  />
+                  <Button type="primary" onClick={handleSubmitFeedback} loading={feedbackSubmitting} disabled={feedbackSubmitted || !feedbackText.trim()}>
+                    {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
                   </Button>
-                )}
-                <Popconfirm
-                  title={t('quiz.stopQuizTitle')}
-                  description={timedQuestionActive
-                    ? t('quiz.timerEndOverrideDescription', { defaultValue: 'A timer is currently running for this question. Ending now will override the timer and end the session.' })
-                    : t('quiz.stopQuizConfirm')
-                  }
-                  onConfirm={handleEndSession}
-                  okText={t('quiz.stopQuizOk')}
-                  cancelText={t('common.cancel')}
-                  okButtonProps={{ danger: true }}
-                >
-                  <Button
-                    danger
-                    size="large"
-                    icon={<CloseCircleOutlined />}
-                    loading={loading}
-                  >
-                    {t('quiz.stopQuiz')}
-                  </Button>
-                </Popconfirm>
-              </div>
-            </Card>
-          ) : !results || results.current_question_index === -1 ? (
-            <Card>
-              <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                <Title level={4}>{t('quiz.readyToStartFirst')}</Title>
-                <Text>{t('quiz.clickAdvanceToStart')}</Text>
-                <Space wrap style={{ justifyContent: 'center' }}>
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<MobileOutlined />}
-                    onClick={handleAdvanceQuestion}
-                    loading={loading}
-                  >
-                    {t('quiz.startFirstQuestion')} <kbd className="qc-kbd">Space</kbd>
-                  </Button>
-                  <Tooltip title={presentImmersiveTooltip}>
-                    <Button
-                      type="primary"
-                      className="quiz-control-present-btn"
-                      size="large"
-                      icon={<DesktopOutlined />}
-                      onClick={handleOpenPresent}
-                    >
-                      {presentLabel} <kbd className="qc-kbd">F5</kbd>
-                    </Button>
-                  </Tooltip>
                 </Space>
-              </Space>
-            </Card>
-          ) : (
-            <Card>
-              <Space direction="vertical" align="center" style={{ width: '100%' }} size="large">
-                <Title level={4}>{t('quiz.sessionComplete')}</Title>
-                <Text>{t('quiz.allQuestionsAnswered')}</Text>
-                <Card size="small" style={{ width: '100%', maxWidth: 620 }}>
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
-                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
-                    <TextArea
-                      rows={4}
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
-                      maxLength={500}
-                      showCount
-                      disabled={feedbackSubmitted}
-                      placeholder={t('quizPresent.shareHostExperience', { defaultValue: 'Share your experience running this quiz' })}
-                    />
-                    <Button
-                      type="primary"
-                      onClick={handleSubmitFeedback}
-                      loading={feedbackSubmitting}
-                      disabled={feedbackSubmitted || !feedbackText.trim()}
-                    >
-                      {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
-                    </Button>
-                  </Space>
-                </Card>
-                <Button
-                  type="primary"
-                  icon={<LeftOutlined />}
-                  onClick={() => navigate('/dashboard')}
-                >
-                  {t('quiz.backDashboard')}
-                </Button>
-              </Space>
-            </Card>
-          )}
-        </>
-      )}
+              </Card>
+            </Space>
+          </Card>
+        ) : null}
+
+        {/* Leaderboard in stage pane */}
+        {leaderboardCard}
+
+      </div>{/* end stage */}
+
+      {/* ════════════════ RIGHT: CONTROL RAIL ════════════════ */}
+      <div className="quiz-cockpit-rail">
+
+        {/* Status */}
+        <div className="qc-rail-status">
+          {isSessionActive && <div className="qc-live-badge">● LIVE</div>}
+          <div style={{ color: sessionStatusUi.valueColor, fontWeight: 600 }}>{sessionStatusUi.label}</div>
+          {session && <Tag color={sessionStatusUi.tagColor} style={{ marginTop: 4 }}>{sessionStatusUi.tagLabel}</Tag>}
+        </div>
+
+        {/* Timer */}
+        {displayTimerRemaining !== null && (
+          <div className="qc-rail-timer">
+            <div className="qc-timer-value" style={{ color: displayTimerRemaining <= 5 ? '#f5222d' : displayTimerRemaining <= 10 ? '#fa8c16' : '#1677ff' }}>
+              <ThunderboltOutlined /> {displayTimerRemaining}s
+            </div>
+            <Progress
+              percent={Math.max(0, Math.min(100, (displayTimerRemaining / Number(currentQuestion.max_time_seconds)) * 100))}
+              size="small"
+              status={displayTimerRemaining <= 5 ? 'exception' : displayTimerRemaining <= 10 ? 'active' : 'normal'}
+              showInfo={false}
+            />
+          </div>
+        )}
+
+        {/* Counts */}
+        {session && (
+          <div className="qc-rail-counts">
+            <div className="qc-rail-stat">
+              <span className="qc-rail-stat-value">{totalJoined}</span>
+              <span className="qc-rail-stat-label"><TeamOutlined /> {t('quiz.participants')}</span>
+            </div>
+            {currentQuestion && (
+              <div className="qc-rail-stat">
+                <span className="qc-rail-stat-value" style={{ color: answeredCount >= totalJoined && totalJoined > 0 ? '#52c41a' : undefined }}>{answeredCount}</span>
+                <span className="qc-rail-stat-label"><CheckCircleOutlined /> {t('quiz.responses')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Divider style={{ margin: '4px 0' }} />
+
+        {/* Navigation controls */}
+        {session && isLobby && (
+          <Button type="primary" block size="large" icon={<MobileOutlined />} onClick={handleAdvanceQuestion} loading={loading}>
+            {t('quiz.startFirstQuestion')} <kbd className="qc-kbd">Space</kbd>
+          </Button>
+        )}
+
+        {session && isSessionActive && (
+          <>
+            <Button block icon={<LeftOutlined />} onClick={handleBackQuestion} loading={loading} disabled={!canGoBack}>
+              {t('quiz.previousQuestion')} <kbd className="qc-kbd">←</kbd>
+            </Button>
+            {nextButton}
+            {/* P1-3: answered/joined counter below Next */}
+            {currentQuestion && (
+              <div className="qc-answered-counter">
+                {answeredCount} / {totalJoined} {t('quiz.responsesReceived', { defaultValue: 'answered' })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Leaderboard toggle */}
+        {session && !isPoll && visibleLeaderboard && (
+          <Button block icon={results?.leaderboard_visible ? <EyeOutlined /> : <EyeInvisibleOutlined />} onClick={handleToggleLeaderboard}>
+            {results?.leaderboard_visible ? t('leaderboard.hideFromParticipants') : t('leaderboard.showToParticipants')}
+          </Button>
+        )}
+
+        {/* Present F5 */}
+        {session && (
+          <Tooltip title={presentImmersiveTooltip}>
+            <Button block className="quiz-control-present-btn" icon={<DesktopOutlined />} onClick={handleOpenPresent}>
+              {t('quiz.presentView')} <kbd className="qc-kbd">F5</kbd>
+            </Button>
+          </Tooltip>
+        )}
+
+        {/* Stop — P1-7: fixed position, reassuring copy */}
+        {session && isSessionRunning && (
+          <>
+            <Divider style={{ margin: '4px 0' }} />
+            {stopButton}
+          </>
+        )}
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Back to dashboard */}
+        <Button type="link" icon={<LeftOutlined />} onClick={() => navigate('/dashboard')} style={{ padding: 0, textAlign: 'left' }}>
+          {t('quiz.backDashboard')}
+        </Button>
+      </div>{/* end rail */}
+
+      {/* QR enlarge modal */}
+      <Modal
+        open={qrModalOpen}
+        onCancel={() => setQrModalOpen(false)}
+        footer={null}
+        centered
+        title={t('quiz.joinInformation')}
+        width={480}
+      >
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <QRCodeCanvas value={joinUrl} size={380} level="H" includeMargin />
+          <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>{joinUrl}</div>
+        </div>
+      </Modal>
     </div>
   )
 }

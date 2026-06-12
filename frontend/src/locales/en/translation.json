@@ -185,6 +185,7 @@
     "stopQuizTitle": "Stop the quiz?",
     "stopQuizConfirm": "This will end the session for all participants. You cannot restart it.",
     "stopQuizOk": "Yes, stop it",
+    "stopQuizSaved": "Results are saved to History.",
     "status": "Status",
     "ready": "READY",
     "created": "CREATED",
