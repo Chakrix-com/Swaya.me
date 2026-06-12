@@ -246,6 +246,15 @@
     "templateLibrary": "टेम्पलेट लाइब्रेरी",
     "duplicateSuccess": "क्विज़ सफलतापूर्वक डुप्लिकेट हुई",
     "duplicateFailed": "क्विज़ डुप्लिकेट करने में विफल",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "टेम्पलेट सफलतापूर्वक सेट हुआ",
     "templateUnsetSuccess": "टेम्पलेट हटाया गया",
     "templateSetFailed": "टेम्पलेट स्थिति अपडेट करने में विफल",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "अपना उत्तर दर्ज करें (अधिकतम 100 अक्षर)"
+    "enterWordCloudAnswer": "अपना उत्तर दर्ज करें (अधिकतम 100 अक्षर)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "navigation": {
     "home": "होम",

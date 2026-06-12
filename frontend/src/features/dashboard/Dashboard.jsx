@@ -35,6 +35,8 @@ import {
   StopOutlined,
   AppstoreOutlined,
   SearchOutlined,
+  InboxOutlined,
+  FilterOutlined,
 } from '@ant-design/icons'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
@@ -153,6 +155,7 @@ function Dashboard() {
   const [foldersLoading, setFoldersLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState(null)
+  const [showArchived, setShowArchived] = useState(false)
 
   const selectedFolderId = useMemo(() => {
     const raw = searchParams.get('folder')
@@ -175,9 +178,9 @@ function Dashboard() {
     return () => document.body.classList.remove('dashboard-scroll-active')
   }, [])
 
-  const loadQuizzes = async () => {
+  const loadQuizzes = async (includeArchived) => {
     try {
-      const res = await quizAPI.list()
+      const res = await quizAPI.list(undefined, undefined, includeArchived)
       dispatch(setQuizzes(res.data))
     } catch (e) {
       console.error('Failed to load quizzes:', e)
@@ -199,9 +202,30 @@ function Dashboard() {
   const handleDeleteQuiz = async (quizId) => {
     try {
       await quizAPI.delete(quizId)
-      loadQuizzes()
+      loadQuizzes(showArchived)
     } catch (e) {
+      message.error(e?.response?.data?.detail || t('quiz.deleteFailed', { defaultValue: 'Failed to delete quiz' }))
       console.error('Failed to delete quiz:', e)
+    }
+  }
+
+  const handleArchiveQuiz = async (quizId) => {
+    try {
+      await quizAPI.archive(quizId)
+      message.success(t('quiz.archiveSuccess', { defaultValue: 'Activity archived' }))
+      loadQuizzes(showArchived)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('quiz.archiveFailed', { defaultValue: 'Failed to archive activity' }))
+    }
+  }
+
+  const handleUnarchiveQuiz = async (quizId) => {
+    try {
+      await quizAPI.unarchive(quizId)
+      message.success(t('quiz.unarchiveSuccess', { defaultValue: 'Activity restored' }))
+      loadQuizzes(showArchived)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('quiz.unarchiveFailed', { defaultValue: 'Failed to restore activity' }))
     }
   }
 
@@ -371,18 +395,20 @@ function Dashboard() {
       const matchSearch = !term || q.title.toLowerCase().includes(term)
       const matchFolder = selectedFolderId ? Number(q.folder_id) === Number(selectedFolderId) : q.folder_id == null
       const matchStatus = !statusFilter || q.status === statusFilter
-      return matchSearch && matchFolder && matchStatus
+      const matchArchived = showArchived ? !!q.archived_at : !q.archived_at
+      return matchSearch && matchFolder && matchStatus && matchArchived
     })
-  }, [quizzes, searchText, selectedFolderId, statusFilter])
+  }, [quizzes, searchText, selectedFolderId, statusFilter, showArchived])
 
   const statistics = useMemo(() => {
     const all = quizzes || []
+    const active = all.filter(q => !q.archived_at)
     return {
-      total: all.length,
+      total: active.length,
       byStatus: {
-        ready: all.filter(q => q.status === 'ready').length,
-        draft: all.filter(q => q.status === 'draft').length,
-        archived: all.filter(q => q.status === 'archived').length,
+        ready: active.filter(q => q.status === 'ready').length,
+        draft: active.filter(q => q.status === 'draft').length,
+        archived: all.filter(q => !!q.archived_at).length,
       },
     }
   }, [quizzes])
@@ -487,6 +513,17 @@ function Dashboard() {
       onClick: () => {},
     }] : []),
     { type: 'divider' },
+    quiz.archived_at ? {
+      key: 'unarchive',
+      label: t('quiz.unarchive', { defaultValue: 'Restore' }),
+      icon: <HistoryOutlined />,
+      onClick: () => handleUnarchiveQuiz(quiz.id),
+    } : {
+      key: 'archive',
+      label: t('quiz.archive', { defaultValue: 'Archive' }),
+      icon: <InboxOutlined />,
+      onClick: () => handleArchiveQuiz(quiz.id),
+    },
     {
       key: 'delete',
       label: t('common.delete', 'Delete'),
@@ -948,6 +985,19 @@ function Dashboard() {
                 <FolderFilled style={{ marginRight: 4 }} />{selectedFolderName}
               </Tag>
             )}
+            <Button
+              size="small"
+              icon={<InboxOutlined />}
+              type={showArchived ? 'primary' : 'default'}
+              onClick={() => {
+                const next = !showArchived
+                setShowArchived(next)
+                loadQuizzes(next)
+              }}
+              style={{ borderRadius: 8 }}
+            >
+              {showArchived ? t('quiz.hideArchived', { defaultValue: 'Hide archived' }) : t('quiz.showArchived', { defaultValue: 'Show archived' })}
+            </Button>
           </div>
 
           {/* Content row */}

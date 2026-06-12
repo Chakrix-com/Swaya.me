@@ -246,6 +246,15 @@
     "templateLibrary": "Библиотека шаблонов",
     "duplicateSuccess": "Викторина успешно продублирована",
     "duplicateFailed": "Не удалось продублировать викторину",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "Шаблон успешно установлен",
     "templateUnsetSuccess": "Шаблон удалён",
     "templateSetFailed": "Не удалось обновить статус шаблона",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "Введите ваш ответ (максимум 100 символов)"
+    "enterWordCloudAnswer": "Введите ваш ответ (максимум 100 символов)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",

@@ -612,9 +612,9 @@ class AnswerServiceAsync:
                 except Exception:
                     pass
         
-        # Get current question if session is active
+        # Get current question only for active sessions (never expose for ended sessions)
         current_question = None
-        if session.current_question_index >= 0 and session.current_question_index < len(questions):
+        if session.status != QuizSessionStatus.ENDED and session.current_question_index >= 0 and session.current_question_index < len(questions):
             question_obj = questions[session.current_question_index]
             timing_row = (
                 await db.execute(

@@ -246,6 +246,15 @@
     "templateLibrary": "Template Library",
     "duplicateSuccess": "Quiz duplicated successfully",
     "duplicateFailed": "Failed to duplicate quiz",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "Template set successfully",
     "templateUnsetSuccess": "Template removed",
     "templateSetFailed": "Failed to update template status",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "Enter your answer (max 100 characters)"
+    "enterWordCloudAnswer": "Enter your answer (max 100 characters)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",

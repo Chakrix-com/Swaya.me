@@ -248,6 +248,15 @@
     "templateLibrary": "Bibliothèque de modèles",
     "duplicateSuccess": "Questionnaire dupliqué avec succès",
     "duplicateFailed": "Impossible de dupliquer le questionnaire",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "Modèle défini avec succès",
     "templateUnsetSuccess": "Modèle supprimé",
     "templateSetFailed": "Impossible de mettre à jour le statut du modèle",
@@ -423,7 +432,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "Entrez votre réponse (100 caractères max)"
+    "enterWordCloudAnswer": "Entrez votre réponse (100 caractères max)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",

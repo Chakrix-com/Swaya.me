@@ -1074,7 +1074,7 @@ class SessionServiceAsync:
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
 
-        # Single query: sessions joined with participant and answer counts
+        # Single query: sessions joined with participant, answer counts, and event join_code
         rows = (await db.execute(
             select(
                 QuizSession.id,
@@ -1083,9 +1083,12 @@ class SessionServiceAsync:
                 QuizSession.updated_at,
                 func.count(func.distinct(Participant.id)).label('participant_count'),
                 func.count(Answer.id).label('total_responses'),
+                func.max(Event.join_code).label('join_code'),
             )
             .outerjoin(Participant, Participant.session_id == QuizSession.id)
             .outerjoin(Answer, Answer.session_id == QuizSession.id)
+            .outerjoin(Quiz, Quiz.id == QuizSession.quiz_id)
+            .outerjoin(Event, Event.id == Quiz.event_id)
             .filter(
                 QuizSession.quiz_id == quiz_id,
                 QuizSession.tenant_id == current_user.tenant_id,
@@ -1102,6 +1105,7 @@ class SessionServiceAsync:
                 ended_at=row.updated_at if row.status == QuizSessionStatus.ENDED else None,
                 participant_count=row.participant_count,
                 total_responses=row.total_responses,
+                join_code=row.join_code or "",
             )
             for row in rows
         ]

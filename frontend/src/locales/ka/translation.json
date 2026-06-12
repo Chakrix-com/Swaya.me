@@ -246,6 +246,15 @@
     "templateLibrary": "შაბლონების ბიბლიოთეკა",
     "duplicateSuccess": "ვიქტორინა წარმატებით დუბლირდა",
     "duplicateFailed": "ვიქტორინის დუბლირება ვერ მოხერხდა",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "შაბლონი წარმატებით დაყენდა",
     "templateUnsetSuccess": "შაბლონი მოიხსნა",
     "templateSetFailed": "შაბლონის სტატუსის განახლება ვერ მოხერხდა",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "ನಿಮ್ಮ ಉತ್ತರ ನಮೂದಿಸಿ (ಗರಿಷ್ಠ 100 ಅಕ್ಷರಗಳು)"
+    "enterWordCloudAnswer": "ನಿಮ್ಮ ಉತ್ತರ ನಮೂದಿಸಿ (ಗರಿಷ್ಠ 100 ಅಕ್ಷರಗಳು)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",

@@ -55,7 +55,7 @@ export const authAPI = {
 
 // Quiz API
 export const quizAPI = {
-  list: (eventId, search) => api.get('/quizzes/', { params: { event_id: eventId, search } }),
+  list: (eventId, search, includeArchived) => api.get('/quizzes/', { params: { event_id: eventId, search, include_archived: includeArchived || undefined } }),
   get: (id) => api.get(`/quizzes/${id}`),
   create: (data) => api.post('/quizzes/', data),
   update: (id, data) => api.put(`/quizzes/${id}`, data),
@@ -64,6 +64,8 @@ export const quizAPI = {
   publish: (id) => api.post(`/quizzes/${id}/publish`),
   publishOffline: (id) => api.post(`/quizzes/${id}/publish-offline`),
   unpublish: (id) => api.post(`/quizzes/${id}/unpublish`),
+  archive: (id) => api.post(`/quizzes/${id}/archive`),
+  unarchive: (id) => api.post(`/quizzes/${id}/unarchive`),
   duplicate: (id) => api.post(`/quizzes/${id}/duplicate`),
   setTemplate: (id, data) => api.post(`/quizzes/${id}/template`, data),
   listTemplates: () => api.get('/quizzes/template-library'),

@@ -280,6 +280,8 @@ class QuizListResponse(BaseModel):
     exam_url: Optional[str] = None
     exam_start_at: Optional[datetime] = None
     exam_end_at: Optional[datetime] = None
+    # Archive
+    archived_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -465,6 +467,7 @@ class SessionListItemResponse(BaseModel):
     ended_at: Optional[datetime] = None
     participant_count: int
     total_responses: int
+    join_code: str = ""
 
 
 class SessionListResponse(BaseModel):

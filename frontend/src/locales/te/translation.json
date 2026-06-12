@@ -246,6 +246,15 @@
     "templateLibrary": "టెంప్లేట్ లైబ్రరీ",
     "duplicateSuccess": "క్విజ్ విజయవంతంగా డూప్లికేట్ అయింది",
     "duplicateFailed": "క్విజ్ డూప్లికేట్ చేయడం విఫలమైంది",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "టెంప్లేట్ విజయవంతంగా సెట్ అయింది",
     "templateUnsetSuccess": "టెంప్లేట్ తొలగించబడింది",
     "templateSetFailed": "టెంప్లేట్ స్థితిని నవీకరించడం విఫలమైంది",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "మీ సమాధానం నమోదు చేయండి (గరిష్టం 100 అక్షరాలు)"
+    "enterWordCloudAnswer": "మీ సమాధానం నమోదు చేయండి (గరిష్టం 100 అక్షరాలు)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "navigation": {
     "home": "హోమ్",

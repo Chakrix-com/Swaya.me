@@ -246,6 +246,15 @@
     "templateLibrary": "টেমপ্লেট লাইব্রেরি",
     "duplicateSuccess": "কুইজ সফলভাবে ডুপ্লিকেট হয়েছে",
     "duplicateFailed": "কুইজ ডুপ্লিকেট করতে ব্যর্থ",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "টেমপ্লেট সফলভাবে সেট হয়েছে",
     "templateUnsetSuccess": "টেমপ্লেট সরানো হয়েছে",
     "templateSetFailed": "টেমপ্লেট স্ট্যাটাস আপডেট করতে ব্যর্থ",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "আপনার উত্তর লিখুন (সর্বাধিক ১০০ অক্ষর)"
+    "enterWordCloudAnswer": "আপনার উত্তর লিখুন (সর্বাধিক ১০০ অক্ষর)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "navigation": {
     "home": "হোম",

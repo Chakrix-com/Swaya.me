@@ -247,6 +247,15 @@
     "templateLibrary": "Vorlagenbibliothek",
     "duplicateSuccess": "Quiz erfolgreich dupliziert",
     "duplicateFailed": "Quiz duplizieren fehlgeschlagen",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "Vorlage erfolgreich gesetzt",
     "templateUnsetSuccess": "Vorlage entfernt",
     "templateSetFailed": "Vorlagenstatus aktualisieren fehlgeschlagen",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "Geben Sie Ihre Antwort ein (maximal 100 Zeichen)"
+    "enterWordCloudAnswer": "Geben Sie Ihre Antwort ein (maximal 100 Zeichen)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",

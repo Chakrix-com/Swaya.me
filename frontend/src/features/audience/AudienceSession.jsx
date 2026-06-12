@@ -411,7 +411,7 @@ export default function AudienceSession() {
             )}
 
             {/* ── Quiz ended ── */}
-            {sessionToken && !sessionInvalidated && sessionStatus === 'ended' && !currentQuestion && (
+            {sessionToken && !sessionInvalidated && sessionStatus === 'ended' && (
               <Card>
                 <Result
                   status="success"
@@ -473,7 +473,7 @@ export default function AudienceSession() {
             )}
 
             {/* ── Waiting for host / next question ── */}
-            {sessionToken && !sessionInvalidated && !currentQuestion && sessionStatus !== 'ended' && (
+            {sessionToken && !sessionInvalidated && !currentQuestion && sessionStatus !== 'ended' && sessionStatus !== null && (
               <Card>
                   <Space direction="vertical" align="center" style={{ width: '100%' }}>
                     <LoadingOutlined style={{ fontSize: 48 }} />
@@ -491,7 +491,7 @@ export default function AudienceSession() {
               )}
 
             {/* ── Active question ── */}
-            {sessionToken && !sessionInvalidated && currentQuestion && (
+            {sessionToken && !sessionInvalidated && currentQuestion && sessionStatus !== 'ended' && (
               <>
                 <Card style={{ marginBottom: 16 }}>
                   <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -695,6 +695,18 @@ export default function AudienceSession() {
                         {t('quiz.submitAnswer')}
                       </Button>
                     </>
+                  ) : submitted && !currentQuestion.correct_answer && !isPoll && !isScaleQuestion ? (
+                    /* P0-2: answer submitted but correct answer not yet revealed — show locked-in state */
+                    <Space direction="vertical" align="center" style={{ width: '100%', padding: '24px 0' }} size="large">
+                      <div style={{ fontSize: 48 }}>⚡</div>
+                      <Title level={4} style={{ margin: 0 }}>{t('audience.lockedIn', { defaultValue: 'Locked in!' })}</Title>
+                      <Text type="secondary">{t('audience.waitingForReveal', { defaultValue: 'Waiting for the host to reveal the answer…' })}</Text>
+                      {selectedAnswer && (
+                        <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+                          {t('audience.yourAnswer', { defaultValue: 'Your answer' })}: {selectedAnswer}
+                        </Tag>
+                      )}
+                    </Space>
                   ) : (
                     <>
                       <Space direction="vertical" style={{ width: '100%' }} size="middle">

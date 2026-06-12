@@ -20,6 +20,9 @@ from persistence.models.quiz import (
     QuizSession,
     QuizSessionStatus,
     Participant,
+    Answer,
+    QuizFeedback,
+    SessionQuestionTiming,
 )
 from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
@@ -430,11 +433,15 @@ class QuizBuilderServiceAsync:
         self,
         db: AsyncSession,
         current_user: CurrentUser,
-        event_id: Optional[int] = None
+        event_id: Optional[int] = None,
+        include_archived: bool = False,
     ) -> List[QuizListResponse]:
         """List quizzes for tenant"""
         query = select(Quiz).filter(Quiz.tenant_id == current_user.tenant_id)
-        
+
+        if not include_archived:
+            query = query.filter(Quiz.archived_at.is_(None))
+
         if event_id:
             query = query.filter(Quiz.event_id == event_id)
         
@@ -505,6 +512,7 @@ class QuizBuilderServiceAsync:
                 ),
                 exam_start_at=getattr(q, 'exam_start_at', None),
                 exam_end_at=getattr(q, 'exam_end_at', None),
+                archived_at=getattr(q, 'archived_at', None),
             )
             for q in quizzes
         ]
@@ -734,7 +742,7 @@ class QuizBuilderServiceAsync:
         quiz_id: int,
         current_user: CurrentUser
     ):
-        """Delete quiz (only in DRAFT status)"""
+        """Delete quiz and all dependent data (sessions, participants, answers, feedback)."""
         result = await db.execute(
             select(Quiz).filter(
                 Quiz.id == quiz_id,
@@ -742,13 +750,55 @@ class QuizBuilderServiceAsync:
             )
         )
         quiz = result.scalar_one_or_none()
-        
+
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
-        
-        if quiz.status != QuizStatus.DRAFT:
-            raise InvalidQuizStatusError("Can only delete quizzes in DRAFT status")
-        
+
+        if quiz.status not in (QuizStatus.DRAFT, QuizStatus.READY, QuizStatus.ARCHIVED):
+            raise InvalidQuizStatusError("Quiz cannot be deleted in its current status")
+
+        # Break circular FKs (quizzes.exam_session_id / offline_session_id → quiz_sessions)
+        if quiz.exam_session_id is not None or quiz.offline_session_id is not None:
+            quiz.exam_session_id = None
+            quiz.offline_session_id = None
+            await db.flush()
+
+        # Get all session IDs for this quiz
+        session_id_rows = (await db.execute(
+            select(QuizSession.id).filter(QuizSession.quiz_id == quiz_id)
+        )).scalars().all()
+        session_ids = list(session_id_rows)
+
+        if session_ids:
+            # Delete quiz feedback tied to these sessions
+            await db.execute(
+                delete(QuizFeedback).where(QuizFeedback.session_id.in_(session_ids))
+            )
+            # Delete answers (references participants + questions)
+            await db.execute(
+                delete(Answer).where(Answer.session_id.in_(session_ids))
+            )
+            # Delete participants
+            await db.execute(
+                delete(Participant).where(Participant.session_id.in_(session_ids))
+            )
+            # Delete session question timings
+            await db.execute(
+                delete(SessionQuestionTiming).where(SessionQuestionTiming.session_id.in_(session_ids))
+            )
+            # Delete sessions
+            await db.execute(
+                delete(QuizSession).where(QuizSession.id.in_(session_ids))
+            )
+
+        # Delete quiz feedback tied directly to the quiz (not via session)
+        await db.execute(
+            delete(QuizFeedback).where(
+                QuizFeedback.quiz_id == quiz_id,
+                QuizFeedback.session_id.is_(None)
+            )
+        )
+
         await db.delete(quiz)
         await db.commit()
     
@@ -975,9 +1025,94 @@ class QuizBuilderServiceAsync:
         quiz.status = QuizStatus.DRAFT
         await db.commit()
         await db.refresh(quiz)
-        
+
         return self._to_quiz_response(quiz)
-    
+
+    async def archive_quiz(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        current_user: CurrentUser
+    ) -> QuizListResponse:
+        """Soft-archive a quiz — hidden from default list but recoverable."""
+        result = await db.execute(
+            select(Quiz)
+            .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        )
+        quiz = result.scalar_one_or_none()
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+        if quiz.archived_at is not None:
+            raise InvalidQuizStatusError("Quiz is already archived")
+        quiz.archived_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(quiz)
+        quiz_ids = [quiz.id]
+        response_count_map: dict[int, int] = {}
+        response_rows = await db.execute(
+            select(QuizSession.quiz_id, func.count(Participant.id).label("cnt"))
+            .join(Participant, Participant.session_id == QuizSession.id)
+            .filter(QuizSession.quiz_id.in_(quiz_ids))
+            .group_by(QuizSession.quiz_id)
+        )
+        response_count_map = {row.quiz_id: row.cnt for row in response_rows}
+        return QuizListResponse(
+            id=quiz.id,
+            event_id=quiz.event_id,
+            title=quiz.title,
+            quiz_type=quiz.quiz_type,
+            status=quiz.status,
+            folder_id=quiz.folder_id,
+            folder_path=" / ".join(self._folder_path_names(quiz.folder)) if quiz.folder else None,
+            is_template=quiz.is_template,
+            template_scope=quiz.template_scope,
+            question_count=len(quiz.questions),
+            response_count=response_count_map.get(quiz.id, 0),
+            has_active_session=False,
+            active_session_id=None,
+            created_at=quiz.created_at.isoformat(),
+            archived_at=quiz.archived_at,
+        )
+
+    async def unarchive_quiz(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        current_user: CurrentUser
+    ) -> QuizListResponse:
+        """Restore an archived quiz back to its previous status."""
+        result = await db.execute(
+            select(Quiz)
+            .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        )
+        quiz = result.scalar_one_or_none()
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+        if quiz.archived_at is None:
+            raise InvalidQuizStatusError("Quiz is not archived")
+        quiz.archived_at = None
+        await db.commit()
+        await db.refresh(quiz)
+        return QuizListResponse(
+            id=quiz.id,
+            event_id=quiz.event_id,
+            title=quiz.title,
+            quiz_type=quiz.quiz_type,
+            status=quiz.status,
+            folder_id=quiz.folder_id,
+            folder_path=" / ".join(self._folder_path_names(quiz.folder)) if quiz.folder else None,
+            is_template=quiz.is_template,
+            template_scope=quiz.template_scope,
+            question_count=len(quiz.questions),
+            response_count=0,
+            has_active_session=False,
+            active_session_id=None,
+            created_at=quiz.created_at.isoformat(),
+            archived_at=None,
+        )
+
     def _validate_quiz(self, quiz: Quiz):
         """Validate quiz before publishing"""
         if not quiz.questions:

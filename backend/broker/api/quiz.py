@@ -165,12 +165,13 @@ async def get_quiz(
 async def list_quizzes(
     event_id: Optional[int] = None,
     search: Optional[str] = None,
+    include_archived: bool = False,
     db: AsyncSession = Depends(get_async_db),
     current_user: CurrentUser = Depends(get_current_user),
     service: QuizBuilderServiceAsync = Depends(get_quiz_service)
 ):
     """List quizzes for tenant"""
-    quizzes = await service.list_quizzes(db, current_user, event_id)
+    quizzes = await service.list_quizzes(db, current_user, event_id, include_archived=include_archived)
     if search:
         term = search.strip().lower()
         quizzes = [
@@ -387,6 +388,38 @@ async def unpublish_quiz(
     """Unpublish quiz (revert to DRAFT status for editing)"""
     try:
         return await service.unpublish_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/{quiz_id:int}/archive", response_model=QuizListResponse)
+async def archive_quiz(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Soft-archive a quiz"""
+    try:
+        return await service.archive_quiz(db, quiz_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/{quiz_id:int}/unarchive", response_model=QuizListResponse)
+async def unarchive_quiz(
+    quiz_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Restore an archived quiz"""
+    try:
+        return await service.unarchive_quiz(db, quiz_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidQuizStatusError as e:

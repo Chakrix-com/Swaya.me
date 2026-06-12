@@ -246,6 +246,15 @@
     "templateLibrary": "Biblioteca de plantillas",
     "duplicateSuccess": "Cuestionario duplicado correctamente",
     "duplicateFailed": "Error al duplicar el cuestionario",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "Plantilla establecida correctamente",
     "templateUnsetSuccess": "Plantilla eliminada",
     "templateSetFailed": "Error al actualizar el estado de la plantilla",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "Ingresa tu respuesta (máximo 100 caracteres)"
+    "enterWordCloudAnswer": "Ingresa tu respuesta (máximo 100 caracteres)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "dashboard": {
     "readyToLaunch": "Listo para lanzar",

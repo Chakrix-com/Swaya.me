@@ -246,6 +246,15 @@
     "templateLibrary": "டெம்ப்ளேட் நூலகம்",
     "duplicateSuccess": "வினாடி வினா வெற்றிகரமாக நகலெடுக்கப்பட்டது",
     "duplicateFailed": "வினாடி வினாவை நகலெடுக்க முடியவில்லை",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archiveSuccess": "Activity archived",
+    "unarchiveSuccess": "Activity restored",
+    "archiveFailed": "Failed to archive activity",
+    "unarchiveFailed": "Failed to restore activity",
+    "deleteFailed": "Failed to delete quiz",
+    "showArchived": "Show archived",
+    "hideArchived": "Hide archived",
     "templateSetSuccess": "டெம்ப்ளேட் வெற்றிகரமாக அமைக்கப்பட்டது",
     "templateUnsetSuccess": "டெம்ப்ளேட் அகற்றப்பட்டது",
     "templateSetFailed": "டெம்ப்ளேட் நிலையை புதுப்பிக்க முடியவில்லை",
@@ -421,7 +430,10 @@
     "ratingsCount_other": "{{count}} ratings",
     "leaveSession": "Leave Session",
     "leftSession": "You left the session",
-    "enterWordCloudAnswer": "உங்கள் பதிலை உள்ளிடுக (அதிகபட்சம் 100 எழுத்துக்கள்)"
+    "enterWordCloudAnswer": "உங்கள் பதிலை உள்ளிடுக (அதிகபட்சம் 100 எழுத்துக்கள்)",
+    "lockedIn": "Locked in!",
+    "waitingForReveal": "Waiting for the host to reveal the answer…",
+    "yourAnswer": "Your answer"
   },
   "navigation": {
     "home": "முகப்பு",

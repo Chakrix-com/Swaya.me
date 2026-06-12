@@ -103,6 +103,9 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Proctoring
     proctoring_policy = Column(JSON, nullable=True)
 
+    # Archive
+    archived_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     sessions = relationship("QuizSession", back_populates="quiz", foreign_keys="QuizSession.quiz_id")
