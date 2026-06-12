@@ -231,3 +231,73 @@ canvas {
   --pub-font-body:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --pub-font-mono:   "IBM Plex Mono", Menlo, monospace;
 }
+
+/* ── Audience session: leaderboard & reveal ───────────────────────────────── */
+.leaderboard-you-row {
+  background: rgba(24, 144, 255, 0.08) !important;
+  font-weight: 600;
+}
+
+.leaderboard-you-row td {
+  border-bottom-color: rgba(24, 144, 255, 0.2) !important;
+}
+
+/* Podium layout */
+.aud-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.aud-podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  max-width: 120px;
+}
+
+.aud-podium-name {
+  font-size: 12px;
+  text-align: center;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.aud-podium-score {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.aud-podium-block {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 40px;
+}
+
+/* +N pts reveal */
+.aud-pts-reveal {
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+.aud-pts-correct {
+  font-size: 28px;
+  font-weight: 800;
+  color: #52c41a;
+  letter-spacing: 1px;
+}
+
+.aud-pts-none {
+  font-size: 15px;
+  color: #8c8c8c;
+}

@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "आप शामिल हो गए!",
-    "othersHere": "{{count}} अन्य यहाँ हैं"
+    "othersHere": "{{count}} अन्य यहाँ हैं",
+    "noPoints": "इस राउंड में कोई अंक नहीं"
   },
   "navigation": {
     "home": "होम",
@@ -779,7 +780,9 @@
     "timeTaken": "Time",
     "hideFromParticipants": "प्रतिभागियों से छुपाएं",
     "showToParticipants": "प्रतिभागियों को दिखाएं",
-    "toggleFailed": "लीडरबोर्ड दृश्यता बदलने में विफल"
+    "toggleFailed": "लीडरबोर्ड दृश्यता बदलने में विफल",
+    "places": "स्थान",
+    "pts": "अंक"
   },
   "home": {
     "login": "लॉगिन",

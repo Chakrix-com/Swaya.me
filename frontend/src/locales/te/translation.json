@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "మీరు చేరారు!",
-    "othersHere": "{{count}} ఇతరులు ఇక్కడ ఉన్నారు"
+    "othersHere": "{{count}} ఇతరులు ఇక్కడ ఉన్నారు",
+    "noPoints": "ఈ రౌండ్‌లో పాయింట్లు లేవు"
   },
   "navigation": {
     "home": "హోమ్",
@@ -779,7 +780,9 @@
     "timeTaken": "Time",
     "hideFromParticipants": "పాల్గొనే వారి నుండి దాచు",
     "showToParticipants": "పాల్గొనే వారికి చూపించు",
-    "toggleFailed": "లీడర్‌బోర్డ్ దృశ్యమానతను మార్చడం విఫలమైంది"
+    "toggleFailed": "లీడర్‌బోర్డ్ దృశ్యమానతను మార్చడం విఫలమైంది",
+    "places": "స్థానాలు",
+    "pts": "పాయింట్లు"
   },
   "home": {
     "login": "లాగిన్",

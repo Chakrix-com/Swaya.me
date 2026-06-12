@@ -67,6 +67,8 @@ export default function AudienceSession() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [timerRemaining, setTimerRemaining] = useState(null)
+  const [rankDelta, setRankDelta] = useState(null)
+  const prevRankRef = useRef(null)
   const lastQuestionIdRef = useRef(null)
   const pollingIntervalRef = useRef(null)
 
@@ -243,6 +245,18 @@ export default function AudienceSession() {
     }
   }
 
+  // Track rank delta for "▲/▼ N places" display
+  useEffect(() => {
+    const currentRank = leaderboard?.current_participant_rank
+    if (!currentRank) { prevRankRef.current = null; return }
+    if (prevRankRef.current !== null && prevRankRef.current !== currentRank) {
+      setRankDelta(prevRankRef.current - currentRank) // positive = moved up
+    } else {
+      setRankDelta(null)
+    }
+    prevRankRef.current = currentRank
+  }, [leaderboard?.current_participant_rank])
+
   const isPollSession = results?.quiz_type === 'poll'
   const currentQuestionAnswerCount = Number(results?.current_question?.total_answers ?? 0)
   const visibleLeaderboard = (leaderboard && currentQuestionAnswerCount > 0)
@@ -292,6 +306,15 @@ export default function AudienceSession() {
 
   const LeaderboardTable = () => {
     if (isPollSession || !visibleLeaderboard || results?.leaderboard_visible === false) return null
+    const entries = visibleLeaderboard.entries || []
+    const top10 = entries.slice(0, 10)
+    const youEntry = entries.find(e => e.is_current_participant)
+    const youInTop10 = top10.some(e => e.is_current_participant)
+    const top3 = entries.slice(0, 3)
+    const podiumOrder = top3.length >= 2 ? [top3[1], top3[0], top3[2]].filter(Boolean) : []
+    const podiumColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
+    const podiumHeights = { 1: 80, 2: 56, 3: 44 }
+
     return (
       <Card
         size="small"
@@ -300,30 +323,70 @@ export default function AudienceSession() {
             <TrophyOutlined style={{ color: '#faad14' }} />
             <span>{t('leaderboard.title')}</span>
             {visibleLeaderboard.current_participant_rank && (
-              <Tag color="blue">{t('leaderboard.yourRank', { rank: visibleLeaderboard.current_participant_rank })}</Tag>
+              <Tag color="blue">
+                {t('leaderboard.yourRank', { rank: visibleLeaderboard.current_participant_rank })}
+              </Tag>
+            )}
+            {rankDelta !== null && rankDelta !== 0 && (
+              <Tag color={rankDelta > 0 ? 'green' : 'red'} style={{ fontWeight: 700 }}>
+                {rankDelta > 0 ? `▲ ${rankDelta}` : `▼ ${Math.abs(rankDelta)}`} {t('leaderboard.places', { defaultValue: 'places' })}
+              </Tag>
             )}
           </Space>
         }
         style={{ marginTop: 16 }}
       >
-        {visibleLeaderboard.entries.length === 0 ? (
+        {entries.length === 0 ? (
           <Text type="secondary">{t('leaderboard.noData')}</Text>
         ) : (
           <>
-            <div className="table-responsive">
-              <Table
-                dataSource={visibleLeaderboard.entries.slice(0, 10)}
-                rowKey="participant_id"
-                columns={leaderboardColumns}
-                pagination={false}
-                size="small"
-                scroll={{ x: 420 }}
-                rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
-              />
-            </div>
-            {visibleLeaderboard.entries.length > 10 && (
+            {/* Podium for top 3 */}
+            {podiumOrder.length >= 2 && (
+              <div className="aud-podium">
+                {podiumOrder.map((entry) => (
+                  <div key={entry.participant_id} className="aud-podium-slot">
+                    <div className="aud-podium-name" style={{ fontWeight: entry.is_current_participant ? 700 : 400, color: entry.is_current_participant ? '#1890ff' : undefined }}>
+                      {entry.display_name}{entry.is_current_participant ? ` (${t('audience.you', { defaultValue: 'You' })})` : ''}
+                    </div>
+                    <div className="aud-podium-score">{entry.score}</div>
+                    <div className="aud-podium-block" style={{ height: podiumHeights[entry.rank] || 40, background: podiumColors[entry.rank] || '#d9d9d9' }}>
+                      #{entry.rank}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Full table (beyond podium) */}
+            {entries.length > 3 && (
+              <div className="table-responsive" style={{ marginTop: podiumOrder.length >= 2 ? 12 : 0 }}>
+                <Table
+                  dataSource={top10}
+                  rowKey="participant_id"
+                  columns={leaderboardColumns}
+                  pagination={false}
+                  size="small"
+                  scroll={{ x: 420 }}
+                  rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
+                />
+              </div>
+            )}
+            {/* Pinned "you" row if outside top 10 */}
+            {youEntry && !youInTop10 && (
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: '2px dashed #1890ff' }}>
+                <Table
+                  dataSource={[youEntry]}
+                  rowKey="participant_id"
+                  columns={leaderboardColumns}
+                  pagination={false}
+                  size="small"
+                  showHeader={false}
+                  rowClassName={() => 'leaderboard-you-row'}
+                />
+              </div>
+            )}
+            {entries.length > 10 && (
               <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--aud-text-secondary)', fontSize: 12 }}>
-                {t('audience.moreParticipants', { count: visibleLeaderboard.entries.length - 10, defaultValue: `+${visibleLeaderboard.entries.length - 10} more participants` })}
+                {t('audience.moreParticipants', { count: entries.length - 10, defaultValue: `+${entries.length - 10} more participants` })}
               </div>
             )}
           </>
@@ -844,6 +907,20 @@ export default function AudienceSession() {
                           )
                         })}
                       </Space>
+                      {/* +N pts feedback after reveal */}
+                      {selectedAnswer && currentQuestion.correct_answer && !isPoll && (
+                        <div className="aud-pts-reveal">
+                          {selectedAnswer === currentQuestion.correct_answer ? (
+                            <div className="aud-pts-correct">
+                              +{currentQuestion.points || 1} {t('leaderboard.pts', { defaultValue: 'pts' })}
+                            </div>
+                          ) : (
+                            <div className="aud-pts-none">
+                              {t('audience.noPoints', { defaultValue: 'No points this round' })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <Alert
                         message={t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
                         type="info"

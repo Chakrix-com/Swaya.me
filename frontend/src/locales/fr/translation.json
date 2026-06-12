@@ -439,7 +439,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "Vous êtes dedans !",
-    "othersHere": "{{count}} autres ici"
+    "othersHere": "{{count}} autres ici",
+    "noPoints": "Aucun point ce tour"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",
@@ -890,7 +891,9 @@
     "timeTaken": "Temps",
     "hideFromParticipants": "Hide from participants",
     "showToParticipants": "Show to participants",
-    "toggleFailed": "Failed to toggle leaderboard visibility"
+    "toggleFailed": "Failed to toggle leaderboard visibility",
+    "places": "places",
+    "pts": "pts"
   },
   "home": {
     "login": "Connexion",

@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "Вы вошли!",
-    "othersHere": "{{count}} других здесь"
+    "othersHere": "{{count}} других здесь",
+    "noPoints": "Нет очков в этом раунде"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",
@@ -888,7 +889,9 @@
     "timeTaken": "Время",
     "hideFromParticipants": "Hide from participants",
     "showToParticipants": "Show to participants",
-    "toggleFailed": "Failed to toggle leaderboard visibility"
+    "toggleFailed": "Failed to toggle leaderboard visibility",
+    "places": "мест",
+    "pts": "очков"
   },
   "home": {
     "login": "Войти",

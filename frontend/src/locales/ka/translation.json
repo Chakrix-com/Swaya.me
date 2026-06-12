@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "ನೀವು ಸೇರಿದ್ದೀರಿ!",
-    "othersHere": "{{count}} ಇತರರು ಇಲ್ಲಿದ್ದಾರೆ"
+    "othersHere": "{{count}} ಇತರರು ಇಲ್ಲಿದ್ದಾರೆ",
+    "noPoints": "ಈ ಸುತ್ತಿನಲ್ಲಿ ಯಾವುದೇ ಅಂಕಗಳಿಲ್ಲ"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",
@@ -779,7 +780,9 @@
     "timeTaken": "Time",
     "hideFromParticipants": "ಭಾಗವಹಿಸುವವರಿಂದ ಮರೆಮಾಡಿ",
     "showToParticipants": "ಭಾಗವಹಿಸುವವರಿಗೆ ತೋರಿಸಿ",
-    "toggleFailed": "ಲೀಡರ್‌ಬೋರ್ಡ್ ಗೋಚರತೆ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ"
+    "toggleFailed": "ಲೀಡರ್‌ಬೋರ್ಡ್ ಗೋಚರತೆ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ",
+    "places": "ಸ್ಥಾನಗಳು",
+    "pts": "ಅಂಕಗಳು"
   },
   "home": {
     "login": "ಲಾಗಿನ್",

@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "আপনি যোগ দিয়েছেন!",
-    "othersHere": "{{count}} জন এখানে আছেন"
+    "othersHere": "{{count}} জন এখানে আছেন",
+    "noPoints": "এই রাউন্ডে কোনো পয়েন্ট নেই"
   },
   "navigation": {
     "home": "হোম",
@@ -779,7 +780,9 @@
     "timeTaken": "Time",
     "hideFromParticipants": "অংশগ্রহণকারীদের থেকে লুকান",
     "showToParticipants": "অংশগ্রহণকারীদের দেখান",
-    "toggleFailed": "লিডারবোর্ড দৃশ্যমানতা পরিবর্তন করতে ব্যর্থ"
+    "toggleFailed": "লিডারবোর্ড দৃশ্যমানতা পরিবর্তন করতে ব্যর্থ",
+    "places": "স্থান",
+    "pts": "পয়েন্ট"
   },
   "home": {
     "login": "লগইন",

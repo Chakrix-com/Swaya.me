@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "நீங்கள் இணைந்தீர்கள்!",
-    "othersHere": "{{count}} பிறர் இங்கே உள்ளனர்"
+    "othersHere": "{{count}} பிறர் இங்கே உள்ளனர்",
+    "noPoints": "இந்த சுற்றில் புள்ளிகள் இல்லை"
   },
   "navigation": {
     "home": "முகப்பு",
@@ -779,7 +780,9 @@
     "timeTaken": "Time",
     "hideFromParticipants": "பங்கேற்பாளர்களிடம் மறைக்கவும்",
     "showToParticipants": "பங்கேற்பாளர்களுக்கு காட்டவும்",
-    "toggleFailed": "லீடர்போர்டு தெரிவுநிலையை மாற்ற முடியவில்லை"
+    "toggleFailed": "லீடர்போர்டு தெரிவுநிலையை மாற்ற முடியவில்லை",
+    "places": "இடங்கள்",
+    "pts": "புள்ளிகள்"
   },
   "home": {
     "login": "உள்நுழை",

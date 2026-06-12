@@ -437,7 +437,8 @@
     "waitingForReveal": "Waiting for the host to reveal the answer…",
     "yourAnswer": "Your answer",
     "youreIn": "Sie sind dabei!",
-    "othersHere": "{{count}} andere hier"
+    "othersHere": "{{count}} andere hier",
+    "noPoints": "Keine Punkte in dieser Runde"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",
@@ -888,7 +889,9 @@
     "timeTaken": "Zeit",
     "hideFromParticipants": "Hide from participants",
     "showToParticipants": "Show to participants",
-    "toggleFailed": "Failed to toggle leaderboard visibility"
+    "toggleFailed": "Failed to toggle leaderboard visibility",
+    "places": "Plätze",
+    "pts": "Punkte"
   },
   "home": {
     "login": "Anmelden",

@@ -17,12 +17,12 @@ Update the Status column / checkboxes as work progresses. Keep this file as the 
 | Phase | Theme | Items | Done |
 |---|---|---|---|
 | **P0** | Trust — live-room bugs | 5 | 5/5 ✅ |
-| **P1** | The live loop — host cockpit + participant game | 12 | 5/12 |
+| **P1** | The live loop — host cockpit + participant game | 12 | 6/12 |
 | **P2** | The shop window — home, create, templates | 8 | 0/8 |
 | **P3** | Coherence — design system + results hub | 9 | 0/9 |
 | **P4** | Reach — PWA, self-serve, workspaces | 7 | 0/7 |
 | **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 0/6 |
-| | **Total** | **47** | **10/47** |
+| | **Total** | **47** | **11/47** |
 
 ---
 
@@ -340,7 +340,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - **Files:** `QuizControl.jsx`, `AudienceSession.jsx`.
 - **Size:** M
 
-### P1-5 ⬜ Participant reveal & leaderboard moments
+### P1-5 ✅ Participant reveal & leaderboard moments
 - Animated bar fills, +points count-up, rank delta ("▲ 2 places"), podium screen for top-3 when host shows leaderboard, "you" row always pinned. Builds on P0-2.
 - **Split (sonnet-review §4):** **P1-5a** — static reveal/leaderboard states, self-contained, no animation dependency. **P1-5b** — animations, depends on the **P3-1a motion library** (pulled forward into M2; full token unification stays P3-1b/M4).
 - **Files:** `AudienceSession.jsx` + CSS/motion utilities (keyframe library delivered by P3-1a).
