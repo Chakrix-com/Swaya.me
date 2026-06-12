@@ -371,7 +371,15 @@
     "timerOverrideTitle": "इस समयबद्ध प्रश्न को जल्दी छोड़ें?",
     "untitled": "शीर्षकहीन",
     "validationError": "प्रकाशित करने से पहले सभी आवश्यक फ़ील्ड की जांच करें",
-    "waitingForParticipants": "प्रतिभागियों के जुड़ने की प्रतीक्षा में…"
+    "waitingForParticipants": "प्रतिभागियों के जुड़ने की प्रतीक्षा में…",
+    "viewRecap": "सारांश",
+    "sessionRecapSubtitle": "सत्र सारांश — अगली बार से पहले साझा करें, निर्यात करें या समीक्षा करें।",
+    "hardestQuestion": "सबसे कठिन प्रश्न",
+    "avgAccuracy": "औसत सटीकता",
+    "perQuestionAccuracy": "प्रति प्रश्न सटीकता",
+    "exportResults": "परिणाम निर्यात करें",
+    "totalQuestions": "प्रश्न",
+    "viewHistory": "इतिहास"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "आप शामिल हो गए!",
     "othersHere": "{{count}} अन्य यहाँ हैं",
-    "noPoints": "इस राउंड में कोई अंक नहीं"
+    "noPoints": "इस राउंड में कोई अंक नहीं",
+    "correct": "सही",
+    "yourRank": "आपकी रैंक",
+    "joinAnotherQuiz": "एक और क्विज़ में शामिल हों"
   },
   "navigation": {
     "home": "होम",

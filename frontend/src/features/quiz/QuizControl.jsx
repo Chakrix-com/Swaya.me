@@ -251,7 +251,7 @@ export default function QuizControl() {
     try {
       await sessionAPI.end(session.id)
       message.success(t('quiz.sessionEnded'))
-      navigate('/dashboard')
+      navigate(`/quiz/${id}/recap/${session.id}`)
     } catch (error) {
       message.error(t('quiz.failedToEnd'))
       console.error(error)

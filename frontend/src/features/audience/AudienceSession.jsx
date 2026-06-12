@@ -475,64 +475,83 @@ export default function AudienceSession() {
 
             {/* ── Quiz ended ── */}
             {sessionToken && !sessionInvalidated && sessionStatus === 'ended' && (
-              <Card>
-                <Result
-                  status="success"
-                  icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                  title={t('audience.quizCompleted', { defaultValue: 'Quiz Completed!' })}
-                  subTitle={
-                    <Space direction="vertical" align="center" style={{ marginTop: 16, width: '100%' }}>
-                      {isPoll ? (
-                        <Title level={4} style={{ margin: 0 }}>
-                          {t('quizPresent.pollCompleted', { defaultValue: 'Poll completed' })}
-                        </Title>
-                      ) : (
-                        <>
-                          <Title level={4} style={{ margin: 0 }}>
-                            {t('audience.yourScore', { defaultValue: 'Your Score' })}: {results?.participant_correct || 0}/{results?.total_questions || 0}
-                          </Title>
-                          <Text type="secondary">
-                            {t('audience.correctAnswersCount', { count: results?.participant_correct || 0 })}
-                          </Text>
-                        </>
-                      )}
-                      <Tag
-                        color="blue"
-                        style={{ marginTop: 8, maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}
-                      >
-                        {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
-                      </Tag>
-                      <LeaderboardTable />
-                      <Card size="small" style={{ width: '100%', marginTop: 16 }}>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
-                          <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
-                          <div style={{ marginBottom: 20 }}>
-                            <RichTextEditor
-                              value={feedbackText}
-                              onChange={setFeedbackText}
-                              placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
-                              isDark={theme === 'dark'}
-                              disabled={feedbackSubmitted}
-                              showCode={false}
-                            />
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                {/* Personal summary card */}
+                <Card>
+                  <Space direction="vertical" align="center" style={{ width: '100%', padding: '12px 0' }} size="large">
+                    <div style={{ fontSize: 52 }}>{isPoll ? '📊' : '🏁'}</div>
+                    <Title level={3} style={{ margin: 0 }}>{t('audience.quizCompleted', { defaultValue: 'Quiz Completed!' })}</Title>
+                    {results?.quiz_title && <Text type="secondary" style={{ fontSize: 16 }}>{results.quiz_title}</Text>}
+
+                    {!isPoll && (
+                      <Space size="large" wrap style={{ justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 32, fontWeight: 800, color: '#1677ff' }}>
+                            {results?.participant_score ?? 0}
                           </div>
-                          <Button
-                            type="primary"
-                            onClick={handleSubmitFeedback}
-                            loading={feedbackSubmitting}
-                            disabled={feedbackSubmitted || !feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === ''}
-                          >
-                            {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
-                          </Button>
-                        </Space>
-                      </Card>
-                    </Space>
-                  }
-                  extra={<Text type="secondary">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</Text>}
-                />
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('leaderboard.pts', { defaultValue: 'pts' })}</Text>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 32, fontWeight: 800, color: '#52c41a' }}>
+                            {results?.participant_correct ?? 0}/{results?.total_questions ?? 0}
+                          </div>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('audience.correct', { defaultValue: 'correct' })}</Text>
+                        </div>
+                        {leaderboard?.current_participant_rank && (
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 32, fontWeight: 800, color: '#faad14' }}>
+                              #{leaderboard.current_participant_rank}
+                            </div>
+                            <Text type="secondary" style={{ fontSize: 12 }}>{t('audience.yourRank', { defaultValue: 'your rank' })}</Text>
+                          </div>
+                        )}
+                      </Space>
+                    )}
+
+                    <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+                      {displayName}
+                    </Tag>
+
+                    <Text type="secondary">{t('quizPresent.thanksForParticipating', { defaultValue: 'Thanks for participating.' })}</Text>
+
+                    {/* Conversion CTA */}
+                    <Button type="primary" size="large" onClick={() => navigate('/join')}>
+                      {t('audience.joinAnotherQuiz', { defaultValue: 'Join another quiz' })}
+                    </Button>
+                  </Space>
+                </Card>
+
+                {/* Leaderboard */}
+                <LeaderboardTable />
+
+                {/* Feedback */}
+                <Card size="small">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text strong>{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</Text>
+                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
+                    <div style={{ marginBottom: 20 }}>
+                      <RichTextEditor
+                        value={feedbackText}
+                        onChange={setFeedbackText}
+                        placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
+                        isDark={theme === 'dark'}
+                        disabled={feedbackSubmitted}
+                        showCode={false}
+                      />
+                    </div>
+                    <Button
+                      type="primary"
+                      onClick={handleSubmitFeedback}
+                      loading={feedbackSubmitting}
+                      disabled={feedbackSubmitted || !feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === ''}
+                    >
+                      {feedbackSubmitted ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' }) : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
+                    </Button>
+                  </Space>
+                </Card>
+
                 <PromoCard />
-              </Card>
+              </Space>
             )}
 
             {/* ── Waiting for host / next question ── */}

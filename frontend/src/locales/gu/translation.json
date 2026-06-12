@@ -371,7 +371,15 @@
     "timerOverrideTitle": "આ સમય-મર્યાદિત પ્રશ્ન વહેલો છોડી દો?",
     "untitled": "શીર્ષક વગરનું",
     "validationError": "પ્રકાશિત કરતાં પહેલાં તમામ ફરજિયાત ક્ષેત્રો તપાસો",
-    "waitingForParticipants": "સહભાગીઓ જોડાવા માટે રાહ જોઈ રહ્યા છે…"
+    "waitingForParticipants": "સહભાગીઓ જોડાવા માટે રાહ જોઈ રહ્યા છે…",
+    "viewRecap": "સારાંશ",
+    "sessionRecapSubtitle": "સત્ર સારાંશ — આગળના રન પહેલા શેર કરો, નિકાસ કરો અથવા સમીક્ષા કરો.",
+    "hardestQuestion": "સૌથી કઠિન પ્રશ્ન",
+    "avgAccuracy": "સરેરાશ ચોકસાઈ",
+    "perQuestionAccuracy": "દરેક પ્રશ્ન ચોકસાઈ",
+    "exportResults": "પરિણામો નિકાસ કરો",
+    "totalQuestions": "પ્રશ્નો",
+    "viewHistory": "ઇतिहास"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "તમે જોડાઈ ગયા!",
     "othersHere": "{{count}} અન્ય અહીં છે",
-    "noPoints": "આ રાઉન્ડમાં કોઈ પોઈન્ટ નહીં"
+    "noPoints": "આ રાઉન્ડમાં કોઈ પોઈન્ટ નહીં",
+    "correct": "સાચા",
+    "yourRank": "તમારી રેન્ક",
+    "joinAnotherQuiz": "બીજી ક્વિઝમાં જોડાઓ"
   },
   "navigation": {
     "home": "મુખ્ય",

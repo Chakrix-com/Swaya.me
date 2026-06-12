@@ -371,7 +371,15 @@
     "timerOverrideTitle": "ಈ ಸಮಯ-ನಿರ್ಬಂಧಿತ ಪ್ರಶ್ನೆಯನ್ನು ಮುಂಚಿತವಾಗಿ ಬಿಟ್ಟುಬಿಡಬೇಕೇ?",
     "untitled": "ಶೀರ್ಷಿಕೆ ಇಲ್ಲ",
     "validationError": "ಪ್ರಕಟಿಸುವ ಮೊದಲು ಎಲ್ಲಾ ಅಗತ್ಯ ಕ್ಷೇತ್ರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
-    "waitingForParticipants": "ಭಾಗವಹಿಸುವವರಿಗಾಗಿ ಕಾಯುತ್ತಿದೆ…"
+    "waitingForParticipants": "ಭಾಗವಹಿಸುವವರಿಗಾಗಿ ಕಾಯುತ್ತಿದೆ…",
+    "viewRecap": "ಸಾರಾಂಶ",
+    "sessionRecapSubtitle": "ಅಧಿವೇಶನ ಸಾರಾಂಶ — ಮುಂದಿನ ರನ್‌ಗೆ ಮೊದಲು ಹಂಚಿಕೊಳ್ಳಿ, ರಫ್ತು ಮಾಡಿ ಅಥವಾ ಪರಿಶೀಲಿಸಿ.",
+    "hardestQuestion": "ಕಠಿಣ ಪ್ರಶ್ನೆ",
+    "avgAccuracy": "ಸರಾಸರಿ ನಿಖರತೆ",
+    "perQuestionAccuracy": "ಪ್ರತಿ ಪ್ರಶ್ನೆ ನಿಖರತೆ",
+    "exportResults": "ಫಲಿತಾಂಶಗಳನ್ನು ರಫ್ತು ಮಾಡಿ",
+    "totalQuestions": "ಪ್ರಶ್ನೆಗಳು",
+    "viewHistory": "ಇತಿಹಾಸ"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "ನೀವು ಸೇರಿದ್ದೀರಿ!",
     "othersHere": "{{count}} ಇತರರು ಇಲ್ಲಿದ್ದಾರೆ",
-    "noPoints": "ಈ ಸುತ್ತಿನಲ್ಲಿ ಯಾವುದೇ ಅಂಕಗಳಿಲ್ಲ"
+    "noPoints": "ಈ ಸುತ್ತಿನಲ್ಲಿ ಯಾವುದೇ ಅಂಕಗಳಿಲ್ಲ",
+    "correct": "ಸರಿ",
+    "yourRank": "ನಿಮ್ಮ ಶ್ರೇಣಿ",
+    "joinAnotherQuiz": "ಮತ್ತೊಂದು ಕ್ವಿಜ್‌ಗೆ ಸೇರಿ"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",

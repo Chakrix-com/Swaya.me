@@ -371,7 +371,15 @@
     "timerOverrideTitle": "இந்த நேரக் கட்டுப்படுத்தப்பட்ட கேள்வியை முன்கூட்டியே தவிர்க்கவா?",
     "untitled": "தலைப்பிடப்படாதது",
     "validationError": "வெளியிடுவதற்கு முன் அனைத்து தேவையான புலங்களையும் சரிபாருங்கள்",
-    "waitingForParticipants": "பங்கேற்பாளர்கள் இணைவதற்காக காத்திருக்கிறது…"
+    "waitingForParticipants": "பங்கேற்பாளர்கள் இணைவதற்காக காத்திருக்கிறது…",
+    "viewRecap": "சுருக்கம்",
+    "sessionRecapSubtitle": "அமர்வு சுருக்கம் — பகிர்க, ஏற்றுமதி செய்க அல்லது மதிப்பாய்வு செய்க.",
+    "hardestQuestion": "கடினமான கேள்வி",
+    "avgAccuracy": "சராசரி துல்லியம்",
+    "perQuestionAccuracy": "ஒவ்வொரு கேள்விக்கும் துல்லியம்",
+    "exportResults": "முடிவுகளை ஏற்றுமதி செய்",
+    "totalQuestions": "கேள்விகள்",
+    "viewHistory": "வரலாறு"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "நீங்கள் இணைந்தீர்கள்!",
     "othersHere": "{{count}} பிறர் இங்கே உள்ளனர்",
-    "noPoints": "இந்த சுற்றில் புள்ளிகள் இல்லை"
+    "noPoints": "இந்த சுற்றில் புள்ளிகள் இல்லை",
+    "correct": "சரியான",
+    "yourRank": "உங்கள் தரவரிசை",
+    "joinAnotherQuiz": "மற்றொரு வினாடி வினாவில் சேரு"
   },
   "navigation": {
     "home": "முகப்பு",

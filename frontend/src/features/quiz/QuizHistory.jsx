@@ -335,7 +335,12 @@ export default function QuizHistory() {
                   <Text type="secondary">·</Text>
                   <Text type="secondary">{session.total_responses} {t('quiz.responses')}</Text>
                 </Space>
-                <div onClick={(e) => e.stopPropagation()} style={{ marginLeft: 8 }}>
+                <Space onClick={(e) => e.stopPropagation()} style={{ marginLeft: 8 }}>
+                  {session.status === 'ended' && (
+                    <Button size="small" onClick={() => navigate(`/quiz/${id}/recap/${session.id}`)}>
+                      {t('quiz.viewRecap', { defaultValue: 'Recap' })}
+                    </Button>
+                  )}
                   <Dropdown
                     menu={{ items: exportMenuItems(session.id) }}
                     trigger={['click']}
@@ -349,7 +354,7 @@ export default function QuizHistory() {
                       {t('quiz.export')}
                     </Button>
                   </Dropdown>
-                </div>
+                </Space>
               </div>
             )
             return (

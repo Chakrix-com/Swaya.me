@@ -371,7 +371,15 @@
     "timerOverrideTitle": "Diese zeitgesteuerte Frage vorzeitig überspringen?",
     "untitled": "Ohne Titel",
     "validationError": "Bitte alle Pflichtfelder vor dem Veröffentlichen prüfen",
-    "waitingForParticipants": "Warten auf Teilnehmer…"
+    "waitingForParticipants": "Warten auf Teilnehmer…",
+    "viewRecap": "Recap",
+    "sessionRecapSubtitle": "Sitzungszusammenfassung — teilen, exportieren oder vor dem nächsten Lauf überprüfen.",
+    "hardestQuestion": "Schwierigste Frage",
+    "avgAccuracy": "Ø Genauigkeit",
+    "perQuestionAccuracy": "Genauigkeit pro Frage",
+    "exportResults": "Ergebnisse exportieren",
+    "totalQuestions": "Fragen",
+    "viewHistory": "Verlauf"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "Sie sind dabei!",
     "othersHere": "{{count}} andere hier",
-    "noPoints": "Keine Punkte in dieser Runde"
+    "noPoints": "Keine Punkte in dieser Runde",
+    "correct": "korrekt",
+    "yourRank": "Ihr Rang",
+    "joinAnotherQuiz": "Einem weiteren Quiz beitreten"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",

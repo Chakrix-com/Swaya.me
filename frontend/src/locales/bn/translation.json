@@ -371,7 +371,15 @@
     "timerOverrideTitle": "এই সময়-নির্ধারিত প্রশ্নটি আগেভাগে এড়িয়ে যাবেন?",
     "untitled": "শিরোনামহীন",
     "validationError": "প্রকাশ করার আগে সকল প্রয়োজনীয় ক্ষেত্র পরীক্ষা করুন",
-    "waitingForParticipants": "অংশগ্রহণকারীরা যোগ দেওয়ার জন্য অপেক্ষা করা হচ্ছে…"
+    "waitingForParticipants": "অংশগ্রহণকারীরা যোগ দেওয়ার জন্য অপেক্ষা করা হচ্ছে…",
+    "viewRecap": "সারসংক্ষেপ",
+    "sessionRecapSubtitle": "সেশন সারসংক্ষেপ — পরবর্তী রানের আগে শেয়ার করুন, রপ্তানি করুন বা পর্যালোচনা করুন।",
+    "hardestQuestion": "সবচেয়ে কঠিন প্রশ্ন",
+    "avgAccuracy": "গড় নির্ভুলতা",
+    "perQuestionAccuracy": "প্রতি প্রশ্নে নির্ভুলতা",
+    "exportResults": "ফলাফল রপ্তানি করুন",
+    "totalQuestions": "প্রশ্ন",
+    "viewHistory": "ইতিহাস"
   },
   "audience": {
     "joinQuiz": "প্রশ্নোত্তরে যোগ দিন",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "আপনি যোগ দিয়েছেন!",
     "othersHere": "{{count}} জন এখানে আছেন",
-    "noPoints": "এই রাউন্ডে কোনো পয়েন্ট নেই"
+    "noPoints": "এই রাউন্ডে কোনো পয়েন্ট নেই",
+    "correct": "সঠিক",
+    "yourRank": "আপনার র‍্যাংক",
+    "joinAnotherQuiz": "অন্য কুইজে যোগ দিন"
   },
   "navigation": {
     "home": "হোম",

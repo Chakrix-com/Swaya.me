@@ -371,7 +371,15 @@
     "timerOverrideTitle": "ఈ సమయ-పరిమిత ప్రశ్నను ముందే దాటిపోవాలా?",
     "untitled": "శీర్షిక లేనిది",
     "validationError": "ప్రచురించే ముందు అన్ని అవసరమైన ఫీల్డ్‌లను తనిఖీ చేయండి",
-    "waitingForParticipants": "పాల్గొనేవారు చేరడానికి వేచి ఉంది…"
+    "waitingForParticipants": "పాల్గొనేవారు చేరడానికి వేచి ఉంది…",
+    "viewRecap": "సారాంశం",
+    "sessionRecapSubtitle": "సెషన్ సారాంశం — తదుపరి రన్‌కు ముందు షేర్ చేయండి, ఎగుమతి చేయండి లేదా సమీక్షించండి.",
+    "hardestQuestion": "కష్టమైన ప్రశ్న",
+    "avgAccuracy": "సగటు ఖచ్చితత్వం",
+    "perQuestionAccuracy": "ప్రతి ప్రశ్న ఖచ్చితత్వం",
+    "exportResults": "ఫలితాలు ఎగుమతి చేయి",
+    "totalQuestions": "ప్రశ్నలు",
+    "viewHistory": "చరిత్ర"
   },
   "audience": {
     "joinQuiz": "క్విజ్‌లో చేరండి",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "మీరు చేరారు!",
     "othersHere": "{{count}} ఇతరులు ఇక్కడ ఉన్నారు",
-    "noPoints": "ఈ రౌండ్‌లో పాయింట్లు లేవు"
+    "noPoints": "ఈ రౌండ్‌లో పాయింట్లు లేవు",
+    "correct": "సరైన",
+    "yourRank": "మీ ర్యాంక్",
+    "joinAnotherQuiz": "మరొక క్విజ్‌లో చేరు"
   },
   "navigation": {
     "home": "హోమ్",

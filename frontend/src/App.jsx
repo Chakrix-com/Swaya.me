@@ -50,6 +50,7 @@ const UserPlans = lazy(() => import('./features/dashboard/UserPlans'))
 const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
 const QuizControl = lazy(() => import('./features/quiz/QuizControl'))
 const QuizHistory = lazy(() => import('./features/quiz/QuizHistory'))
+const SessionRecap = lazy(() => import('./features/quiz/SessionRecap'))
 const OfflinePollResults = lazy(() => import('./features/offline-poll/OfflinePollResults'))
 const ExamResults = lazy(() => import('./features/exam/ExamResults'))
 const QuizPresent = lazy(() => import('./features/quiz/QuizPresent'))
@@ -384,6 +385,7 @@ function AppRoutes() {
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
         <Route path="/quiz/:id/control" element={<QuizControl />} />
         <Route path="/quiz/:id/history" element={<QuizHistory />} />
+        <Route path="/quiz/:id/recap/:sessionId" element={<SessionRecap />} />
         <Route path="/quiz/:id/offline-results" element={<OfflinePollResults />} />
         <Route path="/quiz/:id/exam-results" element={<ExamResults />} />
         <Route path="/admin/statistics" element={<Statistics />} />

@@ -371,7 +371,15 @@
     "timerOverrideTitle": "Пропустить этот вопрос с таймером досрочно?",
     "untitled": "Без названия",
     "validationError": "Проверьте все обязательные поля перед публикацией",
-    "waitingForParticipants": "Ожидание участников…"
+    "waitingForParticipants": "Ожидание участников…",
+    "viewRecap": "Итоги",
+    "sessionRecapSubtitle": "Итоги сессии — поделитесь, экспортируйте или проверьте перед следующим запуском.",
+    "hardestQuestion": "Сложнейший вопрос",
+    "avgAccuracy": "Средняя точность",
+    "perQuestionAccuracy": "Точность по вопросам",
+    "exportResults": "Экспорт результатов",
+    "totalQuestions": "Вопросы",
+    "viewHistory": "История"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",
@@ -438,7 +446,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "Вы вошли!",
     "othersHere": "{{count}} других здесь",
-    "noPoints": "Нет очков в этом раунде"
+    "noPoints": "Нет очков в этом раунде",
+    "correct": "верных",
+    "yourRank": "ваш ранг",
+    "joinAnotherQuiz": "Присоединиться к другой викторине"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",

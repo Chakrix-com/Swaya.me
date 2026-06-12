@@ -373,7 +373,15 @@
     "timerOverrideTitle": "Passer cette question minutée en avance ?",
     "untitled": "Sans titre",
     "validationError": "Veuillez vérifier tous les champs obligatoires avant de publier",
-    "waitingForParticipants": "En attente que les participants rejoignent…"
+    "waitingForParticipants": "En attente que les participants rejoignent…",
+    "viewRecap": "Récap",
+    "sessionRecapSubtitle": "Récap de session — partagez, exportez ou révisez avant votre prochaine session.",
+    "hardestQuestion": "Question la plus difficile",
+    "avgAccuracy": "Précision moyenne",
+    "perQuestionAccuracy": "Précision par question",
+    "exportResults": "Exporter les résultats",
+    "totalQuestions": "Questions",
+    "viewHistory": "Historique"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -440,7 +448,10 @@
     "yourAnswer": "Your answer",
     "youreIn": "Vous êtes dedans !",
     "othersHere": "{{count}} autres ici",
-    "noPoints": "Aucun point ce tour"
+    "noPoints": "Aucun point ce tour",
+    "correct": "correct",
+    "yourRank": "votre rang",
+    "joinAnotherQuiz": "Rejoindre un autre quiz"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",
