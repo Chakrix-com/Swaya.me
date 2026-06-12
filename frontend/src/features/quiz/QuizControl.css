@@ -196,6 +196,24 @@
   row-gap: 6px;
 }
 
+/* ── Lobby: participant name tags ────────────────────────────────────────── */
+.qc-lobby-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.qc-lobby-name-tag {
+  animation: qc-pop-in 0.3s ease-out;
+}
+
+@keyframes qc-pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
 /* ── Mobile: stack layout ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .quiz-cockpit {

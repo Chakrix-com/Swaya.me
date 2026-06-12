@@ -370,7 +370,8 @@
     "timerOverrideOk": "Ja, fortfahren",
     "timerOverrideTitle": "Diese zeitgesteuerte Frage vorzeitig überspringen?",
     "untitled": "Ohne Titel",
-    "validationError": "Bitte alle Pflichtfelder vor dem Veröffentlichen prüfen"
+    "validationError": "Bitte alle Pflichtfelder vor dem Veröffentlichen prüfen",
+    "waitingForParticipants": "Warten auf Teilnehmer…"
   },
   "audience": {
     "joinQuiz": "Quiz beitreten",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "Geben Sie Ihre Antwort ein (maximal 100 Zeichen)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "Sie sind dabei!",
+    "othersHere": "{{count}} andere hier"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",

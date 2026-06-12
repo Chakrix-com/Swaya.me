@@ -370,7 +370,8 @@
     "timerOverrideOk": "ஆம், தொடர்",
     "timerOverrideTitle": "இந்த நேரக் கட்டுப்படுத்தப்பட்ட கேள்வியை முன்கூட்டியே தவிர்க்கவா?",
     "untitled": "தலைப்பிடப்படாதது",
-    "validationError": "வெளியிடுவதற்கு முன் அனைத்து தேவையான புலங்களையும் சரிபாருங்கள்"
+    "validationError": "வெளியிடுவதற்கு முன் அனைத்து தேவையான புலங்களையும் சரிபாருங்கள்",
+    "waitingForParticipants": "பங்கேற்பாளர்கள் இணைவதற்காக காத்திருக்கிறது…"
   },
   "audience": {
     "joinQuiz": "வினாடி வினாவில் சேரவும்",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "உங்கள் பதிலை உள்ளிடுக (அதிகபட்சம் 100 எழுத்துக்கள்)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "நீங்கள் இணைந்தீர்கள்!",
+    "othersHere": "{{count}} பிறர் இங்கே உள்ளனர்"
   },
   "navigation": {
     "home": "முகப்பு",

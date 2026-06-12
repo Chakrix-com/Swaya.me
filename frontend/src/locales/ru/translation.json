@@ -370,7 +370,8 @@
     "timerOverrideOk": "Да, продолжить",
     "timerOverrideTitle": "Пропустить этот вопрос с таймером досрочно?",
     "untitled": "Без названия",
-    "validationError": "Проверьте все обязательные поля перед публикацией"
+    "validationError": "Проверьте все обязательные поля перед публикацией",
+    "waitingForParticipants": "Ожидание участников…"
   },
   "audience": {
     "joinQuiz": "Присоединиться к викторине",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "Введите ваш ответ (максимум 100 символов)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "Вы вошли!",
+    "othersHere": "{{count}} других здесь"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",

@@ -370,7 +370,8 @@
     "timerOverrideOk": "Sí, continuar",
     "timerOverrideTitle": "¿Saltar esta pregunta temporizada antes de tiempo?",
     "untitled": "Sin título",
-    "validationError": "Revisa todos los campos obligatorios antes de publicar"
+    "validationError": "Revisa todos los campos obligatorios antes de publicar",
+    "waitingForParticipants": "Esperando que los participantes se unan…"
   },
   "audience": {
     "joinQuiz": "Unirse al cuestionario",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "Ingresa tu respuesta (máximo 100 caracteres)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "¡Estás dentro!",
+    "othersHere": "{{count}} otros aquí"
   },
   "dashboard": {
     "readyToLaunch": "Listo para lanzar",

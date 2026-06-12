@@ -370,7 +370,8 @@
     "timerOverrideOk": "હા, ચાલુ રાખો",
     "timerOverrideTitle": "આ સમય-મર્યાદિત પ્રશ્ન વહેલો છોડી દો?",
     "untitled": "શીર્ષક વગરનું",
-    "validationError": "પ્રકાશિત કરતાં પહેલાં તમામ ફરજિયાત ક્ષેત્રો તપાસો"
+    "validationError": "પ્રકાશિત કરતાં પહેલાં તમામ ફરજિયાત ક્ષેત્રો તપાસો",
+    "waitingForParticipants": "સહભાગીઓ જોડાવા માટે રાહ જોઈ રહ્યા છે…"
   },
   "audience": {
     "joinQuiz": "ક્વિઝમાં જોડાઓ",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "તમારો જવાબ દાખલ કરો (મહત્તમ 100 અક્ષરો)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "તમે જોડાઈ ગયા!",
+    "othersHere": "{{count}} અન્ય અહીં છે"
   },
   "navigation": {
     "home": "મુખ્ય",

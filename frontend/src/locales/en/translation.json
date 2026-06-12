@@ -370,7 +370,8 @@
     "timerOverrideOk": "Yes, continue",
     "timerOverrideTitle": "Skip this timed question early?",
     "untitled": "Untitled",
-    "validationError": "Please check all required fields before publishing"
+    "validationError": "Please check all required fields before publishing",
+    "waitingForParticipants": "Waiting for participants to join…"
   },
   "audience": {
     "joinQuiz": "Join Quiz",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "Enter your answer (max 100 characters)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "You're in!",
+    "othersHere": "{{count}} others here"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",

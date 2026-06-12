@@ -59,6 +59,7 @@ export default function QuizControl() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [timerRemaining, setTimerRemaining] = useState(null)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [lobbyParticipants, setLobbyParticipants] = useState([])
 
   useEffect(() => {
     if (id) {
@@ -73,6 +74,20 @@ export default function QuizControl() {
       const interval = setInterval(loadResults, 3000)
       return () => clearInterval(interval)
     }
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+    // Poll participant names during lobby only
+    const loadLobbyParticipants = async () => {
+      try {
+        const r = await sessionAPI.listParticipants(session.id)
+        setLobbyParticipants(r.data.participants || [])
+      } catch (_) {}
+    }
+    loadLobbyParticipants()
+    const iv = setInterval(loadLobbyParticipants, 3000)
+    return () => clearInterval(iv)
   }, [session])
 
   const kbRef = useRef({})
@@ -528,18 +543,32 @@ export default function QuizControl() {
           </Card>
 
         ) : isLobby ? (
-          /* Session created, waiting to start first question */
-          <Card>
-            <Space direction="vertical" align="center" style={{ width: '100%', padding: '24px 0' }}>
-              <Title level={4}>{t('quiz.readyToStartFirst')}</Title>
-              <Text>{t('quiz.clickAdvanceToStart')}</Text>
-              <Space>
+          /* Session created, lobby — participants joining */
+          <Card className="qc-lobby-card">
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Space style={{ justifyContent: 'space-between', width: '100%' }}>
+                <Title level={4} style={{ margin: 0 }}>{t('quiz.readyToStartFirst')}</Title>
                 <Tooltip title={presentImmersiveTooltip}>
-                  <Button type="primary" className="quiz-control-present-btn" icon={<DesktopOutlined />} onClick={handleOpenPresent}>
+                  <Button className="quiz-control-present-btn" icon={<DesktopOutlined />} onClick={handleOpenPresent} size="small">
                     {t('quiz.presentView')} <kbd className="qc-kbd">F5</kbd>
                   </Button>
                 </Tooltip>
               </Space>
+              <Text type="secondary">{t('quiz.clickAdvanceToStart')}</Text>
+              {/* Lobby participant list */}
+              {lobbyParticipants.length > 0 ? (
+                <div className="qc-lobby-names">
+                  {lobbyParticipants.map((p, idx) => (
+                    <Tag key={idx} color="blue" className="qc-lobby-name-tag">
+                      {p.name}
+                    </Tag>
+                  ))}
+                </div>
+              ) : (
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  {t('quiz.waitingForParticipants', { defaultValue: 'Waiting for participants to join…' })}
+                </Text>
+              )}
             </Space>
           </Card>
 

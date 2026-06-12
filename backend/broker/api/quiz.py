@@ -713,6 +713,30 @@ async def end_session(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
+@router.get("/sessions/{session_id}/participants-list")
+async def list_session_participants(
+    session_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Return display names of active participants in a session (host only, lobby use)."""
+    from sqlalchemy import select as sa_select
+    await _assert_host_session_access(db, session_id, current_user)
+    rows = (await db.execute(
+        sa_select(Participant.display_name, Participant.created_at)
+        .where(Participant.session_id == session_id, Participant.is_active == True)
+        .order_by(Participant.created_at.asc())
+    )).all()
+    return {
+        "session_id": session_id,
+        "participants": [
+            {"name": r.display_name or "Anonymous"}
+            for r in rows
+        ],
+        "total": len(rows),
+    }
+
+
 @router.get("/sessions/{session_id}/whiteboard-state", response_model=WhiteboardStateResponse)
 async def get_whiteboard_state(
     session_id: int,

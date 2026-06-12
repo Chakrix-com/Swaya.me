@@ -370,7 +370,8 @@
     "timerOverrideOk": "అవును, కొనసాగించు",
     "timerOverrideTitle": "ఈ సమయ-పరిమిత ప్రశ్నను ముందే దాటిపోవాలా?",
     "untitled": "శీర్షిక లేనిది",
-    "validationError": "ప్రచురించే ముందు అన్ని అవసరమైన ఫీల్డ్‌లను తనిఖీ చేయండి"
+    "validationError": "ప్రచురించే ముందు అన్ని అవసరమైన ఫీల్డ్‌లను తనిఖీ చేయండి",
+    "waitingForParticipants": "పాల్గొనేవారు చేరడానికి వేచి ఉంది…"
   },
   "audience": {
     "joinQuiz": "క్విజ్‌లో చేరండి",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "మీ సమాధానం నమోదు చేయండి (గరిష్టం 100 అక్షరాలు)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "మీరు చేరారు!",
+    "othersHere": "{{count}} ఇతరులు ఇక్కడ ఉన్నారు"
   },
   "navigation": {
     "home": "హోమ్",

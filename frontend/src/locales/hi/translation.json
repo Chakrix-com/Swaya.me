@@ -370,7 +370,8 @@
     "timerOverrideOk": "हाँ, जारी रखें",
     "timerOverrideTitle": "इस समयबद्ध प्रश्न को जल्दी छोड़ें?",
     "untitled": "शीर्षकहीन",
-    "validationError": "प्रकाशित करने से पहले सभी आवश्यक फ़ील्ड की जांच करें"
+    "validationError": "प्रकाशित करने से पहले सभी आवश्यक फ़ील्ड की जांच करें",
+    "waitingForParticipants": "प्रतिभागियों के जुड़ने की प्रतीक्षा में…"
   },
   "audience": {
     "joinQuiz": "क्विज़ में शामिल हों",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "अपना उत्तर दर्ज करें (अधिकतम 100 अक्षर)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "आप शामिल हो गए!",
+    "othersHere": "{{count}} अन्य यहाँ हैं"
   },
   "navigation": {
     "home": "होम",

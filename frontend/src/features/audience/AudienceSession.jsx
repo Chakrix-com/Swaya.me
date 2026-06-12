@@ -475,19 +475,44 @@ export default function AudienceSession() {
             {/* ── Waiting for host / next question ── */}
             {sessionToken && !sessionInvalidated && !currentQuestion && sessionStatus !== 'ended' && sessionStatus !== null && (
               <Card>
+                {sessionStatus === 'created' ? (
+                  /* Lobby: "You're in!" moment */
+                  <Space direction="vertical" align="center" style={{ width: '100%', padding: '8px 0' }} size="middle">
+                    <div style={{ fontSize: 52 }}>✅</div>
+                    <Title level={3} style={{ margin: 0 }}>
+                      {t('audience.youreIn', { defaultValue: "You're in!" })}
+                    </Title>
+                    {results?.quiz_title && (
+                      <Text strong style={{ fontSize: 16, textAlign: 'center' }}>{results.quiz_title}</Text>
+                    )}
+                    <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+                      {displayName}
+                    </Tag>
+                    {results?.total_participants > 0 && (
+                      <Text type="secondary">
+                        {t('audience.othersHere', { count: results.total_participants - 1, defaultValue: `${results.total_participants - 1} others here` })}
+                      </Text>
+                    )}
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                      {t('audience.quizWillStartSoon', { defaultValue: 'The quiz will start soon…' })}
+                    </Text>
+                  </Space>
+                ) : (
+                  /* Between questions */
                   <Space direction="vertical" align="center" style={{ width: '100%' }}>
                     <LoadingOutlined style={{ fontSize: 48 }} />
                     <Title level={3}>
-                      {sessionStatus === 'created' ? t('audience.waiting') : t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
+                      {t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
                     </Title>
                     <Text type="secondary">
-                      {sessionStatus === 'created' ? t('audience.quizWillStartSoon', { defaultValue: 'The quiz will start soon' }) : t('audience.hostPreparingNextQuestion', { defaultValue: 'Host is preparing the next question' })}
+                      {t('audience.hostPreparingNextQuestion', { defaultValue: 'Host is preparing the next question' })}
                     </Text>
                     <Tag color="blue" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}>
                       {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
                     </Tag>
                   </Space>
-                </Card>
+                )}
+              </Card>
               )}
 
             {/* ── Active question ── */}

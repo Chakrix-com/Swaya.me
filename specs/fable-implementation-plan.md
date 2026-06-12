@@ -17,12 +17,12 @@ Update the Status column / checkboxes as work progresses. Keep this file as the 
 | Phase | Theme | Items | Done |
 |---|---|---|---|
 | **P0** | Trust — live-room bugs | 5 | 5/5 ✅ |
-| **P1** | The live loop — host cockpit + participant game | 12 | 4/12 |
+| **P1** | The live loop — host cockpit + participant game | 12 | 5/12 |
 | **P2** | The shop window — home, create, templates | 8 | 0/8 |
 | **P3** | Coherence — design system + results hub | 9 | 0/9 |
 | **P4** | Reach — PWA, self-serve, workspaces | 7 | 0/7 |
 | **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 0/6 |
-| | **Total** | **47** | **9/47** |
+| | **Total** | **47** | **10/47** |
 
 ---
 
@@ -335,7 +335,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - **Accept:** Counter updates while participants answer (Selenium two-window test).
 - **Size:** M
 
-### P1-4 ⬜ Pre-session lobby moment
+### P1-4 ✅ Pre-session lobby moment
 - Names pop in as they join (host side), participant lobby shows "You're in — N others here" + activity title/host instead of bare spinner. Optional warm-up toggle (emoji wall) — stretch, may defer.
 - **Files:** `QuizControl.jsx`, `AudienceSession.jsx`.
 - **Size:** M

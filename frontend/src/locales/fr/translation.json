@@ -372,7 +372,8 @@
     "timerOverrideOk": "Oui, continuer",
     "timerOverrideTitle": "Passer cette question minutée en avance ?",
     "untitled": "Sans titre",
-    "validationError": "Veuillez vérifier tous les champs obligatoires avant de publier"
+    "validationError": "Veuillez vérifier tous les champs obligatoires avant de publier",
+    "waitingForParticipants": "En attente que les participants rejoignent…"
   },
   "audience": {
     "joinQuiz": "Rejoindre le quiz",
@@ -436,7 +437,9 @@
     "enterWordCloudAnswer": "Entrez votre réponse (100 caractères max)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "Vous êtes dedans !",
+    "othersHere": "{{count}} autres ici"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",

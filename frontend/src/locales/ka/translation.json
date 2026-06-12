@@ -370,7 +370,8 @@
     "timerOverrideOk": "ಹೌದು, ಮುಂದುವರೆಯಿರಿ",
     "timerOverrideTitle": "ಈ ಸಮಯ-ನಿರ್ಬಂಧಿತ ಪ್ರಶ್ನೆಯನ್ನು ಮುಂಚಿತವಾಗಿ ಬಿಟ್ಟುಬಿಡಬೇಕೇ?",
     "untitled": "ಶೀರ್ಷಿಕೆ ಇಲ್ಲ",
-    "validationError": "ಪ್ರಕಟಿಸುವ ಮೊದಲು ಎಲ್ಲಾ ಅಗತ್ಯ ಕ್ಷೇತ್ರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ"
+    "validationError": "ಪ್ರಕಟಿಸುವ ಮೊದಲು ಎಲ್ಲಾ ಅಗತ್ಯ ಕ್ಷೇತ್ರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
+    "waitingForParticipants": "ಭಾಗವಹಿಸುವವರಿಗಾಗಿ ಕಾಯುತ್ತಿದೆ…"
   },
   "audience": {
     "joinQuiz": "ಪ್ರಶ್ನೋತ್ತರಿಗೆ ಸೇರಿ",
@@ -434,7 +435,9 @@
     "enterWordCloudAnswer": "ನಿಮ್ಮ ಉತ್ತರ ನಮೂದಿಸಿ (ಗರಿಷ್ಠ 100 ಅಕ್ಷರಗಳು)",
     "lockedIn": "Locked in!",
     "waitingForReveal": "Waiting for the host to reveal the answer…",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "youreIn": "ನೀವು ಸೇರಿದ್ದೀರಿ!",
+    "othersHere": "{{count}} ಇತರರು ಇಲ್ಲಿದ್ದಾರೆ"
   },
   "navigation": {
     "home": "ಮುಖ್ಯಪೃಷ್ಠ",
