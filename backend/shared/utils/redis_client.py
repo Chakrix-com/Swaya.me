@@ -88,6 +88,18 @@ class RedisClient:
             await self.connect()
         return await self.client.incrby(key, amount)
 
+    async def publish(self, channel: str, message: str) -> int:
+        """Publish message to a Redis pub/sub channel. Returns subscriber count."""
+        if not self.client:
+            await self.connect()
+        return await self.client.publish(channel, message)
+
+    def pubsub(self):
+        """Return a new pub/sub handle (caller must connect and close it)."""
+        if not self.client:
+            raise RuntimeError("Redis not connected")
+        return self.client.pubsub()
+
 
 # Global Redis client instance
 redis_client = RedisClient()

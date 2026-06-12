@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from 'react'
+import { useState, useEffect, useRef, useContext, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
+import useSessionChannel from '../../hooks/useSessionChannel'
 import { useTranslation } from 'react-i18next'
 import { clearSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
@@ -71,6 +72,33 @@ export default function AudienceSession() {
   const prevRankRef = useRef(null)
   const lastQuestionIdRef = useRef(null)
   const pollingIntervalRef = useRef(null)
+  const sseConnectedRef = useRef(false)
+
+  // Restart the polling interval at the given ms rate
+  const resetPollInterval = useCallback((ms) => {
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
+    pollingIntervalRef.current = setInterval(loadResults, ms)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // SSE event handler — fires on every server push
+  const handleSseEvent = useCallback((event) => {
+    if (event.type === 'sse_unavailable') {
+      if (sseConnectedRef.current) {
+        sseConnectedRef.current = false
+        resetPollInterval(2000)  // SSE lost — back to fast polling
+      }
+      return
+    }
+    // First successful SSE frame: slow the safety-net poll to 5 s
+    if (!sseConnectedRef.current) {
+      sseConnectedRef.current = true
+      resetPollInterval(5000)
+    }
+    // Trigger an immediate fetch so the UI reflects the push right away
+    loadResults()
+  }, [resetPollInterval]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useSessionChannel(sessionId, sessionToken, handleSseEvent)
 
   useEffect(() => {
     if (sessionToken && sessionId) {

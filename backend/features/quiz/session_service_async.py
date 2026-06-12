@@ -102,6 +102,15 @@ class SessionServiceAsync:
             payload,
             expire=86400,
         )
+        # Publish SSE event so connected clients skip their next poll
+        try:
+            import json as _json
+            await self.redis.publish(
+                f"session:{session.id}:events",
+                _json.dumps({"type": "state", "data": payload}),
+            )
+        except Exception:
+            pass
 
     async def _cancel_question_timeout(self, session_id: int) -> None:
         scheduler = stats_scheduler.scheduler
@@ -657,7 +666,27 @@ class SessionServiceAsync:
             },
             expire=86400  # 24 hours
         )
-        
+        # Write initial audience state so SSE subscribers see lobby state immediately
+        q_count_row = await db.execute(
+            select(func.count(Question.id)).where(Question.quiz_id == quiz_id)
+        )
+        q_count = q_count_row.scalar() or 0
+        await self.redis.set_json(
+            f"session:{session.id}:audience_state",
+            {
+                "session_id": session.id,
+                "quiz_title": quiz.title,
+                "quiz_type": quiz.quiz_type.value,
+                "scoring_enabled": quiz.quiz_type != QuizType.POLL,
+                "total_questions": q_count,
+                "status": "created",
+                "current_question_index": -1,
+                "leaderboard_visible": quiz.quiz_type != QuizType.POLL,
+                "current_question": None,
+            },
+            expire=86400,
+        )
+
         return SessionResponse(
             id=session.id,
             quiz_id=quiz.id,
@@ -1056,6 +1085,15 @@ class SessionServiceAsync:
         session.leaderboard_visible = not session.leaderboard_visible
         await db.commit()
         await db.refresh(session)
+
+        try:
+            import json as _json
+            await self.redis.publish(
+                f"session:{session.id}:events",
+                _json.dumps({"type": "leaderboard_toggle", "visible": session.leaderboard_visible}),
+            )
+        except Exception:
+            pass
 
         return await self._to_session_response(db, session)
 
