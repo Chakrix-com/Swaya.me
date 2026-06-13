@@ -21,6 +21,7 @@ import {
   UnorderedListOutlined,
   AppstoreAddOutlined,
   TrophyOutlined,
+  GithubOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -308,6 +309,11 @@ function AuthenticatedLayout({ children }) {
         ),
       }}
       actionsRender={() => [
+        <Tooltip key="github" title="View source on GitHub">
+          <a href="https://github.com/Chakrix-com/Swaya.me" target="_blank" rel="noopener noreferrer" style={{ fontSize: 18, color: 'inherit', display: 'flex', alignItems: 'center' }}>
+            <GithubOutlined />
+          </a>
+        </Tooltip>,
         <Tooltip key="theme" title={t('tooltip.themePicker', 'Choose a UI theme')}><span><ThemePicker /></span></Tooltip>,
         <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
       ]}
