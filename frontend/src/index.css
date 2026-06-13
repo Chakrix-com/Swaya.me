@@ -176,6 +176,10 @@ canvas {
   --sw-card:            #FFFFFF;
   --sw-border:          #E5E7EB;
   --sw-hover:           #F8FAFC;
+  --sw-mode-quiz:       #4F46E5;
+  --sw-mode-exam:       #059669;
+  --sw-mode-poll:       #EA580C;
+  --sw-mode-opoll:      #DB2777;
   --sw-tile-quiz-bg:    #EEF2FF;
   --sw-tile-quiz-fg:    #4F46E5;
   --sw-tile-exam-bg:    #ECFDF5;

@@ -691,14 +691,16 @@ function CompactLeaderboard({ entries, total, onExpand, t }) {
 }
 
 /* ── Sidebar ─────────────────────────────────────────── */
-function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll, t }) {
+function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, onExpandLeaderboard, isPoll, isExam, modeAccent, t }) {
   const [qrModalOpen, setQrModalOpen] = useState(false)
 
   return (
     <aside className="pv-sidebar">
-      <div className="pv-sidebar-title">
+      <div className="pv-sidebar-title" style={{ borderBottom: `2px solid ${modeAccent}66` }}>
         <span>{quizTitle}</span>
-        <BetaBadge />
+        <Tag style={{ background: `${modeAccent}22`, borderColor: `${modeAccent}55`, color: modeAccent, fontSize: 11, lineHeight: 1.4 }}>
+          {isExam ? 'Exam' : isPoll ? 'Poll' : 'Quiz'}
+        </Tag>
       </div>
 
       {joinCode && (
@@ -1217,6 +1219,8 @@ export default function QuizPresent() {
         leaderboard={liveLeaderboard}
         onExpandLeaderboard={() => setShowLbModal(true)}
         isPoll={isPoll}
+        isExam={results?.quiz_type === 'exam'}
+        modeAccent={results?.quiz_type === 'exam' ? '#059669' : results?.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'}
         t={t}
       />
 

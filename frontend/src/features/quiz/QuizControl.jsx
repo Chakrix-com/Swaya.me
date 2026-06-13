@@ -336,6 +336,8 @@ export default function QuizControl() {
     ? leaderboard
     : (leaderboard ? { ...leaderboard, entries: [] } : null)
   const isPoll = (results?.quiz_type || quiz?.quiz_type) === 'poll'
+  const isExam = (results?.quiz_type || quiz?.quiz_type) === 'exam'
+  const modeAccent = isExam ? '#059669' : isPoll ? '#EA580C' : '#4F46E5'
   const isWordCloudQuestion = ['word_cloud', 'one_word'].includes(currentQuestion?.question_type)
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
@@ -498,10 +500,10 @@ export default function QuizControl() {
       <div className="quiz-cockpit-stage">
 
         {/* Title row */}
-        <div className="qc-stage-title">
+        <div className="qc-stage-title" style={{ borderLeft: `4px solid ${modeAccent}`, paddingLeft: 12 }}>
           <Space>
-            <Tag color={isPoll ? 'purple' : 'blue'} style={{ margin: 0 }}>
-              {isPoll ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
+            <Tag style={{ margin: 0, background: `${modeAccent}18`, borderColor: `${modeAccent}55`, color: modeAccent }}>
+              {isExam ? t('exam.typeLabel', { defaultValue: 'Exam' }) : isPoll ? t('quiz.poll', { defaultValue: 'Poll' }) : t('quiz.quizTypeLabel', { defaultValue: 'Quiz' })}
             </Tag>
             <Title level={4} style={{ margin: 0 }}>{quiz.title}</Title>
           </Space>

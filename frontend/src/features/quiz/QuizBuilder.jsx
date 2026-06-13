@@ -2484,9 +2484,11 @@ export default function QuizBuilder() {
                                  <div><Text strong>{t('quiz.quizDescription')}: </Text><Text>{importData.description}</Text></div>
                                )}
                                <Space size="middle">
-                                 <Tag color={importData.quiz_type === 'exam' ? 'volcano' : importData.quiz_type === 'offline_poll' ? 'magenta' : importData.quiz_type === 'poll' ? 'purple' : 'blue'}>
-                                   {importData.quiz_type === 'exam' ? t('exam.typeLabel') : importData.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : importData.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
-                                 </Tag>
+                                 {(() => { const c = importData.quiz_type === 'exam' ? '#059669' : importData.quiz_type === 'offline_poll' ? '#DB2777' : importData.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'; return (
+                                   <Tag style={{ background: `${c}15`, borderColor: `${c}50`, color: c }}>
+                                     {importData.quiz_type === 'exam' ? t('exam.typeLabel') : importData.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : importData.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+                                   </Tag>
+                                 )})()}
                                  <Tag color="blue">{importData.questions?.length} {t('quiz.questions')}</Tag>
                                  {importData.quiz_type === 'exam' && importData.duration_minutes && (
                                    <Tag color="orange">{importData.duration_minutes} {t('exam.timeLimitMinutes')}</Tag>
@@ -2560,9 +2562,14 @@ export default function QuizBuilder() {
               <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
                 {getQuizStatusTranslation(quiz.status)}
               </Tag>
-              <Tag color={quiz.quiz_type === 'exam' ? 'volcano' : quiz.quiz_type === 'offline_poll' ? 'magenta' : quiz.quiz_type === 'poll' ? 'purple' : 'blue'}>
-                {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
-              </Tag>
+              {(() => {
+                const modeColor = quiz.quiz_type === 'exam' ? '#059669' : quiz.quiz_type === 'offline_poll' ? '#DB2777' : quiz.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'
+                return (
+                  <Tag style={{ background: `${modeColor}15`, borderColor: `${modeColor}50`, color: modeColor }}>
+                    {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+                  </Tag>
+                )
+              })()}
             </Space>
           )}
 
