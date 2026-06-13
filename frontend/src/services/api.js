@@ -68,6 +68,7 @@ export const quizAPI = {
   unarchive: (id) => api.post(`/quizzes/${id}/unarchive`),
   duplicate: (id) => api.post(`/quizzes/${id}/duplicate`),
   setTemplate: (id, data) => api.post(`/quizzes/${id}/template`, data),
+  listPublicTemplates: () => api.get('/quizzes/public-templates'),
   listTemplates: () => api.get('/quizzes/template-library'),
   listTemplatesLegacy: () => api.get('/quizzes/templates'),
   useTemplate: (templateQuizId) => api.post(`/quizzes/template-library/${templateQuizId}/use`),

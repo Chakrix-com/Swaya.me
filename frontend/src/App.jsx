@@ -51,6 +51,7 @@ const ResetPassword = lazy(() => import('./features/auth/ResetPassword'))
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'))
 const Activities = lazy(() => import('./features/activities/Activities'))
 const TemplateGallery = lazy(() => import('./features/templates/TemplateGallery'))
+const ExplorePage = lazy(() => import('./features/explore/ExplorePage'))
 const ResultsHub = lazy(() => import('./features/results/ResultsHub'))
 const UserPlans = lazy(() => import('./features/dashboard/UserPlans'))
 const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
@@ -356,6 +357,18 @@ function AppRoutes() {
     )
   }
 
+  // Explore page — public template gallery, no auth
+  if (location.pathname.startsWith('/explore')) {
+    return (
+      <Suspense fallback={<div style={{ padding: 40, textAlign: 'center' }}><Spin size="large" /></div>}>
+        <Routes>
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="*" element={<Navigate to="/explore" />} />
+        </Routes>
+      </Suspense>
+    )
+  }
+
   // Join, session, present, offline poll, and exam routes are always public
   if (
     location.pathname.startsWith('/join') ||
@@ -404,6 +417,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/activities" element={<Activities />} />
         <Route path="/templates" element={<TemplateGallery />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/results" element={<ResultsHub />} />
         <Route path="/plans" element={<UserPlans />} />
         <Route path="/quiz/new" element={<QuizBuilder />} />

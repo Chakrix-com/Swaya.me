@@ -2235,5 +2235,16 @@
     "statusActive": "Live",
     "statusCreated": "Open",
     "empty": "No sessions found. Run a quiz or poll to see results here."
+  },
+  "explore": {
+    "heroTitle": "Browse ready-to-run activities",
+    "heroSubtitle": "Pick a template, sign up for free, and run it with your audience in minutes.",
+    "useTemplate": "Use this template",
+    "signIn": "Sign in",
+    "getStarted": "Get started free",
+    "searchPlaceholder": "Search templates…",
+    "noResults": "No templates found",
+    "footerCta": "Create your own activities for free.",
+    "signUpFree": "Sign up →"
   }
 }

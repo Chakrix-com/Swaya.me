@@ -257,6 +257,15 @@ async def list_templates(
     return await service.list_available_templates(db, current_user)
 
 
+@router.get("/public-templates", response_model=List[TemplateQuizListItemResponse])
+async def list_public_templates(
+    db: AsyncSession = Depends(get_async_db),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """Public endpoint — lists globally-scoped templates without auth (explore page)."""
+    return await service.list_public_templates(db)
+
+
 @router.get("/template-library", response_model=List[TemplateQuizListItemResponse])
 async def list_template_library(
     db: AsyncSession = Depends(get_async_db),

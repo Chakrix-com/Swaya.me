@@ -551,6 +551,35 @@ class QuizBuilderServiceAsync:
         await db.refresh(quiz)
         return self._to_quiz_response(quiz)
 
+    async def list_public_templates(
+        self,
+        db: AsyncSession,
+    ) -> List[TemplateQuizListItemResponse]:
+        """List globally-scoped templates — no auth required (explore page)."""
+        result = await db.execute(
+            select(Quiz)
+            .options(selectinload(Quiz.questions))
+            .where(Quiz.is_template == True, Quiz.template_scope == TemplateScope.GLOBAL)
+            .order_by(Quiz.template_use_count.desc(), Quiz.id)
+        )
+        templates = result.scalars().all()
+        return [
+            TemplateQuizListItemResponse(
+                id=q.id,
+                title=q.title,
+                description=q.description,
+                quiz_type=q.quiz_type,
+                status=q.status,
+                question_count=len(q.questions),
+                template_scope=q.template_scope,
+                tenant_id=q.tenant_id,
+                created_at=q.created_at,
+                template_category=q.template_category,
+                template_use_count=q.template_use_count or 0,
+            )
+            for q in templates
+        ]
+
     async def list_available_templates(
         self,
         db: AsyncSession,

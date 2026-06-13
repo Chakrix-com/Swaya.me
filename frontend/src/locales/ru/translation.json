@@ -2232,5 +2232,16 @@
     "statusActive": "В эфире",
     "statusCreated": "Открыто",
     "empty": "Сессии не найдены. Запустите викторину или опрос, чтобы увидеть результаты здесь."
+  },
+  "explore": {
+    "heroTitle": "Browse ready-to-run activities",
+    "heroSubtitle": "Pick a template, sign up for free, and run it with your audience in minutes.",
+    "useTemplate": "Use this template",
+    "signIn": "Sign in",
+    "getStarted": "Get started free",
+    "searchPlaceholder": "Search templates…",
+    "noResults": "No templates found",
+    "footerCta": "Create your own activities for free.",
+    "signUpFree": "Sign up →"
   }
 }
