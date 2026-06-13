@@ -161,10 +161,12 @@ def create_application() -> FastAPI:
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
     
-    # Mount static files for uploads (must be after API routes)
+    # Mount only safe public subdirectories — proctoring/ is served via authenticated API endpoint
     uploads_path = Path(settings.app.uploads_base_dir)
-    if uploads_path.exists():
-        app.mount("/api/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+    for subdir, mount_name in (("images", "uploads_images"), ("temp", "uploads_temp")):
+        sub_path = uploads_path / subdir
+        sub_path.mkdir(parents=True, exist_ok=True)
+        app.mount(f"/api/uploads/{subdir}", StaticFiles(directory=str(sub_path)), name=mount_name)
 
     # Root health check
     @app.get("/health")

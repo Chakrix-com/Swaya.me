@@ -1019,9 +1019,21 @@ async def get_word_cloud_results(
     question_id: int,
     session_id: int,
     db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Get word cloud results for a question"""
+    # Verify the session belongs to the calling user's tenant
+    session_result = await db.execute(
+        select(QuizSession).where(QuizSession.id == session_id)
+    )
+    session = session_result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    quiz_result = await db.execute(select(Quiz).where(Quiz.id == session.quiz_id))
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     try:
         return await service.get_word_cloud_results(db, session_id, question_id)
     except QuestionNotFoundError as e:

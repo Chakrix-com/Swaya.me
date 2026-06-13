@@ -2,7 +2,7 @@
 Proctoring API — participant and admin endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, Query, File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
@@ -12,7 +12,7 @@ import shutil, os, json
 from core.config.settings import settings
 from persistence.database_async import get_async_db
 from shared.utils.redis_client import redis_client, get_redis, RedisClient
-from core.auth.dependencies import get_current_user, CurrentUser, require_super_admin
+from core.auth.dependencies import get_current_user, CurrentUser, require_admin, require_super_admin
 from persistence.models.core import UserRole
 from persistence.models.quiz import Quiz, QuizType
 from persistence.models.core import Tenant
@@ -362,7 +362,7 @@ async def list_snapshots(
         except (IndexError, ValueError):
             ts_ms = 0
         snapshots.append({
-            "url": f"/api/uploads/proctoring/{quiz_id}/{participant_id}/{f.name}",
+            "url": f"/api/v1/proctoring/snapshot-file/{quiz_id}/{participant_id}/{f.name}",
             "filename": f.name,
             "timestamp_ms": ts_ms,
         })
@@ -370,14 +370,59 @@ async def list_snapshots(
     return {"snapshots": snapshots}
 
 
+@router.get("/snapshot-file/{quiz_id}/{participant_id}/{filename}")
+async def get_snapshot_file(
+    quiz_id: int,
+    participant_id: int,
+    filename: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Admin — serve a webcam snapshot after verifying tenant ownership."""
+    result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
+    quiz = result.scalar_one_or_none()
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    snap_dir = (Path(settings.app.uploads_base_dir) / "proctoring" / str(quiz_id) / str(participant_id)).resolve()
+    file_path = (snap_dir / filename).resolve()
+    try:
+        file_path.relative_to(snap_dir)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+
+    return FileResponse(path=str(file_path), media_type="image/jpeg")
+
+
+async def _verify_participant_tenant(session_token: str, current_user: CurrentUser, db: AsyncSession):
+    """Verify that the participant's quiz belongs to the calling admin's tenant."""
+    from persistence.models.quiz import Participant, QuizSession
+    part_result = await db.execute(
+        select(Participant).where(Participant.session_token == session_token)
+    )
+    participant = part_result.scalar_one_or_none()
+    if not participant:
+        raise HTTPException(status_code=404, detail="Session not found")
+    sess_result = await db.execute(
+        select(Quiz).join(QuizSession, QuizSession.quiz_id == Quiz.id).where(QuizSession.id == participant.session_id)
+    )
+    quiz = sess_result.scalar_one_or_none()
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
 @router.post("/lock/{session_token}")
 async def lock_session(
     session_token: str,
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(require_admin),
     db: AsyncSession = Depends(get_async_db),
     redis: RedisClient = Depends(get_redis)
 ):
     """Admin — manually lock a participant session."""
+    await _verify_participant_tenant(session_token, current_user, db)
     await svc.lock_session(session_token, "ADMIN_LOCK", db, redis)
     await db.commit()
     return {"ok": True}
@@ -386,11 +431,12 @@ async def lock_session(
 @router.post("/unlock/{session_token}")
 async def unlock_session(
     session_token: str,
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(require_admin),
     db: AsyncSession = Depends(get_async_db),
     redis: RedisClient = Depends(get_redis)
 ):
     """Admin — unlock a participant session."""
+    await _verify_participant_tenant(session_token, current_user, db)
     await svc.unlock_session(session_token, db, redis)
     return {"ok": True}
 

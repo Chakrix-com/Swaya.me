@@ -2,6 +2,7 @@
 Excel Import/Export Service - Logic for handling bulk quiz data via XLSX
 """
 import io
+from shared.utils.html_sanitizer import sanitize_html, sanitize_plain
 from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any, Optional
@@ -242,9 +243,9 @@ class ExcelImportService:
             question = Question(
                 quiz_id=quiz.id,
                 question_type=q_type,
-                text=q["text"],
+                text=sanitize_html(q["text"]),
                 order=idx,
-                options=db_options,
+                options=[sanitize_plain(o) for o in db_options],
                 correct_answer_index=correct_index,
                 points=float(q["points"] or 1),
                 negative_points=float(q["neg_marks"] or 0),

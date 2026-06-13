@@ -5,7 +5,7 @@ All operations are async. Public endpoints do not require authentication.
 import asyncio
 import logging
 import os
-import random
+import html as _html
 import secrets
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -155,15 +155,17 @@ async def request_exam_otp(
     if count > 3:
         raise HTTPException(status_code=429, detail="Too many OTP requests. Please wait 10 minutes.")
 
-    otp = str(random.randint(100000, 999999))
+    otp = str(secrets.randbelow(900000) + 100000)
     otp_key = f"exam_otp:{slug}:{email_lower}"
     await redis.set_json(otp_key, {"otp": otp, "display_name": display_name}, expire=600)
 
+    safe_name = _html.escape(display_name)
+    safe_title = _html.escape(quiz.title)
     html_body = f"""
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
       <h2 style="color:#1677ff">Your Exam OTP</h2>
-      <p>Hi {display_name},</p>
-      <p>Use the code below to start your exam <strong>{quiz.title}</strong>:</p>
+      <p>Hi {safe_name},</p>
+      <p>Use the code below to start your exam <strong>{safe_title}</strong>:</p>
       <div style="font-size:36px;font-weight:bold;letter-spacing:10px;text-align:center;
                   padding:20px;background:#f5f5f5;border-radius:8px;margin:20px 0">
         {otp}
@@ -172,7 +174,7 @@ async def request_exam_otp(
     </div>
     """
     await send_email(
-        subject=f"Your exam OTP — {quiz.title}",
+        subject=f"Your exam OTP — {safe_title}",
         recipients=[email],
         html_body=html_body,
     )
@@ -998,9 +1000,10 @@ async def send_results_email(quiz_id: int) -> None:
         frontend_url = os.getenv('FRONTEND_URL', 'https://www.swaya.me')
         results_url = f"{frontend_url}/quiz/{quiz_id}/exam-results"
 
+        safe_title = _html.escape(quiz.title)
         html_body = f"""
         <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto">
-          <h2>Exam Results: {quiz.title}</h2>
+          <h2>Exam Results: {safe_title}</h2>
           <p>
             <strong>Total started:</strong> {results.total_started}<br>
             <strong>Completed:</strong> {results.total_completed}<br>
@@ -1013,7 +1016,7 @@ async def send_results_email(quiz_id: int) -> None:
         </div>
         """
         await send_email(
-            subject=f"Exam Results: {quiz.title}",
+            subject=f"Exam Results: {safe_title}",
             recipients=[quiz.exam_results_email],
             html_body=html_body,
         )
