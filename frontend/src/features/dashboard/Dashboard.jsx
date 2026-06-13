@@ -133,6 +133,99 @@ const TYPE_TAG = {
 
 const TEMPLATE_CACHE_KEY = 'templateQuizIds'
 
+// ── Folder tree node (recursive) ─────────────────────────────────────────────
+function FolderTreeNode({ node, selectedFolderId, onSelect, onNewSubfolder, onRename, onDelete, onShare, depth = 0 }) {
+  const [open, setOpen] = useState(depth === 0)
+  const isActive = selectedFolderId === node.id
+  const hasChildren = node.children?.length > 0
+  const isShared = !!node.is_shared_to_me
+
+  const folderMenu = isShared ? [] : [
+    { key: 'rename', label: 'Rename / Move', icon: <EditOutlined />, onClick: (e) => { e.domEvent?.stopPropagation?.(); onRename(node) } },
+    { key: 'subfolder', label: 'New subfolder', icon: <FolderAddOutlined />, onClick: (e) => { e.domEvent?.stopPropagation?.(); onNewSubfolder(node.id) } },
+    { key: 'share', label: 'Share', icon: <ShareAltOutlined />, onClick: (e) => { e.domEvent?.stopPropagation?.(); onShare(node) } },
+    { type: 'divider' },
+    {
+      key: 'delete',
+      label: (
+        <Popconfirm
+          title="Delete this folder?"
+          description="Activities inside move to the parent or root."
+          onConfirm={() => onDelete(node)}
+          okText="Delete"
+          okButtonProps={{ danger: true }}
+          cancelText="Cancel"
+          onClick={e => e.stopPropagation()}
+        >
+          <span style={{ color: '#ff4d4f' }}>
+            <DeleteOutlined style={{ marginRight: 6 }} />Delete
+          </span>
+        </Popconfirm>
+      ),
+    },
+  ]
+
+  return (
+    <div className="folder-node">
+      <div
+        className={`folder-node-row${isActive ? ' active' : ''}`}
+        onClick={() => { onSelect(node.id); if (hasChildren) setOpen(o => !o) }}
+      >
+        {hasChildren ? (
+          <span style={{ fontSize: 10, opacity: 0.5, width: 10, flexShrink: 0 }}>{open ? '▾' : '▸'}</span>
+        ) : (
+          <span style={{ width: 10, flexShrink: 0 }} />
+        )}
+        {isShared
+          ? <FolderOpenOutlined style={{ fontSize: 13, color: 'var(--sw-info)', flexShrink: 0 }} />
+          : <FolderOutlined style={{ fontSize: 13, flexShrink: 0 }} />
+        }
+        <span className="folder-node-label">{node.name}</span>
+        {isShared && (
+          <Tag color="blue" style={{ fontSize: 10, padding: '0 3px', lineHeight: '16px', flexShrink: 0 }}>shared</Tag>
+        )}
+        <span className="folder-node-actions" onClick={e => e.stopPropagation()}>
+          {!isShared && (
+            <Tooltip title="New subfolder">
+              <Button
+                type="text" size="small"
+                icon={<FolderAddOutlined />}
+                onClick={(e) => { e.stopPropagation(); onNewSubfolder(node.id) }}
+                style={{ padding: '0 3px', height: 20, color: 'var(--sw-text3)' }}
+              />
+            </Tooltip>
+          )}
+          <Dropdown menu={{ items: folderMenu }} trigger={['click']} onClick={e => e.stopPropagation()}>
+            <Button
+              type="text" size="small"
+              icon={<MoreOutlined />}
+              style={{ padding: '0 3px', height: 20, color: 'var(--sw-text3)' }}
+            />
+          </Dropdown>
+        </span>
+      </div>
+
+      {hasChildren && open && (
+        <div className="folder-children">
+          {node.children.map(child => (
+            <FolderTreeNode
+              key={child.id}
+              node={child}
+              selectedFolderId={selectedFolderId}
+              onSelect={onSelect}
+              onNewSubfolder={onNewSubfolder}
+              onRename={onRename}
+              onDelete={onDelete}
+              onShare={onShare}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -177,6 +270,7 @@ function Dashboard() {
   const [shareFolderSelectedUserIds, setShareFolderSelectedUserIds] = useState([])
   const [shareFolderCanEdit, setShareFolderCanEdit] = useState(false)
   const [tenantUsers, setTenantUsers] = useState([])
+  const [shareFolderName, setShareFolderName] = useState('')
 
   useEffect(() => {
     loadQuizzes()
@@ -294,12 +388,14 @@ function Dashboard() {
     }
   }
 
-  const handleDeleteFolder = async () => {
-    if (!selectedFolderId) return
+  // targetFolderId is passed directly from the tree node so we don't depend on URL state
+  const handleDeleteFolder = async (targetFolderId) => {
+    const fid = targetFolderId ?? selectedFolderId
+    if (!fid) return
     try {
-      await quizAPI.deleteFolder(selectedFolderId)
+      await quizAPI.deleteFolder(fid)
       message.success(t('dashboard.folderDeleted', { defaultValue: 'Folder deleted' }))
-      setSearchParams({}, { replace: true })
+      if (selectedFolderId === fid) setSearchParams({}, { replace: true })
       await loadFolders()
       await loadQuizzes()
     } catch (e) {
@@ -307,20 +403,26 @@ function Dashboard() {
     }
   }
 
-  const openRenameFolderModal = () => {
-    if (!selectedFolderId || !selectedFolderName) return
-    renameFolderForm.setFieldsValue({ name: selectedFolderName, parent_id: selectedFolderParentId ?? undefined })
+  const openRenameFolderModal = (node) => {
+    // node can be passed from tree click, or fall back to currently selected folder
+    const name = node?.name ?? selectedFolderName
+    const parentId = node?.parent_id ?? selectedFolderParentId ?? undefined
+    const fid = node?.id ?? selectedFolderId
+    if (!fid || !name) return
+    // store which folder we're editing in the form so handleRenameFolder can read it
+    renameFolderForm.setFieldsValue({ name, parent_id: parentId ?? undefined, _folderId: fid })
     setRenameFolderModalOpen(true)
   }
 
   const handleRenameFolder = async () => {
-    if (!selectedFolderId) return
     try {
       const values = await renameFolderForm.validateFields()
       setRenameFolderSubmitting(true)
+      const fid = values._folderId ?? selectedFolderId
+      if (!fid) return
       const payload = { name: values.name }
       if ('parent_id' in values) payload.parent_id = values.parent_id ?? null
-      await quizAPI.updateFolder(selectedFolderId, payload)
+      await quizAPI.updateFolder(fid, payload)
       message.success('Folder updated')
       setRenameFolderModalOpen(false)
       await loadFolders()
@@ -333,13 +435,16 @@ function Dashboard() {
     }
   }
 
-  const openShareFolderModal = async () => {
-    if (!selectedFolderId) return
+  const openShareFolderModal = async (node) => {
+    const fid = node?.id ?? selectedFolderId
+    if (!fid) return
+    if (node?.id && node.id !== selectedFolderId) setSearchParams({ folder: node.id }, { replace: true })
+    setShareFolderName(node?.name ?? selectedFolderName ?? '')
     setShareFolderModalOpen(true)
     setShareFolderLoading(true)
     try {
       const [sharesRes, usersRes] = await Promise.all([
-        quizAPI.getFolderShares(selectedFolderId),
+        quizAPI.getFolderShares(fid),
         authAPI.getTenantUsers(),
       ])
       const currentShares = sharesRes.data || []
@@ -355,10 +460,11 @@ function Dashboard() {
   }
 
   const handleSaveFolderShares = async () => {
-    if (!selectedFolderId) return
+    const fid = selectedFolderId
+    if (!fid) return
     setShareFolderLoading(true)
     try {
-      await quizAPI.updateFolderShares(selectedFolderId, {
+      await quizAPI.updateFolderShares(fid, {
         user_ids: shareFolderSelectedUserIds,
         can_edit: shareFolderCanEdit,
       })
@@ -1179,56 +1285,6 @@ function Dashboard() {
                 Status: {statusFilter}
               </Tag>
             )}
-            {selectedFolderId && (
-              <Space size={4}>
-                <Tag
-                  closable
-                  onClose={() => setSearchParams({}, { replace: true })}
-                  style={{ background: '#FFF7ED', color: C.orange, border: 'none', borderRadius: 8, fontSize: 12 }}
-                >
-                  <FolderFilled style={{ marginRight: 4 }} />
-                  {selectedFolderName}
-                  {selectedFolderIsSharedToMe && <Tag color="blue" style={{ marginLeft: 6, fontSize: 10, padding: '0 4px' }}>Shared</Tag>}
-                </Tag>
-                {!selectedFolderIsSharedToMe && (
-                  <Dropdown
-                    trigger={['click']}
-                    menu={{
-                      items: [
-                        { key: 'rename', label: 'Rename', icon: <EditOutlined />, onClick: openRenameFolderModal },
-                        { key: 'share', label: 'Share with teammates', icon: <ShareAltOutlined />, onClick: openShareFolderModal },
-                        { type: 'divider' },
-                        {
-                          key: 'delete',
-                          label: (
-                            <Popconfirm
-                              title="Delete this folder?"
-                              description="Activities inside will move to the parent or root."
-                              onConfirm={handleDeleteFolder}
-                              okText="Delete"
-                              okButtonProps={{ danger: true }}
-                              cancelText="Cancel"
-                            >
-                              <span style={{ color: '#ff4d4f' }}><DeleteOutlined style={{ marginRight: 6 }} />Delete folder</span>
-                            </Popconfirm>
-                          ),
-                        },
-                      ],
-                    }}
-                  >
-                    <Button size="small" icon={<MoreOutlined />} style={{ borderRadius: 8 }} />
-                  </Dropdown>
-                )}
-              </Space>
-            )}
-            <Button
-              size="small"
-              icon={<FolderAddOutlined />}
-              onClick={() => openCreateFolderModal(selectedFolderId ?? null)}
-              style={{ borderRadius: 8 }}
-            >
-              {t('dashboard.newFolder', 'New Folder')}
-            </Button>
             <Button
               size="small"
               icon={<InboxOutlined />}
@@ -1246,6 +1302,51 @@ function Dashboard() {
 
           {/* Content row */}
           <div className="explorer-layout">
+            {/* ── Folder sidebar ── */}
+            <div className="folder-sidebar">
+              <div className="folder-sidebar-header">
+                <span>Folders</span>
+                <Tooltip title="New root folder">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<FolderAddOutlined />}
+                    onClick={() => openCreateFolderModal(null)}
+                    style={{ color: C.text3, padding: '0 4px' }}
+                  />
+                </Tooltip>
+              </div>
+
+              {/* "All" root row */}
+              <div
+                className={`folder-all-row${!selectedFolderId ? ' active' : ''}`}
+                onClick={() => setSearchParams({}, { replace: true })}
+              >
+                <FolderOpenOutlined style={{ fontSize: 14, opacity: 0.7 }} />
+                <span style={{ flex: 1 }}>All activities</span>
+              </div>
+
+              {/* Folder tree */}
+              {(folders || []).map(f => (
+                <FolderTreeNode
+                  key={f.id}
+                  node={f}
+                  selectedFolderId={selectedFolderId}
+                  onSelect={(id) => setSearchParams({ folder: id }, { replace: true })}
+                  onNewSubfolder={(parentId) => openCreateFolderModal(parentId)}
+                  onRename={(node) => openRenameFolderModal(node)}
+                  onDelete={(node) => handleDeleteFolder(node.id)}
+                  onShare={(node) => openShareFolderModal(node)}
+                />
+              ))}
+
+              {foldersLoading && (
+                <div style={{ textAlign: 'center', padding: 12 }}>
+                  <Spin size="small" />
+                </div>
+              )}
+            </div>
+
             {/* Activity table */}
             <div className="activity-pane">
               {filteredQuizzes.length === 0 && !searchText.trim() && !selectedFolderId && !statusFilter ? (
@@ -1348,7 +1449,7 @@ function Dashboard() {
 
         {/* Share Folder Modal */}
         <Modal
-          title={<Space><ShareAltOutlined /> Share folder: {selectedFolderName}</Space>}
+          title={<Space><ShareAltOutlined /> Share folder: {shareFolderName || selectedFolderName}</Space>}
           open={shareFolderModalOpen}
           onCancel={() => setShareFolderModalOpen(false)}
           onOk={handleSaveFolderShares}
