@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext, useCallback } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import {
@@ -45,15 +45,22 @@ export default function AudienceSession() {
   const { message } = App.useApp()
   const location = useLocation()
   const navigate = useNavigate()
+  const { sessionId: sessionIdParam } = useParams()
   const dispatch = useDispatch()
   const { t } = useTranslation()
   const { theme } = useContext(VisitorThemeContext)
   const reduxSession = useSelector((state) => state.session.session)
 
+  // Rehydrate from sessionStorage so a page refresh reconnects automatically
+  const storedSession = (() => {
+    try { return JSON.parse(sessionStorage.getItem('swaya_participant_session') || 'null') } catch { return null }
+  })()
+
   const locationState = location.state || {}
-  const sessionToken = locationState.sessionToken || reduxSession?.session_token
-  const sessionId = locationState.sessionId || reduxSession?.session_id
-  const displayName = locationState.displayName || reduxSession?.display_name || 'Guest'
+  // sessionId: URL param is authoritative on refresh; token comes from state/storage
+  const sessionId = sessionIdParam || locationState.sessionId || reduxSession?.session_id || storedSession?.sessionId
+  const sessionToken = locationState.sessionToken || reduxSession?.session_token || storedSession?.sessionToken
+  const displayName = locationState.displayName || reduxSession?.display_name || storedSession?.displayName || 'Guest'
 
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [selectedAnswer, setSelectedAnswer] = useState(null)
@@ -79,6 +86,13 @@ export default function AudienceSession() {
 
   // Keep screen awake while the session is live
   useWakeLock(!!sessionToken && sessionStatus !== 'ended')
+
+  // Persist session to sessionStorage so page refresh reconnects automatically
+  useEffect(() => {
+    if (sessionToken && sessionId) {
+      sessionStorage.setItem('swaya_participant_session', JSON.stringify({ sessionToken, sessionId, displayName }))
+    }
+  }, [sessionToken, sessionId, displayName])
 
   // Restart the polling interval at the given ms rate
   const resetPollInterval = useCallback((ms) => {
@@ -138,6 +152,7 @@ export default function AudienceSession() {
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
           message.success(t('audience.quizEndedThanks', { defaultValue: 'Quiz has ended! Thank you for participating!' }))
+          sessionStorage.removeItem('swaya_participant_session')
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current)
             pollingIntervalRef.current = null
@@ -165,6 +180,7 @@ export default function AudienceSession() {
     } catch (error) {
       if (error.response?.status === 403) {
         setSessionInvalidated(true)
+        sessionStorage.removeItem('swaya_participant_session')
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current)
           pollingIntervalRef.current = null
@@ -273,6 +289,7 @@ export default function AudienceSession() {
         pollingIntervalRef.current = null
       }
       dispatch(clearSession())
+      sessionStorage.removeItem('swaya_participant_session')
       message.info(t('audience.leftSession', { defaultValue: 'You left the session' }))
       navigate('/join')
     }
