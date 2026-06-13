@@ -315,8 +315,12 @@
 .pv-bar-fill {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--sw-dur-reveal) var(--sw-ease-in-out);
   min-width: 3px;
+}
+
+.pv-bar-fill[style*="width: 0%"] {
+  min-width: 0;
 }
 
 /* ── Answer reveal states ────────────────────────────── */
@@ -377,6 +381,7 @@
   margin: 8px 0 0 !important;
   font-size: 26px !important;
   font-family: 'Fraunces', Georgia, serif;
+  animation: sw-fade-up var(--sw-dur-slow) var(--sw-ease-out) both;
 }
 
 /* Podium: 2nd | 1st | 3rd */
@@ -401,6 +406,7 @@
   padding: 18px 20px;
   min-width: 130px;
   text-align: center;
+  animation: sw-rank-in var(--sw-dur-slow) var(--sw-ease-spring) both;
 }
 
 .pv-podium-card-first {
@@ -430,6 +436,8 @@
   font-weight: 800;
   font-family: 'Fraunces', Georgia, serif;
   line-height: 1;
+  animation: sw-scale-in var(--sw-dur-reveal) var(--sw-ease-spring) both;
+  animation-delay: var(--sw-dur-slow);
 }
 
 .pv-podium-time {

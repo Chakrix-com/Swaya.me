@@ -1,0 +1,142 @@
+/**
+ * Swaya motion utility library (P3-1a)
+ *
+ * Duration tokens    --sw-dur-{fast|base|slow|reveal|long}
+ * Easing tokens      --sw-ease-{spring|out|in-out|linear}
+ * Keyframes          sw-bar-fill, sw-count-up, sw-fade-up, sw-scale-in,
+ *                    sw-rank-in, sw-confetti-fall, sw-pulse-ring
+ * Utility classes    .sw-anim-*  (apply animation via class)
+ *
+ * Use @media (prefers-reduced-motion: reduce) before adding any new
+ * component animation — all keyframe classes already suppress motion there.
+ */
+
+/* ── Duration & easing tokens ────────────────────────────────────────── */
+
+:root {
+  --sw-dur-fast:    120ms;
+  --sw-dur-base:    240ms;
+  --sw-dur-slow:    400ms;
+  --sw-dur-reveal:  600ms;
+  --sw-dur-long:    900ms;
+
+  --sw-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --sw-ease-out:     cubic-bezier(0.0,  0.0,  0.2,  1);
+  --sw-ease-in-out:  cubic-bezier(0.4,  0.0,  0.2,  1);
+  --sw-ease-linear:  linear;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────── */
+
+/* Horizontal bar growing from 0 → its natural width (used in histograms) */
+@keyframes sw-bar-fill {
+  from { width: 0; opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+/* Vertical bar growing from 0 → natural height (podium blocks) */
+@keyframes sw-bar-fill-v {
+  from { height: 0; opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+/* Fade + translate up — generic card/list reveal */
+@keyframes sw-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scale in from 0 — score number reveal */
+@keyframes sw-scale-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Rank entry: slide in from right, slight bounce */
+@keyframes sw-rank-in {
+  from { opacity: 0; transform: translateX(24px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* Rank delta flash — green/red tint on rank change */
+@keyframes sw-rank-delta-flash {
+  0%   { background: var(--sw-rank-flash-color, rgba(99,102,241,0.25)); }
+  100% { background: transparent; }
+}
+
+/* Confetti particle fall (apply to individual <span> elements) */
+@keyframes sw-confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Pulse ring — for timers, alerts, score reveals */
+@keyframes sw-pulse-ring {
+  0%   { transform: scale(1);    opacity: 0.6; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* Shake — wrong answer, lock warning */
+@keyframes sw-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* Count-up flash — number increments */
+@keyframes sw-count-flash {
+  0%   { opacity: 0.4; transform: scale(1.12); }
+  100% { opacity: 1;   transform: scale(1); }
+}
+
+/* ── Utility animation classes ───────────────────────────────────────── */
+
+.sw-anim-fade-up {
+  animation: sw-fade-up var(--sw-dur-slow) var(--sw-ease-out) both;
+}
+
+.sw-anim-scale-in {
+  animation: sw-scale-in var(--sw-dur-reveal) var(--sw-ease-spring) both;
+}
+
+.sw-anim-rank-in {
+  animation: sw-rank-in var(--sw-dur-slow) var(--sw-ease-spring) both;
+}
+
+.sw-anim-shake {
+  animation: sw-shake var(--sw-dur-slow) var(--sw-ease-in-out) both;
+}
+
+.sw-anim-count-flash {
+  animation: sw-count-flash var(--sw-dur-base) var(--sw-ease-out) both;
+}
+
+.sw-anim-pulse-ring {
+  animation: sw-pulse-ring 1.2s var(--sw-ease-out) infinite;
+}
+
+/* Staggered list reveal — add style="--sw-i: N" on each item */
+.sw-anim-stagger {
+  animation: sw-fade-up var(--sw-dur-slow) var(--sw-ease-out) both;
+  animation-delay: calc(var(--sw-i, 0) * 60ms);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sw-anim-fade-up,
+  .sw-anim-scale-in,
+  .sw-anim-rank-in,
+  .sw-anim-shake,
+  .sw-anim-count-flash,
+  .sw-anim-pulse-ring,
+  .sw-anim-stagger {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

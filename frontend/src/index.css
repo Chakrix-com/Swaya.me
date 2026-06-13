@@ -1,4 +1,5 @@
 @tailwind utilities;
+@import './themes/motion.css';
 
 /* Explicit reset */
 *,
@@ -287,6 +288,7 @@ canvas {
   font-size: 13px;
   font-weight: 700;
   min-height: 40px;
+  animation: sw-bar-fill-v var(--sw-dur-reveal) var(--sw-ease-spring) both;
 }
 
 /* +N pts reveal */
@@ -301,6 +303,12 @@ canvas {
   font-family: 'Fraunces', Georgia, serif;
   color: #52c41a;
   letter-spacing: 0;
+  animation: sw-scale-in var(--sw-dur-reveal) var(--sw-ease-spring) both;
+}
+
+.aud-podium-slot {
+  animation: sw-fade-up var(--sw-dur-slow) var(--sw-ease-out) both;
+  animation-delay: calc(var(--sw-i, 0) * 80ms);
 }
 
 .sw-display {
