@@ -237,6 +237,7 @@ async def get_tier_plans(
     return plans
 
 
+import secrets as _secrets
 from urllib.parse import urlencode
 from fastapi import Request
 from fastapi.responses import RedirectResponse as FastAPIRedirect
@@ -244,25 +245,44 @@ import httpx
 from core.config.settings import settings
 from core.auth.service_async import oauth_login_or_register
 
+_OAUTH_STATE_TTL = 600  # 10 minutes
+
 
 @router.get("/google/login")
-async def google_login():
+async def google_login(redis: RedisClient = Depends(get_redis)):
     """Redirect browser to Google's OAuth consent screen."""
     if not settings.google.client_id:
         raise HTTPException(status_code=503, detail="Google OAuth is not configured")
+    state = _secrets.token_urlsafe(32)
+    await redis.set(f"oauth_state:{state}", "1", expire=_OAUTH_STATE_TTL)
     params = {
         "client_id": settings.google.client_id,
         "redirect_uri": f"{settings.app.frontend_url}/auth/google/callback",
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
+        "state": state,
     }
     return FastAPIRedirect(f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
 
 
 @router.get("/google/callback")
-async def google_callback(code: str, response: Response, db: AsyncSession = Depends(get_async_db)):
+async def google_callback(
+    code: str,
+    response: Response,
+    state: Optional[str] = None,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis),
+):
     """Exchange Google auth code for a Swaya.me JWT."""
+    # Validate CSRF state token
+    if not state:
+        raise HTTPException(status_code=400, detail="Missing OAuth state parameter")
+    stored = await redis.get(f"oauth_state:{state}")
+    if not stored:
+        raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
+    await redis.delete(f"oauth_state:{state}")
+
     redirect_uri = f"{settings.app.frontend_url}/auth/google/callback"
     async with httpx.AsyncClient() as client:
         token_resp = await client.post(

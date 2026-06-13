@@ -45,6 +45,7 @@ from shared.exceptions.quiz import (
     TierLimitExceededError, ContentFilterError
 )
 from shared.utils.redis_client import get_redis, RedisClient
+from shared.utils.rate_limiter import limiter
 from core.config.tier_service import TierService
 from persistence.models.quiz import Participant, QuizSession, Quiz
 from features.quiz.import_service import ExcelImportService
@@ -733,14 +734,16 @@ async def start_session(
 
 
 @router.post("/sessions/join", response_model=SessionJoinResponse)
+@limiter.limit("60/minute")
 async def join_session(
-    request: SessionJoinRequest,
+    http_request: Request,
+    body: SessionJoinRequest,
     db: AsyncSession = Depends(get_async_db),
     service: SessionServiceAsync = Depends(get_session_service)
 ):
     """Join session as participant (anonymous)"""
     try:
-        return await service.join_session(db, request)
+        return await service.join_session(db, body)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except TierLimitExceededError as e:
@@ -931,15 +934,17 @@ async def stream_public_whiteboard_events(
 
 # Answer Submission Endpoints
 @router.post("/sessions/submit-answer", response_model=AnswerSubmitResponse)
+@limiter.limit("60/minute")
 async def submit_answer(
-    request: AnswerSubmitRequest,
+    http_request: Request,
+    body: AnswerSubmitRequest,
     session_token: str,
     db: AsyncSession = Depends(get_async_db),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Submit MCQ answer (participant)"""
     try:
-        return await service.submit_answer(db, session_token, request)
+        return await service.submit_answer(db, session_token, body)
     except ParticipantNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except (QuestionNotOpenError, DuplicateAnswerError) as e:
@@ -947,15 +952,17 @@ async def submit_answer(
 
 
 @router.post("/sessions/submit-word-cloud", response_model=AnswerSubmitResponse)
+@limiter.limit("60/minute")
 async def submit_word_cloud_answer(
-    request: WordCloudAnswerSubmitRequest,
+    http_request: Request,
+    body: WordCloudAnswerSubmitRequest,
     session_token: str,
     db: AsyncSession = Depends(get_async_db),
     service: AnswerServiceAsync = Depends(get_answer_service)
 ):
     """Submit text answer (word cloud unlimited; other text types single submission)"""
     try:
-        return await service.submit_word_cloud_answer(db, session_token, request)
+        return await service.submit_word_cloud_answer(db, session_token, body)
     except ParticipantNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except (QuestionNotOpenError, DuplicateAnswerError) as e:

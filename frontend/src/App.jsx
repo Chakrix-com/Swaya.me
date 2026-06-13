@@ -24,7 +24,7 @@ import {
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { logout, refreshUser } from './store/authSlice'
+import { logout, refreshUser, initAuth } from './store/authSlice'
 import { authAPI } from './services/api'
 import { applyTheme, getTheme } from './themes/themes'
 import ThemePicker from './components/ThemePicker'
@@ -450,7 +450,7 @@ function App() {
   const { i18n } = useTranslation()
   const locale = localeMap[i18n.language] || enUS
   const dispatch = useDispatch()
-  const { isAuthenticated } = useSelector((state) => state.auth)
+  const { isAuthenticated, loading: authLoading } = useSelector((state) => state.auth)
   const themeId = useSelector((state) => state.theme.themeId)
   const currentTheme = getTheme(themeId)
 
@@ -458,12 +458,22 @@ function App() {
     applyTheme(currentTheme)
   }, [themeId])
 
+  // On mount, check if the HttpOnly cookie session is still valid and populate user state
   useEffect(() => {
-    if (!isAuthenticated) return
     authAPI.getMe()
-      .then(r => dispatch(refreshUser(r.data)))
-      .catch(() => {})
-  }, [isAuthenticated])
+      .then(r => dispatch(initAuth(r.data)))
+      .catch(() => dispatch(initAuth(null)))
+  }, [])
+
+  if (authLoading) {
+    return (
+      <ConfigProvider locale={locale} theme={currentTheme.antd}>
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+        </div>
+      </ConfigProvider>
+    )
+  }
 
   return (
     <ConfigProvider locale={locale} theme={currentTheme.antd}>

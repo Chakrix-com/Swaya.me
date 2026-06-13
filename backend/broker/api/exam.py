@@ -1,12 +1,13 @@
 """
 Exam API — public and authenticated endpoints for exam participation and results.
 """
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
 from shared.utils.redis_client import get_redis, RedisClient
+from shared.utils.rate_limiter import limiter
 from features.quiz.schemas import (
     ExamInfoResponse,
     ExamOtpRequest,
@@ -29,7 +30,9 @@ router = APIRouter(tags=["exam"])
 
 
 @router.post("/e/{slug}/request-otp")
+@limiter.limit("10/minute")
 async def request_exam_otp(
+    http_request: Request,
     slug: str,
     body: ExamOtpRequest,
     db: AsyncSession = Depends(get_async_db),
@@ -52,7 +55,9 @@ async def get_exam_info(slug: str, db: AsyncSession = Depends(get_async_db)):
 
 
 @router.post("/e/{slug}/start", response_model=ExamStartResponse)
+@limiter.limit("10/minute")
 async def start_exam(
+    http_request: Request,
     slug: str,
     body: ExamStartRequest,
     db: AsyncSession = Depends(get_async_db),

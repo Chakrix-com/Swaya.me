@@ -75,13 +75,13 @@ export default function OfflinePollSession() {
   const handleJoin = useCallback(async () => {
     setPhase('joining')
     try {
-      const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY(slug))
+      const storedToken = sessionStorage.getItem(STORAGE_TOKEN_KEY(slug))
       const res = await offlinePollAPI.join(slug, {
         display_name: displayName || undefined,
         session_token: storedToken || undefined,
       })
       const { session_token, questions: qs, saved_answers } = res.data
-      localStorage.setItem(STORAGE_TOKEN_KEY(slug), session_token)
+      sessionStorage.setItem(STORAGE_TOKEN_KEY(slug), session_token)
       setSessionToken(session_token)
       setQuestions(qs)
 
@@ -322,7 +322,7 @@ export default function OfflinePollSession() {
               onClick={handleJoin}
               disabled={phase === 'joining'}
             >
-              {localStorage.getItem(STORAGE_TOKEN_KEY(slug))
+              {sessionStorage.getItem(STORAGE_TOKEN_KEY(slug))
                 ? t('offlinePoll.resumePoll', 'Resume Poll')
                 : t('offlinePoll.startPoll', 'Start Poll')}
             </Button>
