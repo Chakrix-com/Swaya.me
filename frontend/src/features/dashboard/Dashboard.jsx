@@ -309,7 +309,7 @@ function Dashboard() {
 
   const openRenameFolderModal = () => {
     if (!selectedFolderId || !selectedFolderName) return
-    renameFolderForm.setFieldsValue({ name: selectedFolderName })
+    renameFolderForm.setFieldsValue({ name: selectedFolderName, parent_id: selectedFolderParentId ?? undefined })
     setRenameFolderModalOpen(true)
   }
 
@@ -318,8 +318,10 @@ function Dashboard() {
     try {
       const values = await renameFolderForm.validateFields()
       setRenameFolderSubmitting(true)
-      await quizAPI.updateFolder(selectedFolderId, { name: values.name })
-      message.success(t('dashboard.folderRenamed', { defaultValue: 'Folder renamed' }))
+      const payload = { name: values.name }
+      if ('parent_id' in values) payload.parent_id = values.parent_id ?? null
+      await quizAPI.updateFolder(selectedFolderId, payload)
+      message.success('Folder updated')
       setRenameFolderModalOpen(false)
       await loadFolders()
       await loadQuizzes()
@@ -448,6 +450,17 @@ function Dashboard() {
       if (n.children?.length) stack.push(...n.children)
     }
     return false
+  }, [folders, selectedFolderId])
+
+  const selectedFolderParentId = useMemo(() => {
+    const stack = [...folders]
+    while (stack.length) {
+      const n = stack.pop()
+      if (!n) continue
+      if (n.id === selectedFolderId) return n.parent_id ?? null
+      if (n.children?.length) stack.push(...n.children)
+    }
+    return null
   }, [folders, selectedFolderId])
 
   const filteredQuizzes = useMemo(() => {
@@ -1178,17 +1191,44 @@ function Dashboard() {
                   {selectedFolderIsSharedToMe && <Tag color="blue" style={{ marginLeft: 6, fontSize: 10, padding: '0 4px' }}>Shared</Tag>}
                 </Tag>
                 {!selectedFolderIsSharedToMe && (
-                  <Button
-                    size="small"
-                    icon={<ShareAltOutlined />}
-                    onClick={openShareFolderModal}
-                    style={{ borderRadius: 8 }}
+                  <Dropdown
+                    trigger={['click']}
+                    menu={{
+                      items: [
+                        { key: 'rename', label: 'Rename', icon: <EditOutlined />, onClick: openRenameFolderModal },
+                        { key: 'share', label: 'Share with teammates', icon: <ShareAltOutlined />, onClick: openShareFolderModal },
+                        { type: 'divider' },
+                        {
+                          key: 'delete',
+                          label: (
+                            <Popconfirm
+                              title="Delete this folder?"
+                              description="Activities inside will move to the parent or root."
+                              onConfirm={handleDeleteFolder}
+                              okText="Delete"
+                              okButtonProps={{ danger: true }}
+                              cancelText="Cancel"
+                            >
+                              <span style={{ color: '#ff4d4f' }}><DeleteOutlined style={{ marginRight: 6 }} />Delete folder</span>
+                            </Popconfirm>
+                          ),
+                        },
+                      ],
+                    }}
                   >
-                    Share
-                  </Button>
+                    <Button size="small" icon={<MoreOutlined />} style={{ borderRadius: 8 }} />
+                  </Dropdown>
                 )}
               </Space>
             )}
+            <Button
+              size="small"
+              icon={<FolderAddOutlined />}
+              onClick={() => openCreateFolderModal(selectedFolderId ?? null)}
+              style={{ borderRadius: 8 }}
+            >
+              {t('dashboard.newFolder', 'New Folder')}
+            </Button>
             <Button
               size="small"
               icon={<InboxOutlined />}
@@ -1284,7 +1324,7 @@ function Dashboard() {
         </Modal>
 
         <Modal
-          title={t('dashboard.renameFolder', 'Rename Folder')}
+          title="Rename / Move Folder"
           open={renameFolderModalOpen}
           onCancel={() => setRenameFolderModalOpen(false)}
           onOk={handleRenameFolder}
@@ -1294,6 +1334,14 @@ function Dashboard() {
             <Form.Item name="name" label={t('dashboard.folderName', 'Folder name')}
               rules={[{ required: true, message: t('dashboard.folderNameRequired', 'Folder name is required') }]}>
               <Input />
+            </Form.Item>
+            <Form.Item name="parent_id" label="Move to (parent folder)">
+              <TreeSelect
+                allowClear
+                treeData={folderTreeData.filter(n => n.value !== selectedFolderId)}
+                placeholder="Root (no parent)"
+                treeDefaultExpandAll
+              />
             </Form.Item>
           </Form>
         </Modal>
