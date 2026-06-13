@@ -345,6 +345,32 @@ class SessionJoinResponse(BaseModel):
     quiz_title: str
     status: SessionStatusEnum
 
+class SessionLookupResponse(BaseModel):
+    """Pre-join lookup: activity info shown before participant enters their name"""
+    quiz_title: str
+    quiz_type: QuizTypeEnum
+    participant_count: int
+
+
+class LastSessionSummary(BaseModel):
+    """Most recent completed/ended session summary for home page recap card"""
+    quiz_id: int
+    quiz_title: str
+    quiz_type: QuizTypeEnum
+    session_id: int
+    ended_at: Optional[datetime] = None
+    participant_count: int
+    avg_score: Optional[float] = None
+
+
+class HomeStatsResponse(BaseModel):
+    """Aggregate stats for the home page — sessions/participants/score this week"""
+    sessions_this_week: int
+    participants_this_week: int
+    avg_score_this_week: Optional[float] = None
+    last_session: Optional[LastSessionSummary] = None
+
+
 class SessionLeaveResponse(BaseModel):
     """Leave session response"""
     success: bool
@@ -536,6 +562,8 @@ class TemplateQuizListItemResponse(BaseModel):
     template_scope: TemplateScopeEnum
     tenant_id: int
     created_at: datetime
+    template_category: Optional[str] = None
+    template_use_count: int = 0
 
 
 FolderResponse.model_rebuild()

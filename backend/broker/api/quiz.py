@@ -18,7 +18,7 @@ from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse, QuestionReorderRequest,
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
-    SessionLeaveResponse,
+    SessionLeaveResponse, SessionLookupResponse, HomeStatsResponse,
     WhiteboardStateUpdateRequest, WhiteboardStateResponse,
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
@@ -593,6 +593,23 @@ async def reorder_questions(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+@router.post("/{quiz_id:int}/questions/{question_id:int}/duplicate", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
+async def duplicate_question(
+    quiz_id: int,
+    question_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuestionServiceAsync = Depends(get_question_service)
+):
+    """Duplicate a question within the same quiz"""
+    try:
+        return await service.duplicate_question(db, quiz_id, question_id, current_user)
+    except QuestionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidQuizStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.delete("/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_question(
     question_id: int,
@@ -610,6 +627,29 @@ async def delete_question(
 
 
 # Session Management Endpoints
+@router.get("/sessions/home-stats", response_model=HomeStatsResponse)
+async def get_home_stats(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Return aggregate stats for the logged-in host's home page."""
+    return await service.get_home_stats(db, current_user.tenant_id)
+
+
+@router.get("/sessions/lookup", response_model=SessionLookupResponse)
+async def lookup_session(
+    join_code: str,
+    db: AsyncSession = Depends(get_async_db),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """Return activity info by join code — no side effects, no auth required."""
+    try:
+        return await service.lookup_session(db, join_code)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 @router.post("/sessions/start", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def start_session(
     quiz_id: int,

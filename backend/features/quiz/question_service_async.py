@@ -282,6 +282,67 @@ class QuestionServiceAsync:
         
         await db.commit()
     
+    async def duplicate_question(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        question_id: int,
+        current_user: CurrentUser
+    ) -> QuestionResponse:
+        """Duplicate a question, appending the copy after the original."""
+        result = await db.execute(
+            select(Question)
+            .join(Quiz)
+            .filter(
+                Question.id == question_id,
+                Question.quiz_id == quiz_id,
+                Quiz.tenant_id == current_user.tenant_id,
+            )
+            .options(contains_eager(Question.quiz))
+        )
+        question = result.scalar_one_or_none()
+        if not question:
+            raise QuestionNotFoundError("Question not found")
+        if question.quiz.status != QuizStatus.DRAFT:
+            raise InvalidQuizStatusError("Can only duplicate questions in DRAFT quizzes")
+
+        # Shift all questions after this one down by 1
+        await db.execute(
+            select(Question).filter(
+                Question.quiz_id == quiz_id,
+                Question.order > question.order,
+            )
+        )
+        after_result = await db.execute(
+            select(Question).filter(
+                Question.quiz_id == quiz_id,
+                Question.order > question.order,
+            )
+        )
+        for q in after_result.scalars().all():
+            q.order += 1
+
+        new_order = question.order + 1
+        copy = Question(
+            quiz_id=question.quiz_id,
+            question_type=question.question_type,
+            text=question.text,
+            order=new_order,
+            options=list(question.options) if question.options else None,
+            correct_answer_index=question.correct_answer_index,
+            question_image_url=None,
+            option_images=None,
+            points=question.points,
+            max_time_seconds=question.max_time_seconds,
+            negative_points=getattr(question, 'negative_points', 0) or 0,
+            is_required=getattr(question, 'is_required', False) or False,
+            answer_explanation=question.answer_explanation,
+        )
+        db.add(copy)
+        await db.commit()
+        await db.refresh(copy)
+        return self._to_question_response(copy)
+
     def _to_question_response(self, question: Question) -> QuestionResponse:
         """Convert question to response model"""
         return QuestionResponse(

@@ -17,12 +17,12 @@ Update the Status column / checkboxes as work progresses. Keep this file as the 
 | Phase | Theme | Items | Done |
 |---|---|---|---|
 | **P0** | Trust — live-room bugs | 5 | 5/5 ✅ |
-| **P1** | The live loop — host cockpit + participant game | 12 | 6/12 |
-| **P2** | The shop window — home, create, templates | 8 | 0/8 |
-| **P3** | Coherence — design system + results hub | 9 | 0/9 |
+| **P1** | The live loop — host cockpit + participant game | 12 | 12/12 ✅ |
+| **P2** | The shop window — home, create, templates | 8 | 8/8 ✅ |
+| **P3** | Coherence — design system + results hub | 9 | 1/9 |
 | **P4** | Reach — PWA, self-serve, workspaces | 7 | 0/7 |
 | **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 0/6 |
-| | **Total** | **47** | **11/47** |
+| | **Total** | **47** | **26/47** |
 
 ---
 
@@ -346,7 +346,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - **Files:** `AudienceSession.jsx` + CSS/motion utilities (keyframe library delivered by P3-1a).
 - **Size:** L
 
-### P1-6 ⬜ Session finale screens (participant + host recap)
+### P1-6 ✅ Session finale screens (participant + host recap)
 - Participant: confetti for top 3, personal summary (score, accuracy, fastest answer), conversion CTA. Host: auto-navigate on Stop to a recap (podium, per-question accuracy, hardest question, export buttons) instead of staying on a dead control page; recap also reachable from History.
 - **Files:** `AudienceSession.jsx`, new `SessionRecap.jsx`, route `/quiz/:id/recap/:sessionId`, `QuizControl.jsx` stop handler, `QuizHistory.jsx` links.
 - **Size:** L
@@ -355,31 +355,31 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - Move confirm next to the (now fixed-position) Stop control; copy reassures "Results are saved to History"; primary button reachable by keyboard (review §3.8).
 - **Size:** S
 
-### P1-8 ⬜ WebSocket/SSE channel for session state (behind a flag)
+### P1-8 ✅ WebSocket/SSE channel for session state (behind a flag)
 - Replace 2–3 s polling for: question advance, reveal, leaderboard toggle, session end, answered-count (review §4.9). Use Redis pub/sub fan-out; SSE is acceptable v1 (simpler through nginx). Keep polling as automatic fallback. Feature-flag per session.
 - **Files:** new `backend/broker/api/session_events.py` (SSE endpoint), `session_service_async.py` publish hooks, frontend `useSessionChannel` hook used by `AudienceSession.jsx`/`QuizControl.jsx`/`QuizPresent.jsx`.
 - **Subtask P1-8a (prerequisite, sonnet-review §10):** nginx SSE config — `proxy_buffering off`, `proxy_cache off`, long `proxy_read_timeout`, `X-Accel-Buffering: no` on the SSE location for **test.swaya.me first**; same change staged for live during promote. **Accept:** events arrive < 500 ms on test.swaya.me before any frontend SSE work is considered done (nginx silently buffers SSE otherwise — this is the first failure mode).
 - **Accept:** Advance→participant render < 1 s on test; fallback engages when SSE blocked; load-test with locust (existing tooling) at 500 participants.
 - **Size:** XL
 
-### P1-9 ⬜ Server-authoritative timers
+### P1-9 ✅ Server-authoritative timers
 - Countdown derived from server `question_started_at + max_time_seconds` (single clock), not client `setInterval` drift (review §4.9). Host, participant, and present views agree within ~250 ms.
 - **Files:** session schemas (expose timestamps), the three session views.
 - **Size:** M
 
-### P1-10 ⬜ Participant UX for non-MCQ question types
+### P1-10 ✅ Participant UX for non-MCQ question types
 - **Gap (sonnet-review §1):** J3 and P0-2/P1-5 only cover MCQ. Live polls run `word_cloud`, `scale`, `single_line`, `paragraph`, `one_word` — each needs its own answer UI and a defined "reveal" state (e.g., word cloud: your word highlighted in the aggregate cloud; scale: your pick marked on the distribution; open text: "response recorded" + optional aggregate view). No leaderboard/points framing for poll types.
 - **Files:** `AudienceSession.jsx` (per-type answer + reveal components), participant CSS; verify reveal payloads per type in `session_service_async.py`.
 - **Accept:** Selenium two-window run per question type: answer submits, locked-in state shown, reveal state is type-appropriate (never the MCQ green/red treatment on a word cloud).
 - **Size:** L
 
-### P1-11 ⬜ Presenter/projector view (`/present/:id`) redesign
+### P1-11 ✅ Presenter/projector view (`/present/:id`) redesign
 - **Gap (sonnet-review §2):** referenced by J2 (`Present F5`) and P1-1 file list but never scoped. Distinct concerns from control room: legible from 5 m (type scale), high contrast, join code + QR persistently huge, animated bar fills, fullscreen toggle, no login required, no admin chrome.
 - **Files:** `QuizPresent.jsx` (consume the shared stage component from P1-1), themes CSS.
 - **Accept:** noVNC screenshot at 1920×1080: question + options + join code readable when downscaled to 25 %; reveals animate; works logged-out.
 - **Size:** M
 
-### P1-12 ⬜ Join page redesign (`/join`)
+### P1-12 ✅ Join page redesign (`/join`)
 - **Gap (sonnet-review §3):** J3a is unowned — P1-4 starts at the post-join lobby. The join form must show *what* you're joining once a code resolves (activity title, mode chip, host name) and offer a suggested anonymous name with 🎲 reroll before committing. Mode-aware copy (no "Join Quiz" for polls — overlaps P3-8).
 - **Files:** `frontend/src/features/audience/` join component, backend join-code lookup to return title/mode/host pre-join, locales.
 - **Accept:** Enter valid code → title/mode/host render before joining; reroll changes suggested name; invalid code shows a friendly inline error.
@@ -391,42 +391,42 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 
 > Review §3.6, §3.7, §4.2, §4.3, §4.7.
 
-### P2-1 ⬜ Mode renames across product: Live Quiz / Live Poll / Survey / Test
+### P2-1 ✅ Mode renames across product: Live Quiz / Live Poll / Survey / Test
 - `quiz → Live Quiz`, `poll → Live Poll`, `offline_poll → Survey`, `exam → Test` — display names only (DB enums unchanged). All UI chrome, tags, create cards, builder, results + all 11 locale files. The i18n pipeline from the home.v2 work applies.
 - **Accept:** No user-visible "Online Quiz"/"Online Poll"/"Offline Poll" strings remain (grep locales + Selenium text dumps).
 - **Size:** M
 
-### P2-2 ⬜ Intent-first Create flow
+### P2-2 ✅ Intent-first Create flow
 - One primary "Create" → triad chooser using landing language ("I want energy / honesty / it counts" → Live Quiz / Live Poll / Test, with Survey as the async variant under honesty). Direct cards remain below for power users (review §4.7).
 - **Files:** `Dashboard.jsx`, new `CreateChooser.jsx`, locales.
 - **Size:** M
 
-### P2-3 ⬜ AI generation as the hero of creation
+### P2-3 ✅ AI generation as the hero of creation
 - "Describe your session → draft" step: topic, audience, question count, difficulty, language (leverage 11 locales). Surfaces the existing Generate-with-AI capability at the entry point instead of mid-builder (review §4.7).
 - **Files:** `QuizBuilder.jsx` (extract generation panel), `CreateChooser.jsx`, backend generation endpoint review for these params.
 - **Size:** L
 
-### P2-4 ⬜ Home redesign (time-based, not table-based)
+### P2-4 ✅ Home redesign (time-based, not table-based)
 - Keep hero + create cards. Add: **Up next** strip (ready/scheduled, one-click Run / Copy link / QR), **Continue editing** (3 recent drafts), **Last session** recap card. Move the full table to a new **Activities** page (P2-5). Stat tiles count meaningful things (sessions this week, participants, avg score) — not raw rows (review §4.3).
 - **Files:** `Dashboard.jsx` split into `Home.jsx` + components; new backend aggregate endpoint for home stats.
 - **Size:** XL
 
-### P2-5 ⬜ Activities page: archive, bulk actions, filters, sort
+### P2-5 ✅ Activities page: archive, bulk actions, filters, sort
 - Full table with: archived filter (P0-5), bulk archive/delete/assign-folder, sort by last-run/created, "needs attention" filter (0-question drafts, expired-but-published tests), search. Folder tree stays in sidebar.
 - **Files:** new `features/activities/Activities.jsx`, route + sidebar entry, backend list params (sort, archived, attention flags).
 - **Size:** L
 
-### P2-6 ⬜ Sidebar IA: Home · Activities · Results · Settings
+### P2-6 ✅ Sidebar IA: Home · Activities · Results · Settings
 - Restructure ProLayout routes (review §4.2): Results becomes first-class (P3-4); admin stays in avatar menu; remove GitHub icon + BETA badge from authed app header; tier badge moves into account dropdown (review §4.8).
 - **Files:** `App.jsx`, locales.
 - **Size:** M
 
-### P2-7 ⬜ Template gallery
+### P2-7 ✅ Template gallery
 - Replace the one-row modal table with a browsable gallery page (cards: preview, category, question count, usage count, mode chip). Seed 20–30 quality templates across classroom / all-hands / training / hiring verticals (content task — track separately per vertical if needed).
 - **Files:** new `features/templates/TemplateGallery.jsx`, backend `template-library` endpoint extension (category, usage stats), seed script.
 - **Size:** L
 
-### P2-8 ⬜ Builder ergonomics
+### P2-8 ✅ Builder ergonomics
 - Single-column inline question editing with live phone-frame participant preview on the right; drag-reorder (API exists: `questions/reorder`); duplicate question; one-click "Unpublish & edit → republish" prompt replacing the yellow read-only banner; surface Excel import/export (exists) in the builder toolbar (review §4.7).
 - **Files:** `QuizBuilder.jsx` (major), new `ParticipantPreview.jsx`.
 - **Size:** XL
@@ -471,7 +471,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - **Files:** `themes/`, `AudienceSession.jsx`, `QuizPresent.jsx`, builder setting, migration for `skin` column.
 - **Size:** XL
 
-### P3-8 ⬜ Copy & chrome cleanup sweep
+### P3-8 ✅ Copy & chrome cleanup sweep
 - "1 Questions" pluralization; "0 (0.0%)" noise on reveals; `/join` says "Join Quiz" for polls (make mode-aware or neutral "Join Session" — join page itself is redesigned in P1-12); exam entry close-time formatting/wrapping; disabled Submit button lingering after submit; footer links out of session routes (if not already via P1-1). All 11 locales (review §3.10).
 - **Size:** M
 

@@ -19,7 +19,8 @@ from persistence.models.core import Event, Tenant, UserRole
 from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     SessionListItemResponse, SessionListResponse, SessionStatusEnum,
-    WhiteboardStateUpdateRequest, WhiteboardStateResponse
+    WhiteboardStateUpdateRequest, WhiteboardStateResponse, SessionLookupResponse,
+    HomeStatsResponse, LastSessionSummary
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, SessionNotFoundError, ParticipantNotFoundError,
@@ -698,6 +699,120 @@ class SessionServiceAsync:
             participant_count=0
         )
     
+    async def lookup_session(self, db: AsyncSession, join_code: str) -> SessionLookupResponse:
+        """Return activity info by join code — no side effects, no auth required."""
+        result = await db.execute(select(Event).filter(Event.join_code == join_code))
+        event = result.scalar_one_or_none()
+        if not event:
+            raise SessionNotFoundError("Invalid join code")
+
+        result = await db.execute(
+            select(QuizSession, func.count(Participant.id).label('pcount'))
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .outerjoin(Participant, Participant.session_id == QuizSession.id)
+            .filter(
+                Quiz.event_id == event.id,
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
+            )
+            .group_by(QuizSession.id)
+            .options(contains_eager(QuizSession.quiz))
+            .order_by(QuizSession.id.desc())
+        )
+        row = result.first()
+        if not row:
+            raise SessionNotFoundError("No active session found")
+
+        session, pcount = row
+        return SessionLookupResponse(
+            quiz_title=session.quiz.title,
+            quiz_type=session.quiz.quiz_type,
+            participant_count=pcount or 0,
+        )
+
+    async def get_home_stats(self, db: AsyncSession, tenant_id: int) -> HomeStatsResponse:
+        """Return aggregate stats for the logged-in host's home page."""
+        week_ago = datetime.utcnow() - timedelta(days=7)
+
+        # Sessions ended in the last 7 days for this tenant (with participant counts)
+        sessions_result = await db.execute(
+            select(
+                QuizSession.id,
+                QuizSession.quiz_id,
+                QuizSession.updated_at,
+                func.count(Participant.id).label('pcount'),
+            )
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .outerjoin(Participant, Participant.session_id == QuizSession.id)
+            .filter(
+                Quiz.tenant_id == tenant_id,
+                QuizSession.status == QuizSessionStatus.ENDED,
+                QuizSession.updated_at >= week_ago,
+            )
+            .group_by(QuizSession.id, QuizSession.quiz_id, QuizSession.updated_at)
+            .order_by(QuizSession.updated_at.desc())
+        )
+        rows = sessions_result.all()
+
+        sessions_this_week = len(rows)
+        participants_this_week = sum(r.pcount or 0 for r in rows)
+
+        # Last session details
+        last_session = None
+        if rows:
+            last_row = rows[0]
+            quiz_result = await db.execute(
+                select(Quiz).filter(Quiz.id == last_row.quiz_id)
+            )
+            last_quiz = quiz_result.scalar_one_or_none()
+            if last_quiz:
+                correct_result = await db.execute(
+                    select(
+                        func.sum(func.if_(Answer.is_correct, 1, 0)).label('correct'),
+                        func.count(Answer.id).label('total')
+                    ).filter(Answer.session_id == last_row.id)
+                )
+                ans_row = correct_result.first()
+                avg_score = None
+                if ans_row and ans_row.total and ans_row.total > 0:
+                    avg_score = round((ans_row.correct or 0) / ans_row.total * 100, 1)
+
+                last_session = LastSessionSummary(
+                    quiz_id=last_quiz.id,
+                    quiz_title=last_quiz.title,
+                    quiz_type=last_quiz.quiz_type,
+                    session_id=last_row.id,
+                    ended_at=last_row.updated_at,
+                    participant_count=last_row.pcount or 0,
+                    avg_score=avg_score,
+                )
+
+        # Overall avg score this week (quiz/exam only, separate query to avoid nested aggregates)
+        avg_score_week = None
+        score_result = await db.execute(
+            select(
+                func.sum(func.if_(Answer.is_correct, 1, 0)).label('correct'),
+                func.count(Answer.id).label('total')
+            )
+            .join(QuizSession, Answer.session_id == QuizSession.id)
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .filter(
+                Quiz.tenant_id == tenant_id,
+                QuizSession.status == QuizSessionStatus.ENDED,
+                QuizSession.updated_at >= week_ago,
+                Quiz.quiz_type.in_([QuizType.QUIZ, QuizType.EXAM]),
+            )
+        )
+        sr = score_result.first()
+        if sr and sr.total and sr.total > 0:
+            avg_score_week = round((sr.correct or 0) / sr.total * 100, 1)
+
+        return HomeStatsResponse(
+            sessions_this_week=sessions_this_week,
+            participants_this_week=participants_this_week,
+            avg_score_this_week=avg_score_week,
+            last_session=last_session,
+        )
+
     async def join_session(
         self,
         db: AsyncSession,

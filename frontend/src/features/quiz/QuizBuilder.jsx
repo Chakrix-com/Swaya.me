@@ -1,4 +1,7 @@
-import { useState, useEffect, useCallback, memo, useContext, useRef } from 'react'
+import { useState, useEffect, useCallback, memo, useContext, useRef, useMemo } from 'react'
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS as DndCSS } from '@dnd-kit/utilities'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
@@ -35,6 +38,7 @@ import {
   ThunderboltOutlined,
   BulbOutlined,
   LoadingOutlined,
+  HolderOutlined,
 } from '@ant-design/icons'
 import {
   Modal,
@@ -995,6 +999,8 @@ export default function QuizBuilder() {
   const searchParams = new URLSearchParams(location.search)
   const rawType = searchParams.get('type')?.toLowerCase()
   const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : (rawType === 'exam' || rawType === 'test') ? 'exam' : 'quiz'
+  const aiPromptParam = searchParams.get('ai_prompt') || ''
+  const aiCountParam = parseInt(searchParams.get('ai_count') || '5', 10) || 5
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -1038,8 +1044,8 @@ export default function QuizBuilder() {
   const [aiStep, setAiStep] = useState('input') // 'input' | 'preview'
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiAdding, setAiAdding] = useState(false)
-  const [aiTopic, setAiTopic] = useState('')
-  const [aiCount, setAiCount] = useState(5)
+  const [aiTopic, setAiTopic] = useState(aiPromptParam)
+  const [aiCount, setAiCount] = useState(aiCountParam)
   const [aiError, setAiError] = useState(null)
   const [aiPreview, setAiPreview] = useState([]) // [{text, options, correct_answer_index, selected}]
   
@@ -1178,6 +1184,17 @@ export default function QuizBuilder() {
       form.setFieldsValue(values)
     }
   }, [id, initialQuizType, form])
+
+  // Auto-open AI modal when arriving from CreateChooser "Generate" flow
+  const aiAutoTriggeredRef = useRef(false)
+  useEffect(() => {
+    if (id && quiz && aiPromptParam && !aiAutoTriggeredRef.current) {
+      aiAutoTriggeredRef.current = true
+      setAiModalOpen(true)
+      setAiStep('input')
+      setAiError(null)
+    }
+  }, [id, quiz, aiPromptParam])
 
   // On mobile, the quiz settings card can push the questions section off-screen.
   // Scroll to it once after the initial load so users can see the Add Question button.
@@ -1453,6 +1470,11 @@ export default function QuizBuilder() {
     </>
   )
 
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
   const renderQuestionsList = () => {
     const isLive = quiz?.status === 'ready' && isExam
     return (
@@ -1514,96 +1536,105 @@ export default function QuizBuilder() {
         </Button>
       ))}
 
-      <List
-        dataSource={questions}
-        renderItem={(question, index) => (
-          editingQuestion === question.id ? (
-            <MemoizedQuestionForm
-              key={`edit-question-${question.id}`}
-              question={question}
-              onSave={(values) => handleUpdateQuestion(question.id, values)}
-              onCancel={handleCancelQuestion}
-              quizId={id}
-              isPoll={isPoll}
-              isExam={isExam}
-              isOfflinePoll={isOfflinePoll}
-              language={i18n.language}
-              isAdmin={isAdmin}
-              questionImageUrl={questionImageUrl}
-              setQuestionImageUrl={setQuestionImageUrl}
-              optionImages={optionImages}
-              setOptionImages={setOptionImages}
-              tempImages={tempImages}
-              setTempImages={setTempImages}
-              loading={loading}
-              movingImages={movingImages}
-              t={t}
-            />
-          ) : (
-            <Card
-              key={question.id}
-              style={{ marginBottom: 16, width: '100%' }}
-              title={
-                <Space>
-                  <Tag color="blue">Q{index + 1}</Tag>
-                  <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
-                    {getQuestionTypeLabel(question.question_type, t)}
-                  </Tag>
-                  {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
-                  {question.max_time_seconds ? (
-                    <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
-                  ) : null}
-                  {isOfflinePoll && question.is_required && (
-                    <Tag color="red">{t('offlinePoll.required', 'Required')}</Tag>
-                  )}
-                  <Text strong>{stripHtml(question.text).slice(0, 80) || t('quiz.untitled', 'Untitled')}</Text>
-                </Space>
-              }
-              extra={
-                !isLive ? (
-                <Space>
-                  {quiz?.status === 'draft' && (
-                    <>
-                      <Button
-                        size="small"
-                        icon={<ArrowUpOutlined />}
-                        onClick={() => handleMoveQuestion(index, -1)}
-                        disabled={!!editingQuestion || index === 0}
-                      />
-                      <Button
-                        size="small"
-                        icon={<ArrowDownOutlined />}
-                        onClick={() => handleMoveQuestion(index, 1)}
-                        disabled={!!editingQuestion || index === questions.length - 1}
-                      />
-                    </>
-                  )}
-                  <Button
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => setEditingQuestion(question.id)}
-                    disabled={!!editingQuestion}
+      <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+          {questions.map((question, index) => {
+            const SortableWrapper = ({ children }) => {
+              const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id, disabled: !!editingQuestion || isLive || quiz?.status !== 'draft' })
+              const style = { transform: DndCSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 16 }
+              return <div ref={setNodeRef} style={style} {...attributes}>
+                {children({ dragHandleProps: listeners })}
+              </div>
+            }
+            return (
+              <SortableWrapper key={question.id}>
+                {({ dragHandleProps }) => editingQuestion === question.id ? (
+                  <MemoizedQuestionForm
+                    key={`edit-question-${question.id}`}
+                    question={question}
+                    onSave={(values) => handleUpdateQuestion(question.id, values)}
+                    onCancel={handleCancelQuestion}
+                    quizId={id}
+                    isPoll={isPoll}
+                    isExam={isExam}
+                    isOfflinePoll={isOfflinePoll}
+                    language={i18n.language}
+                    isAdmin={isAdmin}
+                    questionImageUrl={questionImageUrl}
+                    setQuestionImageUrl={setQuestionImageUrl}
+                    optionImages={optionImages}
+                    setOptionImages={setOptionImages}
+                    tempImages={tempImages}
+                    setTempImages={setTempImages}
+                    loading={loading}
+                    movingImages={movingImages}
+                    t={t}
+                  />
+                ) : (
+                  <Card
+                    style={{ width: '100%' }}
+                    title={
+                      <Space>
+                        {quiz?.status === 'draft' && !isLive && (
+                          <Tooltip title={t('quiz.dragToReorder', 'Drag to reorder')}>
+                            <span {...dragHandleProps} style={{ cursor: 'grab', color: '#999', display: 'inline-flex', alignItems: 'center' }}>
+                              <HolderOutlined />
+                            </span>
+                          </Tooltip>
+                        )}
+                        <Tag color="blue">Q{index + 1}</Tag>
+                        <Tag color={question.question_type === 'word_cloud' ? 'purple' : (question.question_type === 'mcq' ? 'cyan' : 'geekblue')}>
+                          {getQuestionTypeLabel(question.question_type, t)}
+                        </Tag>
+                        {!isPoll && <Tag color="green">{t('quiz.pointsTag', { points: question.points || 1 })}</Tag>}
+                        {question.max_time_seconds ? (
+                          <Tag color="orange">{t('quiz.timerTag', { seconds: question.max_time_seconds })}</Tag>
+                        ) : null}
+                        {isOfflinePoll && question.is_required && (
+                          <Tag color="red">{t('offlinePoll.required', 'Required')}</Tag>
+                        )}
+                        <Text strong>{stripHtml(question.text).slice(0, 80) || t('quiz.untitled', 'Untitled')}</Text>
+                      </Space>
+                    }
+                    extra={
+                      !isLive ? (
+                      <Space>
+                        <Button
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => setEditingQuestion(question.id)}
+                          disabled={!!editingQuestion}
+                        >
+                          {t('common.edit')}
+                        </Button>
+                        {quiz?.status === 'draft' && (
+                          <Tooltip title={t('quiz.duplicateQuestion', 'Duplicate question')}>
+                            <Button
+                              size="small"
+                              icon={<CopyOutlined />}
+                              onClick={() => handleDuplicateQuestion(question.id)}
+                              disabled={!!editingQuestion || loading}
+                            />
+                          </Tooltip>
+                        )}
+                        <Popconfirm
+                          title={t('quiz.deleteQuestionConfirm')}
+                          onConfirm={() => handleDeleteQuestion(question.id)}
+                          okText={t('common.submit')}
+                          cancelText={t('common.cancel')}
+                          disabled={!!editingQuestion}
+                        >
+                          <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            disabled={!!editingQuestion}
+                          />
+                        </Popconfirm>
+                      </Space>
+                      ) : null
+                    }
                   >
-                    {t('common.edit')}
-                  </Button>
-                  <Popconfirm
-                    title={t('quiz.deleteQuestionConfirm')}
-                    onConfirm={() => handleDeleteQuestion(question.id)}
-                    okText={t('common.submit')}
-                    cancelText={t('common.cancel')}
-                    disabled={!!editingQuestion}
-                  >
-                    <Button
-                      size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                      disabled={!!editingQuestion}
-                    />
-                  </Popconfirm>
-                </Space>
-                ) : null
-              }
-            >
               {question.question_type === 'word_cloud' ? (
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Text type="secondary" italic>
@@ -1678,10 +1709,13 @@ export default function QuizBuilder() {
                   )}
                 </Space>
               )}
-            </Card>
-          )
-        )}
-      />
+                  </Card>
+                )}
+              </SortableWrapper>
+            )
+          })}
+        </SortableContext>
+      </DndContext>
     </>
     )
   }
@@ -1726,7 +1760,10 @@ export default function QuizBuilder() {
       } else {
         const response = await quizAPI.create(values)
         message.success(isExam ? t('exam.createSuccess') : isOfflinePoll ? t('quiz.createOfflinePollSuccess') : isPoll ? t('quiz.createPollSuccess') : t('quiz.createSuccess'))
-        navigate(`/quiz/${response.data.id}/edit`)
+        const editPath = aiPromptParam
+          ? `/quiz/${response.data.id}/edit?ai_prompt=${encodeURIComponent(aiPromptParam)}&ai_count=${aiCountParam}`
+          : `/quiz/${response.data.id}/edit`
+        navigate(editPath)
       }
     } catch (error) {
       let detail = error.response?.data?.detail;
@@ -2026,6 +2063,35 @@ export default function QuizBuilder() {
       loadQuiz()
     }
   }
+
+  const handleDragEnd = useCallback(async (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = questions.findIndex(q => q.id === active.id)
+    const newIndex = questions.findIndex(q => q.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const newQuestions = arrayMove(questions, oldIndex, newIndex)
+    setQuestions(newQuestions)
+    try {
+      await questionAPI.reorder(id, newQuestions.map((q, i) => [q.id, i]))
+    } catch {
+      message.error(t('quiz.saveError'))
+      loadQuiz()
+    }
+  }, [questions, id])
+
+  const handleDuplicateQuestion = useCallback(async (questionId) => {
+    setLoading(true)
+    try {
+      await questionAPI.duplicate(id, questionId)
+      message.success(t('quiz.duplicateQuestionSuccess', 'Question duplicated'))
+      await loadQuiz()
+    } catch (e) {
+      message.error(e.response?.data?.detail || t('quiz.duplicateQuestionFailed', 'Failed to duplicate question'))
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
 
   const _doPublishExam = async (freshStart) => {
     setBatchConfirmModal({ open: false })
@@ -2542,13 +2608,13 @@ export default function QuizBuilder() {
           >
             {isLiveMode && (
               <Alert
-                type="warning"
+                type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                message={isExam ? t('exam.liveEditBannerTitle') : t('quiz.settingsLocked')}
-                description={isExam ? t('exam.settingsLockedDesc') : t('quiz.settingsLockedDesc')}
+                message={t('quiz.unpublishToEditBannerTitle', isExam ? '✏️ Unpublish to edit settings' : '✏️ Unpublish → Edit → Republish')}
+                description={t('quiz.unpublishToEditBannerDesc', isExam ? 'This test is live. Unpublish it to make changes, then republish when ready.' : 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}
                 action={
-                  <Button size="small" loading={loading} onClick={handleUnpublish}>
+                  <Button type="primary" size="small" loading={loading} onClick={handleUnpublish}>
                     {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
                   </Button>
                 }

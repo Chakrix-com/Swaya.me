@@ -652,7 +652,7 @@ export default function QuizControl() {
                       <div key={idx}>
                         <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 4, alignItems: 'flex-start' }}>
                           <Text strong>{isOptionQuestion && currentQuestion.question_type === 'mcq' ? `${letter}: ${opt}` : opt}</Text>
-                          <Text type="secondary">{count} ({pct.toFixed(1)}%)</Text>
+                          <Text type="secondary">{total > 0 ? `${count} (${pct.toFixed(1)}%)` : count}</Text>
                         </Space>
                         <Progress percent={pct} strokeColor={isCorrect ? '#52c41a' : '#1890ff'} size="small" showInfo={false} />
                       </div>

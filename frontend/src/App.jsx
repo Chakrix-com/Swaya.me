@@ -18,6 +18,8 @@ import {
   LoadingOutlined,
   CrownOutlined,
   UserOutlined,
+  UnorderedListOutlined,
+  AppstoreAddOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -46,6 +48,8 @@ const VerifyEmail = lazy(() => import('./features/auth/VerifyEmail'))
 const ForgotPassword = lazy(() => import('./features/auth/ForgotPassword'))
 const ResetPassword = lazy(() => import('./features/auth/ResetPassword'))
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'))
+const Activities = lazy(() => import('./features/activities/Activities'))
+const TemplateGallery = lazy(() => import('./features/templates/TemplateGallery'))
 const UserPlans = lazy(() => import('./features/dashboard/UserPlans'))
 const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
 const QuizControl = lazy(() => import('./features/quiz/QuizControl'))
@@ -65,8 +69,6 @@ import LanguageSwitcher from './components/LanguageSwitcher'
 import GlobalOverlay from './components/GlobalOverlay'
 import SidebarFolderTree from './components/SidebarFolderTree'
 import SidebarLiveSessions from './components/SidebarLiveSessions'
-import BetaBadge from './components/BetaBadge'
-import OpenSourceBadge from './components/OpenSourceBadge'
 import logo from './assets/logo.png'
 import './App.css'
 
@@ -142,7 +144,7 @@ function AuthenticatedLayout({ children }) {
       title="Swaya.me"
       headerTitleRender={(logo, title) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          {logo}{title}<BetaBadge /><OpenSourceBadge />
+          {logo}{title}
         </span>
       )}
       logo={<img src={logo} alt="Swaya.me" style={{ height: 26, width: 'auto', borderRadius: 4 }} />}
@@ -165,6 +167,16 @@ function AuthenticatedLayout({ children }) {
             path: '/dashboard',
             name: t('common.dashboard'),
             icon: <DashboardOutlined />,
+          },
+          {
+            path: '/activities',
+            name: t('activities.title'),
+            icon: <UnorderedListOutlined />,
+          },
+          {
+            path: '/templates',
+            name: t('templates.title'),
+            icon: <AppstoreAddOutlined />,
           },
           // Hidden routes — still routable but not shown in sidebar
           { path: '/plans',                    hideInMenu: true },
@@ -211,6 +223,9 @@ function AuthenticatedLayout({ children }) {
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--sw-text3)', marginTop: 2 }}>
                         {user?.email}
+                      </div>
+                      <div style={{ marginTop: 6 }}>
+                        <TierBadge user={user} />
                       </div>
                     </div>
                   ),
@@ -279,11 +294,10 @@ function AuthenticatedLayout({ children }) {
         ),
       }}
       actionsRender={() => [
-        <span key="tier" className="header-action-desktop"><TierBadge user={user} /></span>,
         <Tooltip key="theme" title={t('tooltip.themePicker', 'Choose a UI theme')}><span><ThemePicker /></span></Tooltip>,
         <Tooltip key="language" title={t('tooltip.languageSwitcher')}><span><LanguageSwitcher /></span></Tooltip>,
       ]}
-      footerRender={() => (
+      footerRender={() => location.pathname.includes('/control') ? null : (
         <div style={{ textAlign: 'center', padding: '12px 24px', borderTop: '1px solid var(--sw-border)' }}>
           <Space split={<Divider type="vertical" />} wrap style={{ justifyContent: 'center' }}>
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>© 2026 Swaya.me. {t('home.footer.rights')}</Typography.Text>
@@ -380,6 +394,8 @@ function AppRoutes() {
     <AuthenticatedLayout>
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/activities" element={<Activities />} />
+        <Route path="/templates" element={<TemplateGallery />} />
         <Route path="/plans" element={<UserPlans />} />
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />

@@ -93,6 +93,7 @@ export const questionAPI = {
   add: (quizId, data) => api.post(`/quizzes/${quizId}/questions`, data),
   update: (id, data) => api.put(`/quizzes/questions/${id}`, data),
   delete: (id) => api.delete(`/quizzes/questions/${id}`),
+  duplicate: (quizId, questionId) => api.post(`/quizzes/${quizId}/questions/${questionId}/duplicate`),
   reorder: (quizId, questionOrders) => api.put(`/quizzes/${quizId}/questions/reorder`, { question_orders: questionOrders }),
   getWordCloudResults: (questionId, sessionId) => 
     api.get(`/quizzes/questions/${questionId}/word-cloud-results`, {
@@ -128,6 +129,8 @@ export const questionAPI = {
 // Session API
 export const sessionAPI = {
   listSessions: (quizId) => api.get(`/quizzes/${quizId}/sessions`),
+  homeStats: () => api.get('/quizzes/sessions/home-stats'),
+  lookup: (joinCode) => api.get('/quizzes/sessions/lookup', { params: { join_code: joinCode } }),
   start: (quizId) => api.post('/quizzes/sessions/start', null, { params: { quiz_id: quizId } }),
   join: (data) => api.post('/quizzes/sessions/join', data),
   leave: (sessionToken) => api.post('/quizzes/sessions/leave', null, { params: { session_token: sessionToken } }),

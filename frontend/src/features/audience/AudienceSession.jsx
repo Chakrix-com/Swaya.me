@@ -227,11 +227,10 @@ export default function AudienceSession() {
       }
     } catch (error) {
       const detail = error.response?.data?.detail
-      if (detail) {
-        message.error(detail)
-      } else if (!isWordCloud) {
-        setSubmitted(true)
-      }
+      if (detail) message.error(detail)
+      // Always transition to submitted state for non-word-cloud types —
+      // an error usually means "already answered", so the answer was recorded.
+      if (!isWordCloud) setSubmitted(true)
     } finally {
       setLoading(false)
     }
@@ -671,93 +670,128 @@ export default function AudienceSession() {
                   }
                 >
                   {isTextQuestion ? (
-                    <>
-                      {isOneWord ? (
-                        <Input
-                          placeholder={t('audience.enterOneWord', { defaultValue: 'Enter one word' })}
-                          maxLength={30}
-                          value={wordCloudAnswer}
-                          onChange={(e) => setWordCloudAnswer(e.target.value.replace(/\s/g, ''))}
-                          style={{ marginBottom: 16, fontSize: 18, textAlign: 'center' }}
-                          size="large"
-                          showCount
-                        />
-                      ) : (
-                      <TextArea
-                        rows={currentQuestion.question_type === 'paragraph' ? 5 : 3}
-                        placeholder={
-                          currentQuestion.question_type === 'word_cloud'
-                            ? t('audience.enterWordCloudAnswer', { defaultValue: 'Enter your answer (max 100 characters)' })
-                            : currentQuestion.question_type === 'single_line'
-                              ? t('audience.enterShortAnswer', { defaultValue: 'Enter a short answer' })
-                              : t('audience.enterParagraphAnswer', { defaultValue: 'Enter your paragraph answer' })
-                        }
-                        maxLength={
-                          currentQuestion.question_type === 'word_cloud'
-                            ? 100
-                            : currentQuestion.question_type === 'single_line'
-                              ? 255
-                              : 2000
-                        }
-                        value={wordCloudAnswer}
-                        onChange={(e) => setWordCloudAnswer(e.target.value)}
-                        showCount
-                        style={{ marginBottom: 16 }}
-                      />
-                      )}
-                      <Button
-                        type="primary"
-                        size="large"
-                        block
-                        icon={<SendOutlined />}
-                        disabled={!wordCloudAnswer.trim()}
-                        onClick={handleSubmitAnswer}
-                        loading={loading}
-                        style={{ marginBottom: 24 }}
-                      >
-                        {t('quiz.submitAnswer')}
-                      </Button>
-                      {(isWordCloud || isOneWord) && wordCloudData.length > 0 ? (
-                        <>
-                          <Alert
-                            message={t('audience.liveWordCloud', { defaultValue: 'Live Word Cloud' })}
-                            description={t('audience.responsesSubmittedCount', { count: wordCloudData.reduce((sum, w) => sum + w.value, 0) })}
-                            type="info"
-                            showIcon
+                    !submitted ? (
+                      // ── Text answer entry ──
+                      <>
+                        {isOneWord ? (
+                          <Input
+                            placeholder={t('audience.enterOneWord', { defaultValue: 'Enter one word' })}
+                            maxLength={30}
+                            value={wordCloudAnswer}
+                            onChange={(e) => setWordCloudAnswer(e.target.value.replace(/\s/g, ''))}
+                            style={{ marginBottom: 16, fontSize: 18, textAlign: 'center' }}
+                            size="large"
+                            showCount
+                          />
+                        ) : (
+                          <TextArea
+                            rows={currentQuestion.question_type === 'paragraph' ? 5 : 3}
+                            placeholder={
+                              currentQuestion.question_type === 'word_cloud'
+                                ? t('audience.enterWordCloudAnswer', { defaultValue: 'Enter your answer (max 100 characters)' })
+                                : currentQuestion.question_type === 'single_line'
+                                  ? t('audience.enterShortAnswer', { defaultValue: 'Enter a short answer' })
+                                  : t('audience.enterParagraphAnswer', { defaultValue: 'Enter your paragraph answer' })
+                            }
+                            maxLength={
+                              currentQuestion.question_type === 'word_cloud'
+                                ? 100
+                                : currentQuestion.question_type === 'single_line'
+                                  ? 255
+                                  : 2000
+                            }
+                            value={wordCloudAnswer}
+                            onChange={(e) => setWordCloudAnswer(e.target.value)}
+                            showCount
                             style={{ marginBottom: 16 }}
                           />
-                          <div style={{
-                            width: '100%', height: 300,
-                            border: '1px solid #d9d9d9', borderRadius: 8,
-                            padding: 16, backgroundColor: '#fafafa'
-                          }}>
-                            <ReactWordcloud
-                              words={wordCloudData}
-                              options={{
-                                rotations: 2, rotationAngles: [0, 90],
-                                fontSizes: [16, 60], padding: 4,
-                                enableTooltip: true, deterministic: true, fontFamily: 'Arial',
-                                colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
-                              }}
+                        )}
+                        <Button
+                          type="primary"
+                          size="large"
+                          block
+                          icon={<SendOutlined />}
+                          disabled={!wordCloudAnswer.trim()}
+                          onClick={handleSubmitAnswer}
+                          loading={loading}
+                          style={{ marginBottom: 24 }}
+                        >
+                          {t('quiz.submitAnswer')}
+                        </Button>
+                        {/* Word cloud live preview — visible before/after submission for word_cloud type */}
+                        {(isWordCloud || isOneWord) && wordCloudData.length > 0 && (
+                          <>
+                            <Alert
+                              message={t('audience.liveWordCloud', { defaultValue: 'Live Word Cloud' })}
+                              description={t('audience.responsesSubmittedCount', { count: wordCloudData.reduce((s, w) => s + w.value, 0) })}
+                              type="info"
+                              showIcon
+                              style={{ marginBottom: 16 }}
                             />
-                          </div>
-                        </>
-                      ) : (isWordCloud || isOneWord) ? (
-                        <Alert
-                          message={t('audience.beFirstToRespond', { defaultValue: 'Be the first to respond!' })}
-                          description={t('audience.wordCloudGrow', { defaultValue: 'Submit your answer and watch the word cloud grow.' })}
-                          type="info"
-                          showIcon
-                        />
-                      ) : (
-                        <Alert
-                          message={t('audience.responseSubmitted', { defaultValue: 'Response submitted' })}
-                          description={t('audience.waitingHostNext', { defaultValue: 'Waiting for the host to move to the next question.' })}
-                          type="success"
-                          showIcon
-                        />
-                      )}
-                    </>
+                            <div style={{ width: '100%', height: 300, border: '1px solid #d9d9d9', borderRadius: 8, padding: 16, backgroundColor: '#fafafa' }}>
+                              <ReactWordcloud
+                                words={wordCloudData}
+                                options={{ rotations: 2, rotationAngles: [0, 90], fontSizes: [16, 60], padding: 4, enableTooltip: true, deterministic: true, fontFamily: 'Arial', colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96'] }}
+                              />
+                            </div>
+                          </>
+                        )}
+                        {(isWordCloud || isOneWord) && wordCloudData.length === 0 && (
+                          <Alert
+                            message={t('audience.beFirstToRespond', { defaultValue: 'Be the first to respond!' })}
+                            description={t('audience.wordCloudGrow', { defaultValue: 'Submit your answer and watch the word cloud grow.' })}
+                            type="info"
+                            showIcon
+                          />
+                        )}
+                      </>
+                    ) : (
+                      // ── Text answer submitted (reveal state) ──
+                      <>
+                        <Space direction="vertical" align="center" style={{ width: '100%', padding: '16px 0' }} size="middle">
+                          <div style={{ fontSize: 36 }}>✅</div>
+                          <Title level={4} style={{ margin: 0 }}>{t('audience.responseRecorded', { defaultValue: 'Response recorded' })}</Title>
+                          {wordCloudAnswer && (
+                            <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px', maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                              {t('audience.yourAnswer', { defaultValue: 'Your answer' })}: {wordCloudAnswer}
+                            </Tag>
+                          )}
+                          {!(isWordCloud || isOneWord) && (
+                            <Text type="secondary">{t('audience.waitingHostNext', { defaultValue: 'Waiting for the host to move to the next question.' })}</Text>
+                          )}
+                        </Space>
+                        {(isWordCloud || isOneWord) && wordCloudData.length > 0 && (
+                          <>
+                            <Alert
+                              message={t('audience.liveWordCloud', { defaultValue: 'Live Word Cloud' })}
+                              description={t('audience.responsesSubmittedCount', { count: wordCloudData.reduce((sum, w) => sum + w.value, 0) })}
+                              type="info"
+                              showIcon
+                              style={{ marginBottom: 16 }}
+                            />
+                            <div style={{
+                              width: '100%', height: 300,
+                              border: '1px solid #d9d9d9', borderRadius: 8,
+                              padding: 16, backgroundColor: '#fafafa'
+                            }}>
+                              <ReactWordcloud
+                                words={wordCloudData.map(w => ({
+                                  ...w,
+                                  // Highlight the word the participant submitted
+                                  color: w.text.toLowerCase() === wordCloudAnswer.toLowerCase() ? '#f5222d' : undefined,
+                                }))}
+                                options={{
+                                  rotations: 2, rotationAngles: [0, 90],
+                                  fontSizes: [16, 60], padding: 4,
+                                  enableTooltip: true, deterministic: true, fontFamily: 'Arial',
+                                  colors: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96']
+                                }}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )
                   ) : !submitted ? (
                     <>
                       {isScaleQuestion ? (
@@ -851,8 +885,15 @@ export default function AudienceSession() {
                           let sum = 0
                           dist.forEach((count, idx) => { sum += count * (idx + 1) })
                           const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
+                          const yourRating = selectedAnswer != null ? Number(selectedAnswer) + 1 : null
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: 16 }}>
+                               {yourRating != null && (
+                                 <Space>
+                                   <Text type="secondary">{t('audience.yourRating', { defaultValue: 'Your rating:' })}</Text>
+                                   <Rate disabled value={yourRating} style={{ fontSize: 22, color: '#faad14' }} />
+                                 </Space>
+                               )}
                                <Text style={{ fontSize: 18 }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</Text>
                                <Space align="baseline">
                                  <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>

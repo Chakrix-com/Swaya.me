@@ -40,6 +40,7 @@ import {
 } from '@ant-design/icons'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
+import CreateChooser from './CreateChooser'
 import './Dashboard.css'
 
 const { Title, Text } = Typography
@@ -103,7 +104,7 @@ const ACTIVITY_TYPES = [
   {
     key: 'offline_poll',
     titleKey: 'offlinePoll.createOfflinePoll',
-    defaultTitle: 'Offline Poll',
+    defaultTitle: 'Survey',
     descKey: 'tooltip.emptyStateOfflinePollDesc',
     defaultDesc: 'Collect responses asynchronously.',
     bg: 'var(--sw-tile-opoll-bg)',
@@ -122,10 +123,10 @@ const STATUS_TAG = {
 
 // ── Type tag colours ──────────────────────────────────────────────────────────
 const TYPE_TAG = {
-  quiz:         { bg: 'var(--sw-tile-quiz-bg)',  color: 'var(--sw-tile-quiz-fg)',  label: 'Quiz' },
+  quiz:         { bg: 'var(--sw-tile-quiz-bg)',  color: 'var(--sw-tile-quiz-fg)',  label: 'Live Quiz' },
   exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  label: 'Test' },
-  poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  label: 'Poll' },
-  offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', label: 'Offline Poll' },
+  poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  label: 'Live Poll' },
+  offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', label: 'Survey' },
 }
 
 const TEMPLATE_CACHE_KEY = 'templateQuizIds'
@@ -147,6 +148,8 @@ function Dashboard() {
   const [folderForm] = Form.useForm()
   const [renameFolderForm] = Form.useForm()
 
+  const [chooserOpen, setChooserOpen] = useState(false)
+  const [homeStats, setHomeStats] = useState(null)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
@@ -171,6 +174,7 @@ function Dashboard() {
     loadQuizzes()
     loadFolders()
     authAPI.getTierPlans().then(r => setTierPlans(r.data)).catch(() => {})
+    sessionAPI.homeStats().then(r => setHomeStats(r.data)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -415,6 +419,17 @@ function Dashboard() {
 
   const activeSessions = useMemo(() => (quizzes || []).filter(q => q.has_active_session), [quizzes])
 
+  // P2-4: Up next = non-archived ready quizzes (live-runnable types), up to 4
+  const upNextQuizzes = useMemo(() => (quizzes || [])
+    .filter(q => !q.archived_at && q.status === 'ready' && q.quiz_type !== 'exam' && q.quiz_type !== 'offline_poll')
+    .slice(0, 4), [quizzes])
+
+  // P2-4: Continue editing = 3 most recently updated drafts
+  const recentDrafts = useMemo(() => (quizzes || [])
+    .filter(q => !q.archived_at && q.status === 'draft')
+    .sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0))
+    .slice(0, 3), [quizzes])
+
   const visibleTemplateData = useMemo(() => {
     if (templates?.length) return templates
     const cachedIds = JSON.parse(localStorage.getItem(TEMPLATE_CACHE_KEY) || '[]').filter(Number.isInteger)
@@ -438,6 +453,14 @@ function Dashboard() {
   const handleDismiss = () => {
     localStorage.setItem('upgrade-banner-dismissed', String(Date.now()))
     setBannerDismissed(true)
+  }
+
+  // ── Up Next helpers ───────────────────────────────────────────────────────
+  const handleStartSession = (quiz) => navigate(`/quiz/${quiz.id}/control`)
+  const handleCopyLink = (quiz) => {
+    const url = quiz.poll_url || quiz.exam_url || `${window.location.origin}/join`
+    navigator.clipboard.writeText(url)
+    message.success(t('quiz.linkCopied', 'Link copied!'))
   }
 
   // ── Table action helpers ──────────────────────────────────────────────────
@@ -776,22 +799,12 @@ function Dashboard() {
                 {t('dashboard.heroSubtitle', 'Create quizzes, polls and assessments in minutes.')}
               </Text>
               <Space size={12} style={{ marginTop: 24 }} wrap>
-                <Dropdown
-                  menu={{
-                    items: ACTIVITY_TYPES.map(a => ({
-                      key: a.key,
-                      label: t(a.titleKey, a.defaultTitle),
-                      icon: <a.Icon />,
-                    })),
-                    onClick: ({ key }) => navigate(`/quiz/new?type=${key}`),
-                  }}
-                >
-                  <Button type="primary" size="large" icon={<PlusOutlined />}
-                    style={{ background: C.primary, borderColor: C.primary, fontWeight: 600, paddingInline: 24 }}>
-                    {t('dashboard.createNew', 'Create New')}
-                  </Button>
-                </Dropdown>
-                <Button size="large" onClick={openTemplateModal}
+                <Button type="primary" size="large" icon={<PlusOutlined />}
+                  onClick={() => setChooserOpen(true)}
+                  style={{ background: C.primary, borderColor: C.primary, fontWeight: 600, paddingInline: 24 }}>
+                  {t('dashboard.createNew', 'Create New')}
+                </Button>
+                <Button size="large" onClick={() => navigate('/templates')}
                   style={{ color: C.text2, fontWeight: 500 }}>
                   <StarOutlined /> {t('quiz.useTemplate', 'Use Template')}
                 </Button>
@@ -847,50 +860,44 @@ function Dashboard() {
         </section>
 
         {/* ── Workflow Summary ─────────────────────────────────────────── */}
+        {/* ── This week stats ─────────────────────────────────────────── */}
         <section className="section-block">
           <Row gutter={[16, 16]}>
             {[
               {
-                key: 'ready', title: t('dashboard.readyToLaunch', 'Ready to Launch'),
-                count: statistics.byStatus.ready, Icon: RocketOutlined,
-                desc: t('dashboard.readyDesc', 'Activities ready to run'),
+                key: 'sessions',
+                title: t('dashboard.sessionsThisWeek', 'Sessions this week'),
+                count: homeStats?.sessions_this_week ?? '—',
+                Icon: PlayCircleOutlined,
                 bg: 'var(--sw-stat-ready-bg)', accent: C.success,
               },
               {
-                key: 'draft', title: t('dashboard.inTheWorks', 'In the Works'),
-                count: statistics.byStatus.draft, Icon: EditFilled,
-                desc: t('dashboard.draftDesc', 'Draft activities'),
+                key: 'participants',
+                title: t('dashboard.participantsThisWeek', 'Participants this week'),
+                count: homeStats?.participants_this_week ?? '—',
+                Icon: WifiOutlined,
                 bg: 'var(--sw-stat-works-bg)', accent: C.warning,
               },
               {
-                key: 'archived', title: t('dashboard.pastSessions', 'Past Sessions'),
-                count: statistics.byStatus.archived, Icon: HistoryOutlined,
-                desc: t('dashboard.archivedDesc', 'Completed activities'),
+                key: 'score',
+                title: t('dashboard.avgScoreThisWeek', 'Avg score this week'),
+                count: homeStats?.avg_score_this_week != null ? `${homeStats.avg_score_this_week}%` : '—',
+                Icon: BarChartOutlined,
                 bg: 'var(--sw-stat-past-bg)', accent: C.blue,
               },
             ].map(card => (
               <Col xs={24} sm={8} key={card.key}>
                 <Card
-                  style={{
-                    background: card.bg, border: 'none', borderRadius: 16,
-                    cursor: 'pointer',
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                    outline: statusFilter === card.key ? `2px solid ${card.accent}` : 'none',
-                  }}
+                  style={{ background: card.bg, border: 'none', borderRadius: 16 }}
                   styles={{ body: { padding: '20px 24px' } }}
-                  className="workflow-card"
-                  onClick={() => setStatusFilter(statusFilter === card.key ? null : card.key)}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ fontSize: 36, fontWeight: 800, color: card.accent, lineHeight: 1 }}>
                         {card.count}
                       </div>
-                      <div style={{ fontWeight: 700, color: C.text1, marginTop: 4, fontSize: 15 }}>
+                      <div style={{ fontWeight: 600, color: C.text2, marginTop: 4, fontSize: 13 }}>
                         {card.title}
-                      </div>
-                      <div style={{ color: C.text3, fontSize: 12, marginTop: 3 }}>
-                        {card.desc}
                       </div>
                     </div>
                     <div style={{
@@ -901,16 +908,134 @@ function Dashboard() {
                       <card.Icon style={{ fontSize: 20, color: card.accent }} />
                     </div>
                   </div>
-                  {statusFilter === card.key && (
-                    <div style={{ marginTop: 8, fontSize: 11, color: card.accent, fontWeight: 600 }}>
-                      Filtering by this status · click to clear
-                    </div>
-                  )}
                 </Card>
               </Col>
             ))}
           </Row>
         </section>
+
+        {/* ── Up Next ─────────────────────────────────────────────────── */}
+        {upNextQuizzes.length > 0 && (
+          <section className="section-block">
+            <Title level={5} style={{ color: C.text2, marginBottom: 14 }}>
+              {t('dashboard.upNext', 'Up Next')}
+            </Title>
+            <Row gutter={[12, 12]}>
+              {upNextQuizzes.map(q => {
+                const typeConf = TYPE_TAG[q.quiz_type] || TYPE_TAG.quiz
+                return (
+                  <Col xs={24} sm={12} md={6} key={q.id}>
+                    <Card
+                      style={{ background: typeConf.bg, border: 'none', borderRadius: 14 }}
+                      styles={{ body: { padding: '16px' } }}
+                    >
+                      <Tag color={typeConf.bg} style={{ color: typeConf.color, border: 'none', fontWeight: 700, fontSize: 10, marginBottom: 8, padding: '2px 8px' }}>
+                        {typeConf.label}
+                      </Tag>
+                      <div style={{ fontWeight: 700, color: C.text1, fontSize: 14, marginBottom: 12, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {q.title}
+                      </div>
+                      <Space size={6} wrap>
+                        <Button size="small" type="primary" icon={<PlayCircleOutlined />}
+                          style={{ fontSize: 12 }}
+                          onClick={() => handleStartSession(q)}>
+                          {t('quiz.run', 'Run')}
+                        </Button>
+                        <Button size="small" icon={<LinkOutlined />}
+                          style={{ fontSize: 12 }}
+                          onClick={() => handleCopyLink(q)}>
+                          {t('quiz.copyLink', 'Link')}
+                        </Button>
+                      </Space>
+                    </Card>
+                  </Col>
+                )
+              })}
+            </Row>
+          </section>
+        )}
+
+        {/* ── Continue Editing + Last Session ─────────────────────────── */}
+        {(recentDrafts.length > 0 || homeStats?.last_session) && (
+          <section className="section-block">
+            <Row gutter={[16, 16]}>
+              {recentDrafts.length > 0 && (
+                <Col xs={24} md={homeStats?.last_session ? 14 : 24}>
+                  <Title level={5} style={{ color: C.text2, marginBottom: 12 }}>
+                    {t('dashboard.continueEditing', 'Continue Editing')}
+                  </Title>
+                  <Card style={{ border: 'none', borderRadius: 14, background: C.bgCard }} styles={{ body: { padding: '4px 0' } }}>
+                    {recentDrafts.map((q, i) => {
+                      const typeConf = TYPE_TAG[q.quiz_type] || TYPE_TAG.quiz
+                      return (
+                        <div key={q.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                          borderBottom: i < recentDrafts.length - 1 ? `1px solid ${C.border}` : 'none',
+                        }}>
+                          <div style={{
+                            width: 36, height: 36, borderRadius: 10,
+                            background: typeConf.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
+                            <EditOutlined style={{ color: typeConf.color, fontSize: 14 }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, color: C.text1, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {q.title}
+                            </div>
+                            <div style={{ fontSize: 11, color: C.text3 }}>
+                              {q.question_count === 1 ? t('dashboard.oneQuestion', '1 question') : `${q.question_count || 0} ${t('dashboard.questions', 'questions')}`} · {typeConf.label}
+                            </div>
+                          </div>
+                          <Button size="small" icon={<EditOutlined />}
+                            onClick={() => navigate(`/quiz/${q.id}/edit`)}>
+                            {t('common.edit', 'Edit')}
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </Card>
+                </Col>
+              )}
+              {homeStats?.last_session && (
+                <Col xs={24} md={recentDrafts.length > 0 ? 10 : 24}>
+                  <Title level={5} style={{ color: C.text2, marginBottom: 12 }}>
+                    {t('dashboard.lastSession', 'Last Session')}
+                  </Title>
+                  <Card style={{ border: 'none', borderRadius: 14, background: C.bgCard }} styles={{ body: { padding: '16px' } }}>
+                    {(() => {
+                      const ls = homeStats.last_session
+                      const typeConf = TYPE_TAG[ls.quiz_type] || TYPE_TAG.quiz
+                      return (
+                        <>
+                          <Tag color={typeConf.bg} style={{ color: typeConf.color, border: 'none', fontWeight: 700, fontSize: 10, marginBottom: 8 }}>
+                            {typeConf.label}
+                          </Tag>
+                          <div style={{ fontWeight: 700, color: C.text1, fontSize: 15, marginBottom: 8 }}>{ls.quiz_title}</div>
+                          <Row gutter={16} style={{ marginBottom: 12 }}>
+                            <Col span={12}>
+                              <div style={{ fontSize: 22, fontWeight: 800, color: C.primary }}>{ls.participant_count}</div>
+                              <div style={{ fontSize: 11, color: C.text3 }}>{t('dashboard.joined', 'joined')}</div>
+                            </Col>
+                            {ls.avg_score != null && (
+                              <Col span={12}>
+                                <div style={{ fontSize: 22, fontWeight: 800, color: C.success }}>{ls.avg_score}%</div>
+                                <div style={{ fontSize: 11, color: C.text3 }}>{t('dashboard.avgCorrect', 'avg correct')}</div>
+                              </Col>
+                            )}
+                          </Row>
+                          <Button size="small" icon={<BarChartOutlined />}
+                            onClick={() => navigate(`/quiz/${ls.quiz_id}/sessions`)}>
+                            {t('dashboard.viewRecap', 'View recap →')}
+                          </Button>
+                        </>
+                      )
+                    })()}
+                  </Card>
+                </Col>
+              )}
+            </Row>
+          </section>
+        )}
 
         {/* ── Upgrade Banner ───────────────────────────────────────────── */}
         {showBanner && (
@@ -956,6 +1081,14 @@ function Dashboard() {
 
         {/* ── Activity Table + Live Sessions ──────────────────────────── */}
         <section className="section-block explorer-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Title level={5} style={{ color: C.text2, margin: 0 }}>
+              {t('dashboard.allActivities', 'All Activities')}
+            </Title>
+            <Button size="small" type="link" onClick={() => navigate('/activities')}>
+              {t('dashboard.viewAll', 'View all →')}
+            </Button>
+          </div>
           {/* Toolbar */}
           <div className="explorer-toolbar">
             <Input
@@ -1058,6 +1191,8 @@ function Dashboard() {
         </section>
 
         {/* ── Modals ──────────────────────────────────────────────────── */}
+        <CreateChooser open={chooserOpen} onClose={() => setChooserOpen(false)} />
+
         <Modal
           title={t('dashboard.newFolder', 'New Folder')}
           open={folderModalOpen}

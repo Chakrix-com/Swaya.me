@@ -582,6 +582,8 @@ class QuizBuilderServiceAsync:
                 template_scope=q.template_scope,
                 tenant_id=q.tenant_id,
                 created_at=q.created_at,
+                template_category=q.template_category,
+                template_use_count=q.template_use_count or 0,
             )
             for q in templates
         ]
@@ -653,6 +655,7 @@ class QuizBuilderServiceAsync:
                 )
             )
 
+        template_quiz.template_use_count = (template_quiz.template_use_count or 0) + 1
         await db.commit()
 
         quiz_result = await db.execute(
@@ -665,7 +668,7 @@ class QuizBuilderServiceAsync:
         )
         created_quiz = quiz_result.scalar_one()
         return self._to_quiz_response(created_quiz)
-    
+
     async def update_quiz(
         self,
         db: AsyncSession,

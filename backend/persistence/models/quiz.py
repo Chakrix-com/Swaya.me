@@ -106,6 +106,10 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Archive
     archived_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
 
+    # Template gallery metadata
+    template_category = Column(String(64), nullable=True)
+    template_use_count = Column(Integer, default=0, nullable=False, server_default="0")
+
     # Relationships
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
     sessions = relationship("QuizSession", back_populates="quiz", foreign_keys="QuizSession.quiz_id")
