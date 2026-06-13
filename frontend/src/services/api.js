@@ -129,6 +129,7 @@ export const questionAPI = {
 // Session API
 export const sessionAPI = {
   listSessions: (quizId) => api.get(`/quizzes/${quizId}/sessions`),
+  listAllSessions: (params) => api.get('/quizzes/sessions/all', { params }),
   homeStats: () => api.get('/quizzes/sessions/home-stats'),
   lookup: (joinCode) => api.get('/quizzes/sessions/lookup', { params: { join_code: joinCode } }),
   start: (quizId) => api.post('/quizzes/sessions/start', null, { params: { quiz_id: quizId } }),

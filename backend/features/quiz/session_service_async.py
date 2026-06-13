@@ -20,7 +20,7 @@ from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     SessionListItemResponse, SessionListResponse, SessionStatusEnum,
     WhiteboardStateUpdateRequest, WhiteboardStateResponse, SessionLookupResponse,
-    HomeStatsResponse, LastSessionSummary
+    HomeStatsResponse, LastSessionSummary, ResultsHubItem, ResultsHubResponse
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, SessionNotFoundError, ParticipantNotFoundError,
@@ -1269,6 +1269,71 @@ class SessionServiceAsync:
             sessions=sessions,
             total=len(sessions),
         )
+
+    async def list_all_sessions(
+        self,
+        db: AsyncSession,
+        current_user,
+        page: int = 1,
+        page_size: int = 20,
+        quiz_type: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> ResultsHubResponse:
+        """List all sessions across all quizzes for the current user's tenant."""
+        filters = [QuizSession.tenant_id == current_user.tenant_id]
+        if quiz_type:
+            filters.append(Quiz.quiz_type == quiz_type)
+        if status:
+            filters.append(QuizSession.status == status)
+
+        count_q = (
+            select(func.count(QuizSession.id))
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .filter(*filters)
+        )
+        total = (await db.execute(count_q)).scalar_one()
+
+        rows = (await db.execute(
+            select(
+                QuizSession.id,
+                QuizSession.status,
+                QuizSession.created_at,
+                QuizSession.updated_at,
+                Quiz.id.label('quiz_id'),
+                Quiz.title.label('quiz_title'),
+                Quiz.quiz_type.label('quiz_type'),
+                func.count(func.distinct(Participant.id)).label('participant_count'),
+                func.max(Event.join_code).label('join_code'),
+            )
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .outerjoin(Participant, Participant.session_id == QuizSession.id)
+            .outerjoin(Event, Event.id == Quiz.event_id)
+            .filter(*filters)
+            .group_by(
+                QuizSession.id, QuizSession.status, QuizSession.created_at,
+                QuizSession.updated_at, Quiz.id, Quiz.title, Quiz.quiz_type
+            )
+            .order_by(QuizSession.created_at.desc())
+            .limit(page_size)
+            .offset((page - 1) * page_size)
+        )).all()
+
+        items = [
+            ResultsHubItem(
+                id=row.id,
+                quiz_id=row.quiz_id,
+                quiz_title=row.quiz_title,
+                quiz_type=row.quiz_type.value if hasattr(row.quiz_type, 'value') else str(row.quiz_type),
+                status=SessionStatusEnum(row.status.value),
+                created_at=row.created_at,
+                ended_at=row.updated_at if row.status == QuizSessionStatus.ENDED else None,
+                participant_count=row.participant_count,
+                join_code=row.join_code or "",
+            )
+            for row in rows
+        ]
+
+        return ResultsHubResponse(items=items, total=total, page=page, page_size=page_size)
 
     async def _to_session_response(self, db: AsyncSession, session: QuizSession) -> SessionResponse:
         """Convert session to response"""

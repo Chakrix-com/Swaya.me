@@ -25,7 +25,8 @@ from features.quiz.schemas import (
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
     FeedbackSubmitRequest, LeaderboardResponse,
     SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse,
-    FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse
+    FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse,
+    ResultsHubResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.schemas import OfflinePollPublishResponse
@@ -627,6 +628,21 @@ async def delete_question(
 
 
 # Session Management Endpoints
+@router.get("/sessions/all", response_model=ResultsHubResponse)
+async def list_all_sessions(
+    page: int = 1,
+    page_size: int = 20,
+    quiz_type: Optional[str] = None,
+    status: Optional[str] = None,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service)
+):
+    """List all sessions across all quizzes for the current user's tenant."""
+    page_size = min(page_size, 100)
+    return await service.list_all_sessions(db, current_user, page, page_size, quiz_type, status)
+
+
 @router.get("/sessions/home-stats", response_model=HomeStatsResponse)
 async def get_home_stats(
     db: AsyncSession = Depends(get_async_db),

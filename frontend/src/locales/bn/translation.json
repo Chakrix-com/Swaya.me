@@ -2197,5 +2197,22 @@
     "searchPlaceholder": "টেমপ্লেট খুঁজুন…",
     "empty": "কোনো টেমপ্লেট পাওয়া যায়নি।",
     "created": "টেমপ্লেট তৈরি হয়েছে — সম্পাদনা শুরু করুন!"
+  },
+  "results": {
+    "title": "ফলাফল",
+    "subtitle": "আপনার সমস্ত কার্যক্রমের সেশন",
+    "activity": "কার্যক্রম",
+    "status": "অবস্থা",
+    "participants": "অংশগ্রহণকারীরা",
+    "date": "তারিখ",
+    "viewResults": "ফলাফল",
+    "goLive": "লাইভে যান",
+    "searchPlaceholder": "শিরোনামে খুঁজুন…",
+    "filterMode": "সব মোড",
+    "filterStatus": "সব অবস্থা",
+    "statusEnded": "শেষ হয়েছে",
+    "statusActive": "লাইভ",
+    "statusCreated": "খোলা",
+    "empty": "কোনো সেশন পাওয়া যায়নি। এখানে ফলাফল দেখতে কুইজ বা পোল চালান।"
   }
 }

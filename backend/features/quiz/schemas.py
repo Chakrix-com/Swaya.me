@@ -504,6 +504,26 @@ class SessionListResponse(BaseModel):
     total: int
 
 
+class ResultsHubItem(BaseModel):
+    """Single row in the cross-quiz Results Hub"""
+    id: int
+    quiz_id: int
+    quiz_title: str
+    quiz_type: str
+    status: SessionStatusEnum
+    created_at: datetime
+    ended_at: Optional[datetime] = None
+    participant_count: int
+    join_code: str = ""
+
+
+class ResultsHubResponse(BaseModel):
+    items: list[ResultsHubItem]
+    total: int
+    page: int
+    page_size: int
+
+
 class LeaderboardEntry(BaseModel):
     """Single leaderboard entry"""
     rank: int

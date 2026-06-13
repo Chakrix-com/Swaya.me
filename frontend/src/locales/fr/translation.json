@@ -2199,5 +2199,22 @@
     "searchPlaceholder": "Rechercher des modèles…",
     "empty": "Aucun modèle trouvé.",
     "created": "Modèle créé — commencez à modifier !"
+  },
+  "results": {
+    "title": "Résultats",
+    "subtitle": "Toutes les sessions de vos activités",
+    "activity": "Activité",
+    "status": "Statut",
+    "participants": "Participants",
+    "date": "Date",
+    "viewResults": "Résultats",
+    "goLive": "Passer en direct",
+    "searchPlaceholder": "Rechercher par titre…",
+    "filterMode": "Tous les modes",
+    "filterStatus": "Tous les statuts",
+    "statusEnded": "Terminé",
+    "statusActive": "En direct",
+    "statusCreated": "Ouvert",
+    "empty": "Aucune session trouvée. Lancez un quiz ou un sondage pour voir les résultats ici."
   }
 }

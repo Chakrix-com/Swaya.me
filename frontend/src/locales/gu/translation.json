@@ -2197,5 +2197,22 @@
     "searchPlaceholder": "ટેમ્પ્લેટ શોધો…",
     "empty": "કોઈ ટેમ્પ્લેટ મળ્યા નહીં.",
     "created": "ટેમ્પ્લેટ બનાવ્યો — સંપાદન શરૂ કરો!"
+  },
+  "results": {
+    "title": "પરિણામો",
+    "subtitle": "તમારી બધી પ્રવૃત્તિઓના સત્રો",
+    "activity": "પ્રવૃત્તિ",
+    "status": "સ્થિતિ",
+    "participants": "સહભાગીઓ",
+    "date": "તારીખ",
+    "viewResults": "પરિણામો",
+    "goLive": "લાઇવ જાઓ",
+    "searchPlaceholder": "શીર્ષક દ્વારા શોધો…",
+    "filterMode": "બધા મોડ",
+    "filterStatus": "બધી સ્થિતિઓ",
+    "statusEnded": "સમાપ્ત",
+    "statusActive": "લાઇવ",
+    "statusCreated": "ખુલ્લું",
+    "empty": "કોઈ સત્ર મળ્યા નથી. અહીં પરિણામો જોવા માટે ક્વિઝ અથવા પોલ ચલાવો."
   }
 }

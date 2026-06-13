@@ -2197,5 +2197,22 @@
     "searchPlaceholder": "टेम्पलेट खोजें…",
     "empty": "कोई टेम्पलेट नहीं मिला।",
     "created": "टेम्पलेट बनाया — संपादन शुरू करें!"
+  },
+  "results": {
+    "title": "परिणाम",
+    "subtitle": "आपकी सभी गतिविधियों के सत्र",
+    "activity": "गतिविधि",
+    "status": "स्थिति",
+    "participants": "प्रतिभागी",
+    "date": "दिनांक",
+    "viewResults": "परिणाम",
+    "goLive": "लाइव जाएं",
+    "searchPlaceholder": "शीर्षक खोजें…",
+    "filterMode": "सभी मोड",
+    "filterStatus": "सभी स्थितियां",
+    "statusEnded": "समाप्त",
+    "statusActive": "लाइव",
+    "statusCreated": "खुला",
+    "empty": "कोई सत्र नहीं मिला। यहाँ परिणाम देखने के लिए क्विज़ या पोल चलाएं।"
   }
 }

@@ -2200,5 +2200,22 @@
     "searchPlaceholder": "Search templates…",
     "empty": "No templates found.",
     "created": "Template created — start editing!"
+  },
+  "results": {
+    "title": "Results",
+    "subtitle": "All sessions across your activities",
+    "activity": "Activity",
+    "status": "Status",
+    "participants": "Participants",
+    "date": "Date",
+    "viewResults": "Results",
+    "goLive": "Go live",
+    "searchPlaceholder": "Search by title…",
+    "filterMode": "All modes",
+    "filterStatus": "All statuses",
+    "statusEnded": "Ended",
+    "statusActive": "Live",
+    "statusCreated": "Open",
+    "empty": "No sessions found. Run a quiz or poll to see results here."
   }
 }

@@ -2197,5 +2197,22 @@
     "searchPlaceholder": "Buscar plantillas…",
     "empty": "No se encontraron plantillas.",
     "created": "¡Plantilla creada — empieza a editar!"
+  },
+  "results": {
+    "title": "Resultados",
+    "subtitle": "Todas las sesiones de tus actividades",
+    "activity": "Actividad",
+    "status": "Estado",
+    "participants": "Participantes",
+    "date": "Fecha",
+    "viewResults": "Resultados",
+    "goLive": "Ir en vivo",
+    "searchPlaceholder": "Buscar por título…",
+    "filterMode": "Todos los modos",
+    "filterStatus": "Todos los estados",
+    "statusEnded": "Terminado",
+    "statusActive": "En vivo",
+    "statusCreated": "Abierto",
+    "empty": "No se encontraron sesiones. Ejecuta un cuestionario o encuesta para ver los resultados aquí."
   }
 }

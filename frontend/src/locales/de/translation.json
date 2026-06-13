@@ -2197,5 +2197,22 @@
     "searchPlaceholder": "Vorlagen suchen…",
     "empty": "Keine Vorlagen gefunden.",
     "created": "Vorlage erstellt — mit der Bearbeitung beginnen!"
+  },
+  "results": {
+    "title": "Ergebnisse",
+    "subtitle": "Alle Sitzungen Ihrer Aktivitäten",
+    "activity": "Aktivität",
+    "status": "Status",
+    "participants": "Teilnehmer",
+    "date": "Datum",
+    "viewResults": "Ergebnisse",
+    "goLive": "Live gehen",
+    "searchPlaceholder": "Nach Titel suchen…",
+    "filterMode": "Alle Modi",
+    "filterStatus": "Alle Status",
+    "statusEnded": "Beendet",
+    "statusActive": "Live",
+    "statusCreated": "Offen",
+    "empty": "Keine Sitzungen gefunden. Führen Sie ein Quiz oder eine Umfrage durch, um Ergebnisse hier zu sehen."
   }
 }

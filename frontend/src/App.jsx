@@ -20,6 +20,7 @@ import {
   UserOutlined,
   UnorderedListOutlined,
   AppstoreAddOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -50,6 +51,7 @@ const ResetPassword = lazy(() => import('./features/auth/ResetPassword'))
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'))
 const Activities = lazy(() => import('./features/activities/Activities'))
 const TemplateGallery = lazy(() => import('./features/templates/TemplateGallery'))
+const ResultsHub = lazy(() => import('./features/results/ResultsHub'))
 const UserPlans = lazy(() => import('./features/dashboard/UserPlans'))
 const QuizBuilder = lazy(() => import('./features/quiz/QuizBuilder'))
 const QuizControl = lazy(() => import('./features/quiz/QuizControl'))
@@ -177,6 +179,11 @@ function AuthenticatedLayout({ children }) {
             path: '/templates',
             name: t('templates.title'),
             icon: <AppstoreAddOutlined />,
+          },
+          {
+            path: '/results',
+            name: t('results.title', 'Results'),
+            icon: <TrophyOutlined />,
           },
           // Hidden routes — still routable but not shown in sidebar
           { path: '/plans',                    hideInMenu: true },
@@ -396,6 +403,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/activities" element={<Activities />} />
         <Route path="/templates" element={<TemplateGallery />} />
+        <Route path="/results" element={<ResultsHub />} />
         <Route path="/plans" element={<UserPlans />} />
         <Route path="/quiz/new" element={<QuizBuilder />} />
         <Route path="/quiz/:id/edit" element={<QuizBuilder />} />
