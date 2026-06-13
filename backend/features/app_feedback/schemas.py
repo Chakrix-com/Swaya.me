@@ -1,25 +1,10 @@
 """
 Schemas for global app feedback
 """
-import re
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, validator, Field
-
-
-def _sanitize_html(html: str) -> str:
-    """Strip dangerous HTML constructs (XSS guard)."""
-    if not html:
-        return html
-    # Remove script and iframe tags (with content)
-    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.IGNORECASE | re.DOTALL)
-    html = re.sub(r'<iframe[^>]*>.*?</iframe>', '', html, flags=re.IGNORECASE | re.DOTALL)
-    # Remove inline event handlers
-    html = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
-    html = re.sub(r'\s+on\w+\s*=\s*[^\s>]+', '', html, flags=re.IGNORECASE)
-    # Remove javascript: hrefs
-    html = re.sub(r'href\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', 'href="#"', html, flags=re.IGNORECASE)
-    return html
+from shared.utils.html_sanitizer import sanitize_plain
 
 
 class AppFeedbackSubmitRequest(BaseModel):
@@ -30,7 +15,8 @@ class AppFeedbackSubmitRequest(BaseModel):
 
     @validator('feedback_text')
     def sanitize_feedback(cls, v):
-        return _sanitize_html(v)
+        # Strip all HTML — feedback is plain text, rendered via dangerouslySetInnerHTML
+        return sanitize_plain(v)
 
 
 class AppFeedbackResponse(BaseModel):

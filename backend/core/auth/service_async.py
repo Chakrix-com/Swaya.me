@@ -5,6 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 from persistence.models.core import User, Tenant, TierEnum, UserRole, Event
 from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
@@ -20,8 +23,6 @@ from shared.exceptions.auth import (
 )
 import secrets
 from core.auth.email_service import send_verification_email, send_welcome_email
-
-DEMO_LOGIN_BYPASS_EMAIL = "demo@swaya.me"
 
 
 def create_tenant_slug(name: str) -> str:
@@ -205,12 +206,15 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
     if not verify_password(request.password, user.hashed_password):
         raise InvalidCredentialsError("Invalid email or password")
         
-    normalized_email = (user.email or "").strip().lower()
-    bypass_email_verification = normalized_email == DEMO_LOGIN_BYPASS_EMAIL
-
-    # Check if email is verified (demo account is temporarily exempted)
-    if (not bypass_email_verification) and hasattr(user, 'is_email_verified') and not getattr(user, 'is_email_verified', True):
-        raise EmailNotVerifiedError("Please verify your email address to log in.")
+    # Check if email is verified
+    if hasattr(user, 'is_email_verified') and not getattr(user, 'is_email_verified', True):
+        # Bypass for demo user who is super admin
+        logger.info(f"Checking email verification for {user.email}. is_email_verified: {user.is_email_verified}")
+        if user.email != "demo@swaya.me":
+            logger.warning(f"Verification required for {user.email}")
+            raise EmailNotVerifiedError("Please verify your email address to log in.")
+        else:
+            logger.info(f"Bypassing email verification for {user.email}")
     
     # Check if user is active - specific error for user feedback
     if not user.is_active:

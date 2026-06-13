@@ -12,7 +12,8 @@ import shutil, os, json
 from core.config.settings import settings
 from persistence.database_async import get_async_db
 from shared.utils.redis_client import redis_client, get_redis, RedisClient
-from core.auth.dependencies import get_current_user, CurrentUser
+from core.auth.dependencies import get_current_user, CurrentUser, require_super_admin
+from persistence.models.core import UserRole
 from persistence.models.quiz import Quiz, QuizType
 from persistence.models.core import Tenant
 from persistence.models.proctoring import PlatformProctoringRule, TenantProctoringPolicy
@@ -76,7 +77,7 @@ async def init_session(
 
     context = await _resolve_context(quiz, tenant)
 
-    ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+    ip = request.client.host if request.client else "unknown"
     ua = request.headers.get("User-Agent", "")
 
     return await svc.init_session(
@@ -287,12 +288,26 @@ async def upload_snapshot(
         except Exception:
             pass
 
+    # Reject uploads with no resolvable participant — prevents writing to 0/0/
+    if not quiz_id or not participant_id:
+        return {"ok": False}
+
     uploads_base = Path(settings.app.uploads_base_dir)
     snap_dir = uploads_base / "proctoring" / str(quiz_id) / str(participant_id)
     snap_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = file.filename or f"snap_{__import__('time').time_ns()}.jpg"
-    dest = snap_dir / filename
+    # Strip all path components from the filename to prevent path traversal
+    raw_name = Path(file.filename or "").name or f"snap_{__import__('time').time_ns()}.jpg"
+    # Keep only alphanumerics, dots, hyphens, underscores
+    import re as _re
+    safe_name = _re.sub(r"[^\w.\-]", "_", raw_name)
+    dest = snap_dir / safe_name
+
+    # Confirm resolved path stays inside snap_dir
+    try:
+        dest.resolve().relative_to(snap_dir.resolve())
+    except ValueError:
+        return {"ok": False}
 
     try:
         with open(dest, "wb") as f:
@@ -411,7 +426,7 @@ async def get_rules_for_user(
 
 @router.get("/admin/rules")
 async def get_platform_rules(
-    current_user: CurrentUser = Depends(get_current_user),
+    _: CurrentUser = Depends(require_super_admin),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Super admin — list all platform rules."""
@@ -437,7 +452,7 @@ async def get_platform_rules(
 async def update_platform_rule(
     rule_id: str,
     body: PlatformRuleUpdate,
-    current_user: CurrentUser = Depends(get_current_user),
+    _: CurrentUser = Depends(require_super_admin),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Super admin — update a platform rule."""
@@ -467,7 +482,11 @@ async def get_tenant_policy(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
 ):
-    """Admin — get tenant proctoring policies."""
+    """Admin — get tenant proctoring policies. Tenant admins can only view their own tenant."""
+    if current_user.user.role not in (UserRole.super_admin, UserRole.admin):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if current_user.user.role == UserRole.admin and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     result = await db.execute(
         select(TenantProctoringPolicy).where(TenantProctoringPolicy.tenant_id == tenant_id)
     )
@@ -490,7 +509,11 @@ async def update_tenant_policy(
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_db),
 ):
-    """Admin — upsert a tenant proctoring policy."""
+    """Admin — upsert a tenant proctoring policy. Tenant admins can only modify their own tenant."""
+    if current_user.user.role not in (UserRole.super_admin, UserRole.admin):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if current_user.user.role == UserRole.admin and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     from datetime import datetime, timezone
 
     result = await db.execute(

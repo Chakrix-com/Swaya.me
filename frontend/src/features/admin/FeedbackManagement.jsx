@@ -147,7 +147,7 @@ function AppFeedbackTab() {
       title: t('admin.feedbackPage.columns.feedback'),
       dataIndex: 'feedback_text',
       key: 'feedback_text',
-      render: (v) => <div dangerouslySetInnerHTML={{ __html: v }} style={{ maxHeight: 120, overflow: 'hidden', wordBreak: 'break-word' }} />,
+      render: (v) => <div style={{ maxHeight: 120, overflow: 'hidden', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{v}</div>,
     },
   ]
 

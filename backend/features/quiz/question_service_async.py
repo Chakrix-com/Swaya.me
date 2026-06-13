@@ -20,6 +20,7 @@ from shared.exceptions.quiz import (
     TierLimitExceededError
 )
 from shared.utils.content_filter import check_content
+from shared.utils.html_sanitizer import sanitize_html, sanitize_plain
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
 from core.storage import ImageService
@@ -89,11 +90,15 @@ class QuestionServiceAsync:
                 f"Question limit reached for {tier.value} tier"
             )
         
-        # Content filter
+        # Content filter + HTML sanitization
         check_content(request.text, "Question text")
         if request.options:
             for i, opt in enumerate(request.options):
                 check_content(opt, f"Option {i + 1}")
+
+        sanitized_text = sanitize_html(request.text)
+        sanitized_options = [sanitize_plain(o) for o in request.options] if request.options else request.options
+        sanitized_explanation = sanitize_html(request.answer_explanation) if request.answer_explanation else request.answer_explanation
 
         # Calculate next order
         max_order = max([q.order for q in quiz.questions], default=-1)
@@ -103,8 +108,8 @@ class QuestionServiceAsync:
         question = Question(
             quiz_id=quiz_id,
             question_type=request.question_type,
-            text=request.text,
-            options=request.options,
+            text=sanitized_text,
+            options=sanitized_options,
             correct_answer_index=request.correct_answer_index,
             question_image_url=request.question_image_url,
             option_images=request.option_images,
@@ -112,7 +117,7 @@ class QuestionServiceAsync:
             max_time_seconds=request.max_time_seconds,
             negative_points=request.negative_points,
             is_required=request.is_required,
-            answer_explanation=request.answer_explanation,
+            answer_explanation=sanitized_explanation,
             order=next_order
         )
         
@@ -147,7 +152,7 @@ class QuestionServiceAsync:
         if question.quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
 
-        # Content filter
+        # Content filter + HTML sanitization
         if "text" in request.model_fields_set:
             check_content(request.text, "Question text")
         if "options" in request.model_fields_set and request.options:
@@ -158,9 +163,9 @@ class QuestionServiceAsync:
         if "question_type" in request.model_fields_set:
             question.question_type = request.question_type
         if "text" in request.model_fields_set:
-            question.text = request.text
+            question.text = sanitize_html(request.text)
         if "options" in request.model_fields_set:
-            question.options = request.options
+            question.options = [sanitize_plain(o) for o in request.options] if request.options else request.options
         if "correct_answer_index" in request.model_fields_set:
             question.correct_answer_index = request.correct_answer_index
         if "question_image_url" in request.model_fields_set:
@@ -176,7 +181,7 @@ class QuestionServiceAsync:
         if "is_required" in request.model_fields_set:
             question.is_required = request.is_required
         if "answer_explanation" in request.model_fields_set:
-            question.answer_explanation = request.answer_explanation
+            question.answer_explanation = sanitize_html(request.answer_explanation) if request.answer_explanation else request.answer_explanation
 
         await db.commit()
         await db.refresh(question)

@@ -797,8 +797,8 @@ export default function QuizPresent() {
   const whiteboardPushQueuedRef = useRef(false)
   const whiteboardLastPushAtRef = useRef(0)
 
-  // Host controls are shown only when a JWT token is present in this browser
-  const isHost = !!localStorage.getItem('token')
+  // Host controls are shown only when a user session exists in this browser
+  const isHost = !!localStorage.getItem('user')
   const isPoll = results?.quiz_type === 'poll'
 
   const joinUrl = joinCode ? `${window.location.origin}/join/${joinCode}` : ''

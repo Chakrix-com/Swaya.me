@@ -39,10 +39,10 @@ const LanguageSwitcher = () => {
 
   const trackLanguageChange = async (newLanguage, oldLanguage) => {
     try {
-      // Check if user is authenticated
-      const token = localStorage.getItem('token')
-      
-      if (token) {
+      // Check if user is authenticated (cookie session; user info in localStorage)
+      const isAuthenticated = !!localStorage.getItem('user')
+
+      if (isAuthenticated) {
         // Authenticated user - update preference
         await languageTrackingAPI.updatePreference({
           language: newLanguage,

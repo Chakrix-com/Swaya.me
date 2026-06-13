@@ -4,6 +4,9 @@ Quiz API Endpoints
 import asyncio
 import json
 import io
+import logging
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, File, UploadFile
 from fastapi.responses import StreamingResponse, FileResponse
@@ -514,6 +517,7 @@ async def get_import_template(
 @router.post("/import/export-draft")
 async def export_draft_to_excel(
     request: Request,
+    current_user: CurrentUser = Depends(get_current_user),
     service: ExcelImportService = Depends(get_import_service)
 ):
     """Generate and download an Excel file from the current frontend draft JSON"""
@@ -527,12 +531,14 @@ async def export_draft_to_excel(
             headers={"Content-Disposition": "attachment; filename=Swaya_me_Draft_Export.xlsx"}
         )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to export draft: {str(e)}")
+        logger.exception("export_draft_to_excel failed")
+        raise HTTPException(status_code=400, detail="Failed to export draft. Please check your data and try again.")
 
 
 @router.post("/import/validate")
 async def validate_import_file(
     file: UploadFile = File(...),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ExcelImportService = Depends(get_import_service)
 ):
     """Parse and validate an uploaded Excel file, returning a preview of results"""
@@ -547,7 +553,8 @@ async def validate_import_file(
     except QuizValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error during validation: {str(e)}")
+        logger.exception("validate_import_file failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred while processing the file. Please try again.")
 
 
 @router.post("/import/finalize", response_model=QuizResponse)
@@ -576,7 +583,8 @@ async def finalize_import(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to finalize import: {str(e)}")
+        logger.exception("finalize_import failed")
+        raise HTTPException(status_code=500, detail="An internal error occurred during import. Please try again.")
 
 
 # Question Management Endpoints

@@ -18,28 +18,13 @@ function Login() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  const { loading, isAuthenticated, token } = useSelector((state) => state.auth)
+  const { loading, isAuthenticated } = useSelector((state) => state.auth)
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true })
-      return
     }
-
-    if (token) {
-      const hydrateUser = async () => {
-        try {
-          const response = await authAPI.getMe()
-          dispatch(loginSuccess({ access_token: token, user: response.data }))
-          navigate('/dashboard', { replace: true })
-        } catch (error) {
-          dispatch(logout())
-        }
-      }
-
-      hydrateUser()
-    }
-  }, [dispatch, isAuthenticated, navigate, token])
+  }, [isAuthenticated, navigate])
 
   const onFinish = async (values) => {
     dispatch(loginStart())

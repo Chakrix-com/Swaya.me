@@ -1,9 +1,12 @@
 """
 API endpoints for image uploads
 """
+import logging
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Form, Request
 from sqlalchemy.orm import Session
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 from persistence.database import get_db
 from core.auth.dependencies import get_current_user
@@ -80,7 +83,8 @@ async def upload_image(
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to upload temp image: {str(e)}")
+            logger.exception("Failed to upload temp image quiz_id=%s", quiz_id)
+            raise HTTPException(status_code=500, detail="Failed to upload image. Please try again.")
     
     # Mode 2: Permanent upload (question_id provided)
     # Get question and verify it belongs to this quiz
@@ -138,7 +142,8 @@ async def upload_image(
         raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+        logger.exception("Failed to upload image quiz_id=%s question_id=%s", quiz_id, question_id)
+        raise HTTPException(status_code=500, detail="Failed to upload image. Please try again.")
 
 
 @router.post("/{quiz_id}/questions/{question_id}/move-temp-images")
@@ -234,7 +239,8 @@ async def move_temp_images(
         raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to move temp images: {str(e)}")
+        logger.exception("Failed to move temp images quiz_id=%s question_id=%s", quiz_id, question_id)
+        raise HTTPException(status_code=500, detail="Failed to process images. Please try again.")
 
 
 
@@ -320,4 +326,5 @@ async def delete_image(
         raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to delete image: {str(e)}")
+        logger.exception("Failed to delete image quiz_id=%s question_id=%s", quiz_id, question_id)
+        raise HTTPException(status_code=500, detail="Failed to delete image. Please try again.")

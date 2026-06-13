@@ -260,9 +260,8 @@ export default function Home() {
         {/* ── nav ── */}
         <nav className="pub-nav">
           <a className="pub-logo" href="/" onClick={e => { e.preventDefault(); navigate('/') }}>
-            <span className="pub-logo-prism" aria-hidden="true" />
-            <img src={logo} alt="Swaya" className="pub-logo-img" />
-            Swaya
+            <img src={logo} alt="Swaya.me" className="pub-logo-img" />
+            Swaya.me
             <BetaBadge />
           </a>
           <div className="pub-nav-actions">

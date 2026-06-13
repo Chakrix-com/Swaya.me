@@ -2,12 +2,15 @@
 Image upload and management service
 """
 import os
+import re
 import uuid
 from pathlib import Path
 from typing import Optional
 from fastapi import UploadFile, HTTPException
 from PIL import Image, ImageOps
 import io
+
+_SAFE_FILENAME_RE = re.compile(r'^[\w.\-]+$')
 
 
 class ImageService:
@@ -282,11 +285,21 @@ class ImageService:
         Returns:
             Relative path to permanent image location
         """
+        # Reject temp_key values that could traverse the filesystem
+        safe_key = Path(temp_key).name
+        if not safe_key or not _SAFE_FILENAME_RE.match(safe_key) or safe_key != temp_key:
+            raise HTTPException(status_code=400, detail="Invalid temp_key")
+
         # Source: temp directory
-        temp_path = cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id) / temp_key
-        
+        expected_base = (cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id)).resolve()
+        temp_path = cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id) / safe_key
+        try:
+            temp_path.resolve().relative_to(expected_base)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid temp_key")
+
         if not temp_path.exists():
-            raise HTTPException(status_code=404, detail=f"Temp image not found: {temp_key}")
+            raise HTTPException(status_code=404, detail=f"Temp image not found: {safe_key}")
         
         # Destination: permanent directory
         permanent_dir = cls.UPLOAD_BASE_DIR / str(tenant_id) / str(quiz_id)
@@ -323,8 +336,17 @@ class ImageService:
         Returns:
             True if deleted, False otherwise
         """
-        temp_path = cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id) / temp_key
-        
+        safe_key = Path(temp_key).name
+        if not safe_key or not _SAFE_FILENAME_RE.match(safe_key) or safe_key != temp_key:
+            return False
+
+        expected_base = (cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id)).resolve()
+        temp_path = cls.TEMP_BASE_DIR / str(tenant_id) / str(quiz_id) / safe_key
+        try:
+            temp_path.resolve().relative_to(expected_base)
+        except ValueError:
+            return False
+
         try:
             if temp_path.exists() and temp_path.is_file():
                 temp_path.unlink()

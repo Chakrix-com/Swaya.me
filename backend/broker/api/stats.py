@@ -54,26 +54,33 @@ async def get_weekly_active_hosts(
     if current_user.user.role not in [UserRole.admin, UserRole.super_admin]:
         raise HTTPException(status_code=403, detail="Admins only")
 
-    tenant_filter = ""
-    params: dict = {"days": days}
     if current_user.user.role == UserRole.admin:
-        tenant_filter = "AND qs.tenant_id = :tenant_id"
-        params["tenant_id"] = current_user.tenant_id
-
-    sql = text(f"""
-        SELECT
-            DATE(qs.created_at) AS day,
-            COUNT(DISTINCT e.creator_id) AS active_hosts
-        FROM quiz_sessions qs
-        JOIN quizzes q ON q.id = qs.quiz_id
-        JOIN events e ON e.id = q.event_id
-        WHERE qs.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-          {tenant_filter}
-        GROUP BY DATE(qs.created_at)
-        ORDER BY day ASC
-    """)
-
-    result = await db.execute(sql, params)
+        sql = text("""
+            SELECT
+                DATE(qs.created_at) AS day,
+                COUNT(DISTINCT e.creator_id) AS active_hosts
+            FROM quiz_sessions qs
+            JOIN quizzes q ON q.id = qs.quiz_id
+            JOIN events e ON e.id = q.event_id
+            WHERE qs.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+              AND qs.tenant_id = :tenant_id
+            GROUP BY DATE(qs.created_at)
+            ORDER BY day ASC
+        """)
+        result = await db.execute(sql, {"days": days, "tenant_id": current_user.tenant_id})
+    else:
+        sql = text("""
+            SELECT
+                DATE(qs.created_at) AS day,
+                COUNT(DISTINCT e.creator_id) AS active_hosts
+            FROM quiz_sessions qs
+            JOIN quizzes q ON q.id = qs.quiz_id
+            JOIN events e ON e.id = q.event_id
+            WHERE qs.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(qs.created_at)
+            ORDER BY day ASC
+        """)
+        result = await db.execute(sql, {"days": days})
     rows = result.fetchall()
     return [{"day": str(row.day), "active_hosts": row.active_hosts} for row in rows]
 

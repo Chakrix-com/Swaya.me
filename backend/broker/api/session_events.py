@@ -87,11 +87,15 @@ async def session_events(
     host JWT in the Authorization header. Unauthenticated requests are
     rejected.
     """
-    # Auth: accept participant session_token or host JWT
+    # Auth: accept participant session_token (query param or X-Session-Token header)
+    # or host JWT (HttpOnly cookie or Authorization header)
     authed = False
 
-    if session_token:
-        cached = await redis.get_json(f"session_token:{session_token}")
+    # Participants may send session_token as a header (fetch-event-source) or query param
+    effective_session_token = session_token or request.headers.get("X-Session-Token", "")
+
+    if effective_session_token:
+        cached = await redis.get_json(f"session_token:{effective_session_token}")
         if cached and cached.get("session_id") == session_id and cached.get("is_active", True):
             authed = True
         else:
@@ -100,21 +104,33 @@ async def session_events(
             from persistence.models.quiz import Participant
             row = (await db.execute(
                 _select(Participant.session_id, Participant.is_active)
-                .where(Participant.session_token == session_token)
+                .where(Participant.session_token == effective_session_token)
             )).one_or_none()
             if row and row.session_id == session_id and row.is_active:
                 authed = True
 
     if not authed:
-        # Try host JWT
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
+        # Try host JWT — prefer HttpOnly cookie, fall back to Authorization header
+        # Verify the JWT's tenant_id matches the session's tenant_id
+        jwt_token = request.cookies.get("access_token", "")
+        if not jwt_token:
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                jwt_token = auth_header[7:]
+        if jwt_token:
             try:
                 from core.security.jwt import decode_access_token
-                payload = decode_access_token(token)
+                from persistence.models.quiz import QuizSession
+                from sqlalchemy import select as _select_jwt
+                payload = decode_access_token(jwt_token)
                 if payload:
-                    authed = True
+                    jwt_tenant_id = payload.get("tenant_id")
+                    row = (await db.execute(
+                        _select_jwt(QuizSession.tenant_id)
+                        .where(QuizSession.id == session_id)
+                    )).scalar_one_or_none()
+                    if row is not None and row == jwt_tenant_id:
+                        authed = True
             except Exception:
                 pass
 

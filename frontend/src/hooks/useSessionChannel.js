@@ -4,79 +4,83 @@
  * Usage (participant):
  *   const { connected } = useSessionChannel(sessionId, sessionToken, onEvent)
  *
- * Usage (host, uses JWT from localStorage):
+ * Usage (host, uses HttpOnly JWT cookie):
  *   const { connected } = useSessionChannel(sessionId, null, onEvent)
  *
- * onEvent(event) — called with every parsed SSE event object:
- *   { type: 'state', data: { ...audienceState } }
- *   { type: 'leaderboard_toggle', visible: bool }
- *
- * If SSE fails or is unsupported, the hook emits a 'sse_unavailable' event
- * so the caller can keep its existing polling logic running unchanged.
+ * Uses @microsoft/fetch-event-source so that:
+ *   - Participants send X-Session-Token header (keeps session_token out of URLs/logs)
+ *   - Hosts send their HttpOnly cookie automatically via credentials: 'include'
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
-const SSE_PATH = (sessionId, sessionToken) => {
-  const base = `/api/v1/quizzes/sessions/${sessionId}/events`
-  if (sessionToken) return `${base}?session_token=${encodeURIComponent(sessionToken)}`
-  return base
-}
+const SSE_URL = (sessionId) =>
+  `${window.location.origin}/api/v1/quizzes/sessions/${sessionId}/events`
 
 export default function useSessionChannel(sessionId, sessionToken, onEvent) {
   const [connected, setConnected] = useState(false)
-  const esRef = useRef(null)
+  const abortRef = useRef(null)
   const onEventRef = useRef(onEvent)
   onEventRef.current = onEvent
 
   const connect = useCallback(() => {
     if (!sessionId) return
-    if (esRef.current) return  // already open
+    if (abortRef.current) return  // already open
 
-    // Participant: no auth header needed (session_token in URL).
-    // Host: EventSource can't set headers — we pass JWT via a short-lived cookie
-    // workaround isn't needed because the backend also accepts Bearer in the header;
-    // for the host we skip SSE and let the existing polling handle it.
-    // Only use SSE for participants (session_token path).
-    if (!sessionToken) {
-      onEventRef.current?.({ type: 'sse_unavailable' })
-      return
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    const headers = {}
+    if (sessionToken) {
+      // Participant: send session_token as a header (not in URL)
+      headers['X-Session-Token'] = sessionToken
     }
 
-    if (typeof EventSource === 'undefined') {
-      onEventRef.current?.({ type: 'sse_unavailable' })
-      return
-    }
-
-    const url = SSE_PATH(sessionId, sessionToken)
-    const es = new EventSource(url)
-    esRef.current = es
-
-    es.onopen = () => setConnected(true)
-
-    es.onmessage = (e) => {
-      try {
-        const event = JSON.parse(e.data)
-        onEventRef.current?.(event)
-      } catch {
-        // ignore malformed frames
-      }
-    }
-
-    es.onerror = () => {
-      setConnected(false)
-      es.close()
-      esRef.current = null
-      // Emit unavailable so caller can fall back to polling
-      onEventRef.current?.({ type: 'sse_unavailable' })
-    }
+    fetchEventSource(SSE_URL(sessionId), {
+      method: 'GET',
+      headers,
+      credentials: 'include',  // sends HttpOnly cookie for host auth
+      signal: controller.signal,
+      onopen: async (response) => {
+        if (response.ok) {
+          setConnected(true)
+          return
+        }
+        // Non-2xx: emit unavailable so caller falls back to polling
+        onEventRef.current?.({ type: 'sse_unavailable' })
+        controller.abort()
+      },
+      onmessage: (msg) => {
+        try {
+          const event = JSON.parse(msg.data)
+          onEventRef.current?.(event)
+        } catch {
+          // ignore malformed frames
+        }
+      },
+      onclose: () => {
+        setConnected(false)
+        abortRef.current = null
+        onEventRef.current?.({ type: 'sse_unavailable' })
+      },
+      onerror: (err) => {
+        setConnected(false)
+        abortRef.current = null
+        onEventRef.current?.({ type: 'sse_unavailable' })
+        // Returning a positive number would trigger retry; throw to stop
+        throw err
+      },
+    }).catch(() => {
+      // fetchEventSource rejects on abort or onerror throw — suppress
+    })
   }, [sessionId, sessionToken])
 
   useEffect(() => {
     connect()
     return () => {
-      if (esRef.current) {
-        esRef.current.close()
-        esRef.current = null
+      if (abortRef.current) {
+        abortRef.current.abort()
+        abortRef.current = null
       }
       setConnected(false)
     }

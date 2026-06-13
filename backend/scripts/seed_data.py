@@ -11,7 +11,7 @@ sys.path.insert(0, str(backend_path))
 
 from sqlalchemy.orm import Session
 from persistence.database import SessionLocal, engine, Base
-from persistence.models.core import Tenant, User, TierConfiguration, TierEnum
+from persistence.models.core import Tenant, User, TierConfiguration, TierEnum, UserRole
 from persistence.models.quiz import Quiz, Question, QuizSession, Participant, Answer
 from core.security.password import hash_password
 
@@ -90,7 +90,9 @@ def seed_demo_data(db: Session):
         email="demo@swaya.me",
         hashed_password=hash_password("Demo1234"),
         full_name="Demo User",
-        is_active=True
+        is_active=True,
+        is_email_verified=True,
+        role=UserRole.super_admin
     )
     db.add(user)
     db.commit()

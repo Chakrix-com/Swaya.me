@@ -3,6 +3,7 @@ Pydantic schemas for authentication
 """
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
+from zxcvbn import zxcvbn
 
 
 class UserRegisterRequest(BaseModel):
@@ -19,6 +20,8 @@ class UserRegisterRequest(BaseModel):
             raise ValueError('Password must contain at least one digit')
         if not any(char.isupper() for char in v):
             raise ValueError('Password must contain at least one uppercase letter')
+        if zxcvbn(v)['score'] < 2:
+            raise ValueError('Password is too weak. Try a longer or more varied password.')
         return v
 
 
@@ -80,4 +83,6 @@ class ResetPasswordRequest(BaseModel):
             raise ValueError('Password must contain at least one digit')
         if not any(char.isupper() for char in v):
             raise ValueError('Password must contain at least one uppercase letter')
+        if zxcvbn(v)['score'] < 2:
+            raise ValueError('Password is too weak. Try a longer or more varied password.')
         return v

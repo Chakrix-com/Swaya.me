@@ -2,8 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
   user: JSON.parse(localStorage.getItem('user') || 'null'),
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('user'),
   loading: false,
   error: null,
 }
@@ -20,8 +19,7 @@ export const authSlice = createSlice({
       state.loading = false
       state.isAuthenticated = true
       state.user = action.payload.user
-      state.token = action.payload.access_token
-      localStorage.setItem('token', action.payload.access_token)
+      // JWT is stored in HttpOnly cookie by the server — not in localStorage
       localStorage.setItem('user', JSON.stringify(action.payload.user))
     },
     loginFailure: (state, action) => {
@@ -30,9 +28,7 @@ export const authSlice = createSlice({
     },
     logout: (state) => {
       state.user = null
-      state.token = null
       state.isAuthenticated = false
-      localStorage.removeItem('token')
       localStorage.removeItem('user')
     },
     refreshUser: (state, action) => {

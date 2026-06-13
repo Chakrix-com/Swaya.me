@@ -105,3 +105,4 @@ screenshots/
 # Load test HTML reports
 live_quiz_load_report*.html
 proctoring_load_report*.html
+vulnerabilities.md

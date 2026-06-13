@@ -1,15 +1,19 @@
 """
 Main FastAPI application entry point
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from contextlib import asynccontextmanager
 from pathlib import Path
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+import logging
+
+logger = logging.getLogger(__name__)
 
 from core.config.settings import settings
 from persistence.models.app_feedback import AppFeedback  # noqa: F401
@@ -57,9 +61,29 @@ async def lifespan(app: FastAPI):
     # Seed proctoring platform rules
     try:
         from persistence.database_async import AsyncSessionLocal
+        from persistence.models.core import User
+        from sqlalchemy import select, update
         from features.proctoring.rule_registry import seed_platform_rules
         async with AsyncSessionLocal() as seed_db:
             await seed_platform_rules(seed_db)
+            
+            # Ensure demo user is verified
+            stmt = select(User).where(User.email == "demo@swaya.me")
+            result = await seed_db.execute(stmt)
+            demo_user = result.scalar_one_or_none()
+            if demo_user and not demo_user.is_email_verified:
+                await seed_db.execute(
+                    update(User)
+                    .where(User.email == "demo@swaya.me")
+                    .values(is_email_verified=True)
+                )
+                await seed_db.commit()
+                logger.info("Demo user verified on startup")
+            elif demo_user:
+                logger.info("Demo user already verified")
+            else:
+                logger.warning("Demo user not found for startup verification")
+                
         print("✓  Proctoring rules seeded")
     except Exception as e:
         print(f"⚠  Proctoring rules seed skipped: {e}")
@@ -119,6 +143,15 @@ def create_application() -> FastAPI:
     
     # Tenant isolation middleware
     app.middleware("http")(tenant_isolation_middleware)
+
+    # Strip server version header to avoid tech-stack disclosure
+    class StripServerHeaderMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            response = await call_next(request)
+            response.headers["server"] = "swaya"
+            return response
+
+    app.add_middleware(StripServerHeaderMiddleware)
 
     # Rate Limiting
     app.state.limiter = limiter

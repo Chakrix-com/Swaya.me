@@ -135,7 +135,8 @@ function AuthenticatedLayout({ children }) {
   const themeId = useSelector((state) => state.theme.themeId)
   const currentTheme = getTheme(themeId)
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await authAPI.logout() } catch (_) {}
     dispatch(logout())
     navigate('/login')
   }

@@ -7,35 +7,18 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // send HttpOnly access_token cookie automatically
 })
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// Handle expired token responses
+// Handle expired/invalid session responses
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only redirect to login for auth failures with tokens (host requests)
-    // Let 403 pass through for participant session invalidation
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Check if this was an authenticated request (has token)
-      const hasAuthToken = error.config?.headers?.Authorization
-      
-      if (hasAuthToken) {
-        // Host authentication failed - redirect to login
-        // Clear localStorage; full-page redirect rebuilds Redux store from scratch
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-      }
-      // If no token, let the error propagate to component (participant 403)
+    // 401 = cookie/token is definitively invalid → clear state and redirect to login
+    // 403 passes through: could be permission denied or participant session invalidation
+    if (error.response?.status === 401) {
+      localStorage.removeItem('user')
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
@@ -44,6 +27,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   verifyEmail: (data) => api.post('/auth/verify-email', data),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
