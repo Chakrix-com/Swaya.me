@@ -1,8 +1,29 @@
 # Swaya.me — Live Audience Engagement Platform
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10+-green.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev)
+
 Swaya is an open-source, multi-tenant platform for running live quizzes, polls, word clouds, and proctored exams. Audiences join instantly via QR code or join code — no app, no login required.
 
 **Live demo:** [www.swaya.me](https://www.swaya.me)
+
+---
+
+## Why Swaya?
+
+| | Swaya | Kahoot | Mentimeter | Google Forms |
+|---|---|---|---|---|
+| Self-hosted | Yes | No | No | No |
+| Proctored exams | Yes | No | No | No |
+| OTP email verification | Yes | No | No | No |
+| AI question generation | Yes | No | No | No |
+| Word cloud responses | Yes | No | Yes | No |
+| 11 UI languages | Yes | Partial | Partial | No |
+| Multi-tenant (SaaS-ready) | Yes | No | No | No |
+| Export to PPTX / PDF / Excel | Yes | Limited | Limited | No |
+| Open source | Yes | No | No | No |
 
 ---
 
@@ -13,11 +34,40 @@ Swaya is an open-source, multi-tenant platform for running live quizzes, polls, 
 - **Word Cloud** — Crowd-sourced responses rendered as a live word cloud with automatic profanity filtering
 - **Offline Poll** — QR-code-based polling for physical spaces without an active host
 - **Exam Mode** — Self-paced, timed exams with webcam proctoring, OTP email verification, and PDF reports
-- **AI Question Generation** — Generate localized MCQ quizzes from a single prompt (Gemini)
+- **AI Question Generation** — Generate localized MCQ quizzes from a single prompt (Gemini 2.0 Flash)
 - **AI Result Analysis** — Post-exam AI summary of class performance
-- **11 languages** — UI and AI-generated content in English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, Russian
-- **Multi-tenant** — Each tenant gets isolated data, branding, and tier-based limits (Free / Basic / Pro / Enterprise)
+- **11 languages** — UI in English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, Russian
+- **Multi-tenant** — Each organization gets isolated data, branding, and tier-based limits
 - **Export** — Results to PDF, Excel, and PowerPoint
+
+---
+
+## Architecture
+
+```
+Browser Clients (Host + Audience)
+          │ HTTPS
+    ┌─────▼──────┐
+    │   Nginx    │── /         → frontend/dist (React SPA)
+    │            │── /api/*    → FastAPI :8000
+    └─────┬──────┘
+          │
+    ┌─────▼──────────────────────────────────┐
+    │         FastAPI (Python 3.10)           │
+    │  20 API routers · async service layer  │
+    │  JWT auth · SSE real-time · Tier limits│
+    └──────┬──────────────────┬──────────────┘
+           │                  │
+    ┌──────▼──────┐   ┌───────▼───────┐
+    │   MySQL 8   │   │    Redis 7    │
+    │ (all data,  │   │ (pub-sub, JWT │
+    │ tenant-     │   │  blocklist,   │
+    │ scoped)     │   │  tier cache,  │
+    │             │   │  OTPs)        │
+    └─────────────┘   └───────────────┘
+```
+
+Real-time updates use **Server-Sent Events** (SSE), not WebSockets — see [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -28,11 +78,11 @@ Swaya is an open-source, multi-tenant platform for running live quizzes, polls, 
 | Backend | FastAPI, SQLAlchemy (async), Alembic, Python 3.10+ |
 | Frontend | React 18, Vite 5, Ant Design 5, Redux Toolkit, react-i18next |
 | Database | MySQL 8 |
-| Cache / Pub-Sub | Redis 7 |
-| AI | Google Gemini (question generation, result analysis) |
-| Auth | JWT + Google OAuth 2.0 |
-| Real-time | WebSockets (FastAPI native) |
-| Email | SMTP (configurable — Titan, SendGrid, etc.) |
+| Cache / Pub-Sub / Blocklist | Redis 7 |
+| AI | Google Gemini 2.0 Flash + Ollama (optional local) |
+| Auth | JWT (HttpOnly cookie) + Google OAuth 2.0 |
+| Real-time | Server-Sent Events (SSE) |
+| Email | SMTP (configurable — any provider) |
 
 ---
 
@@ -51,7 +101,7 @@ cp backend/.env.example backend/.env
 ```
 
 Edit `backend/.env` and fill in at minimum:
-- `JWT_SECRET` — any long random string
+- `JWT_SECRET` — any long random string (`openssl rand -hex 32`)
 - `GEMINI_KEY` — Google AI Studio API key (free tier works)
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — for Google OAuth (optional)
 - `SMTP_*` — for email features (optional)
@@ -72,7 +122,7 @@ npm install
 npm run dev
 ```
 
-Frontend: http://localhost:5173  
+Frontend: http://localhost:5173
 API docs: http://localhost:8000/api/docs
 
 ### 4. Apply database migrations
@@ -113,7 +163,7 @@ npm run dev
 Swaya.me/
 ├── backend/
 │   ├── main.py                    # FastAPI app entry point
-│   ├── broker/api/routes.py       # Central router
+│   ├── broker/api/routes.py       # Central router (20 sub-routers)
 │   ├── core/
 │   │   ├── config/settings.py     # All config (env-driven)
 │   │   ├── ai/                    # Gemini + Ollama integrations
@@ -127,13 +177,32 @@ Swaya.me/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx                # Root routes + ProLayout
-│   │   ├── features/              # Feature slices (quiz, auth, admin…)
-│   │   ├── services/api.js        # All API calls
-│   │   └── locales/               # i18n JSON files (11 languages)
+│   │   ├── features/              # Feature components by domain
+│   │   ├── services/api.js        # All API calls (single source)
+│   │   └── locales/               # 11× i18n JSON files
 │   └── .env.production
-├── docker-compose.dev.yml
+├── docs/                          # Documentation
+│   ├── architecture.md
+│   ├── features.md
+│   ├── tech-choices.md
+│   ├── multi-tenancy.md
+│   ├── deployment.md
+│   └── security.md
 └── scripts/                       # Load tests, regression scripts
 ```
+
+---
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | System overview, SSE realtime flow, service layer, data model |
+| [docs/features.md](docs/features.md) | All activity types, AI features, export, admin tools |
+| [docs/tech-choices.md](docs/tech-choices.md) | Why FastAPI, MySQL, SSE, cookies — with tradeoffs |
+| [docs/multi-tenancy.md](docs/multi-tenancy.md) | DB isolation, roles, tier system, public endpoints |
+| [docs/deployment.md](docs/deployment.md) | Production setup: Nginx, systemd, Alembic, env vars |
+| [docs/security.md](docs/security.md) | HttpOnly cookies, JWT revocation, rate limiting, sanitization |
 
 ---
 
@@ -171,9 +240,20 @@ Interactive Swagger UI is available at `/api/docs` when the backend is running.
 
 ---
 
+## Roadmap
+
+- [ ] WebRTC-based video proctoring (replacing client-side snapshot approach)
+- [ ] Live quiz team mode (group participants into teams)
+- [ ] Poll scheduling (future open/close time)
+- [ ] Webhook support for exam completion events
+- [ ] S3/R2 object storage for uploads (currently local filesystem)
+- [ ] Expanded export: Google Slides, CSV with raw timings
+
+---
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, branch conventions, and PR guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, branch conventions, migration workflow, and PR guidelines.
 
 ---
 
