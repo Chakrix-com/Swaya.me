@@ -270,6 +270,7 @@ canvas {
 .aud-podium-score {
   font-size: 14px;
   font-weight: 700;
+  font-family: 'Fraunces', Georgia, serif;
 }
 
 .aud-podium-block {
@@ -293,8 +294,13 @@ canvas {
 .aud-pts-correct {
   font-size: 28px;
   font-weight: 800;
+  font-family: 'Fraunces', Georgia, serif;
   color: #52c41a;
-  letter-spacing: 1px;
+  letter-spacing: 0;
+}
+
+.sw-display {
+  font-family: 'Fraunces', Georgia, serif;
 }
 
 .aud-pts-none {

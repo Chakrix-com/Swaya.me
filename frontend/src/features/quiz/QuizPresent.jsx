@@ -189,7 +189,7 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed, t }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <div style={{ fontSize: 20, color: 'rgba(255,255,255,0.7)' }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 72, fontWeight: 700, color: '#faad14', lineHeight: 1 }}>{avg}</span>
+              <span style={{ fontSize: 72, fontWeight: 700, fontFamily: "'Fraunces', Georgia, serif", color: '#faad14', lineHeight: 1 }}>{avg}</span>
               <span style={{ fontSize: 28, color: 'rgba(255,255,255,0.4)' }}>/ 5</span>
             </div>
             <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 44, color: '#faad14' }} />
