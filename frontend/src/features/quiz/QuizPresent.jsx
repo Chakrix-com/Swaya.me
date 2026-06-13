@@ -185,19 +185,43 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed, t }) {
       <RichTextRenderer content={question.text || question.question_text} isDark={true} className="pv-question-text" />
 
       {revealed ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 0', gap: 24 }}>
-          <div style={{ fontSize: 24, color: 'rgba(255,255,255,0.85)' }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontSize: 84, fontWeight: 700, color: '#faad14', lineHeight: 1 }}>{avg}</span>
-            <span style={{ fontSize: 32, color: 'rgba(255,255,255,0.45)' }}>/ 5</span>
+        <div style={{ padding: '28px 0', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 20, color: 'rgba(255,255,255,0.7)' }}>{t('quizPresent.averageRating', { defaultValue: 'Average Rating' })}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ fontSize: 72, fontWeight: 700, color: '#faad14', lineHeight: 1 }}>{avg}</span>
+              <span style={{ fontSize: 28, color: 'rgba(255,255,255,0.4)' }}>/ 5</span>
+            </div>
+            <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 44, color: '#faad14' }} />
           </div>
-          <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 56, color: '#faad14' }} />
+          {total > 0 && (
+            <div style={{ maxWidth: 500, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[5, 4, 3, 2, 1].map(star => {
+                const count = dist[star - 1] || 0
+                const pct = Math.round(count / total * 100)
+                return (
+                  <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 13, color: '#faad14', minWidth: 28, textAlign: 'right', fontWeight: 600 }}>{star}★</span>
+                    <div style={{ flex: 1, height: 18, background: 'rgba(255,255,255,0.08)', borderRadius: 9, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,#d48806,#faad14)', borderRadius: 9, transition: 'width 0.5s ease' }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', minWidth: 64, textAlign: 'right' }}>{count} ({pct}%)</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       ) : (
-        <div className="pv-center-fill" style={{ minHeight: 300 }}>
+        <div className="pv-center-fill" style={{ minHeight: 280 }}>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 20 }}>
             {t('quizPresent.waitingToRevealAverageRating', { defaultValue: 'Waiting to reveal average rating...' })}
           </p>
+          {total > 0 && (
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 15, marginTop: 8 }}>
+              {t('quizPresent.responsesCount', { count: total })}
+            </p>
+          )}
         </div>
       )}
     </div>

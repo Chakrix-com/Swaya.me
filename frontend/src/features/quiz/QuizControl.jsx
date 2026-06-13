@@ -633,14 +633,28 @@ export default function QuizControl() {
                     dist.forEach((count, idx) => { sum += count * (idx + 1) })
                     const avg = totalAns > 0 ? (sum / totalAns).toFixed(1) : 0
                     return (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', gap: 12 }}>
-                        <Text style={{ fontSize: 16 }}>Average: {totalAns} response{totalAns !== 1 ? 's' : ''}</Text>
-                        <Space align="baseline">
-                          <b style={{ fontSize: 48, color: '#faad14', lineHeight: 1 }}>{avg}</b>
-                          <Text type="secondary" style={{ fontSize: 18 }}>/ 5</Text>
-                        </Space>
-                        <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 28, color: '#faad14' }} />
-                      </div>
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', gap: 6 }}>
+                          <Space align="baseline">
+                            <b style={{ fontSize: 40, color: '#faad14', lineHeight: 1 }}>{avg}</b>
+                            <Text type="secondary" style={{ fontSize: 16 }}>/ 5</Text>
+                          </Space>
+                          <Rate disabled allowHalf value={Number(avg)} style={{ fontSize: 22, color: '#faad14' }} />
+                        </div>
+                        {[5, 4, 3, 2, 1].map(star => {
+                          const count = dist[star - 1] || 0
+                          const pct = totalAns > 0 ? (count / totalAns * 100) : 0
+                          return (
+                            <div key={star}>
+                              <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 2 }}>
+                                <Text strong>{star}★</Text>
+                                <Text type="secondary">{totalAns > 0 ? `${count} (${pct.toFixed(1)}%)` : count}</Text>
+                              </Space>
+                              <Progress percent={pct} strokeColor="#faad14" size="small" showInfo={false} />
+                            </div>
+                          )
+                        })}
+                      </Space>
                     )
                   })() : (currentQuestion.options || []).map((opt, idx) => {
                     const total = currentQuestion.total_answers || 0
