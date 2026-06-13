@@ -19,10 +19,10 @@ Update the Status column / checkboxes as work progresses. Keep this file as the 
 | **P0** | Trust — live-room bugs | 5 | 5/5 ✅ |
 | **P1** | The live loop — host cockpit + participant game | 12 | 12/12 ✅ |
 | **P2** | The shop window — home, create, templates | 8 | 8/8 ✅ |
-| **P3** | Coherence — design system + results hub | 9 | 1/9 |
+| **P3** | Coherence — design system + results hub | 9 | 9/9 ✅ |
 | **P4** | Reach — PWA, self-serve, workspaces | 7 | 0/7 |
 | **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 0/6 |
-| | **Total** | **47** | **26/47** |
+| | **Total** | **47** | **34/47** |
 
 ---
 
@@ -437,36 +437,36 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 
 > Review §4.6, §4.8.
 
-### P3-1 ⬜ Design tokens & motion system unification
+### P3-1 ✅ Design tokens & motion system unification
 - Single `--sw-*` scale (color/type/space/radius/shadow/motion durations) consumed by landing, app, participant, and present surfaces — today four dialects (review §4.8). Document in `frontend/src/themes/README.md`.
 - **Split (sonnet-review §4):** **P3-1a** — standalone keyframe/motion utility library (bar fill, count-up, rank shuffle, confetti), shipped in **M2** so P1-5b/P1-6 aren't blocked. **P3-1b** — full token unification across the four surfaces, stays **M4**.
 - **Size:** L (P3-1a: S, P3-1b: L)
 
-### P3-2 ⬜ Mode accent colors carried through
+### P3-2 ✅ Mode accent colors carried through
 - One accent hue per mode (as on landing chips) applied across builder, control room, participant, results — "the room knows what game it's playing".
 - **Files:** `themes/themes.js` + per-mode accent var, components.
 - **Size:** M
 
-### P3-3 ⬜ Typography pairing
+### P3-3 ✅ Typography pairing
 - Landing's display serif for headline moments (participant score reveal, podium, recap headings); existing sans for UI. Webfont subsetting for participant page weight budget.
 - **Size:** S
 
-### P3-4 ⬜ Unified Results hub
+### P3-4 ✅ Unified Results hub
 - New **Results** area listing all past sessions/surveys/tests across activities (filterable by mode/date/folder), deep-linking to session recap (P1-6), survey responses, exam results. Replaces hunting through per-quiz History buttons (review §4.2, §4.6).
 - **Files:** new `features/results/ResultsHub.jsx`, backend cross-quiz sessions listing endpoint, sidebar (P2-6).
 - **Size:** L
 
-### P3-5 ⬜ Exam: per-candidate Integrity report view
+### P3-5 ✅ Exam: per-candidate Integrity report view
 - Dedicated sober page per candidate: webcam snapshots timeline, violations, integrity score derivation, adjusted rank explanation — replacing horizontal-scroll table columns (review §4.6).
 - **Files:** `ExamResults.jsx` + new `IntegrityReport.jsx`, backend detail endpoint (data exists).
 - **Size:** L
 
-### P3-6 ⬜ Test candidate experience polish
+### P3-6 ✅ Test candidate experience polish
 - Question palette/progress ("3 of 20, 2 flagged"), flag-for-review, autosave indicator, low-time urgency styling, post-submit "what happens next" (results email timing). Revisit "no going back" — either per-question setting or clearly warned (review §4.6).
 - **Files:** `ExamSession.jsx`, exam settings in builder, backend exam config.
 - **Size:** L
 
-### P3-7 ⬜ Session skins v1 (host-chosen, participant-visible)
+### P3-7 ✅ Session skins v1 (host-chosen, participant-visible)
 - Reframe themes: host's admin chrome gets light/dark only; **skins** (Classroom, Boardroom — mockups exist in repo —, Party) style what participants and the projector see, chosen per activity. Builds on existing themes.js registry + Boardroom mockup commit `a254a27`.
 - **Files:** `themes/`, `AudienceSession.jsx`, `QuizPresent.jsx`, builder setting, migration for `skin` column.
 - **Size:** XL
@@ -475,7 +475,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - "1 Questions" pluralization; "0 (0.0%)" noise on reveals; `/join` says "Join Quiz" for polls (make mode-aware or neutral "Join Session" — join page itself is redesigned in P1-12); exam entry close-time formatting/wrapping; disabled Submit button lingering after submit; footer links out of session routes (if not already via P1-1). All 11 locales (review §3.10).
 - **Size:** M
 
-### P3-9 ⬜ Live poll results visualization (host stage + projector)
+### P3-9 ✅ Live poll results visualization (host stage + projector)
 - **Gap (sonnet-review §11):** word cloud and scale results render mid-session on the control stage and `/present` but have no owned design. Scope: word-cloud layout that stays legible as it grows, scale/NPS distribution histogram, live-updating response count for open-text types, real-time update path (polling now, P1-8 SSE when flagged). P3-2 accent colors apply but don't cover the visualization itself.
 - **Files:** shared stage component (P1-1), `QuizPresent.jsx`, results components, themes CSS.
 - **Accept:** Selenium poll run with ≥10 word-cloud answers: cloud legible on projector screenshot; scale question shows distribution, not raw rows.
