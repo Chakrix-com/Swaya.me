@@ -29,7 +29,7 @@ import {
   InboxOutlined,
 } from '@ant-design/icons'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
-import { quizAPI, sessionAPI } from '../../services/api'
+import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import CreateChooser from './CreateChooser'
 import './Dashboard.css'
 
