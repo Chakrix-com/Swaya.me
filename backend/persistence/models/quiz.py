@@ -1,7 +1,8 @@
 """
 Quiz feature domain models
 """
-from sqlalchemy import Column, Integer, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
+from sqlalchemy.sql import func
 from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
 from sqlalchemy.orm import relationship
 import enum
@@ -265,3 +266,17 @@ class QuizFeedback(Base, TimestampMixin, TenantMixin):
     display_name = Column(String(100), nullable=True)
     rating = Column(Integer, nullable=True)
     feedback_text = Column(Text, nullable=False)
+
+
+class PlatformEvent(Base):
+    """Lightweight analytics beacon — fires-and-forgets, never blocks a request."""
+    __tablename__ = "platform_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    event_type = Column(String(64), nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=True, index=True)
+    user_id = Column(Integer, nullable=True)
+    session_id = Column(Integer, nullable=True)
+    quiz_id = Column(Integer, nullable=True)
+    properties = Column(JSON, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)

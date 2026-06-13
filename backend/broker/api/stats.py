@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from datetime import datetime
+from sqlalchemy import text
+from typing import Optional, List
+from datetime import datetime, timedelta
 
 from persistence.database_async import get_async_db
 from core.auth.dependencies import get_current_user, CurrentUser, require_super_admin
@@ -37,6 +38,44 @@ async def get_stats(
         return await service.get_platform_stats()
     
     return await service.get_tenant_stats(current_user.tenant_id)
+
+
+@router.get("/stats/weekly-active-hosts")
+async def get_weekly_active_hosts(
+    days: int = Query(7, ge=1, le=30),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """
+    Returns daily active host counts for the last N days.
+    Super admin: platform-wide. Admin: tenant-scoped.
+    A host is counted on a day if they ran at least one quiz session that day.
+    """
+    if current_user.user.role not in [UserRole.admin, UserRole.super_admin]:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    tenant_filter = ""
+    params: dict = {"days": days}
+    if current_user.user.role == UserRole.admin:
+        tenant_filter = "AND qs.tenant_id = :tenant_id"
+        params["tenant_id"] = current_user.tenant_id
+
+    sql = text(f"""
+        SELECT
+            DATE(qs.created_at) AS day,
+            COUNT(DISTINCT e.creator_id) AS active_hosts
+        FROM quiz_sessions qs
+        JOIN quizzes q ON q.id = qs.quiz_id
+        JOIN events e ON e.id = q.event_id
+        WHERE qs.created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+          {tenant_filter}
+        GROUP BY DATE(qs.created_at)
+        ORDER BY day ASC
+    """)
+
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+    return [{"day": str(row.day), "active_hosts": row.active_hosts} for row in rows]
 
 
 @router.get("/feedback", response_model=FeedbackListResponse)

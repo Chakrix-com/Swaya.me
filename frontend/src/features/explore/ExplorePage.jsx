@@ -14,6 +14,7 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { quizAPI } from '../../services/api'
+import { trackEvent } from '../../services/metrics'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 
 const { Title, Text, Paragraph } = Typography
@@ -94,6 +95,7 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {
+    trackEvent('explore_page_view')
     quizAPI.listPublicTemplates()
       .then(res => setTemplates(res.data || []))
       .catch(() => setTemplates([]))
@@ -116,7 +118,7 @@ export default function ExplorePage() {
   }, [templates, search, activeTab])
 
   const handleUse = (tmpl) => {
-    // Redirect to login with intent to use the template
+    trackEvent('explore_use_template', { quizId: tmpl.id })
     navigate('/login', { state: { useTemplateId: tmpl.id, useTemplateTitle: tmpl.title } })
   }
 

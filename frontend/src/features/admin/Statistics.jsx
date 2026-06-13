@@ -47,6 +47,10 @@ function Statistics() {
   const [dateRange, setDateRange] = useState([dayjs().subtract(7, 'day'), dayjs()])
   const [granularity, setGranularity] = useState('hourly')
 
+  // Weekly active hosts state
+  const [weeklyHostsData, setWeeklyHostsData] = useState([])
+  const [weeklyHostsLoading, setWeeklyHostsLoading] = useState(false)
+
   // Language tracking state
   const [languageStats, setLanguageStats] = useState(null)
   const [languageLoading, setLanguageLoading] = useState(false)
@@ -154,9 +158,22 @@ function Statistics() {
     }
   }
 
+  const fetchWeeklyActiveHosts = async () => {
+    try {
+      setWeeklyHostsLoading(true)
+      const response = await statsAPI.getWeeklyActiveHosts(7)
+      setWeeklyHostsData(response.data)
+    } catch (_) {
+      setWeeklyHostsData([])
+    } finally {
+      setWeeklyHostsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchStats()
     fetchLanguageStats()
+    fetchWeeklyActiveHosts()
   }, [])
 
   if (loading && !stats) {
@@ -478,6 +495,32 @@ function Statistics() {
               />
             )}
           </Space>
+        </Card>
+      </div>
+
+      <Divider />
+
+      {/* Weekly Active Hosts */}
+      <div style={{ marginBottom: 16 }}>
+        <Title level={4}>
+          <TeamOutlined /> Weekly Active Hosts
+        </Title>
+        <Card>
+          {weeklyHostsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin /></div>
+          ) : weeklyHostsData.length === 0 ? (
+            <Alert message="No session data in the last 7 days." type="info" showIcon />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={weeklyHostsData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" tickFormatter={v => dayjs(v).format('MMM D')} />
+                <YAxis allowDecimals={false} />
+                <Tooltip labelFormatter={v => dayjs(v).format('ddd, MMM D')} />
+                <Bar dataKey="active_hosts" name="Active Hosts" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
 

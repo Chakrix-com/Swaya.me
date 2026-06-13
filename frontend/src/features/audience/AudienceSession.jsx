@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
+import { trackEvent } from '../../services/metrics'
 import useSessionChannel from '../../hooks/useSessionChannel'
 import { useTranslation } from 'react-i18next'
 import { clearSession } from '../../store/sessionSlice'
@@ -94,6 +95,16 @@ export default function AudienceSession() {
     }
   }, [sessionToken, sessionId, displayName])
 
+  // Analytics beacon: participant_join (first time) or participant_rejoin (page refresh)
+  const beaconFiredRef = useRef(false)
+  useEffect(() => {
+    if (sessionToken && sessionId && !beaconFiredRef.current) {
+      beaconFiredRef.current = true
+      const isRejoin = !!storedSession
+      trackEvent(isRejoin ? 'participant_rejoin' : 'participant_join', { sessionId: Number(sessionId) })
+    }
+  }, [sessionToken, sessionId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Restart the polling interval at the given ms rate
   const resetPollInterval = useCallback((ms) => {
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
@@ -152,6 +163,7 @@ export default function AudienceSession() {
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
           message.success(t('audience.quizEndedThanks', { defaultValue: 'Quiz has ended! Thank you for participating!' }))
+          trackEvent('participant_session_end', { sessionId: Number(sessionId) })
           sessionStorage.removeItem('swaya_participant_session')
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current)

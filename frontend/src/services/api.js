@@ -189,6 +189,7 @@ export const statsAPI = {
   getHistory: (params) => api.get('/admin/stats/history', { params }),
   captureSnapshot: (granularity) => api.post(`/admin/stats/capture?granularity=${granularity}`),
   getFeedback: (params) => api.get('/admin/feedback', { params }),
+  getWeeklyActiveHosts: (days = 7) => api.get('/admin/stats/weekly-active-hosts', { params: { days } }),
 }
 
 export const platformQuizAPI = {
