@@ -36,6 +36,7 @@ import RichTextEditor from '../quiz/components/RichTextEditor'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import { applySkin } from '../../themes/skins'
+import useWakeLock from '../../hooks/useWakeLock'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -75,6 +76,9 @@ export default function AudienceSession() {
   const pollingIntervalRef = useRef(null)
   const sseConnectedRef = useRef(false)
   const containerRef = useRef(null)
+
+  // Keep screen awake while the session is live
+  useWakeLock(!!sessionToken && sessionStatus !== 'ended')
 
   // Restart the polling interval at the given ms rate
   const resetPollInterval = useCallback((ms) => {

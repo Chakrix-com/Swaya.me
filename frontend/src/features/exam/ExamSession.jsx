@@ -22,6 +22,7 @@ import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import { ProctoringProvider, ProctoringGate } from '../proctoring'
+import useWakeLock from '../../hooks/useWakeLock'
 import dayjs from 'dayjs'
 
 const { Title, Text, Paragraph } = Typography
@@ -734,6 +735,8 @@ export default function ExamSession() {
   const [flagged, setFlagged] = useState(new Set()) // question ids flagged for review
   const [paletteCollapsed, setPaletteCollapsed] = useState(false)
   const [expiredQuestions, setExpiredQuestions] = useState(new Set()) // question ids that timed out
+
+  useWakeLock(phase === 'taking')
 
   // Timers
   const [globalSecondsLeft, setGlobalSecondsLeft] = useState(null)
