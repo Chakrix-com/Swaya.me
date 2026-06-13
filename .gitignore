@@ -107,3 +107,6 @@ live_quiz_load_report*.html
 proctoring_load_report*.html
 vulnerabilities.md
 vulnerabilities2.md
+
+# Private planning docs, reviews, specs — kept locally, not for public repo
+_private/
