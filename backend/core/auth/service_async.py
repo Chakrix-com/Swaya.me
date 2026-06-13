@@ -227,7 +227,8 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
     if not tenant:
         # This should never happen due to database FK constraint
         # If it does, it indicates database corruption
-        raise TenantNotFoundError(f"User's tenant not found. Contact support (tenant_id: {user.tenant_id})")
+        logger.error("Tenant not found for user %s tenant_id=%s", user.id, user.tenant_id)
+        raise TenantNotFoundError("Your organization account could not be found. Contact support.")
     
     # Check tenant is active - specific error for tenant admin feedback
     if not tenant.is_active:

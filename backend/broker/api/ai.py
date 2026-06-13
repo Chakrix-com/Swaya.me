@@ -2,11 +2,15 @@
 AI generation endpoints — question generation via Google Gemini; other AI via local ollama.
 Restricted to admin and super_admin roles.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from typing import Optional
 
 from core.auth.dependencies import require_admin, get_current_user, CurrentUser
+from shared.utils.rate_limiter import limiter
+
+logger = logging.getLogger(__name__)
 from core.config.settings import settings
 from core.ai.ollama_service import (
     generate_distractors,
@@ -85,7 +89,9 @@ async def get_models(current_user: CurrentUser = Depends(require_admin)):
 
 
 @router.post("/generate/questions", response_model=GenerateQuestionsResponse)
+@limiter.limit("20/minute")
 async def api_generate_questions(
+    request: Request,
     req: GenerateQuestionsRequest,
     current_user: CurrentUser = Depends(get_current_user),
 ):
@@ -115,7 +121,8 @@ async def api_generate_questions(
             language=req.language,
         )
     except GeminiError as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+        logger.error("Gemini question generation failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
     if not questions:
         raise HTTPException(
@@ -130,7 +137,9 @@ async def api_generate_questions(
 
 
 @router.post("/generate/options", response_model=GenerateDistractorsResponse)
+@limiter.limit("20/minute")
 async def api_generate_distractors(
+    request: Request,
     req: GenerateDistractorsRequest,
     current_user: CurrentUser = Depends(get_current_user),
 ):
@@ -147,13 +156,16 @@ async def api_generate_distractors(
             model=model,
         )
     except OllamaError as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+        logger.error("Ollama distractor generation failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
     return GenerateDistractorsResponse(distractors=distractors, model=model)
 
 
 @router.post("/generate/poll-prompt", response_model=GeneratePollPromptResponse)
+@limiter.limit("20/minute")
 async def api_generate_poll_prompt(
+    request: Request,
     req: GeneratePollPromptRequest,
     current_user: CurrentUser = Depends(get_current_user),
 ):
@@ -169,7 +181,8 @@ async def api_generate_poll_prompt(
             model=model,
         )
     except OllamaError as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+        logger.error("Ollama poll-prompt generation failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
     return GeneratePollPromptResponse(prompt=prompt, model=model)
 
@@ -187,7 +200,9 @@ class RewriteResponse(BaseModel):
 
 
 @router.post("/rewrite", response_model=RewriteResponse)
+@limiter.limit("20/minute")
 async def api_rewrite(
+    request: Request,
     req: RewriteRequest,
     current_user: CurrentUser = Depends(get_current_user),
 ):
@@ -201,5 +216,6 @@ async def api_rewrite(
             model=model,
         )
     except OllamaError as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+        logger.error("Ollama rewrite failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
     return RewriteResponse(rewritten=rewritten, model=model)

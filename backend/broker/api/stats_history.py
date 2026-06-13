@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from persistence.database_async import get_async_db
-from core.auth.dependencies import get_current_user, CurrentUser
+from core.auth.dependencies import get_current_user, CurrentUser, require_admin, require_super_admin
 from core.stats.snapshot_service_async import SnapshotServiceAsync
 from core.stats.schemas import StatsHistoryResponse
 from persistence.models.stats import SnapshotGranularity, SnapshotScope
@@ -21,27 +21,23 @@ async def get_stats_history(
     start_date: datetime = Query(..., description="Start date for history range"),
     end_date: datetime = Query(..., description="End date for history range"),
     granularity: SnapshotGranularity = Query(..., description="Snapshot granularity"),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(require_admin),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Get historical statistics snapshots
-    
+
     - **start_date**: Start of date range (ISO format)
     - **end_date**: End of date range (ISO format)
     - **granularity**: Snapshot granularity (hourly or daily)
-    
+
     Returns list of historical snapshots ordered by time.
     Super admins see platform-wide data, admins see their tenant data.
     """
-    # Check authorization
-    if current_user.user.role not in ['admin', 'super_admin']:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
     # Validate date range
     if end_date < start_date:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
-    
+
     # Limit range to avoid performance issues
     max_days = 365 if granularity == SnapshotGranularity.DAILY else 90
     if (end_date - start_date).days > max_days:
@@ -49,11 +45,11 @@ async def get_stats_history(
             status_code=400,
             detail=f"Date range too large. Maximum {max_days} days for {granularity.value} snapshots"
         )
-    
+
     snapshot_service = SnapshotServiceAsync(db)
-    
-    # Determine scope based on role
-    if current_user.user.role == 'super_admin':
+
+    from persistence.models.core import UserRole
+    if current_user.user.role == UserRole.super_admin:
         scope = SnapshotScope.PLATFORM
         tenant_id = None
     else:
@@ -86,17 +82,14 @@ async def get_stats_history(
 @router.post("/capture", status_code=201)
 async def trigger_snapshot_capture(
     granularity: SnapshotGranularity = Query(..., description="Snapshot granularity to capture"),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(require_super_admin),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Manually trigger snapshot capture (for testing/debugging)
-    
+
     Super admin only endpoint.
     """
-    # Only super admin can trigger manual captures
-    if current_user.user.role != 'super_admin':
-        raise HTTPException(status_code=403, detail="Super admin access required")
     
     snapshot_service = SnapshotServiceAsync(db)
     

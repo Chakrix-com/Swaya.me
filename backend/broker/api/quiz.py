@@ -504,6 +504,7 @@ async def list_quiz_sessions(
 # Import/Export Endpoints
 @router.get("/import/template")
 async def get_import_template(
+    current_user: CurrentUser = Depends(get_current_user),
     service: ExcelImportService = Depends(get_import_service)
 ):
     """Download the blank Excel template for bulk upload"""
