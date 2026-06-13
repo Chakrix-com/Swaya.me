@@ -147,7 +147,10 @@ function AuthenticatedLayout({ children }) {
     <ProLayout
       title="Swaya.me"
       headerTitleRender={(logo, title) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <span
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+          onClick={() => navigate('/dashboard')}
+        >
           {logo}{title}
         </span>
       )}
