@@ -734,11 +734,15 @@ class QuizBuilderServiceAsync:
         if request.proctoring_policy is not None:
             quiz.proctoring_policy = request.proctoring_policy
 
+        # Participant skin
+        if request.skin is not None:
+            quiz.skin = request.skin or None
+
         await db.commit()
         await db.refresh(quiz)
 
         return self._to_quiz_response(quiz)
-    
+
     async def delete_quiz(
         self,
         db: AsyncSession,
@@ -1225,4 +1229,5 @@ class QuizBuilderServiceAsync:
             exam_allowed_domains=getattr(quiz, 'exam_allowed_domains', None),
             has_previous_session=bool(getattr(quiz, 'exam_session_id', None)),
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
+            skin=getattr(quiz, 'skin', None),
         )

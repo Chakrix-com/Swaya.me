@@ -754,8 +754,9 @@ class AnswerServiceAsync:
             current_question_index=session.current_question_index,
             current_question=current_question,
             leaderboard_visible=(False if is_poll else session.leaderboard_visible),
+            skin=getattr(session.quiz, 'skin', None),
         )
-    
+
     async def get_leaderboard(
         self,
         db: AsyncSession,

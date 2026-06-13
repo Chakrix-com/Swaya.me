@@ -35,6 +35,7 @@ import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import RichTextEditor from '../quiz/components/RichTextEditor'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
+import { applySkin } from '../../themes/skins'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -73,6 +74,7 @@ export default function AudienceSession() {
   const lastQuestionIdRef = useRef(null)
   const pollingIntervalRef = useRef(null)
   const sseConnectedRef = useRef(false)
+  const containerRef = useRef(null)
 
   // Restart the polling interval at the given ms rate
   const resetPollInterval = useCallback((ms) => {
@@ -455,8 +457,14 @@ export default function AudienceSession() {
     return () => clearInterval(interval)
   }, [currentQuestion?.id, currentQuestion?.max_time_seconds, currentQuestion?.timer_started_at])
 
+  useEffect(() => {
+    applySkin(results?.skin, containerRef.current)
+    return () => applySkin(null, containerRef.current)
+  }, [results?.skin])
+
+
   return (
-    <div className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
+    <div ref={containerRef} className="audience-session min-vh-100 d-flex flex-column" style={{ position: 'relative', overflowX: 'hidden' }}>
       <PublicBrandHeader />
       <div className="container py-3">
         <div className="row justify-content-center mx-0">

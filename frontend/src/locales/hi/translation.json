@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "प्रति प्रश्न सटीकता",
     "exportResults": "परिणाम निर्यात करें",
     "totalQuestions": "प्रश्न",
-    "viewHistory": "इतिहास"
+    "viewHistory": "इतिहास",
+    "skinLabel": "प्रतिभागी थीम",
+    "skinDefault": "डिफ़ॉल्ट",
+    "skinClassroom": "कक्षा",
+    "skinBoardroom": "बोर्डरूम",
+    "skinParty": "पार्टी",
+    "skinHint": "दर्शक और प्रोजेक्टर का स्वरूप चुनें"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",

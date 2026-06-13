@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "Точность по вопросам",
     "exportResults": "Экспорт результатов",
     "totalQuestions": "Вопросы",
-    "viewHistory": "История"
+    "viewHistory": "История",
+    "skinLabel": "Оформление участника",
+    "skinDefault": "По умолчанию",
+    "skinClassroom": "Класс",
+    "skinBoardroom": "Зал заседаний",
+    "skinParty": "Вечеринка",
+    "skinHint": "Выберите вид сцены для аудитории и проектора"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",

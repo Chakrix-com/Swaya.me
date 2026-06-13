@@ -60,6 +60,7 @@ import RichTextRenderer from './components/RichTextRenderer'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
+import { skins } from '../../themes/skins'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -1267,6 +1268,7 @@ export default function QuizBuilder() {
         exam_results_email: response.data.exam_results_email || undefined,
         exam_require_email: response.data.exam_require_email || false,
         exam_allowed_domains: response.data.exam_allowed_domains || undefined,
+        skin: response.data.skin || null,
       })
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
@@ -1330,6 +1332,30 @@ export default function QuizBuilder() {
           </Tooltip>
         </div>
       )}
+
+      {/* Participant skin picker */}
+      <Form.Item name="skin" label={t('quiz.skinLabel', 'Participant skin')}>
+        <Radio.Group buttonStyle="solid">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+            {Object.values(skins).map(skin => (
+              <Radio.Button
+                key={skin.id}
+                value={skin.id === 'default' ? null : skin.id}
+                style={{ height: 'auto', padding: '8px 14px', textAlign: 'center', lineHeight: 1.4 }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    {skin.preview.map((c, i) => (
+                      <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{skin.emoji} {skin.name}</span>
+                </div>
+              </Radio.Button>
+            ))}
+          </div>
+        </Radio.Group>
+      </Form.Item>
 
       {/* Offline poll configuration fields */}
       {isOfflinePoll && (

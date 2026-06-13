@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "ಪ್ರತಿ ಪ್ರಶ್ನೆ ನಿಖರತೆ",
     "exportResults": "ಫಲಿತಾಂಶಗಳನ್ನು ರಫ್ತು ಮಾಡಿ",
     "totalQuestions": "ಪ್ರಶ್ನೆಗಳು",
-    "viewHistory": "ಇತಿಹಾಸ"
+    "viewHistory": "ಇತಿಹಾಸ",
+    "skinLabel": "მონაწილის სტილი",
+    "skinDefault": "ნაგულისხმევი",
+    "skinClassroom": "კლასი",
+    "skinBoardroom": "საბჭო დარბაზი",
+    "skinParty": "წვეულება",
+    "skinHint": "აირჩიეთ მაყურებლისა და პროექტორის გარეგნობა"
   },
   "audience": {
     "joinQuiz": "ಅಧಿವೇಶನಕ್ಕೆ ಸೇರಿ",

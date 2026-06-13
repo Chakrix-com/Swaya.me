@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "ஒவ்வொரு கேள்விக்கும் துல்லியம்",
     "exportResults": "முடிவுகளை ஏற்றுமதி செய்",
     "totalQuestions": "கேள்விகள்",
-    "viewHistory": "வரலாறு"
+    "viewHistory": "வரலாறு",
+    "skinLabel": "பங்கேற்பாளர் தோல்",
+    "skinDefault": "இயல்பு",
+    "skinClassroom": "வகுப்பறை",
+    "skinBoardroom": "அரங்கம்",
+    "skinParty": "கோலாகலம்",
+    "skinHint": "பார்வையாளர்கள் மற்றும் திரைக்கு தோற்றம் தேர்வு செய்க"
   },
   "audience": {
     "joinQuiz": "அமர்வில் சேரவும்",

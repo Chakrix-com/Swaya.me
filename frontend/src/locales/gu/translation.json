@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "દરેક પ્રશ્ન ચોકસાઈ",
     "exportResults": "પરિણામો નિકાસ કરો",
     "totalQuestions": "પ્રશ્નો",
-    "viewHistory": "ઇतिहास"
+    "viewHistory": "ઇतिहास",
+    "skinLabel": "સહભાગી ત્વચા",
+    "skinDefault": "ડિફૉલ્ટ",
+    "skinClassroom": "ક્લાસરૂમ",
+    "skinBoardroom": "બોર્ડરૂમ",
+    "skinParty": "પાર્ટી",
+    "skinHint": "પ્રેક્ષકો અને પ્રોજેક્ટરનો દેખાવ પસંદ કરો"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",

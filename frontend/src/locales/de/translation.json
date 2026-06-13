@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "Genauigkeit pro Frage",
     "exportResults": "Ergebnisse exportieren",
     "totalQuestions": "Fragen",
-    "viewHistory": "Verlauf"
+    "viewHistory": "Verlauf",
+    "skinLabel": "Teilnehmer-Design",
+    "skinDefault": "Standard",
+    "skinClassroom": "Klassenzimmer",
+    "skinBoardroom": "Konferenzraum",
+    "skinParty": "Party",
+    "skinHint": "Wählen Sie das Erscheinungsbild für Publikum und Projektor"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",

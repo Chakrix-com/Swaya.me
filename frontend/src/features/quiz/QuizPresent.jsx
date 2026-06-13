@@ -9,6 +9,7 @@ import { sessionAPI, questionAPI } from '../../services/api'
 import BetaBadge from '../../components/BetaBadge'
 import RichTextRenderer from './components/RichTextRenderer'
 import './QuizPresent.css'
+import { applySkin } from '../../themes/skins'
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E']
 const OPTION_BG = [
@@ -843,6 +844,12 @@ export default function QuizPresent() {
   useEffect(() => {
     setRevealed(false)
   }, [results?.current_question_index])
+
+  // Apply participant skin to the projector view
+  useEffect(() => {
+    applySkin(results?.skin)
+    return () => applySkin(null)
+  }, [results?.skin])
 
   const handleBack = async () => {
     setCtrlLoading(true)

@@ -727,6 +727,7 @@ class SessionServiceAsync:
             quiz_title=session.quiz.title,
             quiz_type=session.quiz.quiz_type,
             participant_count=pcount or 0,
+            skin=getattr(session.quiz, 'skin', None),
         )
 
     async def get_home_stats(self, db: AsyncSession, tenant_id: int) -> HomeStatsResponse:
@@ -905,7 +906,8 @@ class SessionServiceAsync:
                 session_token=session_token,
                 participant_id=participant.id,
                 quiz_title=session.quiz.title,
-                status=session.status
+                status=session.status,
+                skin=getattr(session.quiz, 'skin', None),
             )
             
             return response

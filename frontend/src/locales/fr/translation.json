@@ -381,7 +381,13 @@
     "perQuestionAccuracy": "Précision par question",
     "exportResults": "Exporter les résultats",
     "totalQuestions": "Questions",
-    "viewHistory": "Historique"
+    "viewHistory": "Historique",
+    "skinLabel": "Apparence participant",
+    "skinDefault": "Par défaut",
+    "skinClassroom": "Classe",
+    "skinBoardroom": "Salle de réunion",
+    "skinParty": "Fête",
+    "skinHint": "Choisissez l'apparence de la scène pour le public et le projecteur"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",

@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "প্রতি প্রশ্নে নির্ভুলতা",
     "exportResults": "ফলাফল রপ্তানি করুন",
     "totalQuestions": "প্রশ্ন",
-    "viewHistory": "ইতিহাস"
+    "viewHistory": "ইতিহাস",
+    "skinLabel": "অংশগ্রহণকারীর স্কিন",
+    "skinDefault": "ডিফল্ট",
+    "skinClassroom": "ক্লাসরুম",
+    "skinBoardroom": "বোর্ডরুম",
+    "skinParty": "পার্টি",
+    "skinHint": "দর্শক ও প্রজেক্টরের চেহারা বেছে নিন"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",

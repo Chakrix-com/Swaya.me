@@ -106,6 +106,9 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Archive
     archived_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
 
+    # Participant skin (visual theme for audience + projector view)
+    skin = Column(String(32), nullable=True)
+
     # Template gallery metadata
     template_category = Column(String(64), nullable=True)
     template_use_count = Column(Integer, default=0, nullable=False, server_default="0")

@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "ప్రతి ప్రశ్న ఖచ్చితత్వం",
     "exportResults": "ఫలితాలు ఎగుమతి చేయి",
     "totalQuestions": "ప్రశ్నలు",
-    "viewHistory": "చరిత్ర"
+    "viewHistory": "చరిత్ర",
+    "skinLabel": "పాల్గొనేవారి స్కిన్",
+    "skinDefault": "డిఫాల్ట్",
+    "skinClassroom": "తరగతి గది",
+    "skinBoardroom": "బోర్డ్‌రూమ్",
+    "skinParty": "పార్టీ",
+    "skinHint": "ప్రేక్షకులు మరియు ప్రొజెక్టర్ రూపాన్ని ఎంచుకోండి"
   },
   "audience": {
     "joinQuiz": "సెషన్‌లో చేరండి",

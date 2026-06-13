@@ -213,6 +213,8 @@ class QuizUpdate(BaseModel):
     exam_allowed_domains: Optional[str] = None
     # Proctoring
     proctoring_policy: Optional[dict] = None
+    # Participant skin
+    skin: Optional[str] = Field(None, max_length=32)
 
 
 class QuizResponse(BaseModel):
@@ -249,6 +251,8 @@ class QuizResponse(BaseModel):
     has_previous_session: bool = False
     # Proctoring
     proctoring_policy: Optional[dict] = None
+    # Participant skin
+    skin: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -344,12 +348,14 @@ class SessionJoinResponse(BaseModel):
     participant_id: int
     quiz_title: str
     status: SessionStatusEnum
+    skin: Optional[str] = None
 
 class SessionLookupResponse(BaseModel):
     """Pre-join lookup: activity info shown before participant enters their name"""
     quiz_title: str
     quiz_type: QuizTypeEnum
     participant_count: int
+    skin: Optional[str] = None
 
 
 class LastSessionSummary(BaseModel):
@@ -440,6 +446,7 @@ class SessionResultsResponse(BaseModel):
     current_question_index: int
     current_question: Optional[dict] = None  # Mixed format for host view
     leaderboard_visible: bool = True
+    skin: Optional[str] = None
 
 
 class WordCloudResultsResponse(BaseModel):

@@ -379,7 +379,13 @@
     "perQuestionAccuracy": "Per-Question Accuracy",
     "exportResults": "Export Results",
     "totalQuestions": "Questions",
-    "viewHistory": "History"
+    "viewHistory": "History",
+    "skinLabel": "Participant skin",
+    "skinDefault": "Default",
+    "skinClassroom": "Classroom",
+    "skinBoardroom": "Boardroom",
+    "skinParty": "Party",
+    "skinHint": "Choose how the audience and projector look during this activity"
   },
   "audience": {
     "joinQuiz": "Join Session",
