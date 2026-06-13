@@ -452,13 +452,22 @@ export default function ExamResults() {
           </Button>
         )}
         {row._integrityEntry && (
-          <Button
-            size="small"
-            icon={<CameraOutlined />}
-            onClick={(e) => { e.stopPropagation(); handleViewProctoring(row) }}
-          >
-            {t('exam.integrityMergedTag')}
-          </Button>
+          <>
+            <Button
+              size="small"
+              icon={<CameraOutlined />}
+              onClick={(e) => { e.stopPropagation(); handleViewProctoring(row) }}
+            >
+              {t('exam.integrityMergedTag')}
+            </Button>
+            <Button
+              size="small"
+              type="link"
+              onClick={(e) => { e.stopPropagation(); navigate(`/quiz/${id}/exam-results/integrity/${row.participant_id}`) }}
+            >
+              {t('exam.fullReport', 'Full report')}
+            </Button>
+          </>
         )}
       </Space>
     ),
