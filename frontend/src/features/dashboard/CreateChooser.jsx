@@ -36,9 +36,6 @@ const INTENTS = [
     Icon: BarChartOutlined,
     accentVar: 'var(--sw-tile-poll-fg)',
     bgVar: 'var(--sw-tile-poll-bg)',
-    altKey: 'offline_poll',
-    altLabelKey: 'create.surveyHint',
-    altLabelDefault: 'async? → Survey',
   },
   {
     key: 'exam',
@@ -52,6 +49,19 @@ const INTENTS = [
     Icon: FileTextOutlined,
     accentVar: 'var(--sw-tile-exam-fg)',
     bgVar: 'var(--sw-tile-exam-bg)',
+  },
+  {
+    key: 'offline_poll',
+    emoji: '📋',
+    labelKey: 'create.asyncLabel',
+    labelDefault: 'Async',
+    modeKey: 'create.asyncMode',
+    modeDefault: 'Survey',
+    descKey: 'create.asyncDesc',
+    descDefault: 'Link-based, no live host needed',
+    Icon: AppstoreOutlined,
+    accentVar: 'var(--sw-tile-opoll-fg)',
+    bgVar: 'var(--sw-tile-opoll-bg)',
   },
 ]
 
@@ -78,7 +88,7 @@ export default function CreateChooser({ open, onClose }) {
       onCancel={onClose}
       footer={null}
       centered
-      width={700}
+      width={860}
       styles={{
         body: { padding: '32px 28px 28px' },
         content: { borderRadius: 20 },
@@ -134,36 +144,6 @@ export default function CreateChooser({ open, onClose }) {
               </div>
             </button>
 
-            {intent.altKey && (
-              <button
-                onClick={() => pick(intent.altKey)}
-                style={{
-                  background: 'none',
-                  border: '1px dashed var(--sw-border)',
-                  borderRadius: 10,
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  color: 'var(--sw-text3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'color 0.15s, border-color 0.15s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.color = 'var(--sw-tile-opoll-fg)'
-                  e.currentTarget.style.borderColor = 'var(--sw-tile-opoll-fg)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.color = 'var(--sw-text3)'
-                  e.currentTarget.style.borderColor = 'var(--sw-border)'
-                }}
-              >
-                <AppstoreOutlined style={{ fontSize: 11 }} />
-                {t(intent.altLabelKey, intent.altLabelDefault)}
-              </button>
-            )}
           </div>
         ))}
       </div>
