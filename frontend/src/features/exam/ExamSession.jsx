@@ -441,9 +441,13 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
   const flaggedCount = flagged.size
 
   return (
-    <div style={{ marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+    <nav aria-label={t('exam.paletteTitle', 'Questions')} style={{ marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={!collapsed}
         onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
         style={{ padding: '8px 14px', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
       >
         <Space>
@@ -474,6 +478,8 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
                 type={btnType}
                 style={btnStyle}
                 onClick={() => onNavigate(i)}
+                aria-label={`${t('quiz.question')} ${i + 1}${isCurrent ? ` (${t('exam.current', 'current')})` : ''}${isAnswered ? ` (${t('exam.answered', 'answered')})` : ''}${isFlagged ? ` (${t('exam.flagged', 'flagged')})` : ''}`}
+                aria-current={isCurrent ? 'true' : undefined}
               >
                 {i + 1}
               </Button>
@@ -481,7 +487,7 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
           })}
         </div>
       )}
-    </div>
+    </nav>
   )
 }
 

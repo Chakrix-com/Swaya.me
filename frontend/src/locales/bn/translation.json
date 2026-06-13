@@ -467,7 +467,8 @@
       "poll": "লাইভ পোল",
       "offline_poll": "সার্ভে",
       "exam": "টেস্ট"
-    }
+    },
+    "chooseAnswer": "আপনার উত্তর বেছে নিন"
   },
   "navigation": {
     "home": "হোম",
@@ -1965,7 +1966,8 @@
     "percentage": "শতাংশ",
     "whatsNext": "পরে কী হবে?",
     "whatsNextSaved": "আপনার উত্তর সংরক্ষিত হয়েছে।",
-    "whatsNextHost": "হোস্ট ফলাফল পর্যালোচনা করে প্রস্তুত হলে শেয়ার করবেন।"
+    "whatsNextHost": "হোস্ট ফলাফল পর্যালোচনা করে প্রস্তুত হলে শেয়ার করবেন।",
+    "current": "বর্তমান"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",

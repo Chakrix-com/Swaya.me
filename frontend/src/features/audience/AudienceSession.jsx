@@ -669,12 +669,17 @@ export default function AudienceSession() {
                   </Space>
                   {currentQuestion.max_time_seconds ? (
                     <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={4}>
-                        <Text type="secondary">{t('quiz.timeLeft', { seconds: displayTimerRemaining })}</Text>
+                        <Text
+                          type="secondary"
+                          aria-live={Number(displayTimerRemaining) <= 5 ? 'assertive' : 'off'}
+                          aria-label={t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                        >{t('quiz.timeLeft', { seconds: displayTimerRemaining })}</Text>
                         <Progress
                           percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQuestion.max_time_seconds)) * 100))}
                           size="small"
                           status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
                           showInfo={false}
+                          aria-hidden="true"
                         />
                       </Space>
                     ) : null}
@@ -838,14 +843,23 @@ export default function AudienceSession() {
                           <Text type="secondary">{selectedAnswer ? t('audience.selectedStars', { count: Number(selectedAnswer) + 1 }) : t('audience.noRatingSelected', { defaultValue: 'No rating selected' })}</Text>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+                        <div
+                          role="radiogroup"
+                          aria-label={t('audience.chooseAnswer', { defaultValue: 'Choose your answer' })}
+                          style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}
+                        >
                           {['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
                           const isSelected = selectedAnswer === key
                           return (
                             <div
                               key={key}
+                              role="radio"
+                              aria-checked={isSelected}
+                              aria-label={`${key}: ${label || ''}`}
+                              tabIndex={0}
                               onClick={() => setSelectedAnswer(key)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAnswer(key) } }}
                               style={{
                                 display: 'block',
                                 width: '100%',
@@ -858,6 +872,8 @@ export default function AudienceSession() {
                                 wordBreak: 'break-word',
                                 overflowWrap: 'break-word',
                                 color: 'var(--aud-text-primary)',
+                                outline: isSelected ? '2px solid var(--ctrl-radio-selected-border)' : undefined,
+                                outlineOffset: 2,
                               }}
                             >
                               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -1026,7 +1042,7 @@ export default function AudienceSession() {
                       </Space>
                       {/* +N pts feedback after reveal */}
                       {selectedAnswer && currentQuestion.correct_answer && !isPoll && (
-                        <div className="aud-pts-reveal">
+                        <div className="aud-pts-reveal" aria-live="polite" aria-atomic="true">
                           {selectedAnswer === currentQuestion.correct_answer ? (
                             <div className="aud-pts-correct">
                               +{currentQuestion.points || 1} {t('leaderboard.pts', { defaultValue: 'pts' })}

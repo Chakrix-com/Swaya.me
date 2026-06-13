@@ -467,7 +467,8 @@
       "poll": "Live Poll",
       "offline_poll": "Survey",
       "exam": "Test"
-    }
+    },
+    "chooseAnswer": "Choose your answer"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",
@@ -1985,7 +1986,8 @@
     "percentage": "Percentage",
     "whatsNext": "What happens next?",
     "whatsNextSaved": "Your answers are saved.",
-    "whatsNextHost": "The host will review results and share them when ready."
+    "whatsNextHost": "The host will review results and share them when ready.",
+    "current": "current"
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

@@ -467,7 +467,8 @@
       "poll": "लाइव पोल",
       "offline_poll": "सर्वेक्षण",
       "exam": "टेस्ट"
-    }
+    },
+    "chooseAnswer": "अपना उत्तर चुनें"
   },
   "navigation": {
     "home": "होम",
@@ -1965,7 +1966,8 @@
     "percentage": "प्रतिशत",
     "whatsNext": "आगे क्या होगा?",
     "whatsNextSaved": "आपके उत्तर सुरक्षित हो गए हैं।",
-    "whatsNextHost": "होस्ट परिणाम समीक्षा कर तैयार होने पर साझा करेंगे।"
+    "whatsNextHost": "होस्ट परिणाम समीक्षा कर तैयार होने पर साझा करेंगे।",
+    "current": "वर्तमान"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",

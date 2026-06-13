@@ -467,7 +467,8 @@
       "poll": "લાઇવ પોલ",
       "offline_poll": "સર્વે",
       "exam": "ટેસ્ટ"
-    }
+    },
+    "chooseAnswer": "તમારો જવાબ પસંદ કરો"
   },
   "navigation": {
     "home": "મુખ્ય",
@@ -1965,7 +1966,8 @@
     "percentage": "ટકાવારી",
     "whatsNext": "આગળ શું થશે?",
     "whatsNextSaved": "તમારા જવાબ સાચવી લેવામાં આવ્યા છે.",
-    "whatsNextHost": "આયોજક પરિણામોની સમીક્ષા કરી તૈયાર થશે ત્યારે શેર કરશે."
+    "whatsNextHost": "આયોજક પરિણામોની સમીક્ષા કરી તૈયાર થશે ત્યારે શેર કરશે.",
+    "current": "વર્તમાન"
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",

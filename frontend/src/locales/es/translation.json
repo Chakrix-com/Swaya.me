@@ -467,7 +467,8 @@
       "poll": "Encuesta en vivo",
       "offline_poll": "Encuesta",
       "exam": "Prueba"
-    }
+    },
+    "chooseAnswer": "Elige tu respuesta"
   },
   "dashboard": {
     "readyToLaunch": "Listo para lanzar",
@@ -1965,7 +1966,8 @@
     "percentage": "Porcentaje",
     "whatsNext": "¿Qué pasa ahora?",
     "whatsNextSaved": "Tus respuestas están guardadas.",
-    "whatsNextHost": "El anfitrión revisará los resultados y los compartirá cuando estén listos."
+    "whatsNextHost": "El anfitrión revisará los resultados y los compartirá cuando estén listos.",
+    "current": "actual"
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",

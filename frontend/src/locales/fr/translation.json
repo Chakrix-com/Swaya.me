@@ -469,7 +469,8 @@
       "poll": "Sondage en direct",
       "offline_poll": "Enquête",
       "exam": "Test"
-    }
+    },
+    "chooseAnswer": "Choisissez votre réponse"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",
@@ -1967,7 +1968,8 @@
     "percentage": "Pourcentage",
     "whatsNext": "Que se passe-t-il ensuite ?",
     "whatsNextSaved": "Vos réponses sont sauvegardées.",
-    "whatsNextHost": "L'hôte examinera les résultats et les partagera quand ils seront prêts."
+    "whatsNextHost": "L'hôte examinera les résultats et les partagera quand ils seront prêts.",
+    "current": "actuelle"
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",
