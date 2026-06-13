@@ -149,11 +149,12 @@ function AuthenticatedLayout({ children }) {
       headerTitleRender={(logo, title) => (
         <span
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-          onClick={() => navigate('/dashboard')}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard') }}
         >
           {logo}{title}
         </span>
       )}
+      onMenuHeaderClick={(e) => { e.preventDefault(); navigate('/dashboard') }}
       logo={<img src={logo} alt="Swaya.me" style={{ height: 26, width: 'auto', borderRadius: 4 }} />}
       layout="mix"
       splitMenus={false}
