@@ -1949,7 +1949,17 @@
     "noParticipantsYet": "Nadie ha comenzado este examen todavía.",
     "recoveryTitle": "Reanuda tu Test",
     "recoveryDesc": "Parece que estabas a mitad de un Test. ¿Quieres continuar donde lo dejaste?",
-    "recoverySubmit": "Reanudar Test"
+    "recoverySubmit": "Reanudar Test",
+    "paletteTitle": "Paleta de preguntas",
+    "answered": "respondidas",
+    "flagged": "Marcada",
+    "flagForReview": "Marcar",
+    "saving": "Guardando…",
+    "submitted": "¡Enviado!",
+    "percentage": "Porcentaje",
+    "whatsNext": "¿Qué pasa ahora?",
+    "whatsNextSaved": "Tus respuestas están guardadas.",
+    "whatsNextHost": "El anfitrión revisará los resultados y los compartirá cuando estén listos."
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",

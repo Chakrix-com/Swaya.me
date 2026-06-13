@@ -1949,7 +1949,17 @@
     "noParticipantsYet": "Ещё никто не начал этот экзамен.",
     "recoveryTitle": "Возобновить ваш Test",
     "recoveryDesc": "Похоже, вы прервали выполнение Test. Хотите продолжить с того места, где остановились?",
-    "recoverySubmit": "Возобновить Test"
+    "recoverySubmit": "Возобновить Test",
+    "paletteTitle": "Список вопросов",
+    "answered": "отвечено",
+    "flagged": "Отмечено",
+    "flagForReview": "Отметить",
+    "saving": "Сохранение…",
+    "submitted": "Отправлено!",
+    "percentage": "Процент",
+    "whatsNext": "Что дальше?",
+    "whatsNextSaved": "Ваши ответы сохранены.",
+    "whatsNextHost": "Организатор проверит результаты и поделится ими, когда будет готово."
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

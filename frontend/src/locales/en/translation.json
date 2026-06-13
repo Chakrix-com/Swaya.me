@@ -1969,7 +1969,17 @@
     "batchConfirmHint": "\"Continue Leaderboard\" merges all batches into one ranked list. \"Start Fresh\" discards previous results from the leaderboard.",
     "continueLeaderboard": "Continue Leaderboard",
     "startFresh": "Start Fresh",
-    "noParticipantsYet": "No one has started this exam yet."
+    "noParticipantsYet": "No one has started this exam yet.",
+    "paletteTitle": "Question Palette",
+    "answered": "answered",
+    "flagged": "Flagged",
+    "flagForReview": "Flag",
+    "saving": "Saving…",
+    "submitted": "Submitted!",
+    "percentage": "Percentage",
+    "whatsNext": "What happens next?",
+    "whatsNextSaved": "Your answers are saved.",
+    "whatsNextHost": "The host will review results and share them when ready."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

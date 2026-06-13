@@ -1949,7 +1949,17 @@
     "noParticipantsYet": "अभी तक किसी ने यह परीक्षा शुरू नहीं की है।",
     "recoveryTitle": "अपनी परीक्षा फिर से शुरू करें",
     "recoveryDesc": "ऐसा लगता है कि आप परीक्षा के बीच में थे। क्या आप वहीं से जारी रखना चाहेंगे जहाँ आपने छोड़ा था?",
-    "recoverySubmit": "परीक्षा जारी रखें"
+    "recoverySubmit": "परीक्षा जारी रखें",
+    "paletteTitle": "प्रश्न सूची",
+    "answered": "उत्तरित",
+    "flagged": "चिह्नित",
+    "flagForReview": "समीक्षा हेतु",
+    "saving": "सहेज रहे हैं…",
+    "submitted": "जमा हो गया!",
+    "percentage": "प्रतिशत",
+    "whatsNext": "आगे क्या होगा?",
+    "whatsNextSaved": "आपके उत्तर सुरक्षित हो गए हैं।",
+    "whatsNextHost": "होस्ट परिणाम समीक्षा कर तैयार होने पर साझा करेंगे।"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",

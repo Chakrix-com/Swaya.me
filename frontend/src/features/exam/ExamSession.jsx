@@ -14,6 +14,7 @@ import {
   ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
   QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
   TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined,
+  FlagOutlined, SaveOutlined, MailOutlined, UnorderedListOutlined,
 } from '@ant-design/icons'
 import { examAPI, proctoringAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
@@ -431,6 +432,58 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
   )
 }
 
+// ── Question Palette ─────────────────────────────────────────────────────────
+
+function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, collapsed, onToggle }) {
+  const { t } = useTranslation()
+  const answered = questions.filter((q) => answers[q.id] != null).length
+  const flaggedCount = flagged.size
+
+  return (
+    <div style={{ marginBottom: 12, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+      <div
+        onClick={onToggle}
+        style={{ padding: '8px 14px', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <Space>
+          <UnorderedListOutlined />
+          <Text strong style={{ fontSize: 13 }}>
+            {t('exam.paletteTitle', 'Questions')}
+          </Text>
+          <Tag color="green" style={{ fontSize: 11 }}>{answered}/{questions.length} {t('exam.answered', 'answered')}</Tag>
+          {flaggedCount > 0 && <Tag color="orange" icon={<FlagOutlined />} style={{ fontSize: 11 }}>{flaggedCount} {t('exam.flagged', 'flagged')}</Tag>}
+        </Space>
+        <Text type="secondary" style={{ fontSize: 12 }}>{collapsed ? '▼' : '▲'}</Text>
+      </div>
+      {!collapsed && (
+        <div style={{ padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {questions.map((q, i) => {
+            const isAnswered = answers[q.id] != null
+            const isFlagged = flagged.has(q.id)
+            const isCurrent = i === currentIdx
+            let btnStyle = { minWidth: 36, fontWeight: isCurrent ? 700 : 400 }
+            let btnType = 'default'
+            if (isCurrent) { btnType = 'primary' }
+            else if (isFlagged) { btnStyle = { ...btnStyle, background: '#fff7e6', borderColor: '#ffa940', color: '#fa8c16' } }
+            else if (isAnswered) { btnStyle = { ...btnStyle, background: '#f6ffed', borderColor: '#95de64', color: '#389e0d' } }
+            return (
+              <Button
+                key={q.id}
+                size="small"
+                type={btnType}
+                style={btnStyle}
+                onClick={() => onNavigate(i)}
+              >
+                {i + 1}
+              </Button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Question Screen ──────────────────────────────────────────────────────────
 
 function QuestionScreen({
@@ -446,6 +499,8 @@ function QuestionScreen({
   questionSecondsLeft,
   hasPerQuestionTimers,
   saving,
+  isFlagged,
+  onToggleFlag,
 }) {
   const { t } = useTranslation()
   const { theme } = useContext(VisitorThemeContext)
@@ -540,34 +595,50 @@ function QuestionScreen({
             </Space>
           </Radio.Group>
 
-          <Row justify="space-between" style={{ marginTop: 8 }}>
+          <Row justify="space-between" align="middle" style={{ marginTop: 8 }}>
             <Col>
-              {!hasPerQuestionTimers && questionIndex > 0 && (
-                <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
-                  {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
+              <Space>
+                {!hasPerQuestionTimers && questionIndex > 0 && (
+                  <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
+                    {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
+                  </Button>
+                )}
+                <Button
+                  icon={<FlagOutlined />}
+                  onClick={() => onToggleFlag(question.id)}
+                  style={isFlagged ? { color: '#fa8c16', borderColor: '#ffa940', background: '#fff7e6' } : {}}
+                >
+                  {isFlagged ? t('exam.flagged', 'Flagged') : t('exam.flagForReview', 'Flag')}
                 </Button>
-              )}
+              </Space>
             </Col>
             <Col>
-              {isLast ? (
-                <Button
-                  type="primary"
-                  onClick={onSubmit}
-                  loading={saving}
-                  icon={<CheckCircleOutlined />}
-                >
-                  {t('exam.submitExam')}
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  onClick={onNext}
-                  loading={saving}
-                  icon={<ArrowRightOutlined />}
-                >
-                  {t('common.next', 'Next')}
-                </Button>
-              )}
+              <Space align="center">
+                {saving && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    <SaveOutlined spin style={{ marginRight: 4 }} />{t('exam.saving', 'Saving…')}
+                  </Text>
+                )}
+                {isLast ? (
+                  <Button
+                    type="primary"
+                    onClick={onSubmit}
+                    loading={saving}
+                    icon={<CheckCircleOutlined />}
+                  >
+                    {t('exam.submitExam')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    onClick={onNext}
+                    loading={saving}
+                    icon={<ArrowRightOutlined />}
+                  >
+                    {t('common.next', 'Next')}
+                  </Button>
+                )}
+              </Space>
             </Col>
           </Row>
         </Space>
@@ -580,22 +651,53 @@ function QuestionScreen({
 
 function ScoreScreen({ result, quizTitle, participantEmail, onBack }) {
   const { t } = useTranslation()
+  const pct = result.max_score > 0 ? Math.round((result.total_score / result.max_score) * 100) : 0
+
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', textAlign: 'center', paddingTop: 40 }}>
-      <Card bordered={false}>
-        <TrophyOutlined style={{ fontSize: 56, color: '#faad14', marginBottom: 16 }} />
-        <Title level={2} style={{ marginBottom: 4 }}>{t('exam.yourScore')}</Title>
-        <Title level={1} style={{ color: '#1890ff', marginTop: 0, marginBottom: 24 }}>
-          {result.total_score} / {result.max_score}
+    <div style={{ maxWidth: 520, margin: '0 auto', paddingTop: 32 }}>
+      <Card bordered={false} style={{ textAlign: 'center' }}>
+        <TrophyOutlined style={{ fontSize: 64, color: '#faad14', marginBottom: 12 }} />
+        <Title level={2} style={{ marginBottom: 4, fontFamily: "'Fraunces', Georgia, serif" }}>
+          {t('exam.submitted', 'Submitted!')}
         </Title>
-        {participantEmail && (
-          <Alert
-            type="info"
-            showIcon
-            message={t('exam.reportPendingEmail')}
-            style={{ marginBottom: 24, textAlign: 'left' }}
-          />
-        )}
+        {quizTitle && <Text type="secondary" style={{ display: 'block', marginBottom: 20 }}>{quizTitle}</Text>}
+        <Row gutter={24} justify="center" style={{ marginBottom: 24 }}>
+          <Col>
+            <Statistic
+              title={t('exam.yourScore')}
+              value={result.total_score}
+              suffix={`/ ${result.max_score}`}
+              valueStyle={{ color: '#1677ff', fontFamily: "'Fraunces', Georgia, serif" }}
+            />
+          </Col>
+          <Col>
+            <Statistic
+              title={t('exam.percentage', 'Score %')}
+              value={pct}
+              suffix="%"
+              valueStyle={{ color: pct >= 70 ? '#52c41a' : pct >= 40 ? '#faad14' : '#ff4d4f', fontFamily: "'Fraunces', Georgia, serif" }}
+            />
+          </Col>
+        </Row>
+
+        <Space direction="vertical" style={{ width: '100%', textAlign: 'left', marginBottom: 20 }}>
+          <Text strong style={{ display: 'block', marginBottom: 6 }}>{t('exam.whatsNext', 'What happens next?')}</Text>
+          <Space>
+            <CheckCircleOutlined style={{ color: '#52c41a' }} />
+            <Text>{t('exam.whatsNextSaved', 'Your answers have been saved and locked.')}</Text>
+          </Space>
+          {participantEmail && (
+            <Space>
+              <MailOutlined style={{ color: '#1677ff' }} />
+              <Text>{t('exam.reportPendingEmail', 'A detailed report will be emailed to you once results are released.')}</Text>
+            </Space>
+          )}
+          <Space>
+            <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+            <Text type="secondary">{t('exam.whatsNextHost', 'The host will review and publish results at their discretion.')}</Text>
+          </Space>
+        </Space>
+
         <Button icon={<CloseCircleOutlined />} onClick={() => { window.close(); setTimeout(() => onBack(), 300) }}>
           {t('exam.closeWindow', 'Close')}
         </Button>
@@ -629,6 +731,8 @@ export default function ExamSession() {
   const [questions, setQuestions] = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState({}) // questionId -> selectedOptionIndex
+  const [flagged, setFlagged] = useState(new Set()) // question ids flagged for review
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false)
   const [expiredQuestions, setExpiredQuestions] = useState(new Set()) // question ids that timed out
 
   // Timers
@@ -865,6 +969,16 @@ export default function ExamSession() {
     }
   }
 
+  const handleToggleFlag = (questionId) => {
+    setFlagged(prev => {
+      const next = new Set(prev)
+      next.has(questionId) ? next.delete(questionId) : next.add(questionId)
+      return next
+    })
+  }
+
+  const handleNavigatePalette = (idx) => { setCurrentIdx(idx) }
+
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = () => {
@@ -982,24 +1096,37 @@ export default function ExamSession() {
         )}
 
         {phase === 'taking' && questions.length > 0 && (
-          <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken} onAutoSubmit={handleAutoSubmit}>
-            <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
-              <QuestionScreen
-                question={questions[currentIdx]}
-                questionIndex={currentIdx}
-                totalQuestions={questions.length}
-                selectedAnswer={answers[questions[currentIdx]?.id] ?? null}
-                onAnswerSelect={handleAnswerSelect}
-                onNext={handleNext}
-                onPrev={handlePrev}
-                onSubmit={handleSubmit}
-                globalSecondsLeft={globalSecondsLeft}
-                questionSecondsLeft={questionSecondsLeft}
-                hasPerQuestionTimers={hasPerQuestionTimers}
-                saving={saving}
-              />
-            </ProctoringGate>
-          </ProctoringProvider>
+          <>
+            <QuestionPalette
+              questions={questions}
+              answers={answers}
+              flagged={flagged}
+              currentIdx={currentIdx}
+              onNavigate={handleNavigatePalette}
+              collapsed={paletteCollapsed}
+              onToggle={() => setPaletteCollapsed(c => !c)}
+            />
+            <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken} onAutoSubmit={handleAutoSubmit}>
+              <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
+                <QuestionScreen
+                  question={questions[currentIdx]}
+                  questionIndex={currentIdx}
+                  totalQuestions={questions.length}
+                  selectedAnswer={answers[questions[currentIdx]?.id] ?? null}
+                  onAnswerSelect={handleAnswerSelect}
+                  onNext={handleNext}
+                  onPrev={handlePrev}
+                  onSubmit={handleSubmit}
+                  globalSecondsLeft={globalSecondsLeft}
+                  questionSecondsLeft={questionSecondsLeft}
+                  hasPerQuestionTimers={hasPerQuestionTimers}
+                  saving={saving}
+                  isFlagged={flagged.has(questions[currentIdx]?.id)}
+                  onToggleFlag={handleToggleFlag}
+                />
+              </ProctoringGate>
+            </ProctoringProvider>
+          </>
         )}
 
         {phase === 'submitting' && (

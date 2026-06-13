@@ -1949,7 +1949,17 @@
     "noParticipantsYet": "હજી સુધી કોઈએ આ પરીક્ષા શરૂ નથી કરી.",
     "recoveryTitle": "તમારી પરીક્ષા ફરી શરૂ કરો",
     "recoveryDesc": "એવું લાગે છે કે તમે પરીક્ષાની વચ્ચે હતા. શું તમે જ્યાંથી છોડ્યું હતું ત્યાંથી ચાલુ રાખવા માંગો છો?",
-    "recoverySubmit": "પરીક્ષા ફરી શરૂ કરો"
+    "recoverySubmit": "પરીક્ષા ફરી શરૂ કરો",
+    "paletteTitle": "પ્રશ્ન સૂચિ",
+    "answered": "જવાબ આપ્યો",
+    "flagged": "ચિહ્નિત",
+    "flagForReview": "ચિહ્નિત કરો",
+    "saving": "સાચવી રહ્યા છીએ…",
+    "submitted": "સબમિટ થઈ ગયું!",
+    "percentage": "ટકાવારી",
+    "whatsNext": "આગળ શું થશે?",
+    "whatsNextSaved": "તમારા જવાબ સાચવી લેવામાં આવ્યા છે.",
+    "whatsNextHost": "આયોજક પરિણામોની સમીક્ષા કરી તૈયાર થશે ત્યારે શેર કરશે."
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",

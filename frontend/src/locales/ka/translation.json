@@ -1949,7 +1949,17 @@
     "noParticipantsYet": "ಇನ್ನೂ ಯಾರೂ ಈ ಪರೀಕ್ಷೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿಲ್ಲ.",
     "recoveryTitle": "ನಿಮ್ಮ Test ಅನ್ನು ಮುಂದುವರಿಸಿ",
     "recoveryDesc": "ನೀವು Test ನ ಮಧ್ಯದಲ್ಲಿ ಇದ್ದಂತೆ ಕಾಣುತ್ತಿದೆ. ನೀವು ಎಲ್ಲಿ ಬಿಟ್ಟಿದ್ದೀರೋ ಅಲ್ಲಿಂದ ಮುಂದುವರಿಸಲು ಬಯಸುವಿರಾ?",
-    "recoverySubmit": "Test ಮುಂದುವರಿಸಿ"
+    "recoverySubmit": "Test ಮುಂದುವರಿಸಿ",
+    "paletteTitle": "კითხვების სია",
+    "answered": "პასუხგაცემული",
+    "flagged": "მონიშნული",
+    "flagForReview": "მონიშვნა",
+    "saving": "ინახება…",
+    "submitted": "გაგზავნილია!",
+    "percentage": "პროცენტი",
+    "whatsNext": "შემდეგ რა მოხდება?",
+    "whatsNextSaved": "თქვენი პასუხები შენახულია.",
+    "whatsNextHost": "მასპინძელი განიხილავს შედეგებს და გაგზავნის მზად იქნება."
   },
   "appFeedback": {
     "floatButtonTooltip": "ಪ್ರತಿಕ್ರಿಯೆ ಹಂಚಿಕೊಳ್ಳಿ",
