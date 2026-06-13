@@ -20,9 +20,9 @@ Update the Status column / checkboxes as work progresses. Keep this file as the 
 | **P1** | The live loop — host cockpit + participant game | 12 | 12/12 ✅ |
 | **P2** | The shop window — home, create, templates | 8 | 8/8 ✅ |
 | **P3** | Coherence — design system + results hub | 9 | 9/9 ✅ |
-| **P4** | Reach — PWA, self-serve, workspaces | 7 | 0/7 |
-| **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 0/6 |
-| | **Total** | **47** | **34/47** |
+| **P4** | Reach — PWA, self-serve, workspaces | 7 | 6/7 ✅ (P4-3 skipped) |
+| **X** | Cross-cutting — instrumentation, QA, cleanup | 6 | 6/6 ✅ |
+| | **Total** | **47** | **46/47** (P4-3 skipped) |
 
 ---
 
@@ -487,24 +487,24 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 
 > Review §4.5.7, §5 P4.
 
-### P4-1 ⬜ Participant PWA + wake lock
+### P4-1 ✅ Participant PWA + wake lock
 - Installable manifest, service worker for shell caching, screen wake lock during sessions.
 - **Size:** M
 
-### P4-2 ⬜ Reconnect-resilient participant sessions
+### P4-2 ✅ Reconnect-resilient participant sessions
 - Session token survives refresh/network blip/phone lock; auto-rejoin with same identity and score. (Pairs with P1-8 reconnect logic.)
 - **Accept:** Selenium: join → reload mid-question → same name/rank, current question shown.
 - **Size:** M
 
-### P4-3 ⬜ Self-serve plan upgrades
+### P4-3 🚫 Self-serve plan upgrades
 - Plans page ends in "email us" today (review §2, §4.3). Integrate payment provider chosen in **P4-7**, tier change flow on existing TierService/Redis enforcement. **Note:** JWT tier-stale bug memory — coordinate with the post-2026-06-01 fix. **Blocked by P4-7.**
 - **Size:** XL
 
-### P4-4 ⬜ Public quiz discovery (explore page)
+### P4-4 ✅ Public quiz discovery (explore page)
 - Browse/run public templates without an account beyond join codes. Scope deliberately small: curated global templates only.
 - **Size:** L
 
-### P4-5 ⬜ Team workspaces
+### P4-5 ✅ Team workspaces
 - Shared folders/activities within a tenant using existing tenant/role model (admin/user/viewer); "shared with me" view.
 - **Size:** XL
 
@@ -512,7 +512,7 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 - **Scope (clarified per sonnet-review §9):** promote the **existing test.swaya.me landing** ("One room. Every voice.") to production **as-is, after P0 — without waiting for P2-4**. The P2-4 home redesign ships later through the normal promote flow as part of M3; it is *not* part of this item. Accepted trade-off: landing and logged-in dashboard will be visually out of step between M1 and M3.
 - **Size:** S (deploy + verify)
 
-### P4-7 ⬜ Decide payment provider (Razorpay vs Stripe)
+### P4-7 ✅ Decide payment provider (Razorpay vs Stripe)
 - **Gap (sonnet-review §8):** decision was an inline note inside P4-3 but blocks its design entirely. Evaluate: Indian vs global audience split, fee structure, webhook reliability, subscription/tier-change APIs, integration surface with TierService/Redis. Output: a one-page decision record in `specs/backend/`.
 - **Accept:** decision documented and approved; P4-3 unblocked.
 - **Size:** S
@@ -521,28 +521,28 @@ Reveal rules (fixes P0-2): **your** pick = green ✓ if right / red ✗ if wrong
 
 ## X — Cross-cutting
 
-### X-1 ⬜ Metrics instrumentation
+### X-1 ✅ Metrics instrumentation
 - Events for the review's success metrics: participant rejoin rate, host-never-scrolls/never-loses-code (control-room error + scroll telemetry), finale→signup conversion, time-to-first-published-activity, weekly active hosts (review §5). Minimal: backend event table + lightweight frontend beacon; admin Statistics page chart additions.
 - **Size:** L
 
-### X-2 ⬜ Journey smoke-test suite from exploration scripts
+### X-2 ✅ Journey smoke-test suite from exploration scripts
 - Promote `scripts/fable_explore_1–5.py` into maintained `scripts/smoke/` suite: login, create→publish→delete, live two-window session (join code, correct/incorrect reveal, leaderboard, end-state), exam end-to-end, poll question types. Run against test before every promote-live.
 - **Size:** M
 
-### X-3 ⬜ Test-data cleanup on test env
+### X-3 ✅ Test-data cleanup on test env
 - After P0-4: delete leftover **quiz 1001** ("Fable Review Temp Exam"); archive/delete regression debris ("Proctoring Regression Exam …" ×40, "nnnnnnnnn", "b", etc.) so dashboards reflect reality during dogfooding.
 - **Size:** S
 
-### X-4 ⬜ Accessibility pass on participant + exam surfaces
+### X-4 ✅ Accessibility pass on participant + exam surfaces
 - Keyboard answerable, focus states, ARIA on options/timer, color-contrast check of reveal states (esp. new green/red), reduced-motion respect for P1-5/P1-6 animations.
 - **Size:** M
 
-### X-5 ⬜ Spec docs for architecture changes + new API endpoints
+### X-5 ✅ Spec docs for architecture changes + new API endpoints
 - Write `specs/architecture/session-events.md` (SSE/WS design, fallback, scaling) and `specs/frontend/design-tokens.md` before starting P1-8 / P3-1.
 - **Extended (sonnet-review §6):** one-page API spec (request params, response schema, auth) for each new endpoint **before** dependent frontend work starts: home stats aggregate (P2-4), cross-quiz sessions listing (P3-4), per-candidate integrity detail (P3-5), pre-join code lookup (P1-12). Place in `specs/backend/`.
 - **Size:** M
 
-### X-6 ⬜ Template content seeding
+### X-6 ✅ Template content seeding
 - **Gap (sonnet-review §7):** P2-7 deferred content "to track separately" — nothing tracked it; the gallery would ship empty. Seed minimum **8–10 templates across all four modes** to open the gallery (hard dependency for P2-7 go-live), growing to 20–30 across classroom / all-hands / training / hiring verticals. Localized titles/descriptions where feasible.
 - **Files:** seed script (per P2-7 backend), template content (Markdown/Excel via existing import).
 - **Accept:** gallery shows ≥8 quality templates at P2-7 launch; each runnable end-to-end.
