@@ -51,6 +51,7 @@ export const authAPI = {
   getMyLimits: () => api.get('/auth/my-limits'),
   getTierPlans: () => api.get('/auth/tier-plans'),
   googleCallback: (code) => api.get('/auth/google/callback', { params: { code } }),
+  getTenantUsers: () => api.get('/users', { params: { per_page: 100 } }),
 }
 
 // Quiz API
@@ -77,6 +78,8 @@ export const quizAPI = {
   createFolder: (data) => api.post('/quizzes/folders', data),
   updateFolder: (id, data) => api.put(`/quizzes/folders/${id}`, data),
   deleteFolder: (id) => api.delete(`/quizzes/folders/${id}`),
+  getFolderShares: (id) => api.get(`/quizzes/folders/${id}/shares`),
+  updateFolderShares: (id, data) => api.put(`/quizzes/folders/${id}/shares`, data),
   getImportTemplate: () => api.get('/quizzes/import/template', { responseType: 'blob' }),
   exportDraftToExcel: (data) => api.post('/quizzes/import/export-draft', data, { responseType: 'blob' }),
   validateImport: (file) => {

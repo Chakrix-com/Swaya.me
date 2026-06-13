@@ -3,9 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Button, Tag, Space, Popconfirm, Tooltip, message,
+  Button, Tag, Space, Popconfirm, Tooltip, message, Select, Spin,
   Row, Col, Card, Modal, Input, TreeSelect, Form, Tree,
-  Progress, Table, Typography, Badge, Drawer, Dropdown,
+  Progress, Table, Typography, Badge, Drawer, Dropdown, Switch, List, Avatar,
 } from 'antd'
 import {
   PlusOutlined,
@@ -37,6 +37,8 @@ import {
   SearchOutlined,
   InboxOutlined,
   FilterOutlined,
+  ShareAltOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
@@ -169,6 +171,12 @@ function Dashboard() {
   const [folderSubmitting, setFolderSubmitting] = useState(false)
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false)
   const [renameFolderSubmitting, setRenameFolderSubmitting] = useState(false)
+  const [shareFolderModalOpen, setShareFolderModalOpen] = useState(false)
+  const [shareFolderLoading, setShareFolderLoading] = useState(false)
+  const [shareFolderCurrentShares, setShareFolderCurrentShares] = useState([])
+  const [shareFolderSelectedUserIds, setShareFolderSelectedUserIds] = useState([])
+  const [shareFolderCanEdit, setShareFolderCanEdit] = useState(false)
+  const [tenantUsers, setTenantUsers] = useState([])
 
   useEffect(() => {
     loadQuizzes()
@@ -323,6 +331,44 @@ function Dashboard() {
     }
   }
 
+  const openShareFolderModal = async () => {
+    if (!selectedFolderId) return
+    setShareFolderModalOpen(true)
+    setShareFolderLoading(true)
+    try {
+      const [sharesRes, usersRes] = await Promise.all([
+        quizAPI.getFolderShares(selectedFolderId),
+        authAPI.getTenantUsers(),
+      ])
+      const currentShares = sharesRes.data || []
+      setShareFolderCurrentShares(currentShares)
+      setShareFolderSelectedUserIds(currentShares.map(s => s.user_id))
+      setShareFolderCanEdit(currentShares[0]?.can_edit ?? false)
+      setTenantUsers(usersRes.data?.users || [])
+    } catch (e) {
+      message.error(e?.response?.data?.detail || 'Failed to load shares')
+    } finally {
+      setShareFolderLoading(false)
+    }
+  }
+
+  const handleSaveFolderShares = async () => {
+    if (!selectedFolderId) return
+    setShareFolderLoading(true)
+    try {
+      await quizAPI.updateFolderShares(selectedFolderId, {
+        user_ids: shareFolderSelectedUserIds,
+        can_edit: shareFolderCanEdit,
+      })
+      message.success('Folder sharing updated')
+      setShareFolderModalOpen(false)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || 'Failed to update sharing')
+    } finally {
+      setShareFolderLoading(false)
+    }
+  }
+
   const handleToggleTemplate = async (quiz) => {
     const next = !quiz.is_template
     try {
@@ -391,6 +437,17 @@ function Dashboard() {
       if (n.children?.length) stack.push(...n.children)
     }
     return null
+  }, [folders, selectedFolderId])
+
+  const selectedFolderIsSharedToMe = useMemo(() => {
+    const stack = [...folders]
+    while (stack.length) {
+      const n = stack.pop()
+      if (!n) continue
+      if (n.id === selectedFolderId) return !!n.is_shared_to_me
+      if (n.children?.length) stack.push(...n.children)
+    }
+    return false
   }, [folders, selectedFolderId])
 
   const filteredQuizzes = useMemo(() => {
@@ -1110,13 +1167,27 @@ function Dashboard() {
               </Tag>
             )}
             {selectedFolderId && (
-              <Tag
-                closable
-                onClose={() => setSearchParams({}, { replace: true })}
-                style={{ background: '#FFF7ED', color: C.orange, border: 'none', borderRadius: 8, fontSize: 12 }}
-              >
-                <FolderFilled style={{ marginRight: 4 }} />{selectedFolderName}
-              </Tag>
+              <Space size={4}>
+                <Tag
+                  closable
+                  onClose={() => setSearchParams({}, { replace: true })}
+                  style={{ background: '#FFF7ED', color: C.orange, border: 'none', borderRadius: 8, fontSize: 12 }}
+                >
+                  <FolderFilled style={{ marginRight: 4 }} />
+                  {selectedFolderName}
+                  {selectedFolderIsSharedToMe && <Tag color="blue" style={{ marginLeft: 6, fontSize: 10, padding: '0 4px' }}>Shared</Tag>}
+                </Tag>
+                {!selectedFolderIsSharedToMe && (
+                  <Button
+                    size="small"
+                    icon={<ShareAltOutlined />}
+                    onClick={openShareFolderModal}
+                    style={{ borderRadius: 8 }}
+                  >
+                    Share
+                  </Button>
+                )}
+              </Space>
             )}
             <Button
               size="small"
@@ -1225,6 +1296,60 @@ function Dashboard() {
               <Input />
             </Form.Item>
           </Form>
+        </Modal>
+
+        {/* Share Folder Modal */}
+        <Modal
+          title={<Space><ShareAltOutlined /> Share folder: {selectedFolderName}</Space>}
+          open={shareFolderModalOpen}
+          onCancel={() => setShareFolderModalOpen(false)}
+          onOk={handleSaveFolderShares}
+          confirmLoading={shareFolderLoading}
+          okText="Save sharing"
+        >
+          {shareFolderLoading ? (
+            <div style={{ textAlign: 'center', padding: 32 }}><Spin /></div>
+          ) : (
+            <Space direction="vertical" style={{ width: '100%' }} size={16}>
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>Share with (by email / name)</div>
+                <Select
+                  mode="multiple"
+                  style={{ width: '100%' }}
+                  placeholder="Select teammates…"
+                  value={shareFolderSelectedUserIds}
+                  onChange={setShareFolderSelectedUserIds}
+                  optionFilterProp="label"
+                  options={tenantUsers
+                    .filter(u => u.id !== user?.id)
+                    .map(u => ({ value: u.id, label: u.email }))}
+                  notFoundContent={tenantUsers.length === 0 ? 'No other users in your workspace' : 'No match'}
+                />
+              </div>
+              <Space>
+                <span style={{ fontSize: 13 }}>Allow editing</span>
+                <Switch size="small" checked={shareFolderCanEdit} onChange={setShareFolderCanEdit} />
+              </Space>
+              {shareFolderCurrentShares.length > 0 && (
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Currently shared with</div>
+                  <List
+                    size="small"
+                    dataSource={shareFolderCurrentShares}
+                    renderItem={s => (
+                      <List.Item>
+                        <List.Item.Meta
+                          avatar={<Avatar icon={<UserOutlined />} size={28} />}
+                          title={s.email}
+                          description={s.can_edit ? 'Can edit' : 'View only'}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              )}
+            </Space>
+          )}
         </Modal>
 
         <Modal

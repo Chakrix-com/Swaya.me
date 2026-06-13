@@ -318,6 +318,20 @@ class FolderResponse(BaseModel):
     sort_order: int = 0
     path: str
     children: List["FolderResponse"] = []
+    is_shared_to_me: bool = False  # True when this folder was shared by another user
+    can_edit: bool = True           # False for read-only shared folders
+
+
+class FolderShareRequest(BaseModel):
+    user_ids: List[int]
+    can_edit: bool = False
+
+
+class FolderShareEntry(BaseModel):
+    user_id: int
+    email: str
+    display_name: Optional[str] = None
+    can_edit: bool
 
 
 class SessionResponse(BaseModel):

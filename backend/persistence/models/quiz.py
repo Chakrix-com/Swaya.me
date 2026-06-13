@@ -136,6 +136,23 @@ class QuizFolder(Base, TimestampMixin, TenantMixin):
     parent = relationship("QuizFolder", remote_side=[id], back_populates="children")
     children = relationship("QuizFolder", back_populates="parent", cascade="all, delete-orphan")
     quizzes = relationship("Quiz", back_populates="folder")
+    shares = relationship("FolderShare", back_populates="folder", cascade="all, delete-orphan")
+
+
+class FolderShare(Base):
+    """Grants a tenant user read (or edit) access to a folder they don't own."""
+    __tablename__ = "folder_shares"
+    __table_args__ = (
+        UniqueConstraint("folder_id", "shared_with_user_id", name="uq_folder_shares"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    folder_id = Column(Integer, ForeignKey("quiz_folders.id", ondelete="CASCADE"), nullable=False, index=True)
+    shared_with_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    can_edit = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    folder = relationship("QuizFolder", back_populates="shares")
 
 
 class Question(Base, TimestampMixin):

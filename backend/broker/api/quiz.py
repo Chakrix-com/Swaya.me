@@ -26,6 +26,7 @@ from features.quiz.schemas import (
     FeedbackSubmitRequest, LeaderboardResponse,
     SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse,
     FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse,
+    FolderShareRequest, FolderShareEntry,
     ResultsHubResponse
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
@@ -229,6 +230,37 @@ async def delete_folder(
 ):
     try:
         await service.delete_folder(db, folder_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.put("/folders/{folder_id}/shares", response_model=List[FolderShareEntry])
+async def share_folder(
+    folder_id: int,
+    request: FolderShareRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service),
+):
+    """Replace the share list for a folder (owner only)."""
+    try:
+        return await service.share_folder(db, folder_id, request, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+
+@router.get("/folders/{folder_id}/shares", response_model=List[FolderShareEntry])
+async def list_folder_shares(
+    folder_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service),
+):
+    """List current shares for a folder (owner only)."""
+    try:
+        return await service.list_folder_shares(db, folder_id, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

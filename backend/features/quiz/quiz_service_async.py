@@ -13,6 +13,7 @@ from persistence.models.quiz import (
     Quiz,
     Question,
     QuizFolder,
+    FolderShare,
     QuizStatus,
     QuizType,
     QuestionType,
@@ -29,7 +30,7 @@ from features.quiz.schemas import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse,
     TemplateDesignationRequest, TemplateQuizListItemResponse,
-    FolderCreateRequest, FolderUpdateRequest, FolderResponse,
+    FolderCreateRequest, FolderUpdateRequest, FolderResponse, FolderShareRequest, FolderShareEntry,
     OfflinePollPublishResponse,
 )
 from shared.exceptions.quiz import (
@@ -97,7 +98,8 @@ class QuizBuilderServiceAsync:
         return names
 
     async def list_folders(self, db: AsyncSession, current_user: CurrentUser) -> list[FolderResponse]:
-        rows = (
+        # Own folders
+        own_rows = (
             await db.execute(
                 select(QuizFolder)
                 .filter(
@@ -108,14 +110,46 @@ class QuizBuilderServiceAsync:
             )
         ).scalars().all()
 
-        by_id = {f.id: f for f in rows}
-        parents: dict[int, Optional[QuizFolder]] = {f.id: by_id.get(f.parent_id) for f in rows}
+        # Shared-to-me folders (flat, not nested under own tree)
+        share_rows = (
+            await db.execute(
+                select(FolderShare, QuizFolder)
+                .join(QuizFolder, QuizFolder.id == FolderShare.folder_id)
+                .filter(
+                    FolderShare.shared_with_user_id == current_user.user_id,
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                )
+            )
+        ).all()
+
+        shared_folder_ids = {share.FolderShare.folder_id for share in share_rows}
+        shared_can_edit = {share.FolderShare.folder_id: share.FolderShare.can_edit for share in share_rows}
+
+        by_id = {f.id: f for f in own_rows}
+        parents: dict[int, Optional[QuizFolder]] = {f.id: by_id.get(f.parent_id) for f in own_rows}
         by_parent: dict[Optional[int], list[QuizFolder]] = {}
-        for folder in rows:
+        for folder in own_rows:
             by_parent.setdefault(folder.parent_id, []).append(folder)
 
         roots = sorted(by_parent.get(None, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
-        return [self._folder_to_tree(root, parents, by_parent) for root in roots]
+        result = [self._folder_to_tree(root, parents, by_parent) for root in roots]
+
+        # Append shared-to-me folders as top-level items
+        for share_row in share_rows:
+            f = share_row.QuizFolder
+            path_names = await self._compute_folder_path_names(db, f)
+            result.append(FolderResponse(
+                id=f.id,
+                name=f.name,
+                parent_id=None,  # appears at root for the recipient
+                sort_order=f.sort_order or 0,
+                path=" / ".join(path_names),
+                children=[],
+                is_shared_to_me=True,
+                can_edit=shared_can_edit.get(f.id, False),
+            ))
+
+        return result
 
     async def create_folder(self, db: AsyncSession, request: FolderCreateRequest, current_user: CurrentUser) -> FolderResponse:
         parent: Optional[QuizFolder] = None
@@ -292,6 +326,98 @@ class QuizBuilderServiceAsync:
         )
         await db.delete(folder)
         await db.commit()
+
+    async def share_folder(
+        self,
+        db: AsyncSession,
+        folder_id: int,
+        request: FolderShareRequest,
+        current_user: CurrentUser,
+    ) -> list[FolderShareEntry]:
+        """Replace the share list for a folder (only the owner can do this)."""
+        from persistence.models.core import User
+        folder = (
+            await db.execute(
+                select(QuizFolder).filter(
+                    QuizFolder.id == folder_id,
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.created_by_id == current_user.user_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not folder:
+            raise QuizNotFoundError("Folder not found or not owned by you")
+
+        # Validate that all users belong to the same tenant
+        if request.user_ids:
+            users = (
+                await db.execute(
+                    select(User).filter(
+                        User.id.in_(request.user_ids),
+                        User.tenant_id == current_user.tenant_id,
+                    )
+                )
+            ).scalars().all()
+            if len(users) != len(request.user_ids):
+                raise QuizValidationError("One or more users not found in your tenant")
+        else:
+            users = []
+
+        # Replace shares: delete existing, insert new
+        await db.execute(
+            delete(FolderShare).where(FolderShare.folder_id == folder_id)
+        )
+        for uid in request.user_ids:
+            db.add(FolderShare(folder_id=folder_id, shared_with_user_id=uid, can_edit=request.can_edit))
+        await db.commit()
+
+        return [
+            FolderShareEntry(
+                user_id=u.id,
+                email=u.email,
+                display_name=getattr(u, "display_name", None) or u.email,
+                can_edit=request.can_edit,
+            )
+            for u in users
+        ]
+
+    async def list_folder_shares(
+        self,
+        db: AsyncSession,
+        folder_id: int,
+        current_user: CurrentUser,
+    ) -> list[FolderShareEntry]:
+        """List current shares for a folder (owner only)."""
+        from persistence.models.core import User
+        folder = (
+            await db.execute(
+                select(QuizFolder).filter(
+                    QuizFolder.id == folder_id,
+                    QuizFolder.tenant_id == current_user.tenant_id,
+                    QuizFolder.created_by_id == current_user.user_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not folder:
+            raise QuizNotFoundError("Folder not found or not owned by you")
+
+        rows = (
+            await db.execute(
+                select(FolderShare, User)
+                .join(User, User.id == FolderShare.shared_with_user_id)
+                .filter(FolderShare.folder_id == folder_id)
+            )
+        ).all()
+
+        return [
+            FolderShareEntry(
+                user_id=row.User.id,
+                email=row.User.email,
+                display_name=getattr(row.User, "display_name", None) or row.User.email,
+                can_edit=row.FolderShare.can_edit,
+            )
+            for row in rows
+        ]
 
     async def assign_quiz_folder(self, db: AsyncSession, quiz_id: int, folder_id: Optional[int], current_user: CurrentUser) -> QuizResponse:
         result = await db.execute(
