@@ -2,6 +2,7 @@
 AI generation endpoints — question generation via Google Gemini; other AI via local ollama.
 Restricted to admin and super_admin roles.
 """
+import asyncio
 import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -177,20 +178,44 @@ async def api_generate_questions_stream(
         )
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        try:
-            async for item in gemini_generate_questions_stream(
+        # Run Gemini in a background task so we can send SSE keep-alive pings
+        # every 15 s while it thinks — prevents nginx proxy_read_timeout from
+        # firing on long generations (10+ questions can take 60-120 s).
+        task = asyncio.create_task(
+            gemini_generate_questions(
                 prompt=prompt.strip(),
                 count=req.count,
                 language=req.language,
                 quiz_type=req.quiz_type,
                 existing_questions=req.existing_questions or None,
-            ):
-                yield f"data: {json.dumps(item)}\n\n"
+            )
+        )
+        try:
+            while not task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(task), timeout=15.0)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"  # SSE comment — ignored by clients, resets nginx timeout
+            result = await task
+            for q in result["questions"]:
+                yield f"data: {json.dumps(q)}\n\n"
+            yield f"data: {json.dumps({'done': True, 'title': result.get('title'), 'description': result.get('description'), 'suggested_exam_duration_minutes': result.get('suggested_exam_duration_minutes'), 'suggested_proctoring': result.get('suggested_proctoring')})}\n\n"
         except GeminiError as e:
             logger.error("Gemini streaming failed: %s", e)
+            if not task.done():
+                task.cancel()
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        except Exception as e:
+            logger.error("Unexpected AI stream error: %s", e)
+            if not task.done():
+                task.cancel()
+            yield f"data: {json.dumps({'error': 'Generation failed. Please try again.'})}\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
+    )
 
 
 @router.post("/generate/options", response_model=GenerateDistractorsResponse)
