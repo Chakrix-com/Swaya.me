@@ -9,6 +9,7 @@ import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI } from '../../services/api'
 import BetaBadge from '../../components/BetaBadge'
 import RichTextRenderer from './components/RichTextRenderer'
+import VideoEmbed from './components/VideoEmbed'
 import './QuizPresent.css'
 import { applySkin } from '../../themes/skins'
 
@@ -123,6 +124,7 @@ function MCQView({ question, questionNumber, totalQuestions, revealed, isPoll, t
         )}
       </div>
 
+      <VideoEmbed url={question.question_video_url} />
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
           <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
@@ -178,6 +180,7 @@ function ScaleView({ question, questionNumber, totalQuestions, revealed, t }) {
         )}
       </div>
 
+      <VideoEmbed url={question.question_video_url} />
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
           <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
@@ -245,6 +248,7 @@ function TextResponseView({ question, questionNumber, totalQuestions, t }) {
         <Tag color="default">{t('quizPresent.responsesCount', { count: total })}</Tag>
       </div>
       
+      <VideoEmbed url={question.question_video_url} />
       {question.question_image_url && (
         <div className="pv-question-img-wrap" style={{ flexShrink: 0 }}>
           <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
@@ -328,6 +332,7 @@ function WordCloudView({ question, wordCloudData, questionNumber, totalQuestions
         )}
       </div>
 
+      <VideoEmbed url={question.question_video_url} />
       {question.question_image_url && (
         <div className="pv-question-img-wrap">
           <img src={question.question_image_url} alt={t('quiz.question')} className="pv-question-img" />

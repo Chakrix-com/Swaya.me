@@ -385,7 +385,10 @@
     "skinClassroom": "कक्षा",
     "skinBoardroom": "बोर्डरूम",
     "skinParty": "पार्टी",
-    "skinHint": "दर्शक और प्रोजेक्टर का स्वरूप चुनें"
+    "skinHint": "दर्शक और प्रोजेक्टर का स्वरूप चुनें",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "केवल YouTube और Vimeo URL समर्थित हैं"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI सुझाव: {{minutes}} मिनट की परीक्षा",
     "examSuggProctoring": "प्रॉक्टरिंग अनुशंसित: {{value}}",
     "examSuggApply": "सेटिंग्स पर लागू करें",
-    "examSuggDismiss": "खारिज करें"
+    "examSuggDismiss": "खारिज करें",
+    "imageHintBanner": "{{count}} प्रश्न(ओं) के लिए छवियां सुझाई गई हैं। प्रत्येक प्रश्न खोलकर छवि अपलोड करें।",
+    "optionImageHintBanner": "{{count}} प्रश्न(ओं) के विकल्पों के लिए छवियां सुझाई गई हैं। प्रत्येक प्रश्न खोलकर प्रति विकल्प फोटो अपलोड करें।"
   },
   "offlinePoll": {
     "typeLabel": "सर्वेक्षण",

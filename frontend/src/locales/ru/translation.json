@@ -385,7 +385,10 @@
     "skinClassroom": "Класс",
     "skinBoardroom": "Зал заседаний",
     "skinParty": "Вечеринка",
-    "skinHint": "Выберите вид сцены для аудитории и проектора"
+    "skinHint": "Выберите вид сцены для аудитории и проектора",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "Поддерживаются только URL YouTube и Vimeo"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "ИИ предлагает: экзамен на {{minutes}} минут",
     "examSuggProctoring": "Прокторинг рекомендован: {{value}}",
     "examSuggApply": "Применить к настройкам",
-    "examSuggDismiss": "Отклонить"
+    "examSuggDismiss": "Отклонить",
+    "imageHintBanner": "Для {{count}} вопрос(а/ов) предложены изображения. Откройте каждый вопрос для загрузки изображения.",
+    "optionImageHintBanner": "Для {{count}} вопрос(а/ов) предложены изображения вариантов ответов. Откройте каждый вопрос для загрузки фото на каждый вариант."
   },
   "offlinePoll": {
     "typeLabel": "Опрос",

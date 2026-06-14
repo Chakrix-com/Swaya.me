@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useContext, useCallback } from 'react'
+import VideoEmbed from '../quiz/components/VideoEmbed'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -728,6 +729,7 @@ export default function AudienceSession() {
                 <Card
                   title={
                     <Space direction="vertical" style={{ width: '100%' }}>
+                      <VideoEmbed url={currentQuestion.question_video_url} height={240} />
                       {currentQuestion.question_image_url && (
                         <img
                           src={currentQuestion.question_image_url}

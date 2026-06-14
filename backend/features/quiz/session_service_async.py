@@ -77,6 +77,7 @@ class SessionServiceAsync:
                 "options": options,
                 "correct_answer_index": q.correct_answer_index,
                 "question_image_url": ImageService.to_absolute_url(q.question_image_url, base_url),
+                "question_video_url": q.question_video_url,
                 "option_images": {
                     k: ImageService.to_absolute_url(v, base_url)
                     for k, v in (q.option_images or {}).items()

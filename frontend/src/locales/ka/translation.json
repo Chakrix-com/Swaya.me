@@ -385,7 +385,10 @@
     "skinClassroom": "კლასი",
     "skinBoardroom": "საბჭო დარბაზი",
     "skinParty": "წვეულება",
-    "skinHint": "აირჩიეთ მაყურებლისა და პროექტორის გარეგნობა"
+    "skinHint": "აირჩიეთ მაყურებლისა და პროექტორის გარეგნობა",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "მხოლოდ YouTube და Vimeo URL-ები მხარდაჭერილია"
   },
   "audience": {
     "joinQuiz": "ಅಧಿವೇಶನಕ್ಕೆ ಸೇರಿ",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI ಸಲಹೆ: {{minutes}} ನಿಮಿಷದ ಪರೀಕ್ಷೆ",
     "examSuggProctoring": "ಪ್ರಾಕ್ಟರಿಂಗ್ ಶಿಫಾರಸು: {{value}}",
     "examSuggApply": "ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಗೆ ಅನ್ವಯಿಸಿ",
-    "examSuggDismiss": "ವಜಾಗೊಳಿಸಿ"
+    "examSuggDismiss": "ವಜಾಗೊಳಿಸಿ",
+    "imageHintBanner": "{{count}} კითხვ(ებ)ისთვის სურათები შემოთავაზებულია. გახსენით თითოეული კითხვა სურათის ასატვირთად.",
+    "optionImageHintBanner": "{{count}} კითხვ(ებ)ის პარამეტრებისთვის სურათები შემოთავაზებულია. გახსენით თითოეული კითხვა პარამეტრის ფოტოს ასატვირთად."
   },
   "offlinePoll": {
     "typeLabel": "ಸಮೀಕ್ಷೆ",

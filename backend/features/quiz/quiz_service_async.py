@@ -804,6 +804,7 @@ class QuizBuilderServiceAsync:
                     options=list(question.options) if question.options else None,
                     correct_answer_index=question.correct_answer_index,
                     question_image_url=question.question_image_url,
+                    question_video_url=question.question_video_url,
                     option_images=dict(question.option_images) if question.option_images else None,
                     points=question.points,
                     max_time_seconds=question.max_time_seconds,
@@ -1139,6 +1140,7 @@ class QuizBuilderServiceAsync:
                         options=list(question.options) if question.options else None,
                         correct_answer_index=question.correct_answer_index,
                         question_image_url=question.question_image_url,
+                        question_video_url=question.question_video_url,
                         option_images=dict(question.option_images) if question.option_images else None,
                     )
                 )
@@ -1349,6 +1351,7 @@ class QuizBuilderServiceAsync:
                     question_image_url=ImageService.to_absolute_url(
                         q.question_image_url, base_url
                     ),
+                    question_video_url=q.question_video_url,
                     option_images={
                         key: ImageService.to_absolute_url(path, base_url)
                         for key, path in (q.option_images or {}).items()

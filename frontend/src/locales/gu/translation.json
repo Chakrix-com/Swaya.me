@@ -385,7 +385,10 @@
     "skinClassroom": "ક્લાસરૂમ",
     "skinBoardroom": "બોર્ડરૂમ",
     "skinParty": "પાર્ટી",
-    "skinHint": "પ્રેક્ષકો અને પ્રોજેક્ટરનો દેખાવ પસંદ કરો"
+    "skinHint": "પ્રેક્ષકો અને પ્રોજેક્ટરનો દેખાવ પસંદ કરો",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "ફક્ત YouTube અને Vimeo URL સમર્થિત છે"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI સૂચન: {{minutes}} મિનિટની પરીક્ષા",
     "examSuggProctoring": "પ્રોક્ટરિંગ ભલામણ: {{value}}",
     "examSuggApply": "સેટિંગ્સ પર લાગુ કરો",
-    "examSuggDismiss": "નકારો"
+    "examSuggDismiss": "નકારો",
+    "imageHintBanner": "{{count}} પ્રશ્ન(ો) માટે ચિત્રો સૂચિત થયા છે. દરેક પ્રશ્ન ખોલીને ચિત્ર અપલોડ કરો.",
+    "optionImageHintBanner": "{{count}} પ્રશ્ન(ો)ના વિકલ્પો માટે ચિત્રો સૂચિત થયા છે. દરેક પ્રશ્ન ખોલીને દરેક વિકલ્પ માટે ફોટો અપલોડ કરો."
   },
   "offlinePoll": {
     "typeLabel": "સર્વે",

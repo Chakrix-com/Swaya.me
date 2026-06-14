@@ -112,6 +112,7 @@ class QuestionServiceAsync:
             options=sanitized_options,
             correct_answer_index=request.correct_answer_index,
             question_image_url=request.question_image_url,
+            question_video_url=request.question_video_url,
             option_images=request.option_images,
             points=request.points,
             max_time_seconds=request.max_time_seconds,
@@ -170,6 +171,8 @@ class QuestionServiceAsync:
             question.correct_answer_index = request.correct_answer_index
         if "question_image_url" in request.model_fields_set:
             question.question_image_url = request.question_image_url
+        if "question_video_url" in request.model_fields_set:
+            question.question_video_url = request.question_video_url
         if "option_images" in request.model_fields_set:
             question.option_images = request.option_images
         if "points" in request.model_fields_set:
@@ -336,6 +339,7 @@ class QuestionServiceAsync:
             options=list(question.options) if question.options else None,
             correct_answer_index=question.correct_answer_index,
             question_image_url=None,
+            question_video_url=question.question_video_url,
             option_images=None,
             points=question.points,
             max_time_seconds=question.max_time_seconds,
@@ -358,6 +362,7 @@ class QuestionServiceAsync:
             order=question.order,
             correct_answer_index=question.correct_answer_index,
             question_image_url=question.question_image_url,
+            question_video_url=question.question_video_url,
             option_images=question.option_images,
             points=question.points,
             max_time_seconds=question.max_time_seconds,

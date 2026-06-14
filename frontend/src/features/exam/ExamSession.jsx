@@ -24,6 +24,7 @@ import { VisitorThemeContext } from '../../App'
 import { ProctoringProvider, ProctoringGate } from '../proctoring'
 import useWakeLock from '../../hooks/useWakeLock'
 import dayjs from 'dayjs'
+import VideoEmbed from '../quiz/components/VideoEmbed'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -564,6 +565,7 @@ function QuestionScreen({
 
       <Card bordered={false}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <VideoEmbed url={question.question_video_url} />
           {question.question_image_url && (
             <img
               src={question.question_image_url}

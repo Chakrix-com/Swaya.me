@@ -385,7 +385,10 @@
     "skinClassroom": "Klassenzimmer",
     "skinBoardroom": "Konferenzraum",
     "skinParty": "Party",
-    "skinHint": "Wählen Sie das Erscheinungsbild für Publikum und Projektor"
+    "skinHint": "Wählen Sie das Erscheinungsbild für Publikum und Projektor",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "Nur YouTube- und Vimeo-URLs werden unterstützt"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "KI schlägt vor: {{minutes}}-Minuten-Prüfung",
     "examSuggProctoring": "Beaufsichtigung empfohlen: {{value}}",
     "examSuggApply": "Auf Einstellungen anwenden",
-    "examSuggDismiss": "Verwerfen"
+    "examSuggDismiss": "Verwerfen",
+    "imageHintBanner": "Für {{count}} Frage(n) wurden Bilder vorgeschlagen. Öffnen Sie jede Frage, um das Bild hochzuladen.",
+    "optionImageHintBanner": "Für {{count}} Frage(n) wurden Optionsbilder vorgeschlagen. Öffnen Sie jede Frage, um ein Foto pro Option hochzuladen."
   },
   "offlinePoll": {
     "typeLabel": "Umfrage",

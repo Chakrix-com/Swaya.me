@@ -65,12 +65,22 @@ class QuestionCreate(BaseModel):
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
+    question_video_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     points: int = Field(default=1, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
     negative_points: int = Field(default=0, ge=0)
     is_required: bool = Field(default=False)
     answer_explanation: Optional[str] = Field(None, max_length=5000)
+
+    @validator('question_video_url')
+    def validate_video_url(cls, v):
+        if v is None:
+            return v
+        import re
+        if not re.search(r'(youtube\.com|youtu\.be|vimeo\.com)', v):
+            raise ValueError('Only YouTube and Vimeo URLs are supported')
+        return v
 
     @validator('text')
     def no_dangerous_html(cls, v):
@@ -128,6 +138,7 @@ class QuestionUpdate(BaseModel):
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
+    question_video_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None
     points: Optional[int] = Field(default=None, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
@@ -145,6 +156,7 @@ class QuestionResponse(BaseModel):
     order: int
     correct_answer_index: Optional[int] = None  # Hidden during active session
     question_image_url: Optional[str] = None
+    question_video_url: Optional[str] = None
     option_images: Optional[dict[str, str]] = None
     points: int = 1
     max_time_seconds: Optional[int] = None
@@ -724,6 +736,7 @@ class ExamQuestionResponse(BaseModel):
     options: Optional[List[str]] = None
     order: int
     question_image_url: Optional[str] = None
+    question_video_url: Optional[str] = None
     option_images: Optional[dict] = None
     points: int = 1
     max_time_seconds: Optional[int] = None

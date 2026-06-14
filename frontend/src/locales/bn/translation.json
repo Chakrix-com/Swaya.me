@@ -385,7 +385,10 @@
     "skinClassroom": "ক্লাসরুম",
     "skinBoardroom": "বোর্ডরুম",
     "skinParty": "পার্টি",
-    "skinHint": "দর্শক ও প্রজেক্টরের চেহারা বেছে নিন"
+    "skinHint": "দর্শক ও প্রজেক্টরের চেহারা বেছে নিন",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "শুধুমাত্র YouTube এবং Vimeo URL সমর্থিত"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI পরামর্শ: {{minutes}} মিনিটের পরীক্ষা",
     "examSuggProctoring": "প্রক্টরিং সুপারিশ: {{value}}",
     "examSuggApply": "সেটিংসে প্রয়োগ করুন",
-    "examSuggDismiss": "বাতিল করুন"
+    "examSuggDismiss": "বাতিল করুন",
+    "imageHintBanner": "{{count}}টি প্রশ্নের জন্য ছবি সুপারিশ করা হয়েছে। প্রতিটি প্রশ্ন খুলে ছবি আপলোড করুন।",
+    "optionImageHintBanner": "{{count}}টি প্রশ্নের বিকল্পের জন্য ছবি সুপারিশ করা হয়েছে। প্রতিটি প্রশ্ন খুলে প্রতিটি বিকল্পের জন্য ছবি আপলোড করুন।"
   },
   "offlinePoll": {
     "typeLabel": "সার্ভে",

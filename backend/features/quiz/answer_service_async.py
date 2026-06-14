@@ -613,6 +613,7 @@ class AnswerServiceAsync:
                     "answer_distribution": distribution,
                     "total_answers": total_answers,
                     "question_image_url": q_data.get("question_image_url"),
+                    "question_video_url": q_data.get("question_video_url"),
                     "option_images": q_data.get("option_images"),
                     "points": q_data.get("points", 1),
                     "max_time_seconds": q_data.get("max_time_seconds"),
@@ -828,6 +829,7 @@ class AnswerServiceAsync:
                         "question_image_url": ImageService.to_absolute_url(
                             question_obj.question_image_url, base_url
                         ),
+                        "question_video_url": question_obj.question_video_url,
                         "option_images": {
                             key: ImageService.to_absolute_url(path, base_url)
                             for key, path in (question_obj.option_images or {}).items()
@@ -876,6 +878,7 @@ class AnswerServiceAsync:
                         "question_image_url": ImageService.to_absolute_url(
                             question_obj.question_image_url, base_url
                         ),
+                        "question_video_url": question_obj.question_video_url,
                         "points": question_obj.points or 1,
                         "max_time_seconds": question_obj.max_time_seconds,
                         "timer_started_at": timer_started_at,

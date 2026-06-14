@@ -385,7 +385,10 @@
     "skinClassroom": "తరగతి గది",
     "skinBoardroom": "బోర్డ్‌రూమ్",
     "skinParty": "పార్టీ",
-    "skinHint": "ప్రేక్షకులు మరియు ప్రొజెక్టర్ రూపాన్ని ఎంచుకోండి"
+    "skinHint": "ప్రేక్షకులు మరియు ప్రొజెక్టర్ రూపాన్ని ఎంచుకోండి",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "YouTube మరియు Vimeo URLలు మాత్రమే మద్దతు ఉన్నాయి"
   },
   "audience": {
     "joinQuiz": "సెషన్‌లో చేరండి",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI సూచన: {{minutes}} నిమిషాల పరీక్ష",
     "examSuggProctoring": "పర్యవేక్షణ సిఫార్సు చేయబడింది: {{value}}",
     "examSuggApply": "సెట్టింగులకు వర్తించు",
-    "examSuggDismiss": "తొలగించు"
+    "examSuggDismiss": "తొలగించు",
+    "imageHintBanner": "{{count}} ప్రశ్న(లకు) చిత్రాలు సూచించబడ్డాయి. ప్రతి ప్రశ్నను తెరిచి చిత్రాన్ని అప్‌లోడ్ చేయండి.",
+    "optionImageHintBanner": "{{count}} ప్రశ్న(ల) ఎంపికలకు చిత్రాలు సూచించబడ్డాయి. ప్రతి ప్రశ్నను తెరిచి ప్రతి ఎంపికకు ఫోటో అప్‌లోడ్ చేయండి."
   },
   "offlinePoll": {
     "typeLabel": "సర్వే",

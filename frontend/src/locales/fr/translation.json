@@ -387,7 +387,10 @@
     "skinClassroom": "Classe",
     "skinBoardroom": "Salle de réunion",
     "skinParty": "Fête",
-    "skinHint": "Choisissez l'apparence de la scène pour le public et le projecteur"
+    "skinHint": "Choisissez l'apparence de la scène pour le public et le projecteur",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "Seules les URL YouTube et Vimeo sont prises en charge"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",
@@ -1788,7 +1791,9 @@
     "examSuggDuration": "L'IA suggère : examen de {{minutes}} minutes",
     "examSuggProctoring": "Surveillance recommandée : {{value}}",
     "examSuggApply": "Appliquer aux paramètres",
-    "examSuggDismiss": "Ignorer"
+    "examSuggDismiss": "Ignorer",
+    "imageHintBanner": "{{count}} question(s) ont des images suggérées. Ouvrez chaque question pour télécharger l'image.",
+    "optionImageHintBanner": "{{count}} question(s) ont des images d'options suggérées. Ouvrez chaque question pour télécharger une photo par option."
   },
   "offlinePoll": {
     "typeLabel": "Enquête",

@@ -10,6 +10,7 @@ import { offlinePollAPI } from '../../services/api'
 import { ProctoringProvider, ProctoringGate } from '../proctoring'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import VideoEmbed from '../quiz/components/VideoEmbed'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 
@@ -377,6 +378,7 @@ export default function OfflinePollSession() {
             />
 
             {/* Question text */}
+            <VideoEmbed url={question.question_video_url} />
             {question.question_image_url && (
               <img
                 src={question.question_image_url}

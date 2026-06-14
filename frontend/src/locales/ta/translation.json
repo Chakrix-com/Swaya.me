@@ -385,7 +385,10 @@
     "skinClassroom": "வகுப்பறை",
     "skinBoardroom": "அரங்கம்",
     "skinParty": "கோலாகலம்",
-    "skinHint": "பார்வையாளர்கள் மற்றும் திரைக்கு தோற்றம் தேர்வு செய்க"
+    "skinHint": "பார்வையாளர்கள் மற்றும் திரைக்கு தோற்றம் தேர்வு செய்க",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "YouTube மற்றும் Vimeo URL மட்டுமே ஆதரிக்கப்படுகின்றன"
   },
   "audience": {
     "joinQuiz": "அமர்வில் சேரவும்",
@@ -1786,7 +1789,9 @@
     "examSuggDuration": "AI பரிந்துரை: {{minutes}} நிமிட தேர்வு",
     "examSuggProctoring": "மேற்பார்வை பரிந்துரைக்கப்படுகிறது: {{value}}",
     "examSuggApply": "அமைப்புகளுக்கு பயன்படுத்து",
-    "examSuggDismiss": "நிராகரி"
+    "examSuggDismiss": "நிராகரி",
+    "imageHintBanner": "{{count}} கேள்வி(களில்) படங்கள் பரிந்துரைக்கப்பட்டுள்ளன. ஒவ்வொரு கேள்வியையும் திறந்து படம் பதிவேற்றவும்.",
+    "optionImageHintBanner": "{{count}} கேள்வி(களில்) விருப்பங்களுக்கு படங்கள் பரிந்துரைக்கப்பட்டுள்ளன. ஒவ்வொரு கேள்வியையும் திறந்து ஒவ்வொரு விருப்பத்திற்கும் படம் பதிவேற்றவும்."
   },
   "offlinePoll": {
     "typeLabel": "கணக்கெடுப்பு",

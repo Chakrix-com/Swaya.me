@@ -64,6 +64,7 @@ def _to_exam_question_response(q: Question) -> ExamQuestionResponse:
         options=q.options,
         order=q.order,
         question_image_url=ImageService.to_absolute_url(q.question_image_url, _BASE_URL),
+        question_video_url=q.question_video_url,
         option_images={
             k: ImageService.to_absolute_url(v, _BASE_URL)
             for k, v in (q.option_images or {}).items()

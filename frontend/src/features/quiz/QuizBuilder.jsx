@@ -55,6 +55,7 @@ import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckC
 import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
+import VideoEmbed, { getVideoEmbedUrl } from './components/VideoEmbed'
 import RichTextEditor from './components/RichTextEditor'
 import RichTextRenderer from './components/RichTextRenderer'
 import { VisitorThemeContext } from '../../App'
@@ -110,6 +111,7 @@ const QuestionForm = ({
   const [useRichText, setUseRichText] = useState(false)
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
+  const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
   const { theme } = useContext(VisitorThemeContext)
 
   const toggleOptRich = (key) => {
@@ -181,8 +183,9 @@ const QuestionForm = ({
       })
       setExtraRichOpts(opts.slice(4).map((o) => /<[a-z][\s\S]*>/i.test(o || '')))
 
-      // Set image URLs from question data
+      // Set image/video URLs from question data
       setQuestionImageUrl(question.question_image_url || null)
+      setQuestionVideoUrl(question.question_video_url || null)
       setOptionImages({
         A: question.option_images?.A || null,
         B: question.option_images?.B || null,
@@ -206,8 +209,9 @@ const QuestionForm = ({
       })
       setQuestionType('mcq')
       
-      // Reset image state for new question
+      // Reset image/video state for new question
       setQuestionImageUrl(null)
+      setQuestionVideoUrl(null)
       setOptionImages({
         A: null,
         B: null,
@@ -458,6 +462,24 @@ const QuestionForm = ({
             }}
           />
         </div>
+
+        <Form.Item
+          name="question_video_url"
+          label={t('quiz.videoUrl')}
+          style={{ marginBottom: 8 }}
+        >
+          <Input
+            placeholder={t('quiz.videoUrlPlaceholder')}
+            allowClear
+            onChange={e => setQuestionVideoUrl(e.target.value || null)}
+          />
+        </Form.Item>
+        {questionVideoUrl && (() => {
+          const embedUrl = getVideoEmbedUrl(questionVideoUrl)
+          return embedUrl
+            ? <VideoEmbed url={questionVideoUrl} height={200} />
+            : <Text type="warning" style={{ display: 'block', marginBottom: 8 }}>{t('quiz.videoUrlInvalid')}</Text>
+        })()}
 
         {questionType === 'mcq' && (
           <>
@@ -1849,6 +1871,7 @@ export default function QuizBuilder() {
         negative_points: values.negative_points ?? 0,
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
+        question_video_url: values.question_video_url || null,
       }
 
       // Add options for choice-based question types
@@ -2028,6 +2051,7 @@ export default function QuizBuilder() {
         negative_points: values.negative_points ?? 0,
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
+        question_video_url: values.question_video_url || null,
       }
 
       // Add options for choice-based question types
