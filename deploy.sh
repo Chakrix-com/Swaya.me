@@ -11,6 +11,7 @@
 #   rollback-live     Restore a previous release on live
 #   hotfix <tag>      Branch off a past release tag for a targeted fix
 #   releases          List all release tags with metadata
+#   preflight         Check exams, active sessions, and migration drift (read-only)
 #   migrate-test      Run alembic migrations on test DB
 #   migrate-live      Run alembic migrations on live DB
 #   health            Health-check both environments
@@ -90,6 +91,83 @@ SQL
         return 1
     fi
     success "No active exam participants — safe to deploy."
+    return 0
+}
+
+# ─── Migration drift check ───────────────────────────────────────────────────
+# Compares live DB's current Alembic revision against the dev codebase head.
+# Shows any new migration files that will be applied during deploy.
+# Non-fatal — informs and warns, does not abort.
+check_migration_drift() {
+    info "Checking migration drift (live DB vs dev codebase)..."
+
+    # Step 1: what revision is the live DB currently at?
+    local live_current_output
+    live_current_output=$(cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" \
+        "$LIVE_VENV/bin/alembic" current 2>&1) || true
+
+    if echo "$live_current_output" | grep -q "(head)"; then
+        success "Live DB is already at migration head — no pending migrations."
+    else
+        local live_rev
+        live_rev=$(echo "$live_current_output" | grep -oP '[a-f0-9]{12}' | head -1 || true)
+        if [[ -n "$live_rev" ]]; then
+            warn "⚠  Live DB is at revision ${live_rev} — NOT at head."
+        else
+            warn "⚠  Could not read live DB migration state. Output:"
+            echo "     $live_current_output"
+        fi
+    fi
+
+    # Step 2: file-level diff — show migration files in dev not yet on live
+    local dev_files live_files new_migrations
+    dev_files=$(ls "$DEV_BACKEND/alembic/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
+    live_files=$(ls "$LIVE_BACKEND/alembic/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
+    new_migrations=$(comm -23 <(echo "$dev_files") <(echo "$live_files") || true)
+
+    if [[ -z "$new_migrations" ]]; then
+        success "No new migration files in dev codebase — live is up to date."
+    else
+        local count; count=$(echo "$new_migrations" | wc -l)
+        warn "⚠  ${count} new migration file(s) will be synced and applied during deploy:"
+        while IFS= read -r fname; do
+            echo -e "     ${CYAN}│${RESET} $fname"
+        done <<< "$new_migrations"
+        warn "Scan for DROP TABLE / DROP COLUMN / TRUNCATE before proceeding."
+    fi
+}
+
+# ─── Active live quiz session check ──────────────────────────────────────────
+# Warns (with confirmation prompt) if participants are mid-quiz on live.
+# Unlike exam check, this is a soft warning — quiz participants can simply rejoin.
+check_no_live_sessions() {
+    local db_user="swayame_user"
+    local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
+    local db_name="swayame"
+
+    local result
+    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/dev/null <<'SQL'
+SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' active participant(s)')
+FROM quiz_sessions qs
+JOIN quizzes q ON qs.quiz_id = q.id
+LEFT JOIN participants p ON p.session_id = qs.id
+    AND TIMESTAMPDIFF(MINUTE, p.last_activity_at, NOW()) < 5
+WHERE qs.status = 'ACTIVE'
+  AND q.exam_slug IS NULL
+GROUP BY qs.id, q.title
+HAVING COUNT(DISTINCT p.id) > 0;
+SQL
+)
+
+    if [[ -n "$result" ]]; then
+        warn "⚠  Active live quiz sessions detected (participants will disconnect ~5s on restart):"
+        while IFS= read -r line; do
+            echo -e "     ${YELLOW}•${RESET} $line"
+        done <<< "$result"
+        confirm "Continue anyway? (participants can rejoin after restart)" || { info "Aborted."; return 1; }
+    else
+        success "No active live quiz sessions."
+    fi
     return 0
 }
 
@@ -247,6 +325,14 @@ cmd_promote_live() {
     # Safety: abort if anyone is mid-exam on live
     check_no_live_exams || return 1
 
+    # Soft warning if anyone is mid-quiz (not exam)
+    check_no_live_sessions || return 1
+
+    # Show migration drift before committing to the deploy
+    echo ""
+    check_migration_drift
+    echo ""
+
     warn "This will update PRODUCTION (www.swaya.me)."
     confirm "Proceed?" || { info "Aborted."; return; }
 
@@ -273,6 +359,27 @@ cmd_promote_live() {
         --exclude='uploads/' \
         "$LIVE_BACKEND/" "$BACKUP_DIR/backend_$tag/"
     success "Backend backup done."
+
+    # DB backup — taken before migrations so we have a clean snapshot to restore if needed
+    local db_dump="$BACKUP_DIR/db_${ts}.sql.gz"
+    info "Backing up live database → $db_dump"
+    mysqldump \
+        -u swayame_user -p'Sw4y4m3_S3cur3_P4ssw0rd!2026' \
+        -h 127.0.0.1 swayame \
+        --single-transaction --quick --routines --triggers \
+        2>/dev/null \
+        | gzip > "$db_dump"
+    success "Database backup done → $db_dump ($(du -sh "$db_dump" | cut -f1))"
+
+    # Prune DB dumps — keep only the 3 most recent to conserve disk space
+    local old_dumps
+    old_dumps=$(ls -1t "$BACKUP_DIR"/db_*.sql.gz 2>/dev/null | tail -n +4)
+    if [[ -n "$old_dumps" ]]; then
+        local prune_count; prune_count=$(echo "$old_dumps" | wc -l)
+        info "Pruning $prune_count old DB dump(s)..."
+        echo "$old_dumps" | xargs rm -f
+        success "Old DB dumps removed."
+    fi
 
     # Save metadata (tag, sha, branch, dates, backup paths)
     write_backup_meta "$tag" "$sha"
@@ -504,6 +611,72 @@ cmd_logs_live() {
     sudo journalctl -u "$LIVE_SERVICE" -f --no-pager
 }
 
+# ─── Command: preflight ──────────────────────────────────────────────────────
+cmd_preflight() {
+    header "Pre-flight Check — www.swaya.me"
+
+    # Show dev vs live version gap
+    local dev_branch; dev_branch=$(git_current_branch)
+    local dev_sha;    dev_sha=$(git_current_sha | cut -c1-8)
+    local live_ver=""
+    [[ -f "$LIVE_BACKEND/.deployed_version" ]] && live_ver=$(cat "$LIVE_BACKEND/.deployed_version")
+    info "Dev ready to deploy : $dev_branch [$dev_sha]"
+    [[ -n "$live_ver" ]] && info "Currently on live   : $live_ver"
+
+    # Commits since last deploy
+    local last_sha; last_sha=$(echo "$live_ver" | grep -oP '[a-f0-9]{7,8}' | head -1 || true)
+    if [[ -n "$last_sha" ]]; then
+        local commit_count
+        commit_count=$(git -C "$DEV_ROOT" log --oneline "${last_sha}..HEAD" 2>/dev/null | wc -l || echo "?")
+        info "Commits since last deploy: $commit_count"
+        if [[ "$commit_count" =~ ^[0-9]+$ && "$commit_count" -gt 0 ]]; then
+            git -C "$DEV_ROOT" log --oneline "${last_sha}..HEAD" 2>/dev/null | while IFS= read -r line; do
+                echo -e "     ${CYAN}│${RESET} $line"
+            done
+        fi
+    fi
+
+    echo ""
+    info "── Exam safety ──────────────────────────────────────────────────────"
+    check_no_live_exams || true
+
+    echo ""
+    info "── Quiz session safety ──────────────────────────────────────────────"
+    # Read-only version — don't prompt, just report
+    local db_user="swayame_user"
+    local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
+    local db_name="swayame"
+    local sessions
+    sessions=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/dev/null <<'SQL'
+SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' participant(s) active')
+FROM quiz_sessions qs
+JOIN quizzes q ON qs.quiz_id = q.id
+LEFT JOIN participants p ON p.session_id = qs.id
+    AND TIMESTAMPDIFF(MINUTE, p.last_activity_at, NOW()) < 5
+WHERE qs.status = 'ACTIVE'
+  AND q.exam_slug IS NULL
+GROUP BY qs.id, q.title
+HAVING COUNT(DISTINCT p.id) > 0;
+SQL
+)
+    if [[ -n "$sessions" ]]; then
+        warn "Active live quiz sessions (participants will briefly disconnect on restart):"
+        while IFS= read -r line; do
+            echo -e "     ${YELLOW}•${RESET} $line"
+        done <<< "$sessions"
+    else
+        success "No active live quiz sessions."
+    fi
+
+    echo ""
+    info "── Database migrations ──────────────────────────────────────────────"
+    check_migration_drift
+
+    echo ""
+    success "Pre-flight check complete."
+    info "When ready: ./deploy.sh promote-live"
+}
+
 # ─── Interactive Menu ─────────────────────────────────────────────────────────
 show_menu() {
     local branch sha
@@ -525,6 +698,7 @@ show_menu() {
     echo -e "  ${RED}3)${RESET} Rollback live                 (restore a past release)"
     echo -e "  ${CYAN}4)${RESET} Start hotfix branch          (fix from a past release)"
     echo -e "  ${CYAN}5)${RESET} List releases"
+    echo -e "  ${GREEN}c)${RESET} Pre-flight check             (exams · sessions · migrations)"
     echo ""
     echo -e "  ${CYAN}6)${RESET} Migrate DB → test"
     echo -e "  ${CYAN}7)${RESET} Migrate DB → live"
@@ -548,6 +722,7 @@ run_menu() {
             3) cmd_rollback_live ;;
             4) cmd_hotfix        ;;
             5) cmd_releases      ;;
+            c) cmd_preflight     ;;
             6) cmd_migrate_test  ;;
             7) cmd_migrate_live  ;;
             8) cmd_health        ;;
@@ -569,6 +744,7 @@ case "${1:-}" in
     rollback-live) cmd_rollback_live ;;
     hotfix)        cmd_hotfix        ;;
     releases)      cmd_releases      ;;
+    preflight)     cmd_preflight     ;;
     migrate-test)  cmd_migrate_test  ;;
     migrate-live)  cmd_migrate_live  ;;
     health)        cmd_health        ;;
@@ -577,7 +753,7 @@ case "${1:-}" in
     logs-live)     cmd_logs_live     ;;
     "")            run_menu          ;;
     *)
-        echo "Usage: $0 [deploy-test|promote-live|rollback-live|hotfix|releases|migrate-test|migrate-live|health|status|logs-test|logs-live]"
+        echo "Usage: $0 [deploy-test|promote-live|rollback-live|hotfix|releases|preflight|migrate-test|migrate-live|health|status|logs-test|logs-live]"
         exit 1
         ;;
 esac
