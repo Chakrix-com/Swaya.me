@@ -1069,6 +1069,7 @@ export default function QuizBuilder() {
   const [aiExamSuggProctoring, setAiExamSuggProctoring] = useState(null)
   const [aiExamSuggDismissed, setAiExamSuggDismissed] = useState(false)
   const [voiceListening, setVoiceListening] = useState(false)
+  const recognizerRef = useRef(null)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -2982,24 +2983,31 @@ export default function QuizBuilder() {
                       danger={voiceListening}
                       icon={<span role="img" aria-label="mic">{voiceListening ? '🔴' : '🎤'}</span>}
                       onClick={() => {
-                        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-                        if (!SR) return
                         if (voiceListening) {
+                          recognizerRef.current?.stop()
+                          recognizerRef.current = null
                           setVoiceListening(false)
                           return
                         }
+                        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+                        if (!SR) return
                         const recognizer = new SR()
-                        recognizer.lang = i18n.language || 'en'
+                        recognizerRef.current = recognizer
+                        recognizer.lang = i18n.language || 'en-US'
                         recognizer.continuous = false
                         recognizer.interimResults = false
-                        setVoiceListening(true)
                         recognizer.onresult = (e) => {
                           const transcript = e.results[0]?.[0]?.transcript || ''
                           if (transcript) setAiTopic(prev => prev ? `${prev} ${transcript}` : transcript)
                         }
-                        recognizer.onend = () => setVoiceListening(false)
-                        recognizer.onerror = () => setVoiceListening(false)
-                        recognizer.start()
+                        recognizer.onend = () => { recognizerRef.current = null; setVoiceListening(false) }
+                        recognizer.onerror = () => { recognizerRef.current = null; setVoiceListening(false) }
+                        try {
+                          recognizer.start()
+                          setVoiceListening(true)
+                        } catch {
+                          recognizerRef.current = null
+                        }
                       }}
                     />
                   </Tooltip>
