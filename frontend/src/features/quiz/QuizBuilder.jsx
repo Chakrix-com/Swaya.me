@@ -2621,7 +2621,13 @@ export default function QuizBuilder() {
                             size="large"
                             icon={<ThunderboltOutlined />}
                             loading={loading && savingForAI}
-                            onClick={() => { setSavingForAI(true); form.submit() }}
+                            onClick={() => {
+                              if (!form.getFieldValue('title')?.trim()) {
+                                form.setFieldsValue({ title: t('quiz.untitled', 'Untitled') })
+                              }
+                              setSavingForAI(true)
+                              form.submit()
+                            }}
                             style={{ minWidth: 180 }}
                           >
                             {t('ai.generateWithAI')}
