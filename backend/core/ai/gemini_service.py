@@ -473,9 +473,12 @@ async def generate_questions(
             "<pre><code class=\"language-X\">…</code></pre> where X is the detected language "
             "(e.g. language-python, language-sql, language-javascript, language-java, language-bash). "
             "Short inline references to variable names, functions, or keywords use <code>name</code>.\n"
-            "- options: an array of 2 to 10 distinct answer choices. "
+            "- options: an array of exactly 4 distinct answer choices. "
             "Apply the same code formatting rules to any option that contains code.\n"
-            "- correct_answer_index: 0-based index of the single correct option.\n"
+            "- correct_answer_index: 0-based index of the single correct option. "
+            "CRITICAL: distribute correct answers across ALL positions (0, 1, 2, 3) — "
+            "do NOT place the correct answer at index 0 for every question. "
+            "Across the full question set each position should appear roughly equally.\n"
             "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
             "and why the main wrong answers are incorrect. No HTML in explanation.\n"
             "- image_suggestion: if a diagram, chart, map, or graph would genuinely help students "
@@ -501,7 +504,7 @@ async def generate_questions(
             f'{{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
             f'{exam_schema_fields}'
             f'"questions": [{{"question_type": "mcq", "text": "<question>", '
-            f'"options": ["<A>", "<B>", "..."], "correct_answer_index": 0, '
+            f'"options": ["<option1>", "<option2>", "<option3>", "<option4>"], "correct_answer_index": 2, '
             f'"explanation": "<why correct is right>", "image_suggestion": null | "<search query>"}}]}}'
         )
         question_fields += exam_fields
@@ -536,7 +539,8 @@ Output format (strict JSON, no other text):
 
 Rules:
 - Output exactly {count} questions, no more, no less.
-- For mcq: each question must have between 2 and 10 distinct answer options; correct_answer_index is 0-based; wrong options must be plausible but clearly incorrect.
+- Each question must have exactly 4 options. Wrong options must be plausible but clearly incorrect.
+- correct_answer_index MUST vary — do not use the same index for every question. Spread correct answers across positions 0, 1, 2, and 3 throughout the set.
 {existing_context}
 User instructions:
 {prompt}"""
