@@ -1004,6 +1004,7 @@ export default function QuizBuilder() {
   const aiCountParam = parseInt(searchParams.get('ai_count') || '5', 10) || 5
   const aiContentTypeParam = searchParams.get('ai_content_type') || 'general'
   const aiDifficultyParam = searchParams.get('ai_difficulty') || 'medium'
+  const aiAutoOpen = searchParams.get('ai_auto_open') === '1'
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -1015,6 +1016,7 @@ export default function QuizBuilder() {
   
   // Loading state for moving temp images
   const [movingImages, setMovingImages] = useState(false)
+  const [savingForAI, setSavingForAI] = useState(false)
   const [pollLinkModal, setPollLinkModal] = useState({ open: false, url: '' })
   const [examLinkModal, setExamLinkModal] = useState({ open: false, url: '' })
   const [batchConfirmModal, setBatchConfirmModal] = useState({ open: false })
@@ -1204,16 +1206,16 @@ export default function QuizBuilder() {
     }
   }, [id, initialQuizType, form])
 
-  // Auto-open AI modal when arriving from CreateChooser "Generate" flow
+  // Auto-open AI modal when arriving from CreateChooser "Generate" flow or after new-quiz AI save
   const aiAutoTriggeredRef = useRef(false)
   useEffect(() => {
-    if (id && quiz && aiPromptParam && !aiAutoTriggeredRef.current) {
+    if (id && quiz && (aiPromptParam || aiAutoOpen) && !aiAutoTriggeredRef.current) {
       aiAutoTriggeredRef.current = true
       setAiModalOpen(true)
       setAiStep('input')
       setAiError(null)
     }
-  }, [id, quiz, aiPromptParam])
+  }, [id, quiz, aiPromptParam, aiAutoOpen])
 
   // On mobile, the quiz settings card can push the questions section off-screen.
   // Scroll to it once after the initial load so users can see the Add Question button.
@@ -1806,7 +1808,10 @@ export default function QuizBuilder() {
         message.success(isExam ? t('exam.createSuccess') : isOfflinePoll ? t('quiz.createOfflinePollSuccess') : isPoll ? t('quiz.createPollSuccess') : t('quiz.createSuccess'))
         const editPath = aiPromptParam
           ? `/quiz/${response.data.id}/edit?ai_prompt=${encodeURIComponent(aiPromptParam)}&ai_count=${aiCountParam}`
-          : `/quiz/${response.data.id}/edit`
+          : savingForAI
+            ? `/quiz/${response.data.id}/edit?ai_auto_open=1`
+            : `/quiz/${response.data.id}/edit`
+        setSavingForAI(false)
         navigate(editPath)
       }
     } catch (error) {
@@ -2600,17 +2605,28 @@ export default function QuizBuilder() {
                     >
                       {renderQuizSettings()}
                       
-                      <div style={{ marginTop: 24, textAlign: 'center' }}>
-                        <Button 
-                          type="primary" 
-                          size="large" 
+                      <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <Button
+                          type="primary"
+                          size="large"
                           htmlType="submit"
-                          icon={<SaveOutlined />} 
-                          loading={loading}
-                          style={{ minWidth: 200 }}
+                          icon={<SaveOutlined />}
+                          loading={loading && !savingForAI}
+                          style={{ minWidth: 180 }}
                         >
                           {isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz')}
                         </Button>
+                        {!isPoll && !isOfflinePoll && (
+                          <Button
+                            size="large"
+                            icon={<ThunderboltOutlined />}
+                            loading={loading && savingForAI}
+                            onClick={() => { setSavingForAI(true); form.submit() }}
+                            style={{ minWidth: 180 }}
+                          >
+                            {t('ai.generateWithAI')}
+                          </Button>
+                        )}
                       </div>
                     </Form>
                   </div>
