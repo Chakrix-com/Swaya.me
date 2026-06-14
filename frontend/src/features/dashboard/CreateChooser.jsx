@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Input, InputNumber, Button, Divider } from 'antd'
+import { Modal, Input, InputNumber, Button, Divider, Select, Radio, Space } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -69,7 +69,9 @@ export default function CreateChooser({ open, onClose }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [aiPrompt, setAiPrompt] = useState('')
-  const [aiCount, setAiCount] = useState(5)
+  const [aiContentType, setAiContentType] = useState('general')
+  const [aiDifficulty, setAiDifficulty] = useState('medium')
+  const [aiQuizType, setAiQuizType] = useState('quiz')
 
   const pick = (type) => {
     onClose()
@@ -79,7 +81,13 @@ export default function CreateChooser({ open, onClose }) {
   const handleGenerate = () => {
     if (!aiPrompt.trim()) return
     onClose()
-    navigate(`/quiz/new?type=quiz&ai_prompt=${encodeURIComponent(aiPrompt.trim())}&ai_count=${aiCount}`)
+    const params = new URLSearchParams({
+      type: aiQuizType,
+      ai_prompt: aiPrompt.trim(),
+      ai_content_type: aiContentType,
+      ai_difficulty: aiDifficulty,
+    })
+    navigate(`/quiz/new?${params.toString()}`)
   }
 
   return (
@@ -163,17 +171,60 @@ export default function CreateChooser({ open, onClose }) {
           style={{ flex: 1, borderRadius: 10, fontSize: 14 }}
           onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); handleGenerate() } }}
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 120 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 130 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 12, color: 'var(--sw-text3)', whiteSpace: 'nowrap' }}>
-              {t('create.aiCountLabel', 'Questions:')}
+              {t('create.aiTypeLabel', 'Type:')}
             </span>
-            <InputNumber
-              min={1} max={50} value={aiCount}
-              onChange={v => setAiCount(v || 5)}
-              style={{ width: 60 }} size="small"
+            <Select
+              size="small"
+              value={aiQuizType}
+              onChange={v => setAiQuizType(v)}
+              style={{ flex: 1 }}
+              options={[
+                { value: 'quiz', label: t('quiz.quizTypeLabel', 'Quiz') },
+                { value: 'exam', label: t('exam.typeLabel', 'Exam') },
+                { value: 'poll', label: t('quiz.poll', 'Poll') },
+                { value: 'offline_poll', label: t('offlinePoll.typeLabel', 'Survey') },
+              ]}
             />
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, color: 'var(--sw-text3)', whiteSpace: 'nowrap' }}>
+              {t('ai.contentTypeLabel')}:
+            </span>
+            <Select
+              size="small"
+              value={aiContentType}
+              onChange={v => setAiContentType(v)}
+              style={{ flex: 1 }}
+              options={[
+                { value: 'general', label: t('ai.contentTypeGeneral') },
+                { value: 'code', label: t('ai.contentTypeCode') },
+                { value: 'sql', label: t('ai.contentTypeSQL') },
+                { value: 'math', label: t('ai.contentTypeMath') },
+                { value: 'visual', label: t('ai.contentTypeVisual') },
+              ]}
+            />
+          </div>
+          {aiQuizType === 'exam' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--sw-text3)', whiteSpace: 'nowrap' }}>
+                {t('ai.difficultyLabel')}:
+              </span>
+              <Select
+                size="small"
+                value={aiDifficulty}
+                onChange={v => setAiDifficulty(v)}
+                style={{ flex: 1 }}
+                options={[
+                  { value: 'easy', label: t('ai.difficultyEasy') },
+                  { value: 'medium', label: t('ai.difficultyMedium') },
+                  { value: 'hard', label: t('ai.difficultyHard') },
+                ]}
+              />
+            </div>
+          )}
           <Button
             type="primary"
             icon={<RocketOutlined />}

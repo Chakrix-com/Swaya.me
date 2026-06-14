@@ -1755,7 +1755,20 @@
     "promptLabel": "Décrivez vos questions",
     "promptHint": "Soyez précis : incluez le sujet, la difficulté, le public, toute contrainte et le style de questions que vous souhaitez.",
     "promptPlaceholder": "Exemples :\n• Générez des questions sur les décorateurs Python pour les développeurs seniors. Concentrez-vous sur les cas d'utilisation réels et les cas limites. Évitez les définitions théoriques.\n• Créez 10 questions sur la Révolution française pour des lycéens — couvrez les causes, les événements clés et les personnages importants. Difficulté moyenne.\n• Rédigez des questions sur les amendements constitutionnels indiens depuis 2000. Les questions doivent être factuelles et adaptées à la préparation aux examens gouvernementaux.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "L'IA a suggéré : \"{{title}}\" — sera appliqué lors de l'ajout",
+    "titleGeneratedApply": "Appliquer",
+    "titleGeneratedDismiss": "Ignorer",
+    "contentTypeLabel": "Type de contenu",
+    "contentTypeGeneral": "Général",
+    "contentTypeCode": "Code / Programmation",
+    "contentTypeSQL": "Données / SQL",
+    "contentTypeMath": "Mathématiques / Sciences",
+    "contentTypeVisual": "Visuel / Diagramme",
+    "difficultyLabel": "Difficulté",
+    "difficultyEasy": "Facile",
+    "difficultyMedium": "Moyen",
+    "difficultyHard": "Difficile"
   },
   "offlinePoll": {
     "typeLabel": "Enquête",

@@ -1753,7 +1753,20 @@
     "promptLabel": "আপনার প্রশ্নগুলো বর্ণনা করুন",
     "promptHint": "নির্দিষ্ট হোন: বিষয়, কঠিনতা, দর্শক, যেকোনো বাধা এবং আপনি যে ধরনের প্রশ্ন চান তা অন্তর্ভুক্ত করুন।",
     "promptPlaceholder": "উদাহরণ:\n• সিনিয়র ডেভেলপারদের জন্য Python decorators নিয়ে প্রশ্ন তৈরি করুন। বাস্তব ব্যবহারের ক্ষেত্রে এবং edge cases-এ মনোযোগ দিন। তাত্ত্বিক সংজ্ঞা এড়িয়ে চলুন।\n• হাই স্কুলের শিক্ষার্থীদের জন্য ফরাসি বিপ্লবের উপর ১০টি প্রশ্ন তৈরি করুন — কারণ, মূল ঘটনা এবং গুরুত্বপূর্ণ ব্যক্তিত্ব অন্তর্ভুক্ত করুন। মাঝারি কঠিনতা।\n• ২০০০ সাল থেকে ভারতীয় সাংবিধানিক সংশোধনী নিয়ে প্রশ্ন লিখুন। সরকারি পরীক্ষার প্রস্তুতির জন্য উপযুক্ত তথ্য-ভিত্তিক প্রশ্ন হওয়া উচিত।",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "সার্ভে",

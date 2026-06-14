@@ -1753,7 +1753,20 @@
     "promptLabel": "Опишите свои вопросы",
     "promptHint": "Будьте конкретны: укажите тему, сложность, аудиторию, любые ограничения и стиль вопросов, который вы хотите.",
     "promptPlaceholder": "Примеры:\n• Создай вопросы о декораторах Python для опытных разработчиков. Сосредоточься на реальных случаях использования и крайних случаях. Избегай теоретических определений.\n• Создай 10 вопросов о Французской революции для старшеклассников — охвати причины, ключевые события и важных исторических деятелей. Средний уровень сложности.\n• Напиши вопросы о поправках к Конституции Индии с 2000 года. Вопросы должны быть основаны на фактах и подходить для подготовки к государственным экзаменам.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "Опрос",

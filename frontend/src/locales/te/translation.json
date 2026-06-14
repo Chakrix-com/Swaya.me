@@ -1753,7 +1753,20 @@
     "promptLabel": "మీ ప్రశ్నలను వివరించండి",
     "promptHint": "నిర్దిష్టంగా ఉండండి: అంశం, కష్టతరం, ప్రేక్షకులు, ఏవైనా పరిమితులు మరియు మీకు కావలసిన ప్రశ్నల శైలి చేర్చండి.",
     "promptPlaceholder": "ఉదాహరణలు:\n• సీనియర్ డెవలపర్‌లకు Python decorators పై ప్రశ్నలు తయారు చేయి. వాస్తవ వినియోగ సందర్భాలు మరియు edge cases పై దృష్టి పెట్టు. సైద్ధాంతిక నిర్వచనాలు మానుకో.\n• హైస్కూల్ విద్యార్థులకు ఫ్రెంచ్ విప్లవంపై 10 ప్రశ్నలు సృష్టించు — కారణాలు, ముఖ్య సంఘటనలు మరియు ముఖ్యమైన వ్యక్తులను చేర్చు. మధ్యస్థ కష్టం.\n• 2000 నుండి భారత రాజ్యాంగ సవరణలపై ప్రశ్నలు రాయి. ప్రభుత్వ పరీక్ష తయారీకి అనుకూలమైన వాస్తవ-ఆధారిత ప్రశ్నలు.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "సర్వే",

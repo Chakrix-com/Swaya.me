@@ -1753,7 +1753,20 @@
     "promptLabel": "உங்கள் கேள்விகளை விவரிக்கவும்",
     "promptHint": "குறிப்பிட்டதாக இருங்கள்: தலைப்பு, சிரமம், பார்வையாளர்கள், ஏதேனும் கட்டுப்பாடுகள் மற்றும் நீங்கள் விரும்பும் கேள்வி வகையை சேர்க்கவும்.",
     "promptPlaceholder": "எடுத்துக்காட்டுகள்:\n• மூத்த டெவலப்பர்களுக்கு Python decorators பற்றிய கேள்விகளை உருவாக்கு. நடைமுறை பயன்பாட்டு நிகழ்வுகள் மற்றும் edge cases-ல் கவனம் செலுத்து.\n• உயர்நிலை மாணவர்களுக்கு பிரெஞ்சு புரட்சியில் 10 கேள்விகள் உருவாக்கு — காரணங்கள், முக்கிய நிகழ்வுகள் மற்றும் முக்கியமான நபர்களை உள்ளடக்கு. நடுத்தர கடினம்.\n• 2000 முதல் இந்திய அரசியலமைப்பு திருத்தங்கள் பற்றிய கேள்விகள் எழுது. அரசு தேர்வு தயாரிப்புக்கு ஏற்ற உண்மை அடிப்படையிலான கேள்விகளாக இருக்கட்டும்.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "கணக்கெடுப்பு",

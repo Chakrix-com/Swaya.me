@@ -1753,7 +1753,20 @@
     "promptLabel": "Beschreiben Sie Ihre Fragen",
     "promptHint": "Seien Sie spezifisch: Geben Sie das Thema, den Schwierigkeitsgrad, die Zielgruppe, eventuelle Einschränkungen und den gewünschten Fragestil an.",
     "promptPlaceholder": "Beispiele:\n• Erstelle Fragen zu Python-Dekoratoren für erfahrene Entwickler. Fokussiere dich auf reale Anwendungsfälle und Randfälle. Vermeide theoretische Definitionen.\n• Erstelle 10 Fragen zur Französischen Revolution für Gymnasiasten — decke Ursachen, wichtige Ereignisse und bedeutende Persönlichkeiten ab. Mittlerer Schwierigkeitsgrad.\n• Schreibe Fragen zu indischen Verfassungsänderungen seit 2000. Die Fragen sollten faktenbasiert und für eine Prüfungsvorbereitung geeignet sein.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "Umfrage",

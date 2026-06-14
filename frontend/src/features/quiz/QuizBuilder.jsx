@@ -1002,6 +1002,8 @@ export default function QuizBuilder() {
   const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : (rawType === 'exam' || rawType === 'test') ? 'exam' : 'quiz'
   const aiPromptParam = searchParams.get('ai_prompt') || ''
   const aiCountParam = parseInt(searchParams.get('ai_count') || '5', 10) || 5
+  const aiContentTypeParam = searchParams.get('ai_content_type') || 'general'
+  const aiDifficultyParam = searchParams.get('ai_difficulty') || 'medium'
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -1048,7 +1050,12 @@ export default function QuizBuilder() {
   const [aiTopic, setAiTopic] = useState(aiPromptParam)
   const [aiCount, setAiCount] = useState(aiCountParam)
   const [aiError, setAiError] = useState(null)
-  const [aiPreview, setAiPreview] = useState([]) // [{text, options, correct_answer_index, selected}]
+  const [aiPreview, setAiPreview] = useState([]) // [{text, options, correct_answer_index, selected, question_type}]
+  const [aiTitle, setAiTitle] = useState(null)
+  const [aiDescription, setAiDescription] = useState(null)
+  const [aiTitleDismissed, setAiTitleDismissed] = useState(false)
+  const [aiContentType, setAiContentType] = useState(aiContentTypeParam)
+  const [aiDifficulty, setAiDifficulty] = useState(aiDifficultyParam)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -1409,7 +1416,7 @@ export default function QuizBuilder() {
             name="offline_results_email"
             label={t('offlinePoll.resultsEmail', 'Email Results To (optional)')}
           >
-            <Input type="email" placeholder="your@email.com" />
+            <Input type="email" placeholder={t('offlinePoll.resultsEmailPlaceholder')} />
           </Form.Item>
         </Space>
       )}
@@ -1486,7 +1493,7 @@ export default function QuizBuilder() {
                   extra={t('exam.allowedDomainsHint', 'Comma-separated domains, e.g. natwest.com, rbs.com — leave blank to allow any email')}
                   style={{ marginBottom: 0 }}
                 >
-                  <Input placeholder="natwest.com, rbs.com" />
+                  <Input placeholder={t('exam.allowedDomainsPlaceholder')} />
                 </Form.Item>
               </Space>
             )}
@@ -1516,7 +1523,7 @@ export default function QuizBuilder() {
         />
       )}
 
-      {!isLive && editingQuestion !== 'new' && !isPoll && (
+      {!isLive && editingQuestion !== 'new' && (
         <Button
           icon={<ThunderboltOutlined />}
           onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
@@ -2213,22 +2220,42 @@ export default function QuizBuilder() {
     }
   }
   
+  const CONTENT_TYPE_HINTS = {
+    code: "Format all code samples using appropriate HTML code blocks with the correct language class (e.g. language-python, language-sql, language-java). Every question with code must use <pre><code class='language-X'>.",
+    sql: "All SQL queries and schemas must be in SQL code blocks. Show table structure as CREATE TABLE or SELECT examples.",
+    math: "Use plain Unicode for mathematical expressions (e.g. ≥, ², √, π). Keep formulas readable as text without LaTeX.",
+    visual: "For questions that refer to a diagram, chart, or map: describe the visual clearly in the question text and ask students to interpret or identify elements from it.",
+  }
+
+  const DIFFICULTY_MAP = {
+    easy: { points: 1, negative_points: 0, max_time_seconds: 45 },
+    medium: { points: 2, negative_points: 0.5, max_time_seconds: 60 },
+    hard: { points: 4, negative_points: 1, max_time_seconds: 90 },
+  }
+
   const handleAiGenerate = async () => {
     if (!aiTopic.trim()) return
     setAiGenerating(true)
     setAiError(null)
     try {
+      const hint = CONTENT_TYPE_HINTS[aiContentType]
+      const effectivePrompt = hint ? `${hint}\n\n${aiTopic.trim()}` : aiTopic.trim()
+      const quizType = quiz?.quiz_type || initialQuizType || 'quiz'
       const res = await aiAPI.generateQuestions({
-        prompt: aiTopic.trim(),
+        prompt: effectivePrompt,
         count: aiCount,
         language: i18n.language,
+        quiz_type: quizType,
       })
-      const questions = res.data.questions.map(q => ({ ...q, selected: true }))
-      if (questions.length === 0) {
+      const generatedQuestions = res.data.questions.map(q => ({ ...q, selected: true }))
+      if (generatedQuestions.length === 0) {
         setAiError(t('ai.noQuestionsGenerated'))
         return
       }
-      setAiPreview(questions)
+      setAiPreview(generatedQuestions)
+      setAiTitle(res.data.title || null)
+      setAiDescription(res.data.description || null)
+      setAiTitleDismissed(false)
       setAiStep('preview')
     } catch (err) {
       const detail = err.response?.data?.detail
@@ -2246,22 +2273,79 @@ export default function QuizBuilder() {
     if (selected.length === 0) return
     setAiAdding(true)
     try {
+      // Apply title/description from AI if not dismissed
+      if (!aiTitleDismissed && aiTitle && id) {
+        const updatePayload = {}
+        const currentTitle = form.getFieldValue('title')
+        if (aiTitle && (!currentTitle || currentTitle === t('quiz.enterQuizTitle') || currentTitle === t('exam.enterExamTitle'))) {
+          updatePayload.title = aiTitle
+        }
+        if (aiDescription) updatePayload.description = aiDescription
+        if (Object.keys(updatePayload).length > 0) {
+          try {
+            await quizAPI.update(id, updatePayload)
+          } catch {
+            // Non-fatal: proceed even if title update fails
+          }
+        }
+      }
+
+      const difficultyValues = isExam ? (DIFFICULTY_MAP[aiDifficulty] || DIFFICULTY_MAP.medium) : null
+
       for (const q of selected) {
-        await questionAPI.add(id, {
-          question_type: 'mcq',
-          text: q.text,
-          options: q.options,
-          correct_answer_index: isPoll ? null : q.correct_answer_index,
-          answer_explanation: q.explanation || null,
-          points: 1,
-          max_time_seconds: null,
-        })
+        const qType = q.question_type || 'mcq'
+
+        if (qType === 'word_cloud') {
+          await questionAPI.add(id, {
+            question_type: 'word_cloud',
+            text: q.text,
+            options: null,
+            correct_answer_index: null,
+            answer_explanation: null,
+            points: 1,
+            max_time_seconds: null,
+          })
+        } else if (qType === 'scale') {
+          await questionAPI.add(id, {
+            question_type: 'scale',
+            text: q.text,
+            options: ['1', '2', '3', '4', '5'],
+            correct_answer_index: null,
+            answer_explanation: null,
+            points: 1,
+            max_time_seconds: null,
+          })
+        } else if (qType === 'paragraph') {
+          await questionAPI.add(id, {
+            question_type: 'paragraph',
+            text: q.text,
+            options: [],
+            correct_answer_index: null,
+            answer_explanation: null,
+            points: 1,
+            max_time_seconds: null,
+          })
+        } else {
+          // mcq (default)
+          await questionAPI.add(id, {
+            question_type: 'mcq',
+            text: q.text,
+            options: q.options,
+            correct_answer_index: isPoll ? null : q.correct_answer_index,
+            answer_explanation: q.explanation || null,
+            points: difficultyValues ? difficultyValues.points : 1,
+            negative_points: difficultyValues ? difficultyValues.negative_points : 0,
+            max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
+          })
+        }
       }
       message.success(t('ai.addedSuccess', { count: selected.length }))
       setAiModalOpen(false)
       setAiStep('input')
       setAiTopic('')
       setAiPreview([])
+      setAiTitle(null)
+      setAiDescription(null)
       await loadQuiz()
     } catch (err) {
       message.error(err.response?.data?.detail || t('quiz.aiAddFailed'))
@@ -2782,7 +2866,7 @@ export default function QuizBuilder() {
                 maxLength={5000}
               />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.numberOfQuestions')}</Text>
               <InputNumber
                 min={1}
@@ -2793,6 +2877,31 @@ export default function QuizBuilder() {
               />
               <Text type="secondary" style={{ fontSize: 12 }}>{t('ai.questionCountHint')}</Text>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.contentTypeLabel')}</Text>
+              <Select
+                value={aiContentType}
+                onChange={v => setAiContentType(v)}
+                style={{ width: 180 }}
+                options={[
+                  { value: 'general', label: t('ai.contentTypeGeneral') },
+                  { value: 'code', label: t('ai.contentTypeCode') },
+                  { value: 'sql', label: t('ai.contentTypeSQL') },
+                  { value: 'math', label: t('ai.contentTypeMath') },
+                  { value: 'visual', label: t('ai.contentTypeVisual') },
+                ]}
+              />
+            </div>
+            {isExam && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.difficultyLabel')}</Text>
+                <Radio.Group value={aiDifficulty} onChange={e => setAiDifficulty(e.target.value)}>
+                  <Radio.Button value="easy">{t('ai.difficultyEasy')}</Radio.Button>
+                  <Radio.Button value="medium">{t('ai.difficultyMedium')}</Radio.Button>
+                  <Radio.Button value="hard">{t('ai.difficultyHard')}</Radio.Button>
+                </Radio.Group>
+              </div>
+            )}
             {aiError && <Alert type="error" message={aiError} showIcon />}
             <Button
               type="primary"
@@ -2814,40 +2923,72 @@ export default function QuizBuilder() {
               <Button size="small" onClick={() => setAiStep('input')}>{t('ai.back')}</Button>
               <Text type="secondary">{t('ai.selectedCount', { selected: aiPreview.filter(q => q.selected).length, total: aiPreview.length })}</Text>
             </Space>
-            {aiPreview.map((q, i) => (
-              <Card
-                key={i}
-                size="small"
-                style={{ borderColor: q.selected ? '#1677ff' : '#d9d9d9' }}
-                extra={
-                  <Checkbox
-                    checked={q.selected}
-                    onChange={e => setAiPreview(prev => prev.map((item, idx) => idx === i ? { ...item, selected: e.target.checked } : item))}
-                  />
+            {aiTitle && !aiTitleDismissed && (
+              <Alert
+                type="info"
+                showIcon
+                message={t('ai.titleGeneratedBanner', { title: aiTitle })}
+                action={
+                  <Space>
+                    <Button size="small" type="link" onClick={() => setAiTitleDismissed(true)}>
+                      {t('ai.titleGeneratedDismiss')}
+                    </Button>
+                  </Space>
                 }
-              >
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                  <RichTextRenderer content={q.text} />
-                </div>
-                <div>
-                  {q.options.map((opt, oi) => (
-                    <div key={oi} style={{
-                      display: 'flex', alignItems: 'baseline', gap: 4,
-                      color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
-                      marginBottom: 2,
-                    }}>
-                      <span style={{ flexShrink: 0, fontWeight: 500 }}>
-                        {String.fromCharCode(65 + oi)}:
-                      </span>
-                      <RichTextRenderer content={opt} style={{ flex: 1 }} />
-                      {oi === q.correct_answer_index && !isPoll && (
-                        <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
-                      )}
+              />
+            )}
+            {aiPreview.map((q, i) => {
+              const qType = q.question_type || 'mcq'
+              const typeColors = { mcq: 'cyan', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange' }
+              const typeLabels = { mcq: 'MCQ', word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph') }
+              return (
+                <Card
+                  key={i}
+                  size="small"
+                  style={{ borderColor: q.selected ? '#1677ff' : '#d9d9d9' }}
+                  extra={
+                    <Space>
+                      <Tag color={typeColors[qType] || 'default'}>{typeLabels[qType] || qType}</Tag>
+                      <Checkbox
+                        checked={q.selected}
+                        onChange={e => setAiPreview(prev => prev.map((item, idx) => idx === i ? { ...item, selected: e.target.checked } : item))}
+                      />
+                    </Space>
+                  }
+                >
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                    <RichTextRenderer content={q.text} />
+                  </div>
+                  {qType === 'mcq' && q.options && (
+                    <div>
+                      {q.options.map((opt, oi) => (
+                        <div key={oi} style={{
+                          display: 'flex', alignItems: 'baseline', gap: 4,
+                          color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
+                          marginBottom: 2,
+                        }}>
+                          <span style={{ flexShrink: 0, fontWeight: 500 }}>
+                            {String.fromCharCode(65 + oi)}:
+                          </span>
+                          <RichTextRenderer content={opt} style={{ flex: 1 }} />
+                          {oi === q.correct_answer_index && !isPoll && (
+                            <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
+                  )}
+                  {qType === 'scale' && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>1 — 2 — 3 — 4 — 5</Text>
+                  )}
+                  {(qType === 'word_cloud' || qType === 'paragraph') && (
+                    <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic' }}>
+                      {qType === 'word_cloud' ? t('quiz.wordCloudDescription') : t('quiz.paragraphDescription')}
+                    </Text>
+                  )}
+                </Card>
+              )
+            })}
             <Button
               type="primary"
               block

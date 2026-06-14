@@ -26,7 +26,8 @@
     "langCode": "en",
     "next": "Next",
     "responses": "responses",
-    "typeHere": "Type your answer here..."
+    "typeHere": "Type your answer here...",
+    "viewOnGitHub": "View source on GitHub"
   },
   "auth": {
     "login": "Login",
@@ -528,7 +529,31 @@
     "avgCorrect": "avg correct",
     "viewRecap": "View recap →",
     "allActivities": "All Activities",
-    "viewAll": "View all →"
+    "viewAll": "View all →",
+    "renameMoveFolder": "Rename / Move Folder",
+    "moveTo": "Move to (parent folder)",
+    "rootNoParent": "Root (no parent)",
+    "deleteFolderTitle": "Delete folder",
+    "deleteFolderConfirm": "Delete {{name}}? Activities inside will move to the parent or root.",
+    "shareFolderTitle": "Share folder: {{name}}",
+    "shareWith": "Share with (by email / name)",
+    "selectTeammates": "Select teammates…",
+    "noOtherUsers": "No other users in your workspace",
+    "noMatch": "No match",
+    "allowEditing": "Allow editing",
+    "currentlySharedWith": "Currently shared with",
+    "canEdit": "Can edit",
+    "viewOnly": "View only",
+    "saveFolderSharing": "Save sharing",
+    "folderSharingUpdated": "Folder sharing updated",
+    "failedToLoadShares": "Failed to load shares",
+    "failedToUpdateSharing": "Failed to update sharing",
+    "renameMove": "Rename / Move",
+    "newSubfolder": "New subfolder",
+    "share": "Share",
+    "tooltipNewFolder": "New folder",
+    "tooltipNewSubfolder": "New subfolder",
+    "folderUpdated": "Folder updated"
   },
   "create": {
     "intentTitle": "What does this moment need?",
@@ -664,7 +689,10 @@
       "chartLegendActiveUsers": "Active Users",
       "chartLegendTotalQuizzes": "Total Quizzes",
       "chartLegendActiveSessions": "Active Sessions",
-      "failedToLoadStats": "Failed to load statistics"
+      "failedToLoadStats": "Failed to load statistics",
+      "weeklyActiveHosts": "Weekly Active Hosts",
+      "noWeeklyData": "No session data in the last 7 days.",
+      "activeHosts": "Active Hosts"
     },
     "users": {
       "createUser": "Create User",
@@ -1743,6 +1771,15 @@
       "s11Body": "If you have any questions about these Terms of Service, please contact us at"
     }
   },
+  "sidebar": {
+    "liveSessions": "Live Sessions",
+    "sessionActive": "Session active",
+    "stopThisSession": "Stop this session?",
+    "stopThisSessionDesc": "This will end the session for all participants.",
+    "stop": "Stop",
+    "open": "Open",
+    "end": "End"
+  },
   "ai": {
     "generateWithAI": "Generate with AI",
     "generateQuestionsTitle": "Generate Questions with AI",
@@ -1773,7 +1810,20 @@
     "promptLabel": "Describe your questions",
     "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
     "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
-    "questionCountHint": "max 50"
+    "questionCountHint": "max 50",
+    "titleGeneratedBanner": "AI suggested: \"{{title}}\" — will be applied on add",
+    "titleGeneratedApply": "Apply",
+    "titleGeneratedDismiss": "Dismiss",
+    "contentTypeLabel": "Content type",
+    "contentTypeGeneral": "General",
+    "contentTypeCode": "Code / Programming",
+    "contentTypeSQL": "Data / SQL",
+    "contentTypeMath": "Math / Science",
+    "contentTypeVisual": "Visual / Diagram",
+    "difficultyLabel": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard"
   },
   "offlinePoll": {
     "typeLabel": "Survey",
@@ -1820,7 +1870,9 @@
     "completionRate": "Completion rate",
     "required": "Required",
     "requiredTooltip": "Participants must answer this question before they can proceed.",
-    "requiredWarning": "This question is required. Please answer it to continue."
+    "requiredWarning": "This question is required. Please answer it to continue.",
+    "noResponsesYet": "No responses yet.",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "Test",
@@ -1987,7 +2039,30 @@
     "whatsNext": "What happens next?",
     "whatsNextSaved": "Your answers are saved.",
     "whatsNextHost": "The host will review results and share them when ready.",
-    "current": "current"
+    "current": "current",
+    "sendResultsTitle": "Send results to participants?",
+    "sendResultsContent_one": "This will email personalised results (score, question breakdown, proctoring summary) to all {{count}} completed participant. Emails will be sent from \"{{name}}\". This cannot be undone.",
+    "sendResultsContent_other": "This will email personalised results (score, question breakdown, proctoring summary) to all {{count}} completed participants. Emails will be sent from \"{{name}}\". This cannot be undone.",
+    "sendResultsOk": "Send Now",
+    "emailsQueued": "Emails queued",
+    "emailsQueuedContent": "Result emails are being sent to all participants.",
+    "emailFailed": "Failed",
+    "emailFailedContent": "Could not queue emails. Please try again.",
+    "emailResultSent": "Result email sent",
+    "downloadPdfWithAi": "Download PDF Report (with AI)",
+    "downloadPdf": "Download PDF Report",
+    "senderNamePlaceholder": "Sender name (default: Swaya.me)",
+    "emailsSentDone": "Emails Sent ✓",
+    "sendResultsToParticipants": "Send Results to Participants",
+    "responsesCount": "{{count}} responses",
+    "downloadPdfBtn": "Download PDF",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "fullReport": "Full report",
+    "tagCorrect": "Correct",
+    "tagTheirAnswer": "Their answer",
+    "tagNotAnswered": "Not answered",
+    "participantDetailTitle": "Participant Detail",
+    "couldNotLoadDetail": "Could not load participant detail."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -2112,7 +2187,9 @@
       "notEnabledDesc": "Enable proctoring in the quiz settings to start tracking participant integrity.",
       "enabledNoData": "Proctoring is enabled — no participant data yet.",
       "enabledNoDataDesc": "Integrity data will appear here once participants start the exam through the proctored flow.",
-      "timeline": "Participant #{{id}} — Violation Timeline"
+      "timeline": "Participant #{{id}} — Violation Timeline",
+      "webcamSnapshots": "Webcam Snapshots",
+      "noSnapshots": "No snapshots recorded for this participant"
     },
     "settings": {
       "title": "Security & Proctoring",
@@ -2179,7 +2256,8 @@
     "heading1": "Heading 1",
     "heading2": "Heading 2",
     "heading3": "Heading 3",
-    "heading4": "Heading 4"
+    "heading4": "Heading 4",
+    "link": "Link"
   },
   "activities": {
     "title": "Activities",

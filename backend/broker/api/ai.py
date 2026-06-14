@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from core.auth.dependencies import require_admin, get_current_user, CurrentUser
-from shared.utils.rate_limiter import limiter
+from shared.utils.rate_limiter import limiter, get_user_id_key
 
 logger = logging.getLogger(__name__)
 from core.config.settings import settings
@@ -34,6 +34,7 @@ class GenerateQuestionsRequest(BaseModel):
     prompt: str = Field(..., min_length=10, max_length=5000, description="Detailed description of the questions to generate")
     count: int = Field(5, ge=1, le=100, description="Number of questions to generate")
     language: str = Field("en", max_length=10, description="Language code, e.g. en, hi, fr")
+    quiz_type: str = Field("quiz", max_length=20, description="Type of quiz: quiz, exam, poll, offline_poll")
     # Legacy field — ignored, kept for backward compatibility
     topic: Optional[str] = Field(None, description="Deprecated: use prompt instead")
     model: Optional[str] = Field(None, description="Ignored — Gemini model is used")
@@ -41,12 +42,15 @@ class GenerateQuestionsRequest(BaseModel):
 
 class GeneratedQuestion(BaseModel):
     text: str
-    options: list[str]
-    correct_answer_index: int
+    question_type: str = "mcq"
+    options: Optional[list[str]] = None
+    correct_answer_index: Optional[int] = None
     explanation: Optional[str] = None
 
 
 class GenerateQuestionsResponse(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
     questions: list[GeneratedQuestion]
     model: str
 
@@ -89,7 +93,7 @@ async def get_models(current_user: CurrentUser = Depends(require_admin)):
 
 
 @router.post("/generate/questions", response_model=GenerateQuestionsResponse)
-@limiter.limit("20/minute")
+@limiter.limit("20/minute", key_func=get_user_id_key)
 async def api_generate_questions(
     request: Request,
     req: GenerateQuestionsRequest,
@@ -115,15 +119,17 @@ async def api_generate_questions(
 
     # Step 2: generate questions with enriched context
     try:
-        questions = await gemini_generate_questions(
+        result = await gemini_generate_questions(
             prompt=prompt.strip(),
             count=req.count,
             language=req.language,
+            quiz_type=req.quiz_type,
         )
     except GeminiError as e:
         logger.error("Gemini question generation failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
+    questions = result.get("questions", [])
     if not questions:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -131,13 +137,15 @@ async def api_generate_questions(
         )
 
     return GenerateQuestionsResponse(
+        title=result.get("title") or None,
+        description=result.get("description") or None,
         questions=[GeneratedQuestion(**q) for q in questions],
         model=settings.gemini.model,
     )
 
 
 @router.post("/generate/options", response_model=GenerateDistractorsResponse)
-@limiter.limit("20/minute")
+@limiter.limit("20/minute", key_func=get_user_id_key)
 async def api_generate_distractors(
     request: Request,
     req: GenerateDistractorsRequest,
@@ -163,7 +171,7 @@ async def api_generate_distractors(
 
 
 @router.post("/generate/poll-prompt", response_model=GeneratePollPromptResponse)
-@limiter.limit("20/minute")
+@limiter.limit("20/minute", key_func=get_user_id_key)
 async def api_generate_poll_prompt(
     request: Request,
     req: GeneratePollPromptRequest,
@@ -200,7 +208,7 @@ class RewriteResponse(BaseModel):
 
 
 @router.post("/rewrite", response_model=RewriteResponse)
-@limiter.limit("20/minute")
+@limiter.limit("20/minute", key_func=get_user_id_key)
 async def api_rewrite(
     request: Request,
     req: RewriteRequest,

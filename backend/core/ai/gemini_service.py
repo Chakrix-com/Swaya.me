@@ -400,12 +400,17 @@ async def generate_questions(
     prompt: str,
     count: int = 5,
     language: str = "en",
-) -> list[dict]:
+    quiz_type: str = "quiz",
+) -> dict:
     """
-    Generate MCQ questions from a detailed user prompt via Gemini REST API.
+    Generate questions from a detailed user prompt via Gemini REST API.
 
     Returns:
-        [{"text": str, "options": [str, str, str, str], "correct_answer_index": int}, ...]
+        {
+            "title": str,
+            "description": str,
+            "questions": [{"text", "options", "correct_answer_index", "explanation", "question_type"}, ...]
+        }
     """
     key = settings.gemini.key
     if not key:
@@ -414,31 +419,86 @@ async def generate_questions(
     model = _resolve_model(settings.gemini.model or _DEFAULT_MODEL)
     count = max(1, count)
 
+    is_poll = quiz_type == "poll"
+    is_offline_poll = quiz_type == "offline_poll"
+
+    if is_poll:
+        question_fields = (
+            "Field requirements for every question:\n"
+            "- question_type: must be either \"word_cloud\" or \"mcq\".\n"
+            "  * word_cloud: open-ended, short-answer prompts (e.g. 'What one word describes your leadership style?'). "
+            "No options or correct_answer_index needed — set both to null.\n"
+            "  * mcq: standard multiple-choice opinion poll question.\n"
+            "- text: the question text.\n"
+            "- options: array of 2-6 choices for mcq; null for word_cloud.\n"
+            "- correct_answer_index: null (polls have no single correct answer).\n"
+            "- explanation: null.\n"
+            "Generate a mix: approximately 40% word_cloud and 60% mcq."
+        )
+        output_schema = (
+            '{"title": "<poll title>", "description": "<brief description>", '
+            '"questions": [{"question_type": "word_cloud"|"mcq", "text": "<question>", '
+            '"options": ["<A>", "<B>", "..."] | null, "correct_answer_index": null, "explanation": null}]}'
+        )
+    elif is_offline_poll:
+        question_fields = (
+            "Field requirements for every question:\n"
+            "- question_type: must be \"scale\", \"paragraph\", or \"mcq\".\n"
+            "  * scale: Likert-style rating (e.g. 'Rate your satisfaction 1-5'). "
+            "No options or correct_answer_index needed — set both to null.\n"
+            "  * paragraph: open-ended text response (e.g. 'What could we improve?'). "
+            "No options or correct_answer_index needed — set both to null.\n"
+            "  * mcq: standard multiple-choice question.\n"
+            "- text: the question text.\n"
+            "- options: array of 2-6 choices for mcq; null for scale and paragraph.\n"
+            "- correct_answer_index: null (surveys have no single correct answer).\n"
+            "- explanation: null.\n"
+            "Generate a mix: approximately 30% scale, 30% paragraph, 40% mcq."
+        )
+        output_schema = (
+            '{"title": "<survey title>", "description": "<brief description>", '
+            '"questions": [{"question_type": "scale"|"paragraph"|"mcq", "text": "<question>", '
+            '"options": ["<A>", "<B>", "..."] | null, "correct_answer_index": null, "explanation": null}]}'
+        )
+    else:
+        question_fields = (
+            "Field requirements for every question:\n"
+            "- question_type: \"mcq\".\n"
+            "- text: the question text. Use HTML for formatting where helpful: "
+            "<strong>, <em>, <code>, <pre><code class=\"language-X\">...</code></pre>.\n"
+            "- options: an array of 2 to 10 distinct answer choices. "
+            "Each option may also use HTML formatting.\n"
+            "- correct_answer_index: 0-based index of the single correct option.\n"
+            "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
+            "and why the main wrong answers are incorrect. No HTML in explanation."
+        )
+        output_schema = (
+            '{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
+            '"questions": [{"question_type": "mcq", "text": "<question>", '
+            '"options": ["<A>", "<B>", "..."], "correct_answer_index": 0, '
+            '"explanation": "<why correct is right>"}]}'
+        )
+
     system_instruction = (
         "You are an expert quiz generator for an online quiz platform. "
         "Follow the user's instructions exactly when creating questions. "
         "Output ONLY valid JSON — no markdown fences, no prose, nothing else.\n\n"
-        "Field requirements for every question:\n"
-        "- text: the question text. Use HTML for formatting where helpful: "
-        "<strong>, <em>, <code>, <pre><code class=\"language-X\">...</code></pre>.\n"
-        "- options: an array of 2 to 10 distinct answer choices. "
-        "Each option may also use HTML formatting.\n"
-        "- correct_answer_index: 0-based index of the single correct option.\n"
-        "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
-        "and why the main wrong answers are incorrect. No HTML in explanation."
+        "At the top level, always include:\n"
+        "- title: a concise, descriptive title for this quiz/poll (max 80 chars).\n"
+        "- description: 1-2 sentences describing what this quiz covers and who it's for.\n"
+        "- questions: the array of question objects.\n\n"
+        + question_fields
     )
 
-    user_message = f"""Generate exactly {count} multiple-choice questions based on the instructions below.
+    user_message = f"""Generate exactly {count} questions based on the instructions below.
 Write all questions, options, and explanations in language code: {language}.
 
 Output format (strict JSON, no other text):
-{{"questions": [{{"text": "<question>", "options": ["<A>", "<B>", "..."], "correct_answer_index": 0, "explanation": "<why correct is right and why wrong answers are wrong>"}}]}}
+{output_schema}
 
 Rules:
-- Each question must have between 2 and 10 distinct answer options.
-- correct_answer_index is 0-based.
-- Wrong options must be plausible but clearly incorrect.
 - Output exactly {count} questions, no more, no less.
+- For mcq: each question must have between 2 and 10 distinct answer options; correct_answer_index is 0-based; wrong options must be plausible but clearly incorrect.
 
 User instructions:
 {prompt}"""
@@ -487,23 +547,43 @@ User instructions:
 
     result = []
     for q in questions_raw:
-        opts = q.get("options", [])
-        idx = q.get("correct_answer_index", 0)
-        if not q.get("text") or len(opts) < 2:
+        q_type = q.get("question_type", "mcq")
+        text = q.get("text", "")
+        if not text:
             continue
-        opts = opts[:10]  # cap at platform maximum
-        try:
-            idx = int(idx)
-        except (TypeError, ValueError):
-            idx = 0
-        if not (0 <= idx < len(opts)):
-            idx = 0
-        explanation = q.get("explanation") or ""
-        result.append({
-            "text": _md_to_html(str(q["text"])),
-            "options": [_md_to_html(str(o)) for o in opts],
-            "correct_answer_index": idx,
-            "explanation": _md_to_html(explanation) if explanation else None,
-        })
 
-    return result
+        if q_type in ("word_cloud", "paragraph", "scale"):
+            result.append({
+                "question_type": q_type,
+                "text": _md_to_html(str(text)),
+                "options": None,
+                "correct_answer_index": None,
+                "explanation": None,
+            })
+        else:
+            # mcq (default)
+            opts = q.get("options") or []
+            idx = q.get("correct_answer_index", 0)
+            if len(opts) < 2:
+                continue
+            opts = opts[:10]
+            try:
+                idx = int(idx) if idx is not None else 0
+            except (TypeError, ValueError):
+                idx = 0
+            if not (0 <= idx < len(opts)):
+                idx = 0
+            explanation = q.get("explanation") or ""
+            result.append({
+                "question_type": "mcq",
+                "text": _md_to_html(str(text)),
+                "options": [_md_to_html(str(o)) for o in opts],
+                "correct_answer_index": idx,
+                "explanation": _md_to_html(explanation) if explanation else None,
+            })
+
+    return {
+        "title": parsed.get("title") or "",
+        "description": parsed.get("description") or "",
+        "questions": result,
+    }
