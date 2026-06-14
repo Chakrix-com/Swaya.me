@@ -66,6 +66,7 @@ class QuestionCreate(BaseModel):
     correct_answer_index: Optional[int] = Field(None, ge=0)
     question_image_url: Optional[str] = Field(None, max_length=500)
     question_video_url: Optional[str] = Field(None, max_length=500)
+    from_ai: bool = Field(default=False, description="Skip profanity filter for AI-generated content")
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     points: int = Field(default=1, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)

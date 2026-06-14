@@ -90,11 +90,12 @@ class QuestionServiceAsync:
                 f"Question limit reached for {tier.value} tier"
             )
         
-        # Content filter + HTML sanitization
-        check_content(request.text, "Question text")
-        if request.options:
-            for i, opt in enumerate(request.options):
-                check_content(opt, f"Option {i + 1}")
+        # Content filter + HTML sanitization (skip for AI-generated content — Gemini has its own safety filters)
+        if not getattr(request, 'from_ai', False):
+            check_content(request.text, "Question text")
+            if request.options:
+                for i, opt in enumerate(request.options):
+                    check_content(opt, f"Option {i + 1}")
 
         sanitized_text = sanitize_html(request.text)
         sanitized_options = [sanitize_plain(o) for o in request.options] if request.options else request.options
@@ -153,12 +154,13 @@ class QuestionServiceAsync:
         if question.quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
 
-        # Content filter + HTML sanitization
-        if "text" in request.model_fields_set:
-            check_content(request.text, "Question text")
-        if "options" in request.model_fields_set and request.options:
-            for i, opt in enumerate(request.options):
-                check_content(opt, f"Option {i + 1}")
+        # Content filter + HTML sanitization (skip for AI-generated content — Gemini has its own safety filters)
+        if not getattr(request, 'from_ai', False):
+            if "text" in request.model_fields_set:
+                check_content(request.text, "Question text")
+            if "options" in request.model_fields_set and request.options:
+                for i, opt in enumerate(request.options):
+                    check_content(opt, f"Option {i + 1}")
 
         # Update fields
         if "question_type" in request.model_fields_set:

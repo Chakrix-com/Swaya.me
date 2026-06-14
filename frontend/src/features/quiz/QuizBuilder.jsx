@@ -2399,6 +2399,7 @@ export default function QuizBuilder() {
             answer_explanation: null,
             points: 1,
             max_time_seconds: null,
+            from_ai: true,
           })
         } else if (qType === 'scale') {
           await questionAPI.add(id, {
@@ -2409,6 +2410,7 @@ export default function QuizBuilder() {
             answer_explanation: null,
             points: 1,
             max_time_seconds: null,
+            from_ai: true,
           })
         } else if (qType === 'paragraph') {
           await questionAPI.add(id, {
@@ -2419,6 +2421,7 @@ export default function QuizBuilder() {
             answer_explanation: null,
             points: 1,
             max_time_seconds: null,
+            from_ai: true,
           })
         } else {
           // mcq (default)
@@ -2431,6 +2434,7 @@ export default function QuizBuilder() {
             points: difficultyValues ? difficultyValues.points : 1,
             negative_points: difficultyValues ? difficultyValues.negative_points : 0,
             max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
+            from_ai: true,
           })
         }
       }
