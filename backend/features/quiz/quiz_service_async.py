@@ -891,8 +891,8 @@ class QuizBuilderServiceAsync:
             quiz.proctoring_policy = request.proctoring_policy
 
         # Participant skin
-        if request.skin is not None:
-            quiz.skin = request.skin or None
+        if 'skin' in request.model_fields_set:
+            quiz.skin = request.skin
 
         await db.commit()
         await db.refresh(quiz)

@@ -892,6 +892,7 @@ export default function AudienceSession() {
                         >
                           {['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          if (!label) return null
                           const isSelected = selectedAnswer === key
                           return (
                             <div
@@ -992,6 +993,7 @@ export default function AudienceSession() {
                           )
                         })() : isPoll ? ['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          if (!label) return null
                           const idx = key.charCodeAt(0) - 65
                           const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
                           const totalAns = currentQuestion.total_answers || 0
@@ -1027,6 +1029,7 @@ export default function AudienceSession() {
                           )
                         }) : ['A', 'B', 'C', 'D'].map((key) => {
                           const label = currentQuestion[`option_${key.toLowerCase()}`]
+                          if (!label) return null
                           const idx = key.charCodeAt(0) - 65
                           const dist = currentQuestion.answer_distribution || [0, 0, 0, 0]
                           const totalAns = currentQuestion.total_answers || 0
