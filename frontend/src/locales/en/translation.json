@@ -1843,7 +1843,9 @@
     "examSuggDuration": "AI suggests: {{minutes}}-minute exam",
     "examSuggProctoring": "Proctoring recommended: {{value}}",
     "examSuggApply": "Apply to settings",
-    "examSuggDismiss": "Dismiss"
+    "examSuggDismiss": "Dismiss",
+    "imageHintBanner": "{{count}} question(s) were suggested with images. Open each question to upload the image.",
+    "optionImageHintBanner": "{{count}} question(s) were suggested with image options. Open each question to upload a photo per option."
   },
   "offlinePoll": {
     "typeLabel": "Survey",

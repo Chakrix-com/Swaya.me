@@ -52,6 +52,7 @@ class GeneratedQuestion(BaseModel):
     correct_answer_index: Optional[int] = None
     explanation: Optional[str] = None
     image_suggestion: Optional[str] = None
+    option_image_suggestions: Optional[list[str]] = None
 
 
 class GenerateQuestionsResponse(BaseModel):

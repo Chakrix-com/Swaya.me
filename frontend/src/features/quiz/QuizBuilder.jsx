@@ -1070,6 +1070,8 @@ export default function QuizBuilder() {
   const [aiExamSuggDismissed, setAiExamSuggDismissed] = useState(false)
   const [voiceListening, setVoiceListening] = useState(false)
   const recognizerRef = useRef(null)
+  const [aiImageHintCount, setAiImageHintCount] = useState(0)
+  const [aiOptionImageHintCount, setAiOptionImageHintCount] = useState(0)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -2408,6 +2410,10 @@ export default function QuizBuilder() {
           })
         }
       }
+      const imgHints = selected.filter(q => q.image_suggestion).length
+      const optImgHints = selected.filter(q => q.option_image_suggestions?.some(Boolean)).length
+      if (imgHints > 0) setAiImageHintCount(imgHints)
+      if (optImgHints > 0) setAiOptionImageHintCount(optImgHints)
       message.success(t('ai.addedSuccess', { count: selected.length }))
       setAiModalOpen(false)
       setAiStep('input')
@@ -2567,6 +2573,27 @@ export default function QuizBuilder() {
           </Button>
         )}
       </Space>
+
+      {aiImageHintCount > 0 && (
+        <Alert
+          type="info"
+          showIcon
+          closable
+          onClose={() => setAiImageHintCount(0)}
+          message={t('ai.imageHintBanner', { count: aiImageHintCount, defaultValue: `${aiImageHintCount} question(s) were suggested with images. Open each question to upload the image.` })}
+          style={{ marginTop: 12 }}
+        />
+      )}
+      {aiOptionImageHintCount > 0 && (
+        <Alert
+          type="info"
+          showIcon
+          closable
+          onClose={() => setAiOptionImageHintCount(0)}
+          message={t('ai.optionImageHintBanner', { count: aiOptionImageHintCount, defaultValue: `${aiOptionImageHintCount} question(s) were suggested with image options. Open each question to upload a photo per option.` })}
+          style={{ marginTop: 8 }}
+        />
+      )}
 
       {!id ? (
         <Card bordered={false} className="premium-builder-card shadow-sm" style={{ marginTop: 24 }}>
@@ -3291,6 +3318,16 @@ export default function QuizBuilder() {
                                 {String.fromCharCode(65 + oi)}:
                               </span>
                               <RichTextRenderer content={opt} style={{ flex: 1 }} />
+                              {q.option_image_suggestions?.[oi] && (
+                                <Tooltip title={q.option_image_suggestions[oi]}>
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    style={{ padding: '0 2px', flexShrink: 0 }}
+                                    onClick={() => window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q.option_image_suggestions[oi])}`, '_blank')}
+                                  >🔍</Button>
+                                </Tooltip>
+                              )}
                               {oi === q.correct_answer_index && !isPoll && (
                                 <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
                               )}

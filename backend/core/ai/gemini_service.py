@@ -483,7 +483,11 @@ async def generate_questions(
             "and why the main wrong answers are incorrect. No HTML in explanation.\n"
             "- image_suggestion: if a diagram, chart, map, or graph would genuinely help students "
             "understand or answer this question, provide a short image search query (e.g. "
-            "'mitosis cell division stages diagram'). Otherwise set to null."
+            "'mitosis cell division stages diagram'). Otherwise set to null.\n"
+            "- option_image_suggestions: if the visual identity of an option IS the answer "
+            "(person, place, logo, product), set this to an array of short Google Image Search "
+            "queries, one per option (same length as the options array). "
+            "For all other questions, set it to null."
         )
         if is_exam:
             exam_fields = (
@@ -505,7 +509,8 @@ async def generate_questions(
             f'{exam_schema_fields}'
             f'"questions": [{{"question_type": "mcq", "text": "<question>", '
             f'"options": ["<option1>", "<option2>", "<option3>", "<option4>"], "correct_answer_index": 2, '
-            f'"explanation": "<why correct is right>", "image_suggestion": null | "<search query>"}}]}}'
+            f'"explanation": "<why correct is right>", "image_suggestion": null | "<search query>", '
+            f'"option_image_suggestions": null | ["<query_A>", "<query_B>", "<query_C>", "<query_D>"]}}]}}'
         )
         question_fields += exam_fields
 
@@ -622,6 +627,16 @@ User instructions:
                 image_suggestion = image_suggestion.strip()[:200]
             else:
                 image_suggestion = None
+            raw_ois = q.get("option_image_suggestions")
+            if isinstance(raw_ois, list) and len(raw_ois) == len(opts):
+                option_image_suggestions = [
+                    str(s).strip()[:200] if isinstance(s, str) and s.strip() else None
+                    for s in raw_ois
+                ]
+                if all(s is None for s in option_image_suggestions):
+                    option_image_suggestions = None
+            else:
+                option_image_suggestions = None
             result.append({
                 "question_type": "mcq",
                 "text": _md_to_html(str(text)),
@@ -629,6 +644,7 @@ User instructions:
                 "correct_answer_index": idx,
                 "explanation": _md_to_html(explanation) if explanation else None,
                 "image_suggestion": image_suggestion,
+                "option_image_suggestions": option_image_suggestions,
             })
 
     suggested_duration = parsed.get("suggested_exam_duration_minutes")
