@@ -26,14 +26,14 @@ const TYPE_ICON   = {
   exam: <FileTextOutlined />,
   offline_poll: <BarChartOutlined />,
 }
-const TYPE_LABEL  = { quiz: 'Live Quiz', poll: 'Live Poll', exam: 'Test', offline_poll: 'Survey' }
+const TYPE_LABEL_KEY = { quiz: 'explore.typeQuiz', poll: 'explore.typePoll', exam: 'explore.typeExam', offline_poll: 'explore.typeSurvey' }
 
 const TABS = [
-  { key: 'all',       label: 'All' },
-  { key: 'quiz',      label: 'Quizzes' },
-  { key: 'poll',      label: 'Polls' },
-  { key: 'exam',      label: 'Tests' },
-  { key: 'offline_poll', label: 'Surveys' },
+  { key: 'all',          labelKey: 'explore.tabAll' },
+  { key: 'quiz',         labelKey: 'explore.tabQuizzes' },
+  { key: 'poll',         labelKey: 'explore.tabPolls' },
+  { key: 'exam',         labelKey: 'explore.tabTests' },
+  { key: 'offline_poll', labelKey: 'explore.tabSurveys' },
 ]
 
 function TemplateCard({ tmpl, onUseClick }) {
@@ -58,7 +58,7 @@ function TemplateCard({ tmpl, onUseClick }) {
     >
       <Space size={4} wrap style={{ marginBottom: 4 }}>
         <Tag color={TYPE_COLOR[tmpl.quiz_type] || 'blue'} icon={TYPE_ICON[tmpl.quiz_type]}>
-          {TYPE_LABEL[tmpl.quiz_type] || tmpl.quiz_type}
+          {TYPE_LABEL_KEY[tmpl.quiz_type] ? t(TYPE_LABEL_KEY[tmpl.quiz_type]) : tmpl.quiz_type}
         </Tag>
         <Tag color="purple" icon={<GlobalOutlined />}>{t('templates.scope_global', 'Global')}</Tag>
       </Space>
@@ -177,7 +177,7 @@ export default function ExplorePage() {
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
-            items={TABS.map(tab => ({ key: tab.key, label: tab.label }))}
+            items={TABS.map(tab => ({ key: tab.key, label: t(tab.labelKey) }))}
           />
 
           {loading ? (

@@ -388,7 +388,17 @@
     "skinHint": "দর্শক ও প্রজেক্টরের চেহারা বেছে নিন",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "শুধুমাত্র YouTube এবং Vimeo URL সমর্থিত"
+    "videoUrlInvalid": "শুধুমাত্র YouTube এবং Vimeo URL সমর্থিত",
+    "pollActiveBanner": "আপনার অফলাইন পোল এখন সক্রিয়। অংশগ্রহণকারীদের সাথে এই লিঙ্কটি শেয়ার করুন:",
+    "examActiveBanner": "আপনার পরীক্ষা এখন লাইভ। অংশগ্রহণকারীদের সাথে এই লিঙ্কটি শেয়ার করুন:",
+    "importValidTag": "বৈধ",
+    "importErrorTag": "ত্রুটি",
+    "voiceMicBlocked": "মাইক্রোফোন অ্যাক্সেস ব্লক করা হয়েছে। ব্রাউজার অ্যাড্রেস বারে মাইক্রোফোন অনুমতি দিন।",
+    "voiceNoSpeech": "কোনো কথা সনাক্ত করা যায়নি। আবার চেষ্টা করুন।",
+    "voiceNetworkError": "ভয়েস ইনপুটের জন্য ইন্টারনেট সংযোগ প্রয়োজন।",
+    "voiceError": "ভয়েস ইনপুট ত্রুটি: {{error}}",
+    "voiceStartError": "ভয়েস ইনপুট শুরু করা যায়নি: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",
@@ -820,6 +830,19 @@
   "home": {
     "login": "লগইন",
     "signup": "সাইন আপ",
+    "buzzer": {
+      "hint1": "আপনার দর্শকরা ঠিক এটাই অনুভব করেন।",
+      "hint2": "আবার। সন্তোষজনক, তাই না?",
+      "hint3": "কল্পনা করুন ২০০ জন শিক্ষার্থী একসাথে এটা করছে।",
+      "hint4": "ঠিক আছে, আরেকটা।",
+      "hint5": "বাজার আপনাকে অনুমোদন করে।",
+      "ariaLabel": "ডেমো বাজার চাপুন",
+      "pressMe": "চাপুন!",
+      "buzzesToday": "আজকের বাজ",
+      "fastestBuzz": "দ্রুততম বাজ",
+      "speechBuzz": "আপনি {{time}}s এ বাজ করলেন! ⚡",
+      "speechRecord": "নতুন দ্রুততম বাজ: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "ইন্টারঅ্যাকটিভ কুইজ এখন সহজ",
       "subtitle": "আকর্ষণীয় কুইজ তৈরি করুন, রিয়েল-টাইমে প্রতিক্রিয়া সংগ্রহ করুন, এবং সঙ্গে সঙ্গে ফলাফল দেখুন। ক্লাসরুম, মিটিং ও ইভেন্টের জন্য আদর্শ।"
@@ -1838,7 +1861,9 @@
     "completionRate": "সমাপ্তির হার",
     "required": "প্রয়োজনীয়",
     "requiredTooltip": "অংশগ্রহণকারীদের এগিয়ে যাওয়ার আগে এই প্রশ্নের উত্তর দিতে হবে।",
-    "requiredWarning": "এই প্রশ্নটি প্রয়োজনীয়। চালিয়ে যেতে এর উত্তর দিন।"
+    "requiredWarning": "এই প্রশ্নটি প্রয়োজনীয়। চালিয়ে যেতে এর উত্তর দিন।",
+    "notPublished": "এই কুইজটি অফলাইন পোল নয় বা এখনও প্রকাশিত হয়নি।",
+    "loadFailed": "ফলাফল লোড করতে ব্যর্থ"
   },
   "exam": {
     "typeLabel": "টেস্ট",
@@ -2171,7 +2196,16 @@
       "captureButton": "ফটো ক্যাপচার করুন",
       "verified": "পরিচয় যাচাই হয়েছে। আপনি শুরু করতে প্রস্তুত।",
       "startExam": "পরীক্ষা শুরু করুন"
-    }
+    },
+    "integrityClean": "পরিষ্কার",
+    "integritySuspicious": "সন্দেহজনক",
+    "integrityHighRisk": "উচ্চ ঝুঁকি",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "ইন্টিগ্রিটি ডেটা লোড করতে ব্যর্থ",
+    "noViolationEvents": "কোনো লঙ্ঘনের ঘটনা রেকর্ড করা হয়নি",
+    "noWebcamSnapshots": "এই প্রার্থীর জন্য কোনো ওয়েবক্যাম স্ন্যাপশট রেকর্ড করা হয়নি",
+    "noSnapshotsParticipant": "এই অংশগ্রহণকারীর জন্য কোনো স্ন্যাপশট রেকর্ড করা হয়নি",
+    "analysisError": "AI বিশ্লেষণ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।"
   },
   "richText": {
     "italic": "ইটালিক",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "নির্বাচিত কার্যক্রম আর্কাইভ করবেন?",
     "bulkDeleteConfirm": "নির্বাচিত কার্যক্রম মুছবেন?",
     "sortCreated": "তৈরি হয়েছে",
-    "sortUpdated": "আপডেট হয়েছে"
+    "sortUpdated": "আপডেট হয়েছে",
+    "typeQuiz": "লাইভ কুইজ",
+    "typePoll": "লাইভ পোল",
+    "typeExam": "পরীক্ষা",
+    "typeSurvey": "জরিপ",
+    "statusReady": "প্রস্তুত",
+    "statusDraft": "খসড়া",
+    "statusArchived": "আর্কাইভ",
+    "statusCompleted": "সম্পন্ন"
   },
   "templates": {
     "title": "টেমপ্লেট গ্যালারি",
@@ -2269,7 +2311,11 @@
     "statusEnded": "শেষ হয়েছে",
     "statusActive": "লাইভ",
     "statusCreated": "খোলা",
-    "empty": "কোনো সেশন পাওয়া যায়নি। এখানে ফলাফল দেখতে কুইজ বা পোল চালান।"
+    "empty": "কোনো সেশন পাওয়া যায়নি। এখানে ফলাফল দেখতে কুইজ বা পোল চালান।",
+    "modeQuiz": "কুইজ",
+    "modePoll": "পোল",
+    "modeOfflinePoll": "অফলাইন পোল",
+    "modeExam": "পরীক্ষা"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "সব",
+    "tabQuizzes": "কুইজ",
+    "tabPolls": "পোল",
+    "tabTests": "পরীক্ষা",
+    "tabSurveys": "জরিপ",
+    "typeQuiz": "লাইভ কুইজ",
+    "typePoll": "লাইভ পোল",
+    "typeExam": "পরীক্ষা",
+    "typeSurvey": "জরিপ"
   }
 }

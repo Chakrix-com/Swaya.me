@@ -388,7 +388,17 @@
     "skinHint": "Выберите вид сцены для аудитории и проектора",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "Поддерживаются только URL YouTube и Vimeo"
+    "videoUrlInvalid": "Поддерживаются только URL YouTube и Vimeo",
+    "pollActiveBanner": "Ваш офлайн-опрос теперь активен. Поделитесь этой ссылкой с участниками:",
+    "examActiveBanner": "Ваш экзамен теперь в прямом эфире. Поделитесь этой ссылкой с участниками:",
+    "importValidTag": "Действительно",
+    "importErrorTag": "Ошибка",
+    "voiceMicBlocked": "Доступ к микрофону заблокирован. Пожалуйста, разрешите микрофон в адресной строке браузера.",
+    "voiceNoSpeech": "Речь не обнаружена. Пожалуйста, попробуйте ещё раз.",
+    "voiceNetworkError": "Голосовой ввод требует подключения к интернету.",
+    "voiceError": "Ошибка голосового ввода: {{error}}",
+    "voiceStartError": "Не удалось запустить голосовой ввод: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",
@@ -939,6 +949,19 @@
   "home": {
     "login": "Войти",
     "signup": "Регистрация",
+    "buzzer": {
+      "hint1": "Именно так чувствует себя ваша аудитория.",
+      "hint2": "Ещё раз. Приятно, правда?",
+      "hint3": "Представьте 200 студентов, делающих это одновременно.",
+      "hint4": "Хорошо, ещё одно.",
+      "hint5": "Кнопка одобряет вас.",
+      "ariaLabel": "Нажмите демо-кнопку",
+      "pressMe": "Нажми!",
+      "buzzesToday": "нажатий сегодня",
+      "fastestBuzz": "самое быстрое нажатие",
+      "speechBuzz": "Вы нажали за {{time}}с! ⚡",
+      "speechRecord": "Новый рекорд: {{time}}с! 🏆"
+    },
     "hero": {
       "title": "Интерактивные викторины — это просто",
       "subtitle": "Создавайте увлекательные викторины, собирайте ответы в реальном времени и мгновенно визуализируйте результаты. Отлично подходит для уроков, встреч и мероприятий."
@@ -1838,7 +1861,9 @@
     "completionRate": "Процент завершения",
     "required": "Обязательно",
     "requiredTooltip": "Участники должны ответить на этот вопрос, прежде чем продолжить.",
-    "requiredWarning": "Этот вопрос обязателен. Пожалуйста, ответьте на него, чтобы продолжить."
+    "requiredWarning": "Этот вопрос обязателен. Пожалуйста, ответьте на него, чтобы продолжить.",
+    "notPublished": "Этот тест не является офлайн-опросом или ещё не опубликован.",
+    "loadFailed": "Не удалось загрузить результаты"
   },
   "exam": {
     "typeLabel": "Тест",
@@ -2171,7 +2196,16 @@
       "captureButton": "Сделать фото",
       "verified": "Личность подтверждена. Вы готовы начать.",
       "startExam": "Начать экзамен"
-    }
+    },
+    "integrityClean": "Чисто",
+    "integritySuspicious": "Подозрительно",
+    "integrityHighRisk": "Высокий риск",
+    "integrityNA": "Н/Д",
+    "integrityLoadFailed": "Не удалось загрузить данные целостности",
+    "noViolationEvents": "Нарушений не зафиксировано",
+    "noWebcamSnapshots": "Снимки веб-камеры для этого кандидата не записаны",
+    "noSnapshotsParticipant": "Снимки для этого участника не записаны",
+    "analysisError": "Анализ ИИ не удался. Пожалуйста, попробуйте ещё раз."
   },
   "richText": {
     "italic": "Курсив",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "Архивировать выбранное?",
     "bulkDeleteConfirm": "Удалить выбранное?",
     "sortCreated": "Создано",
-    "sortUpdated": "Обновлено"
+    "sortUpdated": "Обновлено",
+    "typeQuiz": "Живая викторина",
+    "typePoll": "Живой опрос",
+    "typeExam": "Экзамен",
+    "typeSurvey": "Опрос",
+    "statusReady": "Готово",
+    "statusDraft": "Черновик",
+    "statusArchived": "Архивировано",
+    "statusCompleted": "Завершено"
   },
   "templates": {
     "title": "Галерея шаблонов",
@@ -2269,7 +2311,11 @@
     "statusEnded": "Завершено",
     "statusActive": "В эфире",
     "statusCreated": "Открыто",
-    "empty": "Сессии не найдены. Запустите викторину или опрос, чтобы увидеть результаты здесь."
+    "empty": "Сессии не найдены. Запустите викторину или опрос, чтобы увидеть результаты здесь.",
+    "modeQuiz": "Викторина",
+    "modePoll": "Опрос",
+    "modeOfflinePoll": "Офлайн-опрос",
+    "modeExam": "Экзамен"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "Все",
+    "tabQuizzes": "Викторины",
+    "tabPolls": "Опросы",
+    "tabTests": "Тесты",
+    "tabSurveys": "Анкеты",
+    "typeQuiz": "Живая викторина",
+    "typePoll": "Живой опрос",
+    "typeExam": "Экзамен",
+    "typeSurvey": "Опрос"
   }
 }

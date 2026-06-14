@@ -25,7 +25,7 @@ function StatsPanel({ userRole }) {
       setStats(response.data)
       setLastUpdate(new Date())
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load statistics')
+      setError(err.response?.data?.detail || t('admin.stats.failedToLoadStats'))
     } finally {
       setLoading(false)
     }

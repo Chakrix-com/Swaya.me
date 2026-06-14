@@ -162,7 +162,7 @@ export default function ExamResults() {
       const res = await examAPI.analyzeResults(id, customPrompt.trim())
       setAnalysis(res.data.analysis)
     } catch (err) {
-      setAnalysisError(err.response?.data?.detail || 'AI analysis failed. Please try again.')
+      setAnalysisError(err.response?.data?.detail || t('exam.analysisError'))
     } finally {
       setAnalysing(false)
     }

@@ -195,7 +195,7 @@ export function ViolationReport({ quizId }) {
               {snapshotsLoading ? (
                 <Spin size="small" />
               ) : snapshots.length === 0 ? (
-                <Alert message="No snapshots recorded for this participant" type="warning" showIcon style={{ marginBottom: 8 }} />
+                <Alert message={t('exam.noSnapshotsParticipant')} type="warning" showIcon style={{ marginBottom: 8 }} />
               ) : (
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
                   <Image.PreviewGroup>
@@ -234,7 +234,7 @@ export function ViolationReport({ quizId }) {
 
             {/* Violation event timeline */}
             {selectedEntry.events.length === 0 ? (
-              <Alert message="No violation events recorded" type="success" showIcon />
+              <Alert message={t('exam.noViolationEvents')} type="success" showIcon />
             ) : (
               <Timeline
                 items={selectedEntry.events.map((e) => ({

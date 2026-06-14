@@ -26,16 +26,17 @@ function integrityColor(score) {
   return '#ff4d4f'
 }
 
-function integrityLabel(score) {
-  if (score == null) return 'N/A'
-  if (score >= 70) return 'Clean'
-  if (score >= 40) return 'Suspicious'
-  return 'High Risk'
+function integrityLabelKey(score) {
+  if (score == null) return 'exam.integrityNA'
+  if (score >= 70) return 'exam.integrityClean'
+  if (score >= 40) return 'exam.integritySuspicious'
+  return 'exam.integrityHighRisk'
 }
 
 function ViolationTimeline({ events }) {
+  const { t } = useTranslation()
   if (!events || events.length === 0) {
-    return <Alert message="No violation events recorded" type="success" showIcon />
+    return <Alert message={t('exam.noViolationEvents')} type="success" showIcon />
   }
   return (
     <Timeline
@@ -64,9 +65,10 @@ function ViolationTimeline({ events }) {
 }
 
 function SnapshotGrid({ snapshots, events, loading }) {
+  const { t } = useTranslation()
   if (loading) return <Spin size="small" />
   if (snapshots.length === 0) {
-    return <Alert message="No webcam snapshots recorded for this candidate" type="warning" showIcon />
+    return <Alert message={t('exam.noWebcamSnapshots')} type="warning" showIcon />
   }
 
   return (
@@ -138,7 +140,7 @@ export default function IntegrityReport() {
           .then(r => setSnapshots(r.data.snapshots || []))
           .finally(() => setSnapsLoading(false))
       }
-    }).catch(() => setError('Failed to load integrity data'))
+    }).catch(() => setError(t('exam.integrityLoadFailed')))
     .finally(() => setLoading(false))
   }, [quizId, participantId])
 
@@ -282,7 +284,7 @@ export default function IntegrityReport() {
             <Col flex="auto">
               <Space direction="vertical" size={6}>
                 <Tag color={intScore >= 70 ? 'success' : intScore >= 40 ? 'warning' : 'error'} style={{ fontSize: 14, padding: '3px 10px' }}>
-                  {integrityLabel(intScore)}
+                  {t(integrityLabelKey(intScore))}
                 </Tag>
                 <Text>
                   <b>{violations.length}</b> {t('exam.violationEvents', 'violation event(s)')} recorded.

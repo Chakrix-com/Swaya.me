@@ -35,16 +35,16 @@ const C = {
 }
 
 const TYPE_TAG = {
-  quiz:         { bg: 'var(--sw-tile-quiz-bg)',  color: 'var(--sw-tile-quiz-fg)',  label: 'Live Quiz' },
-  exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  label: 'Test' },
-  poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  label: 'Live Poll' },
-  offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', label: 'Survey' },
+  quiz:         { bg: 'var(--sw-tile-quiz-bg)',  color: 'var(--sw-tile-quiz-fg)',  labelKey: 'activities.typeQuiz' },
+  exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  labelKey: 'activities.typeExam' },
+  poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  labelKey: 'activities.typePoll' },
+  offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', labelKey: 'activities.typeSurvey' },
 }
 
 const STATUS_TAG = {
-  ready:    { bg: 'var(--sw-chip-ready-bg)', color: 'var(--sw-chip-ready-fg)', label: 'Ready' },
-  draft:    { bg: 'var(--sw-chip-draft-bg)', color: 'var(--sw-chip-draft-fg)', label: 'Draft' },
-  archived: { bg: 'var(--sw-chip-done-bg)',  color: 'var(--sw-chip-done-fg)',  label: 'Archived' },
+  ready:    { bg: 'var(--sw-chip-ready-bg)', color: 'var(--sw-chip-ready-fg)', labelKey: 'activities.statusReady' },
+  draft:    { bg: 'var(--sw-chip-draft-bg)', color: 'var(--sw-chip-draft-fg)', labelKey: 'activities.statusDraft' },
+  archived: { bg: 'var(--sw-chip-done-bg)',  color: 'var(--sw-chip-done-fg)',  labelKey: 'activities.statusArchived' },
 }
 
 export default function Activities() {
@@ -199,12 +199,12 @@ export default function Activities() {
 
   const getTypeTag = (type) => {
     const cfg = TYPE_TAG[type] || TYPE_TAG.quiz
-    return <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>{cfg.label}</Tag>
+    return <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>{t(cfg.labelKey)}</Tag>
   }
 
   const getStatusTag = (status) => {
     const cfg = STATUS_TAG[status] || STATUS_TAG.draft
-    return <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>{cfg.label}</Tag>
+    return <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 6, fontWeight: 500, fontSize: 12 }}>{t(cfg.labelKey)}</Tag>
   }
 
   const getMoreMenuItems = (quiz) => [
@@ -356,10 +356,10 @@ export default function Activities() {
           value={typeFilter}
           onChange={setTypeFilter}
           options={[
-            { value: 'quiz', label: 'Live Quiz' },
-            { value: 'poll', label: 'Live Poll' },
-            { value: 'exam', label: 'Test' },
-            { value: 'offline_poll', label: 'Survey' },
+            { value: 'quiz', label: t('activities.typeQuiz') },
+            { value: 'poll', label: t('activities.typePoll') },
+            { value: 'exam', label: t('activities.typeExam') },
+            { value: 'offline_poll', label: t('activities.typeSurvey') },
           ]}
         />
         <Select
@@ -369,8 +369,8 @@ export default function Activities() {
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: 'ready', label: 'Ready' },
-            { value: 'draft', label: 'Draft' },
+            { value: 'ready', label: t('activities.statusReady') },
+            { value: 'draft', label: t('activities.statusDraft') },
           ]}
         />
         <Button

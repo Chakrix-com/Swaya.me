@@ -11,17 +11,18 @@ import './Home.css'
 const MODES = ['try', 'quiz', 'poll', 'test']
 
 // ── buzzer demo ──────────────────────────────────────────────────────────────
-const BUZZ_HINTS = [
-  'This is what your audience feels.',
-  "Again. It's satisfying, right?",
-  'Imagine 200 students doing this at once.',
-  'Okay, one more.',
-  'The buzzer approves of you.',
+const BUZZ_HINT_KEYS = [
+  'home.buzzer.hint1',
+  'home.buzzer.hint2',
+  'home.buzzer.hint3',
+  'home.buzzer.hint4',
+  'home.buzzer.hint5',
 ]
 function BuzzerDemo() {
+  const { t } = useTranslation()
   const [count, setCount] = useState(12407)
   const [best, setBest] = useState(0.31)
-  const [hint, setHint] = useState(BUZZ_HINTS[0])
+  const [hintKey, setHintKey] = useState(BUZZ_HINT_KEYS[0])
   const [speech, setSpeech] = useState('')
   const [speechVisible, setSpeechVisible] = useState(false)
   const [pressed, setPressed] = useState(false)
@@ -34,12 +35,12 @@ function BuzzerDemo() {
     const presses = pressesRef.current
     const newCount = count + 1
     setCount(newCount)
-    const t = parseFloat((0.28 + Math.random() * 0.9).toFixed(2))
-    let msg = `You buzzed in ${t}s! ⚡`
-    if (t < best) { setBest(t); msg = `New fastest buzz: ${t}s! 🏆` }
+    const sec = parseFloat((0.28 + Math.random() * 0.9).toFixed(2))
+    let msg = t('home.buzzer.speechBuzz', { time: sec })
+    if (sec < best) { setBest(sec); msg = t('home.buzzer.speechRecord', { time: sec }) }
     setSpeech(msg)
     setSpeechVisible(true)
-    setHint(BUZZ_HINTS[Math.min(presses, BUZZ_HINTS.length - 1)])
+    setHintKey(BUZZ_HINT_KEYS[Math.min(presses, BUZZ_HINT_KEYS.length - 1)])
     clearTimeout(speechTimer.current)
     speechTimer.current = setTimeout(() => setSpeechVisible(false), 1400)
     setPressed(true)
@@ -63,22 +64,22 @@ function BuzzerDemo() {
         <div className="pub-buzzer-base">
           <button
             className={`pub-buzzer${pressed ? ' pub-buzzer--pressed' : ''}`}
-            aria-label="Press the demo buzzer"
+            aria-label={t('home.buzzer.ariaLabel')}
             onClick={handleBuzz}
           >
-            Press<br />me!
+            {t('home.buzzer.pressMe')}
           </button>
           <div className="pub-buzz-stats">
             <div>
               <span className="pub-buzz-big pub-buzz-big--red">{count.toLocaleString('en-IN')}</span>
-              buzzes today
+              {t('home.buzzer.buzzesToday')}
             </div>
             <div>
               <span className="pub-buzz-big pub-buzz-big--blue">{best}s</span>
-              fastest buzz
+              {t('home.buzzer.fastestBuzz')}
             </div>
           </div>
-          <div className="pub-buzz-hint">{hint}</div>
+          <div className="pub-buzz-hint">{t(hintKey)}</div>
         </div>
         {confetti.map(p => (
           <div

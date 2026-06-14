@@ -14,29 +14,31 @@ const { Title, Text } = Typography
 const { Option } = Select
 
 const MODE_META = {
-  quiz:         { label: 'Quiz',        color: '#4F46E5', icon: <BulbOutlined /> },
-  poll:         { label: 'Poll',        color: '#EA580C', icon: <BarChartOutlined /> },
-  offline_poll: { label: 'Offline Poll',color: '#DB2777', icon: <FileTextOutlined /> },
-  exam:         { label: 'Exam',        color: '#059669', icon: <ExperimentOutlined /> },
+  quiz:         { labelKey: 'results.modeQuiz',        color: '#4F46E5', icon: <BulbOutlined /> },
+  poll:         { labelKey: 'results.modePoll',        color: '#EA580C', icon: <BarChartOutlined /> },
+  offline_poll: { labelKey: 'results.modeOfflinePoll', color: '#DB2777', icon: <FileTextOutlined /> },
+  exam:         { labelKey: 'results.modeExam',        color: '#059669', icon: <ExperimentOutlined /> },
 }
 
 function ModeTag({ type }) {
-  const m = MODE_META[type] || { label: type, color: '#6b7280', icon: <BulbOutlined /> }
+  const { t } = useTranslation()
+  const m = MODE_META[type] || { labelKey: null, color: '#6b7280', icon: <BulbOutlined /> }
   return (
     <Tag style={{ background: `${m.color}15`, borderColor: `${m.color}50`, color: m.color }}>
-      {m.icon} {m.label}
+      {m.icon} {m.labelKey ? t(m.labelKey) : type}
     </Tag>
   )
 }
 
 function StatusBadge({ status }) {
+  const { t } = useTranslation()
   const map = {
-    ended:   { color: 'default', text: 'Ended' },
-    active:  { color: 'processing', text: 'Live' },
-    created: { color: 'warning', text: 'Open' },
+    ended:   { color: 'default',    textKey: 'results.statusEnded' },
+    active:  { color: 'processing', textKey: 'results.statusActive' },
+    created: { color: 'warning',    textKey: 'results.statusCreated' },
   }
-  const s = map[status] || { color: 'default', text: status }
-  return <Badge status={s.color} text={s.text} />
+  const s = map[status] || { color: 'default', textKey: null }
+  return <Badge status={s.color} text={s.textKey ? t(s.textKey) : status} />
 }
 
 function recapUrl(item) {

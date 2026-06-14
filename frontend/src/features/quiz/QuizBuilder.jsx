@@ -2820,7 +2820,7 @@ export default function QuizBuilder() {
                                  dataIndex: 'isValid',
                                  width: 100,
                                  render: (isValid) => (
-                                   isValid ? <Tag color="success">Valid</Tag> : <Tag color="error">Error</Tag>
+                                   isValid ? <Tag color="success">{t('quiz.importValidTag')}</Tag> : <Tag color="error">{t('quiz.importErrorTag')}</Tag>
                                  )
                                }
                              ]}
@@ -2946,12 +2946,12 @@ export default function QuizBuilder() {
         onCancel={() => setPollLinkModal({ open: false, url: '' })}
         footer={[
           <Button key="close" onClick={() => setPollLinkModal({ open: false, url: '' })}>
-            Close
+            {t('common.cancel')}
           </Button>
         ]}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Text>Your offline poll is now active. Share this link with participants:</Text>
+          <Text>{t('quiz.pollActiveBanner')}</Text>
           <Text
             strong
             copyable={{ text: pollLinkModal.url, icon: <CopyOutlined />, tooltips: [t('offlinePoll.copyLink', 'Copy Link'), t('offlinePoll.linkCopied', 'Link copied!')] }}
@@ -2996,12 +2996,12 @@ export default function QuizBuilder() {
             {t('exam.resultsTitle')}
           </Button>,
           <Button key="close" onClick={() => setExamLinkModal({ open: false, url: '' })}>
-            Close
+            {t('common.cancel')}
           </Button>
         ]}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Text>Your exam is now live. Share this link with participants:</Text>
+          <Text>{t('quiz.examActiveBanner')}</Text>
           <Text
             strong
             copyable={{ text: examLinkModal.url, icon: <CopyOutlined />, tooltips: [t('exam.copyLink'), t('exam.linkCopied')] }}
@@ -3063,13 +3063,13 @@ export default function QuizBuilder() {
                           recognizerRef.current = null
                           setVoiceListening(false)
                           if (ev.error === 'not-allowed') {
-                            antMessage.error('Microphone access was blocked. Please allow microphone in your browser address bar and try again.')
+                            antMessage.error(t('quiz.voiceMicBlocked'))
                           } else if (ev.error === 'no-speech') {
-                            antMessage.warning('No speech detected. Please try again.')
+                            antMessage.warning(t('quiz.voiceNoSpeech'))
                           } else if (ev.error === 'network') {
-                            antMessage.error('Voice input requires an internet connection to the speech service.')
+                            antMessage.error(t('quiz.voiceNetworkError'))
                           } else {
-                            antMessage.error(`Voice input error: ${ev.error || 'unknown'}`)
+                            antMessage.error(t('quiz.voiceError', { error: ev.error || 'unknown' }))
                           }
                         }
                         try {
@@ -3077,7 +3077,7 @@ export default function QuizBuilder() {
                           setVoiceListening(true)
                         } catch (err) {
                           recognizerRef.current = null
-                          antMessage.error(`Could not start voice input: ${err?.message || err}`)
+                          antMessage.error(t('quiz.voiceStartError', { error: err?.message || err }))
                         }
                       }}
                     />
@@ -3369,7 +3369,7 @@ export default function QuizBuilder() {
                         </div>
                       )}
                       {qType === 'scale' && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>1 — 2 — 3 — 4 — 5</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>{t('quiz.scaleRange')}</Text>
                       )}
                       {(qType === 'word_cloud' || qType === 'paragraph') && (
                         <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic' }}>

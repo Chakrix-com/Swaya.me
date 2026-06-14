@@ -28,7 +28,7 @@ export default function OfflinePollResults() {
       .then(res => {
         const quiz = res.data
         if (!quiz.poll_slug) {
-          setError('This quiz is not an offline poll or has not been published yet.')
+          setError(t('offlinePoll.notPublished'))
           setLoading(false)
           return null
         }
@@ -39,7 +39,7 @@ export default function OfflinePollResults() {
         setLoading(false)
       })
       .catch(err => {
-        setError(err.response?.data?.detail || 'Failed to load results')
+        setError(err.response?.data?.detail || t('offlinePoll.loadFailed'))
         setLoading(false)
       })
   }, [id])

@@ -388,7 +388,17 @@
     "skinHint": "પ્રેક્ષકો અને પ્રોજેક્ટરનો દેખાવ પસંદ કરો",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "ફક્ત YouTube અને Vimeo URL સમર્થિત છે"
+    "videoUrlInvalid": "ફક્ત YouTube અને Vimeo URL સમર્થિત છે",
+    "pollActiveBanner": "તમારો ઓફલાઇન પોલ હવે સક્રિય છે. સહભાગીઓ સાથે આ લિંક શેર કરો:",
+    "examActiveBanner": "તમારી પરીક્ષા હવે લાઇવ છે. સહભાગીઓ સાથે આ લિંક શેર કરો:",
+    "importValidTag": "માન્ય",
+    "importErrorTag": "ભૂલ",
+    "voiceMicBlocked": "માઇક્રોફોન ઍક્સેસ અવરોધિત છે. બ્રાઉઝર ઍડ્રેસ બારમાં માઇક્રોફોન ચાલુ કરો.",
+    "voiceNoSpeech": "કોઈ ભાષણ મળ્યું નહીં. ફરી પ્રયાસ કરો.",
+    "voiceNetworkError": "વૉઇસ ઇનપુટ માટે ઇન્ટરનેટ કનેક્શન જરૂરી છે.",
+    "voiceError": "વૉઇસ ઇનપુટ ભૂલ: {{error}}",
+    "voiceStartError": "વૉઇસ ઇનપુટ શરૂ થઈ શક્યું નહીં: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
@@ -820,6 +830,19 @@
   "home": {
     "login": "લૉગિન",
     "signup": "સાઇન અપ",
+    "buzzer": {
+      "hint1": "આ જ અનુભૂતિ તમારા પ્રેક્ષકો અનુભવે છે.",
+      "hint2": "ફરીથી. સંતોષજનક છે ને?",
+      "hint3": "200 વિદ્યાર્થીઓ એકસાથે આ કરે તે કલ્પના કરો.",
+      "hint4": "ઠીક છે, એક અને.",
+      "hint5": "બઝર તમને મંજૂરી આપે છે.",
+      "ariaLabel": "ડેમો બઝર દબાવો",
+      "pressMe": "દબાવો!",
+      "buzzesToday": "આજના બઝ",
+      "fastestBuzz": "સૌથી ઝડપી બઝ",
+      "speechBuzz": "તમે {{time}}s માં બઝ કર્યો! ⚡",
+      "speechRecord": "નવો સૌથી ઝડપી બઝ: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "ઇન્ટરેક્ટિવ ક્વિઝ હવે સરળ",
       "subtitle": "આકર્ષક ક્વિઝ બનાવો, રિયલ-ટાઇમ પ્રતિભાવો એકત્ર કરો અને તરત જ પરિણામો જુઓ. વર્ગખંડ, મીટિંગ અને ઇવેન્ટ્સ માટે ઉત્તમ."
@@ -1838,7 +1861,9 @@
     "completionRate": "પૂર્ણ કરવાનો દર",
     "required": "જરૂરી",
     "requiredTooltip": "સહભાગીઓએ આગળ જતાં પહેલાં આ પ્રશ્નનો જવાબ આપવો આવશ્યક છે.",
-    "requiredWarning": "આ પ્રશ્ન ફરજિયાત છે. ચાલુ રાખવા માટે તેનો જવાબ આપો."
+    "requiredWarning": "આ પ્રશ્ન ફરજિયાત છે. ચાલુ રાખવા માટે તેનો જવાબ આપો.",
+    "notPublished": "આ ક્વિઝ ઓફલાઇન પોલ નથી અથવા હજી પ્રકાશિત થઈ નથી.",
+    "loadFailed": "પરિણામો લોડ કરવામાં નિષ્ફળ"
   },
   "exam": {
     "typeLabel": "ટેસ્ટ",
@@ -2171,7 +2196,16 @@
       "captureButton": "ફોટો કૅપ્ચર કરો",
       "verified": "ઓળખ ચકાસવામાં આવી. તમે શરૂ કરવા તૈયાર છો.",
       "startExam": "પરીક્ષા શરૂ કરો"
-    }
+    },
+    "integrityClean": "સ્વચ્છ",
+    "integritySuspicious": "શંકાસ્પદ",
+    "integrityHighRisk": "ઉચ્ચ જોખમ",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "ઇન્ટિગ્રિટી ડેટા લોડ કરવામાં નિષ્ફળ",
+    "noViolationEvents": "કોઈ ઉલ્લંઘન ઘટના નોંધાઈ નથી",
+    "noWebcamSnapshots": "આ ઉમેદવાર માટે કોઈ વેબકેમ સ્નેપશોટ નોંધાઈ નથી",
+    "noSnapshotsParticipant": "આ સહભાગી માટે કોઈ સ્નેપશોટ નોંધાઈ નથી",
+    "analysisError": "AI વિશ્લેષણ નિષ્ફળ. ફરી પ્રયાસ કરો."
   },
   "richText": {
     "italic": "ઇટાલિક",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "પસંદ કરેલ પ્રવૃત્તિઓ આર્કાઇવ કરો?",
     "bulkDeleteConfirm": "પસંદ કરેલ પ્રવૃત્તિઓ ડિલીટ કરો?",
     "sortCreated": "બનાવ્યું",
-    "sortUpdated": "અપડેટ"
+    "sortUpdated": "અપડેટ",
+    "typeQuiz": "લાઇવ ક્વિઝ",
+    "typePoll": "લાઇવ પોલ",
+    "typeExam": "પરીક્ષા",
+    "typeSurvey": "સર્વે",
+    "statusReady": "તૈયાર",
+    "statusDraft": "ડ્રાફ્ટ",
+    "statusArchived": "આર્કાઇવ",
+    "statusCompleted": "પૂર્ણ"
   },
   "templates": {
     "title": "ટેમ્પ્લેટ ગેલેરી",
@@ -2269,7 +2311,11 @@
     "statusEnded": "સમાપ્ત",
     "statusActive": "લાઇવ",
     "statusCreated": "ખુલ્લું",
-    "empty": "કોઈ સત્ર મળ્યા નથી. અહીં પરિણામો જોવા માટે ક્વિઝ અથવા પોલ ચલાવો."
+    "empty": "કોઈ સત્ર મળ્યા નથી. અહીં પરિણામો જોવા માટે ક્વિઝ અથવા પોલ ચલાવો.",
+    "modeQuiz": "ક્વિઝ",
+    "modePoll": "પોલ",
+    "modeOfflinePoll": "ઓફલાઇન પોલ",
+    "modeExam": "પરીક્ષા"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "બધા",
+    "tabQuizzes": "ક્વિઝ",
+    "tabPolls": "પોલ",
+    "tabTests": "પરીક્ષા",
+    "tabSurveys": "સર્વે",
+    "typeQuiz": "લાઇવ ક્વિઝ",
+    "typePoll": "લાઇવ પોલ",
+    "typeExam": "પરીક્ષા",
+    "typeSurvey": "સર્વે"
   }
 }

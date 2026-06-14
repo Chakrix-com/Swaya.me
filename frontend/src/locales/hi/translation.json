@@ -388,7 +388,17 @@
     "skinHint": "दर्शक और प्रोजेक्टर का स्वरूप चुनें",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "केवल YouTube और Vimeo URL समर्थित हैं"
+    "videoUrlInvalid": "केवल YouTube और Vimeo URL समर्थित हैं",
+    "pollActiveBanner": "आपका ऑफलाइन पोल अब सक्रिय है। प्रतिभागियों के साथ यह लिंक साझा करें:",
+    "examActiveBanner": "आपकी परीक्षा अब लाइव है। प्रतिभागियों के साथ यह लिंक साझा करें:",
+    "importValidTag": "वैध",
+    "importErrorTag": "त्रुटि",
+    "voiceMicBlocked": "माइक्रोफ़ोन एक्सेस अवरुद्ध है। कृपया ब्राउज़र एड्रेस बार में माइक्रोफ़ोन की अनुमति दें।",
+    "voiceNoSpeech": "कोई आवाज़ नहीं मिली। कृपया पुनः प्रयास करें।",
+    "voiceNetworkError": "वॉयस इनपुट के लिए इंटरनेट कनेक्शन आवश्यक है।",
+    "voiceError": "वॉयस इनपुट त्रुटि: {{error}}",
+    "voiceStartError": "वॉयस इनपुट शुरू नहीं हो सका: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -820,6 +830,19 @@
   "home": {
     "login": "लॉगिन",
     "signup": "साइन अप करें",
+    "buzzer": {
+      "hint1": "यही वो एहसास है जो आपके दर्शकों को होता है।",
+      "hint2": "फिर से। संतोषजनक है ना?",
+      "hint3": "कल्पना करें — 200 छात्र एक साथ यह कर रहे हैं।",
+      "hint4": "ठीक है, एक और।",
+      "hint5": "बज़र आपको मंजूरी देता है।",
+      "ariaLabel": "डेमो बज़र दबाएँ",
+      "pressMe": "दबाएँ!",
+      "buzzesToday": "आज के बज़",
+      "fastestBuzz": "सबसे तेज़ बज़",
+      "speechBuzz": "आपने {{time}}s में बज़ किया! ⚡",
+      "speechRecord": "नया सबसे तेज़ बज़: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "इंटरैक्टिव क्विज़ सरल बनाई",
       "subtitle": "शिक्षकों, प्रशिक्षकों और प्रस्तुतकर्ताओं के साथ शामिल हों जो अपने सत्रों को अधिक इंटरैक्टिव बनाने के लिए Swaya.me का उपयोग कर रहे हैं।"
@@ -1838,7 +1861,9 @@
     "completionRate": "पूर्णता दर",
     "required": "आवश्यक",
     "requiredTooltip": "प्रतिभागियों को आगे बढ़ने से पहले इस प्रश्न का उत्तर देना होगा।",
-    "requiredWarning": "यह प्रश्न आवश्यक है। जारी रखने के लिए इसका उत्तर दें।"
+    "requiredWarning": "यह प्रश्न आवश्यक है। जारी रखने के लिए इसका उत्तर दें।",
+    "notPublished": "यह क्विज़ ऑफलाइन पोल नहीं है या अभी तक प्रकाशित नहीं हुई है।",
+    "loadFailed": "परिणाम लोड करने में विफल"
   },
   "exam": {
     "typeLabel": "टेस्ट",
@@ -2171,7 +2196,16 @@
       "captureButton": "फ़ोटो कैप्चर करें",
       "verified": "पहचान सत्यापित। आप शुरू करने के लिए तैयार हैं।",
       "startExam": "परीक्षा शुरू करें"
-    }
+    },
+    "integrityClean": "स्वच्छ",
+    "integritySuspicious": "संदिग्ध",
+    "integrityHighRisk": "उच्च जोखिम",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "अखंडता डेटा लोड करने में विफल",
+    "noViolationEvents": "कोई उल्लंघन घटना दर्ज नहीं",
+    "noWebcamSnapshots": "इस उम्मीदवार के लिए कोई वेबकैम स्नैपशॉट दर्ज नहीं",
+    "noSnapshotsParticipant": "इस प्रतिभागी के लिए कोई स्नैपशॉट दर्ज नहीं",
+    "analysisError": "AI विश्लेषण विफल। कृपया पुनः प्रयास करें।"
   },
   "richText": {
     "italic": "इटैलिक",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "चुनी गई गतिविधियाँ संग्रहीत करें?",
     "bulkDeleteConfirm": "चुनी गई गतिविधियाँ हटाएं?",
     "sortCreated": "बनाया गया",
-    "sortUpdated": "अपडेट किया"
+    "sortUpdated": "अपडेट किया",
+    "typeQuiz": "लाइव क्विज़",
+    "typePoll": "लाइव पोल",
+    "typeExam": "टेस्ट",
+    "typeSurvey": "सर्वे",
+    "statusReady": "तैयार",
+    "statusDraft": "ड्राफ्ट",
+    "statusArchived": "संग्रहीत",
+    "statusCompleted": "पूर्ण"
   },
   "templates": {
     "title": "टेम्पलेट गैलरी",
@@ -2269,7 +2311,11 @@
     "statusEnded": "समाप्त",
     "statusActive": "लाइव",
     "statusCreated": "खुला",
-    "empty": "कोई सत्र नहीं मिला। यहाँ परिणाम देखने के लिए क्विज़ या पोल चलाएं।"
+    "empty": "कोई सत्र नहीं मिला। यहाँ परिणाम देखने के लिए क्विज़ या पोल चलाएं।",
+    "modeQuiz": "क्विज़",
+    "modePoll": "पोल",
+    "modeOfflinePoll": "ऑफलाइन पोल",
+    "modeExam": "परीक्षा"
   },
   "explore": {
     "heroTitle": "उपयोग के लिए तैयार गतिविधियाँ खोजें",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "टेम्पलेट खोजें…",
     "noResults": "कोई टेम्पलेट नहीं मिला",
     "footerCta": "अपनी गतिविधियाँ मुफ्त बनाएं।",
-    "signUpFree": "साइन अप →"
+    "signUpFree": "साइन अप →",
+    "tabAll": "सभी",
+    "tabQuizzes": "क्विज़",
+    "tabPolls": "पोल",
+    "tabTests": "टेस्ट",
+    "tabSurveys": "सर्वे",
+    "typeQuiz": "लाइव क्विज़",
+    "typePoll": "लाइव पोल",
+    "typeExam": "टेस्ट",
+    "typeSurvey": "सर्वे"
   }
 }

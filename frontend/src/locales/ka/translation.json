@@ -388,7 +388,17 @@
     "skinHint": "აირჩიეთ მაყურებლისა და პროექტორის გარეგნობა",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "მხოლოდ YouTube და Vimeo URL-ები მხარდაჭერილია"
+    "videoUrlInvalid": "მხოლოდ YouTube და Vimeo URL-ები მხარდაჭერილია",
+    "pollActiveBanner": "ನಿಮ್ಮ ಆಫ್‌ಲೈನ್ ಪೋಲ್ ಈಗ ಸಕ್ರಿಯವಾಗಿದೆ. ಈ ಲಿಂಕ್ ಅನ್ನು ಭಾಗವಹಿಸುವವರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ:",
+    "examActiveBanner": "ನಿಮ್ಮ ಪರೀಕ್ಷೆ ಈಗ ಲೈವ್ ಆಗಿದೆ. ಈ ಲಿಂಕ್ ಅನ್ನು ಭಾಗವಹಿಸುವವರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ:",
+    "importValidTag": "ಮಾನ್ಯ",
+    "importErrorTag": "ದೋಷ",
+    "voiceMicBlocked": "ಮೈಕ್ರೋಫೋನ್ ಪ್ರವೇಶ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ. ಬ್ರೌಸರ್ ವಿಳಾಸ ಪಟ್ಟಿಯಲ್ಲಿ ಮೈಕ್ರೋಫೋನ್ ಅನ್ನು ಅನುಮತಿಸಿ.",
+    "voiceNoSpeech": "ಯಾವುದೇ ಮಾತು ಪತ್ತೆಯಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "voiceNetworkError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್‌ಗೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯ.",
+    "voiceError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ದೋಷ: {{error}}",
+    "voiceStartError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "ಅಧಿವೇಶನಕ್ಕೆ ಸೇರಿ",
@@ -820,6 +830,19 @@
   "home": {
     "login": "ಲಾಗಿನ್",
     "signup": "ಸೈನ್ ಅಪ್",
+    "buzzer": {
+      "hint1": "ನಿಮ್ಮ ಪ್ರೇಕ್ಷಕರು ಹೀಗೆ ಅನುಭವಿಸುತ್ತಾರೆ.",
+      "hint2": "ಮತ್ತೆ. ತೃಪ್ತಿಕರವಾಗಿದೆ, ಅಲ್ಲವೇ?",
+      "hint3": "200 ವಿದ್ಯಾರ್ಥಿಗಳು ಏಕಕಾಲದಲ್ಲಿ ಇದನ್ನು ಮಾಡುತ್ತಾರೆ ಎಂದು ಊಹಿಸಿಕೊಳ್ಳಿ.",
+      "hint4": "ಸರಿ, ಇನ್ನೊಂದು.",
+      "hint5": "ಬಜರ್ ನಿಮ್ಮನ್ನು ಅನುಮೋದಿಸುತ್ತದೆ.",
+      "ariaLabel": "ಡೆಮೋ ಬಜರ್ ಒತ್ತಿ",
+      "pressMe": "ಒತ್ತಿ!",
+      "buzzesToday": "ಇಂದು ಬಜರ್‌ಗಳು",
+      "fastestBuzz": "ವೇಗದ ಬಜರ್",
+      "speechBuzz": "ನೀವು {{time}}s ನಲ್ಲಿ ಬಜರ್ ಮಾಡಿದ್ದೀರಿ! ⚡",
+      "speechRecord": "ಹೊಸ ವೇಗದ ಬಜರ್: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "ಇಂಟರಾಕ್ಟಿವ್ ಕ್ವಿಜ್‌ಗಳು ಸುಲಭವಾಗಿ",
       "subtitle": "ಆಕರ್ಷಕ ಕ್ವಿಜ್‌ಗಳನ್ನು ರಚಿಸಿ, ತಕ್ಷಣದ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ಸಂಗ್ರಹಿಸಿ, ಫಲಿತಾಂಶಗಳನ್ನು ಕ್ಷಣದಲ್ಲೇ ನೋಡಿ. ತರಗತಿಗಳು, ಸಭೆಗಳು ಮತ್ತು ಕಾರ್ಯಕ್ರಮಗಳಿಗೆ ಪರಿಪೂರ್ಣ."
@@ -1838,7 +1861,9 @@
     "completionRate": "ಪೂರ್ಣಗೊಳಿಸುವ ದರ",
     "required": "ಅಗತ್ಯ",
     "requiredTooltip": "ಭಾಗವಹಿಸುವವರು ಮುಂದೆ ಹೋಗುವ ಮೊದಲು ಈ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಬೇಕು.",
-    "requiredWarning": "ಈ ಪ್ರಶ್ನೆ ಅಗತ್ಯ. ಮುಂದುವರೆಯಲು ಉತ್ತರಿಸಿ."
+    "requiredWarning": "ಈ ಪ್ರಶ್ನೆ ಅಗತ್ಯ. ಮುಂದುವರೆಯಲು ಉತ್ತರಿಸಿ.",
+    "notPublished": "ಈ ಕ್ವಿಜ್ ಆಫ್‌ಲೈನ್ ಪೋಲ್ ಅಲ್ಲ ಅಥವಾ ಇನ್ನೂ ಪ್ರಕಟಿಸಲಾಗಿಲ್ಲ.",
+    "loadFailed": "ಫಲಿತಾಂಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಯಿತು"
   },
   "exam": {
     "typeLabel": "ಟೆಸ್ಟ್",
@@ -2171,7 +2196,16 @@
       "captureButton": "ಫೋಟೋ ತೆಗೆಯಿರಿ",
       "verified": "ಗುರುತು ಪರಿಶೀಲಿಸಲಾಗಿದೆ. ನೀವು ಪ್ರಾರಂಭಿಸಲು ಸಿದ್ಧರಾಗಿದ್ದೀರಿ.",
       "startExam": "ಪರೀಕ್ಷೆ ಪ್ರಾರಂಭಿಸಿ"
-    }
+    },
+    "integrityClean": "ಸ್ವಚ್ಛ",
+    "integritySuspicious": "ಶಂಕಾಸ್ಪದ",
+    "integrityHighRisk": "ಹೆಚ್ಚಿನ ಅಪಾಯ",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "ಸಮಗ್ರತೆ ಡೇಟಾ ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಯಿತು",
+    "noViolationEvents": "ಯಾವುದೇ ಉಲ್ಲಂಘನೆ ಘಟನೆಗಳು ದಾಖಲಾಗಿಲ್ಲ",
+    "noWebcamSnapshots": "ಈ ಅಭ್ಯರ್ಥಿಗೆ ವೆಬ್‌ಕ್ಯಾಮ್ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್‌ಗಳು ದಾಖಲಾಗಿಲ್ಲ",
+    "noSnapshotsParticipant": "ಈ ಭಾಗವಹಿಸುವವರಿಗೆ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್‌ಗಳು ದಾಖಲಾಗಿಲ್ಲ",
+    "analysisError": "AI ವಿಶ್ಲೇಷಣೆ ವಿಫಲವಾಯಿತು. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
   },
   "richText": {
     "italic": "ಇಟಾಲಿಕ್",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "ಆಯ್ಕೆ ಮಾಡಿದ ಚಟುವಟಿಕೆಗಳನ್ನು ಆರ್ಕೈವ್ ಮಾಡಬೇಕೇ?",
     "bulkDeleteConfirm": "ಆಯ್ಕೆ ಮಾಡಿದ ಚಟುವಟಿಕೆಗಳನ್ನು ಅಳಿಸಬೇಕೇ?",
     "sortCreated": "ರಚಿಸಲಾಗಿದೆ",
-    "sortUpdated": "ನವೀಕರಿಸಲಾಗಿದೆ"
+    "sortUpdated": "ನವೀಕರಿಸಲಾಗಿದೆ",
+    "typeQuiz": "ಲೈವ್ ಕ್ವಿಜ್",
+    "typePoll": "ಲೈವ್ ಪೋಲ್",
+    "typeExam": "ಪರೀಕ್ಷೆ",
+    "typeSurvey": "ಸಮೀಕ್ಷೆ",
+    "statusReady": "ಸಿದ್ಧ",
+    "statusDraft": "ಡ್ರಾಫ್ಟ್",
+    "statusArchived": "ಆರ್ಕೈವ್",
+    "statusCompleted": "ಪೂರ್ಣ"
   },
   "templates": {
     "title": "ಟೆಂಪ್ಲೇಟ್ ಗ್ಯಾಲರಿ",
@@ -2269,7 +2311,11 @@
     "statusEnded": "დასრულდა",
     "statusActive": "პირდაპირი",
     "statusCreated": "ღია",
-    "empty": "სესიები ვერ მოიძებნა. შედეგების სანახავად ჩაატარეთ ვიქტორინა ან გამოკითხვა."
+    "empty": "სესიები ვერ მოიძებნა. შედეგების სანახავად ჩაატარეთ ვიქტორინა ან გამოკითხვა.",
+    "modeQuiz": "ಕ್ವಿಜ್",
+    "modePoll": "ಪೋಲ್",
+    "modeOfflinePoll": "ಆಫ್‌ಲೈನ್ ಪೋಲ್",
+    "modeExam": "ಪರೀಕ್ಷೆ"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "ಎಲ್ಲ",
+    "tabQuizzes": "ಕ್ವಿಜ್‌ಗಳು",
+    "tabPolls": "ಪೋಲ್‌ಗಳು",
+    "tabTests": "ಪರೀಕ್ಷೆಗಳು",
+    "tabSurveys": "ಸಮೀಕ್ಷೆಗಳು",
+    "typeQuiz": "ಲೈವ್ ಕ್ವಿಜ್",
+    "typePoll": "ಲೈವ್ ಪೋಲ್",
+    "typeExam": "ಪರೀಕ್ಷೆ",
+    "typeSurvey": "ಸಮೀಕ್ಷೆ"
   }
 }

@@ -390,7 +390,17 @@
     "skinHint": "Choisissez l'apparence de la scène pour le public et le projecteur",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "Seules les URL YouTube et Vimeo sont prises en charge"
+    "videoUrlInvalid": "Seules les URL YouTube et Vimeo sont prises en charge",
+    "pollActiveBanner": "Votre sondage hors ligne est maintenant actif. Partagez ce lien avec les participants :",
+    "examActiveBanner": "Votre examen est maintenant en direct. Partagez ce lien avec les participants :",
+    "importValidTag": "Valide",
+    "importErrorTag": "Erreur",
+    "voiceMicBlocked": "L'accès au microphone a été bloqué. Veuillez autoriser le microphone dans la barre d'adresse du navigateur.",
+    "voiceNoSpeech": "Aucune voix détectée. Veuillez réessayer.",
+    "voiceNetworkError": "La saisie vocale nécessite une connexion Internet.",
+    "voiceError": "Erreur de saisie vocale : {{error}}",
+    "voiceStartError": "Impossible de démarrer la saisie vocale : {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",
@@ -941,6 +951,19 @@
   "home": {
     "login": "Connexion",
     "signup": "S’inscrire",
+    "buzzer": {
+      "hint1": "C’est ce que ressentent vos participants.",
+      "hint2": "Encore. C’est satisfaisant, n’est-ce pas ?",
+      "hint3": "Imaginez 200 étudiants faisant cela en même temps.",
+      "hint4": "Bien, encore une fois.",
+      "hint5": "Le buzzer vous approuve.",
+      "ariaLabel": "Appuyer sur le buzzer de démo",
+      "pressMe": "Appuyez !",
+      "buzzesToday": "buzzers aujourd’hui",
+      "fastestBuzz": "buzzer le plus rapide",
+      "speechBuzz": "Vous avez buzzé en {{time}}s ! ⚡",
+      "speechRecord": "Nouveau record : {{time}}s ! 🏆"
+    },
     "hero": {
       "title": "Des quiz interactifs en toute simplicité",
       "subtitle": "Créez des quiz captivants, recueillez des réponses en temps réel et visualisez les résultats instantanément. Parfait pour les classes, réunions et événements."
@@ -1840,7 +1863,9 @@
     "completionRate": "Taux de complétion",
     "required": "Obligatoire",
     "requiredTooltip": "Les participants doivent répondre à cette question avant de continuer.",
-    "requiredWarning": "Cette question est obligatoire. Veuillez y répondre pour continuer."
+    "requiredWarning": "Cette question est obligatoire. Veuillez y répondre pour continuer.",
+    "notPublished": "Ce quiz n'est pas un sondage hors ligne ou n'a pas encore été publié.",
+    "loadFailed": "Échec du chargement des résultats"
   },
   "exam": {
     "typeLabel": "Test",
@@ -2173,7 +2198,16 @@
       "captureButton": "Capturer la photo",
       "verified": "Identité vérifiée. Vous êtes prêt à commencer.",
       "startExam": "Démarrer l'examen"
-    }
+    },
+    "integrityClean": "Propre",
+    "integritySuspicious": "Suspect",
+    "integrityHighRisk": "Risque élevé",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "Échec du chargement des données d'intégrité",
+    "noViolationEvents": "Aucun événement de violation enregistré",
+    "noWebcamSnapshots": "Aucune capture webcam enregistrée pour ce candidat",
+    "noSnapshotsParticipant": "Aucune capture enregistrée pour ce participant",
+    "analysisError": "L'analyse IA a échoué. Veuillez réessayer."
   },
   "richText": {
     "italic": "Italique",
@@ -2233,7 +2267,15 @@
     "bulkArchiveConfirm": "Archiver les sélectionnées ?",
     "bulkDeleteConfirm": "Supprimer les sélectionnées ?",
     "sortCreated": "Créé",
-    "sortUpdated": "Mis à jour"
+    "sortUpdated": "Mis à jour",
+    "typeQuiz": "Quiz en direct",
+    "typePoll": "Sondage en direct",
+    "typeExam": "Examen",
+    "typeSurvey": "Enquête",
+    "statusReady": "Prêt",
+    "statusDraft": "Brouillon",
+    "statusArchived": "Archivé",
+    "statusCompleted": "Terminé"
   },
   "templates": {
     "title": "Galerie de modèles",
@@ -2271,7 +2313,11 @@
     "statusEnded": "Terminé",
     "statusActive": "En direct",
     "statusCreated": "Ouvert",
-    "empty": "Aucune session trouvée. Lancez un quiz ou un sondage pour voir les résultats ici."
+    "empty": "Aucune session trouvée. Lancez un quiz ou un sondage pour voir les résultats ici.",
+    "modeQuiz": "Quiz",
+    "modePoll": "Sondage",
+    "modeOfflinePoll": "Sondage hors ligne",
+    "modeExam": "Examen"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2282,6 +2328,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "Tout",
+    "tabQuizzes": "Quiz",
+    "tabPolls": "Sondages",
+    "tabTests": "Tests",
+    "tabSurveys": "Enquêtes",
+    "typeQuiz": "Quiz en direct",
+    "typePoll": "Sondage en direct",
+    "typeExam": "Examen",
+    "typeSurvey": "Enquête"
   }
 }

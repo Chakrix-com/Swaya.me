@@ -389,7 +389,17 @@
     "skinHint": "Choose how the audience and projector look during this activity",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "Only YouTube and Vimeo URLs are supported"
+    "videoUrlInvalid": "Only YouTube and Vimeo URLs are supported",
+    "pollActiveBanner": "Your offline poll is now active. Share this link with participants:",
+    "examActiveBanner": "Your exam is now live. Share this link with participants:",
+    "importValidTag": "Valid",
+    "importErrorTag": "Error",
+    "voiceMicBlocked": "Microphone access was blocked. Please allow microphone in your browser address bar and try again.",
+    "voiceNoSpeech": "No speech detected. Please try again.",
+    "voiceNetworkError": "Voice input requires an internet connection to the speech service.",
+    "voiceError": "Voice input error: {{error}}",
+    "voiceStartError": "Could not start voice input: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "Join Session",
@@ -987,6 +997,19 @@
   "home": {
     "login": "Login",
     "signup": "Sign Up",
+    "buzzer": {
+      "hint1": "This is what your audience feels.",
+      "hint2": "Again. It's satisfying, right?",
+      "hint3": "Imagine 200 students doing this at once.",
+      "hint4": "Okay, one more.",
+      "hint5": "The buzzer approves of you.",
+      "ariaLabel": "Press the demo buzzer",
+      "pressMe": "Press me!",
+      "buzzesToday": "buzzes today",
+      "fastestBuzz": "fastest buzz",
+      "speechBuzz": "You buzzed in {{time}}s! ⚡",
+      "speechRecord": "New fastest buzz: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "Interactive Quizzes Made Simple",
       "subtitle": "Create engaging quizzes, collect real-time responses, and visualize results instantly. Perfect for classrooms, meetings, and events."
@@ -1897,7 +1920,9 @@
     "requiredTooltip": "Participants must answer this question before they can proceed.",
     "requiredWarning": "This question is required. Please answer it to continue.",
     "noResponsesYet": "No responses yet.",
-    "resultsEmailPlaceholder": "your@email.com"
+    "resultsEmailPlaceholder": "your@email.com",
+    "notPublished": "This quiz is not an offline poll or has not been published yet.",
+    "loadFailed": "Failed to load results"
   },
   "exam": {
     "typeLabel": "Test",
@@ -2255,7 +2280,16 @@
       "captureButton": "Capture Photo",
       "verified": "Identity verified. You're ready to begin.",
       "startExam": "Start Exam"
-    }
+    },
+    "integrityClean": "Clean",
+    "integritySuspicious": "Suspicious",
+    "integrityHighRisk": "High Risk",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "Failed to load integrity data",
+    "noViolationEvents": "No violation events recorded",
+    "noWebcamSnapshots": "No webcam snapshots recorded for this candidate",
+    "noSnapshotsParticipant": "No snapshots recorded for this participant",
+    "analysisError": "AI analysis failed. Please try again."
   },
   "richText": {
     "italic": "Italic",
@@ -2299,7 +2333,15 @@
     "bulkArchiveConfirm": "Archive selected activities?",
     "bulkDeleteConfirm": "Delete selected activities?",
     "sortCreated": "Created",
-    "sortUpdated": "Updated"
+    "sortUpdated": "Updated",
+    "typeQuiz": "Live Quiz",
+    "typePoll": "Live Poll",
+    "typeExam": "Test",
+    "typeSurvey": "Survey",
+    "statusReady": "Ready",
+    "statusDraft": "Draft",
+    "statusArchived": "Archived",
+    "statusCompleted": "Completed"
   },
   "templates": {
     "title": "Template Gallery",
@@ -2337,7 +2379,11 @@
     "statusEnded": "Ended",
     "statusActive": "Live",
     "statusCreated": "Open",
-    "empty": "No sessions found. Run a quiz or poll to see results here."
+    "empty": "No sessions found. Run a quiz or poll to see results here.",
+    "modeQuiz": "Quiz",
+    "modePoll": "Poll",
+    "modeOfflinePoll": "Offline Poll",
+    "modeExam": "Exam"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2348,6 +2394,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "All",
+    "tabQuizzes": "Quizzes",
+    "tabPolls": "Polls",
+    "tabTests": "Tests",
+    "tabSurveys": "Surveys",
+    "typeQuiz": "Live Quiz",
+    "typePoll": "Live Poll",
+    "typeExam": "Test",
+    "typeSurvey": "Survey"
   }
 }

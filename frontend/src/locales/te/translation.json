@@ -388,7 +388,17 @@
     "skinHint": "ప్రేక్షకులు మరియు ప్రొజెక్టర్ రూపాన్ని ఎంచుకోండి",
     "videoUrl": "Video URL (YouTube / Vimeo)",
     "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
-    "videoUrlInvalid": "YouTube మరియు Vimeo URLలు మాత్రమే మద్దతు ఉన్నాయి"
+    "videoUrlInvalid": "YouTube మరియు Vimeo URLలు మాత్రమే మద్దతు ఉన్నాయి",
+    "pollActiveBanner": "మీ ఆఫ్‌లైన్ పోల్ ఇప్పుడు చురుకుగా ఉంది. ఈ లింక్‌ను పాల్గొనేవారితో పంచుకోండి:",
+    "examActiveBanner": "మీ పరీక్ష ఇప్పుడు లైవ్ లో ఉంది. ఈ లింక్‌ను పాల్గొనేవారితో పంచుకోండి:",
+    "importValidTag": "చెల్లుబాటు",
+    "importErrorTag": "లోపం",
+    "voiceMicBlocked": "మైక్రోఫోన్ యాక్సెస్ బ్లాక్ చేయబడింది. బ్రౌజర్ అడ్రస్ బార్‌లో మైక్రోఫోన్‌ను అనుమతించండి.",
+    "voiceNoSpeech": "మాట గుర్తించబడలేదు. మళ్ళీ ప్రయత్నించండి.",
+    "voiceNetworkError": "వాయిస్ ఇన్‌పుట్‌కు ఇంటర్నెట్ కనెక్షన్ అవసరం.",
+    "voiceError": "వాయిస్ ఇన్‌పుట్ లోపం: {{error}}",
+    "voiceStartError": "వాయిస్ ఇన్‌పుట్ ప్రారంభించడం విఫలమైంది: {{error}}",
+    "scaleRange": "1 — 2 — 3 — 4 — 5"
   },
   "audience": {
     "joinQuiz": "సెషన్‌లో చేరండి",
@@ -820,6 +830,19 @@
   "home": {
     "login": "లాగిన్",
     "signup": "సైన్ అప్",
+    "buzzer": {
+      "hint1": "మీ ప్రేక్షకులకు ఇలాగే అనిపిస్తుంది.",
+      "hint2": "మళ్ళీ. సంతృప్తిగా ఉంది కదా?",
+      "hint3": "200 విద్యార్థులు ఒకేసారి ఇది చేయడం ఊహించుకోండి.",
+      "hint4": "సరే, మరొకటి.",
+      "hint5": "బజర్ మీకు ఆమోదం తెలిపింది.",
+      "ariaLabel": "డెమో బజర్ నొక్కండి",
+      "pressMe": "నొక్కు!",
+      "buzzesToday": "ఈరోజు బజర్లు",
+      "fastestBuzz": "వేగవంతమైన బజర్",
+      "speechBuzz": "మీరు {{time}}s లో బజర్ చేశారు! ⚡",
+      "speechRecord": "కొత్త వేగమైన బజర్: {{time}}s! 🏆"
+    },
     "hero": {
       "title": "ఇంటరాక్టివ్ క్విజ్‌లు సులభంగా",
       "subtitle": "ఆసక్తికరమైన క్విజ్‌లు సృష్టించండి, రియల్-టైమ్‌లో స్పందనలు సేకరించండి, వెంటనే ఫలితాలను చూపించండి. తరగతులు, సమావేశాలు, కార్యక్రమాలకు అద్భుతం."
@@ -1838,7 +1861,9 @@
     "completionRate": "పూర్తి రేటు",
     "required": "తప్పనిసరి",
     "requiredTooltip": "పాల్గొనేవారు ముందుకు వెళ్ళే ముందు ఈ ప్రశ్నకు సమాధానం ఇవ్వాలి.",
-    "requiredWarning": "ఈ ప్రశ్న తప్పనిసరి. కొనసాగించడానికి దీనికి సమాధానం ఇవ్వండి."
+    "requiredWarning": "ఈ ప్రశ్న తప్పనిసరి. కొనసాగించడానికి దీనికి సమాధానం ఇవ్వండి.",
+    "notPublished": "ఈ క్విజ్ ఆఫ్‌లైన్ పోల్ కాదు లేదా ఇంకా ప్రచురించబడలేదు.",
+    "loadFailed": "ఫలితాలు లోడ్ చేయడం విఫలమైంది"
   },
   "exam": {
     "typeLabel": "టెస్ట్",
@@ -2171,7 +2196,16 @@
       "captureButton": "ఫోటో క్యాప్చర్ చేయండి",
       "verified": "గుర్తింపు ధృవీకరించబడింది. మీరు ప్రారంభించడానికి సిద్ధంగా ఉన్నారు.",
       "startExam": "పరీక్ష ప్రారంభించండి"
-    }
+    },
+    "integrityClean": "శుభ్రంగా",
+    "integritySuspicious": "అనుమానాస్పదం",
+    "integrityHighRisk": "అధిక ప్రమాదం",
+    "integrityNA": "N/A",
+    "integrityLoadFailed": "సమగ్రత డేటా లోడ్ చేయడం విఫలమైంది",
+    "noViolationEvents": "ఉల్లంఘన సంఘటనలు ఏవీ నమోదు కాలేదు",
+    "noWebcamSnapshots": "ఈ అభ్యర్థి కోసం వెబ్‌క్యామ్ స్నాప్‌షాట్‌లు నమోదు కాలేదు",
+    "noSnapshotsParticipant": "ఈ పాల్గొనేవారికి స్నాప్‌షాట్‌లు నమోదు కాలేదు",
+    "analysisError": "AI విశ్లేషణ విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."
   },
   "richText": {
     "italic": "ఇటాలిక్",
@@ -2231,7 +2265,15 @@
     "bulkArchiveConfirm": "ఎంచుకున్న కార్యకలాపాలు ఆర్కైవ్ చేయాలా?",
     "bulkDeleteConfirm": "ఎంచుకున్న కార్యకలాపాలు తొలగించాలా?",
     "sortCreated": "సృష్టించబడింది",
-    "sortUpdated": "నవీకరించబడింది"
+    "sortUpdated": "నవీకరించబడింది",
+    "typeQuiz": "లైవ్ క్విజ్",
+    "typePoll": "లైవ్ పోల్",
+    "typeExam": "పరీక్ష",
+    "typeSurvey": "సర్వే",
+    "statusReady": "సిద్ధం",
+    "statusDraft": "డ్రాఫ్ట్",
+    "statusArchived": "ఆర్కైవ్",
+    "statusCompleted": "పూర్తయింది"
   },
   "templates": {
     "title": "టెంప్లేట్ గ్యాలరీ",
@@ -2269,7 +2311,11 @@
     "statusEnded": "ముగిసింది",
     "statusActive": "లైవ్",
     "statusCreated": "తెరిచి",
-    "empty": "సెషన్లు ఏవీ కనుగొనబడలేదు. ఫలితాలు ఇక్కడ చూడటానికి క్విజ్ లేదా పోల్ నడపండి."
+    "empty": "సెషన్లు ఏవీ కనుగొనబడలేదు. ఫలితాలు ఇక్కడ చూడటానికి క్విజ్ లేదా పోల్ నడపండి.",
+    "modeQuiz": "క్విజ్",
+    "modePoll": "పోల్",
+    "modeOfflinePoll": "ఆఫ్‌లైన్ పోల్",
+    "modeExam": "పరీక్ష"
   },
   "explore": {
     "heroTitle": "Browse ready-to-run activities",
@@ -2280,6 +2326,15 @@
     "searchPlaceholder": "Search templates…",
     "noResults": "No templates found",
     "footerCta": "Create your own activities for free.",
-    "signUpFree": "Sign up →"
+    "signUpFree": "Sign up →",
+    "tabAll": "అన్నీ",
+    "tabQuizzes": "క్విజ్‌లు",
+    "tabPolls": "పోల్‌లు",
+    "tabTests": "పరీక్షలు",
+    "tabSurveys": "సర్వేలు",
+    "typeQuiz": "లైవ్ క్విజ్",
+    "typePoll": "లైవ్ పోల్",
+    "typeExam": "పరీక్ష",
+    "typeSurvey": "సర్వే"
   }
 }
