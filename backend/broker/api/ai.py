@@ -2,10 +2,12 @@
 AI generation endpoints — question generation via Google Gemini; other AI via local ollama.
 Restricted to admin and super_admin roles.
 """
+import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from core.auth.dependencies import require_admin, get_current_user, CurrentUser
 from shared.utils.rate_limiter import limiter, get_user_id_key
@@ -21,6 +23,7 @@ from core.ai.ollama_service import (
 )
 from core.ai.gemini_service import (
     generate_questions as gemini_generate_questions,
+    generate_questions_stream as gemini_generate_questions_stream,
     validate_quiz_prompt,
     GeminiError,
 )
@@ -46,6 +49,7 @@ class GeneratedQuestion(BaseModel):
     options: Optional[list[str]] = None
     correct_answer_index: Optional[int] = None
     explanation: Optional[str] = None
+    image_suggestion: Optional[str] = None
 
 
 class GenerateQuestionsResponse(BaseModel):
@@ -142,6 +146,44 @@ async def api_generate_questions(
         questions=[GeneratedQuestion(**q) for q in questions],
         model=settings.gemini.model,
     )
+
+
+@router.post("/generate/questions/stream")
+@limiter.limit("20/minute", key_func=get_user_id_key)
+async def api_generate_questions_stream(
+    request: Request,
+    req: GenerateQuestionsRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Stream quiz questions as SSE events. Each event contains one question JSON.
+    Final event: {"done": true, "title": "...", "description": "..."}.
+    """
+    prompt = req.prompt or req.topic or ""
+    if not prompt.strip():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="prompt is required")
+
+    valid, reason = await validate_quiz_prompt(prompt.strip(), language=req.language)
+    if not valid:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=reason or "__PROMPT_NOT_FOR_QUIZ__",
+        )
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        try:
+            async for item in gemini_generate_questions_stream(
+                prompt=prompt.strip(),
+                count=req.count,
+                language=req.language,
+                quiz_type=req.quiz_type,
+            ):
+                yield f"data: {json.dumps(item)}\n\n"
+        except GeminiError as e:
+            logger.error("Gemini streaming failed: %s", e)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/generate/options", response_model=GenerateDistractorsResponse)

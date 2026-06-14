@@ -470,13 +470,16 @@ async def generate_questions(
             "Each option may also use HTML formatting.\n"
             "- correct_answer_index: 0-based index of the single correct option.\n"
             "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
-            "and why the main wrong answers are incorrect. No HTML in explanation."
+            "and why the main wrong answers are incorrect. No HTML in explanation.\n"
+            "- image_suggestion: if a diagram, chart, map, or graph would genuinely help students "
+            "understand or answer this question, provide a short image search query (e.g. "
+            "'mitosis cell division stages diagram'). Otherwise set to null."
         )
         output_schema = (
             '{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
             '"questions": [{"question_type": "mcq", "text": "<question>", '
             '"options": ["<A>", "<B>", "..."], "correct_answer_index": 0, '
-            '"explanation": "<why correct is right>"}]}'
+            '"explanation": "<why correct is right>", "image_suggestion": null | "<search query>"}]}'
         )
 
     system_instruction = (
@@ -559,6 +562,7 @@ User instructions:
                 "options": None,
                 "correct_answer_index": None,
                 "explanation": None,
+                "image_suggestion": None,
             })
         else:
             # mcq (default)
@@ -574,12 +578,18 @@ User instructions:
             if not (0 <= idx < len(opts)):
                 idx = 0
             explanation = q.get("explanation") or ""
+            image_suggestion = q.get("image_suggestion")
+            if isinstance(image_suggestion, str) and image_suggestion.strip():
+                image_suggestion = image_suggestion.strip()[:200]
+            else:
+                image_suggestion = None
             result.append({
                 "question_type": "mcq",
                 "text": _md_to_html(str(text)),
                 "options": [_md_to_html(str(o)) for o in opts],
                 "correct_answer_index": idx,
                 "explanation": _md_to_html(explanation) if explanation else None,
+                "image_suggestion": image_suggestion,
             })
 
     return {
@@ -587,3 +597,28 @@ User instructions:
         "description": parsed.get("description") or "",
         "questions": result,
     }
+
+
+async def generate_questions_stream(
+    prompt: str,
+    count: int = 5,
+    language: str = "en",
+    quiz_type: str = "quiz",
+):
+    """
+    Async generator that generates questions and yields each one individually.
+    Yields dicts: question objects (same schema as generate_questions),
+    then a final {"done": True, "title": ..., "description": ...} dict.
+    Raises GeminiError on failure.
+    """
+    import asyncio
+    result = await generate_questions(
+        prompt=prompt,
+        count=count,
+        language=language,
+        quiz_type=quiz_type,
+    )
+    for q in result["questions"]:
+        yield q
+        await asyncio.sleep(0)
+    yield {"done": True, "title": result["title"], "description": result["description"]}

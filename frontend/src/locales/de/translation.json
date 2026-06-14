@@ -1768,7 +1768,11 @@
     "difficultyMedium": "Medium",
     "difficultyHard": "Hard",
     "regenerate": "Regenerate this question",
-    "setCorrect": "Mark as correct"
+    "setCorrect": "Mark as correct",
+    "streamProgress": "Generated {{count}} of {{total}}…",
+    "stopGenerating": "Stop generating",
+    "waitForStream": "Generating…",
+    "findImage": "Find image"
   },
   "offlinePoll": {
     "typeLabel": "Umfrage",

@@ -1059,6 +1059,9 @@ export default function QuizBuilder() {
   const [editingPreviewIndex, setEditingPreviewIndex] = useState(null)
   const [editingData, setEditingData] = useState(null) // {text, options, correct_answer_index}
   const [regeneratingIndex, setRegeneratingIndex] = useState(null)
+  const [aiStreaming, setAiStreaming] = useState(false)
+  const [aiStreamCount, setAiStreamCount] = useState(0)
+  const aiAbortRef = useRef(null)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -2239,36 +2242,57 @@ export default function QuizBuilder() {
   const handleAiGenerate = async () => {
     if (!aiTopic.trim()) return
     setAiGenerating(true)
+    setAiStreaming(false)
+    setAiStreamCount(0)
     setAiError(null)
+    setAiPreview([])
+    const hint = CONTENT_TYPE_HINTS[aiContentType]
+    const effectivePrompt = hint ? `${hint}\n\n${aiTopic.trim()}` : aiTopic.trim()
+    const quizType = quiz?.quiz_type || initialQuizType || 'quiz'
+
+    const abort = new AbortController()
+    aiAbortRef.current = abort
+
+    // Switch to preview step immediately so questions stream in
+    setAiStep('preview')
+    setAiStreaming(true)
+
     try {
-      const hint = CONTENT_TYPE_HINTS[aiContentType]
-      const effectivePrompt = hint ? `${hint}\n\n${aiTopic.trim()}` : aiTopic.trim()
-      const quizType = quiz?.quiz_type || initialQuizType || 'quiz'
-      const res = await aiAPI.generateQuestions({
-        prompt: effectivePrompt,
-        count: aiCount,
-        language: i18n.language,
-        quiz_type: quizType,
-      })
-      const generatedQuestions = res.data.questions.map(q => ({ ...q, selected: true }))
-      if (generatedQuestions.length === 0) {
-        setAiError(t('ai.noQuestionsGenerated'))
-        return
-      }
-      setAiPreview(generatedQuestions)
-      setAiTitle(res.data.title || null)
-      setAiDescription(res.data.description || null)
-      setAiTitleDismissed(false)
-      setAiStep('preview')
-    } catch (err) {
-      const detail = err.response?.data?.detail
-      setAiError(
-        detail === '__PROMPT_NOT_FOR_QUIZ__' ? t('ai.promptNotForQuiz')
-        : detail || t('ai.generationFailed')
+      await aiAPI.streamGenerateQuestions(
+        { prompt: effectivePrompt, count: aiCount, language: i18n.language, quiz_type: quizType },
+        (q) => {
+          setAiPreview(prev => [...prev, { ...q, selected: true }])
+          setAiStreamCount(prev => prev + 1)
+        },
+        (doneEvent) => {
+          setAiTitle(doneEvent.title || null)
+          setAiDescription(doneEvent.description || null)
+          setAiTitleDismissed(false)
+        },
+        abort.signal,
       )
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        // User stopped — keep questions received so far
+      } else {
+        const msg = err.message || t('ai.generationFailed')
+        if (msg === '__PROMPT_NOT_FOR_QUIZ__') {
+          setAiError(t('ai.promptNotForQuiz'))
+          setAiStep('input')
+        } else {
+          setAiError(msg)
+          if (aiPreview.length === 0) setAiStep('input')
+        }
+      }
     } finally {
       setAiGenerating(false)
+      setAiStreaming(false)
+      aiAbortRef.current = null
     }
+  }
+
+  const handleAiStopStream = () => {
+    aiAbortRef.current?.abort()
   }
 
   const handleAiAddSelected = async () => {
@@ -2951,9 +2975,21 @@ export default function QuizBuilder() {
 
         {aiStep === 'preview' && (
           <Space direction="vertical" style={{ width: '100%' }} size={12}>
-            <Space>
-              <Button size="small" onClick={() => setAiStep('input')}>{t('ai.back')}</Button>
-              <Text type="secondary">{t('ai.selectedCount', { selected: aiPreview.filter(q => q.selected).length, total: aiPreview.length })}</Text>
+            <Space wrap>
+              <Button size="small" onClick={() => { setAiStep('input'); setAiPreview([]); setAiStreaming(false); aiAbortRef.current?.abort() }} disabled={aiStreaming}>{t('ai.back')}</Button>
+              {aiStreaming ? (
+                <>
+                  <Text type="secondary">
+                    <LoadingOutlined spin style={{ marginRight: 6 }} />
+                    {t('ai.streamProgress', { count: aiStreamCount, total: aiCount })}
+                  </Text>
+                  <Button size="small" danger onClick={handleAiStopStream}>
+                    {t('ai.stopGenerating')}
+                  </Button>
+                </>
+              ) : (
+                <Text type="secondary">{t('ai.selectedCount', { selected: aiPreview.filter(q => q.selected).length, total: aiPreview.length })}</Text>
+              )}
             </Space>
             {aiTitle && !aiTitleDismissed && (
               <Alert
@@ -3106,6 +3142,20 @@ export default function QuizBuilder() {
                           {qType === 'word_cloud' ? t('quiz.wordCloudDescription') : t('quiz.paragraphDescription')}
                         </Text>
                       )}
+                      {q.image_suggestion && (
+                        <div style={{ marginTop: 6 }}>
+                          <Tooltip title={q.image_suggestion}>
+                            <Button
+                              size="small"
+                              type="dashed"
+                              icon={<span>🔍</span>}
+                              onClick={() => window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q.image_suggestion)}`, '_blank')}
+                            >
+                              {t('ai.findImage', 'Find image')}
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      )}
                     </>
                   )}
                 </Card>
@@ -3115,10 +3165,13 @@ export default function QuizBuilder() {
               type="primary"
               block
               loading={aiAdding}
-              disabled={aiPreview.filter(q => q.selected).length === 0}
+              disabled={aiPreview.filter(q => q.selected).length === 0 || aiStreaming}
               onClick={handleAiAddSelected}
             >
-              {t('ai.addToQuiz', { count: aiPreview.filter(q => q.selected).length })}
+              {aiStreaming
+                ? t('ai.waitForStream', 'Generating…')
+                : t('ai.addToQuiz', { count: aiPreview.filter(q => q.selected).length })
+              }
             </Button>
           </Space>
         )}

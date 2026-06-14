@@ -250,6 +250,44 @@ export const aiAPI = {
   generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data),
   rewrite: (data) => api.post('/ai/rewrite', data),
   listModels: () => api.get('/ai/models'),
+  streamGenerateQuestions: async (data, onQuestion, onDone, signal) => {
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+    const res = await fetch(`${base}/ai/generate/questions/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+      signal,
+    })
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      throw new Error(errBody.detail || `HTTP ${res.status}`)
+    }
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        try {
+          const item = JSON.parse(line.slice(6))
+          if (item.error) throw new Error(item.error)
+          if (item.done) {
+            onDone(item)
+          } else {
+            onQuestion(item)
+          }
+        } catch (e) {
+          if (e.message && !e.message.startsWith('JSON')) throw e
+        }
+      }
+    }
+  },
 }
 
 export const appFeedbackAPI = {
