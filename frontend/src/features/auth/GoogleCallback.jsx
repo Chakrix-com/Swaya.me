@@ -12,11 +12,12 @@ function GoogleCallback() {
 
   useEffect(() => {
     const code = searchParams.get('code')
+    const state = searchParams.get('state')
     if (!code) {
       navigate('/login', { replace: true })
       return
     }
-    authAPI.googleCallback(code)
+    authAPI.googleCallback(code, state)
       .then(r => {
         dispatch(loginSuccess(r.data))
         navigate('/dashboard', { replace: true })

@@ -18,7 +18,13 @@ api.interceptors.response.use(
     // 403 passes through: could be permission denied or participant session invalidation
     if (error.response?.status === 401) {
       localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Don't redirect for session probe (/auth/me) — App.jsx handles that gracefully.
+      // Don't redirect if already on /login to avoid an infinite reload loop.
+      const isProbe = error.config?.url?.includes('/auth/me')
+      const alreadyOnLogin = window.location.pathname === '/login'
+      if (!isProbe && !alreadyOnLogin) {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
@@ -34,7 +40,7 @@ export const authAPI = {
   resetPassword: (data) => api.post('/auth/reset-password', data),
   getMyLimits: () => api.get('/auth/my-limits'),
   getTierPlans: () => api.get('/auth/tier-plans'),
-  googleCallback: (code) => api.get('/auth/google/callback', { params: { code } }),
+  googleCallback: (code, state) => api.get('/auth/google/callback', { params: { code, state } }),
   getTenantUsers: () => api.get('/users', { params: { per_page: 100 } }),
 }
 
@@ -124,6 +130,7 @@ export const sessionAPI = {
   join: (data) => api.post('/quizzes/sessions/join', data),
   leave: (sessionToken) => api.post('/quizzes/sessions/leave', null, { params: { session_token: sessionToken } }),
   advance: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/advance`),
+  closeQuestion: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/close-question`),
   back: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/back`),
   end: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/end`),
   toggleLeaderboard: (sessionId) => api.post(`/quizzes/sessions/${sessionId}/toggle-leaderboard`),

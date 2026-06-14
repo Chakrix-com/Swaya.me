@@ -1,7 +1,7 @@
 """
 Quiz feature domain models
 """
-from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
+from sqlalchemy import Column, Integer, BigInteger, Float, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
 from sqlalchemy.orm import relationship
@@ -170,9 +170,9 @@ class Question(Base, TimestampMixin):
     correct_answer_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
     question_image_url = Column(String(500), nullable=True)  # Optional image for question text
     option_images = Column(JSON, nullable=True)  # Optional images for MCQ options: {"A": "path", "B": "path", ...}
-    points = Column(Integer, nullable=False, default=1, server_default="1")
+    points = Column(Float, nullable=False, default=1, server_default="1")
     max_time_seconds = Column(Integer, nullable=True)
-    negative_points = Column(Integer, nullable=False, default=0, server_default="0")
+    negative_points = Column(Float, nullable=False, default=0, server_default="0")
     is_required = Column(Boolean, nullable=False, default=False, server_default="0")
     answer_explanation = Column(Text, nullable=True)
 

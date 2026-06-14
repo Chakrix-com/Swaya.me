@@ -73,6 +73,7 @@ export default function AudienceSession() {
   const [sessionStatus, setSessionStatus] = useState(null)
   const [sessionInvalidated, setSessionInvalidated] = useState(false)
   const [leaderboard, setLeaderboard] = useState(null)
+  const [endedEarly, setEndedEarly] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
@@ -162,7 +163,16 @@ export default function AudienceSession() {
 
       if (sessionStatus && sessionStatus !== newStatus) {
         if (newStatus === 'ended') {
-          message.success(t('audience.quizEndedThanks', { defaultValue: 'Quiz has ended! Thank you for participating!' }))
+          // Detect if host ended mid-session (not all questions were presented)
+          const totalQ = response.data.total_questions ?? 0
+          const lastIdx = response.data.current_question_index ?? -1
+          const wasEarly = sessionStatus === 'active' && totalQ > 0 && lastIdx < totalQ - 1
+          if (wasEarly) {
+            setEndedEarly(true)
+            message.warning(t('audience.quizEndedByHost', { defaultValue: 'The host has ended the quiz.' }), 5)
+          } else {
+            message.success(t('audience.quizEndedThanks', { defaultValue: 'Quiz has ended! Thank you for participating!' }))
+          }
           trackEvent('participant_session_end', { sessionId: Number(sessionId) })
           sessionStorage.removeItem('swaya_participant_session')
           if (pollingIntervalRef.current) {
@@ -321,7 +331,10 @@ export default function AudienceSession() {
 
   const isPollSession = results?.quiz_type === 'poll'
   const currentQuestionAnswerCount = Number(results?.current_question?.total_answers ?? 0)
-  const visibleLeaderboard = (leaderboard && currentQuestionAnswerCount > 0)
+  // Show full leaderboard: when session is ended, between questions (no active question),
+  // or when the current question already has answers. Clear entries only while a fresh
+  // question is active and nobody has answered yet (avoid spoiling standings mid-question).
+  const visibleLeaderboard = (leaderboard && (sessionStatus === 'ended' || !currentQuestion || currentQuestionAnswerCount > 0))
     ? leaderboard
     : (leaderboard ? { ...leaderboard, entries: [] } : null)
   const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
@@ -547,8 +560,20 @@ export default function AudienceSession() {
                 {/* Personal summary card */}
                 <Card>
                   <Space direction="vertical" align="center" style={{ width: '100%', padding: '12px 0' }} size="large">
-                    <div style={{ fontSize: 52 }}>{isPoll ? '📊' : '🏁'}</div>
-                    <Title level={3} style={{ margin: 0 }}>{t('audience.quizCompleted', { defaultValue: 'Quiz Completed!' })}</Title>
+                    <div style={{ fontSize: 52 }}>{isPoll ? '📊' : endedEarly ? '⏹️' : '🏁'}</div>
+                    <Title level={3} style={{ margin: 0 }}>
+                      {endedEarly
+                        ? t('audience.quizEndedByHostTitle', { defaultValue: 'Quiz ended by host' })
+                        : t('audience.quizCompleted', { defaultValue: 'Quiz Completed!' })}
+                    </Title>
+                    {endedEarly && (
+                      <Alert
+                        message={t('audience.quizEndedEarlyNote', { defaultValue: 'The host ended this session early. Your score reflects questions answered so far.' })}
+                        type="warning"
+                        showIcon
+                        style={{ textAlign: 'left', maxWidth: 420 }}
+                      />
+                    )}
                     {results?.quiz_title && <Text type="secondary" style={{ fontSize: 16 }}>{results.quiz_title}</Text>}
 
                     {!isPoll && (
@@ -649,17 +674,20 @@ export default function AudienceSession() {
                   </Space>
                 ) : (
                   /* Between questions */
-                  <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                    <LoadingOutlined style={{ fontSize: 48 }} />
-                    <Title level={3}>
-                      {t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
-                    </Title>
-                    <Text type="secondary">
-                      {t('audience.hostPreparingNextQuestion', { defaultValue: 'Host is preparing the next question' })}
-                    </Text>
-                    <Tag color="blue" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                      {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
-                    </Tag>
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space direction="vertical" align="center" style={{ width: '100%' }}>
+                      <LoadingOutlined style={{ fontSize: 48 }} />
+                      <Title level={3}>
+                        {t('audience.waitingForNextQuestion', { defaultValue: 'Waiting for next question...' })}
+                      </Title>
+                      <Text type="secondary">
+                        {t('audience.hostPreparingNextQuestion', { defaultValue: 'Host is preparing the next question' })}
+                      </Text>
+                      <Tag color="blue" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                        {t('audience.joinedAs', { defaultValue: 'Joined as' })}: {displayName}
+                      </Tag>
+                    </Space>
+                    <LeaderboardTable />
                   </Space>
                 )}
               </Card>

@@ -95,6 +95,7 @@ class SessionServiceAsync:
             "total_questions": len(questions),
             "status": session.status.value,
             "current_question_index": session.current_question_index,
+            "current_question_status": session.current_question_status.value if session.current_question_status else None,
             "leaderboard_visible": False if is_poll else session.leaderboard_visible,
             "current_question": q_data,
         }
@@ -1030,6 +1031,68 @@ class SessionServiceAsync:
             expire=86400
         )
         await self._write_audience_state_cache(session, questions, timer_started_at=timer_started_at)
+
+        return await self._to_session_response(db, session)
+
+    async def close_question(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        current_user: CurrentUser,
+    ) -> SessionResponse:
+        """Close the current question for answer submissions without advancing to the next question.
+
+        Called when the host reveals the correct answer on the present screen.
+        Prevents participants from submitting answers after they've seen the answer.
+        Idempotent — safe to call if the question is already closed.
+        """
+        result = await db.execute(
+            select(QuizSession)
+            .filter(
+                QuizSession.id == session_id,
+                QuizSession.tenant_id == current_user.tenant_id,
+            )
+            .options(joinedload(QuizSession.quiz).selectinload(Quiz.questions))
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            raise SessionNotFoundError("Session not found")
+        if session.status == QuizSessionStatus.ENDED:
+            raise InvalidSessionStatusError("Session has ended")
+
+        # Idempotent: if already closed, just return current state
+        if session.current_question_status != QuestionStatus.OPEN:
+            return await self._to_session_response(db, session)
+
+        now = datetime.utcnow()
+        await self._cancel_question_timeout(session_id)
+        questions = sorted(session.quiz.questions, key=lambda q: q.order)
+
+        session.current_question_status = QuestionStatus.CLOSED
+        await db.execute(
+            update(SessionQuestionTiming)
+            .where(
+                SessionQuestionTiming.session_id == session_id,
+                SessionQuestionTiming.question_index == session.current_question_index,
+                SessionQuestionTiming.closed_at == None,  # noqa: E711
+            )
+            .values(closed_at=now)
+        )
+
+        await db.commit()
+        await db.refresh(session)
+
+        # Update Redis fast-path so submit_answer sees "closed" immediately
+        await self.redis.set_json(
+            f"session:{session.id}:info",
+            {
+                "status": session.status.value,
+                "current_question_index": session.current_question_index,
+                "current_question_status": session.current_question_status.value if session.current_question_status else None,
+            },
+            expire=86400,
+        )
+        await self._write_audience_state_cache(session, questions)
 
         return await self._to_session_response(db, session)
 

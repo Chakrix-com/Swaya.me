@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { Spin, Tag, Rate, Progress, Modal } from 'antd'
 import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined, FullscreenOutlined } from '@ant-design/icons'
@@ -754,7 +755,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
         <span className="pv-participants-label">{t('quiz.participants')}</span>
       </div>
 
-      {!isPoll && leaderboard?.entries?.some(e => e.score > 0) && (
+      {!isPoll && (leaderboard?.total_participants ?? 0) > 0 && (
         <>
           <div className="pv-sidebar-divider" />
           <CompactLeaderboard
@@ -797,8 +798,9 @@ export default function QuizPresent() {
   const whiteboardPushQueuedRef = useRef(false)
   const whiteboardLastPushAtRef = useRef(0)
 
-  // Host controls are shown only when a user session exists in this browser
-  const isHost = !!localStorage.getItem('user')
+  // Host controls are shown only when a user is authenticated in this browser
+  const { user } = useSelector((s) => s.auth)
+  const isHost = !!user
   const isPoll = results?.quiz_type === 'poll'
 
   const joinUrl = joinCode ? `${window.location.origin}/join/${joinCode}` : ''
@@ -826,8 +828,17 @@ export default function QuizPresent() {
       results?.current_question?.correct_answer_index !== null
       && results?.current_question?.correct_answer_index !== undefined
     const isRevealQuestion = isOptionQuestion && (isPoll || hasCorrectAnswer)
-    // First press on option questions: reveal answer (quiz) or show stats (poll), don't advance yet
+    // First press on option questions: close the question for submissions, then reveal answer/stats.
+    // Closing the question on the backend prevents participants from submitting after seeing
+    // the correct answer displayed on the present screen.
     if (!notStarted && !revealed && isRevealQuestion) {
+      setCtrlLoading(true)
+      try {
+        await sessionAPI.closeQuestion(Number(sessionId))
+      } catch (_) {
+        // Non-fatal: question may already be closed (timed out). Proceed with reveal.
+      }
+      setCtrlLoading(false)
       setRevealed(true)
       return
     }

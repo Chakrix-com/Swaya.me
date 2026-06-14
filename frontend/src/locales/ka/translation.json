@@ -1750,9 +1750,9 @@
     "noQuestionsGenerated": "ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಲಾಗಲಿಲ್ಲ. ಬೇರೆ ವಿಷಯ ಪ್ರಯತ್ನಿಸಿ.",
     "generationFailed": "ರಚಿಸುವಿಕೆ ವಿಫಲವಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
     "promptNotForQuiz": "ನಿಮ್ಮ ಪ್ರಾಂಪ್ಟ್ ಕ್ವಿಜ್ ವಿಷಯಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ನೀವು ಪ್ರಶ್ನೆಗಳನ್ನು ಬಯಸುವ ವಿಷಯ, ಕೌಶಲ್ಯ ಅಥವಾ ಅಧ್ಯಾಯವನ್ನು ವಿವರಿಸಿ.",
-    "promptLabel": "Describe your questions",
-    "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
-    "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
+    "promptLabel": "ನಿಮ್ಮ ಪ್ರಶ್ನೆಗಳನ್ನು ವಿವರಿಸಿ",
+    "promptHint": "ನಿರ್ದಿಷ್ಟವಾಗಿ ಇರಿ: ವಿಷಯ, ಕಷ್ಟ ಮಟ್ಟ, ಪ್ರೇಕ್ಷಕರು, ಯಾವುದೇ ನಿರ್ಬಂಧಗಳು ಮತ್ತು ನೀವು ಬಯಸುವ ಪ್ರಶ್ನೆ ಶೈಲಿ ಸೇರಿಸಿ.",
+    "promptPlaceholder": "ಉದಾಹರಣೆಗಳು:\n• ಹಿರಿಯ ಡೆವಲಪರ್‌ಗಳಿಗೆ Python decorators ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಿ. ನೈಜ ಬಳಕೆ ಪ್ರಕರಣಗಳು ಮತ್ತು edge cases ಮೇಲೆ ಗಮನ ಹರಿಸಿ. ಸೈದ್ಧಾಂತಿಕ ವ್ಯಾಖ್ಯಾನಗಳನ್ನು ತಪ್ಪಿಸಿ.\n• ಹೈಸ್ಕೂಲ್ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಫ್ರೆಂಚ್ ಕ್ರಾಂತಿ ಕುರಿತು 10 ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಿ — ಕಾರಣಗಳು, ಪ್ರಮುಖ ಘಟನೆಗಳು ಮತ್ತು ಪ್ರಮುಖ ವ್ಯಕ್ತಿಗಳನ್ನು ಒಳಗೊಳ್ಳಿ. ಮಧ್ಯಮ ಕಷ್ಟ.\n• 2000 ರ ನಂತರ ಭಾರತೀಯ ಸಾಂವಿಧಾನಿಕ ತಿದ್ದುಪಡಿಗಳ ಕುರಿತು ಪ್ರಶ್ನೆಗಳನ್ನು ಬರೆಯಿರಿ. ಸರ್ಕಾರಿ ಪರೀಕ್ಷಾ ತಯಾರಿಗೆ ಸೂಕ್ತವಾದ ವಾಸ್ತವ-ಆಧಾರಿತ ಪ್ರಶ್ನೆಗಳಾಗಿರಲಿ.",
     "questionCountHint": "max 50"
   },
   "offlinePoll": {

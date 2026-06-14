@@ -45,7 +45,7 @@ from shared.exceptions.quiz import (
     TierLimitExceededError, ContentFilterError
 )
 from shared.utils.redis_client import get_redis, RedisClient
-from shared.utils.rate_limiter import limiter
+from shared.utils.rate_limiter import limiter, get_session_token_key
 from core.config.tier_service import TierService
 from persistence.models.quiz import Participant, QuizSession, Quiz
 from features.quiz.import_service import ExcelImportService
@@ -734,9 +734,9 @@ async def start_session(
 
 
 @router.post("/sessions/join", response_model=SessionJoinResponse)
-@limiter.limit("60/minute")
+@limiter.limit("1000/minute")
 async def join_session(
-    http_request: Request,
+    request: Request,
     body: SessionJoinRequest,
     db: AsyncSession = Depends(get_async_db),
     service: SessionServiceAsync = Depends(get_session_service)
@@ -772,6 +772,25 @@ async def advance_question(
     """Advance to next question"""
     try:
         return await service.advance_question(db, session_id, current_user)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InvalidSessionStatusError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/sessions/{session_id}/close-question", response_model=SessionResponse)
+async def close_question(
+    session_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: SessionServiceAsync = Depends(get_session_service),
+):
+    """Close the current question for answer submissions without advancing to the next question.
+    Used by the host present screen when revealing the correct answer, so participants
+    cannot submit answers after seeing the answer on the projector.
+    """
+    try:
+        return await service.close_question(db, session_id, current_user)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InvalidSessionStatusError as e:
@@ -934,9 +953,9 @@ async def stream_public_whiteboard_events(
 
 # Answer Submission Endpoints
 @router.post("/sessions/submit-answer", response_model=AnswerSubmitResponse)
-@limiter.limit("60/minute")
+@limiter.limit("30/minute", key_func=get_session_token_key)
 async def submit_answer(
-    http_request: Request,
+    request: Request,
     body: AnswerSubmitRequest,
     session_token: str,
     db: AsyncSession = Depends(get_async_db),
@@ -952,9 +971,9 @@ async def submit_answer(
 
 
 @router.post("/sessions/submit-word-cloud", response_model=AnswerSubmitResponse)
-@limiter.limit("60/minute")
+@limiter.limit("60/minute", key_func=get_session_token_key)
 async def submit_word_cloud_answer(
-    http_request: Request,
+    request: Request,
     body: WordCloudAnswerSubmitRequest,
     session_token: str,
     db: AsyncSession = Depends(get_async_db),

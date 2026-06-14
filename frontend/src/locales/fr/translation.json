@@ -1752,9 +1752,9 @@
     "noQuestionsGenerated": "Aucune question générée. Essayez un autre sujet.",
     "generationFailed": "Génération échouée. Réessayez.",
     "promptNotForQuiz": "Votre invite ne semble pas concerner un sujet de quiz. Décrivez un thème, une compétence ou un sujet sur lequel vous souhaitez des questions.",
-    "promptLabel": "Describe your questions",
-    "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
-    "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
+    "promptLabel": "Décrivez vos questions",
+    "promptHint": "Soyez précis : incluez le sujet, la difficulté, le public, toute contrainte et le style de questions que vous souhaitez.",
+    "promptPlaceholder": "Exemples :\n• Générez des questions sur les décorateurs Python pour les développeurs seniors. Concentrez-vous sur les cas d'utilisation réels et les cas limites. Évitez les définitions théoriques.\n• Créez 10 questions sur la Révolution française pour des lycéens — couvrez les causes, les événements clés et les personnages importants. Difficulté moyenne.\n• Rédigez des questions sur les amendements constitutionnels indiens depuis 2000. Les questions doivent être factuelles et adaptées à la préparation aux examens gouvernementaux.",
     "questionCountHint": "max 50"
   },
   "offlinePoll": {

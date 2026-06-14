@@ -245,10 +245,10 @@ class ExcelImportService:
                 question_type=q_type,
                 text=sanitize_html(q["text"]),
                 order=idx,
-                options=[sanitize_plain(o) for o in db_options],
+                options=[str(o).strip() for o in db_options],
                 correct_answer_index=correct_index,
                 points=float(q["points"] or 1),
-                negative_points=float(q["neg_marks"] or 0),
+                negative_points=float(q["neg_marks"] if q["neg_marks"] is not None else 0),
                 max_time_seconds=int(q["time_limit"] or 30)
             )
             db.add(question)

@@ -1750,9 +1750,9 @@
     "noQuestionsGenerated": "கேள்விகள் உருவாக்கப்படவில்லை. வேறு தலைப்பை முயற்சிக்கவும்.",
     "generationFailed": "உருவாக்கல் தோல்வி. மீண்டும் முயற்சிக்கவும்.",
     "promptNotForQuiz": "உங்கள் கோரிக்கை வினாடி-வினா தலைப்பு பற்றியதாக இல்லை என்று தோன்றுகிறது. நீங்கள் கேள்விகள் விரும்பும் பாடம், திறன் அல்லது தலைப்பை விவரிக்கவும்.",
-    "promptLabel": "Describe your questions",
-    "promptHint": "Be specific: include the topic, difficulty, audience, any constraints, and the style of questions you want.",
-    "promptPlaceholder": "Examples:\n• Generate questions about Python decorators for senior developers. Focus on real-world use cases and edge cases. Avoid theoretical definitions.\n• Create 10 questions on the French Revolution for high school students — cover causes, key events, and important figures. Medium difficulty.\n• Write questions on Indian constitutional amendments since 2000. Questions should be fact-based and suitable for a government exam prep quiz.",
+    "promptLabel": "உங்கள் கேள்விகளை விவரிக்கவும்",
+    "promptHint": "குறிப்பிட்டதாக இருங்கள்: தலைப்பு, சிரமம், பார்வையாளர்கள், ஏதேனும் கட்டுப்பாடுகள் மற்றும் நீங்கள் விரும்பும் கேள்வி வகையை சேர்க்கவும்.",
+    "promptPlaceholder": "எடுத்துக்காட்டுகள்:\n• மூத்த டெவலப்பர்களுக்கு Python decorators பற்றிய கேள்விகளை உருவாக்கு. நடைமுறை பயன்பாட்டு நிகழ்வுகள் மற்றும் edge cases-ல் கவனம் செலுத்து.\n• உயர்நிலை மாணவர்களுக்கு பிரெஞ்சு புரட்சியில் 10 கேள்விகள் உருவாக்கு — காரணங்கள், முக்கிய நிகழ்வுகள் மற்றும் முக்கியமான நபர்களை உள்ளடக்கு. நடுத்தர கடினம்.\n• 2000 முதல் இந்திய அரசியலமைப்பு திருத்தங்கள் பற்றிய கேள்விகள் எழுது. அரசு தேர்வு தயாரிப்புக்கு ஏற்ற உண்மை அடிப்படையிலான கேள்விகளாக இருக்கட்டும்.",
     "questionCountHint": "max 50"
   },
   "offlinePoll": {
