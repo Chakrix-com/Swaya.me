@@ -3001,12 +3001,25 @@ export default function QuizBuilder() {
                           if (transcript) setAiTopic(prev => prev ? `${prev} ${transcript}` : transcript)
                         }
                         recognizer.onend = () => { recognizerRef.current = null; setVoiceListening(false) }
-                        recognizer.onerror = () => { recognizerRef.current = null; setVoiceListening(false) }
+                        recognizer.onerror = (ev) => {
+                          recognizerRef.current = null
+                          setVoiceListening(false)
+                          if (ev.error === 'not-allowed') {
+                            antMessage.error('Microphone access was blocked. Please allow microphone in your browser address bar and try again.')
+                          } else if (ev.error === 'no-speech') {
+                            antMessage.warning('No speech detected. Please try again.')
+                          } else if (ev.error === 'network') {
+                            antMessage.error('Voice input requires an internet connection to the speech service.')
+                          } else {
+                            antMessage.error(`Voice input error: ${ev.error || 'unknown'}`)
+                          }
+                        }
                         try {
                           recognizer.start()
                           setVoiceListening(true)
-                        } catch {
+                        } catch (err) {
                           recognizerRef.current = null
+                          antMessage.error(`Could not start voice input: ${err?.message || err}`)
                         }
                       }}
                     />
