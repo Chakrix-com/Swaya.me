@@ -386,7 +386,10 @@
     "skinClassroom": "Classroom",
     "skinBoardroom": "Boardroom",
     "skinParty": "Party",
-    "skinHint": "Choose how the audience and projector look during this activity"
+    "skinHint": "Choose how the audience and projector look during this activity",
+    "videoUrl": "Video URL (YouTube / Vimeo)",
+    "videoUrlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "videoUrlInvalid": "Only YouTube and Vimeo URLs are supported"
   },
   "audience": {
     "joinQuiz": "Join Session",
