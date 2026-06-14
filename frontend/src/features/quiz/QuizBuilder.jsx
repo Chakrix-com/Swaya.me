@@ -79,6 +79,18 @@ const getQuestionTypeLabel = (type, t) => {
 
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
+// Stable sortable wrapper — must live outside questions.map so React sees a consistent
+// component type across re-renders (avoids unmount/remount of children on every parent render).
+const SortableItem = ({ id, disabled, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled })
+  const style = { transform: DndCSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 16 }
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children({ dragHandleProps: listeners })}
+    </div>
+  )
+}
+
 // QuestionForm component - extracted to prevent recreation on parent re-renders
 const QuestionForm = ({
   question,
@@ -1610,15 +1622,8 @@ export default function QuizBuilder() {
       <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
           {questions.map((question, index) => {
-            const SortableWrapper = ({ children }) => {
-              const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id, disabled: !!editingQuestion || isLive || quiz?.status !== 'draft' })
-              const style = { transform: DndCSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 16 }
-              return <div ref={setNodeRef} style={style} {...attributes}>
-                {children({ dragHandleProps: listeners })}
-              </div>
-            }
             return (
-              <SortableWrapper key={question.id}>
+              <SortableItem key={question.id} id={question.id} disabled={!!editingQuestion || isLive || quiz?.status !== 'draft'}>
                 {({ dragHandleProps }) => editingQuestion === question.id ? (
                   <MemoizedQuestionForm
                     key={`edit-question-${question.id}`}
@@ -1782,7 +1787,7 @@ export default function QuizBuilder() {
               )}
                   </Card>
                 )}
-              </SortableWrapper>
+              </SortableItem>
             )
           })}
         </SortableContext>
