@@ -1772,7 +1772,21 @@
     "streamProgress": "Generated {{count}} of {{total}}…",
     "stopGenerating": "Stop generating",
     "waitForStream": "Generating…",
-    "findImage": "Find image"
+    "findImage": "Find image",
+    "existingContextNotice": "{{count}} ఇప్పటికే ఉన్న ప్రశ్నలు సందర్భంగా ఉపయోగించబడతాయి",
+    "voiceStart": "వాయిస్ ఇన్‌పుట్ ప్రారంభించు",
+    "voiceStop": "వినడం ఆపు",
+    "styleLabel": "శైలి",
+    "styleGeneral": "సాధారణ",
+    "styleUPSC": "UPSC MCQ",
+    "styleJEE": "JEE",
+    "styleIELTS": "IELTS",
+    "styleCAT": "CAT",
+    "styleGATE": "GATE",
+    "examSuggDuration": "AI సూచన: {{minutes}} నిమిషాల పరీక్ష",
+    "examSuggProctoring": "పర్యవేక్షణ సిఫార్సు చేయబడింది: {{value}}",
+    "examSuggApply": "సెట్టింగులకు వర్తించు",
+    "examSuggDismiss": "తొలగించు"
   },
   "offlinePoll": {
     "typeLabel": "సర్వే",

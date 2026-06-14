@@ -1772,7 +1772,21 @@
     "streamProgress": "Generated {{count}} of {{total}}…",
     "stopGenerating": "Stop generating",
     "waitForStream": "Generating…",
-    "findImage": "Find image"
+    "findImage": "Find image",
+    "existingContextNotice": "{{count}} હાલના પ્રશ્નો સંદર્ભ તરીકે ઉપયોગ થશે",
+    "voiceStart": "વૉઇસ ઇનપુટ શરૂ કરો",
+    "voiceStop": "સાંભળવાનું બંધ કરો",
+    "styleLabel": "શૈલી",
+    "styleGeneral": "સામાન્ય",
+    "styleUPSC": "UPSC MCQ",
+    "styleJEE": "JEE",
+    "styleIELTS": "IELTS",
+    "styleCAT": "CAT",
+    "styleGATE": "GATE",
+    "examSuggDuration": "AI સૂચન: {{minutes}} મિનિટની પરીક્ષા",
+    "examSuggProctoring": "પ્રોક્ટરિંગ ભલામણ: {{value}}",
+    "examSuggApply": "સેટિંગ્સ પર લાગુ કરો",
+    "examSuggDismiss": "નકારો"
   },
   "offlinePoll": {
     "typeLabel": "સર્વે",

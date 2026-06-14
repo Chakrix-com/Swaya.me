@@ -401,6 +401,7 @@ async def generate_questions(
     count: int = 5,
     language: str = "en",
     quiz_type: str = "quiz",
+    existing_questions: list[str] | None = None,
 ) -> dict:
     """
     Generate questions from a detailed user prompt via Gemini REST API.
@@ -409,7 +410,9 @@ async def generate_questions(
         {
             "title": str,
             "description": str,
-            "questions": [{"text", "options", "correct_answer_index", "explanation", "question_type"}, ...]
+            "suggested_exam_duration_minutes": int | None,
+            "suggested_proctoring": bool | None,
+            "questions": [{"text", "options", "correct_answer_index", "explanation", "question_type", "image_suggestion"}, ...]
         }
     """
     key = settings.gemini.key
@@ -461,6 +464,7 @@ async def generate_questions(
             '"options": ["<A>", "<B>", "..."] | null, "correct_answer_index": null, "explanation": null}]}'
         )
     else:
+        is_exam = quiz_type == "exam"
         question_fields = (
             "Field requirements for every question:\n"
             "- question_type: \"mcq\".\n"
@@ -475,12 +479,29 @@ async def generate_questions(
             "understand or answer this question, provide a short image search query (e.g. "
             "'mitosis cell division stages diagram'). Otherwise set to null."
         )
+        if is_exam:
+            exam_fields = (
+                "\n\nFor the top-level object, also include:\n"
+                "- suggested_exam_duration_minutes: integer estimate of total exam duration in minutes "
+                "based on the number and difficulty of questions. null if not determinable.\n"
+                "- suggested_proctoring: boolean — true if this exam topic/context typically requires "
+                "anti-cheating measures (e.g. hiring tests, certification exams), false for casual use."
+            )
+            exam_schema_fields = (
+                '"suggested_exam_duration_minutes": <int | null>, '
+                '"suggested_proctoring": <true | false>, '
+            )
+        else:
+            exam_fields = ""
+            exam_schema_fields = ""
         output_schema = (
-            '{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
-            '"questions": [{"question_type": "mcq", "text": "<question>", '
-            '"options": ["<A>", "<B>", "..."], "correct_answer_index": 0, '
-            '"explanation": "<why correct is right>", "image_suggestion": null | "<search query>"}]}'
+            f'{{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
+            f'{exam_schema_fields}'
+            f'"questions": [{{"question_type": "mcq", "text": "<question>", '
+            f'"options": ["<A>", "<B>", "..."], "correct_answer_index": 0, '
+            f'"explanation": "<why correct is right>", "image_suggestion": null | "<search query>"}}]}}'
         )
+        question_fields += exam_fields
 
     system_instruction = (
         "You are an expert quiz generator for an online quiz platform. "
@@ -493,6 +514,17 @@ async def generate_questions(
         + question_fields
     )
 
+    existing_context = ""
+    if existing_questions:
+        cleaned = [q.strip()[:120] for q in existing_questions if q.strip()][:30]
+        if cleaned:
+            existing_context = (
+                "\n\nIMPORTANT — these topics are ALREADY covered in the quiz. "
+                "Do NOT generate questions that repeat or overlap them:\n"
+                + "\n".join(f"- {q}" for q in cleaned)
+                + "\nGenerate only fresh, non-overlapping questions."
+            )
+
     user_message = f"""Generate exactly {count} questions based on the instructions below.
 Write all questions, options, and explanations in language code: {language}.
 
@@ -502,7 +534,7 @@ Output format (strict JSON, no other text):
 Rules:
 - Output exactly {count} questions, no more, no less.
 - For mcq: each question must have between 2 and 10 distinct answer options; correct_answer_index is 0-based; wrong options must be plausible but clearly incorrect.
-
+{existing_context}
 User instructions:
 {prompt}"""
 
@@ -592,9 +624,20 @@ User instructions:
                 "image_suggestion": image_suggestion,
             })
 
+    suggested_duration = parsed.get("suggested_exam_duration_minutes")
+    suggested_proctoring = parsed.get("suggested_proctoring")
+    try:
+        suggested_duration = int(suggested_duration) if suggested_duration is not None else None
+    except (TypeError, ValueError):
+        suggested_duration = None
+    if not isinstance(suggested_proctoring, bool):
+        suggested_proctoring = None
+
     return {
         "title": parsed.get("title") or "",
         "description": parsed.get("description") or "",
+        "suggested_exam_duration_minutes": suggested_duration,
+        "suggested_proctoring": suggested_proctoring,
         "questions": result,
     }
 
@@ -604,11 +647,12 @@ async def generate_questions_stream(
     count: int = 5,
     language: str = "en",
     quiz_type: str = "quiz",
+    existing_questions: list[str] | None = None,
 ):
     """
     Async generator that generates questions and yields each one individually.
     Yields dicts: question objects (same schema as generate_questions),
-    then a final {"done": True, "title": ..., "description": ...} dict.
+    then a final {"done": True, "title": ..., "description": ..., exam suggestions...} dict.
     Raises GeminiError on failure.
     """
     import asyncio
@@ -617,8 +661,15 @@ async def generate_questions_stream(
         count=count,
         language=language,
         quiz_type=quiz_type,
+        existing_questions=existing_questions,
     )
     for q in result["questions"]:
         yield q
         await asyncio.sleep(0)
-    yield {"done": True, "title": result["title"], "description": result["description"]}
+    yield {
+        "done": True,
+        "title": result["title"],
+        "description": result["description"],
+        "suggested_exam_duration_minutes": result.get("suggested_exam_duration_minutes"),
+        "suggested_proctoring": result.get("suggested_proctoring"),
+    }

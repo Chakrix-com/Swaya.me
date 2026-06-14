@@ -1772,7 +1772,21 @@
     "streamProgress": "Generated {{count}} of {{total}}…",
     "stopGenerating": "Stop generating",
     "waitForStream": "Generating…",
-    "findImage": "Find image"
+    "findImage": "Find image",
+    "existingContextNotice": "{{count}} vorhandene Fragen werden als Kontext verwendet, um Duplikate zu vermeiden",
+    "voiceStart": "Spracheingabe starten",
+    "voiceStop": "Zuhören beenden",
+    "styleLabel": "Stil",
+    "styleGeneral": "Allgemein",
+    "styleUPSC": "UPSC MCQ",
+    "styleJEE": "JEE",
+    "styleIELTS": "IELTS",
+    "styleCAT": "CAT",
+    "styleGATE": "GATE",
+    "examSuggDuration": "KI schlägt vor: {{minutes}}-Minuten-Prüfung",
+    "examSuggProctoring": "Beaufsichtigung empfohlen: {{value}}",
+    "examSuggApply": "Auf Einstellungen anwenden",
+    "examSuggDismiss": "Verwerfen"
   },
   "offlinePoll": {
     "typeLabel": "Umfrage",

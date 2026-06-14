@@ -88,6 +88,14 @@ class RedisClient:
             await self.connect()
         return await self.client.incrby(key, amount)
 
+    async def set_nx(self, key: str, value: str, expire: Optional[int] = None) -> bool:
+        """Set key only if it does not already exist (atomic NX).
+        Returns True if the key was set, False if it already existed."""
+        if not self.client:
+            await self.connect()
+        result = await self.client.set(key, value, nx=True, ex=expire)
+        return result is not None
+
     async def publish(self, channel: str, message: str) -> int:
         """Publish message to a Redis pub/sub channel. Returns subscriber count."""
         if not self.client:

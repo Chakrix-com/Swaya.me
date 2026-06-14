@@ -182,20 +182,20 @@ export default function ExamResults() {
     const completed = results?.total_completed ?? 0
     const nameLabel = senderName.trim() || 'Swaya.me'
     Modal.confirm({
-      title: 'Send results to participants?',
-      content: `This will email personalised results (score, question breakdown, proctoring summary) to all ${completed} completed participant${completed !== 1 ? 's' : ''}. Emails will be sent from "${nameLabel}". This cannot be undone.`,
-      okText: 'Send Now',
-      cancelText: 'Cancel',
+      title: t('exam.sendResultsTitle'),
+      content: t('exam.sendResultsContent', { count: completed, name: nameLabel }),
+      okText: t('exam.sendResultsOk'),
+      cancelText: t('common.cancel'),
       onOk: async () => {
         setSendingEmails(true)
         try {
           await examAPI.sendParticipantEmails(id, senderName.trim() || null)
-          Modal.success({ title: 'Emails queued', content: 'Result emails are being sent to all participants.' })
+          Modal.success({ title: t('exam.emailsQueued'), content: t('exam.emailsQueuedContent') })
           // Refresh results so the button flips to "Emails Sent ✓"
           const updated = await examAPI.getResults(id)
           setResults(updated.data)
         } catch {
-          Modal.error({ title: 'Failed', content: 'Could not queue emails. Please try again.' })
+          Modal.error({ title: t('exam.emailFailed'), content: t('exam.emailFailedContent') })
         } finally {
           setSendingEmails(false)
         }
@@ -348,7 +348,7 @@ export default function ExamResults() {
             <div style={{ fontSize: 11, color: '#888' }}>
               {row.email}
               {results?.participant_emails_sent && row.is_completed && (
-                <MailOutlined style={{ marginLeft: 5, color: '#52c41a', fontSize: 10 }} title="Result email sent" />
+                <MailOutlined style={{ marginLeft: 5, color: '#52c41a', fontSize: 10 }} title={t('exam.emailResultSent')} />
               )}
             </div>
           )}
@@ -476,7 +476,7 @@ export default function ExamResults() {
   const tableColumns = hasProcData
     ? [...baseColumns, ...proctoringColumns, actionColumn]
     : [...baseColumns, { ...actionColumn, render: (_, row) => row.is_completed
-        ? <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>Answers</Button>
+        ? <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>{t('exam.btnAnswers')}</Button>
         : null
       }]
 
@@ -493,11 +493,11 @@ export default function ExamResults() {
           loading={downloadingPDF}
           disabled={!results}
         >
-          {analysis ? 'Download PDF Report (with AI)' : 'Download PDF Report'}
+          {analysis ? t('exam.downloadPdfWithAi') : t('exam.downloadPdf')}
         </Button>
         {!results?.participant_emails_sent && (
           <Input
-            placeholder="Sender name (default: Swaya.me)"
+            placeholder={t('exam.senderNamePlaceholder')}
             value={senderName}
             onChange={e => setSenderName(e.target.value)}
             style={{ width: 220 }}
@@ -511,7 +511,7 @@ export default function ExamResults() {
           loading={sendingEmails}
           disabled={!results || results.participant_emails_sent || sendingEmails}
         >
-          {results?.participant_emails_sent ? 'Emails Sent ✓' : 'Send Results to Participants'}
+          {results?.participant_emails_sent ? t('exam.emailsSentDone') : t('exam.sendResultsToParticipants')}
         </Button>
       </Space>
 
@@ -647,7 +647,7 @@ export default function ExamResults() {
                 </Tag>
               </Col>
               <Col>
-                <Text type="secondary">{qa.total_answers} responses</Text>
+                <Text type="secondary">{t('exam.responsesCount', { count: qa.total_answers })}</Text>
               </Col>
             </Row>
 
@@ -702,7 +702,7 @@ export default function ExamResults() {
                 onClick={handleDownloadPDF}
                 loading={downloadingPDF}
               >
-                Download PDF
+                {t('exam.downloadPdfBtn')}
               </Button>
             )}
             <Button
@@ -752,7 +752,7 @@ export default function ExamResults() {
         title={
           participantDetail
             ? `${participantDetail.display_name}${participantDetail.email ? ` — ${participantDetail.email}` : ''}`
-            : 'Participant Detail'
+            : t('exam.participantDetailTitle')
         }
         destroyOnClose
       >
@@ -811,15 +811,15 @@ export default function ExamResults() {
                                     }}>
                                       {String.fromCharCode(65 + i)}. {stripHtml(opt)}
                                     </span>
-                                    {isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>Correct</Tag>}
-                                    {isChosen && !isCorrect && <Tag color="error" style={{ margin: 0, fontSize: 11 }}>Their answer</Tag>}
-                                    {isChosen && isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>Their answer</Tag>}
+                                    {isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>{t('exam.tagCorrect')}</Tag>}
+                                    {isChosen && !isCorrect && <Tag color="error" style={{ margin: 0, fontSize: 11 }}>{t('exam.tagTheirAnswer')}</Tag>}
+                                    {isChosen && isCorrect && <Tag color="success" style={{ margin: 0, fontSize: 11 }}>{t('exam.tagTheirAnswer')}</Tag>}
                                   </div>
                                 )
                               })}
                             </div>
                           )}
-                          {!answered && <Text type="secondary" style={{ fontSize: 12 }}>Not answered</Text>}
+                          {!answered && <Text type="secondary" style={{ fontSize: 12 }}>{t('exam.tagNotAnswered')}</Text>}
                           <div style={{ marginTop: 4 }}>
                             <Text type="secondary" style={{ fontSize: 11 }}>{q.points_earned} / {q.points_possible} pts</Text>
                           </div>
@@ -833,7 +833,7 @@ export default function ExamResults() {
           </>
         )}
         {!detailLoading && !participantDetail && (
-          <Alert type="error" message="Could not load participant detail." />
+          <Alert type="error" message={t('exam.couldNotLoadDetail')} />
         )}
       </Modal>
 
@@ -878,12 +878,12 @@ export default function ExamResults() {
           <>
             <div style={{ marginBottom: 20 }}>
               <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                <CameraOutlined /> Webcam Snapshots ({proSnapshotsLoading ? '…' : proSnapshots.length})
+                <CameraOutlined /> {t('proctoring.report.webcamSnapshots')} ({proSnapshotsLoading ? '…' : proSnapshots.length})
               </Text>
               {proSnapshotsLoading ? (
                 <Spin size="small" />
               ) : proSnapshots.length === 0 ? (
-                <Alert message="No snapshots recorded for this participant" type="warning" showIcon style={{ marginBottom: 8 }} />
+                <Alert message={t('proctoring.report.noSnapshots')} type="warning" showIcon style={{ marginBottom: 8 }} />
               ) : (
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
                   <Image.PreviewGroup>

@@ -162,10 +162,10 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         {isSuperAdmin && isEditing && (
           <Form.Item label={t('admin.users.tier')} name="tier">
             <Select placeholder={t('admin.users.tier')}>
-              <Option value="free">Free</Option>
-              <Option value="basic">Basic</Option>
-              <Option value="pro">Pro</Option>
-              <Option value="enterprise">Enterprise</Option>
+              <Option value="free">{t('admin.orgs.tierFree')}</Option>
+              <Option value="basic">{t('admin.orgs.tierBasic')}</Option>
+              <Option value="pro">{t('admin.orgs.tierPro')}</Option>
+              <Option value="enterprise">{t('admin.orgs.tierEnterprise')}</Option>
             </Select>
           </Form.Item>
         )}

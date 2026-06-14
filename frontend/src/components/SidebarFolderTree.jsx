@@ -9,6 +9,7 @@ import {
   FolderFilled, FolderOpenOutlined, FolderAddOutlined, MoreOutlined,
   EditOutlined, ShareAltOutlined, DeleteOutlined, UserOutlined,
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import { setFolders } from '../store/quizSlice'
 import { quizAPI, authAPI } from '../services/api'
 import './SidebarFolderTree.css'
@@ -21,6 +22,7 @@ function SidebarFolderTree() {
   const dispatch = useDispatch()
   const { folders } = useSelector(s => s.quiz)
   const { user } = useSelector(s => s.auth)
+  const { t } = useTranslation()
 
   const selectedFolderId = useMemo(() => {
     const raw = searchParams.get('folder')
@@ -58,13 +60,13 @@ function SidebarFolderTree() {
       const values = await createForm.validateFields()
       setCreateLoading(true)
       await quizAPI.createFolder({ name: values.name, parent_id: values.parent_id ?? null })
-      message.success('Folder created')
+      message.success(t('dashboard.folderCreated'))
       setCreateOpen(false)
       createForm.resetFields()
       await reloadFolders()
     } catch (e) {
       if (e?.errorFields) return
-      message.error(e?.response?.data?.detail || 'Failed to create folder')
+      message.error(e?.response?.data?.detail || t('dashboard.folderCreateFailed'))
     } finally {
       setCreateLoading(false)
     }
@@ -90,12 +92,12 @@ function SidebarFolderTree() {
         name: values.name,
         parent_id: values.parent_id ?? null,
       })
-      message.success('Folder updated')
+      message.success(t('dashboard.folderUpdated'))
       setRenameOpen(false)
       await reloadFolders()
     } catch (e) {
       if (e?.errorFields) return
-      message.error(e?.response?.data?.detail || 'Failed to rename folder')
+      message.error(e?.response?.data?.detail || t('dashboard.folderRenameFailed'))
     } finally {
       setRenameLoading(false)
     }
@@ -116,13 +118,13 @@ function SidebarFolderTree() {
     setDeleteLoading(true)
     try {
       await quizAPI.deleteFolder(deleteTarget.id)
-      message.success('Folder deleted')
+      message.success(t('dashboard.folderDeleted'))
       setDeleteOpen(false)
       if (selectedFolderId === deleteTarget.id) setSearchParams({}, { replace: true })
       setDeleteTarget(null)
       await reloadFolders()
     } catch (e) {
-      message.error(e?.response?.data?.detail || 'Failed to delete folder')
+      message.error(e?.response?.data?.detail || t('dashboard.folderDeleteFailed'))
     } finally {
       setDeleteLoading(false)
     }
@@ -152,7 +154,7 @@ function SidebarFolderTree() {
       setShareCanEdit(current[0]?.can_edit ?? false)
       setTenantUsers(usersRes.data?.users || [])
     } catch (e) {
-      message.error(e?.response?.data?.detail || 'Failed to load shares')
+      message.error(e?.response?.data?.detail || t('dashboard.failedToLoadShares'))
     } finally {
       setShareLoading(false)
     }
@@ -166,10 +168,10 @@ function SidebarFolderTree() {
         user_ids: shareUserIds,
         can_edit: shareCanEdit,
       })
-      message.success('Folder sharing updated')
+      message.success(t('dashboard.folderSharingUpdated'))
       setShareOpen(false)
     } catch (e) {
-      message.error(e?.response?.data?.detail || 'Failed to update sharing')
+      message.error(e?.response?.data?.detail || t('dashboard.failedToUpdateSharing'))
     } finally {
       setShareLoading(false)
     }
@@ -204,13 +206,13 @@ function SidebarFolderTree() {
   const getFolderMenu = (rn) => {
     if (rn.is_shared_to_me) return []
     return [
-      { key: 'rename', label: 'Rename / Move', icon: <EditOutlined />, onClick: () => openRename(rn) },
-      { key: 'subfolder', label: 'New subfolder', icon: <FolderAddOutlined />, onClick: () => openCreate(rn.id) },
-      { key: 'share', label: 'Share', icon: <ShareAltOutlined />, onClick: () => openShare(rn) },
+      { key: 'rename', label: t('dashboard.renameMove'), icon: <EditOutlined />, onClick: () => openRename(rn) },
+      { key: 'subfolder', label: t('dashboard.newSubfolder'), icon: <FolderAddOutlined />, onClick: () => openCreate(rn.id) },
+      { key: 'share', label: t('dashboard.share'), icon: <ShareAltOutlined />, onClick: () => openShare(rn) },
       { type: 'divider' },
       {
         key: 'delete',
-        label: <span style={{ color: '#ff4d4f' }}><DeleteOutlined style={{ marginRight: 6 }} />Delete</span>,
+        label: <span style={{ color: '#ff4d4f' }}><DeleteOutlined style={{ marginRight: 6 }} />{t('common.delete')}</span>,
         onClick: () => openDelete(rn),
       },
     ]
@@ -232,8 +234,8 @@ function SidebarFolderTree() {
     key: 'folders',
     label: (
       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--sw-text2)' }}>Folders</span>
-        <Tooltip title="New folder">
+        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--sw-text2)' }}>{t('dashboard.foldersTitle')}</span>
+        <Tooltip title={t('dashboard.tooltipNewFolder')}>
           <Button
             type="text" size="small" icon={<FolderAddOutlined />}
             onClick={(e) => { e.stopPropagation(); openCreate(null) }}
@@ -255,7 +257,7 @@ function SidebarFolderTree() {
         style={{ background: 'transparent', fontSize: 13 }}
         titleRender={(node) => {
           if (node.key === ROOT_KEY) {
-            return <span className="sf-node-title"><span className="sf-node-label">All Activities</span></span>
+            return <span className="sf-node-title"><span className="sf-node-label">{t('dashboard.allActivities')}</span></span>
           }
           const rn = node.rawNode
           if (!rn) return <span>{node.title}</span>
@@ -268,7 +270,7 @@ function SidebarFolderTree() {
               )}
               {!isShared && (
                 <span className="sf-node-actions" onClick={e => e.stopPropagation()}>
-                  <Tooltip title="New subfolder">
+                  <Tooltip title={t('dashboard.tooltipNewSubfolder')}>
                     <Button
                       type="text" size="small" icon={<FolderAddOutlined />}
                       onClick={(e) => { e.stopPropagation(); openCreate(rn.id) }}
@@ -299,75 +301,75 @@ function SidebarFolderTree() {
         className="sidebar-folder-collapse"
       />
 
-      <Modal title="New Folder" open={createOpen}
+      <Modal title={t('dashboard.newFolder')} open={createOpen}
         onCancel={() => { setCreateOpen(false); createForm.resetFields() }}
         onOk={handleCreate} confirmLoading={createLoading}>
         <Form form={createForm} layout="vertical">
-          <Form.Item name="name" label="Folder name"
-            rules={[{ required: true, message: 'Folder name is required' }]}>
+          <Form.Item name="name" label={t('dashboard.folderName')}
+            rules={[{ required: true, message: t('dashboard.folderNameRequired') }]}>
             <Input autoFocus />
           </Form.Item>
-          <Form.Item name="parent_id" label="Parent folder">
+          <Form.Item name="parent_id" label={t('dashboard.parentFolder')}>
             <TreeSelect allowClear treeData={folderTreeData}
-              placeholder="No parent (root)" treeDefaultExpandAll />
+              placeholder={t('dashboard.noParentRoot')} treeDefaultExpandAll />
           </Form.Item>
         </Form>
       </Modal>
 
-      <Modal title="Rename / Move Folder" open={renameOpen}
+      <Modal title={t('dashboard.renameMoveFolder')} open={renameOpen}
         onCancel={() => { setRenameOpen(false); renameForm.resetFields() }}
         onOk={handleRename} confirmLoading={renameLoading}>
         <Form form={renameForm} layout="vertical">
-          <Form.Item name="name" label="Folder name"
-            rules={[{ required: true, message: 'Folder name is required' }]}>
+          <Form.Item name="name" label={t('dashboard.folderName')}
+            rules={[{ required: true, message: t('dashboard.folderNameRequired') }]}>
             <Input autoFocus />
           </Form.Item>
-          <Form.Item name="parent_id" label="Move to (parent folder)">
+          <Form.Item name="parent_id" label={t('dashboard.moveTo')}>
             <TreeSelect allowClear
               treeData={folderTreeData.filter(n => n.value !== renameTarget?.id)}
-              placeholder="Root (no parent)" treeDefaultExpandAll />
+              placeholder={t('dashboard.rootNoParent')} treeDefaultExpandAll />
           </Form.Item>
         </Form>
       </Modal>
 
-      <Modal title="Delete folder" open={deleteOpen}
+      <Modal title={t('dashboard.deleteFolderTitle')} open={deleteOpen}
         onCancel={() => { setDeleteOpen(false); setDeleteTarget(null) }}
         onOk={handleDelete} confirmLoading={deleteLoading}
-        okButtonProps={{ danger: true }} okText="Delete">
-        <p>Delete <strong>{deleteTarget?.name}</strong>? Activities inside will move to the parent or root.</p>
+        okButtonProps={{ danger: true }} okText={t('common.delete')}>
+        <p>{t('dashboard.deleteFolderConfirm', { name: deleteTarget?.name })}</p>
       </Modal>
 
       <Modal
-        title={<Space><ShareAltOutlined /> Share folder: {shareTarget?.name}</Space>}
+        title={<Space><ShareAltOutlined /> {t('dashboard.shareFolderTitle', { name: shareTarget?.name })}</Space>}
         open={shareOpen} onCancel={() => setShareOpen(false)}
-        onOk={handleSaveShare} confirmLoading={shareLoading} okText="Save sharing">
+        onOk={handleSaveShare} confirmLoading={shareLoading} okText={t('dashboard.saveFolderSharing')}>
         {shareLoading ? (
           <div style={{ textAlign: 'center', padding: 32 }}><Spin /></div>
         ) : (
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
             <div>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>Share with (by email / name)</div>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>{t('dashboard.shareWith')}</div>
               <Select
-                mode="multiple" style={{ width: '100%' }} placeholder="Select teammates…"
+                mode="multiple" style={{ width: '100%' }} placeholder={t('dashboard.selectTeammates')}
                 value={shareUserIds} onChange={setShareUserIds} optionFilterProp="label"
                 options={tenantUsers.filter(u => u.id !== user?.id).map(u => ({ value: u.id, label: u.email }))}
-                notFoundContent={tenantUsers.length === 0 ? 'No other users in your workspace' : 'No match'}
+                notFoundContent={tenantUsers.length === 0 ? t('dashboard.noOtherUsers') : t('dashboard.noMatch')}
               />
             </div>
             <Space>
-              <span style={{ fontSize: 13 }}>Allow editing</span>
+              <span style={{ fontSize: 13 }}>{t('dashboard.allowEditing')}</span>
               <Switch size="small" checked={shareCanEdit} onChange={setShareCanEdit} />
             </Space>
             {shareCurrentShares.length > 0 && (
               <div>
-                <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Currently shared with</div>
+                <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>{t('dashboard.currentlySharedWith')}</div>
                 <List size="small" dataSource={shareCurrentShares}
                   renderItem={s => (
                     <List.Item>
                       <List.Item.Meta
                         avatar={<Avatar icon={<UserOutlined />} size={28} />}
                         title={s.email}
-                        description={s.can_edit ? 'Can edit' : 'View only'}
+                        description={s.can_edit ? t('dashboard.canEdit') : t('dashboard.viewOnly')}
                       />
                     </List.Item>
                   )}

@@ -1062,6 +1062,11 @@ export default function QuizBuilder() {
   const [aiStreaming, setAiStreaming] = useState(false)
   const [aiStreamCount, setAiStreamCount] = useState(0)
   const aiAbortRef = useRef(null)
+  const [aiStyle, setAiStyle] = useState('general')
+  const [aiExamSuggDuration, setAiExamSuggDuration] = useState(null)
+  const [aiExamSuggProctoring, setAiExamSuggProctoring] = useState(null)
+  const [aiExamSuggDismissed, setAiExamSuggDismissed] = useState(false)
+  const [voiceListening, setVoiceListening] = useState(false)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -2233,6 +2238,14 @@ export default function QuizBuilder() {
     visual: "For questions that refer to a diagram, chart, or map: describe the visual clearly in the question text and ask students to interpret or identify elements from it.",
   }
 
+  const STYLE_HINTS = {
+    upsc: "Style: UPSC Civil Services MCQ format. Test factual knowledge with 4 options, one clearly correct. Language: formal administrative/academic. Include statement-based questions ('Consider the following statements...').",
+    jee: "Style: JEE (Joint Entrance Examination) format. Application-based, numerically focused where appropriate. Include numerical values in questions. Tricky distractors based on common calculation errors.",
+    ielts: "Style: IELTS Academic MCQ format. Test reading comprehension, vocabulary, and inference. Academic English only. Answer options should be complete phrases.",
+    cat: "Style: CAT (Common Admission Test) MBA entrance format. Focus on verbal ability, logical reasoning, or quantitative aptitude. Questions should have tricky distractors based on plausible misreadings.",
+    gate: "Style: GATE (Graduate Aptitude Test in Engineering) format. Technically rigorous, precise wording, single correct answer. Questions may reference engineering principles, formulas, or diagrams.",
+  }
+
   const DIFFICULTY_MAP = {
     easy: { points: 1, negative_points: 0, max_time_seconds: 45 },
     medium: { points: 2, negative_points: 0.5, max_time_seconds: 60 },
@@ -2246,9 +2259,20 @@ export default function QuizBuilder() {
     setAiStreamCount(0)
     setAiError(null)
     setAiPreview([])
+    setAiExamSuggDuration(null)
+    setAiExamSuggProctoring(null)
+    setAiExamSuggDismissed(false)
+
     const hint = CONTENT_TYPE_HINTS[aiContentType]
-    const effectivePrompt = hint ? `${hint}\n\n${aiTopic.trim()}` : aiTopic.trim()
+    const styleHint = STYLE_HINTS[aiStyle]
+    const parts = [hint, styleHint, aiTopic.trim()].filter(Boolean)
+    const effectivePrompt = parts.join('\n\n')
     const quizType = quiz?.quiz_type || initialQuizType || 'quiz'
+
+    // Collect existing question texts for context-aware generation (P3-A)
+    const existingQTexts = questions.length > 0
+      ? questions.map(q => stripHtml(q.text || '').trim()).filter(Boolean)
+      : null
 
     const abort = new AbortController()
     aiAbortRef.current = abort
@@ -2259,7 +2283,13 @@ export default function QuizBuilder() {
 
     try {
       await aiAPI.streamGenerateQuestions(
-        { prompt: effectivePrompt, count: aiCount, language: i18n.language, quiz_type: quizType },
+        {
+          prompt: effectivePrompt,
+          count: aiCount,
+          language: i18n.language,
+          quiz_type: quizType,
+          existing_questions: existingQTexts,
+        },
         (q) => {
           setAiPreview(prev => [...prev, { ...q, selected: true }])
           setAiStreamCount(prev => prev + 1)
@@ -2268,6 +2298,12 @@ export default function QuizBuilder() {
           setAiTitle(doneEvent.title || null)
           setAiDescription(doneEvent.description || null)
           setAiTitleDismissed(false)
+          if (doneEvent.suggested_exam_duration_minutes != null) {
+            setAiExamSuggDuration(doneEvent.suggested_exam_duration_minutes)
+          }
+          if (doneEvent.suggested_proctoring != null) {
+            setAiExamSuggProctoring(doneEvent.suggested_proctoring)
+          }
         },
         abort.signal,
       )
@@ -2905,8 +2941,48 @@ export default function QuizBuilder() {
       >
         {aiStep === 'input' && (
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
+            {questions.length > 0 && (
+              <Alert
+                type="info"
+                showIcon
+                message={t('ai.existingContextNotice', { count: questions.length })}
+                style={{ marginBottom: 0 }}
+              />
+            )}
             <div>
-              <Text strong>{t('ai.promptLabel')}</Text>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <Text strong>{t('ai.promptLabel')}</Text>
+                {('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
+                  <Tooltip title={voiceListening ? t('ai.voiceStop') : t('ai.voiceStart')}>
+                    <Button
+                      size="small"
+                      type={voiceListening ? 'primary' : 'default'}
+                      danger={voiceListening}
+                      icon={<span role="img" aria-label="mic">{voiceListening ? '🔴' : '🎤'}</span>}
+                      onClick={() => {
+                        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+                        if (!SR) return
+                        if (voiceListening) {
+                          setVoiceListening(false)
+                          return
+                        }
+                        const recognizer = new SR()
+                        recognizer.lang = i18n.language || 'en'
+                        recognizer.continuous = false
+                        recognizer.interimResults = false
+                        setVoiceListening(true)
+                        recognizer.onresult = (e) => {
+                          const transcript = e.results[0]?.[0]?.transcript || ''
+                          if (transcript) setAiTopic(prev => prev ? `${prev} ${transcript}` : transcript)
+                        }
+                        recognizer.onend = () => setVoiceListening(false)
+                        recognizer.onerror = () => setVoiceListening(false)
+                        recognizer.start()
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </div>
               <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 6 }}>
                 {t('ai.promptHint')}
               </Text>
@@ -2916,7 +2992,7 @@ export default function QuizBuilder() {
                 onChange={e => setAiTopic(e.target.value)}
                 rows={9}
                 autoSize={{ minRows: 9, maxRows: 16 }}
-                style={{ marginTop: 2, fontFamily: 'inherit', fontSize: 14 }}
+                style={{ marginTop: 2, fontFamily: 'inherit', fontSize: 14, borderColor: voiceListening ? '#ff4d4f' : undefined }}
                 autoFocus
                 showCount
                 maxLength={5000}
@@ -2945,6 +3021,22 @@ export default function QuizBuilder() {
                   { value: 'sql', label: t('ai.contentTypeSQL') },
                   { value: 'math', label: t('ai.contentTypeMath') },
                   { value: 'visual', label: t('ai.contentTypeVisual') },
+                ]}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.styleLabel')}</Text>
+              <Select
+                value={aiStyle}
+                onChange={v => setAiStyle(v)}
+                style={{ width: 180 }}
+                options={[
+                  { value: 'general', label: t('ai.styleGeneral') },
+                  { value: 'upsc', label: t('ai.styleUPSC') },
+                  { value: 'jee', label: t('ai.styleJEE') },
+                  { value: 'ielts', label: t('ai.styleIELTS') },
+                  { value: 'cat', label: t('ai.styleCAT') },
+                  { value: 'gate', label: t('ai.styleGATE') },
                 ]}
               />
             </div>
@@ -3000,6 +3092,37 @@ export default function QuizBuilder() {
                   <Space>
                     <Button size="small" type="link" onClick={() => setAiTitleDismissed(true)}>
                       {t('ai.titleGeneratedDismiss')}
+                    </Button>
+                  </Space>
+                }
+              />
+            )}
+            {isExam && !aiStreaming && !aiExamSuggDismissed && (aiExamSuggDuration != null || aiExamSuggProctoring != null) && (
+              <Alert
+                type="success"
+                showIcon
+                message={
+                  <Space size={4} wrap>
+                    {aiExamSuggDuration != null && <span>{t('ai.examSuggDuration', { minutes: aiExamSuggDuration })}</span>}
+                    {aiExamSuggProctoring != null && <span>{t('ai.examSuggProctoring', { value: aiExamSuggProctoring ? t('common.yes', 'Yes') : t('common.no', 'No') })}</span>}
+                  </Space>
+                }
+                action={
+                  <Space>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => {
+                        if (aiExamSuggDuration != null) {
+                          form.setFieldsValue({ exam_time_limit_minutes: aiExamSuggDuration })
+                        }
+                        setAiExamSuggDismissed(true)
+                      }}
+                    >
+                      {t('ai.examSuggApply')}
+                    </Button>
+                    <Button size="small" type="link" onClick={() => setAiExamSuggDismissed(true)}>
+                      {t('ai.examSuggDismiss')}
                     </Button>
                   </Space>
                 }

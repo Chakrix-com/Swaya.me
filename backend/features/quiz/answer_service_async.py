@@ -6,8 +6,12 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
 from datetime import datetime
+import asyncio
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Answer, Question, SessionQuestionTiming,
@@ -28,6 +32,59 @@ from shared.utils.redis_client import RedisClient
 from core.storage import ImageService
 
 
+async def _write_answer_bg(
+    session_id: int,
+    participant_id: int,
+    question_id: int,
+    selected_option_index: int,
+    is_correct: Optional[bool],
+) -> None:
+    """Fire-and-forget DB write for MCQ/scale answers. Response is already sent."""
+    from persistence.database_async import AsyncSessionLocal
+    try:
+        async with AsyncSessionLocal() as db:
+            db.add(Answer(
+                session_id=session_id,
+                participant_id=participant_id,
+                question_id=question_id,
+                selected_option_index=selected_option_index,
+                is_correct=is_correct,
+            ))
+            await db.commit()
+    except Exception as e:
+        logger.error(
+            "bg_answer_write_failed session=%s participant=%s question=%s: %s",
+            session_id, participant_id, question_id, e,
+        )
+
+
+async def _write_text_answer_bg(
+    session_id: int,
+    participant_id: int,
+    question_id: int,
+    text_answer: str,
+    is_correct: Optional[bool],
+) -> None:
+    """Fire-and-forget DB write for text/word-cloud answers. Response is already sent."""
+    from persistence.database_async import AsyncSessionLocal
+    try:
+        async with AsyncSessionLocal() as db:
+            db.add(Answer(
+                session_id=session_id,
+                participant_id=participant_id,
+                question_id=question_id,
+                text_answer=text_answer,
+                selected_option_index=None,
+                is_correct=is_correct,
+            ))
+            await db.commit()
+    except Exception as e:
+        logger.error(
+            "bg_text_answer_write_failed session=%s participant=%s question=%s: %s",
+            session_id, participant_id, question_id, e,
+        )
+
+
 class AnswerServiceAsync:
     """Async service for answer submission and aggregation"""
     
@@ -40,23 +97,93 @@ class AnswerServiceAsync:
         session_token: str,
         request: AnswerSubmitRequest
     ) -> AnswerSubmitResponse:
+        """Submit answer to current question.
+
+        Hot path uses two Redis reads (participant info + session state) and one
+        atomic Redis SET NX for deduplication, leaving a single DB INSERT as the
+        only database operation.  Falls back to the original full-DB path on any
+        cache miss so correctness is never compromised.
         """
-        Submit answer to current question
-        
-        Args:
-            db: Database session
-            session_token: Participant session token
-            request: Answer data
-            
-        Returns:
-            Submission confirmation
-            
-        Raises:
-            ParticipantNotFoundError: If token invalid
-            QuestionNotOpenError: If question not accepting answers
-            DuplicateAnswerError: If already answered
-        """
-        # Get participant with session and quiz relationships
+        # ── Redis fast path ────────────────────────────────────────────────────
+        p_info = await self.redis.get_json(f"session_token:{session_token}")
+        state = await self.redis.get_json(
+            f"session:{p_info['session_id']}:audience_state"
+        ) if p_info else None
+
+        if p_info and state:
+            participant_id = p_info["participant_id"]
+            session_id     = p_info["session_id"]
+
+            if state.get("status") != "active":
+                raise QuestionNotOpenError("Session is not active")
+            if state.get("current_question_status") != "open":
+                raise QuestionNotOpenError("Question is not open for answers")
+
+            q_data = state.get("current_question")
+            if not q_data:
+                raise QuestionNotOpenError("No active question")
+            if q_data["id"] != request.question_id:
+                raise QuestionNotOpenError("Question is not currently active")
+
+            q_type = q_data.get("question_type")
+            if q_type not in ("mcq", "scale"):
+                raise ValueError("This endpoint is for option-based questions only")
+
+            options = q_data.get("options") or []
+            option_count = len(options)
+            if option_count == 0:
+                raise ValueError("Question has no options configured")
+            if not (0 <= request.selected_option_index < option_count):
+                raise ValueError("Invalid option index")
+
+            # Atomic dedup: SET NX replaces the SELECT for duplicate check.
+            # The DB also has a unique constraint (uq_answer_participant_question)
+            # as a safety net against race conditions.
+            dedup_key = f"session:{session_id}:ans:{participant_id}:{request.question_id}"
+            if not await self.redis.set_nx(dedup_key, "1", expire=86400):
+                raise DuplicateAnswerError("You have already answered this question")
+
+            correct_answer_index = q_data.get("correct_answer_index")
+            is_correct = (
+                request.selected_option_index == correct_answer_index
+                if correct_answer_index is not None
+                else None
+            )
+
+            asyncio.create_task(_write_answer_bg(
+                session_id=session_id,
+                participant_id=participant_id,
+                question_id=request.question_id,
+                selected_option_index=request.selected_option_index,
+                is_correct=is_correct,
+            ))
+
+            await self._update_aggregation(session_id, request.question_id, request.selected_option_index)
+
+            score_key = f"session_token:{session_token}:score"
+            score_data = await self.redis.get_json(score_key) or {"score": 0, "correct": 0}
+            if is_correct is True:
+                points = q_data.get("points") or 1
+                score_data["score"] = score_data.get("score", 0) + points
+                score_data["correct"] = score_data.get("correct", 0) + 1
+            await self.redis.set_json(score_key, score_data, expire=86400)
+
+            return AnswerSubmitResponse(
+                success=True,
+                message="Answer submitted successfully",
+                is_correct=None,
+            )
+
+        # ── DB fallback (cache miss — should be rare) ──────────────────────────
+        return await self._submit_answer_db(db, session_token, request)
+
+    async def _submit_answer_db(
+        self,
+        db: AsyncSession,
+        session_token: str,
+        request: AnswerSubmitRequest,
+    ) -> AnswerSubmitResponse:
+        """Original DB-only path for submit_answer, used when Redis cache is cold."""
         result = await db.execute(
             select(Participant)
             .filter(Participant.session_token == session_token)
@@ -67,89 +194,68 @@ class AnswerServiceAsync:
             )
         )
         participant = result.scalar_one_or_none()
-        
         if not participant:
             raise ParticipantNotFoundError("Invalid session token")
-        
+
         session = participant.session
-        
-        # Check if question is open
         if session.current_question_status != QuestionStatus.OPEN:
             raise QuestionNotOpenError("Question is not open for answers")
-        
-        # Get current question
+
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
         if session.current_question_index >= len(questions):
             raise QuestionNotOpenError("No active question")
-        
+
         current_question = questions[session.current_question_index]
-        
-        # Validate question_id matches current question
         if current_question.id != request.question_id:
             raise QuestionNotOpenError("Question is not currently active")
-        
-        # Verify this is an option-based question
         if current_question.question_type not in (QuestionType.MCQ, QuestionType.SCALE):
             raise ValueError("This endpoint is for option-based questions only")
-        
-        # Check if already answered (one answer per participant)
+
         result = await db.execute(
             select(Answer).filter(
                 Answer.session_id == session.id,
                 Answer.participant_id == participant.id,
-                Answer.question_id == request.question_id
+                Answer.question_id == request.question_id,
             )
         )
-        existing = result.scalar_one_or_none()
-        
-        if existing:
+        if result.scalar_one_or_none():
             raise DuplicateAnswerError("You have already answered this question")
-        
-        # Validate option index against the current option count
+
         option_count = len(current_question.options or [])
         if option_count == 0:
             raise ValueError("Question has no options configured")
-        if request.selected_option_index < 0 or request.selected_option_index >= option_count:
+        if not (0 <= request.selected_option_index < option_count):
             raise ValueError("Invalid option index")
-        
-        # Option-based correctness (leaderboard still counts MCQ only)
+
         is_correct = (
             request.selected_option_index == current_question.correct_answer_index
-            if (
-                current_question.question_type in (QuestionType.MCQ, QuestionType.SCALE)
-                and current_question.correct_answer_index is not None
-            )
+            if current_question.correct_answer_index is not None
             else None
         )
-        
-        # Create answer
-        answer = Answer(
+
+        db.add(Answer(
             session_id=session.id,
             participant_id=participant.id,
             question_id=request.question_id,
             selected_option_index=request.selected_option_index,
-            is_correct=is_correct
-        )
-        
-        db.add(answer)
+            is_correct=is_correct,
+        ))
         await db.commit()
-        
-        # Update aggregation in Redis
+
         await self._update_aggregation(session.id, request.question_id, request.selected_option_index)
 
-        # Update participant score cache used by the audience fast path
         score_key = f"session_token:{session_token}:score"
         score_data = await self.redis.get_json(score_key) or {"score": 0, "correct": 0}
         if is_correct is True:
-            question_points = (current_question.points if current_question.points else 1)
-            score_data["score"] = score_data.get("score", 0) + question_points
+            points = current_question.points or 1
+            score_data["score"] = score_data.get("score", 0) + points
             score_data["correct"] = score_data.get("correct", 0) + 1
         await self.redis.set_json(score_key, score_data, expire=86400)
 
         return AnswerSubmitResponse(
             success=True,
             message="Answer submitted successfully",
-            is_correct=None  # Don't reveal until question closes
+            is_correct=None,
         )
     
     async def submit_word_cloud_answer(
@@ -158,22 +264,90 @@ class AnswerServiceAsync:
         session_token: str,
         request: WordCloudAnswerSubmitRequest
     ) -> AnswerSubmitResponse:
+        """Submit a text/word-cloud answer.
+
+        Same Redis-first strategy as submit_answer: participant identity and session
+        state come from Redis; the DB only sees the final INSERT.
         """
-        Submit word cloud answer (unlimited submissions allowed)
-        
-        Args:
-            db: Database session
-            session_token: Participant session token
-            request: Word cloud answer data
-            
-        Returns:
-            Submission confirmation
-            
-        Raises:
-            ParticipantNotFoundError: If token invalid
-            QuestionNotOpenError: If question not accepting answers
-        """
-        # Get participant with session and quiz relationships
+        _TEXT_TYPES = ("word_cloud", "single_line", "paragraph", "one_word")
+
+        # ── Redis fast path ────────────────────────────────────────────────────
+        p_info = await self.redis.get_json(f"session_token:{session_token}")
+        state = await self.redis.get_json(
+            f"session:{p_info['session_id']}:audience_state"
+        ) if p_info else None
+
+        if p_info and state:
+            participant_id = p_info["participant_id"]
+            session_id     = p_info["session_id"]
+
+            if state.get("status") != "active":
+                raise QuestionNotOpenError("Session is not active")
+            if state.get("current_question_status") != "open":
+                raise QuestionNotOpenError("Question is not open for answers")
+
+            q_data = state.get("current_question")
+            if not q_data:
+                raise QuestionNotOpenError("No active question")
+            if q_data["id"] != request.question_id:
+                raise QuestionNotOpenError("Question is not currently active")
+
+            q_type = q_data.get("question_type")
+            if q_type not in _TEXT_TYPES:
+                raise ValueError("This endpoint is for text-based questions only")
+
+            text = request.text_answer.strip()
+
+            if q_type == "one_word":
+                if not text or any(c in text for c in (' ', '\t', '\n', '\r')):
+                    raise ValueError("One-word answers must be a single word with no spaces")
+
+            # word_cloud allows unlimited; all others get dedup via Redis NX
+            if q_type != "word_cloud":
+                dedup_key = f"session:{session_id}:ans:{participant_id}:{request.question_id}"
+                if not await self.redis.set_nx(dedup_key, "1", expire=86400):
+                    raise DuplicateAnswerError("You have already answered this question")
+
+            check_content(text, "Answer")
+
+            options = q_data.get("options") or []
+            expected_answer = options[0] if options else None
+
+            is_text_scored = q_type in ("single_line", "paragraph")
+            is_correct = None
+            if is_text_scored and expected_answer:
+                from core.ai.ollama_service import grade_text_answer
+                is_correct = await grade_text_answer(
+                    participant_answer=text,
+                    expected_answer=str(expected_answer).strip(),
+                )
+
+            asyncio.create_task(_write_text_answer_bg(
+                session_id=session_id,
+                participant_id=participant_id,
+                question_id=request.question_id,
+                text_answer=text,
+                is_correct=is_correct,
+            ))
+
+            await self._update_word_cloud_aggregation(session_id, request.question_id, text)
+
+            return AnswerSubmitResponse(
+                success=True,
+                message="Response submitted successfully",
+                is_correct=None,
+            )
+
+        # ── DB fallback ────────────────────────────────────────────────────────
+        return await self._submit_word_cloud_answer_db(db, session_token, request)
+
+    async def _submit_word_cloud_answer_db(
+        self,
+        db: AsyncSession,
+        session_token: str,
+        request: WordCloudAnswerSubmitRequest,
+    ) -> AnswerSubmitResponse:
+        """Original DB-only path for submit_word_cloud_answer, used on cache miss."""
         result = await db.execute(
             select(Participant)
             .filter(Participant.session_token == session_token)
@@ -184,27 +358,20 @@ class AnswerServiceAsync:
             )
         )
         participant = result.scalar_one_or_none()
-        
         if not participant:
             raise ParticipantNotFoundError("Invalid session token")
-        
+
         session = participant.session
-        
-        # Check if question is open
         if session.current_question_status != QuestionStatus.OPEN:
             raise QuestionNotOpenError("Question is not open for answers")
-        
-        # Get current question
+
         questions = sorted(session.quiz.questions, key=lambda q: q.order)
         if session.current_question_index >= len(questions):
             raise QuestionNotOpenError("No active question")
-        
+
         current_question = questions[session.current_question_index]
-        
-        # Validate question_id matches current question
         if current_question.id != request.question_id:
             raise QuestionNotOpenError("Question is not currently active")
-        
         if current_question.question_type not in (
             QuestionType.WORD_CLOUD,
             QuestionType.SINGLE_LINE,
@@ -213,65 +380,50 @@ class AnswerServiceAsync:
         ):
             raise ValueError("This endpoint is for text-based questions only")
 
-        # Validate one_word: must be a single word (no whitespace)
+        text = request.text_answer.strip()
         if current_question.question_type == QuestionType.ONE_WORD:
-            word = request.text_answer.strip()
-            if not word or any(c in word for c in (' ', '\t', '\n', '\r')):
+            if not text or any(c in text for c in (' ', '\t', '\n', '\r')):
                 raise ValueError("One-word answers must be a single word with no spaces")
 
-        # Only word cloud allows unlimited submissions
         if current_question.question_type != QuestionType.WORD_CLOUD:
-            result = await db.execute(
+            dup = await db.execute(
                 select(Answer).filter(
                     Answer.session_id == session.id,
                     Answer.participant_id == participant.id,
-                    Answer.question_id == request.question_id
+                    Answer.question_id == request.question_id,
                 )
             )
-            existing = result.scalar_one_or_none()
-            if existing:
+            if dup.scalar_one_or_none():
                 raise DuplicateAnswerError("You have already answered this question")
-        
-        # Matches response with correct answer: strip whitespaces and convert to lowercase
+
         expected_answer = (current_question.options or [None])[0]
-        # Content filter
-        check_content(request.text_answer.strip(), "Answer")
+        check_content(text, "Answer")
 
         is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
-
         is_correct = None
         if is_text_scored and expected_answer:
             from core.ai.ollama_service import grade_text_answer
             is_correct = await grade_text_answer(
-                participant_answer=request.text_answer.strip(),
+                participant_answer=text,
                 expected_answer=str(expected_answer).strip(),
             )
 
-        
-        # Create answer
-        answer = Answer(
+        db.add(Answer(
             session_id=session.id,
             participant_id=participant.id,
             question_id=request.question_id,
-            text_answer=request.text_answer.strip(),
+            text_answer=text,
             selected_option_index=None,
-            is_correct=is_correct
-        )
-        
-        db.add(answer)
+            is_correct=is_correct,
+        ))
         await db.commit()
-        
-        # Update word cloud aggregation in Redis
-        await self._update_word_cloud_aggregation(
-            session.id,
-            request.question_id,
-            request.text_answer.strip()
-        )
-        
+
+        await self._update_word_cloud_aggregation(session.id, request.question_id, text)
+
         return AnswerSubmitResponse(
             success=True,
             message="Response submitted successfully",
-            is_correct=None
+            is_correct=None,
         )
     
     async def get_word_cloud_results(

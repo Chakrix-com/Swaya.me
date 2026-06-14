@@ -169,7 +169,7 @@ export default function OfflinePollResults() {
           )}
 
           {qr.question_type !== 'mcq' && (!qr.word_frequencies || Object.keys(qr.word_frequencies).length === 0) && (
-            <Paragraph type="secondary" style={{ marginTop: 8 }}>No responses yet.</Paragraph>
+            <Paragraph type="secondary" style={{ marginTop: 8 }}>{t('offlinePoll.noResponsesYet')}</Paragraph>
           )}
         </Card>
       ))}

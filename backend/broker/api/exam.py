@@ -32,7 +32,7 @@ router = APIRouter(tags=["exam"])
 @router.post("/e/{slug}/request-otp")
 @limiter.limit("10/minute")
 async def request_exam_otp(
-    http_request: Request,
+    request: Request,
     slug: str,
     body: ExamOtpRequest,
     db: AsyncSession = Depends(get_async_db),
@@ -57,7 +57,7 @@ async def get_exam_info(slug: str, db: AsyncSession = Depends(get_async_db)):
 @router.post("/e/{slug}/start", response_model=ExamStartResponse)
 @limiter.limit("10/minute")
 async def start_exam(
-    http_request: Request,
+    request: Request,
     slug: str,
     body: ExamStartRequest,
     db: AsyncSession = Depends(get_async_db),

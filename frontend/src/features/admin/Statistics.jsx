@@ -503,13 +503,13 @@ function Statistics() {
       {/* Weekly Active Hosts */}
       <div style={{ marginBottom: 16 }}>
         <Title level={4}>
-          <TeamOutlined /> Weekly Active Hosts
+          <TeamOutlined /> {t('admin.stats.weeklyActiveHosts')}
         </Title>
         <Card>
           {weeklyHostsLoading ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin /></div>
           ) : weeklyHostsData.length === 0 ? (
-            <Alert message="No session data in the last 7 days." type="info" showIcon />
+            <Alert message={t('admin.stats.noWeeklyData')} type="info" showIcon />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={weeklyHostsData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
@@ -517,7 +517,7 @@ function Statistics() {
                 <XAxis dataKey="day" tickFormatter={v => dayjs(v).format('MMM D')} />
                 <YAxis allowDecimals={false} />
                 <Tooltip labelFormatter={v => dayjs(v).format('ddd, MMM D')} />
-                <Bar dataKey="active_hosts" name="Active Hosts" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="active_hosts" name={t('admin.stats.activeHosts')} fill="#4f46e5" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

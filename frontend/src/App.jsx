@@ -309,7 +309,7 @@ function AuthenticatedLayout({ children }) {
         ),
       }}
       actionsRender={() => [
-        <Tooltip key="github" title="View source on GitHub">
+        <Tooltip key="github" title={t('common.viewOnGitHub')}>
           <a href="https://github.com/Chakrix-com/Swaya.me" target="_blank" rel="noopener noreferrer" style={{ fontSize: 18, color: 'inherit', display: 'flex', alignItems: 'center' }}>
             <GithubOutlined />
           </a>

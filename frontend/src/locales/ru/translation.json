@@ -1772,7 +1772,21 @@
     "streamProgress": "Generated {{count}} of {{total}}…",
     "stopGenerating": "Stop generating",
     "waitForStream": "Generating…",
-    "findImage": "Find image"
+    "findImage": "Find image",
+    "existingContextNotice": "{{count}} существующих вопросов будут использованы как контекст для исключения дублей",
+    "voiceStart": "Начать голосовой ввод",
+    "voiceStop": "Остановить прослушивание",
+    "styleLabel": "Стиль",
+    "styleGeneral": "Общий",
+    "styleUPSC": "UPSC MCQ",
+    "styleJEE": "JEE",
+    "styleIELTS": "IELTS",
+    "styleCAT": "CAT",
+    "styleGATE": "GATE",
+    "examSuggDuration": "ИИ предлагает: экзамен на {{minutes}} минут",
+    "examSuggProctoring": "Прокторинг рекомендован: {{value}}",
+    "examSuggApply": "Применить к настройкам",
+    "examSuggDismiss": "Отклонить"
   },
   "offlinePoll": {
     "typeLabel": "Опрос",

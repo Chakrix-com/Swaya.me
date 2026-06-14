@@ -38,6 +38,7 @@ class GenerateQuestionsRequest(BaseModel):
     count: int = Field(5, ge=1, le=100, description="Number of questions to generate")
     language: str = Field("en", max_length=10, description="Language code, e.g. en, hi, fr")
     quiz_type: str = Field("quiz", max_length=20, description="Type of quiz: quiz, exam, poll, offline_poll")
+    existing_questions: Optional[list[str]] = Field(None, description="Texts of already-existing questions to avoid duplicating")
     # Legacy field — ignored, kept for backward compatibility
     topic: Optional[str] = Field(None, description="Deprecated: use prompt instead")
     model: Optional[str] = Field(None, description="Ignored — Gemini model is used")
@@ -55,6 +56,8 @@ class GeneratedQuestion(BaseModel):
 class GenerateQuestionsResponse(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    suggested_exam_duration_minutes: Optional[int] = None
+    suggested_proctoring: Optional[bool] = None
     questions: list[GeneratedQuestion]
     model: str
 
@@ -128,6 +131,7 @@ async def api_generate_questions(
             count=req.count,
             language=req.language,
             quiz_type=req.quiz_type,
+            existing_questions=req.existing_questions or None,
         )
     except GeminiError as e:
         logger.error("Gemini question generation failed: %s", e)
@@ -143,6 +147,8 @@ async def api_generate_questions(
     return GenerateQuestionsResponse(
         title=result.get("title") or None,
         description=result.get("description") or None,
+        suggested_exam_duration_minutes=result.get("suggested_exam_duration_minutes"),
+        suggested_proctoring=result.get("suggested_proctoring"),
         questions=[GeneratedQuestion(**q) for q in questions],
         model=settings.gemini.model,
     )
@@ -177,6 +183,7 @@ async def api_generate_questions_stream(
                 count=req.count,
                 language=req.language,
                 quiz_type=req.quiz_type,
+                existing_questions=req.existing_questions or None,
             ):
                 yield f"data: {json.dumps(item)}\n\n"
         except GeminiError as e:

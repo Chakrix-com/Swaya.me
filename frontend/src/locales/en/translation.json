@@ -1829,7 +1829,21 @@
     "streamProgress": "Generated {{count}} of {{total}}…",
     "stopGenerating": "Stop generating",
     "waitForStream": "Generating…",
-    "findImage": "Find image"
+    "findImage": "Find image",
+    "existingContextNotice": "{{count}} existing questions will be used as context to avoid duplicates",
+    "voiceStart": "Start voice input",
+    "voiceStop": "Stop listening",
+    "styleLabel": "Style",
+    "styleGeneral": "General",
+    "styleUPSC": "UPSC MCQ",
+    "styleJEE": "JEE",
+    "styleIELTS": "IELTS",
+    "styleCAT": "CAT",
+    "styleGATE": "GATE",
+    "examSuggDuration": "AI suggests: {{minutes}}-minute exam",
+    "examSuggProctoring": "Proctoring recommended: {{value}}",
+    "examSuggApply": "Apply to settings",
+    "examSuggDismiss": "Dismiss"
   },
   "offlinePoll": {
     "typeLabel": "Survey",

@@ -309,7 +309,7 @@ export default function RichTextEditor({
             <Divider />
 
             {/* Link */}
-            <ToolbarBtn active={editor.isActive('link')} tooltip="Link" onClick={setLink}><LinkOutlined /></ToolbarBtn>
+            <ToolbarBtn active={editor.isActive('link')} tooltip={t('richText.link')} onClick={setLink}><LinkOutlined /></ToolbarBtn>
 
             {/* Table */}
             <ToolbarBtn active={editor.isActive('table')} tooltip={t('richText.insertTable')} onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableOutlined /></ToolbarBtn>
