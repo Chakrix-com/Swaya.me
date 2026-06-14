@@ -2617,23 +2617,21 @@ export default function QuizBuilder() {
                         >
                           {isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz')}
                         </Button>
-                        {!isPoll && !isOfflinePoll && (
-                          <Button
-                            size="large"
-                            icon={<ThunderboltOutlined />}
-                            loading={loading && savingForAI}
-                            onClick={() => {
-                              if (!form.getFieldValue('title')?.trim()) {
-                                form.setFieldsValue({ title: t('quiz.untitled', 'Untitled') })
-                              }
-                              setSavingForAI(true)
-                              form.submit()
-                            }}
-                            style={{ minWidth: 180 }}
-                          >
-                            {t('ai.generateWithAI')}
-                          </Button>
-                        )}
+                        <Button
+                          size="large"
+                          icon={<ThunderboltOutlined />}
+                          loading={loading && savingForAI}
+                          onClick={() => {
+                            if (!form.getFieldValue('title')?.trim()) {
+                              form.setFieldsValue({ title: t('quiz.untitled', 'Untitled') })
+                            }
+                            setSavingForAI(true)
+                            form.submit()
+                          }}
+                          style={{ minWidth: 180 }}
+                        >
+                          {t('ai.generateWithAI')}
+                        </Button>
                       </div>
                     </Form>
                   </div>
