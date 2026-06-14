@@ -1056,6 +1056,9 @@ export default function QuizBuilder() {
   const [aiTitleDismissed, setAiTitleDismissed] = useState(false)
   const [aiContentType, setAiContentType] = useState(aiContentTypeParam)
   const [aiDifficulty, setAiDifficulty] = useState(aiDifficultyParam)
+  const [editingPreviewIndex, setEditingPreviewIndex] = useState(null)
+  const [editingData, setEditingData] = useState(null) // {text, options, correct_answer_index}
+  const [regeneratingIndex, setRegeneratingIndex] = useState(null)
   
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
@@ -2354,6 +2357,35 @@ export default function QuizBuilder() {
     }
   }
 
+  const handleRegenerateOne = async (index) => {
+    setRegeneratingIndex(index)
+    try {
+      const hint = CONTENT_TYPE_HINTS[aiContentType]
+      const effectivePrompt = hint ? `${hint}\n\n${aiTopic.trim()}` : aiTopic.trim()
+      const quizType = quiz?.quiz_type || initialQuizType || 'quiz'
+      const existing = aiPreview[index]
+      const contextNote = existing?.text
+        ? `Replace the following question with a completely different one on the same topic. Do NOT repeat: "${existing.text.replace(/<[^>]*>/g, '').slice(0, 100)}".`
+        : ''
+      const res = await aiAPI.generateQuestions({
+        prompt: contextNote ? `${contextNote}\n\n${effectivePrompt}` : effectivePrompt,
+        count: 1,
+        language: i18n.language,
+        quiz_type: quizType,
+      })
+      const newQ = res.data.questions[0]
+      if (newQ) {
+        setAiPreview(prev => prev.map((item, idx) =>
+          idx === index ? { ...newQ, selected: item.selected } : item
+        ))
+      }
+    } catch {
+      message.error(t('ai.generationFailed'))
+    } finally {
+      setRegeneratingIndex(null)
+    }
+  }
+
   const getQuizStatusTranslation = (status) => {
     const statusMap = {
       draft: 'statusDraft',
@@ -2941,50 +2973,140 @@ export default function QuizBuilder() {
               const qType = q.question_type || 'mcq'
               const typeColors = { mcq: 'cyan', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange' }
               const typeLabels = { mcq: 'MCQ', word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph') }
+              const isEditing = editingPreviewIndex === i
+              const isRegenerating = regeneratingIndex === i
+
               return (
                 <Card
                   key={i}
                   size="small"
-                  style={{ borderColor: q.selected ? '#1677ff' : '#d9d9d9' }}
+                  style={{ borderColor: isEditing ? '#fa8c16' : q.selected ? '#1677ff' : '#d9d9d9', opacity: isRegenerating ? 0.5 : 1 }}
                   extra={
                     <Space>
                       <Tag color={typeColors[qType] || 'default'}>{typeLabels[qType] || qType}</Tag>
-                      <Checkbox
-                        checked={q.selected}
-                        onChange={e => setAiPreview(prev => prev.map((item, idx) => idx === i ? { ...item, selected: e.target.checked } : item))}
-                      />
+                      {!isEditing && (
+                        <>
+                          <Button
+                            size="small"
+                            icon={isRegenerating ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                            onClick={() => handleRegenerateOne(i)}
+                            disabled={isRegenerating || regeneratingIndex !== null || editingPreviewIndex !== null}
+                            title={t('ai.regenerate', 'Regenerate')}
+                          />
+                          <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              setEditingPreviewIndex(i)
+                              setEditingData({
+                                text: stripHtml(q.text) || q.text,
+                                options: (q.options || []).map(o => stripHtml(o) || o),
+                                correct_answer_index: q.correct_answer_index ?? 0,
+                              })
+                            }}
+                            disabled={regeneratingIndex !== null || editingPreviewIndex !== null}
+                          />
+                          <Checkbox
+                            checked={q.selected}
+                            onChange={e => setAiPreview(prev => prev.map((item, idx) => idx === i ? { ...item, selected: e.target.checked } : item))}
+                          />
+                        </>
+                      )}
                     </Space>
                   }
                 >
-                  <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                    <RichTextRenderer content={q.text} />
-                  </div>
-                  {qType === 'mcq' && q.options && (
-                    <div>
-                      {q.options.map((opt, oi) => (
-                        <div key={oi} style={{
-                          display: 'flex', alignItems: 'baseline', gap: 4,
-                          color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
-                          marginBottom: 2,
-                        }}>
-                          <span style={{ flexShrink: 0, fontWeight: 500 }}>
-                            {String.fromCharCode(65 + oi)}:
+                  {isEditing && editingData ? (
+                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                      <Input.TextArea
+                        value={editingData.text}
+                        onChange={e => setEditingData(d => ({ ...d, text: e.target.value }))}
+                        rows={2}
+                        autoSize={{ minRows: 2 }}
+                        placeholder={t('quiz.enterQuestion')}
+                        style={{ fontWeight: 600 }}
+                      />
+                      {qType === 'mcq' && editingData.options.map((opt, oi) => (
+                        <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span
+                            style={{
+                              flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              background: oi === editingData.correct_answer_index ? '#52c41a' : '#f0f0f0',
+                              color: oi === editingData.correct_answer_index ? '#fff' : '#666',
+                              cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                            }}
+                            title={t('ai.setCorrect', 'Mark as correct')}
+                            onClick={() => setEditingData(d => ({ ...d, correct_answer_index: oi }))}
+                          >
+                            {String.fromCharCode(65 + oi)}
                           </span>
-                          <RichTextRenderer content={opt} style={{ flex: 1 }} />
-                          {oi === q.correct_answer_index && !isPoll && (
-                            <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
-                          )}
+                          <Input
+                            value={opt}
+                            onChange={e => setEditingData(d => {
+                              const opts = [...d.options]
+                              opts[oi] = e.target.value
+                              return { ...d, options: opts }
+                            })}
+                            size="small"
+                            style={{ flex: 1 }}
+                          />
                         </div>
                       ))}
-                    </div>
-                  )}
-                  {qType === 'scale' && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>1 — 2 — 3 — 4 — 5</Text>
-                  )}
-                  {(qType === 'word_cloud' || qType === 'paragraph') && (
-                    <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic' }}>
-                      {qType === 'word_cloud' ? t('quiz.wordCloudDescription') : t('quiz.paragraphDescription')}
-                    </Text>
+                      <Space>
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => {
+                            setAiPreview(prev => prev.map((item, idx) =>
+                              idx === i ? { ...item, text: editingData.text, options: editingData.options, correct_answer_index: editingData.correct_answer_index } : item
+                            ))
+                            setEditingPreviewIndex(null)
+                            setEditingData(null)
+                          }}
+                        >
+                          {t('common.save')}
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => { setEditingPreviewIndex(null); setEditingData(null) }}
+                        >
+                          {t('common.cancel')}
+                        </Button>
+                      </Space>
+                    </Space>
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                        <RichTextRenderer content={q.text} />
+                      </div>
+                      {qType === 'mcq' && q.options && (
+                        <div>
+                          {q.options.map((opt, oi) => (
+                            <div key={oi} style={{
+                              display: 'flex', alignItems: 'baseline', gap: 4,
+                              color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
+                              marginBottom: 2,
+                            }}>
+                              <span style={{ flexShrink: 0, fontWeight: 500 }}>
+                                {String.fromCharCode(65 + oi)}:
+                              </span>
+                              <RichTextRenderer content={opt} style={{ flex: 1 }} />
+                              {oi === q.correct_answer_index && !isPoll && (
+                                <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {qType === 'scale' && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>1 — 2 — 3 — 4 — 5</Text>
+                      )}
+                      {(qType === 'word_cloud' || qType === 'paragraph') && (
+                        <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic' }}>
+                          {qType === 'word_cloud' ? t('quiz.wordCloudDescription') : t('quiz.paragraphDescription')}
+                        </Text>
+                      )}
+                    </>
                   )}
                 </Card>
               )

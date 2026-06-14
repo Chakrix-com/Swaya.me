@@ -1766,7 +1766,9 @@
     "difficultyLabel": "Difficulty",
     "difficultyEasy": "Easy",
     "difficultyMedium": "Medium",
-    "difficultyHard": "Hard"
+    "difficultyHard": "Hard",
+    "regenerate": "Regenerate this question",
+    "setCorrect": "Mark as correct"
   },
   "offlinePoll": {
     "typeLabel": "સર્વે",
