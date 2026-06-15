@@ -96,6 +96,7 @@ const QuestionForm = ({
   question,
   onSave,
   onCancel,
+  onAutoSave,
   quizId,
   questionImageUrl,
   setQuestionImageUrl,
@@ -330,7 +331,14 @@ const QuestionForm = ({
     }
   }
 
+  const handleFormBlur = useCallback((e) => {
+    if (!onAutoSave || !question) return
+    if (e.currentTarget.contains(e.relatedTarget)) return
+    onAutoSave(question.id, questionForm.getFieldsValue(true))
+  }, [onAutoSave, question, questionForm])
+
   return (
+    <div onBlur={handleFormBlur}>
     <Card style={{ marginBottom: 16, width: '100%' }}>
       <Form
         form={questionForm}
@@ -913,6 +921,7 @@ const QuestionForm = ({
         </div>
       </Form>
     </Card>
+    </div>
   )
 }
 
@@ -936,6 +945,8 @@ export default function QuizBuilder() {
   const [stageView, setStageView] = useState(null) // null | 'setup' | 'proctoring'
   const [railFilter, setRailFilter] = useState('all') // 'all' | 'incomplete'
   const [proctoringPolicy, setProctoringPolicy] = useState(null)
+  const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
+  const saveStatusTimerRef = useRef(null)
   const questionsRef = useRef(null)
   
   // Image state for question being edited/created
@@ -1752,6 +1763,46 @@ export default function QuizBuilder() {
     setRailTitleEditing(false)
   }
 
+  const handleAutoSave = useCallback(async (questionId, values) => {
+    setSaveStatus('saving')
+    try {
+      const questionData = {
+        question_type: values.question_type || 'mcq',
+        text: values.text,
+        points: values.points || 1,
+        max_time_seconds: values.max_time_seconds ?? null,
+        negative_points: values.negative_points ?? 0,
+        is_required: values.is_required ?? false,
+        answer_explanation: values.answer_explanation || null,
+        question_video_url: values.question_video_url || null,
+      }
+      if (values.question_type === 'mcq') {
+        const mcqOptions = [values.option_a, values.option_b, values.option_c, values.option_d, ...(values.extra_options || [])].filter(opt => stripHtml(opt).length > 0)
+        if (mcqOptions.length < 2) { setSaveStatus('idle'); return }
+        questionData.options = mcqOptions
+        const selected = Number(values.correct_answer)
+        questionData.correct_answer_index = isPoll ? null : selected
+      } else if (values.question_type === 'scale') {
+        questionData.options = ['1', '2', '3', '4', '5']
+        questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
+      } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
+        questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
+        questionData.correct_answer_index = null
+      } else {
+        questionData.options = null
+        questionData.correct_answer_index = null
+      }
+      await questionAPI.update(questionId, questionData)
+      // Update local question state so rail status dots refresh without a full reload
+      setQuestions(qs => qs.map(q => q.id === questionId ? { ...q, ...questionData } : q))
+      setSaveStatus('saved')
+      clearTimeout(saveStatusTimerRef.current)
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
+    } catch {
+      setSaveStatus('error')
+    }
+  }, [isPoll])
+
   const handleSaveQuiz = async (rawValues) => {
     setLoading(true)
     // Serialize dayjs objects to ISO strings for the API
@@ -2470,7 +2521,9 @@ export default function QuizBuilder() {
               {isExam ? t('exam.typeLabel') : isOfflinePoll ? t('offlinePoll.typeLabel', 'Poll') : isPoll ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
             </span>
           )}
-          <span className="qb-save-status" />
+          <span className={`qb-save-status${saveStatus !== 'idle' ? ` qb-save-status--${saveStatus}` : ''}`}>
+            {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved ✓' : saveStatus === 'error' ? '⚠ Save failed' : ''}
+          </span>
           {quiz && quiz.status === 'draft' && questions.length >= 1 && (
             <Tooltip title={t('tooltip.publishQuiz')}>
               <Button type="primary" icon={<RocketOutlined />} onClick={handlePublish} loading={loading}>
@@ -3013,6 +3066,7 @@ export default function QuizBuilder() {
                     key={`edit-${q.id}`}
                     question={q}
                     onSave={(values) => handleUpdateQuestion(q.id, values)}
+                    onAutoSave={handleAutoSave}
                     onCancel={handleCancelQuestion}
                     quizId={id}
                     isPoll={isPoll}
