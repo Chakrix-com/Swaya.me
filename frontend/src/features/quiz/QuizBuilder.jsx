@@ -122,6 +122,7 @@ const QuestionForm = ({
   const [rewriting, setRewriting] = useState({})
   const [useRichText, setUseRichText] = useState(false)
   const [typeChipsExpanded, setTypeChipsExpanded] = useState(true)
+  const [explanationOpen, setExplanationOpen] = useState(false)
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
@@ -184,6 +185,7 @@ const QuestionForm = ({
       questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
       setTypeChipsExpanded(!question.text)
+      setExplanationOpen(!!question.answer_explanation)
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
@@ -223,6 +225,7 @@ const QuestionForm = ({
       })
       setQuestionType('mcq')
       setTypeChipsExpanded(true)
+      setExplanationOpen(false)
 
       // Reset image/video state for new question
       setQuestionImageUrl(null)
@@ -991,18 +994,29 @@ const QuestionForm = ({
           </>
         )}
 
-        <Form.Item
-          name="answer_explanation"
-          label={t('quiz.answerExplanation', 'Answer Explanation (optional)')}
-          tooltip={t('quiz.answerExplanationTooltip', 'Shown to participants only after they submit the exam.')}
-        >
-          <Input.TextArea
-            placeholder={t('quiz.answerExplanationPlaceholder', 'Explain why the correct answer is correct…')}
-            maxLength={1000}
-            showCount
-            autoSize={{ minRows: 2, maxRows: 5 }}
-          />
-        </Form.Item>
+        {/* Explanation — collapsed by default */}
+        <div style={{ marginBottom: 16 }}>
+          <button
+            type="button"
+            className="qb-explanation-toggle"
+            onClick={() => setExplanationOpen(v => !v)}
+          >
+            {explanationOpen ? '▾' : '▸'} {explanationOpen
+              ? t('quiz.editExplanation', 'Edit explanation')
+              : t('quiz.addExplanation', 'Add explanation (optional)')}
+          </button>
+          {explanationOpen && (
+            <Form.Item name="answer_explanation" style={{ marginTop: 8, marginBottom: 0 }}>
+              <Input.TextArea
+                placeholder={t('quiz.answerExplanationPlaceholder', 'Explain why the correct answer is correct…')}
+                maxLength={1000}
+                showCount
+                autoSize={{ minRows: 2, maxRows: 5 }}
+                autoFocus
+              />
+            </Form.Item>
+          )}
+        </div>
 
         <Space style={{ marginTop: 28 }}>
           <Button
