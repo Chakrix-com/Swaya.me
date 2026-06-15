@@ -2815,11 +2815,80 @@ export default function QuizBuilder() {
               <span className="qb-rail-title">{quiz?.title || '…'}</span>
             </div>
             <div className="qb-rail-list">
-              <div style={{ padding: '24px 16px', fontSize: 12, color: '#aaa', textAlign: 'center' }}>
-                Question navigator — coming soon
-              </div>
+              {quiz?.status === 'ready' && isExam && (
+                <div style={{ padding: '8px 10px', fontSize: 11, color: '#fa8c16', background: '#fff7e6', borderRadius: 6, margin: '4px 0 8px' }}>
+                  {t('exam.questionsLockedNotice')}
+                </div>
+              )}
+              <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                  {questions.map((question, index) => {
+                    const hasText = !!stripHtml(question.text).trim()
+                    const hasCa = !Number.isInteger(question.correct_answer_index) ? false : question.correct_answer_index >= 0
+                    const needsCa = question.question_type === 'mcq' && !isPoll
+                    const statusCls = !hasText ? 'qb-q-status-dot--empty' : (needsCa && !hasCa) ? 'qb-q-status-dot--warn' : 'qb-q-status-dot--ok'
+                    const isActive = editingQuestion === question.id
+                    const isDraftQuiz = quiz?.status === 'draft'
+                    return (
+                      <SortableItem
+                        key={question.id}
+                        id={question.id}
+                        disabled={!isDraftQuiz || !!(editingQuestion && editingQuestion !== question.id)}
+                      >
+                        {({ dragHandleProps }) => (
+                          <div
+                            className={`qb-q-card${isActive ? ' qb-q-card--active' : ''}`}
+                            onClick={() => setEditingQuestion(question.id)}
+                          >
+                            {isDraftQuiz && (
+                              <span className="qb-q-drag-handle" {...dragHandleProps}>⠿</span>
+                            )}
+                            <div className="qb-q-card-body">
+                              <div className="qb-q-card-meta">
+                                <span className="qb-q-num">Q{index + 1}</span>
+                                <span className="qb-q-type-tag">{getQuestionTypeLabel(question.question_type, t)}</span>
+                                <span className={`qb-q-status-dot ${statusCls}`} />
+                              </div>
+                              <div className="qb-q-preview">
+                                {stripHtml(question.text).slice(0, 40) || t('quiz.untitled', 'Untitled')}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </SortableItem>
+                    )
+                  })}
+                </SortableContext>
+              </DndContext>
+              {questions.length === 0 && (
+                <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: 12, color: '#aaa' }}>
+                  {t('quiz.addFirstQuestion', 'No questions yet — add one below')}
+                </div>
+              )}
             </div>
-            <div className="qb-rail-footer" />
+            <div className="qb-rail-footer">
+              {!(quiz?.status === 'ready' && isExam) && (
+                <>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    block
+                    onClick={() => { setEditingQuestion('new') }}
+                    disabled={!!editingQuestion && editingQuestion !== 'new'}
+                  >
+                    {t('quiz.addQuestion')}
+                  </Button>
+                  <Button
+                    icon={<ThunderboltOutlined />}
+                    block
+                    onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
+                    disabled={!!editingQuestion}
+                  >
+                    {t('ai.generateWithAI')}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Right stage — all existing edit content */}
@@ -2900,11 +2969,66 @@ export default function QuizBuilder() {
               )}
             </Card>
 
-            <Divider orientation="left" style={{ marginTop: 8, marginBottom: 16 }}>
-              {t('quiz.questionsSection')} ({questions.length})
-            </Divider>
-
-            {renderQuestionsList()}
+            {/* Question form area — shown when a question is selected from the rail */}
+            {editingQuestion === 'new' ? (
+              <MemoizedQuestionForm
+                key="new-question"
+                onSave={handleAddQuestion}
+                onCancel={handleCancelQuestion}
+                quizId={id}
+                isPoll={isPoll}
+                isExam={isExam}
+                isOfflinePoll={isOfflinePoll}
+                language={i18n.language}
+                isAdmin={isAdmin}
+                questionImageUrl={questionImageUrl}
+                setQuestionImageUrl={setQuestionImageUrl}
+                optionImages={optionImages}
+                setOptionImages={setOptionImages}
+                tempImages={tempImages}
+                setTempImages={setTempImages}
+                loading={loading}
+                movingImages={movingImages}
+                t={t}
+              />
+            ) : editingQuestion ? (
+              (() => {
+                const q = questions.find(q => q.id === editingQuestion)
+                if (!q) return null
+                return (
+                  <MemoizedQuestionForm
+                    key={`edit-${q.id}`}
+                    question={q}
+                    onSave={(values) => handleUpdateQuestion(q.id, values)}
+                    onCancel={handleCancelQuestion}
+                    quizId={id}
+                    isPoll={isPoll}
+                    isExam={isExam}
+                    isOfflinePoll={isOfflinePoll}
+                    language={i18n.language}
+                    isAdmin={isAdmin}
+                    questionImageUrl={questionImageUrl}
+                    setQuestionImageUrl={setQuestionImageUrl}
+                    optionImages={optionImages}
+                    setOptionImages={setOptionImages}
+                    tempImages={tempImages}
+                    setTempImages={setTempImages}
+                    loading={loading}
+                    movingImages={movingImages}
+                    t={t}
+                  />
+                )
+              })()
+            ) : (
+              <div className="qb-stage-empty">
+                <div className="qb-stage-empty-icon">✏️</div>
+                <div>
+                  {questions.length === 0
+                    ? t('quiz.addFirstQuestion', 'Add your first question using the button below')
+                    : t('quiz.selectQuestion', 'Select a question on the left to edit it')}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
