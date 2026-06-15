@@ -284,6 +284,10 @@
   .qb-stage--mobile-hidden {
     display: none;
   }
+
+  .qb-mobile-back {
+    display: flex !important;
+  }
 }
 
 /* ── Legacy builder page (creation form, /quiz/new) ─────────────────────── */

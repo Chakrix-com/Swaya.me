@@ -1018,6 +1018,7 @@ export default function QuizBuilder() {
   const [editingQuestion, setEditingQuestion] = useState(null)
   const [railTitleEditing, setRailTitleEditing] = useState(false)
   const [railTitleValue, setRailTitleValue] = useState('')
+  const [mobileView, setMobileView] = useState('list') // 'list' | 'form'
   const [proctoringPolicy, setProctoringPolicy] = useState(null)
   const questionsRef = useRef(null)
   
@@ -2823,7 +2824,7 @@ export default function QuizBuilder() {
       ) : (
         /* Edit Mode: Two-Pane Studio */
         <div className="qb-body">
-          <div className="qb-rail">
+          <div className={`qb-rail${mobileView === 'form' ? ' qb-rail--mobile-hidden' : ''}`}>
             <div className="qb-rail-header">
               {railTitleEditing ? (
                 <input
@@ -2869,7 +2870,7 @@ export default function QuizBuilder() {
                         {({ dragHandleProps }) => (
                           <div
                             className={`qb-q-card${isActive ? ' qb-q-card--active' : ''}`}
-                            onClick={() => setEditingQuestion(question.id)}
+                            onClick={() => { setEditingQuestion(question.id); setMobileView('form') }}
                           >
                             {isDraftQuiz && (
                               <span className="qb-q-drag-handle" {...dragHandleProps}>⠿</span>
@@ -2904,7 +2905,7 @@ export default function QuizBuilder() {
                     type="primary"
                     icon={<PlusOutlined />}
                     block
-                    onClick={() => { setEditingQuestion('new') }}
+                    onClick={() => { setEditingQuestion('new'); setMobileView('form') }}
                     disabled={!!editingQuestion && editingQuestion !== 'new'}
                   >
                     {t('quiz.addQuestion')}
@@ -2923,7 +2924,17 @@ export default function QuizBuilder() {
           </div>
 
           {/* Right stage — all existing edit content */}
-          <div className="qb-stage">
+          <div className={`qb-stage${mobileView === 'list' ? ' qb-stage--mobile-hidden' : ''}`}>
+            {/* Mobile-only back button */}
+            <Button
+              className="qb-mobile-back"
+              type="text"
+              icon={<LeftOutlined />}
+              onClick={() => { setMobileView('list'); setEditingQuestion(null) }}
+              style={{ display: 'none', marginBottom: 12 }}
+            >
+              {t('quiz.allQuestions', 'All questions')}
+            </Button>
             {quiz && (
               <Space style={{ marginBottom: 16 }}>
                 <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
