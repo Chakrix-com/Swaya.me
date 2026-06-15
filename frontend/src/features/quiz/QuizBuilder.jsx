@@ -958,6 +958,7 @@ export default function QuizBuilder() {
   const aiContentTypeParam = searchParams.get('ai_content_type') || 'general'
   const aiDifficultyParam = searchParams.get('ai_difficulty') || 'medium'
   const aiAutoOpen = searchParams.get('ai_auto_open') === '1'
+  const isNewActivity = searchParams.get('new') === '1'
 
   const [tempImages, setTempImages] = useState({
     question: null,  // {url, tempKey}
@@ -1246,6 +1247,13 @@ export default function QuizBuilder() {
         exam_allowed_domains: response.data.exam_allowed_domains || undefined,
         skin: response.data.skin || null,
       })
+      // Auto-focus title for freshly created activities (skip-setup flow)
+      if (isNewActivity) {
+        setTimeout(() => {
+          setRailTitleValue(response.data.title || '')
+          setRailTitleEditing(true)
+        }, 300)
+      }
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.loadError')
       message.error(errorMsg)
@@ -1713,6 +1721,23 @@ export default function QuizBuilder() {
       </DndContext>
     </>
     )
+  }
+
+  const handleSkipSetup = async () => {
+    setLoading(true)
+    try {
+      const response = await quizAPI.create({
+        title: t('quiz.untitled', 'Untitled Quiz'),
+        quiz_type: initialQuizType,
+        skin: 'default',
+        description: '',
+      })
+      navigate(`/quiz/${response.data.id}/edit?new=1`)
+    } catch {
+      message.error(t('quiz.saveError'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleRailTitleSave = async () => {
@@ -2595,6 +2620,11 @@ export default function QuizBuilder() {
                         >
                           {t('ai.generateWithAI')}
                         </Button>
+                      </div>
+                      <div style={{ marginTop: 16, textAlign: 'center' }}>
+                        <button type="button" className="qb-skip-link" onClick={handleSkipSetup} disabled={loading}>
+                          {t('quiz.skipSetup', 'or skip setup and start adding questions →')}
+                        </button>
                       </div>
                     </Form>
                   </div>
