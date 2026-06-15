@@ -171,9 +171,9 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 0 10px;
+  gap: 0 12px;
   margin-bottom: 18px;
-  font-size: 0.78rem;
+  font-size: 1rem;
   color: var(--pub-muted);
   font-family: var(--pub-font-mono);
   letter-spacing: 0.01em;
@@ -181,7 +181,7 @@
 .pub-name-word {
   font-weight: 700;
   color: var(--pub-ink);
-  font-size: 0.82rem;
+  font-size: 1.05rem;
 }
 .pub-name-phonetic {
   color: var(--pub-primary);
@@ -192,7 +192,7 @@
 }
 .pub-name-devanagari {
   font-family: 'Noto Serif', Georgia, serif;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   letter-spacing: 0;
   color: var(--pub-muted);
 }
