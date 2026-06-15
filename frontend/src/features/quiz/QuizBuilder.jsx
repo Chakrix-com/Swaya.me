@@ -934,6 +934,7 @@ export default function QuizBuilder() {
   const [railTitleValue, setRailTitleValue] = useState('')
   const [mobileView, setMobileView] = useState('list') // 'list' | 'form'
   const [stageView, setStageView] = useState(null) // null | 'setup' | 'proctoring'
+  const [railFilter, setRailFilter] = useState('all') // 'all' | 'incomplete'
   const [proctoringPolicy, setProctoringPolicy] = useState(null)
   const questionsRef = useRef(null)
   
@@ -2782,6 +2783,26 @@ export default function QuizBuilder() {
                   {t('exam.questionsLockedNotice')}
                 </div>
               )}
+              {/* Filter toggle — shown when there are incomplete questions */}
+              {(() => {
+                const incompleteCount = questions.filter(q => {
+                  const hasText = !!stripHtml(q.text).trim()
+                  const hasCa = Number.isInteger(q.correct_answer_index) && q.correct_answer_index >= 0
+                  const needsCa = q.question_type === 'mcq' && !isPoll
+                  return !hasText || (needsCa && !hasCa)
+                }).length
+                if (incompleteCount === 0) return null
+                return (
+                  <div className="qb-rail-filter">
+                    <button type="button" className={`qb-rail-filter-btn${railFilter === 'all' ? ' qb-rail-filter-btn--active' : ''}`} onClick={() => setRailFilter('all')}>
+                      {t('quiz.filterAll', 'All')}
+                    </button>
+                    <button type="button" className={`qb-rail-filter-btn${railFilter === 'incomplete' ? ' qb-rail-filter-btn--active' : ''}`} onClick={() => setRailFilter('incomplete')}>
+                      {t('quiz.filterIncomplete', 'Incomplete')} ({incompleteCount})
+                    </button>
+                  </div>
+                )
+              })()}
               <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
                   {questions.map((question, index) => {
@@ -2789,6 +2810,8 @@ export default function QuizBuilder() {
                     const hasCa = !Number.isInteger(question.correct_answer_index) ? false : question.correct_answer_index >= 0
                     const needsCa = question.question_type === 'mcq' && !isPoll
                     const statusCls = !hasText ? 'qb-q-status-dot--empty' : (needsCa && !hasCa) ? 'qb-q-status-dot--warn' : 'qb-q-status-dot--ok'
+                    const isIncomplete = !hasText || (needsCa && !hasCa)
+                    if (railFilter === 'incomplete' && !isIncomplete) return null
                     const isActive = editingQuestion === question.id
                     const isDraftQuiz = quiz?.status === 'draft'
                     return (

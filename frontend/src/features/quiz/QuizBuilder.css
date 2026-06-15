@@ -479,6 +479,33 @@
   cursor: inherit;
 }
 
+/* ── Rail filter toggle ──────────────────────────────────────────────────── */
+.qb-rail-filter {
+  display: flex;
+  gap: 4px;
+  padding: 4px 4px 4px;
+  flex-shrink: 0;
+}
+
+.qb-rail-filter-btn {
+  flex: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--sw-border, #e5e7eb);
+  background: transparent;
+  color: var(--sw-text2, #555);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.qb-rail-filter-btn:hover { background: var(--sw-bg, #f0f0f0); }
+.qb-rail-filter-btn--active {
+  background: var(--sw-primary, #6366f1);
+  border-color: var(--sw-primary, #6366f1);
+  color: #fff;
+}
+
 /* ── Right stage ─────────────────────────────────────────────────────────── */
 .qb-stage {
   flex: 1;
