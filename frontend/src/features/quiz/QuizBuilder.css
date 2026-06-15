@@ -224,6 +224,52 @@
   background: var(--sw-surface, #fff);
 }
 
+/* ── Question type chips ─────────────────────────────────────────────────── */
+.qb-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.qb-type-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--sw-border, #e5e7eb);
+  background: var(--sw-bg, #f8fafc);
+  color: var(--sw-text2, #555);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+.qb-type-chip:hover {
+  border-color: var(--sw-primary, #6366f1);
+  color: var(--sw-primary, #6366f1);
+}
+.qb-type-chip--active {
+  background: var(--sw-primary, #6366f1);
+  border-color: var(--sw-primary, #6366f1);
+  color: #fff;
+}
+.qb-type-chip--active:hover {
+  color: #fff;
+}
+
+.qb-change-type-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--sw-primary, #6366f1);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.qb-change-type-link:hover { opacity: 0.75; }
+
 /* ── Right stage ─────────────────────────────────────────────────────────── */
 .qb-stage {
   flex: 1;

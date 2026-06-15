@@ -121,6 +121,7 @@ const QuestionForm = ({
   const [aiSuggesting, setAiSuggesting] = useState(false)
   const [rewriting, setRewriting] = useState({})
   const [useRichText, setUseRichText] = useState(false)
+  const [typeChipsExpanded, setTypeChipsExpanded] = useState(true)
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
@@ -182,6 +183,7 @@ const QuestionForm = ({
       }
       questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
+      setTypeChipsExpanded(!question.text)
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
@@ -220,7 +222,8 @@ const QuestionForm = ({
         correct_answer: isPoll ? undefined : '0',
       })
       setQuestionType('mcq')
-      
+      setTypeChipsExpanded(true)
+
       // Reset image/video state for new question
       setQuestionImageUrl(null)
       setQuestionVideoUrl(null)
@@ -327,19 +330,38 @@ const QuestionForm = ({
           correct_answer: isPoll ? undefined : '0'
         }}
       >
-        <Form.Item
-          name="question_type"
-          label={t('quiz.questionType')}
-          rules={[{ required: true }]}
-        >
-            <Radio.Group onChange={handleTypeChange}>
-              <Radio value="mcq">{t('quiz.multipleChoice')}</Radio>
-              {isPoll && <Radio value="word_cloud">{t('quiz.wordCloud')}</Radio>}
-              {isPoll && <Radio value="one_word">{t('quiz.oneWord')}</Radio>}
-              {!isExam && <Radio value="single_line">{t('quiz.singleLine')}</Radio>}
-              {isPoll && <Radio value="scale">{t('quizPresent.scaleOneToFive')}</Radio>}
-              {isPoll && <Radio value="paragraph">{t('quiz.paragraph')}</Radio>}
-          </Radio.Group>
+        {/* Question type — pill chips */}
+        <Form.Item name="question_type" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+          {typeChipsExpanded ? (
+            <div className="qb-type-chips">
+              {[
+                { value: 'mcq', label: t('quiz.multipleChoice'), show: true },
+                { value: 'single_line', label: t('quiz.singleLine'), show: !isPoll || isOfflinePoll === false },
+                { value: 'word_cloud', label: t('quiz.wordCloud'), show: isPoll },
+                { value: 'scale', label: t('quizPresent.scaleOneToFive'), show: isPoll },
+                { value: 'paragraph', label: t('quiz.paragraph'), show: isOfflinePoll },
+                { value: 'one_word', label: t('quiz.oneWord'), show: isPoll },
+              ].filter(c => c.show).map(chip => (
+                <button
+                  key={chip.value}
+                  type="button"
+                  className={`qb-type-chip${questionType === chip.value ? ' qb-type-chip--active' : ''}`}
+                  onClick={() => { questionForm.setFieldsValue({ question_type: chip.value }); handleTypeChange({ target: { value: chip.value } }) }}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="qb-type-chip qb-type-chip--active" style={{ cursor: 'default' }}>
+                {getQuestionTypeLabel(questionType, t)}
+              </span>
+              <button type="button" className="qb-change-type-link" onClick={() => setTypeChipsExpanded(true)}>
+                {t('quiz.changeType', 'Change type')}
+              </button>
+            </div>
+          )}
         </Form.Item>
 
         <Form.Item
