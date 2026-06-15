@@ -289,7 +289,15 @@ export default function Home() {
               {t('home.v2.heroTitle1', 'One room.')}<br />
               <em>{t('home.v2.heroTitle2', 'Every voice.')}</em>
             </h1>
-            <p className="pub-lede">{t('home.v2.lede', 'Swaya turns any audience into participants. Run a quiz when you want energy, a poll when you want honesty, a test when it counts — everyone joins from their phone with one code.')}</p>
+            <p className="pub-name-gloss" aria-label="Swaya.me pronunciation and meaning">
+              <span className="pub-name-word">Swaya.me</span>
+              <span className="pub-name-phonetic">[svuh·yum]</span>
+              <span className="pub-name-sep" aria-hidden="true">·</span>
+              <span className="pub-name-devanagari" title="svayam">स्वयम्</span>
+              <span className="pub-name-sep" aria-hidden="true">·</span>
+              <span className="pub-name-meaning">Sanskrit for <em>"by oneself"</em></span>
+            </p>
+            <p className="pub-lede">{t('home.v2.lede', 'Swaya.me turns any audience into participants. Run a quiz when you want energy, a poll when you want honesty, a test when it counts — everyone joins from their phone with one code.')}</p>
             <div className="pub-hero-ctas">
               <button className="pub-btn" onClick={() => navigate('/register')}>
                 {t('home.v2.ctaPrimary', 'Create your first session — free')}

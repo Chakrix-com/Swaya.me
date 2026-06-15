@@ -150,6 +150,7 @@ export const themes = {
       '--sw-text3': '#A9A4D9',
       '--sw-bg': '#0E0B33',
       '--sw-card': '#1A1554',
+      '--sw-surface': '#1A1554',
       '--sw-border': 'rgba(255, 255, 255, 0.10)',
       '--sw-hover': 'rgba(255, 255, 255, 0.05)',
       '--sw-tile-quiz-bg': 'rgba(255, 178, 36, 0.12)',

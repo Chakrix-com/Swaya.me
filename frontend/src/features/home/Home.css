@@ -167,6 +167,39 @@
   color: transparent;
 }
 
+.pub-name-gloss {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  margin-bottom: 18px;
+  font-size: 0.78rem;
+  color: var(--pub-muted);
+  font-family: var(--pub-font-mono);
+  letter-spacing: 0.01em;
+}
+.pub-name-word {
+  font-weight: 700;
+  color: var(--pub-ink);
+  font-size: 0.82rem;
+}
+.pub-name-phonetic {
+  color: var(--pub-primary);
+  font-weight: 600;
+}
+.pub-name-sep {
+  opacity: 0.35;
+}
+.pub-name-devanagari {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  color: var(--pub-muted);
+}
+.pub-name-meaning em {
+  font-style: italic;
+}
+
 .pub-lede {
   font-size: 1.16rem;
   color: var(--pub-muted);

@@ -33,6 +33,12 @@ html[data-theme='funky-studio'] .ant-pro-global-header {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
+/* Keyboard shortcut badges: dark-on-dark is invisible — flip to light translucent */
+html[data-theme='funky-studio'] .qc-kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
 /* Public visitor pages other than Home (login, about, legal, join, exam)
    intentionally keep their existing light skin: they mix hardcoded white
    panels with the --visitor-* variables, so a variable-only dark flip leaves
