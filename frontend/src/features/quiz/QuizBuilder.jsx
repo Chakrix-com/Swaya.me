@@ -32,6 +32,7 @@ import {
   ArrowDownOutlined,
   RocketOutlined,
   LeftOutlined,
+  RightOutlined,
   EditOutlined,
   CloseOutlined,
   MinusCircleOutlined,
@@ -97,6 +98,9 @@ const QuestionForm = ({
   onSave,
   onCancel,
   onAutoSave,
+  onNavigate,
+  questionIndex,
+  totalQuestions,
   quizId,
   questionImageUrl,
   setQuestionImageUrl,
@@ -908,16 +912,42 @@ const QuestionForm = ({
             </div>
           )}
           <div style={{ flex: 1 }} />
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading || movingImages}
-            icon={question ? <SaveOutlined /> : <PlusOutlined />}
-            size="small"
-          >
-            {movingImages ? t('quiz.movingImages') : (question ? t('quiz.updateQuestion') : t('quiz.addQuestion'))}
-          </Button>
-          <Button size="small" icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
+          {question ? (
+            /* Existing question: Prev / Next navigation (autosave handles saving) */
+            <>
+              <Button
+                size="small"
+                icon={<LeftOutlined />}
+                disabled={questionIndex <= 0}
+                onClick={() => onNavigate && onNavigate(-1)}
+              >
+                {t('common.prev', 'Prev')}
+              </Button>
+              <Button
+                size="small"
+                icon={<RightOutlined />}
+                iconPosition="end"
+                disabled={questionIndex >= totalQuestions - 1}
+                onClick={() => onNavigate && onNavigate(1)}
+              >
+                {t('common.next', 'Next')}
+              </Button>
+            </>
+          ) : (
+            /* New question: explicit Add / Cancel */
+            <>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading || movingImages}
+                icon={<PlusOutlined />}
+                size="small"
+              >
+                {movingImages ? t('quiz.movingImages') : t('quiz.addQuestion')}
+              </Button>
+              <Button size="small" icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
+            </>
+          )}
         </div>
       </Form>
     </Card>
@@ -1802,6 +1832,14 @@ export default function QuizBuilder() {
       setSaveStatus('error')
     }
   }, [isPoll])
+
+  const handleNavigate = useCallback((direction) => {
+    const currentIndex = questions.findIndex(q => q.id === editingQuestion)
+    const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= questions.length) return
+    setEditingQuestion(questions[nextIndex].id)
+    setStageView(null)
+  }, [questions, editingQuestion])
 
   const handleSaveQuiz = async (rawValues) => {
     setLoading(true)
@@ -3060,13 +3098,17 @@ export default function QuizBuilder() {
               /* ── Edit question form ── */
               (() => {
                 const q = questions.find(q => q.id === editingQuestion)
+                const qIndex = questions.findIndex(q => q.id === editingQuestion)
                 if (!q) return null
                 return (
                   <MemoizedQuestionForm
                     key={`edit-${q.id}`}
                     question={q}
+                    questionIndex={qIndex}
+                    totalQuestions={questions.length}
                     onSave={(values) => handleUpdateQuestion(q.id, values)}
                     onAutoSave={handleAutoSave}
+                    onNavigate={handleNavigate}
                     onCancel={handleCancelQuestion}
                     quizId={id}
                     isPoll={isPoll}
