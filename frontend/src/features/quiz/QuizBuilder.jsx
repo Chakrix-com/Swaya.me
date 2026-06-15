@@ -1016,6 +1016,8 @@ export default function QuizBuilder() {
   const [quiz, setQuiz] = useState(null)
   const [questions, setQuestions] = useState([])
   const [editingQuestion, setEditingQuestion] = useState(null)
+  const [railTitleEditing, setRailTitleEditing] = useState(false)
+  const [railTitleValue, setRailTitleValue] = useState('')
   const [proctoringPolicy, setProctoringPolicy] = useState(null)
   const questionsRef = useRef(null)
   
@@ -1794,6 +1796,18 @@ export default function QuizBuilder() {
       </DndContext>
     </>
     )
+  }
+
+  const handleRailTitleSave = async () => {
+    const trimmed = railTitleValue.trim()
+    if (!trimmed || trimmed === quiz?.title) { setRailTitleEditing(false); return }
+    try {
+      await quizAPI.update(id, { title: trimmed })
+      setQuiz(q => ({ ...q, title: trimmed }))
+    } catch {
+      message.error(t('quiz.saveError'))
+    }
+    setRailTitleEditing(false)
   }
 
   const handleSaveQuiz = async (rawValues) => {
@@ -2808,11 +2822,27 @@ export default function QuizBuilder() {
         </Card>
       ) : (
         /* Edit Mode: Two-Pane Studio */
-        <div className="qb-body" style={{ marginTop: 16 }}>
-          {/* Left rail — placeholder; populated in Task 1.4 */}
+        <div className="qb-body">
           <div className="qb-rail">
             <div className="qb-rail-header">
-              <span className="qb-rail-title">{quiz?.title || '…'}</span>
+              {railTitleEditing ? (
+                <input
+                  className="qb-rail-title-input"
+                  value={railTitleValue}
+                  autoFocus
+                  onChange={e => setRailTitleValue(e.target.value)}
+                  onBlur={handleRailTitleSave}
+                  onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setRailTitleEditing(false) }}
+                />
+              ) : (
+                <span
+                  className="qb-rail-title"
+                  title={t('quiz.clickToRename', 'Click to rename')}
+                  onClick={() => { setRailTitleValue(quiz?.title || ''); setRailTitleEditing(true) }}
+                >
+                  {quiz?.title || '…'}
+                </span>
+              )}
             </div>
             <div className="qb-rail-list">
               {quiz?.status === 'ready' && isExam && (
