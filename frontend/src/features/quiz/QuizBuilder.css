@@ -319,6 +319,30 @@
 }
 .qb-explanation-toggle:hover { color: var(--sw-primary, #6366f1); }
 
+/* ── Compact form footer row (Points · Neg · Time · Save) ───────────────── */
+.qb-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--sw-border, #e5e7eb);
+  margin-top: 8px;
+}
+
+.qb-footer-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qb-footer-label {
+  font-size: 12px;
+  color: var(--sw-text2, #555);
+  white-space: nowrap;
+  cursor: inherit;
+}
+
 /* ── Right stage ─────────────────────────────────────────────────────────── */
 .qb-stage {
   flex: 1;

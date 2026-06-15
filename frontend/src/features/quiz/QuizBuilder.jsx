@@ -428,49 +428,7 @@ const QuestionForm = ({
           </Tooltip>
         </div>
 
-        <Space size={16} style={{ width: '100%' }} wrap>
-          {!isPoll && (
-            <Form.Item
-              name="points"
-              label={t('quiz.pointsLabel')}
-              initialValue={1}
-              rules={[{ required: true, message: t('quiz.pointsRequired') }]}
-              help={t('tooltip.questionPoints')}
-            >
-              <InputNumber min={1} precision={0} />
-            </Form.Item>
-          )}
-          <Form.Item
-            name="max_time_seconds"
-            label={t('quiz.maxTimeSecondsLabel')}
-            tooltip={t('quiz.maxTimeSecondsTooltip')}
-            help={t('tooltip.maxTime')}
-          >
-            <InputNumber min={1} max={3600} precision={0} />
-          </Form.Item>
-          {isExam && (
-            <Form.Item
-              name="negative_points"
-              label={t('exam.negativePoints')}
-              initialValue={0}
-              tooltip={t('tooltip.negativePoints')}
-              help={t('tooltip.negativePoints')}
-            >
-              <InputNumber min={0} precision={0} />
-            </Form.Item>
-          )}
-        </Space>
-
-        {isOfflinePoll && (
-          <Form.Item
-            name="is_required"
-            label={t('offlinePoll.required', 'Required')}
-            valuePropName="checked"
-            tooltip={t('offlinePoll.requiredTooltip', 'Participants must answer this question before they can proceed.')}
-          >
-            <Switch />
-          </Form.Item>
-        )}
+        {/* Compact footer row: Points · Neg · Time (hidden for polls) */}
 
         {/* Question Image Upload */}
         <div style={{ marginBottom: 16 }}>
@@ -1018,17 +976,56 @@ const QuestionForm = ({
           )}
         </div>
 
-        <Space style={{ marginTop: 28 }}>
+        {/* Compact Points · Neg · Time footer */}
+        <div className="qb-footer-row">
+          {!isPoll && (
+            <Tooltip title={t('tooltip.questionPoints')}>
+              <div className="qb-footer-field">
+                <label className="qb-footer-label">{t('quiz.pointsLabel')}</label>
+                <Form.Item name="points" initialValue={1} rules={[{ required: true, message: t('quiz.pointsRequired') }]} style={{ margin: 0 }}>
+                  <InputNumber min={1} precision={0} size="small" style={{ width: 60 }} />
+                </Form.Item>
+              </div>
+            </Tooltip>
+          )}
+          {isExam && (
+            <Tooltip title={t('tooltip.negativePoints')}>
+              <div className="qb-footer-field">
+                <label className="qb-footer-label">{t('exam.negativePoints')}</label>
+                <Form.Item name="negative_points" initialValue={0} style={{ margin: 0 }}>
+                  <InputNumber min={0} precision={0} size="small" style={{ width: 60 }} />
+                </Form.Item>
+              </div>
+            </Tooltip>
+          )}
+          <Tooltip title={t('quiz.maxTimeSecondsTooltip')}>
+            <div className="qb-footer-field">
+              <label className="qb-footer-label">{t('quiz.maxTimeSecondsLabel')}</label>
+              <Form.Item name="max_time_seconds" style={{ margin: 0 }}>
+                <InputNumber min={1} max={3600} precision={0} size="small" style={{ width: 72 }} />
+              </Form.Item>
+            </div>
+          </Tooltip>
+          {isOfflinePoll && (
+            <div className="qb-footer-field">
+              <label className="qb-footer-label">{t('offlinePoll.required', 'Required')}</label>
+              <Form.Item name="is_required" valuePropName="checked" style={{ margin: 0 }}>
+                <Switch size="small" />
+              </Form.Item>
+            </div>
+          )}
+          <div style={{ flex: 1 }} />
           <Button
             type="primary"
             htmlType="submit"
             loading={loading || movingImages}
             icon={question ? <SaveOutlined /> : <PlusOutlined />}
+            size="small"
           >
             {movingImages ? t('quiz.movingImages') : (question ? t('quiz.updateQuestion') : t('quiz.addQuestion'))}
           </Button>
-          <Button icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
-        </Space>
+          <Button size="small" icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
+        </div>
       </Form>
     </Card>
   )
