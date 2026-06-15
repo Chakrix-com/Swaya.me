@@ -123,6 +123,8 @@ const QuestionForm = ({
   const [useRichText, setUseRichText] = useState(false)
   const [typeChipsExpanded, setTypeChipsExpanded] = useState(true)
   const [explanationOpen, setExplanationOpen] = useState(false)
+  const [mediaImageOpen, setMediaImageOpen] = useState(false)
+  const [mediaVideoOpen, setMediaVideoOpen] = useState(false)
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
@@ -186,6 +188,8 @@ const QuestionForm = ({
       setQuestionType(question.question_type || 'mcq')
       setTypeChipsExpanded(!question.text)
       setExplanationOpen(!!question.answer_explanation)
+      setMediaImageOpen(!!question.question_image_url)
+      setMediaVideoOpen(!!question.question_video_url)
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
@@ -226,6 +230,8 @@ const QuestionForm = ({
       setQuestionType('mcq')
       setTypeChipsExpanded(true)
       setExplanationOpen(false)
+      setMediaImageOpen(false)
+      setMediaVideoOpen(false)
 
       // Reset image/video state for new question
       setQuestionImageUrl(null)
@@ -430,45 +436,65 @@ const QuestionForm = ({
 
         {/* Compact footer row: Points · Neg · Time (hidden for polls) */}
 
-        {/* Question Image Upload */}
-        <div style={{ marginBottom: 16 }}>
-          <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
-            {t('quiz.questionImageOptional')}
-          </Text>
-          <ImageUpload
-            quizId={parseInt(quizId)}
-            questionId={question?.id}
-            imageType="question"
-            currentImageUrl={questionImageUrl}
-            tempData={tempImages.question}
-            onImageChange={(url, tempKey) => {
-              if (tempKey) {
-                // Temp upload
-                setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
-              } else {
-                // Permanent upload or deletion
-                setQuestionImageUrl(url)
-                setTempImages(prev => ({ ...prev, question: null }))
-              }
-            }}
-          />
+        {/* Collapsible media row */}
+        <div className="qb-media-row">
+          {/* Image */}
+          {questionImageUrl ? (
+            <div className="qb-media-thumb">
+              <img src={questionImageUrl} alt="" style={{ height: 48, borderRadius: 4, objectFit: 'cover' }} />
+              <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })); setMediaImageOpen(false) }}>✕</button>
+            </div>
+          ) : (
+            <button type="button" className={`qb-media-btn${mediaImageOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaImageOpen(v => !v)}>
+              📷 {t('quiz.addImage', 'Add image')}
+            </button>
+          )}
+          {/* Video */}
+          {questionVideoUrl ? (
+            <div className="qb-media-thumb" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 11, color: '#555' }}>🎬 {questionVideoUrl.slice(0, 30)}{questionVideoUrl.length > 30 ? '…' : ''}</span>
+              <button type="button" className="qb-media-remove" onClick={() => { setQuestionVideoUrl(null); setMediaVideoOpen(false) }}>✕</button>
+            </div>
+          ) : (
+            <button type="button" className={`qb-media-btn${mediaVideoOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaVideoOpen(v => !v)}>
+              🎬 {t('quiz.addVideo', 'Add video')}
+            </button>
+          )}
         </div>
-
-        <Form.Item
-          name="question_video_url"
-          label={t('quiz.videoUrl')}
-          style={{ marginBottom: 8 }}
-        >
-          <Input
-            placeholder={t('quiz.videoUrlPlaceholder')}
-            allowClear
-            onChange={e => setQuestionVideoUrl(e.target.value || null)}
-          />
-        </Form.Item>
+        {mediaImageOpen && !questionImageUrl && (
+          <div style={{ marginBottom: 12 }}>
+            <ImageUpload
+              quizId={parseInt(quizId)}
+              questionId={question?.id}
+              imageType="question"
+              currentImageUrl={questionImageUrl}
+              tempData={tempImages.question}
+              onImageChange={(url, tempKey) => {
+                if (tempKey) {
+                  setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
+                } else {
+                  setQuestionImageUrl(url)
+                  setTempImages(prev => ({ ...prev, question: null }))
+                  if (!url) setMediaImageOpen(false)
+                }
+              }}
+            />
+          </div>
+        )}
+        {mediaVideoOpen && !questionVideoUrl && (
+          <Form.Item name="question_video_url" style={{ marginBottom: 12 }}>
+            <Input
+              placeholder={t('quiz.videoUrlPlaceholder')}
+              allowClear
+              autoFocus
+              onChange={e => setQuestionVideoUrl(e.target.value || null)}
+            />
+          </Form.Item>
+        )}
         {questionVideoUrl && (() => {
           const embedUrl = getVideoEmbedUrl(questionVideoUrl)
           return embedUrl
-            ? <VideoEmbed url={questionVideoUrl} height={200} />
+            ? <VideoEmbed url={questionVideoUrl} height={180} />
             : <Text type="warning" style={{ display: 'block', marginBottom: 8 }}>{t('quiz.videoUrlInvalid')}</Text>
         })()}
 
