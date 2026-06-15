@@ -919,7 +919,10 @@ const QuestionForm = ({
                 size="small"
                 icon={<LeftOutlined />}
                 disabled={questionIndex <= 0}
-                onClick={() => onNavigate && onNavigate(-1)}
+                onClick={() => {
+                  if (onAutoSave) onAutoSave(question.id, questionForm.getFieldsValue(true))
+                  onNavigate && onNavigate(-1)
+                }}
               >
                 {t('common.prev', 'Prev')}
               </Button>
@@ -928,7 +931,10 @@ const QuestionForm = ({
                 icon={<RightOutlined />}
                 iconPosition="end"
                 disabled={questionIndex >= totalQuestions - 1}
-                onClick={() => onNavigate && onNavigate(1)}
+                onClick={() => {
+                  if (onAutoSave) onAutoSave(question.id, questionForm.getFieldsValue(true))
+                  onNavigate && onNavigate(1)
+                }}
               >
                 {t('common.next', 'Next')}
               </Button>
@@ -977,6 +983,7 @@ export default function QuizBuilder() {
   const [proctoringPolicy, setProctoringPolicy] = useState(null)
   const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
   const saveStatusTimerRef = useRef(null)
+  const lastFailedSaveRef = useRef(null) // { questionId, values } — for retry
   const questionsRef = useRef(null)
   
   // Image state for question being edited/created
@@ -1226,6 +1233,13 @@ export default function QuizBuilder() {
       }, 300)
     }
   }, [id, quiz])
+
+  // Reset autosave status when switching questions (clears any error state)
+  useEffect(() => {
+    setSaveStatus('idle')
+    clearTimeout(saveStatusTimerRef.current)
+    lastFailedSaveRef.current = null
+  }, [editingQuestion])
 
   const loadQuiz = useCallback(async () => {
     try {
@@ -1829,11 +1843,19 @@ export default function QuizBuilder() {
       clearTimeout(saveStatusTimerRef.current)
       saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
     } catch {
+      lastFailedSaveRef.current = { questionId, values }
       setSaveStatus('error')
     }
   }, [isPoll])
 
+  const handleRetryAutoSave = useCallback(() => {
+    const failed = lastFailedSaveRef.current
+    if (!failed) return
+    handleAutoSave(failed.questionId, failed.values)
+  }, [handleAutoSave])
+
   const handleNavigate = useCallback((direction) => {
+    if (saveStatus === 'saving') return
     const currentIndex = questions.findIndex(q => q.id === editingQuestion)
     const nextIndex = currentIndex + direction
     if (nextIndex < 0 || nextIndex >= questions.length) return
@@ -2560,7 +2582,11 @@ export default function QuizBuilder() {
             </span>
           )}
           <span className={`qb-save-status${saveStatus !== 'idle' ? ` qb-save-status--${saveStatus}` : ''}`}>
-            {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved ✓' : saveStatus === 'error' ? '⚠ Save failed' : ''}
+            {saveStatus === 'saving' ? 'Saving…'
+              : saveStatus === 'saved' ? 'Saved ✓'
+              : saveStatus === 'error' ? (
+                <>⚠ Save failed — <button type="button" className="qb-retry-link" onClick={handleRetryAutoSave}>retry?</button></>
+              ) : ''}
           </span>
           {quiz && quiz.status === 'draft' && questions.length >= 1 && (
             <Tooltip title={t('tooltip.publishQuiz')}>

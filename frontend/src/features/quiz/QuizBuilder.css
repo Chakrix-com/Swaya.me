@@ -61,6 +61,16 @@
 .qb-save-status--saved  { color: var(--sw-success, #3f8600); }
 .qb-save-status--error  { color: var(--sw-error, #cf1322); }
 
+.qb-retry-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
 /* Body = rail + stage side by side */
 .qb-body {
   display: flex;
