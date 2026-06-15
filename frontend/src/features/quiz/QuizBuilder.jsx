@@ -2835,108 +2835,106 @@ export default function QuizBuilder() {
           />
         </Card>
       ) : (
-        /* Edit Mode: Single View */
-        <Card
-          title={isExam ? t('exam.editExam') : isOfflinePoll ? t('offlinePoll.editOfflinePoll', 'Edit Offline Poll') : isPoll ? t('quiz.editPoll', 'Edit Poll') : t('quiz.editQuiz')}
-          style={{ marginTop: 24, marginBottom: 24, width: '100%' }}
-        >
-          {quiz && (
-            <Space style={{ marginBottom: 16 }}>
-              <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
-                {getQuizStatusTranslation(quiz.status)}
-              </Tag>
-              {(() => {
-                const modeColor = quiz.quiz_type === 'exam' ? '#059669' : quiz.quiz_type === 'offline_poll' ? '#DB2777' : quiz.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'
-                return (
-                  <Tag style={{ background: `${modeColor}15`, borderColor: `${modeColor}50`, color: modeColor }}>
-                    {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
-                  </Tag>
-                )
-              })()}
-            </Space>
-          )}
-
-          <div style={{
-            marginBottom: 24,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: token.colorFillAlter,
-            padding: '16px',
-            borderRadius: token.borderRadiusLG,
-            border: `1px solid ${token.colorBorderSecondary}`
-          }}>
-            <Text type="secondary">
-               {isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
-            </Text>
-            {isExam && (
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleDownloadDraft}
-              >
-                {t('quiz.downloadDraftExcel')}
-              </Button>
-            )}
+        /* Edit Mode: Two-Pane Studio */
+        <div className="qb-body" style={{ marginTop: 16 }}>
+          {/* Left rail — placeholder; populated in Task 1.4 */}
+          <div className="qb-rail">
+            <div className="qb-rail-header">
+              <span className="qb-rail-title">{quiz?.title || '…'}</span>
+            </div>
+            <div className="qb-rail-list">
+              <div style={{ padding: '24px 16px', fontSize: 12, color: '#aaa', textAlign: 'center' }}>
+                Question navigator — coming soon
+              </div>
+            </div>
+            <div className="qb-rail-footer" />
           </div>
 
-          {/* Settings Card — save button in header, live-mode alert inside */}
-          <Card
-            title={t('quiz.settingsCardTitle')}
-            style={{ marginBottom: 24 }}
-            extra={
-              !isLiveMode && (
-                <Button
-                  type="primary"
-                  onClick={() => form.submit()}
-                  icon={<SaveOutlined />}
-                  loading={loading}
-                >
-                  {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
+          {/* Right stage — all existing edit content */}
+          <div className="qb-stage">
+            {quiz && (
+              <Space style={{ marginBottom: 16 }}>
+                <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>
+                  {getQuizStatusTranslation(quiz.status)}
+                </Tag>
+                {(() => {
+                  const modeColor = quiz.quiz_type === 'exam' ? '#059669' : quiz.quiz_type === 'offline_poll' ? '#DB2777' : quiz.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'
+                  return (
+                    <Tag style={{ background: `${modeColor}15`, borderColor: `${modeColor}50`, color: modeColor }}>
+                      {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+                    </Tag>
+                  )
+                })()}
+              </Space>
+            )}
+
+            <div style={{
+              marginBottom: 24,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: token.colorFillAlter,
+              padding: '16px',
+              borderRadius: token.borderRadiusLG,
+              border: `1px solid ${token.colorBorderSecondary}`
+            }}>
+              <Text type="secondary">
+                {isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
+              </Text>
+              {isExam && (
+                <Button icon={<DownloadOutlined />} onClick={handleDownloadDraft}>
+                  {t('quiz.downloadDraftExcel')}
                 </Button>
-              )
-            }
-          >
-            {isLiveMode && (
-              <Alert
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-                message={t('quiz.unpublishToEditBannerTitle', isExam ? '✏️ Unpublish to edit settings' : '✏️ Unpublish → Edit → Republish')}
-                description={t('quiz.unpublishToEditBannerDesc', isExam ? 'This test is live. Unpublish it to make changes, then republish when ready.' : 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}
-                action={
-                  <Button type="primary" size="small" loading={loading} onClick={handleUnpublish}>
-                    {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+              )}
+            </div>
+
+            {/* Settings Card */}
+            <Card
+              title={t('quiz.settingsCardTitle')}
+              style={{ marginBottom: 24 }}
+              extra={
+                !isLiveMode && (
+                  <Button type="primary" onClick={() => form.submit()} icon={<SaveOutlined />} loading={loading}>
+                    {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
                   </Button>
-                }
-              />
-            )}
-
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSaveQuiz}
-              disabled={isLiveMode}
+                )
+              }
             >
-              {renderQuizSettings()}
-            </Form>
+              {isLiveMode && (
+                <Alert
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                  message={t('quiz.unpublishToEditBannerTitle', isExam ? '✏️ Unpublish to edit settings' : '✏️ Unpublish → Edit → Republish')}
+                  description={t('quiz.unpublishToEditBannerDesc', isExam ? 'This test is live. Unpublish it to make changes, then republish when ready.' : 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}
+                  action={
+                    <Button type="primary" size="small" loading={loading} onClick={handleUnpublish}>
+                      {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+                    </Button>
+                  }
+                />
+              )}
+              <Form form={form} layout="vertical" onFinish={handleSaveQuiz} disabled={isLiveMode}>
+                {renderQuizSettings()}
+              </Form>
+              {!isLiveMode && id && (isExam || isOfflinePoll) && proctoringPolicy !== null && (
+                <ProctoringSettings
+                  quizId={parseInt(id)}
+                  quizType={quiz?.quiz_type}
+                  tenantTier={currentUser?.tier || 'free'}
+                  currentPolicy={proctoringPolicy}
+                  onChange={(p) => setProctoringPolicy(p)}
+                />
+              )}
+            </Card>
 
-            {!isLiveMode && id && (isExam || isOfflinePoll) && proctoringPolicy !== null && (
-              <ProctoringSettings
-                quizId={parseInt(id)}
-                quizType={quiz?.quiz_type}
-                tenantTier={currentUser?.tier || 'free'}
-                currentPolicy={proctoringPolicy}
-                onChange={(p) => setProctoringPolicy(p)}
-              />
-            )}
-          </Card>
+            <Divider orientation="left" style={{ marginTop: 8, marginBottom: 16 }}>
+              {t('quiz.questionsSection')} ({questions.length})
+            </Divider>
 
-          <Divider orientation="left" style={{ marginTop: 8, marginBottom: 16 }}>
-            {t('quiz.questionsSection')} ({questions.length})
-          </Divider>
-
-          {renderQuestionsList()}
-        </Card>
+            {renderQuestionsList()}
+          </div>
+        </div>
       )}
 
       {/* Poll link modal for offline polls */}
