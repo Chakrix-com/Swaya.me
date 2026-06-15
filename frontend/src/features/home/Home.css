@@ -336,6 +336,22 @@
   box-shadow: var(--pub-shadow);
 }
 
+.pub-path-join-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pub-path-join-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--pub-ink);
+}
+.pub-path-join-note {
+  font-size: 0.74rem;
+  color: var(--pub-muted);
+  margin-top: -2px;
+}
+
 .pub-path-join-row {
   display: flex;
   gap: 7px;
@@ -369,12 +385,6 @@
 .pub-join-input:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-.pub-path-card--join .pub-path-body {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
 }
 
 /* ── mode demo stage ── */

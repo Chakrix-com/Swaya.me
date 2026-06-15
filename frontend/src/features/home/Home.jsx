@@ -321,11 +321,10 @@ export default function Home() {
               <span className="pub-path-or" aria-hidden="true">{t('home.v2.pathOr', 'or')}</span>
 
               <div className="pub-path-card pub-path-card--join">
-                <span className="pub-path-icon" aria-hidden="true">📱</span>
-                <span className="pub-path-body">
-                  <strong>{t('home.v2.pathAudienceTitle', 'Got a join code?')}</strong>
-                  <small>{t('home.v2.pathAudienceSub', 'No app, no account needed')}</small>
-                </span>
+                <div className="pub-path-join-header">
+                  <span className="pub-path-icon" aria-hidden="true">📱</span>
+                  <strong className="pub-path-join-title">{t('home.v2.pathAudienceTitle', 'Got a join code?')}</strong>
+                </div>
                 <div className="pub-path-join-row">
                   <input
                     className="pub-join-input"
@@ -343,6 +342,7 @@ export default function Home() {
                     aria-label={t('home.v2.joinBtn', 'Join')}
                   >→</button>
                 </div>
+                <small className="pub-path-join-note">{t('home.v2.pathAudienceSub', 'No app, no account needed')}</small>
               </div>
             </div>
           </div>
