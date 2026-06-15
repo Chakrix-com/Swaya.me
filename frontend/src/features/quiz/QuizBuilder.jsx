@@ -366,23 +366,10 @@ const QuestionForm = ({
 
         <Form.Item
           name="text"
-          label={
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {t('quiz.question')}
-              <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
-                <Button
-                  size="small"
-                  type={useRichText ? 'primary' : 'default'}
-                  onClick={() => setUseRichText(v => !v)}
-                  style={{ fontSize: 11, height: 20, padding: '0 7px', lineHeight: '18px' }}
-                >
-                  {useRichText ? t('quiz.simpleTextToggle') : t('quiz.richTextToggle')}
-                </Button>
-              </Tooltip>
-            </span>
-          }
+          label={t('quiz.question')}
           rules={[{ required: true, message: t('quiz.questionRequired') }]}
           getValueFromEvent={useRichText ? (v) => v : undefined}
+          style={{ marginBottom: 4 }}
         >
           {useRichText ? (
             <RichTextEditor
@@ -391,7 +378,7 @@ const QuestionForm = ({
             />
           ) : (
             <TextArea
-              rows={2}
+              rows={3}
               placeholder={t('quiz.enterQuestion')}
               spellCheck="true"
               lang={t('common.langCode', { defaultValue: 'en' })}
@@ -399,35 +386,44 @@ const QuestionForm = ({
             />
           )}
         </Form.Item>
-        {(
-          <div style={{ marginTop: -8, marginBottom: 12, textAlign: 'right' }}>
-            <Tooltip title={t('ai.rewriteWithAIModel')}>
-              <Button
-                size="small"
-                type="text"
-                icon={rewriteIcon('text')}
-                loading={rewriting['text']}
-                onClick={() => {
-                  if (useRichText) {
-                    // Strip HTML before sending to AI, then put response back as plain text
-                    const rawHtml = questionForm.getFieldValue('text') || ''
-                    const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
-                    if (!plain) return
-                    setRewriting(prev => ({ ...prev, text: true }))
-                    aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
-                      .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
-                      .catch(() => {})
-                      .finally(() => setRewriting(prev => ({ ...prev, text: false })))
-                  } else {
-                    handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
-                  }
-                }}
-              >
-                {t('ai.rewrite')}
-              </Button>
-            </Tooltip>
-          </div>
-        )}
+        {/* Text field action row: Aa toggle + AI rewrite */}
+        <div className="qb-text-actions">
+          <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
+            <button
+              type="button"
+              className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
+              onClick={() => setUseRichText(v => !v)}
+            >
+              Aa
+            </button>
+          </Tooltip>
+          <div style={{ flex: 1 }} />
+          <Tooltip title={t('ai.rewriteWithAIModel')}>
+            <Button
+              size="small"
+              type="text"
+              icon={rewriteIcon('text')}
+              loading={rewriting['text']}
+              style={{ fontSize: 12 }}
+              onClick={() => {
+                if (useRichText) {
+                  const rawHtml = questionForm.getFieldValue('text') || ''
+                  const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
+                  if (!plain) return
+                  setRewriting(prev => ({ ...prev, text: true }))
+                  aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
+                    .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
+                    .catch(() => {})
+                    .finally(() => setRewriting(prev => ({ ...prev, text: false })))
+                } else {
+                  handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
+                }
+              }}
+            >
+              {t('ai.rewrite')}
+            </Button>
+          </Tooltip>
+        </div>
 
         <Space size={16} style={{ width: '100%' }} wrap>
           {!isPoll && (
