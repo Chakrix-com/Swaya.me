@@ -81,9 +81,9 @@ const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
 // Stable sortable wrapper — must live outside questions.map so React sees a consistent
 // component type across re-renders (avoids unmount/remount of children on every parent render).
-const SortableItem = ({ id, disabled, children }) => {
+const SortableItem = ({ id, disabled, children, marginBottom = 16 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled })
-  const style = { transform: DndCSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 16 }
+  const style = { transform: DndCSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom }
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       {children({ dragHandleProps: listeners })}
@@ -2834,6 +2834,7 @@ export default function QuizBuilder() {
                         key={question.id}
                         id={question.id}
                         disabled={!isDraftQuiz || !!(editingQuestion && editingQuestion !== question.id)}
+                        marginBottom={0}
                       >
                         {({ dragHandleProps }) => (
                           <div
