@@ -597,6 +597,8 @@ class AnswerServiceAsync:
                     session_id, q_data["id"], len(options)
                 )
                 is_poll = state.get("quiz_type") == "poll"
+                is_closed = state.get("current_question_status") == "closed"
+                ca_idx = q_data.get("correct_answer_index") if (is_closed and not is_poll) else None
                 current_question = {
                     "id": q_data["id"],
                     "text": q_data["text"],
@@ -605,11 +607,11 @@ class AnswerServiceAsync:
                     "option_b": options[1] if len(options) > 1 else None,
                     "option_c": options[2] if len(options) > 2 else None,
                     "option_d": options[3] if len(options) > 3 else None,
-                    "correct_answer": None,  # hidden from audience until closed
+                    "correct_answer": chr(65 + ca_idx) if ca_idx is not None else None,
                     "question_id": q_data["id"],
                     "question_text": q_data["text"],
                     "options": options,
-                    "correct_answer_index": None,  # hidden from audience
+                    "correct_answer_index": ca_idx,
                     "answer_distribution": distribution,
                     "total_answers": total_answers,
                     "question_image_url": q_data.get("question_image_url"),

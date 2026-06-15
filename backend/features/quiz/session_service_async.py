@@ -1269,6 +1269,11 @@ class SessionServiceAsync:
 
         try:
             import json as _json
+            # Patch audience_state cache so participant polls see the new value immediately
+            state = await self.redis.get_json(f"session:{session.id}:audience_state")
+            if state is not None:
+                state["leaderboard_visible"] = session.leaderboard_visible
+                await self.redis.set_json(f"session:{session.id}:audience_state", state, expire=86400)
             await self.redis.publish(
                 f"session:{session.id}:events",
                 _json.dumps({"type": "leaderboard_toggle", "visible": session.leaderboard_visible}),
