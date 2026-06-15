@@ -2500,131 +2500,103 @@ export default function QuizBuilder() {
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
   return (
-    <div className="quiz-builder-page" style={{ padding: 24 }}>
-      <Space wrap className="quiz-builder-topbar">
-        <Button 
-          icon={<LeftOutlined />} 
-          onClick={() => navigate('/dashboard')}
-        >
-          {t('quiz.backDashboard')}
-        </Button>
-        {quiz && quiz.status === 'draft' && questions.length >= 1 && (
-          <Tooltip title={t('tooltip.publishQuiz')}>
-            <Button
-              type="primary"
-              icon={<RocketOutlined />}
-              onClick={handlePublish}
-              loading={loading}
-            >
-              {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
+    <div className={id ? 'qb-studio' : 'quiz-builder-page'} style={!id ? { padding: 24 } : undefined}>
+      {id ? (
+        /* ── Edit mode: sticky top bar ───────────────────────────── */
+        <div className="qb-topbar">
+          <div className="qb-topbar-breadcrumb">
+            <Button type="text" size="small" icon={<LeftOutlined />} onClick={() => navigate('/dashboard')}>
+              {t('quiz.backDashboard')}
             </Button>
-          </Tooltip>
-        )}
-        {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && (
-          <>
-            <Button
-              type="primary"
-              icon={<RocketOutlined />}
-              onClick={() => navigate(`/quiz/${id}/control`)}
-            >
-              {isPoll ? t('quiz.startPoll') : t('quiz.startSession')}
-            </Button>
-            <Tooltip title={t('tooltip.unpublishQuiz')}>
-              <Button
-                type="default"
-                onClick={handleUnpublish}
-                loading={loading}
-              >
-                {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+          </div>
+          {quiz && (
+            <span className="qb-topbar-type-badge">
+              {isExam ? t('exam.typeLabel') : isOfflinePoll ? t('offlinePoll.typeLabel', 'Poll') : isPoll ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
+            </span>
+          )}
+          <span className="qb-save-status" />
+          {quiz && quiz.status === 'draft' && questions.length >= 1 && (
+            <Tooltip title={t('tooltip.publishQuiz')}>
+              <Button type="primary" icon={<RocketOutlined />} onClick={handlePublish} loading={loading}>
+                {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
               </Button>
             </Tooltip>
-          </>
-        )}
-        {quiz && quiz.status === 'ready' && isOfflinePoll && quiz.poll_slug && (
-          <Tooltip title={t('tooltip.copyShareLink')}>
-            <Button
-              icon={<ShareAltOutlined />}
-              onClick={() => setPollLinkModal({ open: true, url: `${window.location.origin}/poll/${quiz.poll_slug}` })}
-            >
-              {t('offlinePoll.copyLink', 'Copy Link')}
-            </Button>
-          </Tooltip>
-        )}
-        {quiz && quiz.status === 'ready' && isOfflinePoll && (
-          <>
-            <Button
-              onClick={() => navigate(`/quiz/${id}/offline-results`)}
-            >
-              {t('offlinePoll.viewResults', 'View Results')}
-            </Button>
-            <Tooltip title={t('tooltip.unpublishQuiz')}>
-              <Button
-                type="default"
-                onClick={handleUnpublish}
-                loading={loading}
-              >
-                {t('quiz.unpublishPoll')}
+          )}
+          {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && (
+            <>
+              <Button type="primary" icon={<RocketOutlined />} onClick={() => navigate(`/quiz/${id}/control`)}>
+                {isPoll ? t('quiz.startPoll') : t('quiz.startSession')}
+              </Button>
+              <Tooltip title={t('tooltip.unpublishQuiz')}>
+                <Button type="default" onClick={handleUnpublish} loading={loading}>
+                  {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
+                </Button>
+              </Tooltip>
+            </>
+          )}
+          {quiz && quiz.status === 'ready' && isOfflinePoll && quiz.poll_slug && (
+            <Tooltip title={t('tooltip.copyShareLink')}>
+              <Button icon={<ShareAltOutlined />} onClick={() => setPollLinkModal({ open: true, url: `${window.location.origin}/poll/${quiz.poll_slug}` })}>
+                {t('offlinePoll.copyLink', 'Copy Link')}
               </Button>
             </Tooltip>
-          </>
-        )}
-        {quiz && quiz.status === 'ready' && isExam && quiz.exam_slug && (
-          <Tooltip title={t('tooltip.copyShareLink')}>
-            <Button
-              icon={<ShareAltOutlined />}
-              onClick={() => setExamLinkModal({ open: true, url: `${window.location.origin}/e/${quiz.exam_slug}` })}
-            >
-              {t('exam.copyLink')}
-            </Button>
-          </Tooltip>
-        )}
-        {quiz && quiz.status === 'ready' && isExam && (
-          <>
-            <Button
-              onClick={() => navigate(`/quiz/${id}/exam-results`)}
-            >
-              {t('exam.resultsTitle')}
-            </Button>
-            <Tooltip title={t('tooltip.unpublishQuiz')}>
-              <Button
-                type="default"
-                onClick={handleUnpublish}
-                loading={loading}
-              >
-                {t('exam.unpublishExam')}
+          )}
+          {quiz && quiz.status === 'ready' && isOfflinePoll && (
+            <>
+              <Button onClick={() => navigate(`/quiz/${id}/offline-results`)}>
+                {t('offlinePoll.viewResults', 'View Results')}
+              </Button>
+              <Tooltip title={t('tooltip.unpublishQuiz')}>
+                <Button type="default" onClick={handleUnpublish} loading={loading}>
+                  {t('quiz.unpublishPoll')}
+                </Button>
+              </Tooltip>
+            </>
+          )}
+          {quiz && quiz.status === 'ready' && isExam && quiz.exam_slug && (
+            <Tooltip title={t('tooltip.copyShareLink')}>
+              <Button icon={<ShareAltOutlined />} onClick={() => setExamLinkModal({ open: true, url: `${window.location.origin}/e/${quiz.exam_slug}` })}>
+                {t('exam.copyLink')}
               </Button>
             </Tooltip>
-          </>
-        )}
-        {!id && isExam && (
-          <Button
-            disabled={isValidating}
-            icon={<DownloadOutlined />}
-            onClick={handleDownloadTemplate}
-          >
-            {t('quiz.downloadTemplate')}
+          )}
+          {quiz && quiz.status === 'ready' && isExam && (
+            <>
+              <Button onClick={() => navigate(`/quiz/${id}/exam-results`)}>
+                {t('exam.resultsTitle')}
+              </Button>
+              <Tooltip title={t('tooltip.unpublishQuiz')}>
+                <Button type="default" onClick={handleUnpublish} loading={loading}>
+                  {t('exam.unpublishExam')}
+                </Button>
+              </Tooltip>
+            </>
+          )}
+        </div>
+      ) : (
+        /* ── Create mode: original topbar ───────────────────────── */
+        <Space wrap className="quiz-builder-topbar">
+          <Button icon={<LeftOutlined />} onClick={() => navigate('/dashboard')}>
+            {t('quiz.backDashboard')}
           </Button>
-        )}
-      </Space>
+          {isExam && (
+            <Button disabled={isValidating} icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
+              {t('quiz.downloadTemplate')}
+            </Button>
+          )}
+        </Space>
+      )}
 
       {aiImageHintCount > 0 && (
-        <Alert
-          type="info"
-          showIcon
-          closable
-          onClose={() => setAiImageHintCount(0)}
+        <Alert type="info" showIcon closable onClose={() => setAiImageHintCount(0)}
           message={t('ai.imageHintBanner', { count: aiImageHintCount, defaultValue: `${aiImageHintCount} question(s) were suggested with images. Open each question to upload the image.` })}
-          style={{ marginTop: 12 }}
+          style={id ? { margin: '0 20px 12px' } : { marginTop: 12 }}
         />
       )}
       {aiOptionImageHintCount > 0 && (
-        <Alert
-          type="info"
-          showIcon
-          closable
-          onClose={() => setAiOptionImageHintCount(0)}
+        <Alert type="info" showIcon closable onClose={() => setAiOptionImageHintCount(0)}
           message={t('ai.optionImageHintBanner', { count: aiOptionImageHintCount, defaultValue: `${aiOptionImageHintCount} question(s) were suggested with image options. Open each question to upload a photo per option.` })}
-          style={{ marginTop: 8 }}
+          style={id ? { margin: '0 20px 8px' } : { marginTop: 8 }}
         />
       )}
 
