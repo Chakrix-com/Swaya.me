@@ -269,7 +269,7 @@ export default function Home() {
             <OpenSourceBadge />
             <ThemePicker />
             <LanguageSwitcher />
-            <button className="pub-btn pub-btn--ghost pub-btn--sm" onClick={() => navigate('/login')}>
+            <button className="pub-btn pub-btn--outline pub-btn--sm" onClick={() => navigate('/login')}>
               {t('home.login', 'Log in')}
             </button>
             <button className="pub-btn pub-btn--sm" onClick={() => navigate('/register')}>
@@ -303,14 +303,47 @@ export default function Home() {
                 {t('home.v2.ctaPrimary', 'Create your first session — free')}
               </button>
               <button className="pub-btn pub-btn--ghost" onClick={() => navigate('/login')}>
-                {t('home.v2.ctaSecondary', 'See it live')}
+                {t('home.login', 'Log in')}
               </button>
             </div>
-            <div className="pub-join-chip">
-              <span className="pub-join-code">RX4-92K</span>
-              <span className="pub-join-label">
-                {t('home.v2.joinLabel', 'Got a code from a host? Type it here — no app, no account.')}
-              </span>
+
+            {/* ── Change 4: two-path card — host login vs audience join ── */}
+            <div className="pub-two-path">
+              <button className="pub-path-card" onClick={() => navigate('/login')}>
+                <span className="pub-path-icon" aria-hidden="true">🎤</span>
+                <span className="pub-path-body">
+                  <strong>{t('home.v2.pathHostTitle', 'I\'m hosting')}</strong>
+                  <small>{t('home.v2.pathHostSub', 'Log in to your dashboard')}</small>
+                </span>
+                <span className="pub-path-arrow" aria-hidden="true">→</span>
+              </button>
+
+              <span className="pub-path-or" aria-hidden="true">{t('home.v2.pathOr', 'or')}</span>
+
+              <div className="pub-path-card pub-path-card--join">
+                <span className="pub-path-icon" aria-hidden="true">📱</span>
+                <span className="pub-path-body">
+                  <strong>{t('home.v2.pathAudienceTitle', 'Got a join code?')}</strong>
+                  <small>{t('home.v2.pathAudienceSub', 'No app, no account needed')}</small>
+                </span>
+                <div className="pub-path-join-row">
+                  <input
+                    className="pub-join-input"
+                    placeholder="RX4-92K"
+                    value={joinCode}
+                    onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleJoin()}
+                    maxLength={10}
+                    aria-label={t('home.v2.joinCodeLabel', 'Enter join code')}
+                  />
+                  <button
+                    className="pub-btn pub-btn--sm"
+                    onClick={handleJoin}
+                    disabled={!joinCode.trim()}
+                    aria-label={t('home.v2.joinBtn', 'Join')}
+                  >→</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -413,6 +446,12 @@ export default function Home() {
             <button className="pub-btn pub-btn--cta" onClick={() => navigate('/register')}>
               {t('home.v2.ctaButton', "Create a session — it's free")}
             </button>
+            <p className="pub-cta-login">
+              {t('home.v2.ctaAlreadyMember', 'Already a member?')}{' '}
+              <button className="pub-cta-login-link" onClick={() => navigate('/login')}>
+                {t('home.login', 'Log in')} →
+              </button>
+            </p>
           </div>
         </section>
 

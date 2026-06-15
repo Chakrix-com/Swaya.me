@@ -103,6 +103,15 @@
   border-color: var(--pub-ink);
   box-shadow: 0 10px 24px -10px rgba(0,0,0,.15);
 }
+.pub-btn--outline {
+  background: transparent;
+  color: var(--pub-primary);
+  border-color: var(--pub-primary);
+}
+.pub-btn--outline:hover {
+  background: var(--pub-soft);
+  box-shadow: 0 6px 18px -8px rgba(0,0,0,.18);
+}
 .pub-btn--sm {
   padding: 9px 18px;
   font-size: 0.9rem;
@@ -241,6 +250,131 @@
   font-size: 0.86rem;
   color: var(--pub-muted);
   line-height: 1.4;
+}
+
+/* ── two-path: host login vs audience join ── */
+.pub-two-path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: 480px;
+}
+
+.pub-path-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--pub-card);
+  border: 1px solid var(--pub-line);
+  border-radius: 14px;
+  padding: 13px 15px;
+  box-shadow: var(--pub-shadow);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--pub-font-body);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.pub-path-card:hover {
+  border-color: var(--pub-primary);
+  box-shadow: 0 6px 22px -8px rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+
+.pub-path-icon {
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pub-path-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.pub-path-body strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--pub-ink);
+  white-space: nowrap;
+}
+.pub-path-body small {
+  font-size: 0.76rem;
+  color: var(--pub-muted);
+  white-space: nowrap;
+}
+
+.pub-path-arrow {
+  color: var(--pub-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.pub-path-or {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pub-muted);
+  font-family: var(--pub-font-mono);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.pub-path-card--join {
+  cursor: default;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.pub-path-card--join:hover {
+  border-color: var(--pub-line);
+  transform: none;
+  box-shadow: var(--pub-shadow);
+}
+
+.pub-path-join-row {
+  display: flex;
+  gap: 7px;
+  width: 100%;
+}
+
+.pub-join-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--pub-font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--pub-soft);
+  border: 1px solid var(--pub-line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: var(--pub-ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.pub-join-input:focus {
+  border-color: var(--pub-primary);
+}
+.pub-join-input::placeholder {
+  color: var(--pub-muted);
+  opacity: 0.5;
+  letter-spacing: 0.12em;
+}
+.pub-join-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pub-path-card--join .pub-path-body {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 /* ── mode demo stage ── */
@@ -769,6 +903,26 @@
   margin: 14px auto 32px;
 }
 
+/* ── bottom CTA login escape hatch ── */
+.pub-cta-login {
+  margin-top: 18px;
+  font-size: 0.9rem;
+  color: var(--pub-cta-muted);
+}
+.pub-cta-login-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--pub-font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pub-cta-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pub-cta-login-link:hover { opacity: 0.8 }
+
 /* ── footer ── */
 .pub-footer {
   padding: 42px 0 56px;
@@ -799,7 +953,11 @@
   .pub-modes, .pub-steps { grid-template-columns: 1fr }
   .pub-trust { grid-template-columns: 1fr; padding: 36px 26px }
   .pub-section { padding: 54px 0 }
+  /* on mobile hide only the ghost nav btn (the outline Login stays visible) */
   .pub-nav-actions .pub-btn--ghost { display: none }
+  .pub-two-path { max-width: 100% }
+  .pub-path-card { flex-basis: 100% }
+  .pub-path-or { padding: 4px 0 }
 }
 
 @media (prefers-reduced-motion: reduce) {
