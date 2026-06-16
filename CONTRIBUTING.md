@@ -15,6 +15,30 @@ Thank you for taking the time to contribute.
 
 ---
 
+## AI Configuration
+
+Swaya.me's AI features are powered by a pluggable provider system. You can use Ollama (local, no API key), Gemini, OpenAI, Groq, Anthropic, or any OpenAI-compatible service.
+
+Two env vars select the backend:
+
+```env
+AI_PRIMARY_PROVIDER=ollama   # or: gemini, openai_compat, anthropic
+AI_LIGHT_PROVIDER=ollama     # same options; used for distractors/rewrite/grading
+```
+
+For a fully local setup with no cloud account needed:
+
+```env
+AI_PRIMARY_PROVIDER=ollama
+AI_LIGHT_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5:7b
+```
+
+See [`docs/self-hosting/ai.md`](docs/self-hosting/ai.md) for the full provider matrix, `.env` examples for every supported backend, and model recommendations by RAM.
+
+---
+
 ## Local Development Setup
 
 Follow the [Quick Start](README.md#quick-start-docker) in the README to get the stack running. For active development, the native (non-Docker) setup is faster for hot-reload iteration.
