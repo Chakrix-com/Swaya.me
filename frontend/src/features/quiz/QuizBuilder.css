@@ -157,7 +157,7 @@
   top: 4px;
   bottom: 8px;
   width: 1px;
-  background: #d4d4d8;
+  background: var(--sw-border, #d4d4d8);
   pointer-events: none;
 }
 
@@ -185,7 +185,7 @@
   transform: translateY(-50%);
   width: 10px;
   height: 1px;
-  background: #d4d4d8;
+  background: var(--sw-border, #d4d4d8);
 }
 .qb-rail-entry:hover,
 .qb-rail-entry--active { background: var(--sw-bg, #f0f0f0); color: var(--sw-text, #1a1a2e); }
@@ -210,7 +210,7 @@
   top: 14px;
   width: 10px;
   height: 1px;
-  background: #d4d4d8;
+  background: var(--sw-border, #d4d4d8);
 }
 .qb-q-card:hover    { background: var(--sw-bg, #f5f5f5); }
 .qb-q-card--active  { background: var(--sw-primary-light, #ede9fe); }
@@ -239,7 +239,7 @@
 
 .qb-q-file-icon {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--sw-text3, #94a3b8);
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -276,8 +276,8 @@
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 8px;
-  background: #f0f0f0;
-  color: #666;
+  background: var(--sw-bg, #f0f0f0);
+  color: var(--sw-text2, #666);
   white-space: nowrap;
 }
 
@@ -371,30 +371,30 @@
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 10px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--sw-border, #e0e0e0);
   cursor: pointer;
   user-select: none;
-  background: #fafafa;
-  color: #555;
+  background: var(--sw-surface, #fafafa);
+  color: var(--sw-text2, #555);
   transition: border-color 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.qb-chip:hover { border-color: #4f46e5; color: #4f46e5; }
-.qb-chip--neg { color: #d32f2f; border-color: #ffcdd2; background: #fff8f8; }
-.qb-chip--neg:hover { border-color: #d32f2f; color: #d32f2f; }
-.qb-chip--time { color: #795548; border-color: #d7ccc8; }
-.qb-chip--time:hover { border-color: #4f46e5; color: #4f46e5; }
+.qb-chip:hover { border-color: var(--sw-primary, #4f46e5); color: var(--sw-primary, #4f46e5); }
+.qb-chip--neg { color: var(--sw-error, #d32f2f); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); }
+.qb-chip--neg:hover { border-color: var(--sw-error, #d32f2f); color: var(--sw-error, #d32f2f); }
+.qb-chip--time { color: var(--sw-text3, #795548); border-color: var(--sw-border, #d7ccc8); }
+.qb-chip--time:hover { border-color: var(--sw-primary, #4f46e5); color: var(--sw-primary, #4f46e5); }
 
 /* ── Question compose box ────────────────────────────────────────────────── */
 .qb-compose-box {
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--sw-border, #d9d9d9);
   border-radius: 8px;
   overflow: hidden;
   transition: border-color 0.2s;
   margin-bottom: 12px;
 }
 .qb-compose-box:focus-within {
-  border-color: #4f46e5;
+  border-color: var(--sw-primary, #4f46e5);
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.08);
 }
 .qb-compose-box .ant-input {
@@ -419,9 +419,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--sw-border, #f0f0f0);
   padding: 6px 10px;
-  background: #fafafa;
+  background: var(--sw-card, #fafafa);
 }
 
 .qb-aa-btn {
@@ -469,10 +469,10 @@
 .qb-q-position {
   font-size: 12px;
   font-weight: 600;
-  color: #555;
+  color: var(--sw-text2, #555);
   margin-bottom: 6px;
 }
-.qb-q-position-total { font-weight: 400; color: #999; }
+.qb-q-position-total { font-weight: 400; color: var(--sw-text3, #999); }
 
 .qb-footer-row {
   display: flex;
@@ -496,9 +496,9 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--sw-border, #f0f0f0);
   padding: 6px 10px;
-  background: #fafafa;
+  background: var(--sw-card, #fafafa);
 }
 
 .qb-media-btn {
@@ -554,14 +554,14 @@
   .qb-options-grid { grid-template-columns: 1fr; }
 }
 .qb-option-card {
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--sw-border, #e8e8e8);
   border-radius: 8px;
   padding: 8px 10px;
   transition: border-color 0.15s, background 0.15s;
 }
 .qb-option-card--correct {
   border-left: 3px solid #22c55e;
-  background: #f0fdf4;
+  background: rgba(34, 197, 94, 0.08);
 }
 
 .qb-opt-row {
@@ -577,7 +577,7 @@
   gap: 4px;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--sw-border, #f0f0f0);
 }
 .qb-option-card:focus-within .qb-opt-strip {
   display: flex;
