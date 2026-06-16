@@ -844,3 +844,76 @@
   opacity: 0.35;
   margin: 2px 0;
 }
+
+/* ── Reveal animations (S5) ──────────────────────────────────────────────── */
+
+/* Faded (wrong, unselected): slide slightly left and fade out */
+.aud2-options-list--revealed .aud2-option--faded {
+  animation: aud2-fade-slide 0.25s ease-out both;
+}
+
+/* Correct option: pop in with scale */
+.aud2-options-list--revealed .aud2-option--correct {
+  animation: aud2-scale-pop 0.3s ease-out 0.2s both;
+}
+
+/* Wrong selected option: shake briefly */
+.aud2-options-list--revealed .aud2-option--wrong {
+  animation: aud2-shake 0.3s ease-out both;
+}
+
+/* Points badge: float up from below */
+.aud2-pts-reveal {
+  animation: aud2-float-up 0.4s ease-out 0.35s both;
+}
+
+/* Status banner: slide in from top */
+.aud2-status-banner {
+  animation: aud2-slide-down 0.25s ease-out both;
+}
+
+@keyframes aud2-fade-slide {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0.35; transform: translateX(-10px); }
+}
+
+@keyframes aud2-scale-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes aud2-shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-5px); }
+  75%       { transform: translateX(5px); }
+}
+
+@keyframes aud2-float-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes aud2-slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── S6 stats sequential entry ───────────────────────────────────────────── */
+
+.aud2-stat {
+  animation: aud2-float-up 0.35s ease-out both;
+}
+
+.aud2-stats-row .aud2-stat:nth-child(1) { animation-delay: 0ms; }
+.aud2-stats-row .aud2-stat:nth-child(2) { animation-delay: 200ms; }
+.aud2-stats-row .aud2-stat:nth-child(3) { animation-delay: 400ms; }
+
+/* S6 leaderboard bar fill: animate width on mount (to = inline style) */
+.aud2-lb-bar-fill {
+  animation: aud2-bar-grow 0.8s ease-out 0.5s both;
+}
+
+@keyframes aud2-bar-grow {
+  from { width: 0; }
+}
