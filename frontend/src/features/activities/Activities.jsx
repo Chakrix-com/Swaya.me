@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Button, Tag, Space, Popconfirm, Tooltip, message,
-  Input, Table, Typography, Badge, Dropdown, Select, Alert,
+  Input, Table, Typography, Badge, Dropdown, Select, Alert, Grid,
 } from 'antd'
+
+const { useBreakpoint } = Grid
 import {
   PlayCircleOutlined, EditOutlined, DeleteOutlined, CopyOutlined,
   FileTextOutlined, CheckCircleOutlined, HistoryOutlined, StarOutlined,
@@ -53,6 +55,8 @@ export default function Activities() {
   const [searchParams] = useSearchParams()
   const dispatch = useDispatch()
   const { quizzes } = useSelector((s) => s.quiz)
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
 
   const [searchText, setSearchText] = useState('')
   const [typeFilter, setTypeFilter] = useState(null)
@@ -329,7 +333,7 @@ export default function Activities() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <Title level={4} style={{ margin: 0, color: C.text1 }}>
           {t('activities.title', 'Activities')}
@@ -340,19 +344,19 @@ export default function Activities() {
       </div>
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16, alignItems: 'center' }}>
         <Input
           prefix={<SearchOutlined style={{ color: C.text3 }} />}
           allowClear
           placeholder={t('dashboard.searchQuizzes', 'Search activities…')}
-          style={{ width: 260, borderRadius: 10 }}
+          style={{ flex: '1 1 180px', minWidth: 0, borderRadius: 10 }}
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
         />
         <Select
           allowClear
           placeholder={t('dashboard.type', 'Type')}
-          style={{ width: 140 }}
+          style={{ flex: '0 0 auto', width: isMobile ? 110 : 140 }}
           value={typeFilter}
           onChange={setTypeFilter}
           options={[
@@ -365,7 +369,7 @@ export default function Activities() {
         <Select
           allowClear
           placeholder={t('quiz.status', 'Status')}
-          style={{ width: 120 }}
+          style={{ flex: '0 0 auto', width: isMobile ? 100 : 120 }}
           value={statusFilter}
           onChange={setStatusFilter}
           options={[

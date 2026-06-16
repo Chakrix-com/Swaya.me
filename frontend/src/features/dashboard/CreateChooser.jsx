@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Modal, Input, InputNumber, Button, Divider, Select, Radio, Space } from 'antd'
+import { Modal, Input, InputNumber, Button, Divider, Select, Radio, Space, Grid } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+
+const { useBreakpoint } = Grid
 import {
   ThunderboltOutlined,
   BarChartOutlined,
@@ -68,6 +70,8 @@ const INTENTS = [
 export default function CreateChooser({ open, onClose }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiContentType, setAiContentType] = useState('general')
   const [aiDifficulty, setAiDifficulty] = useState('medium')
@@ -96,23 +100,27 @@ export default function CreateChooser({ open, onClose }) {
       onCancel={onClose}
       footer={null}
       centered
-      width={860}
+      width={isMobile ? 'calc(100vw - 24px)' : 860}
       styles={{
-        body: { padding: '32px 28px 28px' },
+        body: { padding: isMobile ? '20px 16px 16px' : '32px 28px 28px' },
         content: { borderRadius: 20 },
       }}
     >
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--sw-text1)' }}>
+      <div style={{ textAlign: 'center', marginBottom: isMobile ? 16 : 28 }}>
+        <div style={{ fontSize: isMobile ? 17 : 22, fontWeight: 700, color: 'var(--sw-text1)' }}>
           {t('create.intentTitle', 'What does this moment need?')}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+        gap: isMobile ? 10 : 16,
+      }}>
         {INTENTS.map(intent => (
           <div
             key={intent.key}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
           >
             <button
               onClick={() => pick(intent.key)}
@@ -121,7 +129,7 @@ export default function CreateChooser({ open, onClose }) {
                 background: intent.bgVar,
                 border: '2px solid transparent',
                 borderRadius: 16,
-                padding: '24px 16px 20px',
+                padding: isMobile ? '16px 10px 14px' : '24px 16px 20px',
                 cursor: 'pointer',
                 textAlign: 'center',
                 transition: 'border-color 0.15s, transform 0.15s, box-shadow 0.15s',
@@ -137,19 +145,21 @@ export default function CreateChooser({ open, onClose }) {
                 e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 8 }}>{intent.emoji}</div>
+              <div style={{ fontSize: isMobile ? 24 : 32, marginBottom: 6 }}>{intent.emoji}</div>
               <div style={{
-                fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
-                color: intent.accentVar, textTransform: 'uppercase', marginBottom: 4,
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+                color: intent.accentVar, textTransform: 'uppercase', marginBottom: 3,
               }}>
                 {t(intent.labelKey, intent.labelDefault)}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--sw-text1)', marginBottom: 8 }}>
+              <div style={{ fontSize: isMobile ? 13 : 16, fontWeight: 700, color: 'var(--sw-text1)', marginBottom: isMobile ? 4 : 8 }}>
                 {t(intent.modeKey, intent.modeDefault)}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--sw-text3)', lineHeight: 1.5 }}>
-                {t(intent.descKey, intent.descDefault)}
-              </div>
+              {!isMobile && (
+                <div style={{ fontSize: 13, color: 'var(--sw-text3)', lineHeight: 1.5 }}>
+                  {t(intent.descKey, intent.descDefault)}
+                </div>
+              )}
             </button>
 
           </div>
@@ -162,16 +172,16 @@ export default function CreateChooser({ open, onClose }) {
         </span>
       </Divider>
 
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10, alignItems: 'flex-start' }}>
         <Input.TextArea
           placeholder={t('create.aiPlaceholder', '"10 questions on photosynthesis for class 9, Hindi"')}
           value={aiPrompt}
           onChange={e => setAiPrompt(e.target.value)}
           autoSize={{ minRows: 2, maxRows: 4 }}
-          style={{ flex: 1, borderRadius: 10, fontSize: 14 }}
+          style={{ flex: 1, borderRadius: 10, fontSize: 14, width: '100%' }}
           onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); handleGenerate() } }}
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 130 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 6, minWidth: isMobile ? '100%' : 130 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 12, color: 'var(--sw-text3)', whiteSpace: 'nowrap' }}>
               {t('create.aiTypeLabel', 'Type:')}

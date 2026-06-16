@@ -272,7 +272,7 @@ export default function Home() {
             <button className="pub-btn pub-btn--outline pub-btn--sm" onClick={() => navigate('/login')}>
               {t('home.login', 'Log in')}
             </button>
-            <button className="pub-btn pub-btn--sm" onClick={() => navigate('/register')}>
+            <button className="pub-btn pub-btn--sm pub-btn--start-free" onClick={() => navigate('/register')}>
               {t('home.v2.startFree', 'Start free')}
             </button>
           </div>

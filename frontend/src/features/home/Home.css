@@ -970,6 +970,21 @@
   .pub-path-or { padding: 4px 0 }
 }
 
+/* ── mobile nav — collapse to fit small screens ── */
+@media (max-width: 640px) {
+  .pub-wrap { padding: 0 16px }
+  .pub-nav { padding: 16px 0; gap: 8px; flex-wrap: nowrap }
+  .pub-nav-actions { gap: 6px; flex-wrap: nowrap }
+  /* hide decorative items that add no function on mobile */
+  .pub-nav-actions .open-source-badge { display: none }
+  .pub-btn--start-free { display: none }
+  /* Beta badge clutters the logo on small screens */
+  .pub-logo .beta-badge { display: none }
+  /* shrink the language picker to fit — inline style width is 120px, override it */
+  .pub-nav-actions .ant-select { width: 84px !important }
+  .pub-nav-actions .ant-select .ant-select-selector { padding: 0 6px !important }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important }
 }
