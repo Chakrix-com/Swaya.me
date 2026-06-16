@@ -58,3 +58,23 @@ html[data-theme='perky-game'] h5 {
 html[data-theme='perky-game'] code {
   font-family: 'IBM Plex Mono', source-code-pro, Menlo, Consolas, monospace;
 }
+
+/* ── Boardroom theme — selector-scoped rules ─────────────────────────────── */
+
+/* Header border: single subtle line instead of harsh drop-shadow on dark BG */
+html[data-theme='boardroom'] .ant-pro-layout .ant-layout-header,
+html[data-theme='boardroom'] .ant-pro-global-header {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Keyboard shortcut badges: flip to light translucent */
+html[data-theme='boardroom'] .qc-kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.20);
+}
+
+/* Hero illustration: soften on dark background */
+html[data-theme='boardroom'] .hero-illustration {
+  opacity: 0.75;
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5)) saturate(0.85);
+}
