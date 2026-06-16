@@ -3077,7 +3077,6 @@ export default function QuizBuilder() {
                     icon={<PlusOutlined />}
                     block
                     onClick={() => { setEditingQuestion('new'); setStageView(null); setMobileView('form') }}
-                    disabled={!!editingQuestion && editingQuestion !== 'new'}
                   >
                     {t('quiz.addQuestion')}
                   </Button>
@@ -3085,7 +3084,6 @@ export default function QuizBuilder() {
                     icon={<ThunderboltOutlined />}
                     block
                     onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
-                    disabled={!!editingQuestion}
                   >
                     {t('ai.generateWithAI')}
                   </Button>
