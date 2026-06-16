@@ -422,94 +422,67 @@ export default function AudienceSession() {
     }
   ]
 
-  const LeaderboardTable = () => {
+  const LeaderboardTable = ({ withBars = false }) => {
     if (isPollSession || !visibleLeaderboard || results?.leaderboard_visible === false) return null
     const entries = visibleLeaderboard.entries || []
     const top10 = entries.slice(0, 10)
     const youEntry = entries.find(e => e.is_current_participant)
     const youInTop10 = top10.some(e => e.is_current_participant)
-    const top3 = entries.slice(0, 3)
-    const podiumOrder = top3.length >= 2 ? [top3[1], top3[0], top3[2]].filter(Boolean) : []
-    const podiumColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
-    const podiumHeights = { 1: 80, 2: 56, 3: 44 }
+    const maxScore = entries[0]?.score || 1
+    const medals = ['🥇', '🥈', '🥉']
+
+    if (entries.length === 0) {
+      return <p className="aud2-subtext aud2-subtext--centered">{t('leaderboard.noData')}</p>
+    }
+
+    const renderRow = (entry) => {
+      const isYou = entry.is_current_participant
+      const medal = entry.rank <= 3 ? medals[entry.rank - 1] : null
+      const barPct = withBars ? Math.min(100, (entry.score / maxScore) * 100) : null
+      return (
+        <div key={entry.participant_id} className={`aud2-lb-row${isYou ? ' aud2-lb-row--you' : ''}`}>
+          <span className="aud2-lb-rank">{medal || `${entry.rank}.`}</span>
+          <span className="aud2-lb-name">
+            {entry.display_name}{isYou ? ` (${t('audience.you', { defaultValue: 'You' })})` : ''}
+          </span>
+          <span className="aud2-lb-score">{entry.score}</span>
+          {withBars && (
+            <div className="aud2-lb-bar-track">
+              <div className="aud2-lb-bar-fill" style={{ width: `${barPct}%` }} />
+            </div>
+          )}
+        </div>
+      )
+    }
 
     return (
-      <Card
-        size="small"
-        title={
-          <Space wrap>
-            <TrophyOutlined style={{ color: '#faad14' }} />
-            <span>{t('leaderboard.title')}</span>
-            {visibleLeaderboard.current_participant_rank && (
-              <Tag color="blue">
-                {t('leaderboard.yourRank', { rank: visibleLeaderboard.current_participant_rank })}
-              </Tag>
-            )}
-            {rankDelta !== null && rankDelta !== 0 && (
-              <Tag color={rankDelta > 0 ? 'green' : 'red'} style={{ fontWeight: 700 }}>
-                {rankDelta > 0 ? `▲ ${rankDelta}` : `▼ ${Math.abs(rankDelta)}`} {t('leaderboard.places', { defaultValue: 'places' })}
-              </Tag>
-            )}
-          </Space>
-        }
-        style={{ marginTop: 16 }}
-      >
-        {entries.length === 0 ? (
-          <Text type="secondary">{t('leaderboard.noData')}</Text>
-        ) : (
-          <>
-            {/* Podium for top 3 */}
-            {podiumOrder.length >= 2 && (
-              <div className="aud-podium">
-                {podiumOrder.map((entry) => (
-                  <div key={entry.participant_id} className="aud-podium-slot">
-                    <div className="aud-podium-name" style={{ fontWeight: entry.is_current_participant ? 700 : 400, color: entry.is_current_participant ? '#1890ff' : undefined }}>
-                      {entry.display_name}{entry.is_current_participant ? ` (${t('audience.you', { defaultValue: 'You' })})` : ''}
-                    </div>
-                    <div className="aud-podium-score">{entry.score}</div>
-                    <div className="aud-podium-block" style={{ height: podiumHeights[entry.rank] || 40, background: podiumColors[entry.rank] || '#d9d9d9' }}>
-                      #{entry.rank}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Full table (beyond podium) */}
-            {entries.length > 3 && (
-              <div className="table-responsive" style={{ marginTop: podiumOrder.length >= 2 ? 12 : 0 }}>
-                <Table
-                  dataSource={top10}
-                  rowKey="participant_id"
-                  columns={leaderboardColumns}
-                  pagination={false}
-                  size="small"
-                  scroll={{ x: 420 }}
-                  rowClassName={(record) => record.is_current_participant ? 'leaderboard-you-row' : ''}
-                />
-              </div>
-            )}
-            {/* Pinned "you" row if outside top 10 */}
-            {youEntry && !youInTop10 && (
-              <div style={{ marginTop: 8, paddingTop: 8, borderTop: '2px dashed #1890ff' }}>
-                <Table
-                  dataSource={[youEntry]}
-                  rowKey="participant_id"
-                  columns={leaderboardColumns}
-                  pagination={false}
-                  size="small"
-                  showHeader={false}
-                  rowClassName={() => 'leaderboard-you-row'}
-                />
-              </div>
-            )}
-            {entries.length > 10 && (
-              <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--aud-text-secondary)', fontSize: 12 }}>
-                {t('audience.moreParticipants', { count: entries.length - 10, defaultValue: `+${entries.length - 10} more participants` })}
-              </div>
-            )}
-          </>
+      <div className="aud2-lb-wrap">
+        <p className="aud2-lb-title">
+          🏆 {t('leaderboard.title')}
+          {visibleLeaderboard.current_participant_rank
+            ? ` — ${t('leaderboard.yourRank', { rank: visibleLeaderboard.current_participant_rank })}`
+            : null}
+          {rankDelta !== null && rankDelta !== 0 && (
+            <span className={`aud2-rank-delta aud2-rank-delta--${rankDelta > 0 ? 'up' : 'down'}`}>
+              {' '}{rankDelta > 0 ? `↑${rankDelta}` : `↓${Math.abs(rankDelta)}`}
+            </span>
+          )}
+        </p>
+        <div className="aud2-lb-list">
+          {top10.map(renderRow)}
+          {youEntry && !youInTop10 && (
+            <>
+              <div className="aud2-lb-divider" />
+              {renderRow(youEntry)}
+            </>
+          )}
+        </div>
+        {entries.length > 10 && (
+          <p className="aud2-subtext aud2-subtext--centered" style={{ fontSize: 11, marginTop: 4 }}>
+            {t('audience.moreParticipants', { count: entries.length - 10, defaultValue: `+${entries.length - 10} more participants` })}
+          </p>
         )}
-      </Card>
+      </div>
     )
   }
 
@@ -624,7 +597,7 @@ export default function AudienceSession() {
 
                   <span className="aud2-name-tag">{displayName}</span>
 
-                  <LeaderboardTable />
+                  <LeaderboardTable withBars />
 
                   <div className="aud2-feedback-panel">
                     <p className="aud2-feedback-label">{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</p>
