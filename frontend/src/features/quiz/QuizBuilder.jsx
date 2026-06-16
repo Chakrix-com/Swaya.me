@@ -393,93 +393,96 @@ const QuestionForm = ({
         </Form.Item>
 
         <Form.Item
-          name="text"
           label={t('quiz.question')}
-          rules={[{ required: true, message: t('quiz.questionRequired') }]}
-          getValueFromEvent={useRichText ? (v) => v : undefined}
-          style={{ marginBottom: 4 }}
+          style={{ marginBottom: 0 }}
         >
-          {useRichText ? (
-            <RichTextEditor
-              isDark={theme === 'dark'}
-              placeholder={t('quiz.enterQuestion')}
-            />
-          ) : (
-            <TextArea
-              rows={3}
-              placeholder={t('quiz.enterQuestion')}
-              spellCheck="true"
-              lang={t('common.langCode', { defaultValue: 'en' })}
-              onContextMenu={(e) => e.stopPropagation()}
-            />
-          )}
+          <div className="qb-compose-box">
+            <Form.Item
+              name="text"
+              noStyle
+              rules={[{ required: true, message: t('quiz.questionRequired') }]}
+              getValueFromEvent={useRichText ? (v) => v : undefined}
+            >
+              {useRichText ? (
+                <RichTextEditor
+                  isDark={theme === 'dark'}
+                  placeholder={t('quiz.enterQuestion')}
+                />
+              ) : (
+                <TextArea
+                  rows={3}
+                  placeholder={t('quiz.enterQuestion')}
+                  spellCheck="true"
+                  lang={t('common.langCode', { defaultValue: 'en' })}
+                  onContextMenu={(e) => e.stopPropagation()}
+                />
+              )}
+            </Form.Item>
+            {/* Text field action row: format toggle + AI rewrite */}
+            <div className="qb-text-actions">
+              <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
+                <button
+                  type="button"
+                  className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
+                  onClick={() => setUseRichText(v => !v)}
+                >
+                  <FontColorsOutlined />
+                </button>
+              </Tooltip>
+              <div style={{ flex: 1 }} />
+              <Tooltip title={t('ai.rewriteWithAIModel')}>
+                <Button
+                  size="small"
+                  type="text"
+                  icon={rewriteIcon('text')}
+                  loading={rewriting['text']}
+                  style={{ fontSize: 12 }}
+                  onClick={() => {
+                    if (useRichText) {
+                      const rawHtml = questionForm.getFieldValue('text') || ''
+                      const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
+                      if (!plain) return
+                      setRewriting(prev => ({ ...prev, text: true }))
+                      aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
+                        .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
+                        .catch(() => {})
+                        .finally(() => setRewriting(prev => ({ ...prev, text: false })))
+                    } else {
+                      handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
+                    }
+                  }}
+                >
+                  {t('ai.rewrite')}
+                </Button>
+              </Tooltip>
+            </div>
+            {/* Media row: image + video */}
+            <div className="qb-media-row">
+              {/* Image */}
+              {questionImageUrl ? (
+                <div className="qb-media-thumb">
+                  <img src={questionImageUrl} alt="" style={{ height: 48, borderRadius: 4, objectFit: 'cover' }} />
+                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })); setMediaImageOpen(false) }}>✕</button>
+                </div>
+              ) : (
+                <button type="button" className={`qb-media-btn${mediaImageOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaImageOpen(v => !v)}>
+                  📷 {t('quiz.addImage', 'Add image')}
+                </button>
+              )}
+              {/* Video */}
+              {questionVideoUrl ? (
+                <div className="qb-media-thumb" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 11, color: '#555' }}>🎬 {questionVideoUrl.slice(0, 30)}{questionVideoUrl.length > 30 ? '…' : ''}</span>
+                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionVideoUrl(null); setMediaVideoOpen(false) }}>✕</button>
+                </div>
+              ) : (
+                <button type="button" className={`qb-media-btn${mediaVideoOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaVideoOpen(v => !v)}>
+                  🎬 {t('quiz.addVideo', 'Add video')}
+                </button>
+              )}
+            </div>
+          </div>
         </Form.Item>
-        {/* Text field action row: Aa toggle + AI rewrite */}
-        <div className="qb-text-actions">
-          <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
-            <button
-              type="button"
-              className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
-              onClick={() => setUseRichText(v => !v)}
-            >
-              <FontColorsOutlined />
-            </button>
-          </Tooltip>
-          <div style={{ flex: 1 }} />
-          <Tooltip title={t('ai.rewriteWithAIModel')}>
-            <Button
-              size="small"
-              type="text"
-              icon={rewriteIcon('text')}
-              loading={rewriting['text']}
-              style={{ fontSize: 12 }}
-              onClick={() => {
-                if (useRichText) {
-                  const rawHtml = questionForm.getFieldValue('text') || ''
-                  const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
-                  if (!plain) return
-                  setRewriting(prev => ({ ...prev, text: true }))
-                  aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
-                    .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
-                    .catch(() => {})
-                    .finally(() => setRewriting(prev => ({ ...prev, text: false })))
-                } else {
-                  handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
-                }
-              }}
-            >
-              {t('ai.rewrite')}
-            </Button>
-          </Tooltip>
-        </div>
-
-        {/* Compact footer row: Points · Neg · Time (hidden for polls) */}
-
-        {/* Collapsible media row */}
-        <div className="qb-media-row">
-          {/* Image */}
-          {questionImageUrl ? (
-            <div className="qb-media-thumb">
-              <img src={questionImageUrl} alt="" style={{ height: 48, borderRadius: 4, objectFit: 'cover' }} />
-              <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })); setMediaImageOpen(false) }}>✕</button>
-            </div>
-          ) : (
-            <button type="button" className={`qb-media-btn${mediaImageOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaImageOpen(v => !v)}>
-              📷 {t('quiz.addImage', 'Add image')}
-            </button>
-          )}
-          {/* Video */}
-          {questionVideoUrl ? (
-            <div className="qb-media-thumb" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 11, color: '#555' }}>🎬 {questionVideoUrl.slice(0, 30)}{questionVideoUrl.length > 30 ? '…' : ''}</span>
-              <button type="button" className="qb-media-remove" onClick={() => { setQuestionVideoUrl(null); setMediaVideoOpen(false) }}>✕</button>
-            </div>
-          ) : (
-            <button type="button" className={`qb-media-btn${mediaVideoOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaVideoOpen(v => !v)}>
-              🎬 {t('quiz.addVideo', 'Add video')}
-            </button>
-          )}
-        </div>
         {mediaImageOpen && !questionImageUrl && (
           <div style={{ marginBottom: 12 }}>
             <ImageUpload

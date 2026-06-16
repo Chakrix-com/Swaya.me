@@ -281,12 +281,43 @@
 .qb-change-type-link:hover { opacity: 0.75; }
 
 /* ── Question text field action row ─────────────────────────────────────── */
+/* ── Question compose box ────────────────────────────────────────────────── */
+.qb-compose-box {
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+.qb-compose-box:focus-within {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.08);
+}
+.qb-compose-box .ant-input {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  resize: none;
+}
+.qb-compose-box .ant-input:focus {
+  box-shadow: none !important;
+}
+/* RichTextEditor root inside compose box */
+.qb-compose-box > .ant-form-item > div > div > div > [class*="RichText"],
+.qb-compose-box .ProseMirror-parent,
+.qb-compose-box .tiptap-wrapper {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
 .qb-text-actions {
   display: flex;
   align-items: center;
-  margin-top: 4px;
-  margin-bottom: 16px;
   gap: 6px;
+  border-top: 1px solid #f0f0f0;
+  padding: 6px 10px;
+  background: #fafafa;
 }
 
 .qb-aa-btn {
@@ -351,8 +382,10 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
   align-items: center;
+  border-top: 1px solid #f0f0f0;
+  padding: 6px 10px;
+  background: #fafafa;
 }
 
 .qb-media-btn {
