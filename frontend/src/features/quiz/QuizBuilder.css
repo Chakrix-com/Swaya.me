@@ -482,6 +482,11 @@
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   padding: 8px 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.qb-option-card--correct {
+  border-left: 3px solid #22c55e;
+  background: #f0fdf4;
 }
 
 .qb-opt-row {

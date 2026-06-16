@@ -613,7 +613,7 @@ const QuestionForm = ({
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(opt.req || '') }]
                 : opt.required ? [{ required: true, message: opt.req }] : []
               return (
-                <div key={opt.key} className="qb-option-card">
+                <div key={opt.key} className={`qb-option-card${isCorrect ? ' qb-option-card--correct' : ''}`}>
                   {/* Top row: correct-answer dot + input */}
                   <div className="qb-opt-row">
                     <button
@@ -704,7 +704,7 @@ const QuestionForm = ({
                     const isCorrect = !isPoll && selectedAnswer === String(extraIndex)
                     const extraLabel = String.fromCharCode(65 + extraIndex)
                     return (
-                      <div key={field.key} className="qb-option-card">
+                      <div key={field.key} className={`qb-option-card${isCorrect ? ' qb-option-card--correct' : ''}`}>
                         <div className="qb-opt-row">
                           <button
                             type="button"
