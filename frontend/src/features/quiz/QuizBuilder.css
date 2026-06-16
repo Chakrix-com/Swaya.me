@@ -468,11 +468,26 @@
 .qb-media-remove:hover { color: var(--sw-error, #cf1322); }
 
 /* ── Option rows (Phase 3) ───────────────────────────────────────────────── */
+/* ── Options 2-column grid ───────────────────────────────────────────────── */
+.qb-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+@media (max-width: 767px) {
+  .qb-options-grid { grid-template-columns: 1fr; }
+}
+.qb-option-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 .qb-opt-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 8px;
 }
 
 .qb-opt-dot {

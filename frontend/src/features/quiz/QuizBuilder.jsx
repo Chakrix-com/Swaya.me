@@ -597,7 +597,8 @@ const QuestionForm = ({
               </Form.Item>
             )}
 
-            {/* Option rows: A / B / C / D */}
+            {/* Option rows: A / B / C / D — 2-column grid on desktop */}
+            <div className="qb-options-grid">
             {[
               { key: 'option_a', imgKey: 'A', tempKey: 'optionA', richKey: 'option_a', label: 'A', index: 0, show: true, required: true, req: t('quiz.optionARequired'), ph: t('quiz.optionAPlaceholder') },
               { key: 'option_b', imgKey: 'B', tempKey: 'optionB', richKey: 'option_b', label: 'B', index: 1, show: true, required: true, req: t('quiz.optionBRequired'), ph: t('quiz.optionBPlaceholder') },
@@ -612,7 +613,7 @@ const QuestionForm = ({
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(opt.req || '') }]
                 : opt.required ? [{ required: true, message: opt.req }] : []
               return (
-                <div key={opt.key} className="qb-opt-row">
+                <div key={opt.key} className="qb-opt-row qb-option-card">
                   {/* Correct-answer dot */}
                   <button
                     type="button"
@@ -697,17 +698,19 @@ const QuestionForm = ({
                 </div>
               )
             })}
+            </div>{/* end qb-options-grid (fixed A-D) */}
 
             <Form.List name="extra_options">
               {(fields, { add, remove }) => (
                 <>
+                  <div className="qb-options-grid">
                   {fields.map((field) => {
                     const isRich = !!extraRichOpts[field.name]
                     const extraIndex = mcqBaseOptionCount + field.name
                     const isCorrect = !isPoll && selectedAnswer === String(extraIndex)
                     const extraLabel = String.fromCharCode(65 + extraIndex)
                     return (
-                      <div key={field.key} className="qb-opt-row">
+                      <div key={field.key} className="qb-opt-row qb-option-card">
                         <button
                           type="button"
                           className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
@@ -744,6 +747,7 @@ const QuestionForm = ({
                       </div>
                     )
                   })}
+                  </div>{/* end qb-options-grid (extras) */}
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4, marginBottom: 16 }}>
                     <Button
                       type="dashed"
