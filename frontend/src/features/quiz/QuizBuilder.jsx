@@ -40,6 +40,8 @@ import {
   BulbOutlined,
   LoadingOutlined,
   HolderOutlined,
+  FolderFilled,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import {
   Modal,
@@ -2944,24 +2946,27 @@ export default function QuizBuilder() {
         <div className="qb-body">
           <div className={`qb-rail${mobileView === 'form' ? ' qb-rail--mobile-hidden' : ''}`}>
             <div className="qb-rail-header">
-              {railTitleEditing ? (
-                <input
-                  className="qb-rail-title-input"
-                  value={railTitleValue}
-                  autoFocus
-                  onChange={e => setRailTitleValue(e.target.value)}
-                  onBlur={handleRailTitleSave}
-                  onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setRailTitleEditing(false) }}
-                />
-              ) : (
-                <span
-                  className="qb-rail-title"
-                  title={t('quiz.clickToRename', 'Click to rename')}
-                  onClick={() => { setRailTitleValue(quiz?.title || ''); setRailTitleEditing(true) }}
-                >
-                  {quiz?.title || '…'}
-                </span>
-              )}
+              <div className="qb-rail-tree-root">
+                <FolderFilled className="qb-rail-folder-icon" />
+                {railTitleEditing ? (
+                  <input
+                    className="qb-rail-title-input"
+                    value={railTitleValue}
+                    autoFocus
+                    onChange={e => setRailTitleValue(e.target.value)}
+                    onBlur={handleRailTitleSave}
+                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setRailTitleEditing(false) }}
+                  />
+                ) : (
+                  <span
+                    className="qb-rail-title"
+                    title={t('quiz.clickToRename', 'Click to rename')}
+                    onClick={() => { setRailTitleValue(quiz?.title || ''); setRailTitleEditing(true) }}
+                  >
+                    {quiz?.title || '…'}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="qb-rail-list">
               {/* Setup entry */}
@@ -3033,6 +3038,7 @@ export default function QuizBuilder() {
                             )}
                             <div className="qb-q-card-body">
                               <div className="qb-q-card-meta">
+                                <FileTextOutlined className="qb-q-file-icon" />
                                 <span className="qb-q-num">Q{index + 1}</span>
                                 <span className="qb-q-type-tag">{getQuestionTypeLabel(question.question_type, t)}</span>
                                 <span className={`qb-q-status-dot ${statusCls}`} />
