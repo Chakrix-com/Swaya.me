@@ -280,7 +280,45 @@
 }
 .qb-change-type-link:hover { opacity: 0.75; }
 
-/* ── Question text field action row ─────────────────────────────────────── */
+/* ── Scoring chips on Question label ────────────────────────────────────── */
+/* Ensure label cell takes full available width so chips can right-align */
+.ant-form-item:has(.qb-question-label-row) .ant-form-item-label {
+  width: 100%;
+}
+.ant-form-item:has(.qb-question-label-row) .ant-form-item-label > label {
+  width: 100%;
+}
+
+.qb-question-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+.qb-scoring-chips {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.qb-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  user-select: none;
+  background: #fafafa;
+  color: #555;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.qb-chip:hover { border-color: #4f46e5; color: #4f46e5; }
+.qb-chip--neg { color: #d32f2f; border-color: #ffcdd2; background: #fff8f8; }
+.qb-chip--neg:hover { border-color: #d32f2f; color: #d32f2f; }
+.qb-chip--time { color: #795548; border-color: #d7ccc8; }
+.qb-chip--time:hover { border-color: #4f46e5; color: #4f46e5; }
+
 /* ── Question compose box ────────────────────────────────────────────────── */
 .qb-compose-box {
   border: 1px solid #d9d9d9;

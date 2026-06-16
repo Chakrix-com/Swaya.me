@@ -48,6 +48,7 @@ import {
   Spin,
   Alert,
   Tooltip,
+  Popover,
   DatePicker,
   Switch,
   message as antMessage,
@@ -136,6 +137,10 @@ const QuestionForm = ({
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
   const { theme } = useContext(VisitorThemeContext)
+
+  const watchedPoints = Form.useWatch('points', questionForm)
+  const watchedNegPoints = Form.useWatch('negative_points', questionForm)
+  const watchedMaxTime = Form.useWatch('max_time_seconds', questionForm)
 
   const toggleOptRich = (key) => {
     setUseRichTextOptions((prev) => {
@@ -393,7 +398,70 @@ const QuestionForm = ({
         </Form.Item>
 
         <Form.Item
-          label={t('quiz.question')}
+          label={
+            <div className="qb-question-label-row">
+              <span className="qb-question-label-text">{t('quiz.question')}</span>
+              <div className="qb-scoring-chips">
+                {!isPoll && (
+                  <Popover
+                    content={
+                      <InputNumber
+                        min={0}
+                        precision={0}
+                        size="small"
+                        value={watchedPoints ?? 1}
+                        onChange={val => questionForm.setFieldsValue({ points: val })}
+                        style={{ width: 80 }}
+                      />
+                    }
+                    title={t('quiz.pointsLabel')}
+                    trigger="click"
+                  >
+                    <span className="qb-chip">★ {watchedPoints ?? 1}pt</span>
+                  </Popover>
+                )}
+                {isExam && (
+                  <Popover
+                    content={
+                      <InputNumber
+                        min={0}
+                        step={0.5}
+                        size="small"
+                        value={watchedNegPoints ?? 0}
+                        onChange={val => questionForm.setFieldsValue({ negative_points: val })}
+                        style={{ width: 80 }}
+                      />
+                    }
+                    title={t('exam.negativePoints')}
+                    trigger="click"
+                  >
+                    <span className="qb-chip qb-chip--neg">– {watchedNegPoints ?? 0}</span>
+                  </Popover>
+                )}
+                {!isOfflinePoll && (
+                  <Popover
+                    content={
+                      <InputNumber
+                        min={0}
+                        max={3600}
+                        precision={0}
+                        size="small"
+                        value={watchedMaxTime ?? undefined}
+                        onChange={val => questionForm.setFieldsValue({ max_time_seconds: val || null })}
+                        placeholder="∞"
+                        addonAfter="s"
+                        style={{ width: 100 }}
+                      />
+                    }
+                    title={t('quiz.maxTimeSecondsLabel')}
+                    trigger="click"
+                  >
+                    <span className="qb-chip qb-chip--time">⏱ {watchedMaxTime ? `${watchedMaxTime}s` : '—'}</span>
+                  </Popover>
+                )}
+              </div>
+            </div>
+          }
           style={{ marginBottom: 0 }}
         >
           <div className="qb-compose-box">
@@ -876,36 +944,25 @@ const QuestionForm = ({
           )}
         </div>
 
-        {/* Compact Points · Neg · Time footer */}
+        {/* Hidden form bindings for scoring — values managed via label chips */}
+        {!isPoll && (
+          <Form.Item name="points" initialValue={1} rules={[{ required: true, message: t('quiz.pointsRequired') }]} style={{ display: 'none', margin: 0 }}>
+            <InputNumber />
+          </Form.Item>
+        )}
+        {isExam && (
+          <Form.Item name="negative_points" initialValue={0} style={{ display: 'none', margin: 0 }}>
+            <InputNumber />
+          </Form.Item>
+        )}
+        {!isOfflinePoll && (
+          <Form.Item name="max_time_seconds" style={{ display: 'none', margin: 0 }}>
+            <InputNumber />
+          </Form.Item>
+        )}
+
+        {/* Footer row: Required toggle (offline poll only) + Prev / Next */}
         <div className="qb-footer-row">
-          {!isPoll && (
-            <Tooltip title={t('tooltip.questionPoints')}>
-              <div className="qb-footer-field">
-                <label className="qb-footer-label">{t('quiz.pointsLabel')}</label>
-                <Form.Item name="points" initialValue={1} rules={[{ required: true, message: t('quiz.pointsRequired') }]} style={{ margin: 0 }}>
-                  <InputNumber min={1} precision={0} size="small" style={{ width: 60 }} />
-                </Form.Item>
-              </div>
-            </Tooltip>
-          )}
-          {isExam && (
-            <Tooltip title={t('tooltip.negativePoints')}>
-              <div className="qb-footer-field">
-                <label className="qb-footer-label">{t('exam.negativePoints')}</label>
-                <Form.Item name="negative_points" initialValue={0} style={{ margin: 0 }}>
-                  <InputNumber min={0} precision={0} size="small" style={{ width: 60 }} />
-                </Form.Item>
-              </div>
-            </Tooltip>
-          )}
-          <Tooltip title={t('quiz.maxTimeSecondsTooltip')}>
-            <div className="qb-footer-field">
-              <label className="qb-footer-label">{t('quiz.maxTimeSecondsLabel')}</label>
-              <Form.Item name="max_time_seconds" style={{ margin: 0 }}>
-                <InputNumber min={1} max={3600} precision={0} size="small" style={{ width: 72 }} />
-              </Form.Item>
-            </div>
-          </Tooltip>
           {isOfflinePoll && (
             <div className="qb-footer-field">
               <label className="qb-footer-label">{t('offlinePoll.required', 'Required')}</label>
