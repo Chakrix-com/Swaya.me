@@ -5,27 +5,9 @@ import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import {
   App,
-  Card,
-  Button,
-  Space,
-  Typography,
-  Tag,
-  Alert,
-  Result,
-  Progress,
   Input,
   Rate,
-  Table
 } from 'antd'
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  LoadingOutlined,
-  LoginOutlined,
-  SendOutlined,
-  TrophyOutlined,
-  LogoutOutlined
-} from '@ant-design/icons'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
 import { trackEvent } from '../../services/metrics'
@@ -41,7 +23,6 @@ import { applySkin } from '../../themes/skins'
 import useWakeLock from '../../hooks/useWakeLock'
 import './AudienceSession.css'
 
-const { Title, Text } = Typography
 const { TextArea } = Input
 
 export default function AudienceSession() {
@@ -380,48 +361,6 @@ export default function AudienceSession() {
   const visibleLeaderboard = (leaderboard && (sessionStatus === 'ended' || !currentQuestion || currentQuestionAnswerCount > 0))
     ? leaderboard
     : (leaderboard ? { ...leaderboard, entries: [] } : null)
-  const rankColors = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
-
-  const leaderboardColumns = [
-    {
-      title: t('leaderboard.rank'),
-      dataIndex: 'rank',
-      width: 55,
-      render: (rank) => (
-        <Tag style={rankColors[rank] ? { backgroundColor: rankColors[rank], color: 'var(--aud-input-text)', borderColor: rankColors[rank] } : {}}>
-          {rank}
-        </Tag>
-      )
-    },
-    {
-      title: t('leaderboard.participant'),
-      dataIndex: 'display_name',
-      ellipsis: false,
-      render: (name, record) => (
-        <span style={{ ...(record.is_current_participant ? { fontWeight: 700, color: '#1890ff' } : {}), whiteSpace: 'normal', wordBreak: 'break-word' }}>
-          {name}{record.is_current_participant ? ` (${t('audience.you', { defaultValue: 'You' })})` : ''}
-        </span>
-      )
-    },
-    {
-      title: t('leaderboard.score'),
-      dataIndex: 'score',
-      width: 72,
-      render: (score, record) => (
-        <Tag color={record.is_current_participant ? 'blue' : 'green'}>{score}</Tag>
-      )
-    },
-    {
-      title: t('leaderboard.timeTaken'),
-      dataIndex: 'time_taken_seconds',
-      width: 78,
-      responsive: ['sm'],
-      render: (secs) => secs != null
-        ? <Text type="secondary" style={{ fontSize: 12 }}>{secs.toFixed(1)}s</Text>
-        : <Text type="secondary" style={{ fontSize: 12 }}>—</Text>
-    }
-  ]
-
   const LeaderboardTable = ({ withBars = false }) => {
     if (isPollSession || !visibleLeaderboard || results?.leaderboard_visible === false) return null
     const entries = visibleLeaderboard.entries || []
