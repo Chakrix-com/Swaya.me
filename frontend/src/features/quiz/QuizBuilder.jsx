@@ -363,6 +363,14 @@ const QuestionForm = ({
           correct_answer: isPoll ? undefined : '0'
         }}
       >
+        {/* Question position indicator */}
+        {question && (
+          <div className="qb-q-position">
+            Q{questionIndex + 1}
+            <span className="qb-q-position-total"> · {totalQuestions} {totalQuestions !== 1 ? t('quiz.questions', 'questions') : 'question'}</span>
+          </div>
+        )}
+
         {/* Question type — pill chips */}
         <Form.Item name="question_type" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
           {typeChipsExpanded ? (

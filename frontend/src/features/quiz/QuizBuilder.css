@@ -399,6 +399,15 @@
 .qb-explanation-toggle:hover { color: var(--sw-primary, #6366f1); }
 
 /* ── Compact form footer row (Points · Neg · Time · Save) ───────────────── */
+/* ── Question position indicator ────────────────────────────────────────── */
+.qb-q-position {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+.qb-q-position-total { font-weight: 400; color: #999; }
+
 .qb-footer-row {
   display: flex;
   align-items: center;
