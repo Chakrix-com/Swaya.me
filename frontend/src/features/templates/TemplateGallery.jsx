@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Row, Col, Button, Input, Tabs, Tag, Typography, Space, Spin, message, Empty, Tooltip } from 'antd'
+import { Card, Row, Col, Button, Input, Tabs, Tag, Typography, Space, Spin, message, Empty, Tooltip, Grid } from 'antd'
+
+const { useBreakpoint } = Grid
 import {
   SearchOutlined,
   ThunderboltOutlined,
@@ -101,6 +103,8 @@ function TemplateCard({ template, onUse, using }) {
 export default function TemplateGallery() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
 
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
@@ -164,7 +168,7 @@ export default function TemplateGallery() {
   }))
 
   return (
-    <div style={{ padding: '24px 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px 16px 32px' : '24px 24px 48px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
       <div style={{ marginBottom: 24 }}>
         <Button
           type="link"
