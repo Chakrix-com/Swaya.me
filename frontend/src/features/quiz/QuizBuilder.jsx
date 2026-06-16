@@ -613,86 +613,80 @@ const QuestionForm = ({
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(opt.req || '') }]
                 : opt.required ? [{ required: true, message: opt.req }] : []
               return (
-                <div key={opt.key} className="qb-opt-row qb-option-card">
-                  {/* Correct-answer dot */}
-                  <button
-                    type="button"
-                    className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
-                    onClick={() => {
-                      if (isPoll) return
-                      setSelectedAnswer(String(opt.index))
-                      questionForm.setFieldsValue({ correct_answer: String(opt.index) })
-                    }}
-                    title={isPoll ? undefined : t('quiz.markCorrect', 'Mark as correct answer')}
-                  >
-                    {opt.label}
-                  </button>
-                  {/* Input + expanding image */}
-                  <div className="qb-opt-content">
-                    <Form.Item
-                      name={opt.key}
-                      style={{ marginBottom: 4 }}
-                      rules={rules}
-                      getValueFromEvent={isRich ? (v) => v : undefined}
+                <div key={opt.key} className="qb-option-card">
+                  {/* Top row: correct-answer dot + input */}
+                  <div className="qb-opt-row">
+                    <button
+                      type="button"
+                      className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
+                      onClick={() => {
+                        if (isPoll) return
+                        setSelectedAnswer(String(opt.index))
+                        questionForm.setFieldsValue({ correct_answer: String(opt.index) })
+                      }}
+                      title={isPoll ? undefined : t('quiz.markCorrect', 'Mark as correct answer')}
                     >
-                      {isRich
-                        ? <RichTextEditor isDark={theme === 'dark'} placeholder={opt.ph} />
-                        : <Input
-                            placeholder={opt.ph}
-                            spellCheck="true"
-                            lang={t('common.langCode', { defaultValue: 'en' })}
-                            onContextMenu={e => e.stopPropagation()}
-                            suffix={
-                              <Tooltip title={t('ai.rewriteWithAI')}>
-                                <Button type="text" size="small" icon={rewriteIcon(opt.key)} onClick={() => handleRewrite(opt.key, 'quiz answer option')} />
-                              </Tooltip>
+                      {opt.label}
+                    </button>
+                    <div className="qb-opt-content">
+                      <Form.Item
+                        name={opt.key}
+                        style={{ marginBottom: 0 }}
+                        rules={rules}
+                        getValueFromEvent={isRich ? (v) => v : undefined}
+                      >
+                        {isRich
+                          ? <RichTextEditor isDark={theme === 'dark'} placeholder={opt.ph} />
+                          : <Input
+                              placeholder={opt.ph}
+                              spellCheck="true"
+                              lang={t('common.langCode', { defaultValue: 'en' })}
+                              onContextMenu={e => e.stopPropagation()}
+                            />
+                        }
+                      </Form.Item>
+                      {hasImg && (
+                        <div className="qb-opt-img-thumb">
+                          <img src={optionImages[opt.imgKey]} alt="" />
+                          <button type="button" className="qb-media-remove" onClick={() => { setOptionImages(prev => ({ ...prev, [opt.imgKey]: null })); setTempImages(prev => ({ ...prev, [opt.tempKey]: null })) }}>✕</button>
+                        </div>
+                      )}
+                      {isImgOpen && !hasImg && (
+                        <ImageUpload
+                          quizId={parseInt(quizId)}
+                          questionId={question?.id}
+                          imageType={`option_${opt.label.toLowerCase()}`}
+                          currentImageUrl={null}
+                          tempData={tempImages[opt.tempKey]}
+                          onImageChange={(url, tempKey) => {
+                            if (tempKey) {
+                              setTempImages(prev => ({ ...prev, [opt.tempKey]: { url, tempKey } }))
+                            } else {
+                              setOptionImages(prev => ({ ...prev, [opt.imgKey]: url }))
+                              setTempImages(prev => ({ ...prev, [opt.tempKey]: null }))
+                              if (!url) setOptImageOpen(prev => ({ ...prev, [opt.imgKey]: false }))
                             }
-                          />
-                      }
-                    </Form.Item>
-                    {isRich && (
-                      <div style={{ textAlign: 'right', marginTop: -4, marginBottom: 4 }}>
-                        <Tooltip title={t('ai.rewriteWithAI')}>
-                          <Button type="text" size="small" icon={rewriteIcon(opt.key)} onClick={() => handleRewrite(opt.key, 'quiz answer option')} />
-                        </Tooltip>
-                      </div>
-                    )}
-                    {hasImg && (
-                      <div className="qb-opt-img-thumb">
-                        <img src={optionImages[opt.imgKey]} alt="" />
-                        <button type="button" className="qb-media-remove" onClick={() => { setOptionImages(prev => ({ ...prev, [opt.imgKey]: null })); setTempImages(prev => ({ ...prev, [opt.tempKey]: null })) }}>✕</button>
-                      </div>
-                    )}
-                    {isImgOpen && !hasImg && (
-                      <ImageUpload
-                        quizId={parseInt(quizId)}
-                        questionId={question?.id}
-                        imageType={`option_${opt.label.toLowerCase()}`}
-                        currentImageUrl={null}
-                        tempData={tempImages[opt.tempKey]}
-                        onImageChange={(url, tempKey) => {
-                          if (tempKey) {
-                            setTempImages(prev => ({ ...prev, [opt.tempKey]: { url, tempKey } }))
-                          } else {
-                            setOptionImages(prev => ({ ...prev, [opt.imgKey]: url }))
-                            setTempImages(prev => ({ ...prev, [opt.tempKey]: null }))
-                            if (!url) setOptImageOpen(prev => ({ ...prev, [opt.imgKey]: false }))
-                          }
-                        }}
-                      />
-                    )}
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                  {/* Aa + camera */}
-                  <div className="qb-opt-actions">
+                  {/* Compose strip: format toggle + image + rewrite — visible on focus */}
+                  <div className="qb-opt-strip">
                     <Tooltip title={isRich ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
-                      <button type="button" className={`qb-aa-btn${isRich ? ' qb-aa-btn--active' : ''}`} style={{ padding: '1px 6px', fontSize: 10 }} onClick={() => toggleOptRich(opt.richKey)}>Aa</button>
+                      <button type="button" className={`qb-aa-btn qb-aa-btn--sm${isRich ? ' qb-aa-btn--active' : ''}`} onClick={() => toggleOptRich(opt.richKey)}>
+                        <FontColorsOutlined />
+                      </button>
                     </Tooltip>
                     <Tooltip title={t('quiz.addImage', 'Add image')}>
                       <button
                         type="button"
-                        className={`qb-opt-camera${isImgOpen || hasImg ? ' qb-opt-camera--active' : ''}`}
+                        className={`qb-opt-camera qb-opt-strip-btn${isImgOpen || hasImg ? ' qb-opt-camera--active' : ''}`}
                         onClick={() => setOptImageOpen(prev => ({ ...prev, [opt.imgKey]: !prev[opt.imgKey] }))}
                       >📷</button>
+                    </Tooltip>
+                    <Tooltip title={t('ai.rewriteWithAI')}>
+                      <Button type="text" size="small" icon={rewriteIcon(opt.key)} onClick={() => handleRewrite(opt.key, 'quiz answer option')} />
                     </Tooltip>
                   </div>
                 </div>
@@ -710,39 +704,43 @@ const QuestionForm = ({
                     const isCorrect = !isPoll && selectedAnswer === String(extraIndex)
                     const extraLabel = String.fromCharCode(65 + extraIndex)
                     return (
-                      <div key={field.key} className="qb-opt-row qb-option-card">
-                        <button
-                          type="button"
-                          className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
-                          onClick={() => {
-                            if (isPoll) return
-                            setSelectedAnswer(String(extraIndex))
-                            questionForm.setFieldsValue({ correct_answer: String(extraIndex) })
-                          }}
-                        >
-                          {extraLabel}
-                        </button>
-                        <div className="qb-opt-content">
-                          <Form.Item
-                            {...field}
-                            style={{ marginBottom: 4 }}
-                            rules={isRich
-                              ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' })) }]
-                              : [{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]
-                            }
-                            getValueFromEvent={isRich ? (v) => v : undefined}
+                      <div key={field.key} className="qb-option-card">
+                        <div className="qb-opt-row">
+                          <button
+                            type="button"
+                            className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
+                            onClick={() => {
+                              if (isPoll) return
+                              setSelectedAnswer(String(extraIndex))
+                              questionForm.setFieldsValue({ correct_answer: String(extraIndex) })
+                            }}
                           >
-                            {isRich
-                              ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
-                              : <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
-                            }
-                          </Form.Item>
+                            {extraLabel}
+                          </button>
+                          <div className="qb-opt-content">
+                            <Form.Item
+                              {...field}
+                              style={{ marginBottom: 0 }}
+                              rules={isRich
+                                ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' })) }]
+                                : [{ required: true, message: t('quiz.optionRequired', { defaultValue: 'Option cannot be empty' }) }]
+                              }
+                              getValueFromEvent={isRich ? (v) => v : undefined}
+                            >
+                              {isRich
+                                ? <RichTextEditor isDark={theme === 'dark'} placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                                : <Input placeholder={t('quiz.optionPlaceholder', { defaultValue: 'Enter option text' })} />
+                              }
+                            </Form.Item>
+                          </div>
                         </div>
-                        <div className="qb-opt-actions">
+                        <div className="qb-opt-strip">
                           <Tooltip title={isRich ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleOptions')}>
-                            <button type="button" className={`qb-aa-btn${isRich ? ' qb-aa-btn--active' : ''}`} style={{ padding: '1px 6px', fontSize: 10 }} onClick={() => toggleExtraOptRich(field.name)}>Aa</button>
+                            <button type="button" className={`qb-aa-btn qb-aa-btn--sm${isRich ? ' qb-aa-btn--active' : ''}`} onClick={() => toggleExtraOptRich(field.name)}>
+                              <FontColorsOutlined />
+                            </button>
                           </Tooltip>
-                          <button type="button" className="qb-opt-camera" onClick={() => remove(field.name)} title="Remove option">✕</button>
+                          <button type="button" className="qb-opt-camera qb-opt-strip-btn" onClick={() => remove(field.name)} title="Remove option">✕</button>
                         </div>
                       </div>
                     )

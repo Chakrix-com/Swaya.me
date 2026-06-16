@@ -490,6 +490,26 @@
   gap: 8px;
 }
 
+/* ── Option compose strip ────────────────────────────────────────────────── */
+.qb-opt-strip {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+}
+.qb-option-card:focus-within .qb-opt-strip {
+  display: flex;
+}
+.qb-aa-btn--sm {
+  padding: 1px 6px;
+  font-size: 12px;
+}
+.qb-opt-strip-btn {
+  opacity: 1 !important;
+}
+
 .qb-opt-dot {
   flex-shrink: 0;
   width: 26px;
