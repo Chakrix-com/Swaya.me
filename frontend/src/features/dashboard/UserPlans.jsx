@@ -23,13 +23,13 @@ export default function UserPlans() {
   const currentTierIdx = TIER_ORDER.indexOf(currentTier)
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 1000, margin: '0 auto' }}>
+    <div style={{ padding: '32px 24px', maxWidth: 1000, margin: '0 auto', width: '100%' }}>
       {/* Page header */}
       <div style={{ marginBottom: 32 }}>
-        <Space align="center" style={{ marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <CrownOutlined style={{ fontSize: 20, color: '#6366F1' }} />
           <Title level={3} style={{ margin: 0 }}>{t('dashboard.plansTab', 'Your Plan')}</Title>
-        </Space>
+        </div>
         <Text type="secondary">{t('dashboard.plansSubtitle', 'Active subscription and feature limits')}</Text>
       </div>
 
