@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Table, Tag, Button, Select, Space, Typography, Input, Badge, Tooltip, Empty, Spin,
+  Table, Tag, Button, Select, Space, Typography, Input, Badge, Tooltip, Empty, Spin, Grid,
 } from 'antd'
+
+const { useBreakpoint } = Grid
 import {
   TrophyOutlined, TeamOutlined, CalendarOutlined, SearchOutlined, ReloadOutlined,
   BarChartOutlined, FileTextOutlined, BulbOutlined, ExperimentOutlined, PlayCircleOutlined,
@@ -50,6 +52,8 @@ function recapUrl(item) {
 export default function ResultsHub() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
 
   const [sessions, setSessions]   = useState([])
   const [total, setTotal]         = useState(0)
@@ -150,7 +154,7 @@ export default function ResultsHub() {
   ]
 
   return (
-    <div style={{ padding: '24px 24px 48px' }}>
+    <div style={{ padding: isMobile ? '16px 16px 32px' : '24px 24px 48px', width: '100%' }}>
       <Space style={{ marginBottom: 20, justifyContent: 'space-between', width: '100%', flexWrap: 'wrap' }}>
         <Space direction="vertical" size={0}>
           <Title level={3} style={{ margin: 0 }}>{t('results.title', 'Results')}</Title>
@@ -202,6 +206,7 @@ export default function ResultsHub() {
             dataSource={filtered}
             columns={columns}
             rowKey="id"
+            scroll={{ x: 700 }}
             pagination={{
               current: page,
               pageSize,
