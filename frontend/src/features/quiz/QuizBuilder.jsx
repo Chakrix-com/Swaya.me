@@ -3051,6 +3051,12 @@ export default function QuizBuilder() {
                                 <span className="qb-q-num">Q{index + 1}</span>
                                 <span className="qb-q-type-tag">{getQuestionTypeLabel(question.question_type, t)}</span>
                                 <span className={`qb-q-status-dot ${statusCls}`} />
+                                {question.points !== undefined && question.points !== 1 && (
+                                  <span className="qb-q-chip">★{question.points}</span>
+                                )}
+                                {question.max_time_seconds && (
+                                  <span className="qb-q-chip">⏱{question.max_time_seconds}s</span>
+                                )}
                               </div>
                               <div className="qb-q-preview">
                                 {stripHtml(question.text).slice(0, 40) || t('quiz.untitled', 'Untitled')}

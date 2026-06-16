@@ -215,6 +215,15 @@
 .qb-q-status-dot--warn   { background: #fa8c16; }
 .qb-q-status-dot--empty  { background: #ff4d4f; }
 
+.qb-q-chip {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: #666;
+  white-space: nowrap;
+}
+
 .qb-q-preview {
   font-size: 11px;
   color: var(--sw-text3, #888);
