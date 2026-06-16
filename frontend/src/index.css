@@ -133,6 +133,19 @@ canvas {
   --ctrl-tag-text:            #152238;
   --ctrl-alert-text:          #152238;
   --ctrl-spinner:             #6366F1;
+
+  /* ── Audience session v2 (aud2-*) token defaults ───────────────────────── */
+  --aud-timer-color:          #1677ff;
+  --aud-timer-danger-color:   #ef4444;
+  --aud-option-min-height:    56px;
+  --aud-option-radius:        10px;
+  --aud-glow-color:           rgba(22, 119, 255, 0.3);
+  --skin-correct:             #52c41a;
+  --skin-correct-bg:          #f6ffed;
+  --skin-wrong:               #ff4d4f;
+  --skin-wrong-bg:            #fff1f0;
+  --skin-accent:              #6366F1;
+  --skin-accent-soft:         rgba(99, 102, 241, 0.12);
 }
 
 .visitor-theme--light .ant-divider-inner-text,
