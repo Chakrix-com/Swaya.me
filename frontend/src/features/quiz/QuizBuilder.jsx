@@ -52,7 +52,7 @@ import {
   Switch,
   message as antMessage,
 } from 'antd'
-import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
+import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FontColorsOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
@@ -422,7 +422,7 @@ const QuestionForm = ({
               className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
               onClick={() => setUseRichText(v => !v)}
             >
-              Aa
+              <FontColorsOutlined />
             </button>
           </Tooltip>
           <div style={{ flex: 1 }} />
