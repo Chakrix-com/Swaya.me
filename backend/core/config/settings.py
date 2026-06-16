@@ -148,6 +148,52 @@ class GeminiSettings(BaseSettings):
     )
 
 
+class OpenAICompatSettings(BaseSettings):
+    """OpenAI-compatible API config — works for OpenAI, Groq, Azure, Together, LM Studio, vLLM, Mistral, etc."""
+    api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    base_url: str = Field(default="https://api.openai.com/v1", alias="OPENAI_BASE_URL")
+    model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
+    model_fast: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL_FAST")
+    timeout_seconds: int = Field(default=120, alias="OPENAI_TIMEOUT_SECONDS")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        protected_namespaces=(),
+    )
+
+
+class AnthropicSettings(BaseSettings):
+    """Anthropic Claude API configuration"""
+    api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    model: str = Field(default="claude-haiku-4-5-20251001", alias="ANTHROPIC_MODEL")
+    model_fast: str = Field(default="claude-haiku-4-5-20251001", alias="ANTHROPIC_MODEL_FAST")
+    timeout_seconds: int = Field(default=120, alias="ANTHROPIC_TIMEOUT_SECONDS")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        protected_namespaces=(),
+    )
+
+
+class AIRoutingSettings(BaseSettings):
+    """Controls which AI provider handles primary (quality) and light (speed) tasks."""
+    primary_provider: str = Field(default="gemini", alias="AI_PRIMARY_PROVIDER")
+    light_provider: str = Field(default="ollama", alias="AI_LIGHT_PROVIDER")
+    openai: OpenAICompatSettings = Field(default_factory=OpenAICompatSettings)
+    anthropic: AnthropicSettings = Field(default_factory=AnthropicSettings)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        protected_namespaces=(),
+    )
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
@@ -158,6 +204,7 @@ class Settings(BaseSettings):
     smtp: SMTPSettings = Field(default_factory=SMTPSettings)
     ollama: OllamaSettings = Field(default_factory=OllamaSettings)
     gemini: GeminiSettings = Field(default_factory=GeminiSettings)
+    ai: AIRoutingSettings = Field(default_factory=AIRoutingSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",
