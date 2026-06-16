@@ -14,13 +14,14 @@ import { questionAPI } from '../../../services/api'
  * @param {function} onImageChange - Callback when image changes (url, tempKey) => void
  * @param {object} tempData - Temp image data {url, tempKey} (if exists)
  */
-export default function ImageUpload({ 
-  quizId, 
-  questionId, 
-  imageType, 
-  currentImageUrl, 
+export default function ImageUpload({
+  quizId,
+  questionId,
+  imageType,
+  currentImageUrl,
   onImageChange,
-  tempData = null
+  tempData = null,
+  triggerElement = null  // when provided, wraps it with Upload — caller handles display
 }) {
   const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
@@ -100,6 +101,15 @@ export default function ImageUpload({
     } finally {
       setDeleting(false)
     }
+  }
+
+  // Inline mode: caller owns display; this just wraps its element with upload behaviour
+  if (triggerElement) {
+    return (
+      <Upload accept="image/*" showUploadList={false} beforeUpload={handleUpload}>
+        {triggerElement}
+      </Upload>
+    )
   }
 
   return (

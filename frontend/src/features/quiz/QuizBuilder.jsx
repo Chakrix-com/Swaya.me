@@ -129,10 +129,8 @@ const QuestionForm = ({
   const [useRichText, setUseRichText] = useState(false)
   const [typeChipsExpanded, setTypeChipsExpanded] = useState(true)
   const [explanationOpen, setExplanationOpen] = useState(false)
-  const [mediaImageOpen, setMediaImageOpen] = useState(false)
   const [mediaVideoOpen, setMediaVideoOpen] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState('0')
-  const [optImageOpen, setOptImageOpen] = useState({ A: false, B: false, C: false, D: false })
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
@@ -200,10 +198,8 @@ const QuestionForm = ({
       setQuestionType(question.question_type || 'mcq')
       setTypeChipsExpanded(!question.text)
       setExplanationOpen(!!question.answer_explanation)
-      setMediaImageOpen(!!question.question_image_url)
       setMediaVideoOpen(!!question.question_video_url)
       setSelectedAnswer(isPoll ? '-1' : String(question.correct_answer_index ?? 0))
-      setOptImageOpen({ A: false, B: false, C: false, D: false })
 
       // Auto-detect rich text: if question text contains HTML tags open in rich text mode
       setUseRichText(/<[a-z][\s\S]*>/i.test(question.text || ''))
@@ -244,10 +240,8 @@ const QuestionForm = ({
       setQuestionType('mcq')
       setTypeChipsExpanded(true)
       setExplanationOpen(false)
-      setMediaImageOpen(false)
       setMediaVideoOpen(false)
       setSelectedAnswer(isPoll ? '-1' : '0')
-      setOptImageOpen({ A: false, B: false, C: false, D: false })
 
       // Reset image/video state for new question
       setQuestionImageUrl(null)
@@ -534,16 +528,33 @@ const QuestionForm = ({
             </div>
             {/* Media row: image + video */}
             <div className="qb-media-row">
-              {/* Image */}
+              {/* Image — upload trigger is the button itself (single click) */}
               {questionImageUrl ? (
                 <div className="qb-media-thumb">
                   <img src={questionImageUrl} alt="" style={{ height: 48, borderRadius: 4, objectFit: 'cover' }} />
-                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })); setMediaImageOpen(false) }}>✕</button>
+                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })) }}>✕</button>
                 </div>
               ) : (
-                <button type="button" className={`qb-media-btn${mediaImageOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaImageOpen(v => !v)}>
-                  📷 {t('quiz.addImage', 'Add image')}
-                </button>
+                <ImageUpload
+                  quizId={parseInt(quizId)}
+                  questionId={question?.id}
+                  imageType="question"
+                  currentImageUrl={null}
+                  tempData={tempImages.question}
+                  onImageChange={(url, tempKey) => {
+                    if (tempKey) {
+                      setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
+                    } else {
+                      setQuestionImageUrl(url)
+                      setTempImages(prev => ({ ...prev, question: null }))
+                    }
+                  }}
+                  triggerElement={
+                    <button type="button" className="qb-media-btn">
+                      📷 {t('quiz.addImage', 'Add image')}
+                    </button>
+                  }
+                />
               )}
               {/* Video */}
               {questionVideoUrl ? (
@@ -559,26 +570,6 @@ const QuestionForm = ({
             </div>
           </div>
         </Form.Item>
-        {mediaImageOpen && !questionImageUrl && (
-          <div style={{ marginBottom: 12 }}>
-            <ImageUpload
-              quizId={parseInt(quizId)}
-              questionId={question?.id}
-              imageType="question"
-              currentImageUrl={questionImageUrl}
-              tempData={tempImages.question}
-              onImageChange={(url, tempKey) => {
-                if (tempKey) {
-                  setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
-                } else {
-                  setQuestionImageUrl(url)
-                  setTempImages(prev => ({ ...prev, question: null }))
-                  if (!url) setMediaImageOpen(false)
-                }
-              }}
-            />
-          </div>
-        )}
         {mediaVideoOpen && !questionVideoUrl && (
           <Form.Item name="question_video_url" style={{ marginBottom: 12 }}>
             <Input
@@ -616,7 +607,6 @@ const QuestionForm = ({
               const isRich = !!useRichTextOptions[opt.richKey]
               const isCorrect = !isPoll && selectedAnswer === String(opt.index)
               const hasImg = !!optionImages[opt.imgKey]
-              const isImgOpen = optImageOpen[opt.imgKey]
               const rules = isRich
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(opt.req || '') }]
                 : opt.required ? [{ required: true, message: opt.req }] : []
@@ -659,24 +649,6 @@ const QuestionForm = ({
                           <button type="button" className="qb-media-remove" onClick={() => { setOptionImages(prev => ({ ...prev, [opt.imgKey]: null })); setTempImages(prev => ({ ...prev, [opt.tempKey]: null })) }}>✕</button>
                         </div>
                       )}
-                      {isImgOpen && !hasImg && (
-                        <ImageUpload
-                          quizId={parseInt(quizId)}
-                          questionId={question?.id}
-                          imageType={`option_${opt.label.toLowerCase()}`}
-                          currentImageUrl={null}
-                          tempData={tempImages[opt.tempKey]}
-                          onImageChange={(url, tempKey) => {
-                            if (tempKey) {
-                              setTempImages(prev => ({ ...prev, [opt.tempKey]: { url, tempKey } }))
-                            } else {
-                              setOptionImages(prev => ({ ...prev, [opt.imgKey]: url }))
-                              setTempImages(prev => ({ ...prev, [opt.tempKey]: null }))
-                              if (!url) setOptImageOpen(prev => ({ ...prev, [opt.imgKey]: false }))
-                            }
-                          }}
-                        />
-                      )}
                     </div>
                   </div>
                   {/* Compose strip: format toggle + image + rewrite — visible on focus */}
@@ -687,11 +659,24 @@ const QuestionForm = ({
                       </button>
                     </Tooltip>
                     <Tooltip title={t('quiz.addImage', 'Add image')}>
-                      <button
-                        type="button"
-                        className={`qb-opt-camera qb-opt-strip-btn${isImgOpen || hasImg ? ' qb-opt-camera--active' : ''}`}
-                        onClick={() => setOptImageOpen(prev => ({ ...prev, [opt.imgKey]: !prev[opt.imgKey] }))}
-                      >📷</button>
+                      <ImageUpload
+                        quizId={parseInt(quizId)}
+                        questionId={question?.id}
+                        imageType={`option_${opt.label.toLowerCase()}`}
+                        currentImageUrl={null}
+                        tempData={tempImages[opt.tempKey]}
+                        onImageChange={(url, tempKey) => {
+                          if (tempKey) {
+                            setTempImages(prev => ({ ...prev, [opt.tempKey]: { url, tempKey } }))
+                          } else {
+                            setOptionImages(prev => ({ ...prev, [opt.imgKey]: url }))
+                            setTempImages(prev => ({ ...prev, [opt.tempKey]: null }))
+                          }
+                        }}
+                        triggerElement={
+                          <button type="button" className={`qb-opt-camera qb-opt-strip-btn${hasImg ? ' qb-opt-camera--active' : ''}`}>📷</button>
+                        }
+                      />
                     </Tooltip>
                     <Tooltip title={t('ai.rewriteWithAI')}>
                       <Button type="text" size="small" icon={rewriteIcon(opt.key)} onClick={() => handleRewrite(opt.key, 'quiz answer option')} />
