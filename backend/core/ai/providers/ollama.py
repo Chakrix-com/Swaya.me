@@ -1,7 +1,7 @@
 """
 Ollama provider — implements BaseAIProvider using a local Ollama daemon.
-Optimised for the light tier (distractors, rewrite, grading).
-Can also be used as the primary provider for fully local/air-gapped deployments.
+Light-tier only: distractors, rewrite, poll prompts, answer grading.
+Question generation is not supported (use gemini, openai_compat, or anthropic).
 """
 import json
 import logging
@@ -14,10 +14,8 @@ from core.ai.prompts import (
     build_distractor_messages,
     build_grade_messages,
     build_poll_prompt_messages,
-    build_question_generation_content,
     build_rewrite_messages,
     _parse_json,
-    parse_question_response,
 )
 from core.config.settings import settings
 
@@ -55,7 +53,7 @@ class OllamaProvider(BaseAIProvider):
     """
     Light-tier provider backed by a local Ollama daemon.
     Set AI_LIGHT_PROVIDER=ollama (default) to use this for distractors/rewrite/grading.
-    Set AI_PRIMARY_PROVIDER=ollama for a fully local deployment (basic MCQ only).
+    Do NOT use as primary provider — question generation is not supported.
     """
 
     def __init__(self, model: str | None = None, fallback_model: str | None = None):
@@ -93,34 +91,15 @@ class OllamaProvider(BaseAIProvider):
                 raise AIProviderError(f"Ollama returned HTTP {e.response.status_code}")
         return resp.json()["response"]
 
-    # ── Primary tier (basic, local-only) ──────────────────────────────────────
-
-    async def generate_questions(
-        self,
-        prompt: str,
-        count: int,
-        language: str,
-        quiz_type: str,
-        existing_questions: list[str] | None = None,
-    ) -> dict:
-        """
-        Basic MCQ generation via Ollama. Only supports quiz/exam types reliably.
-        poll/offline_poll types are attempted but local models may struggle with the schema.
-        """
-        count = min(max(count, 1), 10)
-        _, user_message = build_question_generation_content(
-            prompt, count, language, quiz_type, existing_questions
+    async def generate_questions(self, prompt: str, count: int, language: str, quiz_type: str,
+                                 existing_questions: list[str] | None = None) -> dict:
+        raise AIProviderError(
+            "Ollama does not support question generation. "
+            "Set AI_PRIMARY_PROVIDER to gemini, openai_compat, or anthropic."
         )
-        raw = await self._generate(user_message, self._model, max_tokens=4096)
-        try:
-            return parse_question_response(raw, quiz_type)
-        except (ValueError, json.JSONDecodeError) as e:
-            logger.warning("Ollama question parse failed: %s | raw: %.200s", e, raw)
-            raise AIProviderError("Ollama returned malformed JSON — try again or reduce question count")
 
-    # validate_quiz_prompt: inherits no-op default (True, "") — correct for local models
-
-    # generate_participant_summary / analyze_exam_results: inherit NotImplementedError
+    # validate_quiz_prompt: inherits no-op default (True, "") from BaseAIProvider
+    # generate_participant_summary / analyze_exam_results: inherit AIProviderError from BaseAIProvider
 
     # ── Light tier ────────────────────────────────────────────────────────────
 

@@ -1,10 +1,9 @@
 # AI Configuration for Self-Hosted Deployments
 
-Swaya.me uses a pluggable AI provider system. You can run with **any combination** of:
-- A local LLM via Ollama (no cloud account, no API key, fully private)
-- OpenAI, Groq, Azure, Together.ai, LM Studio, or any OpenAI-compatible server
-- Google Gemini (default on swaya.me)
-- Anthropic Claude
+Swaya.me uses a pluggable AI provider system with two tiers:
+
+- **Primary** — question generation, exam analysis, participant summaries. Requires a capable model (cloud or local API-compatible server).
+- **Light** — distractor generation, text rewriting, semantic answer grading. Ollama (local, no API key) works well here.
 
 Two env vars control which providers are used:
 
@@ -13,7 +12,7 @@ Two env vars control which providers are used:
 | `AI_PRIMARY_PROVIDER` | `gemini` | Question generation, exam analysis, participant summaries |
 | `AI_LIGHT_PROVIDER` | `ollama` | Distractor generation, text rewriting, semantic answer grading |
 
-You can use the same provider for both, or mix and match.
+**Ollama is a light-tier provider only.** Do not set `AI_PRIMARY_PROVIDER=ollama` — question generation is not supported via Ollama.
 
 ---
 
@@ -22,37 +21,39 @@ You can use the same provider for both, or mix and match.
 | Provider | Env value | Keys needed | Free tier | Best for |
 |----------|-----------|-------------|-----------|----------|
 | Google Gemini | `gemini` | `GEMINI_KEY` | Yes (limited) | Best quality, default |
-| OpenAI | `openai` or `openai_compat` | `OPENAI_API_KEY` | No | High quality, paid |
+| OpenAI | `openai_compat` | `OPENAI_API_KEY` | No | High quality, paid |
 | Groq | `openai_compat` | `OPENAI_API_KEY` | Yes (generous) | Fast + cheap cloud |
 | Anthropic Claude | `anthropic` | `ANTHROPIC_API_KEY` | No | High quality alternative |
-| Ollama (local) | `ollama` | None | Free | Air-gapped, privacy-first |
+| LM Studio / vLLM | `openai_compat` | Any string | Free | Local primary tier |
 | Azure OpenAI | `openai_compat` | `OPENAI_API_KEY` | Enterprise | Enterprise/compliance |
-| LM Studio | `openai_compat` | Any string | Free | Local desktop |
+| Ollama (local) | `ollama` | None | Free | **Light tier only** |
 
 ---
 
 ## Configuration Examples
 
-### Full local — Ollama for everything (no cloud required)
+### Default — Gemini primary + Ollama light (no extra config needed)
+
+This is the default on swaya.me. Requires only a Gemini API key and a local Ollama daemon.
 
 ```env
-AI_PRIMARY_PROVIDER=ollama
-AI_LIGHT_PROVIDER=ollama
+# AI_PRIMARY_PROVIDER defaults to gemini
+# AI_LIGHT_PROVIDER defaults to ollama
+GEMINI_KEY=AIza...
 OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen2.5:7b
-OLLAMA_FALLBACK_MODEL=qwen2.5:3b
+OLLAMA_MODEL=qwen2.5:3b
 ```
 
-Pull the model first: `ollama pull qwen2.5:7b`
+Pull the Ollama model first: `ollama pull qwen2.5:3b`
 
-**Model recommendations by RAM:**
+**Ollama model recommendations by RAM (light tier):**
 
-| RAM | Primary model | Fallback model |
-|-----|--------------|----------------|
-| 4 GB | `qwen2.5:3b` | `qwen2.5:3b` |
-| 8 GB | `qwen2.5:7b` | `qwen2.5:3b` |
-| 16 GB | `qwen2.5:14b` | `llama3.1:8b` |
-| 32 GB+ | `qwen2.5:32b` | `qwen2.5:14b` |
+| RAM | Model |
+|-----|-------|
+| 2 GB | `qwen2.5:3b` |
+| 4 GB | `qwen2.5:3b` |
+| 8 GB | `qwen2.5:7b` |
+| 16 GB | `qwen2.5:14b` |
 
 ---
 
@@ -109,9 +110,9 @@ OPENAI_MODEL_FAST=gpt-4o-mini
 
 ---
 
-### LM Studio (fully local, desktop)
+### LM Studio (local primary, fully private)
 
-Run LM Studio and enable its local server (default port 1234).
+Run LM Studio, enable its local server (default port 1234), and load a 7B+ model.
 
 ```env
 AI_PRIMARY_PROVIDER=openai_compat
@@ -155,20 +156,20 @@ No errors will occur — AI features simply won't appear.
 
 | Feature | Gemini | OpenAI-compat | Anthropic | Ollama |
 |---------|:------:|:-------------:|:---------:|:------:|
-| Question generation (MCQ) | ✅ Full | ✅ Full | ✅ Full | ✅ Basic |
-| Question generation (Poll/Survey) | ✅ Full | ✅ Full | ✅ Full | ⚠️ Limited |
-| Streaming generation | ✅ | ✅ (polyfill) | ✅ (polyfill) | ✅ (polyfill) |
+| Question generation | ✅ | ✅ | ✅ | ❌ (light tier only) |
+| Streaming generation | ✅ | ✅ (polyfill) | ✅ (polyfill) | ❌ |
 | Prompt validation | ✅ | ✅ | ✅ | ❌ (fails open) |
 | Distractor generation | ✅ | ✅ | ✅ | ✅ |
 | Text rewriting | ✅ | ✅ | ✅ | ✅ |
 | Semantic answer grading | ✅ | ✅ | ✅ | ✅ |
+| Poll prompt generation | ✅ | ✅ | ✅ | ✅ |
 | Participant exam summary | ✅ | ✅ | ✅ | ❌ |
 | Cohort exam analysis | ✅ | ✅ | ✅ | ❌ |
 | List available models | ❌ | ✅ | Hardcoded | ✅ |
 
 **Notes:**
 - "Polyfill" streaming: the response is generated in one shot then yielded question-by-question. The frontend SSE client sees no difference.
-- Ollama "Basic" MCQ: works well for straightforward quiz/exam types; complex poll/survey schemas may produce inconsistent JSON from smaller models. Use a 7B+ model for best results.
+- Ollama is the default `AI_LIGHT_PROVIDER`. It handles distractors, rewriting, and grading well on any 3B+ model.
 - Ollama does not support participant summaries or cohort analysis — these are skipped silently (email sent without AI section).
 
 ---
@@ -185,7 +186,7 @@ The `openai_compat` provider works with any service that implements the `/v1/cha
 | Mistral | `https://api.mistral.ai/v1` | |
 | LM Studio | `http://localhost:1234/v1` | Local desktop |
 | vLLM | `http://localhost:8080/v1` | Local server |
-| Ollama OpenAI compat | `http://localhost:11434/v1` | Alternative to `ollama` provider |
+| Ollama OpenAI compat | `http://localhost:11434/v1` | Use for light tier only |
 | Azure OpenAI | `https://<resource>.openai.azure.com/...` | Enterprise |
 
 > **Note:** Some local servers (older LM Studio, some vLLM configs) ignore `response_format: json_object`. The provider handles this by always parsing defensively — stripping markdown fences before JSON parsing.

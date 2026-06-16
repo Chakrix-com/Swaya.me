@@ -17,23 +17,20 @@ Thank you for taking the time to contribute.
 
 ## AI Configuration
 
-Swaya.me's AI features are powered by a pluggable provider system. You can use Ollama (local, no API key), Gemini, OpenAI, Groq, Anthropic, or any OpenAI-compatible service.
+Swaya.me's AI features are powered by a pluggable provider system with two tiers:
 
-Two env vars select the backend:
+- **Primary** (`AI_PRIMARY_PROVIDER`): question generation, exam analysis — use `gemini`, `openai_compat`, or `anthropic`
+- **Light** (`AI_LIGHT_PROVIDER`): distractors, rewriting, answer grading — `ollama` (default, free, local) works well here
 
-```env
-AI_PRIMARY_PROVIDER=ollama   # or: gemini, openai_compat, anthropic
-AI_LIGHT_PROVIDER=ollama     # same options; used for distractors/rewrite/grading
-```
-
-For a fully local setup with no cloud account needed:
+Minimum config (Gemini primary + local Ollama light):
 
 ```env
-AI_PRIMARY_PROVIDER=ollama
-AI_LIGHT_PROVIDER=ollama
+GEMINI_KEY=AIza...
 OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen2.5:7b
+OLLAMA_MODEL=qwen2.5:3b
 ```
+
+> **Note:** Ollama is only supported as the light-tier provider. Do not set `AI_PRIMARY_PROVIDER=ollama`.
 
 See [`docs/self-hosting/ai.md`](docs/self-hosting/ai.md) for the full provider matrix, `.env` examples for every supported backend, and model recommendations by RAM.
 
