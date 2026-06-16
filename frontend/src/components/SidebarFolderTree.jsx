@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Collapse, Tree, Spin, Button, Tooltip, Dropdown, Modal, Form, Input,
+  Tree, Spin, Button, Tooltip, Dropdown, Modal, Form, Input,
   TreeSelect, message, Switch, Select, List, Avatar, Space, Tag,
 } from 'antd'
 import {
-  FolderFilled, FolderOpenOutlined, FolderAddOutlined, MoreOutlined,
+  FolderFilled, FolderOpenFilled, FolderAddOutlined, MoreOutlined,
   EditOutlined, ShareAltOutlined, DeleteOutlined, UserOutlined,
+  CaretRightFilled, CaretDownFilled,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { setFolders } from '../store/quizSlice'
@@ -189,16 +190,16 @@ function SidebarFolderTree() {
     const map = (nodes) => (nodes || []).map(n => ({
       key: String(n.id),
       title: n.name,
-      icon: selectedFolderId === n.id
-        ? <FolderOpenOutlined style={{ color: '#F59E0B' }} />
-        : <FolderFilled style={{ color: '#F59E0B' }} />,
+      icon: ({ expanded }) => expanded || selectedFolderId === n.id
+        ? <FolderOpenFilled className="sf-folder-icon sf-folder-icon--open" />
+        : <FolderFilled className="sf-folder-icon" />,
       children: map(n.children || []),
       rawNode: n,
     }))
     return [{
       key: ROOT_KEY,
-      title: 'All Activities',
-      icon: <FolderOpenOutlined style={{ color: '#F59E0B' }} />,
+      title: t('dashboard.allActivities'),
+      icon: <FolderOpenFilled className="sf-folder-icon sf-folder-icon--open" />,
       children: map(folders),
     }]
   }, [folders, selectedFolderId])
@@ -230,31 +231,32 @@ function SidebarFolderTree() {
     }
   }
 
-  const collapseItems = [{
-    key: 'folders',
-    label: (
-      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--sw-text2)' }}>{t('dashboard.foldersTitle')}</span>
+  return (
+    <div className="sidebar-folder-accordion">
+      <div className="sf-section-header">
+        <span className="sf-section-title">{t('dashboard.foldersTitle')}</span>
         <Tooltip title={t('dashboard.tooltipNewFolder')}>
           <Button
             type="text" size="small" icon={<FolderAddOutlined />}
-            onClick={(e) => { e.stopPropagation(); openCreate(null) }}
-            style={{ padding: '0 4px', height: 20, color: 'var(--sw-text3)', fontSize: 13 }}
+            onClick={() => openCreate(null)}
+            className="sf-header-btn"
           />
         </Tooltip>
-      </span>
-    ),
-    children: (
+      </div>
       <Tree
         key={folders.length}
         showIcon
-        showLine={{ showLeafIcon: false }}
         treeData={treeData}
         selectedKeys={[selectedFolderId ? String(selectedFolderId) : ROOT_KEY]}
         onSelect={handleSelect}
         defaultExpandAll
         className="sidebar-folder-tree"
-        style={{ background: 'transparent', fontSize: 13 }}
+        style={{ background: 'transparent', fontSize: 12 }}
+        switcherIcon={({ expanded, isLeaf }) =>
+          isLeaf ? null : expanded
+            ? <CaretDownFilled className="sf-switcher-icon" />
+            : <CaretRightFilled className="sf-switcher-icon" />
+        }
         titleRender={(node) => {
           if (node.key === ROOT_KEY) {
             return <span className="sf-node-title"><span className="sf-node-label">{t('dashboard.allActivities')}</span></span>
@@ -288,17 +290,6 @@ function SidebarFolderTree() {
             </span>
           )
         }}
-      />
-    ),
-  }]
-
-  return (
-    <div className="sidebar-folder-accordion">
-      <Collapse
-        defaultActiveKey={['folders']}
-        ghost
-        items={collapseItems}
-        className="sidebar-folder-collapse"
       />
 
       <Modal title={t('dashboard.newFolder')} open={createOpen}

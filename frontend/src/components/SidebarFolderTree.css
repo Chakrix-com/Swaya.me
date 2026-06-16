@@ -1,37 +1,116 @@
 .sidebar-folder-accordion {
   border-top: 1px solid var(--sw-border);
-  padding: 4px 0;
+  padding: 0;
 }
 
-.sidebar-folder-collapse .ant-collapse-header {
-  padding: 10px 16px !important;
-  color: var(--sw-text2) !important;
+/* Section header — "Folders" + new folder button */
+.sf-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
 }
 
-.sidebar-folder-collapse .ant-collapse-content-box {
-  padding: 0 8px 8px !important;
+.sf-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sw-text3, #aaa);
+}
+
+.sf-header-btn {
+  padding: 0 3px !important;
+  height: 18px !important;
+  color: var(--sw-text3, #aaa) !important;
+  font-size: 13px !important;
+}
+.sf-header-btn:hover {
+  color: var(--sw-text2, #555) !important;
+  background: transparent !important;
+}
+
+/* Tree container */
+.sidebar-folder-tree {
+  padding: 0 6px 8px !important;
+}
+
+/* Each tree node row */
+.sidebar-folder-tree .ant-tree-treenode {
+  padding: 0 !important;
+  align-items: center;
 }
 
 .sidebar-folder-tree .ant-tree-node-content-wrapper {
-  border-radius: 6px;
-  transition: background 0.1s;
+  padding: 3px 4px !important;
+  border-radius: 4px !important;
+  transition: background 0.12s;
+  line-height: 20px !important;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
-  background: var(--sw-hover) !important;
+  background: var(--sw-hover, #f0f0f0) !important;
 }
 
 .sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
-  background: var(--sw-primary-soft) !important;
-  color: var(--sw-primary);
+  background: var(--sw-primary-soft, #ede9fe) !important;
+  color: var(--sw-primary, #6366f1);
   font-weight: 600;
 }
 
+/* Switcher — the ▶/▼ chevron */
+.sidebar-folder-tree .ant-tree-switcher {
+  width: 16px !important;
+  line-height: 26px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sf-switcher-icon {
+  font-size: 9px !important;
+  color: #b0b0b0 !important;
+  transition: color 0.12s;
+}
+
+.sidebar-folder-tree .ant-tree-treenode:hover .sf-switcher-icon {
+  color: #888 !important;
+}
+
+/* Folder icons */
+.sf-folder-icon {
+  font-size: 13px !important;
+  color: #e8a838 !important;
+}
+
+.sf-folder-icon--open {
+  color: #f0bb50 !important;
+}
+
+.sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .sf-folder-icon {
+  color: #f0bb50 !important;
+}
+
+/* Icon element spacing */
+.sidebar-folder-tree .ant-tree-iconEle {
+  width: 18px !important;
+  margin-right: 2px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Title area */
 .sidebar-folder-tree .ant-tree-title {
-  font-size: 13px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   min-width: 0;
+  flex: 1;
 }
 
 /* Custom title layout */
@@ -63,8 +142,24 @@
   display: flex;
 }
 
-.sidebar-folder-collapse .ant-collapse-header-text {
-  flex: 1;
-  min-width: 0;
+/* Indent guide lines (Windows tree lines) */
+.sidebar-folder-tree .ant-tree-indent-unit {
+  width: 16px !important;
+  position: relative;
 }
 
+.sidebar-folder-tree .ant-tree-indent-unit::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: #e0e0e0;
+  pointer-events: none;
+}
+
+/* Hide the line for the last indent unit (leaf end) */
+.sidebar-folder-tree .ant-tree-indent-unit-end::before {
+  display: none;
+}
