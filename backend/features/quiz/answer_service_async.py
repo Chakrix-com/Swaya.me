@@ -316,8 +316,8 @@ class AnswerServiceAsync:
             is_text_scored = q_type in ("single_line", "paragraph")
             is_correct = None
             if is_text_scored and expected_answer:
-                from core.ai.ollama_service import grade_text_answer
-                is_correct = await grade_text_answer(
+                from core.ai import router as _ai_router
+                is_correct = await _ai_router.grade_text_answer(
                     participant_answer=text,
                     expected_answer=str(expected_answer).strip(),
                 )
@@ -402,8 +402,8 @@ class AnswerServiceAsync:
         is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
         is_correct = None
         if is_text_scored and expected_answer:
-            from core.ai.ollama_service import grade_text_answer
-            is_correct = await grade_text_answer(
+            from core.ai import router as _ai_router
+            is_correct = await _ai_router.grade_text_answer(
                 participant_answer=text,
                 expected_answer=str(expected_answer).strip(),
             )

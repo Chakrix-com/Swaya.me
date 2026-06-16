@@ -1,6 +1,7 @@
 """
-AI generation endpoints — question generation via Google Gemini; other AI via local ollama.
-Restricted to admin and super_admin roles.
+AI generation endpoints — provider-agnostic via core.ai.router.
+Which backend is used is determined by AI_PRIMARY_PROVIDER and AI_LIGHT_PROVIDER in .env.
+Defaults: primary=gemini, light=ollama (unchanged from original behaviour).
 """
 import asyncio
 import json
@@ -15,19 +16,8 @@ from shared.utils.rate_limiter import limiter, get_user_id_key
 
 logger = logging.getLogger(__name__)
 from core.config.settings import settings
-from core.ai.ollama_service import (
-    generate_distractors,
-    generate_poll_prompt,
-    rewrite_text,
-    list_available_models,
-    OllamaError,
-)
-from core.ai.gemini_service import (
-    generate_questions as gemini_generate_questions,
-    generate_questions_stream as gemini_generate_questions_stream,
-    validate_quiz_prompt,
-    GeminiError,
-)
+from core.ai.base import AIProviderError
+from core.ai import router as ai_router
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -97,8 +87,8 @@ class ModelsResponse(BaseModel):
 @router.get("/models", response_model=ModelsResponse)
 async def get_models(current_user: CurrentUser = Depends(require_admin)):
     """List available ollama models on this server."""
-    models = await list_available_models()
-    return ModelsResponse(models=models, default_model=settings.ollama.model)
+    models = await ai_router.list_available_models()
+    return ModelsResponse(models=models, default_model=settings.ai.light_provider)
 
 
 @router.post("/generate/questions", response_model=GenerateQuestionsResponse)
@@ -109,7 +99,7 @@ async def api_generate_questions(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """
-    Generate MCQ quiz questions using Google Gemini from a detailed user prompt.
+    Generate quiz questions using the configured AI provider.
     Returns questions with 4 options each and the correct answer index.
     """
     # Support legacy callers that send topic instead of prompt
@@ -118,25 +108,24 @@ async def api_generate_questions(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="prompt is required")
 
     # Step 1: fast guard — check the prompt is appropriate for quiz generation
-    valid, reason = await validate_quiz_prompt(prompt.strip(), language=req.language)
+    valid, reason = await ai_router.validate_quiz_prompt(prompt.strip(), language=req.language)
     if not valid:
-        # Use Gemini's localised reason when available; sentinel triggers frontend i18n fallback
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=reason or "__PROMPT_NOT_FOR_QUIZ__",
         )
 
-    # Step 2: generate questions with enriched context
+    # Step 2: generate questions
     try:
-        result = await gemini_generate_questions(
+        result = await ai_router.generate_questions(
             prompt=prompt.strip(),
             count=req.count,
             language=req.language,
             quiz_type=req.quiz_type,
             existing_questions=req.existing_questions or None,
         )
-    except GeminiError as e:
-        logger.error("Gemini question generation failed: %s", e)
+    except AIProviderError as e:
+        logger.error("AI question generation failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
     questions = result.get("questions", [])
@@ -152,7 +141,7 @@ async def api_generate_questions(
         suggested_exam_duration_minutes=result.get("suggested_exam_duration_minutes"),
         suggested_proctoring=result.get("suggested_proctoring"),
         questions=[GeneratedQuestion(**q) for q in questions],
-        model=settings.gemini.model,
+        model=settings.ai.primary_provider,
     )
 
 
@@ -171,7 +160,7 @@ async def api_generate_questions_stream(
     if not prompt.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="prompt is required")
 
-    valid, reason = await validate_quiz_prompt(prompt.strip(), language=req.language)
+    valid, reason = await ai_router.validate_quiz_prompt(prompt.strip(), language=req.language)
     if not valid:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -179,11 +168,10 @@ async def api_generate_questions_stream(
         )
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        # Run Gemini in a background task so we can send SSE keep-alive pings
-        # every 15 s while it thinks — prevents nginx proxy_read_timeout from
-        # firing on long generations (10+ questions can take 60-120 s).
+        # Run generation in a background task and send SSE keep-alive pings every 15 s
+        # to prevent nginx proxy_read_timeout on long generations (10+ questions can take 60-120 s).
         task = asyncio.create_task(
-            gemini_generate_questions(
+            ai_router.generate_questions(
                 prompt=prompt.strip(),
                 count=req.count,
                 language=req.language,
@@ -201,8 +189,8 @@ async def api_generate_questions_stream(
             for q in result["questions"]:
                 yield f"data: {json.dumps(q)}\n\n"
             yield f"data: {json.dumps({'done': True, 'title': result.get('title'), 'description': result.get('description'), 'suggested_exam_duration_minutes': result.get('suggested_exam_duration_minutes'), 'suggested_proctoring': result.get('suggested_proctoring')})}\n\n"
-        except GeminiError as e:
-            logger.error("Gemini streaming failed: %s", e)
+        except AIProviderError as e:
+            logger.error("AI streaming failed: %s", e)
             if not task.done():
                 task.cancel()
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -230,19 +218,17 @@ async def api_generate_distractors(
     Generate plausible wrong answer options (distractors) for an MCQ question.
     Useful when you already have a question and correct answer but need the wrong options.
     """
-    model = req.model or settings.ollama.model
     try:
-        distractors = await generate_distractors(
+        distractors = await ai_router.generate_distractors(
             question=req.question,
             correct_answer=req.correct_answer,
             count=req.count,
-            model=model,
         )
-    except OllamaError as e:
-        logger.error("Ollama distractor generation failed: %s", e)
+    except AIProviderError as e:
+        logger.error("AI distractor generation failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
-    return GenerateDistractorsResponse(distractors=distractors, model=model)
+    return GenerateDistractorsResponse(distractors=distractors, model=settings.ai.light_provider)
 
 
 @router.post("/generate/poll-prompt", response_model=GeneratePollPromptResponse)
@@ -256,18 +242,16 @@ async def api_generate_poll_prompt(
     Generate a short open-ended word cloud poll question for a given topic.
     Designed to elicit single/two-word responses from the audience.
     """
-    model = req.model or settings.ollama.model
     try:
-        prompt = await generate_poll_prompt(
+        prompt = await ai_router.generate_poll_prompt(
             topic=req.topic,
             language=req.language,
-            model=model,
         )
-    except OllamaError as e:
-        logger.error("Ollama poll-prompt generation failed: %s", e)
+    except AIProviderError as e:
+        logger.error("AI poll-prompt generation failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
-    return GeneratePollPromptResponse(prompt=prompt, model=model)
+    return GeneratePollPromptResponse(prompt=prompt, model=settings.ai.light_provider)
 
 
 class RewriteRequest(BaseModel):
@@ -290,15 +274,13 @@ async def api_rewrite(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Rewrite a piece of text to be clearer and better suited for a quiz context."""
-    model = req.model or settings.ollama.fallback_model
     try:
-        rewritten = await rewrite_text(
+        rewritten = await ai_router.rewrite_text(
             text=req.text,
             context=req.context,
             language=req.language,
-            model=model,
         )
-    except OllamaError as e:
-        logger.error("Ollama rewrite failed: %s", e)
+    except AIProviderError as e:
+        logger.error("AI rewrite failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
-    return RewriteResponse(rewritten=rewritten, model=model)
+    return RewriteResponse(rewritten=rewritten, model=settings.ai.light_provider)

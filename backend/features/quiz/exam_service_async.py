@@ -1188,8 +1188,8 @@ async def send_participant_results_emails(quiz_id: int, sender_name: str | None 
                 # AI personal summary — fail silently
                 ai_summary = None
                 try:
-                    from core.ai.gemini_service import generate_participant_summary
-                    ai_summary = await generate_participant_summary(
+                    from core.ai import router as _ai_router
+                    ai_summary = await _ai_router.generate_participant_summary(
                         name=best_p.display_name or '',
                         quiz_title=quiz.title,
                         total_score=best_score,
