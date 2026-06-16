@@ -17,6 +17,63 @@ import './SidebarFolderTree.css'
 
 const ROOT_KEY = 'swayame-root'
 
+// ── Recursive folder node ────────────────────────────────────────────────────
+function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getFolderMenu, t }) {
+  const [expanded, setExpanded] = useState(true)
+  const hasChildren = (node.children || []).length > 0
+  const isSelected = selectedFolderId === node.id
+  const isShared = !!node.is_shared_to_me
+
+  return (
+    <>
+      <div
+        className={`sf2-row${isSelected ? ' sf2-row--active' : ''}`}
+        style={{ paddingLeft: 6 + depth * 14 }}
+        onClick={() => onSelect(node.id)}
+      >
+        <button
+          type="button"
+          className="sf2-chevron"
+          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
+          tabIndex={-1}
+          style={{ visibility: hasChildren ? 'visible' : 'hidden' }}
+        >
+          {expanded ? <CaretDownFilled /> : <CaretRightFilled />}
+        </button>
+        <span className="sf2-icon">
+          {(expanded && hasChildren) || isSelected ? <FolderOpenFilled /> : <FolderFilled />}
+        </span>
+        <span className="sf2-label">{node.name}</span>
+        {isShared && <span className="sf2-shared-badge">shared</span>}
+        {!isShared && (
+          <span className="sf2-actions" onClick={e => e.stopPropagation()}>
+            <Tooltip title={t('dashboard.tooltipNewSubfolder')}>
+              <Button type="text" size="small" icon={<FolderAddOutlined />}
+                className="sf2-action-btn" onClick={() => onCreateSub(node.id)} />
+            </Tooltip>
+            <Dropdown menu={{ items: getFolderMenu(node) }} trigger={['click']}>
+              <Button type="text" size="small" icon={<MoreOutlined />} className="sf2-action-btn" />
+            </Dropdown>
+          </span>
+        )}
+      </div>
+      {expanded && hasChildren && (node.children || []).map(child => (
+        <FolderNode
+          key={child.id}
+          node={child}
+          depth={depth + 1}
+          selectedFolderId={selectedFolderId}
+          onSelect={onSelect}
+          onCreateSub={onCreateSub}
+          getFolderMenu={getFolderMenu}
+          t={t}
+        />
+      ))}
+    </>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 function SidebarFolderTree() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -178,31 +235,13 @@ function SidebarFolderTree() {
     }
   }
 
-  // ── Derived data ───────────────────────────────────────────────────────────
+  // ── Derived ────────────────────────────────────────────────────────────────
   const folderTreeData = useMemo(() => {
     const map = (nodes) => nodes.map(n => ({
       value: n.id, title: n.name, children: map(n.children || []),
     }))
     return map(folders)
   }, [folders])
-
-  const treeData = useMemo(() => {
-    const map = (nodes) => (nodes || []).map(n => ({
-      key: String(n.id),
-      title: n.name,
-      icon: ({ expanded }) => expanded || selectedFolderId === n.id
-        ? <FolderOpenFilled className="sf-folder-icon sf-folder-icon--open" />
-        : <FolderFilled className="sf-folder-icon" />,
-      children: map(n.children || []),
-      rawNode: n,
-    }))
-    return [{
-      key: ROOT_KEY,
-      title: t('dashboard.allActivities'),
-      icon: <FolderOpenFilled className="sf-folder-icon sf-folder-icon--open" />,
-      children: map(folders),
-    }]
-  }, [folders, selectedFolderId])
 
   const getFolderMenu = (rn) => {
     if (rn.is_shared_to_me) return []
@@ -219,12 +258,11 @@ function SidebarFolderTree() {
     ]
   }
 
-  const handleSelect = (keys) => {
-    const key = keys[0]
-    if (!key || key === ROOT_KEY) {
+  const handleSelectFolder = (id) => {
+    if (id === undefined) {
       setSearchParams({}, { replace: true })
     } else {
-      setSearchParams({ folder: key }, { replace: true })
+      setSearchParams({ folder: String(id) }, { replace: true })
     }
     if (!window.location.pathname.startsWith('/dashboard')) {
       navigate('/dashboard')
@@ -232,66 +270,54 @@ function SidebarFolderTree() {
   }
 
   return (
-    <div className="sidebar-folder-accordion">
-      <div className="sf-section-header">
-        <span className="sf-section-title">{t('dashboard.foldersTitle')}</span>
+    <div className="sf2-container">
+      {/* Section header */}
+      <div className="sf2-header">
+        <span className="sf2-section-label">{t('dashboard.foldersTitle')}</span>
         <Tooltip title={t('dashboard.tooltipNewFolder')}>
           <Button
             type="text" size="small" icon={<FolderAddOutlined />}
+            className="sf2-header-add"
             onClick={() => openCreate(null)}
-            className="sf-header-btn"
           />
         </Tooltip>
       </div>
-      <Tree
-        key={folders.length}
-        showIcon
-        treeData={treeData}
-        selectedKeys={[selectedFolderId ? String(selectedFolderId) : ROOT_KEY]}
-        onSelect={handleSelect}
-        defaultExpandAll
-        className="sidebar-folder-tree"
-        style={{ background: 'transparent', fontSize: 12 }}
-        switcherIcon={({ expanded, isLeaf }) =>
-          isLeaf ? null : expanded
-            ? <CaretDownFilled className="sf-switcher-icon" />
-            : <CaretRightFilled className="sf-switcher-icon" />
-        }
-        titleRender={(node) => {
-          if (node.key === ROOT_KEY) {
-            return <span className="sf-node-title"><span className="sf-node-label">{t('dashboard.allActivities')}</span></span>
-          }
-          const rn = node.rawNode
-          if (!rn) return <span>{node.title}</span>
-          const isShared = !!rn.is_shared_to_me
-          return (
-            <span className="sf-node-title">
-              <span className="sf-node-label">{node.title}</span>
-              {isShared && (
-                <Tag color="blue" style={{ fontSize: 10, padding: '0 3px', lineHeight: '16px', flexShrink: 0 }}>shared</Tag>
-              )}
-              {!isShared && (
-                <span className="sf-node-actions" onClick={e => e.stopPropagation()}>
-                  <Tooltip title={t('dashboard.tooltipNewSubfolder')}>
-                    <Button
-                      type="text" size="small" icon={<FolderAddOutlined />}
-                      onClick={(e) => { e.stopPropagation(); openCreate(rn.id) }}
-                      style={{ padding: '0 3px', height: 20, color: 'var(--sw-text3)' }}
-                    />
-                  </Tooltip>
-                  <Dropdown menu={{ items: getFolderMenu(rn) }} trigger={['click']} onClick={e => e.stopPropagation()}>
-                    <Button
-                      type="text" size="small" icon={<MoreOutlined />}
-                      style={{ padding: '0 3px', height: 20, color: 'var(--sw-text3)' }}
-                    />
-                  </Dropdown>
-                </span>
-              )}
-            </span>
-          )
-        }}
-      />
 
+      {/* Tree */}
+      <div className="sf2-tree">
+        {/* All Activities — virtual root */}
+        <div
+          className={`sf2-row${!selectedFolderId ? ' sf2-row--active' : ''}`}
+          style={{ paddingLeft: 6 }}
+          onClick={() => handleSelectFolder(undefined)}
+        >
+          <span className="sf2-chevron" style={{ visibility: 'hidden' }} />
+          <span className="sf2-icon sf2-icon--root">
+            {!selectedFolderId ? <FolderOpenFilled /> : <FolderFilled />}
+          </span>
+          <span className="sf2-label">{t('dashboard.allActivities')}</span>
+        </div>
+
+        {/* User folders */}
+        {folders.map(folder => (
+          <FolderNode
+            key={folder.id}
+            node={folder}
+            depth={1}
+            selectedFolderId={selectedFolderId}
+            onSelect={handleSelectFolder}
+            onCreateSub={openCreate}
+            getFolderMenu={getFolderMenu}
+            t={t}
+          />
+        ))}
+
+        {folders.length === 0 && (
+          <div className="sf2-empty">{t('dashboard.noFolders', 'No folders yet')}</div>
+        )}
+      </div>
+
+      {/* ── Modals ── */}
       <Modal title={t('dashboard.newFolder')} open={createOpen}
         onCancel={() => { setCreateOpen(false); createForm.resetFields() }}
         onOk={handleCreate} confirmLoading={createLoading}>

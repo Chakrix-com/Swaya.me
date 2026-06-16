@@ -1,165 +1,184 @@
-.sidebar-folder-accordion {
-  border-top: 1px solid var(--sw-border);
-  padding: 0;
+/* ── Container ── */
+.sf2-container {
+  border-top: 1px solid var(--sw-border, #f0f0f0);
 }
 
-/* Section header — "Folders" + new folder button */
-.sf-section-header {
+/* ── Section header ── */
+.sf2-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px 6px;
+  padding: 14px 10px 4px;
 }
 
-.sf-section-title {
-  font-size: 11px;
+.sf2-section-label {
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--sw-text3, #aaa);
+  letter-spacing: 0.08em;
+  color: var(--sw-text3, #b8b8b8);
+  user-select: none;
 }
 
-.sf-header-btn {
-  padding: 0 3px !important;
-  height: 18px !important;
-  color: var(--sw-text3, #aaa) !important;
-  font-size: 13px !important;
+.sf2-header-add {
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  color: var(--sw-text3, #c0c0c0) !important;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-.sf-header-btn:hover {
+
+.sf2-container:hover .sf2-header-add {
+  opacity: 1;
+}
+
+.sf2-header-add:hover {
   color: var(--sw-text2, #555) !important;
   background: transparent !important;
 }
 
-/* Tree container */
-.sidebar-folder-tree {
-  padding: 0 6px 8px !important;
+/* ── Tree wrapper ── */
+.sf2-tree {
+  padding: 2px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-/* Each tree node row */
-.sidebar-folder-tree .ant-tree-treenode {
-  padding: 0 !important;
-  align-items: center;
-}
-
-.sidebar-folder-tree .ant-tree-node-content-wrapper {
-  padding: 3px 4px !important;
-  border-radius: 4px !important;
-  transition: background 0.12s;
-  line-height: 20px !important;
-  min-height: 26px;
+/* ── Individual row ── */
+.sf2-row {
   display: flex;
   align-items: center;
+  height: 28px;
+  border-radius: 5px;
+  cursor: pointer;
+  padding-right: 2px;
+  user-select: none;
+  color: var(--sw-text2, #3d3d3d);
+  transition: background 0.1s;
+  position: relative;
 }
 
-.sidebar-folder-tree .ant-tree-node-content-wrapper:hover {
-  background: var(--sw-hover, #f0f0f0) !important;
+.sf2-row:hover {
+  background: var(--sw-hover, rgba(0, 0, 0, 0.04));
 }
 
-.sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+.sf2-row--active {
   background: var(--sw-primary-soft, #ede9fe) !important;
   color: var(--sw-primary, #6366f1);
-  font-weight: 600;
 }
 
-/* Switcher — the ▶/▼ chevron */
-.sidebar-folder-tree .ant-tree-switcher {
-  width: 16px !important;
-  line-height: 26px !important;
+.sf2-row--active .sf2-icon {
+  color: #f5c842 !important;
+}
+
+/* ── Chevron toggle ── */
+.sf2-chevron {
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #c8c8c8;
+  font-size: 8px;
+  border-radius: 3px;
+  margin-right: 1px;
+  transition: color 0.12s, background 0.12s;
 }
 
-.sf-switcher-icon {
-  font-size: 9px !important;
-  color: #b0b0b0 !important;
+.sf2-chevron:hover {
+  color: #888 !important;
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.sf2-row:hover .sf2-chevron {
+  color: #aaa;
+}
+
+/* ── Folder icon ── */
+.sf2-icon {
+  font-size: 13px;
+  color: #e8a838;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 5px;
   transition: color 0.12s;
 }
 
-.sidebar-folder-tree .ant-tree-treenode:hover .sf-switcher-icon {
-  color: #888 !important;
+.sf2-icon--root {
+  color: #f0bb50;
 }
 
-/* Folder icons */
-.sf-folder-icon {
-  font-size: 13px !important;
-  color: #e8a838 !important;
-}
-
-.sf-folder-icon--open {
-  color: #f0bb50 !important;
-}
-
-.sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .sf-folder-icon {
-  color: #f0bb50 !important;
-}
-
-/* Icon element spacing */
-.sidebar-folder-tree .ant-tree-iconEle {
-  width: 18px !important;
-  margin-right: 2px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* Title area */
-.sidebar-folder-tree .ant-tree-title {
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  min-width: 0;
+/* ── Folder name ── */
+.sf2-label {
   flex: 1;
-}
-
-/* Custom title layout */
-.sf-node-title {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  width: 100%;
-}
-
-.sf-node-label {
-  flex: 1;
+  font-size: 12.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  line-height: 1;
 }
 
-.sf-node-actions {
+/* ── Hover action buttons ── */
+.sf2-actions {
   display: none;
   align-items: center;
-  gap: 1px;
   flex-shrink: 0;
+  gap: 0;
 }
 
-.sidebar-folder-tree .ant-tree-node-content-wrapper:hover .sf-node-actions,
-.sidebar-folder-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .sf-node-actions {
+.sf2-row:hover .sf2-actions,
+.sf2-row--active .sf2-actions {
   display: flex;
 }
 
-/* Indent guide lines (Windows tree lines) */
-.sidebar-folder-tree .ant-tree-indent-unit {
-  width: 16px !important;
-  position: relative;
+.sf2-action-btn {
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  font-size: 11px !important;
+  color: var(--sw-text3, #c0c0c0) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
 }
 
-.sidebar-folder-tree .ant-tree-indent-unit::before {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: -4px;
-  bottom: -4px;
-  width: 1px;
-  background: #e0e0e0;
-  pointer-events: none;
+.sf2-action-btn:hover {
+  color: var(--sw-text2, #555) !important;
+  background: rgba(0, 0, 0, 0.07) !important;
 }
 
-/* Hide the line for the last indent unit (leaf end) */
-.sidebar-folder-tree .ant-tree-indent-unit-end::before {
-  display: none;
+/* ── Shared badge ── */
+.sf2-shared-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #e8f4ff;
+  color: #1890ff;
+  flex-shrink: 0;
+  margin-left: auto;
+  letter-spacing: 0.02em;
+}
+
+/* ── Empty state ── */
+.sf2-empty {
+  font-size: 11px;
+  color: var(--sw-text3, #bbb);
+  padding: 4px 6px 4px 36px;
+  font-style: italic;
 }
