@@ -1,0 +1,258 @@
+/* ── Setup Panel — reimagined layout ─────────────────────────────────── */
+
+.sp-wrap {
+  background: var(--sw-surface, #fff);
+  border: 1px solid var(--sw-border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.sp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--sw-border, #e5e7eb);
+  background: var(--sw-surface, #fff);
+}
+
+.sp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sp-header-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.sp-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sw-text, #1a1a2e);
+  flex-shrink: 0;
+}
+
+.sp-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sp-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  background: var(--sw-bg, #f0f0f0);
+  color: var(--sw-text2, #555);
+  border-color: var(--sw-border, #e5e7eb);
+}
+
+.sp-badge--status {
+  background: #fef3c715;
+  color: #d97706;
+  border-color: #d9770640;
+}
+
+.sp-badge--live {
+  background: #dcfce715;
+  color: #16a34a;
+  border-color: #16a34a40;
+}
+
+/* ── Live lock banner ──────────────────────────────────────────────────── */
+.sp-live-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+}
+
+.sp-live-banner-icon {
+  color: #d97706;
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.sp-live-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: #92400e;
+}
+
+.sp-live-banner-text strong {
+  font-weight: 600;
+}
+
+.sp-live-banner-text span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+.sp-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sw-border, #e5e7eb);
+}
+
+.sp-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sw-text3, #888);
+  margin-bottom: 12px;
+}
+
+.sp-section-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text, #1a1a2e);
+  margin-bottom: 8px;
+}
+
+/* ── Description with AI button ────────────────────────────────────────── */
+.sp-desc-wrap {
+  position: relative;
+}
+
+.sp-desc-ai {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ── Date grid ─────────────────────────────────────────────────────────── */
+.sp-date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Skin grid ─────────────────────────────────────────────────────────── */
+.sp-skin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.sp-skin-card {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--sw-border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--sw-surface, #fff);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  text-align: left;
+  padding: 0;
+  font-family: inherit;
+}
+
+.sp-skin-card:hover {
+  border-color: var(--sw-primary, #6366f1);
+}
+
+.sp-skin-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sp-skin-card--active {
+  border-color: var(--sw-primary, #6366f1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sw-primary, #6366f1) 20%, transparent);
+}
+
+.sp-skin-swatch {
+  height: 38px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.sp-skin-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sw-primary, #6366f1);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sp-skin-meta {
+  padding: 7px 9px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sp-skin-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sw-text, #1a1a2e);
+  line-height: 1.2;
+}
+
+.sp-skin-desc {
+  font-size: 10px;
+  color: var(--sw-text3, #888);
+  line-height: 1.3;
+}
+
+/* ── Access section ────────────────────────────────────────────────────── */
+.sp-access-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sp-access-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text, #1a1a2e);
+}
+
+.sp-access-indent {
+  padding-left: 16px;
+  border-left: 2px solid var(--sw-border, #e5e7eb);
+}
+
+/* ── Save footer ───────────────────────────────────────────────────────── */
+.sp-save-footer {
+  padding: 16px 20px;
+  background: var(--sw-bg, #f8fafc);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .sp-skin-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sp-date-grid {
+    grid-template-columns: 1fr;
+  }
+}
