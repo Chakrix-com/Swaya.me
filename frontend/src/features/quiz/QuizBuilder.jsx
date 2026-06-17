@@ -490,8 +490,8 @@ const QuestionForm = ({
                 />
               )}
             </Form.Item>
-            {/* Text field action row: format toggle + AI rewrite */}
-            <div className="qb-text-actions">
+            {/* Compose strip: format · image · video ──── rewrite */}
+            <div className="qb-compose-strip">
               <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
                 <button
                   type="button"
@@ -501,6 +501,43 @@ const QuestionForm = ({
                   <FontColorsOutlined />
                 </button>
               </Tooltip>
+              {questionImageUrl ? (
+                <div className="qb-media-thumb">
+                  <img src={questionImageUrl} alt="" style={{ height: 28, borderRadius: 4, objectFit: 'cover' }} />
+                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })) }}>✕</button>
+                </div>
+              ) : (
+                <ImageUpload
+                  quizId={parseInt(quizId)}
+                  questionId={question?.id}
+                  imageType="question"
+                  currentImageUrl={null}
+                  tempData={tempImages.question}
+                  onImageChange={(url, tempKey) => {
+                    if (tempKey) {
+                      setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
+                    } else {
+                      setQuestionImageUrl(url)
+                      setTempImages(prev => ({ ...prev, question: null }))
+                    }
+                  }}
+                  triggerElement={
+                    <button type="button" className="qb-media-btn">
+                      📷 {t('quiz.addImage', 'Add image')}
+                    </button>
+                  }
+                />
+              )}
+              {questionVideoUrl ? (
+                <div className="qb-media-thumb">
+                  <span style={{ fontSize: 11 }}>🎬 {questionVideoUrl.slice(0, 22)}{questionVideoUrl.length > 22 ? '…' : ''}</span>
+                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionVideoUrl(null); setMediaVideoOpen(false) }}>✕</button>
+                </div>
+              ) : (
+                <button type="button" className={`qb-media-btn${mediaVideoOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaVideoOpen(v => !v)}>
+                  🎬 {t('quiz.addVideo', 'Add video')}
+                </button>
+              )}
               <div style={{ flex: 1 }} />
               <Tooltip title={t('ai.rewriteWithAIModel')}>
                 <Button
@@ -527,48 +564,6 @@ const QuestionForm = ({
                   {t('ai.rewrite')}
                 </Button>
               </Tooltip>
-            </div>
-            {/* Media row: image + video */}
-            <div className="qb-media-row">
-              {/* Image — upload trigger is the button itself (single click) */}
-              {questionImageUrl ? (
-                <div className="qb-media-thumb">
-                  <img src={questionImageUrl} alt="" style={{ height: 48, borderRadius: 4, objectFit: 'cover' }} />
-                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionImageUrl(null); setTempImages(prev => ({ ...prev, question: null })) }}>✕</button>
-                </div>
-              ) : (
-                <ImageUpload
-                  quizId={parseInt(quizId)}
-                  questionId={question?.id}
-                  imageType="question"
-                  currentImageUrl={null}
-                  tempData={tempImages.question}
-                  onImageChange={(url, tempKey) => {
-                    if (tempKey) {
-                      setTempImages(prev => ({ ...prev, question: { url, tempKey } }))
-                    } else {
-                      setQuestionImageUrl(url)
-                      setTempImages(prev => ({ ...prev, question: null }))
-                    }
-                  }}
-                  triggerElement={
-                    <button type="button" className="qb-media-btn">
-                      📷 {t('quiz.addImage', 'Add image')}
-                    </button>
-                  }
-                />
-              )}
-              {/* Video */}
-              {questionVideoUrl ? (
-                <div className="qb-media-thumb" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 11, color: '#555' }}>🎬 {questionVideoUrl.slice(0, 30)}{questionVideoUrl.length > 30 ? '…' : ''}</span>
-                  <button type="button" className="qb-media-remove" onClick={() => { setQuestionVideoUrl(null); setMediaVideoOpen(false) }}>✕</button>
-                </div>
-              ) : (
-                <button type="button" className={`qb-media-btn${mediaVideoOpen ? ' qb-media-btn--active' : ''}`} onClick={() => setMediaVideoOpen(v => !v)}>
-                  🎬 {t('quiz.addVideo', 'Add video')}
-                </button>
-              )}
             </div>
           </div>
         </Form.Item>
@@ -3150,7 +3145,7 @@ export default function QuizBuilder() {
               </>
             ) : stageView === 'proctoring' ? (
               /* ── Security & Proctoring panel ── */
-              <Card title={t('quiz.securityLabel', 'Security & Proctoring')} style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 24 }}>
                 {id && proctoringPolicy !== null ? (
                   <ProctoringSettings
                     quizId={parseInt(id)}
@@ -3160,9 +3155,11 @@ export default function QuizBuilder() {
                     onChange={(p) => setProctoringPolicy(p)}
                   />
                 ) : (
-                  <Text type="secondary">{t('quiz.proctoringLoadingNote', 'Proctoring settings will appear here once the activity is saved.')}</Text>
+                  <Card style={{ marginTop: 16 }}>
+                    <Text type="secondary">{t('quiz.proctoringLoadingNote', 'Proctoring settings will appear here once the activity is saved.')}</Text>
+                  </Card>
                 )}
-              </Card>
+              </div>
             ) : editingQuestion === 'new' ? (
               /* ── New question form ── */
               <MemoizedQuestionForm
