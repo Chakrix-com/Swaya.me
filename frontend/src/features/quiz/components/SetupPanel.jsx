@@ -197,12 +197,12 @@ export function SetupPanel({
                 name={isOfflinePoll ? 'offline_start_at' : 'exam_start_at'}
                 label={isOfflinePoll ? t('offlinePoll.startDate', 'Start Date & Time') : t('exam.startAt')}
                 rules={[{ required: true, message: isOfflinePoll ? t('quiz.startDateRequired') : t('exam.startAtRequired') }]}
-                style={{ marginBottom: 0, flex: '1 1 180px' }}
+                style={{ marginBottom: 0, flex: '0 0 auto' }}
               >
                 <DatePicker
                   showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
-                  style={{ width: '100%' }}
+                  style={{ width: 178 }}
                   disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
                 />
               </Form.Item>
@@ -210,12 +210,12 @@ export function SetupPanel({
                 name={isOfflinePoll ? 'offline_end_at' : 'exam_end_at'}
                 label={isOfflinePoll ? t('offlinePoll.endDate', 'End Date & Time') : t('exam.endAt')}
                 rules={[{ required: true, message: isOfflinePoll ? t('quiz.endDateRequired') : t('exam.endAtRequired') }]}
-                style={{ marginBottom: 0, flex: '1 1 180px' }}
+                style={{ marginBottom: 0, flex: '0 0 auto' }}
               >
                 <DatePicker
                   showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
-                  style={{ width: '100%' }}
+                  style={{ width: 178 }}
                   disabledDate={(d) => {
                     if (!d) return false;
                     const startKey = isOfflinePoll ? 'offline_start_at' : 'exam_start_at';
