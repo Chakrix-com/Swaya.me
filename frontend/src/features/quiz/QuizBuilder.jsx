@@ -65,6 +65,7 @@ import RichTextRenderer from './components/RichTextRenderer'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
+import { SetupPanel } from './components/SetupPanel'
 import { skins } from '../../themes/skins'
 
 const { Title, Text } = Typography
@@ -3099,50 +3100,22 @@ export default function QuizBuilder() {
             {/* Stage content driven by stageView or editingQuestion */}
             {stageView === 'setup' ? (
               /* ── Setup panel ── */
-              <>
-                {quiz && (
-                  <Space style={{ marginBottom: 12 }}>
-                    <Tag color={quiz.status === 'draft' ? 'orange' : 'green'}>{getQuizStatusTranslation(quiz.status)}</Tag>
-                    {(() => {
-                      const modeColor = quiz.quiz_type === 'exam' ? '#059669' : quiz.quiz_type === 'offline_poll' ? '#DB2777' : quiz.quiz_type === 'poll' ? '#EA580C' : '#4F46E5'
-                      return (
-                        <Tag style={{ background: `${modeColor}15`, borderColor: `${modeColor}50`, color: modeColor }}>
-                          {quiz.quiz_type === 'exam' ? t('exam.typeLabel') : quiz.quiz_type === 'offline_poll' ? t('offlinePoll.typeLabel', 'Poll') : quiz.quiz_type === 'poll' ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
-                        </Tag>
-                      )
-                    })()}
-                  </Space>
-                )}
-                <Card
-                  title={t('quiz.settingsCardTitle')}
-                  style={{ marginBottom: 24 }}
-                  extra={
-                    !isLiveMode && (
-                      <Button type="primary" onClick={() => form.submit()} icon={<SaveOutlined />} loading={loading}>
-                        {isExam ? t('exam.saveSettings') : isOfflinePoll ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll') : isPoll ? t('quiz.updatePoll') : t('quiz.editQuiz')}
-                      </Button>
-                    )
-                  }
-                >
-                  {isLiveMode && (
-                    <Alert
-                      type="info"
-                      showIcon
-                      style={{ marginBottom: 16 }}
-                      message={t('quiz.unpublishToEditBannerTitle', isExam ? '✏️ Unpublish to edit settings' : '✏️ Unpublish → Edit → Republish')}
-                      description={t('quiz.unpublishToEditBannerDesc', isExam ? 'This test is live. Unpublish it to make changes, then republish when ready.' : 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}
-                      action={
-                        <Button type="primary" size="small" loading={loading} onClick={handleUnpublish}>
-                          {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
-                        </Button>
-                      }
-                    />
-                  )}
-                  <Form form={form} layout="vertical" onFinish={handleSaveQuiz} disabled={isLiveMode}>
-                    {renderQuizSettings()}
-                  </Form>
-                </Card>
-              </>
+              <SetupPanel
+                quiz={quiz}
+                form={form}
+                isExam={isExam}
+                isPoll={isPoll}
+                isOfflinePoll={isOfflinePoll}
+                isLiveMode={isLiveMode}
+                loading={loading}
+                mainRewriting={mainRewriting}
+                onSave={() => form.submit()}
+                onFinish={handleSaveQuiz}
+                onUnpublish={handleUnpublish}
+                onMainRewrite={handleMainRewrite}
+                i18n={i18n}
+                t={t}
+              />
             ) : stageView === 'proctoring' ? (
               /* ── Security & Proctoring panel ── */
               <div style={{ marginBottom: 24 }}>
