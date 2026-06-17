@@ -217,19 +217,25 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
             <div className="ps-section-title">{t('proctoring.settings.escalationTitle')}</div>
             <div className="ps-escalation">
               <div className="ps-escalation-controls">
-                <label className="ps-esc-label">
-                  <span className="ps-esc-label-text">{t('proctoring.escalation.lockLabel')}</span>
-                  <InputNumber
-                    min={1}
-                    max={20}
-                    value={lockAt}
-                    size="small"
-                    style={{ width: 64 }}
-                    onChange={(v) =>
-                      updatePolicy({ ...policy, escalation: { ...(policy.escalation || {}), lock_on_violation_count: v } })
-                    }
-                  />
-                </label>
+                <span className="ps-esc-label ps-esc-label--inline">
+                  {t('proctoring.escalation.lockLabel').split('___').map((part, i, arr) => (
+                    i < arr.length - 1 ? (
+                      <span key={i}>
+                        {part}
+                        <InputNumber
+                          min={1}
+                          max={20}
+                          value={lockAt}
+                          size="small"
+                          style={{ width: 56, margin: '0 4px' }}
+                          onChange={(v) =>
+                            updatePolicy({ ...policy, escalation: { ...(policy.escalation || {}), lock_on_violation_count: v } })
+                          }
+                        />
+                      </span>
+                    ) : <span key={i}>{part}</span>
+                  ))}
+                </span>
                 <label className="ps-esc-label">
                   <span className="ps-esc-label-text">{t('proctoring.escalation.autoSubmitLabel')}</span>
                   <Switch

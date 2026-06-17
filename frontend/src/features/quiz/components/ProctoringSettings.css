@@ -232,6 +232,16 @@
   cursor: default;
 }
 
+.ps-esc-label--inline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text, #1a1a2e);
+}
+
 .ps-esc-label-text {
   font-size: 13px;
   color: var(--sw-text, #1a1a2e);
