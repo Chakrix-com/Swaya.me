@@ -398,7 +398,13 @@
     "voiceNetworkError": "Голосовой ввод требует подключения к интернету.",
     "voiceError": "Ошибка голосового ввода: {{error}}",
     "voiceStartError": "Не удалось запустить голосовой ввод: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "Настройка",
+    "basicsSection": "Основное",
+    "appearanceSection": "Внешний вид",
+    "scheduleSection": "Расписание",
+    "accessSection": "Доступ",
+    "minutes": "мин"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* Баллы варьируются по вопросам",
     "timeLimitWarning": "У вас есть <strong>{{minutes}} минут</strong> с момента начала.",
     "perQuestionTimerWarning": "Каждый вопрос имеет ограничение по времени — при истечении таймера он автоматически переходит к следующему. Вернуться к истёкшим вопросам нельзя.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "Проверка email включена",
+    "requireEmailOff": "Проверка email отключена",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "Сохранить настройки",
     "saveSettingsHint": "Сохраняет расписание, оценки и настройки безопасности одним кликом.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "предупреждает",
       "silent": "тихий",
       "silentHint": "Тихий — участник не видит предупреждения при срабатывании этого правила",
-      "webcamNotice": "Веб-камера включена — участники, отказавшие в доступе к камере, не смогут начать экзамен."
+      "webcamNotice": "Веб-камера включена — участники, отказавшие в доступе к камере, не смогут начать экзамен.",
+      "escalationTitle": "Эскалация нарушений"
     },
     "preset": {
       "light": "Лёгкий мониторинг",

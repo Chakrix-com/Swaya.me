@@ -398,7 +398,13 @@
     "voiceNetworkError": "વૉઇસ ઇનપુટ માટે ઇન્ટરનેટ કનેક્શન જરૂરી છે.",
     "voiceError": "વૉઇસ ઇનપુટ ભૂલ: {{error}}",
     "voiceStartError": "વૉઇસ ઇનપુટ શરૂ થઈ શક્યું નહીં: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "સેટઅપ",
+    "basicsSection": "મૂળભૂત",
+    "appearanceSection": "દેખાવ",
+    "scheduleSection": "સમયપત્રક",
+    "accessSection": "ઍક્સેસ",
+    "minutes": "મિનિ"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* દરેક પ્રશ્ન માટે પ્રશ્ન પ્રમાણે ગુણ",
     "timeLimitWarning": "તમે શરૂ કર્યા પછી કુલ <strong>{{minutes}} મિનિટ</strong> છે.",
     "perQuestionTimerWarning": "દરેક પ્રશ્નની સમય મર્યાદા છે — ટાઇમર પૂરો થાય ત્યારે આપોઆપ આગળ વધે છે. સમય વીતી ગયેલા પ્રશ્નો પર પાછા જઈ શકાશે નહીં.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "ઈમેઈલ ચકાસણી ચાલુ",
+    "requireEmailOff": "ઈમેઈલ ચકાસણી બંધ",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "સેટિંગ્સ સેવ કરો",
     "saveSettingsHint": "શેડ્યૂલ, સ્કોરિંગ અને સુરક્ષા સેટિંગ્સ એક ક્લિકમાં સેવ કરે છે.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "ચેતવણી",
       "silent": "મૌન",
       "silentHint": "મૌન — આ નિયમ ટ્રિગર થાય ત્યારે ચેતવણી દેખાતી નથી",
-      "webcamNotice": "વેબકૅમ સક્ષમ છે — કૅમેરા ઍક્સેસ નકારનાર સહભાગી પ્રીક્ષા શરૂ કરી શકશે નહીં."
+      "webcamNotice": "વેબકૅમ સક્ષમ છે — કૅમેરા ઍક્સેસ નકારનાર સહભાગી પ્રીક્ષા શરૂ કરી શકશે નહીં.",
+      "escalationTitle": "ઉલ્લંઘન નિયંત્રણ"
     },
     "preset": {
       "light": "હળવી નિગ્રાહ",

@@ -398,7 +398,13 @@
     "voiceNetworkError": "La entrada de voz requiere conexión a internet.",
     "voiceError": "Error de entrada de voz: {{error}}",
     "voiceStartError": "No se pudo iniciar la entrada de voz: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "Configuración",
+    "basicsSection": "Básico",
+    "appearanceSection": "Apariencia",
+    "scheduleSection": "Horario",
+    "accessSection": "Acceso",
+    "minutes": "min"
   },
   "audience": {
     "joinQuiz": "Unirse a la sesión",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* Los puntos varían por pregunta",
     "timeLimitWarning": "Tiene <strong>{{minutes}} minutos</strong> en total desde que comienza.",
     "perQuestionTimerWarning": "Cada pregunta tiene un límite de tiempo — avanza automáticamente cuando se acaba el tiempo. No puede volver a las preguntas caducadas.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "Verificación email activada",
+    "requireEmailOff": "Verificación email desactivada",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "Guardar configuración",
     "saveSettingsHint": "Guarda la programación, puntuación y configuración de seguridad en un clic.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "advierte",
       "silent": "silencioso",
       "silentHint": "Silencioso — el participante no ve una advertencia cuando se activa esta regla",
-      "webcamNotice": "La cámara web está activada — los participantes que denieguen acceso no podrán comenzar el examen."
+      "webcamNotice": "La cámara web está activada — los participantes que denieguen acceso no podrán comenzar el examen.",
+      "escalationTitle": "Escalada de infracciones"
     },
     "preset": {
       "light": "Monitoreo básico",

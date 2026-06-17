@@ -398,7 +398,13 @@
     "voiceNetworkError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್‌ಗೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯ.",
     "voiceError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ದೋಷ: {{error}}",
     "voiceStartError": "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "ಸೆಟಪ್",
+    "basicsSection": "ಮೂಲ ಅಂಶಗಳು",
+    "appearanceSection": "ನೋಟ",
+    "scheduleSection": "ವೇಳಾಪಟ್ಟಿ",
+    "accessSection": "ಪ್ರವೇಶ",
+    "minutes": "ನಿಮಿ"
   },
   "audience": {
     "joinQuiz": "ಅಧಿವೇಶನಕ್ಕೆ ಸೇರಿ",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* ಪ್ರತಿ ಪ್ರಶ್ನೆಗೆ ಅಂಕಗಳು ಬದಲಾಗುತ್ತವೆ",
     "timeLimitWarning": "ನೀವು ಪ್ರಾರಂಭಿಸಿದ ತಕ್ಷಣದಿಂದ ಒಟ್ಟು <strong>{{minutes}} ನಿಮಿಷಗಳು</strong> ಇವೆ.",
     "perQuestionTimerWarning": "ಪ್ರತಿ ಪ್ರಶ್ನೆಗೆ ಸಮಯ ಮಿತಿ ಇದೆ — ಟೈಮರ್ ಮುಗಿದ ನಂತರ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮುಂದಿನ ಪ್ರಶ್ನೆಗೆ ಹೋಗುತ್ತದೆ. ಅವಧಿ ಮೀರಿದ ಪ್ರಶ್ನೆಗಳಿಗೆ ಹಿಂತಿರುಗಲು ಸಾಧ್ಯವಿಲ್ಲ.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "ಇಮೇಲ್ ಪರಿಶೀಲನೆ ಚಾಲು",
+    "requireEmailOff": "ಇಮೇಲ್ ಪರಿಶೀಲನೆ ನಿಲ್ಲಿ",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",
     "saveSettingsHint": "ವೇಳಾಪಟ್ಟಿ, ಸ್ಕೋರಿಂಗ್ ಮತ್ತು ಭದ್ರತಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಒಂದೇ ಕ್ಲಿಕ್‌ನಲ್ಲಿ ಉಳಿಸುತ್ತದೆ.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "ಎಚ್ಚರಿಕೆ",
       "silent": "ಮೌನ",
       "silentHint": "ಮೌನ — ಭಾಗವಹಿಸುವವರಿಗೆ ಎಚ್ಚರಿಕೆ ಕಾಣಿಸುವುದಿಲ್ಲ",
-      "webcamNotice": "ವೆಬ್‌ಕ್ಯಾಮ್ ಸಕ್ರಿಯಗೊಂಡಿದೆ — ಕ್ಯಾಮೆರಾ ಪ್ರವೇಶ ನಿರಾಕರಿಸಿದ ಭಾಗವಹಿಸುವವರು ಪ್ರಾರಂಭಿಸಲಾಗುವುದಿಲ್ಲ."
+      "webcamNotice": "ವೆಬ್‌ಕ್ಯಾಮ್ ಸಕ್ರಿಯಗೊಂಡಿದೆ — ಕ್ಯಾಮೆರಾ ಪ್ರವೇಶ ನಿರಾಕರಿಸಿದ ಭಾಗವಹಿಸುವವರು ಪ್ರಾರಂಭಿಸಲಾಗುವುದಿಲ್ಲ.",
+      "escalationTitle": "ಉಲ್ಲಂಘನೆ ನಿಯಂತ್ರಣ"
     },
     "preset": {
       "light": "ಹಗುರ ಮೇಲ್ವಿಚಾರಣೆ",

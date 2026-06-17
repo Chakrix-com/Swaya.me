@@ -398,7 +398,13 @@
     "voiceNetworkError": "వాయిస్ ఇన్‌పుట్‌కు ఇంటర్నెట్ కనెక్షన్ అవసరం.",
     "voiceError": "వాయిస్ ఇన్‌పుట్ లోపం: {{error}}",
     "voiceStartError": "వాయిస్ ఇన్‌పుట్ ప్రారంభించడం విఫలమైంది: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "సెటప్",
+    "basicsSection": "ప్రాథమికాలు",
+    "appearanceSection": "రూపం",
+    "scheduleSection": "షెడ్యూల్",
+    "accessSection": "యాక్సెస్",
+    "minutes": "నిమి"
   },
   "audience": {
     "joinQuiz": "సెషన్‌లో చేరండి",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* ప్రతి ప్రశ్నకు పాయింట్లు మారుతాయి",
     "timeLimitWarning": "మీరు ప్రారంభించిన దగ్గర నుండి మొత్తం <strong>{{minutes}} నిమిషాలు</strong> ఉన్నాయి.",
     "perQuestionTimerWarning": "ప్రతి ప్రశ్నకు సమయ పరిమితి ఉంది — టైమర్ అయిపోయిన తర్వాత స్వయంచాలకంగా తదుపరి ప్రశ్నకు వెళ్తుంది. గడువు తీరిన ప్రశ్నలకు వెనక్కి వెళ్ళలేరు.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "ఈమెయిల్ ధృవీకరణ ఆన్",
+    "requireEmailOff": "ఈమెయిల్ ధృవీకరణ ఆఫ్",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "సెట్టింగులు సేవ్ చేయండి",
     "saveSettingsHint": "షెడ్యూల్, స్కోరింగ్ మరియు భద్రత సెట్టింగులను ఒక్క క్లిక్‌లో సేవ్ చేస్తుంది.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "హెచ్చరిక",
       "silent": "నిశ్శబ్దం",
       "silentHint": "నిశ్శబ్దం — ఈ నియమం ట్రిగ్గర్ అయినప్పుడు హెచ్చరిక కనిపించదు",
-      "webcamNotice": "వెబ్‌కామ్ ప్రారంభించబడింది — కెమెరా నిరాకరించిన వారు పరీక్షను ప్రారంభించలేరు."
+      "webcamNotice": "వెబ్‌కామ్ ప్రారంభించబడింది — కెమెరా నిరాకరించిన వారు పరీక్షను ప్రారంభించలేరు.",
+      "escalationTitle": "ఉల్లంఘన నియంత్రణ"
     },
     "preset": {
       "light": "తేలికపాటి పర్యవేక్షణ",

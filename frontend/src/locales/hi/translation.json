@@ -398,7 +398,13 @@
     "voiceNetworkError": "वॉयस इनपुट के लिए इंटरनेट कनेक्शन आवश्यक है।",
     "voiceError": "वॉयस इनपुट त्रुटि: {{error}}",
     "voiceStartError": "वॉयस इनपुट शुरू नहीं हो सका: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "सेटअप",
+    "basicsSection": "मूल बातें",
+    "appearanceSection": "दिखावट",
+    "scheduleSection": "समय-सारणी",
+    "accessSection": "पहुँच",
+    "minutes": "मिनट"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* प्रत्येक प्रश्न के लिए अंक अलग-अलग हैं",
     "timeLimitWarning": "आपके पास शुरुआत से कुल <strong>{{minutes}} मिनट</strong> हैं।",
     "perQuestionTimerWarning": "प्रत्येक प्रश्न की समय सीमा है — टाइमर समाप्त होने पर यह अपने आप आगे बढ़ जाएगा। आप समाप्त प्रश्नों पर वापस नहीं जा सकते।",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "ईमेल सत्यापन चालू",
+    "requireEmailOff": "ईमेल सत्यापन बंद",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "सेटिंग्स सहेजें",
     "saveSettingsHint": "शेड्यूल, स्कोरिंग और सुरक्षा सेटिंग्स एक क्लिक में सहेजता है।",
@@ -2169,7 +2175,8 @@
       "severityWarn": "चेतावनी देता है",
       "silent": "मौन",
       "silentHint": "मौन — इस नियम के ट्रिगर होने पर प्रतिभागी को चेतावनी नहीं दिखती",
-      "webcamNotice": "वेबकैम सक्षम है — जो प्रतिभागी कैमरा एक्सेस अस्वीकार करते हैं वे परीक्षा शुरू नहीं कर पाएंगे।"
+      "webcamNotice": "वेबकैम सक्षम है — जो प्रतिभागी कैमरा एक्सेस अस्वीकार करते हैं वे परीक्षा शुरू नहीं कर पाएंगे।",
+      "escalationTitle": "उल्लंघन नियंत्रण"
     },
     "preset": {
       "light": "हल्की निगरानी",

@@ -400,7 +400,13 @@
     "voiceNetworkError": "La saisie vocale nécessite une connexion Internet.",
     "voiceError": "Erreur de saisie vocale : {{error}}",
     "voiceStartError": "Impossible de démarrer la saisie vocale : {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "Configuration",
+    "basicsSection": "Bases",
+    "appearanceSection": "Apparence",
+    "scheduleSection": "Calendrier",
+    "accessSection": "Accès",
+    "minutes": "min"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",
@@ -1975,8 +1981,8 @@
     "pointsVary": "* Les points varient par question",
     "timeLimitWarning": "Vous avez <strong>{{minutes}} minutes</strong> au total depuis le début.",
     "perQuestionTimerWarning": "Chaque question a une limite de temps — elle passe automatiquement à la suivante quand le temps est écoulé. Vous ne pouvez pas revenir aux questions expirées.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "Vérification email activée",
+    "requireEmailOff": "Vérification email désactivée",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "Enregistrer les paramètres",
     "saveSettingsHint": "Enregistre le calendrier, la notation et les paramètres de sécurité en un clic.",
@@ -2171,7 +2177,8 @@
       "severityWarn": "avertit",
       "silent": "silencieux",
       "silentHint": "Silencieux — le participant ne voit pas d'avertissement lorsque cette règle se déclenche",
-      "webcamNotice": "La webcam est activée — les participants qui refusent l'accès à la caméra ne pourront pas démarrer l'examen."
+      "webcamNotice": "La webcam est activée — les participants qui refusent l'accès à la caméra ne pourront pas démarrer l'examen.",
+      "escalationTitle": "Escalade des infractions"
     },
     "preset": {
       "light": "Surveillance légère",

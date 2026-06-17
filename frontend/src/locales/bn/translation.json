@@ -398,7 +398,13 @@
     "voiceNetworkError": "ভয়েস ইনপুটের জন্য ইন্টারনেট সংযোগ প্রয়োজন।",
     "voiceError": "ভয়েস ইনপুট ত্রুটি: {{error}}",
     "voiceStartError": "ভয়েস ইনপুট শুরু করা যায়নি: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "সেটআপ",
+    "basicsSection": "মূল বিষয়",
+    "appearanceSection": "উপস্থিতি",
+    "scheduleSection": "সময়সূচি",
+    "accessSection": "প্রবেশ",
+    "minutes": "মিনিট"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* প্রতিটি প্রশ্নের জন্য পয়েন্ট আলাদা",
     "timeLimitWarning": "আপনি শুরু করার পর থেকে মোট <strong>{{minutes}} মিনিট</strong> আছে।",
     "perQuestionTimerWarning": "প্রতিটি প্রশ্নের সময়সীমা আছে — টাইমার শেষ হলে স্বয়ংক্রিয়ভাবে পরবর্তী প্রশ্নে যাবে। মেয়াদ শেষ হওয়া প্রশ্নে ফিরে যাওয়া যাবে না।",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "ইমেইল যাচাই চালু",
+    "requireEmailOff": "ইমেইল যাচাই বন্ধ",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "সেটিংস সেভ করুন",
     "saveSettingsHint": "সময়সূচী, স্কোরিং এবং নিরাপত্তা সেটিংস এক ক্লিকে সেভ করে।",
@@ -2169,7 +2175,8 @@
       "severityWarn": "সতর্ক করে",
       "silent": "নীরব",
       "silentHint": "নীরব — এই নিয়ম চালু হলে অংশগ্রহণকারীকে সতর্কবার্তা দেখানো হয় না",
-      "webcamNotice": "ওয়েবক্যাম সক্রিয় — যারা ক্যামেরা অ্যাক্সেস অস্বীকার করবেন তারা পরীক্ষা শুরু করতে পারবেন না।"
+      "webcamNotice": "ওয়েবক্যাম সক্রিয় — যারা ক্যামেরা অ্যাক্সেস অস্বীকার করবেন তারা পরীক্ষা শুরু করতে পারবেন না।",
+      "escalationTitle": "লঙ্ঘন নিয়ন্ত্রণ"
     },
     "preset": {
       "light": "হালকা নজরদারি",

@@ -398,7 +398,13 @@
     "voiceNetworkError": "Spracheingabe erfordert eine Internetverbindung.",
     "voiceError": "Spracheingabefehler: {{error}}",
     "voiceStartError": "Spracheingabe konnte nicht gestartet werden: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "Einrichtung",
+    "basicsSection": "Grundlagen",
+    "appearanceSection": "Erscheinungsbild",
+    "scheduleSection": "Zeitplan",
+    "accessSection": "Zugang",
+    "minutes": "Min"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* Punkte variieren je nach Frage",
     "timeLimitWarning": "Sie haben insgesamt <strong>{{minutes}} Minuten</strong> ab dem Start.",
     "perQuestionTimerWarning": "Jede Frage hat ein Zeitlimit — sie springt automatisch weiter, wenn die Zeit abläuft. Sie können nicht zu abgelaufenen Fragen zurückgehen.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "E-Mail-Verifizierung ein",
+    "requireEmailOff": "E-Mail-Verifizierung aus",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "Einstellungen speichern",
     "saveSettingsHint": "Speichert Zeitplan, Bewertung und Sicherheitseinstellungen mit einem Klick.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "warnt",
       "silent": "still",
       "silentHint": "Still — Teilnehmer sieht keine Warnung wenn diese Regel ausgelöst wird",
-      "webcamNotice": "Webcam ist aktiviert — Teilnehmer die den Kamerazugriff verweigern können die Prüfung nicht starten."
+      "webcamNotice": "Webcam ist aktiviert — Teilnehmer die den Kamerazugriff verweigern können die Prüfung nicht starten.",
+      "escalationTitle": "Verstoßeskalation"
     },
     "preset": {
       "light": "Leichte Überwachung",

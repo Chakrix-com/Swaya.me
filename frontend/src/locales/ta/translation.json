@@ -398,7 +398,13 @@
     "voiceNetworkError": "குரல் உள்ளீட்டிற்கு இணைய இணைப்பு தேவை.",
     "voiceError": "குரல் உள்ளீடு பிழை: {{error}}",
     "voiceStartError": "குரல் உள்ளீட்டை தொடங்க முடியவில்லை: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "setupLabel": "அமைவு",
+    "basicsSection": "அடிப்படைகள்",
+    "appearanceSection": "தோற்றம்",
+    "scheduleSection": "அட்டவணை",
+    "accessSection": "அணுகல்",
+    "minutes": "நிமி"
   },
   "audience": {
     "joinQuiz": "அமர்வில் சேரவும்",
@@ -1973,8 +1979,8 @@
     "pointsVary": "* ஒவ்வொரு கேள்விக்கும் புள்ளிகள் மாறுபடும்",
     "timeLimitWarning": "நீங்கள் தொடங்கிய நேரத்திலிருந்து மொத்தம் <strong>{{minutes}} நிமிடங்கள்</strong> உள்ளன.",
     "perQuestionTimerWarning": "ஒவ்வொரு கேள்விக்கும் நேர வரம்பு உள்ளது — நேரம் முடிந்தால் தானாக அடுத்த கேள்விக்கு செல்லும். காலாவதியான கேள்விகளுக்கு திரும்பிச் செல்ல முடியாது.",
-    "requireEmailOn": "Email verification ON",
-    "requireEmailOff": "Email verification OFF",
+    "requireEmailOn": "மின்னஞ்சல் சரிபார்ப்பு இயக்கம்",
+    "requireEmailOff": "மின்னஞ்சல் சரிபார்ப்பு நிறுத்தம்",
     "requireEmailHint": "Participants must enter their name and email, receive a one-time code, and verify it before the test opens. Their email is recorded against the result.",
     "saveSettings": "அமைப்புகளை சேமி",
     "saveSettingsHint": "ஒரு கிளிக்கில் அட்டவணை, மதிப்பெண் மற்றும் பாதுகாப்பு அமைப்புகளை சேமிக்கிறது.",
@@ -2169,7 +2175,8 @@
       "severityWarn": "எச்சரிக்கை",
       "silent": "மௌனம்",
       "silentHint": "மௌன — இந்த விதி தூண்டப்படும்போது பங்கேற்பாளருக்கு எச்சரிக்கை இல்லை",
-      "webcamNotice": "வெப்கேம் இயக்கப்பட்டுள்ளது — கேமரா அணுகலை மறுக்கும் பங்கேற்பாளர்கள் தேர்வை தொடங்க முடியாது."
+      "webcamNotice": "வெப்கேம் இயக்கப்பட்டுள்ளது — கேமரா அணுகலை மறுக்கும் பங்கேற்பாளர்கள் தேர்வை தொடங்க முடியாது.",
+      "escalationTitle": "மீறல் நடவடிக்கை"
     },
     "preset": {
       "light": "லைட் மானிட்டரிங்",
