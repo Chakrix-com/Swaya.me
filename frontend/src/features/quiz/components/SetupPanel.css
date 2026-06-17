@@ -4,7 +4,6 @@
   background: var(--sw-surface, #fff);
   border: 1px solid var(--sw-border, #e5e7eb);
   border-radius: 10px;
-  overflow: hidden;
   margin-bottom: 24px;
 }
 
@@ -17,6 +16,7 @@
   padding: 14px 20px;
   border-bottom: 1px solid var(--sw-border, #e5e7eb);
   background: var(--sw-surface, #fff);
+  border-radius: 10px 10px 0 0;
 }
 
 .sp-header-left {
@@ -245,6 +245,7 @@
 .sp-save-footer {
   padding: 16px 20px;
   background: var(--sw-bg, #f8fafc);
+  border-radius: 0 0 10px 10px;
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
