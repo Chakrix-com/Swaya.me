@@ -192,12 +192,12 @@ export function SetupPanel({
         {(isExam || isOfflinePoll) && (
           <div className="sp-section">
             <div className="sp-section-title">{t('quiz.scheduleSection', 'Schedule')}</div>
-            <div className="sp-date-grid">
+            <div className="sp-inline-row">
               <Form.Item
                 name={isOfflinePoll ? 'offline_start_at' : 'exam_start_at'}
                 label={isOfflinePoll ? t('offlinePoll.startDate', 'Start Date & Time') : t('exam.startAt')}
                 rules={[{ required: true, message: isOfflinePoll ? t('quiz.startDateRequired') : t('exam.startAtRequired') }]}
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 0, flex: '1 1 180px' }}
               >
                 <DatePicker
                   showTime
@@ -209,7 +209,7 @@ export function SetupPanel({
                 name={isOfflinePoll ? 'offline_end_at' : 'exam_end_at'}
                 label={isOfflinePoll ? t('offlinePoll.endDate', 'End Date & Time') : t('exam.endAt')}
                 rules={[{ required: true, message: isOfflinePoll ? t('quiz.endDateRequired') : t('exam.endAtRequired') }]}
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 0, flex: '1 1 180px' }}
               >
                 <DatePicker
                   showTime
@@ -223,25 +223,25 @@ export function SetupPanel({
                   }}
                 />
               </Form.Item>
+              {isExam && (
+                <Form.Item
+                  name="exam_time_limit_minutes"
+                  label={t('exam.timeLimitMinutes')}
+                  style={{ marginBottom: 0, flex: '0 0 auto' }}
+                >
+                  <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: 110 }} addonAfter={t('quiz.minutes', 'min')} />
+                </Form.Item>
+              )}
+              {isOfflinePoll && (
+                <Form.Item
+                  name="offline_results_email"
+                  label={t('offlinePoll.resultsEmail', 'Email Results To (optional)')}
+                  style={{ marginBottom: 0, flex: '1 1 180px' }}
+                >
+                  <Input type="email" placeholder={t('offlinePoll.resultsEmailPlaceholder')} />
+                </Form.Item>
+              )}
             </div>
-            {isExam && (
-              <Form.Item
-                name="exam_time_limit_minutes"
-                label={t('exam.timeLimitMinutes')}
-                style={{ marginTop: 14, marginBottom: 0 }}
-              >
-                <InputNumber min={1} max={600} placeholder={t('exam.timeLimitPlaceholder')} style={{ width: 140 }} addonAfter={t('quiz.minutes', 'min')} />
-              </Form.Item>
-            )}
-            {isOfflinePoll && (
-              <Form.Item
-                name="offline_results_email"
-                label={t('offlinePoll.resultsEmail', 'Email Results To (optional)')}
-                style={{ marginTop: 14, marginBottom: 0 }}
-              >
-                <Input type="email" placeholder={t('offlinePoll.resultsEmailPlaceholder')} />
-              </Form.Item>
-            )}
           </div>
         )}
 
@@ -249,27 +249,28 @@ export function SetupPanel({
         {isExam && (
           <div className="sp-section">
             <div className="sp-section-title">{t('quiz.accessSection', 'Access')}</div>
-            <div className="sp-access-row">
-              <span className="sp-access-label">{t('exam.requireEmailOn', 'Email verification')}</span>
-              <Form.Item name="exam_require_email" valuePropName="checked" noStyle>
-                <Switch checkedChildren={t('exam.requireEmailOn')} unCheckedChildren={t('exam.requireEmailOff')} />
-              </Form.Item>
-            </div>
-            <Form.Item noStyle shouldUpdate={(prev, cur) => prev.exam_require_email !== cur.exam_require_email}>
-              {({ getFieldValue }) => getFieldValue('exam_require_email') && (
-                <div className="sp-access-indent">
-                  <Alert type="info" showIcon message={t('exam.requireEmailHint')} style={{ marginBottom: 10 }} />
+            <div className="sp-inline-row sp-inline-row--align-end">
+              <div className="sp-access-toggle-wrap">
+                <span className="sp-section-label" style={{ marginBottom: 4 }}>{t('exam.requireEmailOn', 'Email verification')}</span>
+                <Form.Item name="exam_require_email" valuePropName="checked" noStyle>
+                  <Switch checkedChildren={t('exam.requireEmailOn')} unCheckedChildren={t('exam.requireEmailOff')} />
+                </Form.Item>
+              </div>
+              <Form.Item noStyle shouldUpdate={(prev, cur) => prev.exam_require_email !== cur.exam_require_email}>
+                {({ getFieldValue }) => getFieldValue('exam_require_email') ? (
                   <Form.Item
                     name="exam_allowed_domains"
                     label={t('exam.allowedDomains', 'Allowed email domains (optional)')}
                     extra={t('exam.allowedDomainsHint', 'Comma-separated domains, e.g. natwest.com, rbs.com — leave blank to allow any email')}
-                    style={{ marginBottom: 0 }}
+                    style={{ marginBottom: 0, flex: '1 1 240px' }}
                   >
                     <Input placeholder={t('exam.allowedDomainsPlaceholder')} />
                   </Form.Item>
-                </div>
-              )}
-            </Form.Item>
+                ) : (
+                  <span className="sp-access-hint">{t('exam.requireEmailHint')}</span>
+                )}
+              </Form.Item>
+            </div>
           </div>
         )}
 

@@ -137,11 +137,16 @@
   margin-top: 4px;
 }
 
-/* ── Date grid ─────────────────────────────────────────────────────────── */
-.sp-date-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* ── Inline row (schedule + access fields) ─────────────────────────────── */
+.sp-inline-row {
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
+  align-items: flex-start;
+}
+
+.sp-inline-row--align-end {
+  align-items: flex-end;
 }
 
 /* ── Skin grid ─────────────────────────────────────────────────────────── */
@@ -223,22 +228,19 @@
 }
 
 /* ── Access section ────────────────────────────────────────────────────── */
-.sp-access-row {
+.sp-access-toggle-wrap {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.sp-access-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--sw-text, #1a1a2e);
-}
-
-.sp-access-indent {
-  padding-left: 16px;
-  border-left: 2px solid var(--sw-border, #e5e7eb);
+.sp-access-hint {
+  font-size: 12px;
+  color: var(--sw-text3, #888);
+  line-height: 1.4;
+  max-width: 420px;
+  padding-bottom: 4px;
 }
 
 /* ── Save footer ───────────────────────────────────────────────────────── */
@@ -253,7 +255,10 @@
   .sp-skin-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .sp-date-grid {
-    grid-template-columns: 1fr;
+  .sp-inline-row {
+    flex-direction: column;
+  }
+  .sp-inline-row > * {
+    flex: 1 1 100% !important;
   }
 }
