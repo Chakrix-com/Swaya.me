@@ -200,7 +200,8 @@ export function SetupPanel({
                 style={{ marginBottom: 0, flex: '1 1 180px' }}
               >
                 <DatePicker
-                  showTime
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
                 />
@@ -212,7 +213,8 @@ export function SetupPanel({
                 style={{ marginBottom: 0, flex: '1 1 180px' }}
               >
                 <DatePicker
-                  showTime
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   disabledDate={(d) => {
                     if (!d) return false;
