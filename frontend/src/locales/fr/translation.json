@@ -2179,7 +2179,8 @@
       "silent": "silencieux",
       "silentHint": "Silencieux — le participant ne voit pas d'avertissement lorsque cette règle se déclenche",
       "webcamNotice": "La webcam est activée — les participants qui refusent l'accès à la caméra ne pourront pas démarrer l'examen.",
-      "escalationTitle": "Escalade des infractions"
+      "escalationTitle": "Escalade des infractions",
+      "enabledHint": "La surveillance est active pour cet examen."
     },
     "preset": {
       "light": "Surveillance légère",

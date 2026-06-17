@@ -120,7 +120,7 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
             <div className="ps-header-title">{t('proctoring.settings.title')}</div>
             <div className="ps-header-hint">
               {policy.enabled
-                ? t('proctoring.settings.enableHint').replace('When disabled, n', 'N').replace(' and participants have zero overhead.', ' is active.')
+                ? t('proctoring.settings.enabledHint', 'Monitoring is active for this exam.')
                 : t('proctoring.settings.enableHint')}
             </div>
           </div>

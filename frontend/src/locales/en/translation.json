@@ -2260,7 +2260,8 @@
       "silent": "silent",
       "silentHint": "Silent — participant does not see a warning when this rule triggers",
       "webcamNotice": "Webcam is enabled — participants who deny camera access will not be able to start this exam.",
-      "escalationTitle": "Violation Escalation"
+      "escalationTitle": "Violation Escalation",
+      "enabledHint": "Monitoring is active for this exam."
     },
     "preset": {
       "light": "Light Monitoring",

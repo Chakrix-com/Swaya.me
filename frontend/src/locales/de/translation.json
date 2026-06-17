@@ -2177,7 +2177,8 @@
       "silent": "still",
       "silentHint": "Still — Teilnehmer sieht keine Warnung wenn diese Regel ausgelöst wird",
       "webcamNotice": "Webcam ist aktiviert — Teilnehmer die den Kamerazugriff verweigern können die Prüfung nicht starten.",
-      "escalationTitle": "Verstoßeskalation"
+      "escalationTitle": "Verstoßeskalation",
+      "enabledHint": "Die Überwachung ist für diese Prüfung aktiv."
     },
     "preset": {
       "light": "Leichte Überwachung",
