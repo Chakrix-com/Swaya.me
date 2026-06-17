@@ -1889,7 +1889,7 @@
     "endAt": "Дата и время окончания",
     "startAtRequired": "Выберите дату начала",
     "endAtRequired": "Выберите дату окончания",
-    "timeLimitMinutes": "Общий лимит времени (минуты)",
+    "timeLimitMinutes": "Общий лимит времени",
     "timeLimitPlaceholder": "Напр. 60",
     "negativePoints": "Отрицательные баллы",
     "resultsEmail": "Email для результатов",

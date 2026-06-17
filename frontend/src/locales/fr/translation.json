@@ -1891,7 +1891,7 @@
     "endAt": "Date et heure de fin",
     "startAtRequired": "Sélectionnez la date de début",
     "endAtRequired": "Sélectionnez la date de fin",
-    "timeLimitMinutes": "Durée totale (minutes)",
+    "timeLimitMinutes": "Durée totale",
     "timeLimitPlaceholder": "Ex. 60",
     "negativePoints": "Points négatifs",
     "resultsEmail": "Email des résultats",

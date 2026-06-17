@@ -1954,7 +1954,7 @@
     "endAt": "End Date & Time",
     "startAtRequired": "Please set test start date",
     "endAtRequired": "Please set test end date",
-    "timeLimitMinutes": "Total Time Limit (minutes)",
+    "timeLimitMinutes": "Total Time Limit",
     "timeLimitPlaceholder": "Leave blank for no limit",
     "perQuestionTimer": "Per-question Time Limit (seconds)",
     "negativePoints": "Negative Points (wrong answer penalty)",

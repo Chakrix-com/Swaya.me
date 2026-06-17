@@ -1889,7 +1889,7 @@
     "endAt": "Fecha y hora de cierre",
     "startAtRequired": "Seleccione la fecha de inicio",
     "endAtRequired": "Seleccione la fecha de cierre",
-    "timeLimitMinutes": "Límite de tiempo total (minutos)",
+    "timeLimitMinutes": "Límite de tiempo total",
     "timeLimitPlaceholder": "Ej. 60",
     "negativePoints": "Puntos negativos",
     "resultsEmail": "Correo de resultados",

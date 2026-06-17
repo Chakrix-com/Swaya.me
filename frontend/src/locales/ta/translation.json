@@ -1889,7 +1889,7 @@
     "endAt": "முடிவு தேதி மற்றும் நேரம்",
     "startAtRequired": "தொடக்க தேதியை தேர்ந்தெடுக்கவும்",
     "endAtRequired": "முடிவு தேதியை தேர்ந்தெடுக்கவும்",
-    "timeLimitMinutes": "மொத்த நேர வரம்பு (நிமிடங்கள்)",
+    "timeLimitMinutes": "மொத்த நேர வரம்பு",
     "timeLimitPlaceholder": "எ.கா. 60",
     "negativePoints": "எதிர் மதிப்பெண்கள்",
     "resultsEmail": "முடிவுகள் மின்னஞ்சல்",

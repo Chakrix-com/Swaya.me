@@ -1889,7 +1889,7 @@
     "endAt": "শেষের তারিখ ও সময়",
     "startAtRequired": "শুরুর তারিখ নির্বাচন করুন",
     "endAtRequired": "শেষের তারিখ নির্বাচন করুন",
-    "timeLimitMinutes": "মোট সময়সীমা (মিনিট)",
+    "timeLimitMinutes": "মোট সময়সীমা",
     "timeLimitPlaceholder": "যেমন ৬০",
     "negativePoints": "নেতিবাচক পয়েন্ট",
     "resultsEmail": "ফলাফল ইমেইল",

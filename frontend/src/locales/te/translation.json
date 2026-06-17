@@ -1889,7 +1889,7 @@
     "endAt": "ముగింపు తేదీ మరియు సమయం",
     "startAtRequired": "ప్రారంభ తేదీని ఎంచుకోండి",
     "endAtRequired": "ముగింపు తేదీని ఎంచుకోండి",
-    "timeLimitMinutes": "మొత్తం సమయ పరిమితి (నిమిషాలు)",
+    "timeLimitMinutes": "మొత్తం సమయ పరిమితి",
     "timeLimitPlaceholder": "ఉదా. 60",
     "negativePoints": "నెగటివ్ పాయింట్లు",
     "resultsEmail": "ఫలితాల ఇమెయిల్",

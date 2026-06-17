@@ -1889,7 +1889,7 @@
     "endAt": "ಅಂತಿಮ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ",
     "startAtRequired": "ಪ್ರಾರಂಭ ದಿನಾಂಕ ಆಯ್ಕೆ ಮಾಡಿ",
     "endAtRequired": "ಅಂತಿಮ ದಿನಾಂಕ ಆಯ್ಕೆ ಮಾಡಿ",
-    "timeLimitMinutes": "ಒಟ್ಟು ಸಮಯ ಮಿತಿ (ನಿಮಿಷಗಳು)",
+    "timeLimitMinutes": "ಒಟ್ಟು ಸಮಯ ಮಿತಿ",
     "timeLimitPlaceholder": "ಉದಾ. 60",
     "negativePoints": "ಋಣಾತ್ಮಕ ಅಂಕಗಳು",
     "resultsEmail": "ಫಲಿತಾಂಶ ಇಮೇಲ್",
