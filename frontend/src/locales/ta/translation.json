@@ -404,7 +404,8 @@
     "appearanceSection": "தோற்றம்",
     "scheduleSection": "அட்டவணை",
     "accessSection": "அணுகல்",
-    "minutes": "நிமி"
+    "minutes": "நிமி",
+    "securityLabel": "பாதுகாப்பு & கண்காணிப்பு"
   },
   "audience": {
     "joinQuiz": "அமர்வில் சேரவும்",

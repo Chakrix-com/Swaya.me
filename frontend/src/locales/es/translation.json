@@ -404,7 +404,8 @@
     "appearanceSection": "Apariencia",
     "scheduleSection": "Horario",
     "accessSection": "Acceso",
-    "minutes": "min"
+    "minutes": "min",
+    "securityLabel": "Seguridad y Supervisión"
   },
   "audience": {
     "joinQuiz": "Unirse a la sesión",

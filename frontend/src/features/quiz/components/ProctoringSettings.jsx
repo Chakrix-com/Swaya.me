@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Switch, InputNumber, Tag, Tooltip, Alert, Space } from 'antd';
-import { LockOutlined, CameraOutlined, ThunderboltOutlined, SafetyOutlined, FireOutlined } from '@ant-design/icons';
+import { Switch, InputNumber, Tag, Tooltip, Alert, Space, Button } from 'antd';
+import { LockOutlined, CameraOutlined, ThunderboltOutlined, SafetyOutlined, FireOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import './ProctoringSettings.css';
 
@@ -22,7 +22,7 @@ const PRESET_META = {
   maximum:  { icon: <FireOutlined />,        colorClass: 'ps-preset-card--maximum' },
 };
 
-export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy, onChange }) {
+export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy, onChange, onSave, saving }) {
   const { t } = useTranslation();
   const [policy, setPolicy] = useState(
     currentPolicy || { enabled: false, rules: {}, escalation: { lock_on_violation_count: 3, auto_submit_on_lock: false } }
@@ -131,6 +131,17 @@ export function ProctoringSettings({ quizId, quizType, tenantTier, currentPolicy
             checked={policy.enabled}
             onChange={(v) => updatePolicy({ ...policy, enabled: v })}
           />
+          {onSave && (
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={onSave}
+              size="small"
+            >
+              {t('common.save', 'Save')}
+            </Button>
+          )}
         </div>
       </div>
 

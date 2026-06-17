@@ -404,7 +404,8 @@
     "appearanceSection": "ನೋಟ",
     "scheduleSection": "ವೇಳಾಪಟ್ಟಿ",
     "accessSection": "ಪ್ರವೇಶ",
-    "minutes": "ನಿಮಿ"
+    "minutes": "ನಿಮಿ",
+    "securityLabel": "ಭದ್ರತೆ & ಮೇಲ್ವಿಚಾರಣೆ"
   },
   "audience": {
     "joinQuiz": "ಅಧಿವೇಶನಕ್ಕೆ ಸೇರಿ",

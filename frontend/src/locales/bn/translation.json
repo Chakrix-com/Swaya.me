@@ -404,7 +404,8 @@
     "appearanceSection": "উপস্থিতি",
     "scheduleSection": "সময়সূচি",
     "accessSection": "প্রবেশ",
-    "minutes": "মিনিট"
+    "minutes": "মিনিট",
+    "securityLabel": "নিরাপত্তা ও পর্যবেক্ষণ"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",

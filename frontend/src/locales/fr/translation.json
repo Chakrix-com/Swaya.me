@@ -406,7 +406,8 @@
     "appearanceSection": "Apparence",
     "scheduleSection": "Calendrier",
     "accessSection": "Accès",
-    "minutes": "min"
+    "minutes": "min",
+    "securityLabel": "Sécurité et Surveillance"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",

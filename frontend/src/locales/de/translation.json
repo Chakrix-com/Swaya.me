@@ -404,7 +404,8 @@
     "appearanceSection": "Erscheinungsbild",
     "scheduleSection": "Zeitplan",
     "accessSection": "Zugang",
-    "minutes": "Min"
+    "minutes": "Min",
+    "securityLabel": "Sicherheit & Überwachung"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",

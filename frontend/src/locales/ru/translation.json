@@ -404,7 +404,8 @@
     "appearanceSection": "Внешний вид",
     "scheduleSection": "Расписание",
     "accessSection": "Доступ",
-    "minutes": "мин"
+    "minutes": "мин",
+    "securityLabel": "Безопасность и надзор"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",

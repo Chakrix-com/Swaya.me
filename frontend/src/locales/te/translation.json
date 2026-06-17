@@ -404,7 +404,8 @@
     "appearanceSection": "రూపం",
     "scheduleSection": "షెడ్యూల్",
     "accessSection": "యాక్సెస్",
-    "minutes": "నిమి"
+    "minutes": "నిమి",
+    "securityLabel": "భద్రత & పర్యవేక్షణ"
   },
   "audience": {
     "joinQuiz": "సెషన్‌లో చేరండి",

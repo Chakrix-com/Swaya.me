@@ -2369,6 +2369,31 @@ export default function QuizBuilder() {
     }
   }
 
+  const handleSaveProctoringOnly = async () => {
+    if (!id || proctoringPolicy === null) return
+    setLoading(true)
+    try {
+      const ALL_RULE_IDS = [
+        'fullscreen_enforce', 'tab_switch_detect', 'copy_paste_block', 'multi_tab_detect',
+        'right_click_block', 'bot_signal_detect', 'honeypot_traps', 'question_randomization',
+        'option_randomization', 'answer_timing_enforce', 'behavioral_biometrics',
+        'browser_fingerprint_bind', 'ip_bind', 'steg_watermark', 'devtools_detect',
+        'webcam_monitoring', 'canvas_rendering',
+      ]
+      const normalised = { ...proctoringPolicy, rules: { ...proctoringPolicy.rules } }
+      for (const rid of ALL_RULE_IDS) {
+        if (!normalised.rules[rid]) normalised.rules[rid] = { enabled: false }
+      }
+      const formValues = form.getFieldsValue()
+      await quizAPI.update(id, { ...formValues, proctoring_policy: normalised })
+      message.success(t('quiz.saveSuccess'))
+    } catch (error) {
+      message.error(error.response?.data?.detail || t('common.error', 'Error saving'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleUnpublish = async () => {
     setLoading(true)
     try {
@@ -3126,6 +3151,8 @@ export default function QuizBuilder() {
                     tenantTier={currentUser?.tier || 'free'}
                     currentPolicy={proctoringPolicy}
                     onChange={(p) => setProctoringPolicy(p)}
+                    onSave={handleSaveProctoringOnly}
+                    saving={loading}
                   />
                 ) : (
                   <Card style={{ marginTop: 16 }}>

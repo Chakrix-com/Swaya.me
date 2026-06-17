@@ -404,7 +404,8 @@
     "voiceNetworkError": "Voice input requires an internet connection to the speech service.",
     "voiceError": "Voice input error: {{error}}",
     "voiceStartError": "Could not start voice input: {{error}}",
-    "scaleRange": "1 — 2 — 3 — 4 — 5"
+    "scaleRange": "1 — 2 — 3 — 4 — 5",
+    "securityLabel": "Security & Proctoring"
   },
   "audience": {
     "joinQuiz": "Join Session",

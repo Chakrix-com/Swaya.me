@@ -404,7 +404,8 @@
     "appearanceSection": "दिखावट",
     "scheduleSection": "समय-सारणी",
     "accessSection": "पहुँच",
-    "minutes": "मिनट"
+    "minutes": "मिनट",
+    "securityLabel": "सुरक्षा और निगरानी"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",

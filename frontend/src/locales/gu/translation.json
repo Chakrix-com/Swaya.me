@@ -404,7 +404,8 @@
     "appearanceSection": "દેખાવ",
     "scheduleSection": "સમયપત્રક",
     "accessSection": "ઍક્સેસ",
-    "minutes": "મિનિ"
+    "minutes": "મિનિ",
+    "securityLabel": "સુરક્ષા અને નિગરાની"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
