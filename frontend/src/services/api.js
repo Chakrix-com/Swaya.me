@@ -158,6 +158,8 @@ export const sessionAPI = {
     api.get(`/quizzes/sessions/${sessionId}/audience-leaderboard`, {
       params: { session_token: sessionToken }
     }),
+  getReactions: (sessionId) =>
+    api.get(`/quizzes/sessions/${sessionId}/reactions`),
   listParticipants: (sessionId) =>
     api.get(`/quizzes/sessions/${sessionId}/participants-list`),
   getWhiteboardState: (sessionId) =>

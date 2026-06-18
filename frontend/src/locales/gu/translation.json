@@ -95,7 +95,7 @@
   "quiz": {
     "myQuizzes": "મારા ક્વિઝ",
     "createQuiz": "લાઇવ ક્વિઝ બનાવો",
-    "editQuiz": "ક્વિઝ સંપાદિત કરો",
+    "editQuiz": "સાચવો",
     "settingsCardTitle": "સેટિંગ્સ",
     "settingsLocked": "સેટિંગ્સ ફક્ત-વાંચવા-લાયક છે",
     "settingsLockedDesc": "આ ક્વિઝ/પોલ લાઇવ છે. સેટિંગ્સ બદલવા માટે તેને અનપ્રકાશ કરો.",
@@ -381,6 +381,8 @@
     "totalQuestions": "પ્રશ્નો",
     "viewHistory": "ઇतिहास",
     "skinLabel": "સહભાગી ત્વચા",
+    "reactionsSection": "સહભાગી પ્રતિક્રિયાઓ",
+    "reactionsHint": "સત્ર સમાપ્ત થયા પછી સહભાગીઓને પ્રતિક્રિયા આપવા દો",
     "skinDefault": "ડિફૉલ્ટ",
     "skinClassroom": "ક્લાસરૂમ",
     "skinBoardroom": "બોર્ડરૂમ",
@@ -2078,6 +2080,21 @@
     "emptyStateOfflinePollDesc": "ઑફલાઇન પૉલ — લિંક શેર કરો, ગમે ત્યારે પ્રતિક્રિયા એકત્ર કરો",
     "emptyStateExamDesc": "ટેસ્ટ / પરીક્ષા — સમય-મર્યાદિત, ઑટો-સ્કોર, લિંક દ્વારા શેર કરી શકાય",
     "themePicker": "UI થીમ પસંદ કરો"
+  },
+  "reactions": {
+    "howWasIt": "કેવું લાગ્યું?",
+    "thanks": "તમારા પ્રતિભાવ માટે આભાર!",
+    "notGreat": "સારું નહીં",
+    "likedIt": "ગમ્યું",
+    "lovedIt": "ખૂબ ગમ્યું!",
+    "meh": "ઠીક-ઠીક",
+    "boring": "કંટાળાજનક",
+    "ok": "ઠીક",
+    "good": "સારું",
+    "amazing": "અદ્ભુત!",
+    "submitFailed": "પ્રતિક્રિયા મોકલી શકાઈ નહીં",
+    "title": "સહભાગી પ્રતિક્રિયાઓ",
+    "totalReactions": "{{count}} કુલ પ્રતિક્રિયાઓ"
   },
   "promo": {
     "tagline": "Swaya.me પર તમારા પોલ અને ક્વિઝ મફતમાં બનાવો",

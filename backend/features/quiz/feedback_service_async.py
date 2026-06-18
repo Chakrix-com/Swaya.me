@@ -5,18 +5,26 @@ from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.auth.dependencies import CurrentUser
 from persistence.models.core import User, UserRole
 from persistence.models.quiz import Participant, Quiz, QuizFeedback, QuizSession
-from features.quiz.schemas import FeedbackListResponse, FeedbackResponse, FeedbackSubmitRequest
+from features.quiz.schemas import (
+    FeedbackListResponse, FeedbackResponse, FeedbackSubmitRequest,
+    ReactionAggregateResponse,
+)
+from features.quiz.reaction_sets import validate_reaction, REACTION_SETS
 from shared.exceptions.quiz import ParticipantNotFoundError, QuizNotFoundError, SessionNotFoundError
 from shared.utils.content_filter import check_content
 
 
 class FeedbackServiceAsync:
     """Async service for quiz feedback"""
+
+    def __init__(self, redis=None):
+        self.redis = redis
 
     async def submit_participant_feedback(
         self,
@@ -49,7 +57,14 @@ class FeedbackServiceAsync:
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
 
-        check_content(request.feedback_text, "Feedback")
+        if request.reaction:
+            if not quiz.reaction_style:
+                raise QuizNotFoundError("Reactions are not enabled for this quiz")
+            if not validate_reaction(quiz.reaction_style, request.reaction):
+                raise QuizNotFoundError(f"Invalid reaction: {request.reaction}")
+
+        if request.feedback_text:
+            check_content(request.feedback_text, "Feedback")
 
         feedback = QuizFeedback(
             tenant_id=session.tenant_id,
@@ -59,10 +74,25 @@ class FeedbackServiceAsync:
             source_type="participant",
             display_name=request.display_name or participant.display_name,
             rating=request.rating,
-            feedback_text=request.feedback_text.strip(),
+            feedback_text=request.feedback_text.strip() if request.feedback_text else None,
+            reaction=request.reaction,
         )
         db.add(feedback)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            from fastapi import HTTPException
+            raise HTTPException(status_code=409, detail="You have already submitted feedback for this session")
+
+        if request.reaction and self.redis:
+            try:
+                key = f"session:{session.id}:reactions"
+                await self.redis.client.hincrby(key, request.reaction, 1)
+                await self.redis.client.expire(key, 86400)
+            except Exception:
+                pass
+
         return {"success": True, "message": "Feedback submitted"}
 
     async def submit_user_feedback(
@@ -96,7 +126,8 @@ class FeedbackServiceAsync:
             if not session:
                 raise SessionNotFoundError("Session not found")
 
-        check_content(request.feedback_text, "Feedback")
+        if request.feedback_text:
+            check_content(request.feedback_text, "Feedback")
 
         feedback = QuizFeedback(
             tenant_id=quiz.tenant_id,
@@ -106,11 +137,63 @@ class FeedbackServiceAsync:
             source_type="user",
             display_name=request.display_name or current_user.user.full_name or current_user.user.email,
             rating=request.rating,
-            feedback_text=request.feedback_text.strip(),
+            feedback_text=request.feedback_text.strip() if request.feedback_text else None,
+            reaction=request.reaction,
         )
         db.add(feedback)
         await db.commit()
         return {"success": True, "message": "Feedback submitted"}
+
+    async def get_reaction_aggregates(
+        self,
+        db: AsyncSession,
+        session_id: int,
+    ) -> ReactionAggregateResponse:
+        """Get aggregated emoji reactions for a session"""
+        session_result = await db.execute(
+            select(QuizSession).filter(QuizSession.id == session_id)
+        )
+        session = session_result.scalar_one_or_none()
+        if not session:
+            raise SessionNotFoundError("Session not found")
+
+        quiz_result = await db.execute(
+            select(Quiz).filter(Quiz.id == session.quiz_id)
+        )
+        quiz = quiz_result.scalar_one_or_none()
+        reaction_style = getattr(quiz, 'reaction_style', None) if quiz else None
+
+        # Try Redis first
+        if self.redis:
+            try:
+                raw = await self.redis.client.hgetall(f"session:{session_id}:reactions")
+                if raw:
+                    counts = {k: int(v) for k, v in raw.items()}
+                    return ReactionAggregateResponse(
+                        session_id=session_id,
+                        reaction_style=reaction_style,
+                        counts=counts,
+                        total=sum(counts.values()),
+                    )
+            except Exception:
+                pass
+
+        # DB fallback
+        result = await db.execute(
+            select(QuizFeedback.reaction, func.count(QuizFeedback.id))
+            .filter(
+                QuizFeedback.session_id == session_id,
+                QuizFeedback.reaction.isnot(None),
+            )
+            .group_by(QuizFeedback.reaction)
+        )
+        counts = {row[0]: row[1] for row in result.all()}
+        return ReactionAggregateResponse(
+            session_id=session_id,
+            reaction_style=reaction_style,
+            counts=counts,
+            total=sum(counts.values()),
+        )
 
     async def list_feedback(
         self,
@@ -184,6 +267,7 @@ class FeedbackServiceAsync:
                     user_email=row.user_email,
                     rating=feedback.rating,
                     feedback_text=feedback.feedback_text,
+                    reaction=feedback.reaction,
                     created_at=feedback.created_at,
                 )
             )

@@ -99,7 +99,7 @@
     "quizTypeLabel": "Live Quiz",
     "createQuiz": "Create Live Quiz",
     "createPoll": "Create Live Poll",
-    "editQuiz": "Edit Quiz",
+    "editQuiz": "Save",
     "settingsCardTitle": "Settings",
     "settingsLocked": "Settings are read-only",
     "settingsLockedDesc": "This quiz/poll is live. Unpublish it to make changes to settings.",
@@ -382,6 +382,8 @@
     "totalQuestions": "Questions",
     "viewHistory": "History",
     "skinLabel": "Participant skin",
+    "reactionsSection": "Participant Reactions",
+    "reactionsHint": "Let participants react after the session ends",
     "basicsSection": "Basics",
     "appearanceSection": "Appearance",
     "scheduleSection": "Schedule",
@@ -488,7 +490,8 @@
       "offline_poll": "Survey",
       "exam": "Test"
     },
-    "chooseAnswer": "Choose your answer"
+    "chooseAnswer": "Choose your answer",
+    "getReady": "Get ready!"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",
@@ -2159,6 +2162,21 @@
     "emptyStateOfflinePollDesc": "Survey — share a link, collect responses anytime",
     "emptyStateExamDesc": "Test / Exam — timed, auto-scored, shareable via link",
     "themePicker": "Choose a UI theme"
+  },
+  "reactions": {
+    "howWasIt": "How was it?",
+    "thanks": "Thanks for your feedback!",
+    "notGreat": "Not great",
+    "likedIt": "Liked it",
+    "lovedIt": "Loved it!",
+    "meh": "Meh",
+    "boring": "Boring",
+    "ok": "OK",
+    "good": "Good",
+    "amazing": "Amazing!",
+    "submitFailed": "Could not submit reaction",
+    "title": "Participant Reactions",
+    "totalReactions": "{{count}} total reactions"
   },
   "promo": {
     "tagline": "Create your own polls & quizzes for free on Swaya.me",

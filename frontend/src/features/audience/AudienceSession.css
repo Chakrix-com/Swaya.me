@@ -719,6 +719,87 @@
   letter-spacing: 0.04em;
 }
 
+/* ── Promo strip (compact branding) ─────────────────────────────────────────*/
+
+.aud2-promo-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--skin-accent-soft, rgba(99, 102, 241, 0.08)), rgba(99, 102, 241, 0.03));
+  border: 1px solid var(--ctrl-divider, rgba(0, 0, 0, 0.07));
+  color: var(--aud-text-secondary, #566480);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.aud2-promo-strip:hover {
+  background: var(--skin-accent-soft, rgba(99, 102, 241, 0.12));
+  border-color: var(--skin-accent, #6366F1);
+}
+
+.aud2-promo-strip__star {
+  color: var(--skin-accent, #6366F1);
+  font-size: 14px;
+}
+
+.aud2-promo-strip__arrow {
+  color: var(--skin-accent, #6366F1);
+  font-weight: 700;
+  font-size: 15px;
+  transition: transform 0.2s;
+}
+
+.aud2-promo-strip:hover .aud2-promo-strip__arrow {
+  transform: translateX(3px);
+}
+
+/* ── Promo bar (just below header, full-width) ─────────────────────────────*/
+
+.aud2-promo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--skin-accent-soft, rgba(99, 102, 241, 0.08)), rgba(99, 102, 241, 0.03));
+  border-bottom: 1px solid var(--ctrl-divider, rgba(0, 0, 0, 0.07));
+  color: var(--aud-text-secondary, #566480);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.aud2-promo-bar:hover {
+  background: var(--skin-accent-soft, rgba(99, 102, 241, 0.12));
+}
+
+.aud2-promo-bar__star {
+  color: var(--skin-accent, #6366F1);
+  font-size: 12px;
+}
+
+.aud2-promo-bar__arrow {
+  color: var(--skin-accent, #6366F1);
+  font-weight: 700;
+  font-size: 13px;
+  transition: transform 0.2s;
+}
+
+.aud2-promo-bar:hover .aud2-promo-bar__arrow {
+  transform: translateX(3px);
+}
+
 /* ── Feedback panel ─────────────────────────────────────────────────────────*/
 
 .aud2-feedback-panel {
@@ -916,4 +997,257 @@
 
 @keyframes aud2-bar-grow {
   from { width: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GAME-SHOW MODE (quiz / poll)
+   Kahoot-style colored options, ambient glows, celebration accents.
+   Active when .aud2-page--gameshow is present. Exam/offline_poll stay neutral.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Mode accent tokens ────────────────────────────────────────────────────── */
+.aud2-page--quiz         { --aud-gs-accent: #E21B3C; --aud-gs-accent2: #FF6B8A; }
+.aud2-page--poll         { --aud-gs-accent: #1368CE; --aud-gs-accent2: #5AB8FF; }
+.aud2-page--exam         { --aud-gs-accent: #D89E00; --aud-gs-accent2: #FFC95E; }
+.aud2-page--offline_poll { --aud-gs-accent: #26890C; --aud-gs-accent2: #4ADE80; }
+
+/* ── Ambient background — colored glow orbs ────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.aud2-page--gameshow .aud2-screen::before,
+.aud2-page--gameshow .aud2-screen::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(70px);
+  will-change: transform;
+}
+
+.aud2-page--gameshow .aud2-screen::before {
+  width: 320px;
+  height: 320px;
+  top: -60px;
+  right: -80px;
+  background: var(--aud-gs-accent);
+  opacity: 0.07;
+  animation: aud2-orb-drift 14s ease-in-out infinite;
+}
+
+.aud2-page--gameshow .aud2-screen::after {
+  width: 240px;
+  height: 240px;
+  bottom: 10%;
+  left: -60px;
+  background: var(--aud-gs-accent2);
+  opacity: 0.06;
+  animation: aud2-orb-drift 14s ease-in-out infinite 5s;
+}
+
+@keyframes aud2-orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(25px, -20px) scale(1.08); }
+  66%      { transform: translate(-15px, 15px) scale(0.94); }
+}
+
+/* Ensure content sits above orbs */
+.aud2-page--gameshow .aud2-center-panel,
+.aud2-page--gameshow .aud2-ended-panel,
+.aud2-page--gameshow .aud2-question-area,
+.aud2-page--gameshow .aud2-answer-area,
+.aud2-page--gameshow .aud2-between-header,
+.aud2-page--gameshow .aud2-between-loading,
+.aud2-page--gameshow .aud2-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Lobby hero emoji + ring pulse ─────────────────────────────────────────── */
+
+.aud2-gs-hero-emoji {
+  font-size: 72px;
+  line-height: 1;
+  display: block;
+  position: relative;
+  animation: aud2-float 2.5s ease-in-out infinite;
+}
+
+/* Expanding ring emanating from the emoji */
+.aud2-gs-hero-emoji::before {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--aud-gs-accent);
+  opacity: 0;
+  animation: aud2-ring-pulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes aud2-ring-pulse {
+  0%   { opacity: 0.5; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+@keyframes aud2-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* ── Lobby text sizing ─────────────────────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-center-panel .aud2-quiz-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.aud2-page--gameshow .aud2-center-panel .aud2-greeting {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.aud2-page--gameshow .aud2-center-panel .aud2-subtext {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aud-gs-accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Mode-colored pulse dots ───────────────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-pulse-dots span {
+  background: var(--aud-gs-accent);
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Mode-colored timer bar ────────────────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-timer-bar {
+  background: var(--aud-gs-accent);
+  height: 4px;
+}
+
+.aud2-page--gameshow .aud2-timer-track {
+  height: 4px;
+}
+
+/* ── Kahoot-style option tile colors ───────────────────────────────────────── */
+
+.aud2-gs {
+  border: none !important;
+  color: #fff;
+  min-height: 64px;
+  border-radius: 12px;
+}
+
+.aud2-gs--a { background: #E21B3C; }
+.aud2-gs--b { background: #1368CE; }
+.aud2-gs--c { background: #D89E00; }
+.aud2-gs--d { background: #26890C; }
+
+.aud2-gs .aud2-option-key {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.aud2-gs .aud2-option-text,
+.aud2-gs .aud2-option-text p,
+.aud2-gs .aud2-option-text span {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.aud2-gs .aud2-option-img {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.aud2-gs:not(:disabled):active {
+  filter: brightness(0.85);
+  transform: scale(0.96);
+}
+
+.aud2-gs.aud2-option--selected {
+  filter: brightness(1.2);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.aud2-page--gameshow .aud2-options-list {
+  gap: 10px;
+}
+
+/* ── Locked-in state (S4) enhancements ─────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-locked-icon {
+  font-size: 52px;
+}
+
+.aud2-page--gameshow .aud2-locked-heading {
+  color: var(--aud-gs-accent);
+  font-size: 24px;
+}
+
+.aud2-page--gameshow .aud2-locked-choice {
+  border-color: var(--aud-gs-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--aud-gs-accent) 15%, transparent),
+              0 8px 24px color-mix(in srgb, var(--aud-gs-accent) 12%, transparent);
+}
+
+/* ── Ended screen (S6) — celebration ───────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-ended-hero .aud2-hero-icon {
+  font-size: 64px;
+}
+
+.aud2-page--gameshow .aud2-ended-hero .aud2-heading {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--aud-gs-accent), var(--aud-gs-accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aud2-page--gameshow .aud2-stat {
+  border-color: color-mix(in srgb, var(--aud-gs-accent) 20%, transparent);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--aud-gs-accent) 10%, transparent);
+  background: linear-gradient(
+    135deg,
+    var(--aud-surface, #ffffff),
+    color-mix(in srgb, var(--aud-gs-accent) 4%, var(--aud-surface, #ffffff))
+  );
+}
+
+.aud2-page--gameshow .aud2-stat-num {
+  color: var(--aud-gs-accent);
+  font-size: 28px;
+}
+
+/* ── Correct/wrong reveal banners — bolder in game-show ────────────────────── */
+
+.aud2-page--gameshow .aud2-status-banner {
+  font-size: 20px;
+  padding: 14px 16px;
+}
+
+.aud2-page--gameshow .aud2-pts-correct {
+  font-size: 24px;
+  color: var(--skin-correct, #52c41a);
+  text-shadow: 0 2px 8px color-mix(in srgb, var(--skin-correct, #52c41a) 30%, transparent);
+}
+
+/* ── Between questions (S2) — mode vibe ────────────────────────────────────── */
+
+.aud2-page--gameshow .aud2-between-loading .aud2-subtext {
+  font-size: 15px;
+  font-weight: 500;
 }

@@ -99,6 +99,8 @@ class SessionServiceAsync:
             "current_question_status": session.current_question_status.value if session.current_question_status else None,
             "leaderboard_visible": False if is_poll else session.leaderboard_visible,
             "current_question": q_data,
+            "skin": getattr(session.quiz, 'skin', None),
+            "reaction_style": getattr(session.quiz, 'reaction_style', None),
         }
         await self.redis.set_json(
             f"session:{session.id}:audience_state",

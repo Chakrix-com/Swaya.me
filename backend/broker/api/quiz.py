@@ -26,7 +26,7 @@ from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
-    FeedbackSubmitRequest, LeaderboardResponse,
+    FeedbackSubmitRequest, ReactionAggregateResponse, LeaderboardResponse,
     SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse,
     FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse,
     FolderShareRequest, FolderShareEntry,
@@ -73,8 +73,8 @@ async def get_answer_service(redis: RedisClient = Depends(get_redis)) -> AnswerS
     return AnswerServiceAsync(redis)
 
 
-async def get_feedback_service() -> FeedbackServiceAsync:
-    return FeedbackServiceAsync()
+async def get_feedback_service(redis: RedisClient = Depends(get_redis)) -> FeedbackServiceAsync:
+    return FeedbackServiceAsync(redis=redis)
 
 
 async def get_import_service() -> ExcelImportService:
@@ -1039,6 +1039,32 @@ async def submit_user_feedback(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except ContentFilterError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/reactions", response_model=ReactionAggregateResponse)
+async def get_session_reactions(
+    session_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: FeedbackServiceAsync = Depends(get_feedback_service),
+):
+    """Get aggregated emoji reactions for a session (host view)"""
+    try:
+        session_result = await db.execute(
+            select(QuizSession).filter(QuizSession.id == session_id)
+        )
+        session = session_result.scalar_one_or_none()
+        if not session:
+            raise SessionNotFoundError("Session not found")
+        quiz_result = await db.execute(
+            select(Quiz).filter(Quiz.id == session.quiz_id)
+        )
+        quiz = quiz_result.scalar_one_or_none()
+        if not quiz or (current_user.user.role != 'super_admin' and quiz.tenant_id != current_user.tenant_id):
+            raise SessionNotFoundError("Session not found")
+        return await service.get_reaction_aggregates(db, session_id)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.get("/questions/{question_id}/word-cloud-results", response_model=WordCloudResultsResponse)

@@ -894,6 +894,13 @@ class QuizBuilderServiceAsync:
         if 'skin' in request.model_fields_set:
             quiz.skin = request.skin
 
+        # Emoji reactions
+        if 'reaction_style' in request.model_fields_set:
+            from features.quiz.reaction_sets import VALID_STYLES
+            if request.reaction_style and request.reaction_style not in VALID_STYLES:
+                raise QuizValidationError(f"Invalid reaction style: {request.reaction_style}")
+            quiz.reaction_style = request.reaction_style
+
         await db.commit()
         await db.refresh(quiz)
 
@@ -1388,4 +1395,5 @@ class QuizBuilderServiceAsync:
             has_previous_session=bool(getattr(quiz, 'exam_session_id', None)),
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
             skin=getattr(quiz, 'skin', None),
+            reaction_style=getattr(quiz, 'reaction_style', None),
         )

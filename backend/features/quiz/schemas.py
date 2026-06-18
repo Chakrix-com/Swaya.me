@@ -228,6 +228,8 @@ class QuizUpdate(BaseModel):
     proctoring_policy: Optional[dict] = None
     # Participant skin
     skin: Optional[str] = Field(None, max_length=32)
+    # Emoji reactions
+    reaction_style: Optional[str] = Field(None, max_length=32)
 
 
 class QuizResponse(BaseModel):
@@ -266,6 +268,8 @@ class QuizResponse(BaseModel):
     proctoring_policy: Optional[dict] = None
     # Participant skin
     skin: Optional[str] = None
+    # Emoji reactions
+    reaction_style: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -474,6 +478,7 @@ class SessionResultsResponse(BaseModel):
     current_question: Optional[dict] = None  # Mixed format for host view
     leaderboard_visible: bool = True
     skin: Optional[str] = None
+    reaction_style: Optional[str] = None
 
 
 class WordCloudResultsResponse(BaseModel):
@@ -487,11 +492,18 @@ class WordCloudResultsResponse(BaseModel):
 
 class FeedbackSubmitRequest(BaseModel):
     """Submit feedback request"""
-    feedback_text: str = Field(..., min_length=2, max_length=2000)
+    feedback_text: Optional[str] = Field(None, min_length=2, max_length=2000)
     rating: Optional[int] = Field(None, ge=1, le=5)
     quiz_id: Optional[int] = None
     session_id: Optional[int] = None
     display_name: Optional[str] = Field(None, max_length=100)
+    reaction: Optional[str] = Field(None, max_length=32)
+
+    @model_validator(mode='after')
+    def require_feedback_or_reaction(self):
+        if not self.feedback_text and not self.reaction:
+            raise ValueError('Either feedback_text or reaction must be provided')
+        return self
 
 
 class FeedbackResponse(BaseModel):
@@ -507,7 +519,8 @@ class FeedbackResponse(BaseModel):
     display_name: Optional[str] = None
     user_email: Optional[str] = None
     rating: Optional[int] = None
-    feedback_text: str
+    feedback_text: Optional[str] = None
+    reaction: Optional[str] = None
     created_at: datetime
 
 
@@ -517,6 +530,14 @@ class FeedbackListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class ReactionAggregateResponse(BaseModel):
+    """Aggregated emoji reaction counts for a session"""
+    session_id: int
+    reaction_style: Optional[str] = None
+    counts: dict[str, int] = {}
+    total: int = 0
 
 
 class SessionListItemResponse(BaseModel):

@@ -645,6 +645,8 @@ class AnswerServiceAsync:
                 current_question_index=state.get("current_question_index", -1),
                 current_question=current_question,
                 leaderboard_visible=state.get("leaderboard_visible", False),
+                skin=state.get("skin"),
+                reaction_style=state.get("reaction_style"),
             )
         except Exception:
             # Any Redis error → fall back to DB path
@@ -912,6 +914,7 @@ class AnswerServiceAsync:
             current_question=current_question,
             leaderboard_visible=(False if is_poll else session.leaderboard_visible),
             skin=getattr(session.quiz, 'skin', None),
+            reaction_style=getattr(session.quiz, 'reaction_style', None),
         )
 
     async def get_leaderboard(

@@ -13,6 +13,12 @@ import { sessionAPI } from '../../services/api'
 
 const { Title, Text } = Typography
 
+const REACTION_EMOJIS = {
+  thumbs_down: '👎', thumbs_up: '👍', thumbs_love: '👍👍',
+  hearts_broken: '💔', hearts_red: '❤️', hearts_fire: '❤️‍🔥',
+  vibes_boring: '😴', vibes_ok: '😐', vibes_good: '😊', vibes_amazing: '🤩',
+  stars_1: '⭐', stars_2: '⭐⭐', stars_3: '⭐⭐⭐', stars_4: '⭐⭐⭐⭐', stars_5: '⭐⭐⭐⭐⭐',
+}
 const MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' }
 const PODIUM_COLOR = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' }
 
@@ -23,6 +29,7 @@ export default function SessionRecap() {
 
   const [results, setResults] = useState(null)
   const [leaderboard, setLeaderboard] = useState(null)
+  const [reactions, setReactions] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,6 +42,10 @@ export default function SessionRecap() {
         ])
         setResults(rRes.data)
         setLeaderboard(rLb.data)
+        try {
+          const rReact = await sessionAPI.getReactions(sessionId)
+          if (rReact.data?.total > 0) setReactions(rReact.data)
+        } catch (_) {}
       } catch (err) {
         message.error(t('quiz.failedToLoadResults'))
       } finally {
@@ -134,6 +145,31 @@ export default function SessionRecap() {
           )}
         </Space>
       </Card>
+
+      {/* Reactions */}
+      {reactions && reactions.total > 0 && (
+        <Card
+          title={<Space><span style={{ fontSize: 16 }}>😊</span>{t('reactions.title', { defaultValue: 'Participant Reactions' })}</Space>}
+          style={{ marginBottom: 20 }}
+        >
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {Object.entries(reactions.counts)
+              .sort(([, a], [, b]) => b - a)
+              .map(([key, count]) => (
+                <div key={key} style={{ textAlign: 'center', minWidth: 60 }}>
+                  <div style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}>{REACTION_EMOJIS[key] || key}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{count}</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>
+                    {Math.round((count / reactions.total) * 100)}%
+                  </div>
+                </div>
+              ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 12, color: '#888', fontSize: 13 }}>
+            {t('reactions.totalReactions', { count: reactions.total, defaultValue: `${reactions.total} total reactions` })}
+          </div>
+        </Card>
+      )}
 
       {/* Podium */}
       {!isPoll && entries.length > 0 && (

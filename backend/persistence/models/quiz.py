@@ -110,6 +110,9 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Participant skin (visual theme for audience + projector view)
     skin = Column(String(32), nullable=True)
 
+    # Emoji reaction style for participant feedback (null = disabled)
+    reaction_style = Column(String(32), nullable=True)
+
     # Template gallery metadata
     template_category = Column(String(64), nullable=True)
     template_use_count = Column(Integer, default=0, nullable=False, server_default="0")
@@ -283,7 +286,8 @@ class QuizFeedback(Base, TimestampMixin, TenantMixin):
     source_type = Column(String(20), nullable=False)  # participant | user
     display_name = Column(String(100), nullable=True)
     rating = Column(Integer, nullable=True)
-    feedback_text = Column(Text, nullable=False)
+    feedback_text = Column(Text, nullable=True)
+    reaction = Column(String(32), nullable=True)
 
 
 class PlatformEvent(Base):

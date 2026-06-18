@@ -1354,6 +1354,7 @@ export default function QuizBuilder() {
         exam_require_email: response.data.exam_require_email || false,
         exam_allowed_domains: response.data.exam_allowed_domains || undefined,
         skin: response.data.skin || null,
+        reaction_style: response.data.reaction_style || null,
       })
       // Auto-focus title for freshly created activities (skip-setup flow)
       if (isNewActivity) {

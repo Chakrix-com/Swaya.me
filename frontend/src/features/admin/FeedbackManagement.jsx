@@ -55,7 +55,7 @@ function QuizFeedbackTab() {
       dataIndex: 'feedback_text',
       key: 'feedback_text',
       ellipsis: true,
-      render: (v) => <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{v}</Text>,
+      render: (v, r) => <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{v || (r.reaction ? `Reaction: ${r.reaction}` : '—')}</Text>,
     },
   ]
 
@@ -147,7 +147,7 @@ function AppFeedbackTab() {
       title: t('admin.feedbackPage.columns.feedback'),
       dataIndex: 'feedback_text',
       key: 'feedback_text',
-      render: (v) => <div style={{ maxHeight: 120, overflow: 'hidden', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{v}</div>,
+      render: (v, r) => <div style={{ maxHeight: 120, overflow: 'hidden', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{v || (r.reaction ? `Reaction: ${r.reaction}` : '—')}</div>,
     },
   ]
 

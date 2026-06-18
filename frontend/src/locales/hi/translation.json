@@ -95,7 +95,7 @@
   "quiz": {
     "myQuizzes": "मेरी क्विज़",
     "createQuiz": "लाइव क्विज़ बनाएं",
-    "editQuiz": "क्विज़ संपादित करें",
+    "editQuiz": "सहेजें",
     "settingsCardTitle": "सेटिंग्स",
     "settingsLocked": "सेटिंग्स केवल-पठनीय हैं",
     "settingsLockedDesc": "यह क्विज़/पोल लाइव है। सेटिंग्स में बदलाव करने के लिए इसे अप्रकाशित करें।",
@@ -381,6 +381,8 @@
     "totalQuestions": "प्रश्न",
     "viewHistory": "इतिहास",
     "skinLabel": "प्रतिभागी थीम",
+    "reactionsSection": "प्रतिभागी प्रतिक्रियाएं",
+    "reactionsHint": "सत्र समाप्त होने पर प्रतिभागियों को प्रतिक्रिया देने दें",
     "skinDefault": "डिफ़ॉल्ट",
     "skinClassroom": "कक्षा",
     "skinBoardroom": "बोर्डरूम",
@@ -2078,6 +2080,21 @@
     "emptyStateOfflinePollDesc": "ऑफलाइन पोल — लिंक साझा करें, कभी भी प्रतिक्रियाएं एकत्र करें",
     "emptyStateExamDesc": "टेस्ट / परीक्षा — समयबद्ध, स्वतः-स्कोर, लिंक के माध्यम से साझा करने योग्य",
     "themePicker": "UI थीम चुनें"
+  },
+  "reactions": {
+    "howWasIt": "कैसा लगा?",
+    "thanks": "आपकी प्रतिक्रिया के लिए धन्यवाद!",
+    "notGreat": "अच्छा नहीं",
+    "likedIt": "पसंद आया",
+    "lovedIt": "बहुत पसंद!",
+    "meh": "ठीक-ठाक",
+    "boring": "उबाऊ",
+    "ok": "ठीक",
+    "good": "अच्छा",
+    "amazing": "अद्भुत!",
+    "submitFailed": "प्रतिक्रिया भेज नहीं पाए",
+    "title": "प्रतिभागी प्रतिक्रियाएं",
+    "totalReactions": "{{count}} कुल प्रतिक्रियाएं"
   },
   "promo": {
     "tagline": "Swaya.me पर अपने पोल और क्विज़ मुफ़्त में बनाएं",

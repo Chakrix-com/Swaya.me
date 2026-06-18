@@ -9,6 +9,38 @@ import './SetupPanel.css';
 
 const { TextArea } = Input;
 
+const REACTION_STYLES = [
+  { id: null, emoji: '🚫', name: 'None', description: 'No reactions' },
+  { id: 'thumbs', emoji: '👍', name: 'Thumbs', description: '👎 👍 👍👍', preview: ['👎', '👍', '👍👍'] },
+  { id: 'hearts', emoji: '❤️', name: 'Hearts', description: '💔 ❤️ ❤️‍🔥', preview: ['💔', '❤️', '❤️‍🔥'] },
+  { id: 'vibes', emoji: '🤩', name: 'Vibes', description: '😴 😐 😊 🤩', preview: ['😴', '😐', '😊', '🤩'] },
+  { id: 'stars', emoji: '⭐', name: 'Stars', description: '⭐ 1-5 rating', preview: ['⭐'] },
+];
+
+function ReactionStylePicker({ value, onChange, disabled }) {
+  return (
+    <div className="sp-reaction-grid">
+      {REACTION_STYLES.map((style) => {
+        const isActive = (value ?? null) === style.id;
+        return (
+          <button
+            key={style.id ?? 'none'}
+            type="button"
+            disabled={disabled}
+            className={`sp-reaction-card${isActive ? ' sp-reaction-card--active' : ''}`}
+            onClick={() => onChange(style.id)}
+          >
+            <span className="sp-reaction-card__emoji">{style.emoji}</span>
+            <span className="sp-reaction-card__name">{style.name}</span>
+            <span className="sp-reaction-card__desc">{style.description}</span>
+            {isActive && <span className="sp-reaction-card__check"><CheckOutlined /></span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function SkinCard({ value, onChange, disabled }) {
   return (
     <div className="sp-skin-grid">
@@ -187,6 +219,17 @@ export function SetupPanel({
             <SkinCard disabled={isLiveMode} t={t} />
           </Form.Item>
         </div>
+
+        {/* ── Reactions (not for exam) ── */}
+        {!isExam && (
+          <div className="sp-section">
+            <div className="sp-section-title">{t('quiz.reactionsSection', 'Participant Reactions')}</div>
+            <div className="sp-section-label">{t('quiz.reactionsHint', 'Let participants react after the session ends')}</div>
+            <Form.Item name="reaction_style" noStyle>
+              <ReactionStylePicker disabled={isLiveMode} />
+            </Form.Item>
+          </div>
+        )}
 
         {/* ── Schedule (exam / offline poll only) ── */}
         {(isExam || isOfflinePoll) && (

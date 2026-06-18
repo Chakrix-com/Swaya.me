@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useContext, useCallback } from 'react'
+import EmojiReactionBar from './EmojiReactionBar'
 import VideoEmbed from '../quiz/components/VideoEmbed'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -9,15 +10,13 @@ import {
   Rate,
 } from 'antd'
 import ReactWordcloud from 'react-wordcloud'
-import { sessionAPI, questionAPI, feedbackAPI } from '../../services/api'
+import { sessionAPI, questionAPI } from '../../services/api'
 import { trackEvent } from '../../services/metrics'
 import useSessionChannel from '../../hooks/useSessionChannel'
 import { useTranslation } from 'react-i18next'
 import { clearSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
-import RichTextEditor from '../quiz/components/RichTextEditor'
-import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import { applySkin } from '../../themes/skins'
 import useWakeLock from '../../hooks/useWakeLock'
@@ -57,10 +56,6 @@ export default function AudienceSession() {
   const [sessionInvalidated, setSessionInvalidated] = useState(false)
   const [leaderboard, setLeaderboard] = useState(null)
   const [endedEarly, setEndedEarly] = useState(false)
-  const [feedbackText, setFeedbackText] = useState('')
-  const [feedbackRating, setFeedbackRating] = useState(0)
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [timerRemaining, setTimerRemaining] = useState(null)
   const [rankDelta, setRankDelta] = useState(null)
   const prevRankRef = useRef(null)
@@ -263,23 +258,6 @@ export default function AudienceSession() {
     }
   }
 
-  const handleSubmitFeedback = async () => {
-    if (!feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === '') return
-    setFeedbackSubmitting(true)
-    try {
-      await feedbackAPI.submitParticipant(sessionToken, {
-        feedback_text: feedbackText,
-        rating: feedbackRating || undefined,
-        display_name: displayName,
-      })
-      setFeedbackSubmitted(true)
-      message.success(t('audience.feedbackThanks', { defaultValue: 'Thank you for your feedback' }))
-    } catch (error) {
-      message.error(error.response?.data?.detail || t('audience.feedbackSubmitFailed', { defaultValue: 'Failed to submit feedback' }))
-    } finally {
-      setFeedbackSubmitting(false)
-    }
-  }
 
   const handleLeaveSession = async () => {
     try {
@@ -354,6 +332,8 @@ export default function AudienceSession() {
   }, [leaderboard?.current_participant_rank])
 
   const isPollSession = results?.quiz_type === 'poll'
+  const quizType = results?.quiz_type
+  const isGameShow = quizType === 'quiz' || quizType === 'poll'
   const currentQuestionAnswerCount = Number(results?.current_question?.total_answers ?? 0)
   // Show full leaderboard: when session is ended, between questions (no active question),
   // or when the current question already has answers. Clear entries only while a fresh
@@ -465,8 +445,15 @@ export default function AudienceSession() {
 
 
   return (
-    <div ref={containerRef} className="aud2-page audience-session">
+    <div ref={containerRef} className={`aud2-page audience-session${isGameShow ? ' aud2-page--gameshow' : ''}${quizType ? ` aud2-page--${quizType}` : ''}`}>
       <PublicBrandHeader />
+      {sessionStatus === 'ended' && (
+        <a href="https://www.swaya.me" target="_blank" rel="noopener noreferrer" className="aud2-promo-bar">
+          <span className="aud2-promo-bar__star">✦</span>
+          <span>{t('promo.tagline')}</span>
+          <span className="aud2-promo-bar__arrow">→</span>
+        </a>
+      )}
       <div className="aud2-body">
             {/* S0 — no session token */}
             {!sessionToken && (
@@ -536,33 +523,11 @@ export default function AudienceSession() {
 
                   <span className="aud2-name-tag">{displayName}</span>
 
+                  {results?.reaction_style && (
+                    <EmojiReactionBar reactionStyle={results.reaction_style} sessionToken={sessionToken} />
+                  )}
+
                   <LeaderboardTable withBars />
-
-                  <div className="aud2-feedback-panel">
-                    <p className="aud2-feedback-label">{t('audience.shareFeedback', { defaultValue: 'Share Feedback' })}</p>
-                    <Rate value={feedbackRating} onChange={setFeedbackRating} disabled={feedbackSubmitted} />
-                    <div style={{ marginTop: 8, marginBottom: 8 }}>
-                      <RichTextEditor
-                        value={feedbackText}
-                        onChange={setFeedbackText}
-                        placeholder={t('audience.feedbackPlaceholder', { defaultValue: 'Tell us what worked well or what can improve' })}
-                        isDark={theme === 'dark'}
-                        disabled={feedbackSubmitted}
-                        showCode={false}
-                      />
-                    </div>
-                    <button
-                      className="aud2-cta-btn"
-                      onClick={handleSubmitFeedback}
-                      disabled={feedbackSubmitted || feedbackSubmitting || !feedbackText || feedbackText.replace(/<[^>]*>/g, '').trim() === ''}
-                    >
-                      {feedbackSubmitting ? '…' : feedbackSubmitted
-                        ? t('audience.feedbackSubmitted', { defaultValue: 'Feedback Submitted' })
-                        : t('audience.submitFeedback', { defaultValue: 'Submit Feedback' })}
-                    </button>
-                  </div>
-
-                  <PromoCard />
 
                   <button className="aud2-cta-btn" onClick={() => navigate('/join')}>
                     {t('audience.joinAnotherQuiz', { defaultValue: 'Join another quiz' })}
@@ -578,6 +543,9 @@ export default function AudienceSession() {
                   {t('audience.leaveSession', { defaultValue: 'Leave Session' })}
                 </button>
                 <div className="aud2-center-panel">
+                  {isGameShow && (
+                    <span className="aud2-gs-hero-emoji">{quizType === 'quiz' ? '🎯' : '📊'}</span>
+                  )}
                   <div className="aud2-pulse-dots"><span /><span /><span /></div>
                   {results?.quiz_title && <h2 className="aud2-quiz-title">{results.quiz_title}</h2>}
                   <p className="aud2-greeting">Hi, {displayName} 👋</p>
@@ -586,7 +554,11 @@ export default function AudienceSession() {
                       {t('audience.othersHere', { count: results.total_participants - 1, defaultValue: `${results.total_participants - 1} others here` })}
                     </p>
                   )}
-                  <p className="aud2-subtext">{t('audience.quizWillStartSoon', { defaultValue: 'The quiz will start soon…' })}</p>
+                  <p className="aud2-subtext">
+                    {isGameShow
+                      ? t('audience.getReady', { defaultValue: 'Get ready!' })
+                      : t('audience.quizWillStartSoon', { defaultValue: 'The quiz will start soon…' })}
+                  </p>
                 </div>
               </div>
             )}
@@ -764,7 +736,7 @@ export default function AudienceSession() {
                             key={key}
                             role="radio"
                             aria-checked={isSelected}
-                            className={`aud2-option${isSelected ? ' aud2-option--selected' : ''}`}
+                            className={`aud2-option${isSelected ? ' aud2-option--selected' : ''}${isGameShow ? ` aud2-gs aud2-gs--${key.toLowerCase()}` : ''}`}
                             onClick={() => handleSelectAndSubmit(key)}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectAndSubmit(key) } }}
                             disabled={loading}
