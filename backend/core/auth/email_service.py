@@ -142,31 +142,33 @@ WELCOME_EMAIL_HTML = """\
 
 
 <!-- ═══ HEADER ════════════════════════════════════════════════ -->
-<tr><td style="background:linear-gradient(145deg,#0f0c2e 0%,#1e1165 40%,#3b0d8c 75%,#5b21b6 100%);position:relative;overflow:hidden;">
-  <!-- decorative blobs -->
-  <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.35) 0%,transparent 70%);"></div>
-  <div style="position:absolute;bottom:-30px;left:30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.18) 0%,transparent 70%);"></div>
+<tr><td style="background:linear-gradient(145deg,#0f0c2e 0%,#1e1165 40%,#3b0d8c 75%,#5b21b6 100%);">
 
-  <div class="hdr-pad" style="padding:36px 36px 32px;position:relative;z-index:1;">
+  <div class="hdr-pad" style="padding:36px 36px 32px;">
 
     <!-- Logo -->
     <div style="margin-bottom:28px;">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="vertical-align:middle;padding-right:12px;">
-            <img src="https://www.swaya.me/logo-email.png"
+            <img src="cid:logo-email"
                  alt="Swaya.me"
                  width="48" height="48"
                  style="display:block;width:48px;height:48px;border-radius:10px;" />
           </td>
           <td style="vertical-align:middle;">
             <span style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">
-              swaya<span style="font-weight:300;color:rgba(255,255,255,0.55);">.me</span>
+              swaya.me
             </span>
           </td>
         </tr>
       </table>
     </div>
+
+    <!-- Pronunciation -->
+    <p style="margin:0 0 24px;font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:0.2px;">
+      <span style="color:rgba(255,255,255,0.7);">[svuh·yum]</span> &nbsp;·&nbsp; स्वयम् &nbsp;·&nbsp; Sanskrit for <em>"by oneself"</em>
+    </p>
 
     <!-- Hero headline -->
     <h1 style="margin:0 0 10px;font-size:30px;font-weight:900;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">
@@ -218,17 +220,17 @@ WELCOME_EMAIL_HTML = """\
                 border:1px solid #ddd6fe;margin-bottom:36px;">
     <tr>
       <td class="qs-cell" style="padding:20px 24px;text-align:center;border-right:1px solid #ddd6fe;" width="33%">
-        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">1</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-block;text-align:center;margin-bottom:8px;line-height:32px;">1</div>
         <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Create</div>
         <div style="font-size:12px;color:#6b7280;line-height:1.5;">Type a prompt or paste questions from Excel</div>
       </td>
       <td class="qs-cell" style="padding:20px 24px;text-align:center;border-right:1px solid #ddd6fe;" width="33%">
-        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">2</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-block;text-align:center;margin-bottom:8px;line-height:32px;">2</div>
         <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Share</div>
         <div style="font-size:12px;color:#6b7280;line-height:1.5;">Share a 6-digit code or QR — no app needed</div>
       </td>
       <td class="qs-cell" style="padding:20px 24px;text-align:center;" width="33%">
-        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">3</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-block;text-align:center;margin-bottom:8px;line-height:32px;">3</div>
         <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Run</div>
         <div style="font-size:12px;color:#6b7280;line-height:1.5;">Watch the leaderboard update live in real time</div>
       </td>
@@ -305,11 +307,7 @@ WELCOME_EMAIL_HTML = """\
 <!-- ═══ SECTION 2: AI ═════════════════════════════════════════ -->
 <tr><td style="background:#0f0c2e;padding:0;">
 
-  <div style="position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-60px;right:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.15) 0%,transparent 65%);"></div>
-    <div style="position:absolute;bottom:-40px;left:20px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.2) 0%,transparent 65%);"></div>
-
-    <div style="padding:32px 36px;position:relative;z-index:1;">
+    <div style="padding:32px 36px;">
 
       <!-- Section label -->
       <div style="margin-bottom:20px;">
@@ -349,7 +347,6 @@ WELCOME_EMAIL_HTML = """\
       </table>
 
     </div>
-  </div>
 
 </td></tr>
 
@@ -536,13 +533,13 @@ WELCOME_EMAIL_HTML = """\
         <table cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td style="vertical-align:middle;padding-right:8px;">
-              <img src="https://www.swaya.me/logo-email.png"
+              <img src="cid:logo-email"
                    alt="" width="24" height="24"
                    style="display:block;width:24px;height:24px;border-radius:5px;opacity:0.35;" />
             </td>
             <td style="vertical-align:middle;">
               <span style="font-size:18px;font-weight:900;color:rgba(255,255,255,0.25);letter-spacing:-0.3px;">
-                swaya<span style="font-weight:300;">.me</span>
+                swaya.me
               </span>
             </td>
           </tr>
@@ -573,12 +570,23 @@ WELCOME_EMAIL_HTML = """\
 
 async def send_welcome_email(email: str, name: Optional[str] = None) -> bool:
     """Send a welcome email after a new user account is created."""
+    import os
     recipient_name = (name or email.split('@')[0]).strip().split()[0]
     html_content = WELCOME_EMAIL_HTML.format(first_name=recipient_name)
+    logo_path = os.path.join(os.path.dirname(__file__), "logo-email.png")
+    attachments = []
+    if os.path.isfile(logo_path):
+        attachments.append({
+            "file": logo_path,
+            "headers": {"Content-ID": "<logo-email>", "Content-Disposition": 'inline; filename="logo-email.png"'},
+            "mime_type": "image",
+            "mime_subtype": "png",
+        })
     return await send_email(
         subject="Welcome to Swaya.me — you just got a very powerful toolkit",
         recipients=[email],
         html_body=html_content,
+        attachments=attachments,
     )
 
 
@@ -1049,6 +1057,7 @@ async def send_email(
     recipients: list[EmailStr],
     html_body: str,
     sender_name: str | None = None,
+    attachments: list | None = None,
 ) -> bool:
     """
     Send an email using FastMail. If SMTP is not configured, logs the email content.
@@ -1086,7 +1095,8 @@ async def send_email(
             subject=subject,
             recipients=recipients,
             body=html_body,
-            subtype=MessageType.html
+            subtype=MessageType.html,
+            attachments=attachments or [],
         )
         await mailer.send_message(message)
         logger.info(f"Email sent successfully to {recipients}")
