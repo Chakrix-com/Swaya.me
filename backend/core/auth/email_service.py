@@ -111,147 +111,461 @@ WELCOME_EMAIL_HTML = """\
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Swaya.me</title>
+<title>Welcome to Swaya.me — {first_name}</title>
   <style>
-    body {{ margin: 0; padding: 0; background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; }}
-    .wrapper {{ max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
-    .header {{ background: #1677ff; padding: 28px 32px; }}
-    .header h1 {{ margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }}
-    .header p {{ margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 13px; }}
-    .body {{ padding: 32px; }}
-    .greeting {{ font-size: 16px; margin: 0 0 16px; }}
-    .intro {{ font-size: 15px; color: #444; margin: 0 0 24px; line-height: 1.6; }}
-    .feature-list {{ margin: 0 0 28px; padding: 0; list-style: none; }}
-    .feature-list li {{ padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: flex-start; }}
-    .feature-list li:last-child {{ border-bottom: none; }}
-    .feature-icon {{ font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; margin-top: 1px; }}
-    .feature-text strong {{ display: block; font-size: 15px; color: #1a1a1a; margin-bottom: 2px; }}
-    .feature-text span {{ font-size: 13px; color: #666; line-height: 1.5; }}
-    .cta-wrap {{ text-align: center; margin: 28px 0 8px; }}
-    .cta {{ display: inline-block; background: #1677ff; color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 6px; font-size: 15px; font-weight: 600; letter-spacing: 0.1px; }}
-    .footer {{ background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 32px; text-align: center; }}
-    .footer p {{ margin: 0; font-size: 12px; color: #999; line-height: 1.6; }}
+    /* ─── browser preview only — production version must use inline CSS ─── */
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ background: #ede9fe; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #1e1b4b; }}
+
+    @media (max-width: 640px) {{
+      .email-wrapper {{ width: 100% !important; border-radius: 0 !important; }}
+      .hdr-pad {{ padding: 28px 20px 24px !important; }}
+      .body-pad {{ padding: 28px 20px !important; }}
+      .act-cell {{ display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }}
+      .perk-cell {{ display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }}
+      .ai-col {{ display: block !important; width: 100% !important; padding: 0 0 16px 0 !important; }}
+      .qs-cell {{ display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }}
+    }}
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="header">
-      <h1>You're in. Let's run something.</h1>
-      <p>Your Swaya.me account is ready.</p>
+<body style="margin:0;padding:0;background:#ede9fe;">
+
+<!-- ═══════════════════════════════════════════════════════════
+     OUTER WRAPPER
+═══════════════════════════════════════════════════════════ -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ede9fe;padding:36px 16px 48px;">
+<tr><td align="center">
+
+<table class="email-wrapper" width="600" cellpadding="0" cellspacing="0" border="0"
+       style="max-width:600px;width:100%;border-radius:20px;overflow:hidden;
+              box-shadow:0 8px 40px rgba(88,28,235,0.18);">
+
+
+<!-- ═══ HEADER ════════════════════════════════════════════════ -->
+<tr><td style="background:linear-gradient(145deg,#0f0c2e 0%,#1e1165 40%,#3b0d8c 75%,#5b21b6 100%);position:relative;overflow:hidden;">
+  <!-- decorative blobs -->
+  <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.35) 0%,transparent 70%);"></div>
+  <div style="position:absolute;bottom:-30px;left:30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.18) 0%,transparent 70%);"></div>
+
+  <div class="hdr-pad" style="padding:36px 36px 32px;position:relative;z-index:1;">
+
+    <!-- Logo -->
+    <div style="margin-bottom:28px;">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="vertical-align:middle;padding-right:12px;">
+            <img src="https://www.swaya.me/logo-email.png"
+                 alt="Swaya.me"
+                 width="48" height="48"
+                 style="display:block;width:48px;height:48px;border-radius:10px;" />
+          </td>
+          <td style="vertical-align:middle;">
+            <span style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">
+              swaya<span style="font-weight:300;color:rgba(255,255,255,0.55);">.me</span>
+            </span>
+          </td>
+        </tr>
+      </table>
     </div>
-    <div class="body">
-      <p class="greeting">Hi {name},</p>
-      <p class="intro">
-        Welcome to Swaya.me. Here's the full picture of what you can do from day one:
-      </p>
-      <ul class="feature-list">
-        <li>
-          <span class="feature-icon">🎯</span>
-          <span class="feature-text">
-            <strong>Live Quiz</strong>
-            <span>Share a join code — your audience answers MCQs in real time and the leaderboard updates live.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">⚡</span>
-          <span class="feature-text">
-            <strong>Generate with AI</strong>
-            <span>Describe what you want and AI builds your quiz questions — with options and explanations — in seconds.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">📊</span>
-          <span class="feature-text">
-            <strong>Live Poll</strong>
-            <span>Run instant polls with word clouds, rating scales, open-ended, or one-word answers — results animate on screen.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">📋</span>
-          <span class="feature-text">
-            <strong>Offline Poll</strong>
-            <span>No live session needed. Share a link and collect responses at any pace.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">📝</span>
-          <span class="feature-text">
-            <strong>Test / Exam</strong>
-            <span>Schedule a timed exam with negative marking, fullscreen enforcement, and automatic scoring.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">🔒</span>
-          <span class="feature-text">
-            <strong>Proctoring</strong>
-            <span>Webcam monitoring, tab-switch detection, and session locking — for exams that need to be fair.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">📂</span>
-          <span class="feature-text">
-            <strong>Import from Excel</strong>
-            <span>Bulk-upload questions from a spreadsheet. Download the template, fill it in, and you're done.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">🗂️</span>
-          <span class="feature-text">
-            <strong>Templates &amp; Folders</strong>
-            <span>Save any quiz as a reusable template. Organise everything into folders.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">✍️</span>
-          <span class="feature-text">
-            <strong>Rich Text Questions</strong>
-            <span>Bold, italic, code blocks, tables, headings, colours — questions can be fully formatted.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">🖊️</span>
-          <span class="feature-text">
-            <strong>Whiteboard</strong>
-            <span>Draw and annotate live on a canvas during your quiz presentations.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">📈</span>
-          <span class="feature-text">
-            <strong>Session History &amp; Export</strong>
-            <span>Every past session is saved. Download results as a spreadsheet anytime.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">🌐</span>
-          <span class="feature-text">
-            <strong>11 Languages</strong>
-            <span>English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, and Russian.</span>
-          </span>
-        </li>
-        <li>
-          <span class="feature-icon">🌙</span>
-          <span class="feature-text">
-            <strong>Dark / Light Mode</strong>
-            <span>Switch themes on every screen — host, participant, and join views.</span>
-          </span>
-        </li>
-      </ul>
-      <div class="cta-wrap">
-        <a class="cta" href="https://www.swaya.me">Open Dashboard →</a>
+
+    <!-- Hero headline -->
+    <h1 style="margin:0 0 10px;font-size:30px;font-weight:900;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">
+      Your audience engagement<br/>platform is ready.
+    </h1>
+    <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.65);line-height:1.6;">
+      Live quizzes. Self-paced exams. Real-time polls. All in one place — no app needed for your audience.
+    </p>
+
+    <!-- Stats strip -->
+    <table cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+      <tr>
+        <td style="padding-right:28px;">
+          <div style="font-size:22px;font-weight:900;color:#a78bfa;line-height:1;">4</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Activity types</div>
+        </td>
+        <td style="padding-right:28px;border-left:1px solid rgba(255,255,255,0.1);padding-left:28px;">
+          <div style="font-size:22px;font-weight:900;color:#a78bfa;line-height:1;">11</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Languages</div>
+        </td>
+        <td style="padding-right:28px;border-left:1px solid rgba(255,255,255,0.1);padding-left:28px;">
+          <div style="font-size:22px;font-weight:900;color:#a78bfa;line-height:1;">500+</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Participants / session</div>
+        </td>
+        <td style="border-left:1px solid rgba(255,255,255,0.1);padding-left:28px;">
+          <div style="font-size:22px;font-weight:900;color:#f59e0b;line-height:1;">AI</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;">Built in</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</td></tr>
+
+
+<!-- ═══ GREETING ══════════════════════════════════════════════ -->
+<tr><td class="body-pad" style="background:#ffffff;padding:36px 36px 0;">
+
+  <p style="font-size:17px;color:#1e1b4b;margin:0 0 6px;font-weight:400;">
+    Hi <strong style="color:#5b21b6;">{first_name}</strong>,
+  </p>
+  <p style="font-size:15px;color:#4b5563;line-height:1.7;margin:0 0 28px;">
+    You've joined a platform built for teachers, trainers, event hosts, and anyone who needs
+    to engage a room — live or async. Here's everything you can do from the moment you log in.
+  </p>
+
+  <!-- Quick-start 3-step -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);border-radius:14px;
+                border:1px solid #ddd6fe;margin-bottom:36px;">
+    <tr>
+      <td class="qs-cell" style="padding:20px 24px;text-align:center;border-right:1px solid #ddd6fe;" width="33%">
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">1</div>
+        <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Create</div>
+        <div style="font-size:12px;color:#6b7280;line-height:1.5;">Type a prompt or paste questions from Excel</div>
+      </td>
+      <td class="qs-cell" style="padding:20px 24px;text-align:center;border-right:1px solid #ddd6fe;" width="33%">
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">2</div>
+        <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Share</div>
+        <div style="font-size:12px;color:#6b7280;line-height:1.5;">Share a 6-digit code or QR — no app needed</div>
+      </td>
+      <td class="qs-cell" style="padding:20px 24px;text-align:center;" width="33%">
+        <div style="width:32px;height:32px;border-radius:50%;background:#5b21b6;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;line-height:32px;">3</div>
+        <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:3px;">Run</div>
+        <div style="font-size:12px;color:#6b7280;line-height:1.5;">Watch the leaderboard update live in real time</div>
+      </td>
+    </tr>
+  </table>
+
+</td></tr>
+
+
+<!-- ═══ SECTION 1: FOUR WAYS TO RUN A SESSION ════════════════ -->
+<tr><td class="body-pad" style="background:#ffffff;padding:0 36px 32px;">
+
+  <!-- Section label -->
+  <div style="display:flex;align-items:center;margin-bottom:18px;">
+    <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;font-size:12px;font-weight:800;text-align:center;line-height:26px;margin-right:10px;flex-shrink:0;">1</span>
+    <span style="font-size:16px;font-weight:800;color:#1e1b4b;letter-spacing:-0.2px;">Four ways to run a session</span>
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <!-- Live Quiz -->
+      <td class="act-cell" style="padding:0 6px 0 0;vertical-align:top;" width="50%">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:18px;height:100%;background:#fafafa;">
+          <div style="font-size:24px;margin-bottom:10px;">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:6px;">Live Quiz</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.6;">
+            Host-controlled, real-time competitive quiz. Live leaderboard after every question.
+            Export results as PDF, Excel, or PowerPoint when you're done.
+          </div>
+        </div>
+      </td>
+      <!-- Live Poll -->
+      <td class="act-cell" style="padding:0 0 0 6px;vertical-align:top;" width="50%">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:18px;height:100%;background:#fafafa;">
+          <div style="font-size:24px;margin-bottom:10px;">📊</div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:6px;">Live Poll</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.6;">
+            Six question types: MCQ, animated word clouds, 1–10 scale, single-line, paragraph, and one-word.
+            Results update instantly on screen.
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr><td colspan="2" style="padding-bottom:12px;"></td></tr>
+    <tr>
+      <!-- Offline Survey -->
+      <td class="act-cell" style="padding:0 6px 0 0;vertical-align:top;" width="50%">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:18px;height:100%;background:#fafafa;">
+          <div style="font-size:24px;margin-bottom:10px;">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:6px;">Offline Survey</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.6;">
+            No live session required. Generate a QR code and let your audience respond at their own pace —
+            ideal for conference posters, trade shows, and restaurant tables.
+          </div>
+        </div>
+      </td>
+      <!-- Exam Mode -->
+      <td class="act-cell" style="padding:0 0 0 6px;vertical-align:top;" width="50%">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:18px;height:100%;background:#fafafa;">
+          <div style="font-size:24px;margin-bottom:10px;">📝</div>
+          <div style="font-size:14px;font-weight:700;color:#1e1b4b;margin-bottom:6px;">Exam Mode</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.6;">
+            Timed, self-paced exam with OTP email verification. Configurable open/close dates,
+            negative marking, and automatic scoring. Full proctoring available.
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+</td></tr>
+
+
+<!-- ═══ SECTION 2: AI ═════════════════════════════════════════ -->
+<tr><td style="background:#0f0c2e;padding:0;">
+
+  <div style="position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-60px;right:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.15) 0%,transparent 65%);"></div>
+    <div style="position:absolute;bottom:-40px;left:20px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.2) 0%,transparent 65%);"></div>
+
+    <div style="padding:32px 36px;position:relative;z-index:1;">
+
+      <!-- Section label -->
+      <div style="margin-bottom:20px;">
+        <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:12px;font-weight:800;text-align:center;line-height:26px;margin-right:10px;">2</span>
+        <span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">AI does the heavy lifting</span>
       </div>
-      <p style="font-size:14px; color:#555; text-align:center; margin-top:20px; line-height:1.6;">
-        Thanks for joining Swaya.me.<br>
-        Your feedback helps us build something great.
+
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.7;margin:0 0 24px;">
+        Describe what you need. Gemini 2.0 Flash generates a complete, fully populated activity —
+        title, questions, options, and all — streamed live as you watch. Works across all four activity types.
       </p>
-    </div>
-    <div class="footer">
-      <p>
-        You're receiving this because you registered at Swaya.me.<br>
-        © 2026 Swaya.me &nbsp;·&nbsp; <a href="https://www.swaya.me" style="color:#999;">www.swaya.me</a>
-      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="ai-col" style="padding-right:12px;vertical-align:top;" width="33%">
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;">
+              <div style="font-size:20px;margin-bottom:8px;">🎙️</div>
+              <div style="font-size:13px;font-weight:700;color:#fde68a;margin-bottom:5px;">Voice Input</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;">Speak your prompt — no typing required. AI transcribes and generates.</div>
+            </div>
+          </td>
+          <td class="ai-col" style="padding:0 6px;vertical-align:top;" width="33%">
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;">
+              <div style="font-size:20px;margin-bottom:8px;">🖼️</div>
+              <div style="font-size:13px;font-weight:700;color:#fde68a;margin-bottom:5px;">Image Suggestions</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;">For visual topics, AI suggests image search queries per answer option.</div>
+            </div>
+          </td>
+          <td class="ai-col" style="padding-left:12px;vertical-align:top;" width="33%">
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px;">
+              <div style="font-size:20px;margin-bottom:8px;">📈</div>
+              <div style="font-size:13px;font-weight:700;color:#fde68a;margin-bottom:5px;">Exam Analysis</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;">After submissions come in, request an AI performance summary for the class.</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
     </div>
   </div>
+
+</td></tr>
+
+
+<!-- ═══ SECTION 3: PROCTORED EXAMS ════════════════════════════ -->
+<tr><td class="body-pad" style="background:#ffffff;padding:32px 36px;">
+
+  <!-- Section label -->
+  <div style="display:flex;align-items:center;margin-bottom:18px;">
+    <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;font-size:12px;font-weight:800;text-align:center;line-height:26px;margin-right:10px;flex-shrink:0;">3</span>
+    <span style="font-size:16px;font-weight:800;color:#1e1b4b;letter-spacing:-0.2px;">Exams that can't be faked</span>
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background:linear-gradient(135deg,#fef2f2 0%,#fff7ed 100%);border:1px solid #fecaca;border-radius:14px;">
+    <tr>
+      <td style="padding:20px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:top;padding-right:20px;" width="50%">
+              <div style="font-size:13px;color:#7f1d1d;line-height:1.85;">
+                <div style="margin-bottom:7px;">🔒 &nbsp;<strong>OTP email verification</strong> — candidates prove identity before the exam starts</div>
+                <div style="margin-bottom:7px;">📸 &nbsp;<strong>Webcam snapshots</strong> — captured via MediaPipe (client-side, no external service)</div>
+                <div style="margin-bottom:7px;">🚨 &nbsp;<strong>Violation detection</strong> — tab switch, fullscreen exit, copy-paste, focus loss</div>
+              </div>
+            </td>
+            <td style="vertical-align:top;" width="50%">
+              <div style="font-size:13px;color:#7f1d1d;line-height:1.85;">
+                <div style="margin-bottom:7px;">🎯 &nbsp;<strong>Integrity score 0–100</strong> — automatically adjusts the final score</div>
+                <div style="margin-bottom:7px;">🔐 &nbsp;<strong>Lock mid-exam</strong> — host can remove a candidate instantly</div>
+                <div style="margin-bottom:7px;">📥 &nbsp;<strong>Downloadable evidence</strong> — violation timeline + snapshot grid</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</td></tr>
+
+
+<!-- ✦ DIVIDER ✦ -->
+<tr><td style="background:#ffffff;padding:0 36px;">
+  <div style="text-align:center;color:#c4b5fd;font-size:12px;letter-spacing:6px;padding:4px 0 16px;">✦ &nbsp; ✦ &nbsp; ✦</div>
+</td></tr>
+
+
+<!-- ═══ SECTION 4: THE DETAILS THAT DELIGHT ═════════════════ -->
+<tr><td class="body-pad" style="background:#ffffff;padding:0 36px 32px;">
+
+  <!-- Section label -->
+  <div style="display:flex;align-items:center;margin-bottom:18px;">
+    <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;font-size:12px;font-weight:800;text-align:center;line-height:26px;margin-right:10px;flex-shrink:0;">4</span>
+    <span style="font-size:16px;font-weight:800;color:#1e1b4b;letter-spacing:-0.2px;">The details that delight</span>
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td class="perk-cell" style="padding:0 5px 10px 0;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">🎨 &nbsp;Participant Skins</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Set the look and feel per quiz — Classroom, Boardroom, Party, or Default. Applies to all audience devices instantly.</div>
+        </div>
+      </td>
+      <td class="perk-cell" style="padding:0 0 10px 5px;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">🎭 &nbsp;UI Themes</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Classic Indigo, Funky-Studio, or Perky-Game — switchable from the header without a reload.</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="perk-cell" style="padding:0 5px 10px 0;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">🎬 &nbsp;Video in Questions</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Embed YouTube or Vimeo videos directly in any question. Great for listening comprehension and case studies.</div>
+        </div>
+      </td>
+      <td class="perk-cell" style="padding:0 0 10px 5px;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">📱 &nbsp;Install as an App (PWA)</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Add Swaya.me to your home screen on any device. Dashboard loads from cache — no app store required.</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="perk-cell" style="padding:0 5px 10px 0;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">🖊️ &nbsp;Live Host Cockpit</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Two-pane: left mirrors the audience view, right stays your controls. QR pinned throughout so latecomers can always join.</div>
+        </div>
+      </td>
+      <td class="perk-cell" style="padding:0 0 10px 5px;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">📂 &nbsp;Folders + Templates</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Organise everything into nested folders. Browse the template gallery and start with a fully populated activity in one click.</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="perk-cell" style="padding:0 5px 0 0;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">📥 &nbsp;Import from Excel</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Bulk-upload questions from a spreadsheet. Download the template, fill it in, upload — done in under a minute.</div>
+        </div>
+      </td>
+      <td class="perk-cell" style="padding:0 0 0 5px;vertical-align:top;" width="50%">
+        <div style="border-left:3px solid #7c3aed;padding-left:12px;">
+          <div style="font-size:13px;font-weight:700;color:#1e1b4b;margin-bottom:3px;">📤 &nbsp;Export Three Ways</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.55;">Download session results as PDF, Excel, or a ready-to-present PowerPoint deck — immediately after each session.</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+</td></tr>
+
+
+<!-- ═══ LANGUAGE STRIP ════════════════════════════════════════ -->
+<tr><td style="background:#f5f3ff;border-top:1px solid #ede9fe;border-bottom:1px solid #ede9fe;padding:16px 36px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td style="vertical-align:middle;">
+        <span style="font-size:12px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.8px;">🌐 &nbsp;11 Languages</span>
+      </td>
+      <td style="vertical-align:middle;text-align:right;">
+        <span style="font-size:12px;color:#6b7280;">English · Hindi · Tamil · Telugu · Kannada · Bengali · Gujarati · Spanish · French · German · Russian</span>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+
+
+<!-- ═══ CTA PANEL ════════════════════════════════════════════ -->
+<tr><td style="background:linear-gradient(145deg,#3730a3 0%,#5b21b6 50%,#7c3aed 100%);padding:40px 36px;text-align:center;">
+  <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.3px;">
+    Ready to run your first session?
+  </h2>
+  <p style="margin:0 0 24px;font-size:14px;color:rgba(255,255,255,0.65);line-height:1.6;">
+    Create a quiz in under 2 minutes — or let AI build it for you in 10 seconds.
+  </p>
+  <a href="https://www.swaya.me"
+     style="display:inline-block;background:#ffffff;color:#5b21b6;text-decoration:none;
+            padding:14px 40px;border-radius:999px;font-size:15px;font-weight:800;
+            letter-spacing:0.1px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+    Open My Dashboard →
+  </a>
+  <p style="margin:20px 0 0;font-size:12px;color:rgba(255,255,255,0.4);">
+    No app install needed for your audience &nbsp;·&nbsp; Works on any device
+  </p>
+</td></tr>
+
+
+<!-- ═══ OPEN SOURCE CALLOUT ══════════════════════════════════ -->
+<tr><td style="background:#1e1b4b;padding:20px 36px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td style="vertical-align:middle;padding-right:16px;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:3px;">⭐ &nbsp;Swaya.me is open source</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;">
+          Star the repo, file issues, or self-host for your organisation at
+          <a href="https://github.com/Chakrix-com/Swaya.me" style="color:#a78bfa;text-decoration:none;">github.com/Chakrix-com/Swaya.me</a>
+        </div>
+      </td>
+      <td style="vertical-align:middle;text-align:right;white-space:nowrap;">
+        <a href="https://github.com/Chakrix-com/Swaya.me"
+           style="display:inline-block;border:1px solid rgba(255,255,255,0.2);border-radius:8px;
+                  padding:8px 16px;font-size:12px;color:rgba(255,255,255,0.7);text-decoration:none;
+                  background:rgba(255,255,255,0.06);">
+          View on GitHub →
+        </a>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
+<tr><td style="background:#13103b;padding:20px 36px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td>
+        <table cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:middle;padding-right:8px;">
+              <img src="https://www.swaya.me/logo-email.png"
+                   alt="" width="24" height="24"
+                   style="display:block;width:24px;height:24px;border-radius:5px;opacity:0.35;" />
+            </td>
+            <td style="vertical-align:middle;">
+              <span style="font-size:18px;font-weight:900;color:rgba(255,255,255,0.25);letter-spacing:-0.3px;">
+                swaya<span style="font-weight:300;">.me</span>
+              </span>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td align="right">
+        <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.3);line-height:1.7;text-align:right;">
+          You're receiving this because you registered at Swaya.me.<br/>
+          &copy; 2026 &nbsp;<a href="https://www.swaya.me" style="color:rgba(255,255,255,0.4);text-decoration:none;">Swaya.me</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+
+
+</table>
+<!-- /email wrapper -->
+
+</td></tr>
+</table>
+<!-- /outer -->
+
 </body>
 </html>
 """
@@ -260,9 +574,9 @@ WELCOME_EMAIL_HTML = """\
 async def send_welcome_email(email: str, name: Optional[str] = None) -> bool:
     """Send a welcome email after a new user account is created."""
     recipient_name = (name or email.split('@')[0]).strip().split()[0]
-    html_content = WELCOME_EMAIL_HTML.format(name=recipient_name)
+    html_content = WELCOME_EMAIL_HTML.format(first_name=recipient_name)
     return await send_email(
-        subject="Welcome to Swaya.me — here's everything you can do",
+        subject="Welcome to Swaya.me — you just got a very powerful toolkit",
         recipients=[email],
         html_body=html_content,
     )
