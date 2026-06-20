@@ -1,0 +1,317 @@
+/* ── AudienceJoin — reimagined join experience ────────────────────────────────
+   Dark gradient backdrop, glassmorphic card, split-digit code input.
+   Classes use aj-* prefix. Mode-aware accents after quiz lookup.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page shell ────────────────────────────────────────────────────────────── */
+
+.aj-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  transition: background 0.6s ease;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+
+  /* Override visitor header vars for dark bg */
+  --visitor-header-bg: rgba(15, 12, 41, 0.85);
+  --visitor-header-border: rgba(255, 255, 255, 0.08);
+  --visitor-text-primary: #e2e0f0;
+
+  /* Default mode accent */
+  --aj-accent: #6366f1;
+}
+
+/* Mode-specific backgrounds & accents */
+.aj-page--quiz         { --aj-accent: #E21B3C; background: linear-gradient(160deg, #1a0a2e 0%, #3b1040 50%, #24243e 100%); }
+.aj-page--poll         { --aj-accent: #1368CE; background: linear-gradient(160deg, #0a1a3e 0%, #102e5e 50%, #0f172a 100%); }
+.aj-page--exam         { --aj-accent: #D89E00; background: linear-gradient(160deg, #1a1a2e 0%, #2d2840 50%, #1a1a2e 100%); }
+.aj-page--offline_poll { --aj-accent: #26890C; background: linear-gradient(160deg, #0a2e1a 0%, #1a4e30 50%, #0f2a1f 100%); }
+
+.aj-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+/* ── Glassmorphic card ────────────────────────────────────────────────────── */
+
+.aj-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: aj-fade-in 0.35s ease-out;
+}
+
+.aj-card--name {
+  border-top: 3px solid var(--aj-accent);
+}
+
+@keyframes aj-fade-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Typography ────────────────────────────────────────────────────────────── */
+
+.aj-heading {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.aj-subtext {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.aj-quiz-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Mode badge ────────────────────────────────────────────────────────────── */
+
+.aj-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--aj-accent);
+  color: #ffffff;
+}
+
+/* ── Split-digit code input ────────────────────────────────────────────────── */
+
+.aj-digits {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.aj-digit {
+  width: 44px;
+  height: 56px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  caret-color: var(--aj-accent);
+  font-family: inherit;
+}
+
+.aj-digit:focus {
+  border-color: var(--aj-accent);
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--aj-accent) 30%, transparent);
+}
+
+.aj-digit--filled {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+
+.aj-btn {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.aj-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aj-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.aj-btn--primary {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1a1a2e;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+}
+
+.aj-btn--join {
+  background: var(--aj-accent);
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.aj-btn--reroll {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.aj-btn--reroll:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.aj-btn--link {
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 8px;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.aj-btn--link:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Quiz preview section ──────────────────────────────────────────────────── */
+
+.aj-preview {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.aj-participant-count {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* ── Name entry section ────────────────────────────────────────────────────── */
+
+.aj-name-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aj-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.aj-name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.aj-input {
+  flex: 1;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+
+.aj-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.aj-input:focus {
+  border-color: var(--aj-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--aj-accent) 25%, transparent);
+}
+
+/* ── Loading spinner ───────────────────────────────────────────────────────── */
+
+.aj-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(0, 0, 0, 0.15);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: aj-spin 0.6s linear infinite;
+}
+
+@keyframes aj-spin {
+  to { transform: rotate(360deg); }
+}
+
+.aj-btn--join .aj-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 380px) {
+  .aj-digit {
+    width: 38px;
+    height: 48px;
+    font-size: 20px;
+  }
+  .aj-digits { gap: 6px; }
+  .aj-card { padding: 24px 16px; }
+}
