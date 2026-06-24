@@ -12,12 +12,12 @@ from typing import Optional, List
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 
 from persistence.models.quiz import (
     Quiz, QuizType, QuizStatus, QuizSession, QuizSessionStatus,
-    Question, QuestionType, Participant, Answer,
+    Question, QuestionType, Participant, Answer, FolderShare,
 )
 from features.quiz.schemas import (
     ExamInfoResponse,
@@ -561,10 +561,19 @@ async def get_exam_results(
     current_user: CurrentUser,
 ) -> ExamResultsResponse:
     """Auth-required — full results for host: leaderboard + per-question analytics."""
+    shared_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id
+    )
     result = await db.execute(
         select(Quiz)
         .options(selectinload(Quiz.questions))
-        .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+        .filter(
+            Quiz.id == quiz_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(shared_folder_ids),
+            ),
+        )
     )
     quiz = result.scalar_one_or_none()
     if not quiz:
@@ -741,10 +750,19 @@ async def get_participant_detail(
     current_user: CurrentUser,
 ) -> ParticipantDetailResponse:
     """Auth-required — per-participant question breakdown for host."""
+    shared_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id
+    )
     result = await db.execute(
         select(Quiz)
         .options(selectinload(Quiz.questions))
-        .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+        .filter(
+            Quiz.id == quiz_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(shared_folder_ids),
+            ),
+        )
     )
     quiz = result.scalar_one_or_none()
     if not quiz:

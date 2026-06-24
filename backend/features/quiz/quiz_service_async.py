@@ -539,16 +539,22 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizResponse:
         """Get quiz by ID"""
+        shared_folder_ids = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id
+        )
         result = await db.execute(
             select(Quiz)
             .filter(
                 Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
+                or_(
+                    Quiz.tenant_id == current_user.tenant_id,
+                    Quiz.folder_id.in_(shared_folder_ids),
+                ),
             )
             .options(selectinload(Quiz.questions), selectinload(Quiz.folder).selectinload(QuizFolder.parent))
         )
         quiz = result.scalar_one_or_none()
-        
+
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
         
