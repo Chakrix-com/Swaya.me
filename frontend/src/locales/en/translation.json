@@ -564,6 +564,7 @@
     "noMatch": "No match",
     "allowEditing": "Allow editing",
     "currentlySharedWith": "Currently shared with",
+    "sharedWithCount": "Shared with {{count}} user(s)",
     "canEdit": "Can edit",
     "viewOnly": "View only",
     "saveFolderSharing": "Save sharing",

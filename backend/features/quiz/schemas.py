@@ -337,6 +337,7 @@ class FolderResponse(BaseModel):
     children: List["FolderResponse"] = []
     is_shared_to_me: bool = False  # True when this folder was shared by another user
     can_edit: bool = True           # False for read-only shared folders
+    share_count: int = 0            # How many users this folder is shared with (owner view)
 
 
 class FolderShareRequest(BaseModel):

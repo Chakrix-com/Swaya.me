@@ -74,7 +74,7 @@ class QuizBuilderServiceAsync:
         names.reverse()
         return names
 
-    def _folder_to_tree(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]], by_parent: dict[Optional[int], list[QuizFolder]]) -> FolderResponse:
+    def _folder_to_tree(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]], by_parent: dict[Optional[int], list[QuizFolder]], share_count_map: dict[int, int] | None = None) -> FolderResponse:
         path_names = self._folder_path_names_with_lookup(folder, parents)
         children = sorted(by_parent.get(folder.id, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
         return FolderResponse(
@@ -83,7 +83,8 @@ class QuizBuilderServiceAsync:
             parent_id=folder.parent_id,
             sort_order=folder.sort_order or 0,
             path=" / ".join(path_names),
-            children=[self._folder_to_tree(child, parents, by_parent) for child in children],
+            children=[self._folder_to_tree(child, parents, by_parent, share_count_map) for child in children],
+            share_count=(share_count_map or {}).get(folder.id, 0),
         )
 
     def _folder_path_names_with_lookup(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]]) -> list[str]:
@@ -124,6 +125,17 @@ class QuizBuilderServiceAsync:
         shared_folder_ids = {share.FolderShare.folder_id for share in share_rows}
         shared_can_edit = {share.FolderShare.folder_id: share.FolderShare.can_edit for share in share_rows}
 
+        # Share counts for owned folders (how many people the owner shared each folder with)
+        own_folder_ids = [f.id for f in own_rows]
+        share_count_map: dict[int, int] = {}
+        if own_folder_ids:
+            sc_rows = await db.execute(
+                select(FolderShare.folder_id, func.count(FolderShare.id).label("cnt"))
+                .filter(FolderShare.folder_id.in_(own_folder_ids))
+                .group_by(FolderShare.folder_id)
+            )
+            share_count_map = {row.folder_id: row.cnt for row in sc_rows}
+
         by_id = {f.id: f for f in own_rows}
         parents: dict[int, Optional[QuizFolder]] = {f.id: by_id.get(f.parent_id) for f in own_rows}
         by_parent: dict[Optional[int], list[QuizFolder]] = {}
@@ -131,7 +143,7 @@ class QuizBuilderServiceAsync:
             by_parent.setdefault(folder.parent_id, []).append(folder)
 
         roots = sorted(by_parent.get(None, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
-        result = [self._folder_to_tree(root, parents, by_parent) for root in roots]
+        result = [self._folder_to_tree(root, parents, by_parent, share_count_map) for root in roots]
 
         # Append shared-to-me folders as top-level items
         for share_row in share_rows:

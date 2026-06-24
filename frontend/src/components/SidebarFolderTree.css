@@ -162,7 +162,7 @@
   background: rgba(0, 0, 0, 0.07) !important;
 }
 
-/* ── Shared badge ── */
+/* ── Shared badge (shared-to-me) ── */
 .sf2-shared-badge {
   font-size: 9px;
   font-weight: 600;
@@ -173,6 +173,27 @@
   flex-shrink: 0;
   margin-left: auto;
   letter-spacing: 0.02em;
+}
+
+/* ── Share indicator (owner view) ── */
+.sf2-share-indicator {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #f3f0ff;
+  color: #7c3aed;
+  flex-shrink: 0;
+  margin-left: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: background 0.15s;
+}
+
+.sf2-share-indicator:hover {
+  background: #ede9fe;
 }
 
 /* ── Empty state ── */

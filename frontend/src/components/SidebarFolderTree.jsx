@@ -18,7 +18,7 @@ import './SidebarFolderTree.css'
 const ROOT_KEY = 'swayame-root'
 
 // ── Recursive folder node ────────────────────────────────────────────────────
-function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getFolderMenu, t }) {
+function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getFolderMenu, onShare, t }) {
   const [expanded, setExpanded] = useState(true)
   const hasChildren = (node.children || []).length > 0
   const isSelected = selectedFolderId === node.id
@@ -45,6 +45,13 @@ function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getF
         </span>
         <span className="sf2-label">{node.name}</span>
         {isShared && <span className="sf2-shared-badge">shared</span>}
+        {!isShared && node.share_count > 0 && (
+          <Tooltip title={t('dashboard.sharedWithCount', { count: node.share_count })}>
+            <span className="sf2-share-indicator" onClick={e => { e.stopPropagation(); onShare(node) }}>
+              <ShareAltOutlined style={{ fontSize: 10 }} /> {node.share_count}
+            </span>
+          </Tooltip>
+        )}
         {!isShared && (
           <span className="sf2-actions" onClick={e => e.stopPropagation()}>
             <Tooltip title={t('dashboard.tooltipNewSubfolder')}>
@@ -66,6 +73,7 @@ function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getF
           onSelect={onSelect}
           onCreateSub={onCreateSub}
           getFolderMenu={getFolderMenu}
+          onShare={onShare}
           t={t}
         />
       ))}
@@ -308,6 +316,7 @@ function SidebarFolderTree() {
             onSelect={handleSelectFolder}
             onCreateSub={openCreate}
             getFolderMenu={getFolderMenu}
+            onShare={openShare}
             t={t}
           />
         ))}
