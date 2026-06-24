@@ -2,7 +2,7 @@
 Quiz Builder Service - Business logic for quiz CRUD operations (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import select, update, delete, func, or_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
@@ -117,7 +117,6 @@ class QuizBuilderServiceAsync:
                 .join(QuizFolder, QuizFolder.id == FolderShare.folder_id)
                 .filter(
                     FolderShare.shared_with_user_id == current_user.user_id,
-                    QuizFolder.tenant_id == current_user.tenant_id,
                 )
             )
         ).all()
@@ -562,15 +561,23 @@ class QuizBuilderServiceAsync:
         event_id: Optional[int] = None,
         include_archived: bool = False,
     ) -> List[QuizListResponse]:
-        """List quizzes for tenant"""
-        query = select(Quiz).filter(Quiz.tenant_id == current_user.tenant_id)
+        """List quizzes for tenant + quizzes in folders shared to the user"""
+        shared_folder_ids_q = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id
+        )
+        query = select(Quiz).filter(
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(shared_folder_ids_q),
+            )
+        )
 
         if not include_archived:
             query = query.filter(Quiz.archived_at.is_(None))
 
         if event_id:
             query = query.filter(Quiz.event_id == event_id)
-        
+
         # Eagerly load questions to avoid lazy loading in async context
         query = query.options(selectinload(Quiz.questions), selectinload(Quiz.folder).selectinload(QuizFolder.parent))
         query = query.order_by(Quiz.created_at.desc())
