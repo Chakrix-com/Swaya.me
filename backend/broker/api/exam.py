@@ -2,8 +2,11 @@
 Exam API — public and authenticated endpoints for exam participation and results.
 """
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from persistence.database_async import get_async_db
 from shared.utils.redis_client import get_redis, RedisClient
@@ -230,3 +233,134 @@ async def unpublish_exam(
         raise HTTPException(status_code=404, detail=str(e))
     except (QuizValidationError, InvalidQuizStatusError) as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Certificate endpoints (public — no auth) ───────────────────────────────────
+
+class CertMetaResponse(BaseModel):
+    name: str
+    quiz_title: str
+    score_pct: int
+    issued_at: str
+    org_name: str
+    org_logo_url: Optional[str] = None
+
+
+async def _get_participant_for_cert(token: str, db: AsyncSession):
+    """Look up a completed participant by certificate_token; raise 404 if not found."""
+    from persistence.models.quiz import Participant, QuizSession
+    from persistence.models.core import Tenant
+    from features.quiz.schemas import Quiz
+
+    result = await db.execute(
+        select(Participant).where(Participant.certificate_token == token)
+    )
+    participant = result.scalar_one_or_none()
+    if not participant or not participant.completed_at:
+        raise HTTPException(status_code=404, detail="Certificate not found.")
+    return participant
+
+
+@router.get("/exam/certificate/{token}")
+async def get_certificate_png(token: str, db: AsyncSession = Depends(get_async_db)):
+    """
+    Public — generate and return the participant's certificate as a PNG.
+    Nginx caches this for 1 hour (Cache-Control set here).
+    """
+    from persistence.models.quiz import Participant, QuizSession
+    from persistence.models.core import Tenant
+    from persistence.models.quiz import Quiz
+    from features.quiz.certificate_service import generate_certificate_png, _resolve_org_logo
+
+    result = await db.execute(
+        select(Participant).where(Participant.certificate_token == token)
+    )
+    participant = result.scalar_one_or_none()
+    if not participant or not participant.completed_at:
+        raise HTTPException(status_code=404, detail="Certificate not found.")
+
+    # Load the exam session → quiz → tenant
+    session_result = await db.execute(
+        select(QuizSession).where(QuizSession.id == participant.session_id)
+    )
+    session = session_result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Certificate not found.")
+
+    from sqlalchemy.orm import selectinload as _selectinload
+    quiz_result = await db.execute(
+        select(Quiz).options(_selectinload(Quiz.questions)).where(Quiz.id == session.quiz_id)
+    )
+    quiz = quiz_result.scalar_one_or_none()
+
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == (quiz.tenant_id if quiz else 0)))
+    tenant = tenant_result.scalar_one_or_none()
+
+    org_name = (tenant.name if tenant else None) or "Swaya.me"
+    org_logo_url = getattr(tenant, "logo_url", None) if tenant else None
+    org_logo_path = _resolve_org_logo(org_logo_url)
+
+    # Compute score percentage
+    from features.quiz.exam_service_async import _score_participant
+    score_pct = await _score_participant(db, participant, quiz)
+
+    png_bytes = generate_certificate_png(
+        participant_name=participant.display_name or "Participant",
+        quiz_title=quiz.title if quiz else "Assessment",
+        score_pct=score_pct,
+        issued_at=participant.completed_at,
+        org_name=org_name,
+        certificate_token=token,
+        org_logo_path=org_logo_path,
+    )
+
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="certificate-{token[:8]}.png"',
+            "Cache-Control": "public, max-age=3600",
+        },
+    )
+
+
+@router.get("/exam/cert-meta/{token}", response_model=CertMetaResponse)
+async def get_cert_meta(token: str, db: AsyncSession = Depends(get_async_db)):
+    """
+    Public — return lightweight certificate metadata for the share landing page.
+    """
+    from persistence.models.quiz import Participant, QuizSession, Quiz
+    from persistence.models.core import Tenant
+    from features.quiz.exam_service_async import _score_participant
+
+    result = await db.execute(
+        select(Participant).where(Participant.certificate_token == token)
+    )
+    participant = result.scalar_one_or_none()
+    if not participant or not participant.completed_at:
+        raise HTTPException(status_code=404, detail="Certificate not found.")
+
+    session_result = await db.execute(
+        select(QuizSession).where(QuizSession.id == participant.session_id)
+    )
+    session = session_result.scalar_one_or_none()
+
+    from sqlalchemy.orm import selectinload as _selectinload2
+    quiz_result = await db.execute(
+        select(Quiz).options(_selectinload2(Quiz.questions)).where(Quiz.id == (session.quiz_id if session else 0))
+    )
+    quiz = quiz_result.scalar_one_or_none()
+
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == (quiz.tenant_id if quiz else 0)))
+    tenant = tenant_result.scalar_one_or_none()
+
+    score_pct = await _score_participant(db, participant, quiz)
+
+    return CertMetaResponse(
+        name=participant.display_name or "Participant",
+        quiz_title=quiz.title if quiz else "Assessment",
+        score_pct=score_pct,
+        issued_at=participant.completed_at.isoformat(),
+        org_name=(tenant.name if tenant else None) or "Swaya.me",
+        org_logo_url=getattr(tenant, "logo_url", None) if tenant else None,
+    )

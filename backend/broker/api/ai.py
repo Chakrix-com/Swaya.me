@@ -6,7 +6,7 @@ Defaults: primary=gemini, light=ollama (unchanged from original behaviour).
 import asyncio
 import json
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, AsyncGenerator
@@ -252,6 +252,60 @@ async def api_generate_poll_prompt(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
 
     return GeneratePollPromptResponse(prompt=prompt, model=settings.ai.light_provider)
+
+
+class ExtractTextResponse(BaseModel):
+    text: str
+    char_count: int
+    source_label: str
+
+
+_MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+@router.post("/extract-text", response_model=ExtractTextResponse)
+@limiter.limit("10/minute", key_func=get_user_id_key)
+async def api_extract_text(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    url: Optional[str] = Form(None),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Extract plain text from an uploaded PDF/DOCX/TXT file or a public URL.
+    The returned text can be used as the prompt for /generate/questions/stream.
+    Requires BASIC tier or above.
+    """
+    if current_user.tier == "free":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="upgrade_required",
+        )
+
+    if file is None and not url:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Provide either a file or a url.")
+    if file is not None and url:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Provide either a file or a url, not both.")
+
+    from core.ai.document_extractor import extract_from_file, extract_from_url
+
+    if file is not None:
+        # Enforce max file size before reading the whole body
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds 10 MB limit.")
+        data = await file.read()
+        if len(data) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds 10 MB limit.")
+        # Put the data back so the extractor can read it
+        import io
+        file.file = io.BytesIO(data)
+        await file.seek(0)
+        text, source_label = await extract_from_file(file)
+    else:
+        text, source_label = await extract_from_url(url.strip())
+
+    return ExtractTextResponse(text=text, char_count=len(text), source_label=source_label)
 
 
 class RewriteRequest(BaseModel):

@@ -47,6 +47,7 @@ import {
   Modal,
   Checkbox,
   Select,
+  Segmented,
   Spin,
   Alert,
   Tooltip,
@@ -55,7 +56,7 @@ import {
   Switch,
   message as antMessage,
 } from 'antd'
-import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FontColorsOutlined } from '@ant-design/icons'
+import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FontColorsOutlined, LinkOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
@@ -1127,7 +1128,16 @@ export default function QuizBuilder() {
   const recognizerRef = useRef(null)
   const [aiImageHintCount, setAiImageHintCount] = useState(0)
   const [aiOptionImageHintCount, setAiOptionImageHintCount] = useState(0)
-  
+
+  // Document extract state (for AI modal tabs 2 & 3)
+  const [aiSourceTab, setAiSourceTab] = useState('topic') // 'topic' | 'file' | 'url'
+  const [aiExtractFile, setAiExtractFile] = useState(null) // File object
+  const [aiExtractUrl, setAiExtractUrl] = useState('')
+  const [aiExtracting, setAiExtracting] = useState(false)
+  const [aiExtractError, setAiExtractError] = useState(null)
+  const [aiExtractedText, setAiExtractedText] = useState('') // result shown in preview textarea
+  const [aiExtractedLabel, setAiExtractedLabel] = useState('') // source filename/domain
+
   // Excel Import/Export State
   const [importData, setImportData] = useState(null)
   const [isValidating, setIsValidating] = useState(false)
@@ -2435,6 +2445,29 @@ export default function QuizBuilder() {
     hard: { points: 4, negative_points: 1, max_time_seconds: 90 },
   }
 
+  const handleAiExtract = async (file, url) => {
+    setAiExtracting(true)
+    setAiExtractError(null)
+    setAiExtractedText('')
+    try {
+      const res = await aiAPI.extractText(file || null, url || null)
+      const { text, source_label } = res.data
+      setAiExtractedText(text)
+      setAiExtractedLabel(source_label)
+      // Auto-fill the topic textarea so Generate works immediately
+      setAiTopic(text)
+    } catch (err) {
+      const detail = err?.response?.data?.detail
+      if (detail === 'upgrade_required') {
+        setAiExtractError('Document import requires BASIC plan or above.')
+      } else {
+        setAiExtractError(detail || 'Failed to extract text. Please try again.')
+      }
+    } finally {
+      setAiExtracting(false)
+    }
+  }
+
   const handleAiGenerate = async () => {
     if (!aiTopic.trim()) return
     setAiGenerating(true)
@@ -3309,7 +3342,7 @@ export default function QuizBuilder() {
       <Modal
         title={<Space><ThunderboltOutlined />{t('ai.generateQuestionsTitle')}</Space>}
         open={aiModalOpen}
-        onCancel={() => { setAiModalOpen(false); setAiStep('input'); setAiPreview([]); setAiError(null) }}
+        onCancel={() => { setAiModalOpen(false); setAiStep('input'); setAiPreview([]); setAiError(null); setAiExtractedText(''); setAiExtractError(null); setAiSourceTab('topic') }}
         footer={null}
         width={680}
       >
@@ -3323,75 +3356,169 @@ export default function QuizBuilder() {
                 style={{ marginBottom: 0 }}
               />
             )}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <Text strong>{t('ai.promptLabel')}</Text>
-                {('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
-                  <Tooltip title={voiceListening ? t('ai.voiceStop') : t('ai.voiceStart')}>
-                    <Button
-                      size="small"
-                      type={voiceListening ? 'primary' : 'default'}
-                      danger={voiceListening}
-                      icon={<span role="img" aria-label="mic">{voiceListening ? '🔴' : '🎤'}</span>}
-                      onClick={() => {
-                        if (voiceListening) {
-                          recognizerRef.current?.stop()
-                          recognizerRef.current = null
-                          setVoiceListening(false)
-                          return
-                        }
-                        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-                        if (!SR) return
-                        const recognizer = new SR()
-                        recognizerRef.current = recognizer
-                        recognizer.lang = i18n.language || 'en-US'
-                        recognizer.continuous = false
-                        recognizer.interimResults = false
-                        recognizer.onresult = (e) => {
-                          const transcript = e.results[0]?.[0]?.transcript || ''
-                          if (transcript) setAiTopic(prev => prev ? `${prev} ${transcript}` : transcript)
-                        }
-                        recognizer.onend = () => { recognizerRef.current = null; setVoiceListening(false) }
-                        recognizer.onerror = (ev) => {
-                          recognizerRef.current = null
-                          setVoiceListening(false)
-                          if (ev.error === 'not-allowed') {
-                            antMessage.error(t('quiz.voiceMicBlocked'))
-                          } else if (ev.error === 'no-speech') {
-                            antMessage.warning(t('quiz.voiceNoSpeech'))
-                          } else if (ev.error === 'network') {
-                            antMessage.error(t('quiz.voiceNetworkError'))
-                          } else {
-                            antMessage.error(t('quiz.voiceError', { error: ev.error || 'unknown' }))
+            {/* Source selector */}
+            <Segmented
+              block
+              value={aiSourceTab}
+              onChange={v => { setAiSourceTab(v); setAiExtractError(null) }}
+              options={[
+                { label: <span><BulbOutlined /> Describe topic</span>, value: 'topic' },
+                { label: <span><FilePdfOutlined /> Upload file</span>, value: 'file' },
+                { label: <span><LinkOutlined /> From URL</span>, value: 'url' },
+              ]}
+              style={{ marginBottom: 8 }}
+            />
+
+            {/* Tab: Describe topic (original textarea) */}
+            {aiSourceTab === 'topic' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <Text strong>{t('ai.promptLabel')}</Text>
+                  {('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
+                    <Tooltip title={voiceListening ? t('ai.voiceStop') : t('ai.voiceStart')}>
+                      <Button
+                        size="small"
+                        type={voiceListening ? 'primary' : 'default'}
+                        danger={voiceListening}
+                        icon={<span role="img" aria-label="mic">{voiceListening ? '🔴' : '🎤'}</span>}
+                        onClick={() => {
+                          if (voiceListening) {
+                            recognizerRef.current?.stop()
+                            recognizerRef.current = null
+                            setVoiceListening(false)
+                            return
                           }
-                        }
-                        try {
-                          recognizer.start()
-                          setVoiceListening(true)
-                        } catch (err) {
-                          recognizerRef.current = null
-                          antMessage.error(t('quiz.voiceStartError', { error: err?.message || err }))
-                        }
-                      }}
+                          const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+                          if (!SR) return
+                          const recognizer = new SR()
+                          recognizerRef.current = recognizer
+                          recognizer.lang = i18n.language || 'en-US'
+                          recognizer.continuous = false
+                          recognizer.interimResults = false
+                          recognizer.onresult = (e) => {
+                            const transcript = e.results[0]?.[0]?.transcript || ''
+                            if (transcript) setAiTopic(prev => prev ? `${prev} ${transcript}` : transcript)
+                          }
+                          recognizer.onend = () => { recognizerRef.current = null; setVoiceListening(false) }
+                          recognizer.onerror = (ev) => {
+                            recognizerRef.current = null
+                            setVoiceListening(false)
+                            if (ev.error === 'not-allowed') {
+                              antMessage.error(t('quiz.voiceMicBlocked'))
+                            } else if (ev.error === 'no-speech') {
+                              antMessage.warning(t('quiz.voiceNoSpeech'))
+                            } else if (ev.error === 'network') {
+                              antMessage.error(t('quiz.voiceNetworkError'))
+                            } else {
+                              antMessage.error(t('quiz.voiceError', { error: ev.error || 'unknown' }))
+                            }
+                          }
+                          try {
+                            recognizer.start()
+                            setVoiceListening(true)
+                          } catch (err) {
+                            recognizerRef.current = null
+                            antMessage.error(t('quiz.voiceStartError', { error: err?.message || err }))
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                </div>
+                <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 6 }}>
+                  {t('ai.promptHint')}
+                </Text>
+                <Input.TextArea
+                  placeholder={t('ai.promptPlaceholder')}
+                  value={aiTopic}
+                  onChange={e => setAiTopic(e.target.value)}
+                  rows={9}
+                  autoSize={{ minRows: 9, maxRows: 16 }}
+                  style={{ marginTop: 2, fontFamily: 'inherit', fontSize: 14, borderColor: voiceListening ? '#ff4d4f' : undefined }}
+                  autoFocus
+                  showCount
+                  maxLength={5000}
+                />
+              </div>
+            )}
+
+            {/* Tab: Upload file */}
+            {aiSourceTab === 'file' && (
+              <div>
+                <Upload.Dragger
+                  accept=".pdf,.docx,.txt"
+                  maxCount={1}
+                  beforeUpload={file => {
+                    setAiExtractFile(file)
+                    handleAiExtract(file, null)
+                    return false
+                  }}
+                  showUploadList={false}
+                  disabled={aiExtracting}
+                >
+                  <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+                  <p className="ant-upload-text">Click or drag a PDF, DOCX, or TXT file here</p>
+                  <p className="ant-upload-hint">Max 10 MB · Text is extracted and shown below for review before generating</p>
+                </Upload.Dragger>
+                {aiExtracting && <div style={{ textAlign: 'center', marginTop: 12 }}><Spin /> <Text type="secondary"> Extracting text…</Text></div>}
+                {aiExtractError && <Alert type="error" message={aiExtractError} showIcon style={{ marginTop: 8 }} />}
+                {aiExtractedText && !aiExtracting && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text strong style={{ fontSize: 12 }}>Extracted from: {aiExtractedLabel}</Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>{aiExtractedText.length} chars</Text>
+                    </div>
+                    <Input.TextArea
+                      value={aiExtractedText}
+                      onChange={e => { setAiExtractedText(e.target.value); setAiTopic(e.target.value) }}
+                      autoSize={{ minRows: 7, maxRows: 14 }}
+                      style={{ fontSize: 13, fontFamily: 'inherit' }}
                     />
-                  </Tooltip>
+                  </div>
                 )}
               </div>
-              <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 6 }}>
-                {t('ai.promptHint')}
-              </Text>
-              <Input.TextArea
-                placeholder={t('ai.promptPlaceholder')}
-                value={aiTopic}
-                onChange={e => setAiTopic(e.target.value)}
-                rows={9}
-                autoSize={{ minRows: 9, maxRows: 16 }}
-                style={{ marginTop: 2, fontFamily: 'inherit', fontSize: 14, borderColor: voiceListening ? '#ff4d4f' : undefined }}
-                autoFocus
-                showCount
-                maxLength={5000}
-              />
-            </div>
+            )}
+
+            {/* Tab: From URL */}
+            {aiSourceTab === 'url' && (
+              <div>
+                <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 8 }}>
+                  Paste any public webpage URL — Swaya will extract the text and use it to generate questions.
+                </Text>
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    placeholder="https://example.com/article"
+                    value={aiExtractUrl}
+                    onChange={e => setAiExtractUrl(e.target.value)}
+                    onPressEnter={() => aiExtractUrl.trim() && handleAiExtract(null, aiExtractUrl.trim())}
+                    disabled={aiExtracting}
+                  />
+                  <Button
+                    type="primary"
+                    loading={aiExtracting}
+                    disabled={!aiExtractUrl.trim()}
+                    onClick={() => handleAiExtract(null, aiExtractUrl.trim())}
+                  >
+                    Extract
+                  </Button>
+                </Space.Compact>
+                {aiExtractError && <Alert type="error" message={aiExtractError} showIcon style={{ marginTop: 8 }} />}
+                {aiExtractedText && !aiExtracting && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text strong style={{ fontSize: 12 }}>Extracted from: {aiExtractedLabel}</Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>{aiExtractedText.length} chars</Text>
+                    </div>
+                    <Input.TextArea
+                      value={aiExtractedText}
+                      onChange={e => { setAiExtractedText(e.target.value); setAiTopic(e.target.value) }}
+                      autoSize={{ minRows: 7, maxRows: 14 }}
+                      style={{ fontSize: 13, fontFamily: 'inherit' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <Text strong style={{ whiteSpace: 'nowrap' }}>{t('ai.numberOfQuestions')}</Text>
               <InputNumber
@@ -3450,7 +3577,7 @@ export default function QuizBuilder() {
               icon={<ThunderboltOutlined />}
               block
               loading={aiGenerating}
-              disabled={!aiTopic.trim() || aiGenerating}
+              disabled={(!aiTopic.trim() && !aiExtractedText.trim()) || aiGenerating || aiExtracting}
               onClick={handleAiGenerate}
               size="large"
             >

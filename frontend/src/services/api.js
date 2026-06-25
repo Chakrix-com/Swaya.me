@@ -243,6 +243,7 @@ export const examAPI = {
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
   sendParticipantEmails: (quizId, senderName) =>
     api.post(`/quiz/${quizId}/send-participant-emails`, senderName ? { sender_name: senderName } : {}),
+  getCertMeta: (token) => api.get(`/exam/cert-meta/${token}`),
 }
 
 // AI Generation API
@@ -252,6 +253,12 @@ export const aiAPI = {
   generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data),
   rewrite: (data) => api.post('/ai/rewrite', data),
   listModels: () => api.get('/ai/models'),
+  extractText: (file, url) => {
+    const form = new FormData()
+    if (file) form.append('file', file)
+    if (url) form.append('url', url)
+    return api.post('/ai/extract-text', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
   streamGenerateQuestions: async (data, onQuestion, onDone, signal) => {
     const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
     const res = await fetch(`${base}/ai/generate/questions/stream`, {

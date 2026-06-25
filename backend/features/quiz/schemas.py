@@ -819,6 +819,7 @@ class ExamSubmitResponse(BaseModel):
     wrong_count: int
     unanswered_count: int
     question_results: List[ExamQuestionResult]
+    certificate_token: Optional[str] = None
 
 
 class ExamLeaderboardEntry(BaseModel):

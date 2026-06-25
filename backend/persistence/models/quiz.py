@@ -222,6 +222,7 @@ class Participant(Base, TimestampMixin):
     last_activity_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
     is_abandoned = Column(Boolean, default=False, nullable=False, server_default="0")
     result_email_sent = Column(Boolean, default=False, nullable=False, server_default="0")
+    certificate_token = Column(String(36), unique=True, nullable=True, index=True)
 
     # Relationships
     session = relationship("QuizSession", back_populates="participants")

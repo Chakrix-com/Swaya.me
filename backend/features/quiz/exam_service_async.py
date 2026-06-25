@@ -7,6 +7,7 @@ import logging
 import os
 import html as _html
 import secrets
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
@@ -44,6 +45,31 @@ _GRACE_PERIOD_SECONDS = 600  # 10 minutes
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+async def _score_participant(db: AsyncSession, participant, quiz) -> int:
+    """Return the score percentage (0-100) for a completed participant."""
+    if not quiz:
+        return 0
+    answers_result = await db.execute(
+        select(Answer).filter(
+            Answer.participant_id == participant.id,
+            Answer.session_id == participant.session_id,
+        )
+    )
+    answers = answers_result.scalars().all()
+    answers_by_qid = {a.question_id: a for a in answers}
+    total_score = 0
+    max_score = 0
+    for q in quiz.questions:
+        max_score += q.points
+        answer = answers_by_qid.get(q.id)
+        if answer and answer.is_correct:
+            total_score += q.points
+        elif answer and not answer.is_correct:
+            total_score -= getattr(q, "negative_points", 0)
+    total_score = max(0, total_score)
+    return round((total_score / max_score * 100) if max_score > 0 else 0)
 
 
 def _exam_status(quiz: Quiz) -> str:
@@ -451,6 +477,20 @@ async def submit_exam(
     percentage = round((total_score / max_score * 100) if max_score > 0 else 0.0, 2)
 
     participant.completed_at = _utcnow()
+
+    # Generate certificate token for non-FREE tenants
+    cert_token: Optional[str] = None
+    try:
+        from sqlalchemy import select as _select
+        from persistence.models.core import Tenant
+        tenant_result = await db.execute(_select(Tenant).where(Tenant.id == quiz.tenant_id))
+        tenant = tenant_result.scalar_one_or_none()
+        if tenant and tenant.tier.value != "free":
+            cert_token = str(uuid.uuid4())
+            participant.certificate_token = cert_token
+    except Exception:
+        pass  # Never block submission due to cert token generation failure
+
     await db.commit()
 
     return ExamSubmitResponse(
@@ -461,6 +501,7 @@ async def submit_exam(
         wrong_count=wrong_count,
         unanswered_count=unanswered_count,
         question_results=question_results,
+        certificate_token=cert_token,
     )
 
 

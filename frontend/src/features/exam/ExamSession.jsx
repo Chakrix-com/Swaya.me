@@ -8,13 +8,14 @@ import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Form, Input, Progress, Space,
   Alert, Spin, Row, Col, Tag, Statistic, Divider, Radio, Result,
-  Modal, Badge
+  Modal, Badge, message
 } from 'antd'
 import {
   ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
   QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
   TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined,
   FlagOutlined, SaveOutlined, MailOutlined, UnorderedListOutlined,
+  DownloadOutlined, ShareAltOutlined, CopyOutlined, LinkedinFilled,
 } from '@ant-design/icons'
 import { examAPI, proctoringAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
@@ -661,6 +662,15 @@ function QuestionScreen({
 function ScoreScreen({ result, quizTitle, participantEmail, onBack }) {
   const { t } = useTranslation()
   const pct = result.max_score > 0 ? Math.round((result.total_score / result.max_score) * 100) : 0
+  const certToken = result.certificate_token || null
+  const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1$/, '')
+  const shareUrl = certToken ? `${window.location.origin}/cert/${certToken}` : null
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      message.success('Link copied!')
+    })
+  }
 
   return (
     <div style={{ maxWidth: 520, margin: '0 auto', paddingTop: 32 }}>
@@ -688,6 +698,36 @@ function ScoreScreen({ result, quizTitle, participantEmail, onBack }) {
             />
           </Col>
         </Row>
+
+        {/* Certificate section */}
+        {certToken && (
+          <Card
+            size="small"
+            style={{ marginBottom: 20, background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%)', border: '1px solid #adc6ff', borderRadius: 10 }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              <Text strong style={{ fontSize: 15 }}>🎓 Your certificate is ready</Text>
+              <Space wrap justify="center">
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  onClick={() => window.open(`${apiBase}/api/v1/exam/certificate/${certToken}`, '_blank')}
+                >
+                  Download Certificate
+                </Button>
+                <Button
+                  icon={<LinkedinFilled style={{ color: '#0A66C2' }} />}
+                  onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank')}
+                >
+                  Share on LinkedIn
+                </Button>
+                <Button icon={<CopyOutlined />} onClick={handleCopyLink}>
+                  Copy link
+                </Button>
+              </Space>
+            </Space>
+          </Card>
+        )}
 
         <Space direction="vertical" style={{ width: '100%', textAlign: 'left', marginBottom: 20 }}>
           <Text strong style={{ display: 'block', marginBottom: 6 }}>{t('exam.whatsNext', 'What happens next?')}</Text>

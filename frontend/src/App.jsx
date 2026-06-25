@@ -62,6 +62,7 @@ const SessionRecap = lazy(() => import('./features/quiz/SessionRecap'))
 const OfflinePollResults = lazy(() => import('./features/offline-poll/OfflinePollResults'))
 const ExamResults = lazy(() => import('./features/exam/ExamResults'))
 const IntegrityReport = lazy(() => import('./features/exam/IntegrityReport'))
+const CertificatePage = lazy(() => import('./features/exam/CertificatePage'))
 const QuizPresent = lazy(() => import('./features/quiz/QuizPresent'))
 const UserManagement = lazy(() => import('./features/admin/components/UserManagement'))
 const Statistics = lazy(() => import('./features/admin/Statistics'))
@@ -386,7 +387,8 @@ function AppRoutes() {
     location.pathname.startsWith('/session') ||
     location.pathname.startsWith('/present') ||
     location.pathname.startsWith('/poll') ||
-    location.pathname.startsWith('/e/')
+    location.pathname.startsWith('/e/') ||
+    location.pathname.startsWith('/cert/')
   ) {
     return (
       <PublicLayout>
@@ -397,6 +399,7 @@ function AppRoutes() {
           <Route path="/present/:sessionId" element={<QuizPresent />} />
           <Route path="/poll/:slug" element={<OfflinePollSession />} />
           <Route path="/e/:slug" element={<ExamSession />} />
+          <Route path="/cert/:token" element={<CertificatePage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </PublicLayout>
