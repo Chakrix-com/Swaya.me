@@ -1,5 +1,5 @@
 """
-Certificate PNG generator using Pillow + DejaVu fonts (no external deps beyond pillow).
+Certificate PNG generator using Pillow + DejaVu fonts + qrcode.
 
 Produces a 1200×850 landscape PNG.  Generated on every request (<200ms);
 no storage layer needed.  Nginx caches the response for 1 hour.
@@ -184,15 +184,42 @@ def generate_certificate_png(
     date_str = issued_at.strftime("%d %B %Y")
     _draw_centred(draw, 460, f"Score: {score_pct}%  ·  Date: {date_str}", f_body, GRAY)
 
-    # ── Footer separator ───────────────────────────────────────────────────────
-    draw.line([(100, H - 130), (W - 100, H - 130)], fill=BORDER, width=1)
+    # ── QR code (bottom-right, inside light box) ──────────────────────────────
+    QR_SIZE = 115
+    QR_X = W - 75 - QR_SIZE   # 1010
+    QR_Y = H - 85 - QR_SIZE   # 650
+
+    try:
+        import qrcode as _qrcode
+        verify_url = f"https://swaya.me/cert/{certificate_token}"
+        qr = _qrcode.QRCode(version=None, box_size=4, border=2,
+                             error_correction=_qrcode.constants.ERROR_CORRECT_M)
+        qr.add_data(verify_url)
+        qr.make(fit=True)
+        qr_pil = qr.make_image(fill_color=NAVY, back_color=WHITE).get_image()
+        qr_pil = qr_pil.resize((QR_SIZE, QR_SIZE), resample=0)  # NEAREST for crisp pixels
+        img.paste(qr_pil.convert("RGB"), (QR_X, QR_Y))
+
+        # "Scan to verify" label under QR
+        scan_font = _load_font(_FONT_REGULAR, 11)
+        scan_text = "Scan to verify"
+        stw = _text_width(draw, scan_text, scan_font)
+        draw.text((QR_X + (QR_SIZE - stw) // 2, QR_Y + QR_SIZE + 4), scan_text,
+                  font=scan_font, fill=GRAY)
+    except Exception as exc:
+        logger.warning("certificate_service: QR generation failed: %s", exc)
+        # Fall back to text URL if qrcode fails
+        verify_text = f"Verify at: swaya.me/cert/{certificate_token}"
+        _draw_centred(draw, H - 98, verify_text, f_small, INDIGO)
+
+    # ── Footer separator (clipped left of QR code) ─────────────────────────────
+    draw.line([(100, H - 130), (QR_X - 20, H - 130)], fill=BORDER, width=1)
 
     # ── Issued by ─────────────────────────────────────────────────────────────
-    _draw_centred(draw, H - 122, f"Issued by: {org_name}", f_body, GRAY)
-
-    # ── Verification URL ───────────────────────────────────────────────────────
-    verify_text = f"Verify at: swaya.me/cert/{certificate_token}"
-    _draw_centred(draw, H - 98, verify_text, f_small, INDIGO)
+    issued_text = f"Issued by: {org_name}"
+    itw = _text_width(draw, issued_text, f_body)
+    left_cx = (QR_X - 20 + 100) // 2  # centre of the left section
+    draw.text((left_cx - itw // 2, H - 122), issued_text, font=f_body, fill=GRAY)
 
     out = io.BytesIO()
     img.save(out, format="PNG", optimize=True)
