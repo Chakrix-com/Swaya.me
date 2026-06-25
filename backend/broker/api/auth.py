@@ -35,14 +35,14 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         secure=True,
-        samesite="strict",
+        samesite="lax",
         max_age=_COOKIE_MAX_AGE,
         path="/",
     )
 
 
 def _clear_auth_cookie(response: Response) -> None:
-    response.delete_cookie("access_token", path="/", samesite="strict", secure=True)
+    response.delete_cookie("access_token", path="/", samesite="lax", secure=True)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

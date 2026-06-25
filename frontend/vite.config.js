@@ -12,7 +12,8 @@ export default defineConfig({
       // Only cache the app shell — API calls are never cached
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        globIgnores: ['assets/help-screens/**'],
         runtimeCaching: [
           {
             // Google Fonts — cache-first, 1 year
