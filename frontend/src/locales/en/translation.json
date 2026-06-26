@@ -1881,7 +1881,19 @@
     "examSuggApply": "Apply to settings",
     "examSuggDismiss": "Dismiss",
     "imageHintBanner": "{{count}} question(s) were suggested with images. Open each question to upload the image.",
-    "optionImageHintBanner": "{{count}} question(s) were suggested with image options. Open each question to upload a photo per option."
+    "optionImageHintBanner": "{{count}} question(s) were suggested with image options. Open each question to upload a photo per option.",
+    "sourceTabTopic": "Describe topic",
+    "sourceTabFile": "Upload file",
+    "sourceTabUrl": "From URL",
+    "uploadDraggerText": "Click or drag a PDF, DOCX, or TXT file here",
+    "uploadDraggerHint": "Max 10 MB · Text is extracted and shown below for review before generating",
+    "extracting": "Extracting text…",
+    "extractedFrom": "Extracted from: {{label}}",
+    "charCount": "{{count}} chars",
+    "urlHint": "Paste any public webpage URL — Swaya will extract the text and use it to generate questions.",
+    "extractButton": "Extract",
+    "extractUpgradePlan": "Document import requires BASIC plan or above.",
+    "extractFailed": "Failed to extract text. Please try again."
   },
   "offlinePoll": {
     "typeLabel": "Survey",

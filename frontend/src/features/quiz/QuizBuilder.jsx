@@ -2459,9 +2459,9 @@ export default function QuizBuilder() {
     } catch (err) {
       const detail = err?.response?.data?.detail
       if (detail === 'upgrade_required') {
-        setAiExtractError('Document import requires BASIC plan or above.')
+        setAiExtractError(t('ai.extractUpgradePlan'))
       } else {
-        setAiExtractError(detail || 'Failed to extract text. Please try again.')
+        setAiExtractError(detail || t('ai.extractFailed'))
       }
     } finally {
       setAiExtracting(false)
@@ -3362,9 +3362,9 @@ export default function QuizBuilder() {
               value={aiSourceTab}
               onChange={v => { setAiSourceTab(v); setAiExtractError(null) }}
               options={[
-                { label: <span><BulbOutlined /> Describe topic</span>, value: 'topic' },
-                { label: <span><FilePdfOutlined /> Upload file</span>, value: 'file' },
-                { label: <span><LinkOutlined /> From URL</span>, value: 'url' },
+                { label: <span><BulbOutlined /> {t('ai.sourceTabTopic')}</span>, value: 'topic' },
+                { label: <span><FilePdfOutlined /> {t('ai.sourceTabFile')}</span>, value: 'file' },
+                { label: <span><LinkOutlined /> {t('ai.sourceTabUrl')}</span>, value: 'url' },
               ]}
               style={{ marginBottom: 8 }}
             />
@@ -3457,16 +3457,16 @@ export default function QuizBuilder() {
                   disabled={aiExtracting}
                 >
                   <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-                  <p className="ant-upload-text">Click or drag a PDF, DOCX, or TXT file here</p>
-                  <p className="ant-upload-hint">Max 10 MB · Text is extracted and shown below for review before generating</p>
+                  <p className="ant-upload-text">{t('ai.uploadDraggerText')}</p>
+                  <p className="ant-upload-hint">{t('ai.uploadDraggerHint')}</p>
                 </Upload.Dragger>
-                {aiExtracting && <div style={{ textAlign: 'center', marginTop: 12 }}><Spin /> <Text type="secondary"> Extracting text…</Text></div>}
+                {aiExtracting && <div style={{ textAlign: 'center', marginTop: 12 }}><Spin /> <Text type="secondary"> {t('ai.extracting')}</Text></div>}
                 {aiExtractError && <Alert type="error" message={aiExtractError} showIcon style={{ marginTop: 8 }} />}
                 {aiExtractedText && !aiExtracting && (
                   <div style={{ marginTop: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text strong style={{ fontSize: 12 }}>Extracted from: {aiExtractedLabel}</Text>
-                      <Text type="secondary" style={{ fontSize: 11 }}>{aiExtractedText.length} chars</Text>
+                      <Text strong style={{ fontSize: 12 }}>{t('ai.extractedFrom', { label: aiExtractedLabel })}</Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>{t('ai.charCount', { count: aiExtractedText.length })}</Text>
                     </div>
                     <Input.TextArea
                       value={aiExtractedText}
@@ -3483,7 +3483,7 @@ export default function QuizBuilder() {
             {aiSourceTab === 'url' && (
               <div>
                 <Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 8 }}>
-                  Paste any public webpage URL — Swaya will extract the text and use it to generate questions.
+                  {t('ai.urlHint')}
                 </Text>
                 <Space.Compact style={{ width: '100%' }}>
                   <Input
@@ -3499,15 +3499,15 @@ export default function QuizBuilder() {
                     disabled={!aiExtractUrl.trim()}
                     onClick={() => handleAiExtract(null, aiExtractUrl.trim())}
                   >
-                    Extract
+                    {t('ai.extractButton')}
                   </Button>
                 </Space.Compact>
                 {aiExtractError && <Alert type="error" message={aiExtractError} showIcon style={{ marginTop: 8 }} />}
                 {aiExtractedText && !aiExtracting && (
                   <div style={{ marginTop: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text strong style={{ fontSize: 12 }}>Extracted from: {aiExtractedLabel}</Text>
-                      <Text type="secondary" style={{ fontSize: 11 }}>{aiExtractedText.length} chars</Text>
+                      <Text strong style={{ fontSize: 12 }}>{t('ai.extractedFrom', { label: aiExtractedLabel })}</Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>{t('ai.charCount', { count: aiExtractedText.length })}</Text>
                     </div>
                     <Input.TextArea
                       value={aiExtractedText}

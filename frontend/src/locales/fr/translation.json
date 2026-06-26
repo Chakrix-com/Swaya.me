@@ -1825,7 +1825,19 @@
     "examSuggApply": "Appliquer aux paramètres",
     "examSuggDismiss": "Ignorer",
     "imageHintBanner": "{{count}} question(s) ont des images suggérées. Ouvrez chaque question pour télécharger l'image.",
-    "optionImageHintBanner": "{{count}} question(s) ont des images d'options suggérées. Ouvrez chaque question pour télécharger une photo par option."
+    "optionImageHintBanner": "{{count}} question(s) ont des images d'options suggérées. Ouvrez chaque question pour télécharger une photo par option.",
+    "sourceTabTopic": "Décrire le sujet",
+    "sourceTabFile": "Télécharger un fichier",
+    "sourceTabUrl": "Depuis une URL",
+    "uploadDraggerText": "Cliquez ou glissez un fichier PDF, DOCX ou TXT ici",
+    "uploadDraggerHint": "Max. 10 Mo · Le texte est extrait et affiché ci-dessous pour révision avant de générer",
+    "extracting": "Extraction du texte…",
+    "extractedFrom": "Extrait de : {{label}}",
+    "charCount": "{{count}} caractères",
+    "urlHint": "Collez n'importe quelle URL de page web publique — Swaya extraira le texte et l'utilisera pour générer des questions.",
+    "extractButton": "Extraire",
+    "extractUpgradePlan": "L'importation de documents nécessite le plan BASIC ou supérieur.",
+    "extractFailed": "Échec de l'extraction du texte. Veuillez réessayer."
   },
   "offlinePoll": {
     "typeLabel": "Enquête",
