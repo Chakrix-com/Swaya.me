@@ -44,9 +44,9 @@ function Login() {
       <div className="login-container">
         <Card className="login-form">
           {/* Logo/Branding Header */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Space direction="vertical" size={16} align="center" style={{ width: '100%' }}>
+              <Space direction="vertical" size={4} align="center" style={{ width: '100%' }}>
                 <img src={logo} alt="Swaya Logo" style={{ display: 'block', margin: '0 auto', height: 'auto', maxHeight: '64px', maxWidth: '100%', objectFit: 'contain', borderRadius: '12px' }} />
                 <Title level={2} style={{ margin: 0, color: 'var(--visitor-accent)', textAlign: 'center' }}>
                   Swaya.me
@@ -56,7 +56,7 @@ function Login() {
             </Link>
           </div>
 
-          <Title level={3} style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <Title level={3} style={{ textAlign: 'center', marginBottom: '8px' }}>
             {t('auth.login')}
           </Title>
 
@@ -64,7 +64,7 @@ function Login() {
             <Alert
               type="info"
               showIcon
-              style={{ marginBottom: 16 }}
+              style={{ marginBottom: 12 }}
               message={t('auth.verifyEmailNoticeTitle', { defaultValue: 'Verify your email before logging in' })}
               description={t('auth.verifyEmailNoticeBody', {
                 defaultValue: 'We sent a verification link to {{email}}. Please verify your email and then log in.',
@@ -99,18 +99,18 @@ function Login() {
               <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} size="large" />
             </Form.Item>
 
-            <div style={{ textAlign: 'right', marginBottom: '24px', marginTop: '-12px' }}>
+            <div style={{ textAlign: 'right', marginBottom: '8px', marginTop: '-6px' }}>
               <Link to="/forgot-password" style={{ color: 'var(--visitor-accent)' }}>
                 {t('auth.forgotPassword')}
               </Link>
             </div>
 
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={loading} 
-                block 
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
                 icon={<LoginOutlined />}
                 size="large"
               >
@@ -118,7 +118,7 @@ function Login() {
               </Button>
             </Form.Item>
 
-            <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '8px 0', gap: 8 }}>
               <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
               <span style={{ color: 'var(--visitor-text-secondary)', fontSize: 12 }}>{t('common.or')}</span>
               <div style={{ flex: 1, height: 1, background: 'var(--visitor-panel-border)' }} />
@@ -134,11 +134,11 @@ function Login() {
               {t('auth.continueWithGoogle')}
             </Button>
 
-            <div style={{ textAlign: 'center', marginTop: '16px', color: 'var(--visitor-text-secondary)' }}>
+            <div style={{ textAlign: 'center', marginTop: '8px', color: 'var(--visitor-text-secondary)' }}>
               {t('auth.noAccount')} <Link to="/register">{t('auth.registerButton')}</Link>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--visitor-panel-border)' }}>
+            <div style={{ textAlign: 'center', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--visitor-panel-border)' }}>
               <Link to="/">
                 <Button type="link" icon={<HomeOutlined />}>
                   {t('auth.backToHome')}
@@ -147,7 +147,7 @@ function Login() {
             </div>
           </Form>
 
-          <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--visitor-panel-border)', fontSize: 12, color: 'var(--visitor-text-secondary)' }}>
+          <div style={{ textAlign: 'center', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid var(--visitor-panel-border)', fontSize: 12, color: 'var(--visitor-text-secondary)' }}>
             <Space split={<Text type="secondary">·</Text>} wrap size={4} style={{ justifyContent: 'center', width: '100%' }}>
               <Link to="/about" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.aboutLink')}</Link>
               <Link to="/privacy-policy" style={{ fontSize: 12, color: 'var(--visitor-text-secondary)' }}>{t('pages.legal.privacyLink')}</Link>

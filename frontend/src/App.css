@@ -9,19 +9,29 @@
   align-items: center;
   width: 100%;
   min-height: 100vh;
-  padding: 24px;
+  padding: 16px;
   background: var(--visitor-login-bg);
 }
 
 .login-form {
   max-width: 450px;
   width: 100%;
-  padding: 48px 40px;
+  padding: 20px 28px;
   background: var(--visitor-panel-bg);
   border: 1px solid var(--visitor-panel-border);
   border-radius: 16px;
   box-shadow: var(--visitor-card-shadow);
   color: var(--visitor-text-primary);
+}
+
+/* Card already gets its padding from .login-form above — zero out the
+   antd Card body's own default padding so it isn't applied twice. */
+.login-form .ant-card-body {
+  padding: 0;
+}
+
+.login-form .ant-form-item {
+  margin-bottom: 12px;
 }
 
 .login-form a,
