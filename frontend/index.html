@@ -12,9 +12,6 @@
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Swaya.me - Interactive Quiz Platform</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
     <meta name="description" content="Create and run live interactive quizzes and polls. Audiences join instantly — no app needed." />
 
     <!-- Open Graph -->
@@ -49,18 +46,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      (function () {
-        var cacheBuster = Date.now().toString()
-        var links = document.querySelectorAll('link[rel="stylesheet"]')
-        links.forEach(function (link) {
-          var href = link.getAttribute('href')
-          if (!href) return
-          var separator = href.indexOf('?') === -1 ? '?' : '&'
-          link.setAttribute('href', href + separator + 'v=' + cacheBuster)
-        })
-      })()
-    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

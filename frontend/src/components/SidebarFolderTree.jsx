@@ -58,7 +58,8 @@ function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getF
               <Button type="text" size="small" icon={<FolderAddOutlined />}
                 className="sf2-action-btn" onClick={() => onCreateSub(node.id)} />
             </Tooltip>
-            <Dropdown menu={{ items: getFolderMenu(node) }} trigger={['click']}>
+            <Dropdown menu={{ items: getFolderMenu(node) }} trigger={['click']}
+              getPopupContainer={trigger => trigger.parentElement}>
               <Button type="text" size="small" icon={<MoreOutlined />} className="sf2-action-btn" />
             </Dropdown>
           </span>

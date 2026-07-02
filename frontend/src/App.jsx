@@ -455,6 +455,7 @@ function AppRoutes() {
   )
 }
 
+
 function App() {
   const { i18n } = useTranslation()
   const locale = localeMap[i18n.language] || enUS

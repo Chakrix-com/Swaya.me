@@ -32,7 +32,7 @@ export default defineConfig({
           },
         ],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/diag\.html$/],
       },
       manifest: {
         name: 'Swaya.me',
