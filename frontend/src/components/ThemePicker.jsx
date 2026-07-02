@@ -1,4 +1,3 @@
-import { startTransition } from 'react'
 import { Dropdown, Button } from 'antd'
 import { BgColorsOutlined, CheckOutlined } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
@@ -35,12 +34,11 @@ const ThemePicker = () => {
         {id === themeId && <CheckOutlined style={{ fontSize: 11 }} />}
       </span>
     ),
-    onClick: () => startTransition(() => dispatch(setTheme(id))),
+    onClick: () => dispatch(setTheme(id)),
   }))
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight"
-      getPopupContainer={trigger => trigger.parentElement}>
+    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
       <Button type="text" icon={<BgColorsOutlined />} className="theme-picker-btn" />
     </Dropdown>
   )

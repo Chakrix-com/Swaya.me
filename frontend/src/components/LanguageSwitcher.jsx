@@ -1,4 +1,4 @@
-import React, { useState, startTransition } from 'react'
+import React, { useState } from 'react'
 import { Select } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { GlobalOutlined } from '@ant-design/icons'
@@ -26,11 +26,8 @@ const LanguageSwitcher = () => {
   const handleLanguageChange = async (value) => {
     const previous = i18n.language
     
-    // Change language in UI — startTransition keeps the browser responsive
-    // during the full-app re-render cascade that i18n triggers
-    startTransition(() => {
-      i18n.changeLanguage(value)
-    })
+    // Change language in UI
+    i18n.changeLanguage(value)
     localStorage.setItem('preferredLanguage', value)
     
     // Track language change (async, don't block UI)
@@ -77,7 +74,6 @@ const LanguageSwitcher = () => {
       style={{ width: 120 }}
       suffixIcon={<GlobalOutlined />}
       virtual={false}
-      getPopupContainer={trigger => trigger.parentElement}
     />
   )
 }
