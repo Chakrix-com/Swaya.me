@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Select } from 'antd'
+import { theme } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { GlobalOutlined } from '@ant-design/icons'
 import { languageTrackingAPI } from '../services/api'
@@ -7,6 +7,7 @@ import { getOrCreateSessionId } from '../utils/session'
 
 const LanguageSwitcher = () => {
   const { i18n } = useTranslation()
+  const { token } = theme.useToken()
   const [previousLanguage, setPreviousLanguage] = useState(i18n.language)
 
   const languages = [
@@ -66,15 +67,41 @@ const LanguageSwitcher = () => {
     }
   }
 
+  // Custom chevron so the dropdown affordance is deliberate and theme-tinted,
+  // instead of each browser's inconsistent native arrow rendering.
+  const arrowSvg = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="${token.colorPrimary}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+  )}`
+
   return (
-    <Select
-      value={i18n.language}
-      onChange={handleLanguageChange}
-      options={languages}
-      style={{ width: 120 }}
-      suffixIcon={<GlobalOutlined />}
-      virtual={false}
-    />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <GlobalOutlined style={{ fontSize: 14, color: token.colorPrimary }} />
+      <select
+        value={i18n.language}
+        onChange={(e) => handleLanguageChange(e.target.value)}
+        style={{
+          boxSizing: 'border-box',
+          width: 88,
+          height: 32,
+          lineHeight: '30px',
+          borderRadius: token.borderRadius,
+          border: `1px solid ${token.colorPrimaryBorder}`,
+          background: `${token.colorBgContainer} url("${arrowSvg}") no-repeat right 6px center / 10px`,
+          color: token.colorText,
+          padding: '0 22px 0 8px',
+          fontFamily: 'inherit',
+          fontSize: 13,
+          cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          MozAppearance: 'none',
+        }}
+      >
+        {languages.map((l) => (
+          <option key={l.value} value={l.value}>{l.label}</option>
+        ))}
+      </select>
+    </span>
   )
 }
 

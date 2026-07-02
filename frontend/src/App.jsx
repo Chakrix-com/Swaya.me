@@ -1,7 +1,7 @@
 import { useState, createContext, useContext, useEffect, lazy, Suspense, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { ProLayout } from '@ant-design/pro-components'
-import { App as AntApp, Button, ConfigProvider, Dropdown, Space, Divider, Typography, Tooltip, Spin, Tag } from 'antd'
+import { App as AntApp, Button, ConfigProvider, Space, Divider, Typography, Tooltip, Spin, Tag, theme } from 'antd'
 import enUS from 'antd/locale/en_US'
 import hiIN from 'antd/locale/hi_IN'
 import {
@@ -136,6 +136,29 @@ function AuthenticatedLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false)
   const themeId = useSelector((state) => state.theme.themeId)
   const currentTheme = getTheme(themeId)
+  const { token } = theme.useToken()
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+
+    const onOutsideClick = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    const onEscape = (e) => {
+      if (e.key === 'Escape') setProfileMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', onOutsideClick)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('mousedown', onOutsideClick)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [profileMenuOpen])
 
   const handleLogout = async () => {
     try { await authAPI.logout() } catch (_) {}
@@ -223,91 +246,148 @@ function AuthenticatedLayout({ children }) {
         style: { background: currentTheme.antd.token.colorPrimary, color: currentTheme.onPrimary, cursor: 'pointer', flexShrink: 0 },
         title: <span className="hide-on-mobile">{user?.full_name || user?.email || t('common.user')}</span>,
         size: 'small',
-        render: (_props, dom) => (
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={{
-              items: [
+        // Deliberately not using antd's Dropdown here — this popup manages its
+        // own open/close state and a single outside-click listener, avoiding
+        // @rc-component/trigger's multi-listener mousedown/pointerdown
+        // coordination entirely (traced as the source of the click-race
+        // dropdown bugs). Visuals are hand-matched to antd's default Dropdown
+        // menu styling so there's no look-and-feel change.
+        render: (_props, dom) => {
+          const menuItems = [
+            {
+              key: 'profile-label',
+              type: 'group',
+              label: (
+                <div style={{ padding: '2px 0 6px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--sw-text1)' }}>
+                    {user?.full_name || user?.email}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--sw-text3)', marginTop: 2 }}>
+                    {user?.email}
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <TierBadge user={user} />
+                  </div>
+                </div>
+              ),
+            },
+            { type: 'divider' },
+            {
+              key: 'plans',
+              icon: <CrownOutlined />,
+              label: t('dashboard.plansTab', 'User Plans'),
+              onClick: () => navigate('/plans'),
+            },
+            ...(isAdmin ? [
+              { type: 'divider' },
+              {
+                key: 'statistics',
+                icon: <BarChartOutlined />,
+                label: t('admin.statistics', 'Statistics'),
+                onClick: () => navigate('/admin/statistics'),
+              },
+              {
+                key: 'users',
+                icon: <TeamOutlined />,
+                label: t('admin.userManagement', 'User Management'),
+                onClick: () => navigate('/admin/users'),
+              },
+              ...(isSuperAdmin ? [
                 {
-                  key: 'profile-label',
-                  type: 'group',
-                  label: (
-                    <div style={{ padding: '2px 0 6px' }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--sw-text1)' }}>
-                        {user?.full_name || user?.email}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--sw-text3)', marginTop: 2 }}>
-                        {user?.email}
-                      </div>
-                      <div style={{ marginTop: 6 }}>
-                        <TierBadge user={user} />
-                      </div>
-                    </div>
-                  ),
+                  key: 'organizations',
+                  icon: <ApartmentOutlined />,
+                  label: t('admin.organizations', 'Organizations'),
+                  onClick: () => navigate('/admin/organizations'),
                 },
-                { type: 'divider' },
                 {
-                  key: 'plans',
-                  icon: <CrownOutlined />,
-                  label: t('dashboard.plansTab', 'User Plans'),
-                  onClick: () => navigate('/plans'),
+                  key: 'platform-quizzes',
+                  icon: <AppstoreOutlined />,
+                  label: t('admin.platformQuizzes', 'Platform Quizzes'),
+                  onClick: () => navigate('/admin/platform-quizzes'),
                 },
-                ...(isAdmin ? [
-                  { type: 'divider' },
-                  {
-                    key: 'statistics',
-                    icon: <BarChartOutlined />,
-                    label: t('admin.statistics', 'Statistics'),
-                    onClick: () => navigate('/admin/statistics'),
-                  },
-                  {
-                    key: 'users',
-                    icon: <TeamOutlined />,
-                    label: t('admin.userManagement', 'User Management'),
-                    onClick: () => navigate('/admin/users'),
-                  },
-                  ...(isSuperAdmin ? [
-                    {
-                      key: 'organizations',
-                      icon: <ApartmentOutlined />,
-                      label: t('admin.organizations', 'Organizations'),
-                      onClick: () => navigate('/admin/organizations'),
-                    },
-                    {
-                      key: 'platform-quizzes',
-                      icon: <AppstoreOutlined />,
-                      label: t('admin.platformQuizzes', 'Platform Quizzes'),
-                      onClick: () => navigate('/admin/platform-quizzes'),
-                    },
-                    {
-                      key: 'tier-management',
-                      icon: <SlidersOutlined />,
-                      label: t('admin.tierManagement', 'Tier Management'),
-                      onClick: () => navigate('/admin/tier-management'),
-                    },
-                    {
-                      key: 'feedback',
-                      icon: <MessageOutlined />,
-                      label: t('admin.feedback', 'Feedback'),
-                      onClick: () => navigate('/admin/feedback'),
-                    },
-                  ] : []),
-                ] : []),
-                { type: 'divider' },
                 {
-                  key: 'logout',
-                  icon: <LogoutOutlined />,
-                  label: t('tooltip.logout', 'Sign Out'),
-                  danger: true,
-                  onClick: handleLogout,
+                  key: 'tier-management',
+                  icon: <SlidersOutlined />,
+                  label: t('admin.tierManagement', 'Tier Management'),
+                  onClick: () => navigate('/admin/tier-management'),
                 },
-              ],
-            }}
-          >
-            <span style={{ cursor: 'pointer' }}>{dom}</span>
-          </Dropdown>
-        ),
+                {
+                  key: 'feedback',
+                  icon: <MessageOutlined />,
+                  label: t('admin.feedback', 'Feedback'),
+                  onClick: () => navigate('/admin/feedback'),
+                },
+              ] : []),
+            ] : []),
+            { type: 'divider' },
+            {
+              key: 'logout',
+              icon: <LogoutOutlined />,
+              label: t('tooltip.logout', 'Sign Out'),
+              danger: true,
+              onClick: handleLogout,
+            },
+          ]
+
+          return (
+            <span ref={profileMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ cursor: 'pointer' }} onClick={() => setProfileMenuOpen((v) => !v)}>{dom}</span>
+              {profileMenuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 4px)',
+                    right: 0,
+                    minWidth: 220,
+                    background: token.colorBgElevated,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                    borderRadius: token.borderRadiusLG,
+                    boxShadow: token.boxShadowSecondary,
+                    padding: 4,
+                    zIndex: 1050,
+                    boxSizing: 'border-box',
+                    fontSize: token.fontSize,
+                    lineHeight: 'normal',
+                  }}
+                >
+                  {menuItems.map((item, i) => {
+                    if (item.type === 'divider') {
+                      return <div key={`div-${i}`} style={{ height: 1, background: token.colorSplit, margin: '4px 0' }} />
+                    }
+                    if (item.type === 'group') {
+                      return <div key={item.key} style={{ padding: '4px 12px' }}>{item.label}</div>
+                    }
+                    return (
+                      <div
+                        key={item.key}
+                        onClick={() => { item.onClick?.(); setProfileMenuOpen(false) }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          boxSizing: 'border-box',
+                          height: 30,
+                          padding: '0 12px',
+                          borderRadius: token.borderRadiusSM,
+                          cursor: 'pointer',
+                          color: item.danger ? token.colorError : token.colorText,
+                          fontSize: token.fontSize,
+                          lineHeight: '30px',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = item.danger ? token.colorErrorBg : token.controlItemBgHover }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </span>
+          )
+        },
       }}
       actionsRender={() => [
         <Tooltip key="github" title={t('common.viewOnGitHub')}>
