@@ -79,9 +79,21 @@ const getQuestionTypeLabel = (type, t) => {
     scale: t('quizPresent.scaleOneToFive'),
     paragraph: t('quiz.paragraph'),
     one_word: t('quiz.oneWord'),
+    code: t('questionTypes.code', 'Code'),
   }
   return labels[type] || t('quiz.multipleChoice')
 }
+
+const CODE_LANGUAGE_OPTIONS = [
+  { value: 'python', label: 'Python' },
+  { value: 'java', label: 'Java' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'go', label: 'Go' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'csharp', label: 'C#' },
+]
 
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
@@ -198,6 +210,10 @@ const QuestionForm = ({
         formValues.extra_options = question.options?.slice(4) || []
         formValues.correct_answer = isPoll ? undefined : String(question.correct_answer_index ?? 0)
       }
+      if (question.question_type === 'code') {
+        formValues.code_languages = question.code_languages || question.options || ['python']
+        formValues.grading_rubric = question.grading_rubric || ''
+      }
       questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
       setTypeChipsExpanded(!question.text)
@@ -281,6 +297,18 @@ const QuestionForm = ({
         extra_options: [],
         correct_answer: undefined,
         expected_answer: undefined,
+      })
+    }
+    if (nextType === 'code') {
+      questionForm.setFieldsValue({
+        option_a: undefined,
+        option_b: undefined,
+        option_c: undefined,
+        option_d: undefined,
+        extra_options: [],
+        correct_answer: undefined,
+        expected_answer: undefined,
+        code_languages: ['python'],
       })
     }
     if (nextType === 'scale') {
@@ -380,6 +408,7 @@ const QuestionForm = ({
                 { value: 'scale', label: t('quizPresent.scaleOneToFive'), show: isPoll },
                 { value: 'paragraph', label: t('quiz.paragraph'), show: isOfflinePoll },
                 { value: 'one_word', label: t('quiz.oneWord'), show: isPoll },
+                { value: 'code', label: t('questionTypes.code', 'Code'), show: !isPoll },
               ].filter(c => c.show).map(chip => (
                 <button
                   key={chip.value}
@@ -914,6 +943,58 @@ const QuestionForm = ({
           </>
         )}
 
+        {questionType === 'code' && (
+          <>
+            <Form.Item
+              name="code_languages"
+              label={t('codeEditor.selectLanguage', 'Allowed Languages')}
+              rules={[{ required: true, message: t('quiz.codeLanguageRequired', 'Select at least one language') }]}
+              help={t('quiz.codeLanguageHelp', 'Participants can choose any of these languages to write their solution.')}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {CODE_LANGUAGE_OPTIONS.map(opt => {
+                  const selected = (questionForm.getFieldValue('code_languages') || []).includes(opt.value)
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        const current = questionForm.getFieldValue('code_languages') || []
+                        const next = selected ? current.filter(l => l !== opt.value) : [...current, opt.value]
+                        if (next.length > 0) questionForm.setFieldsValue({ code_languages: next })
+                      }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 4,
+                        border: `1px solid ${selected ? '#1677ff' : '#d9d9d9'}`,
+                        background: selected ? '#e6f4ff' : '#fff',
+                        color: selected ? '#1677ff' : '#555',
+                        cursor: 'pointer',
+                        fontSize: 13,
+                        fontWeight: selected ? 600 : 400,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </Form.Item>
+            <Form.Item
+              name="grading_rubric"
+              label={t('quiz.gradingRubric', 'Expected Output / Grading Criteria')}
+              help={t('quiz.gradingRubricHelp', 'Describe the expected output or test cases. The AI uses this to judge submissions.')}
+            >
+              <Input.TextArea
+                rows={3}
+                placeholder={t('quiz.gradingRubricPlaceholder', 'e.g. For input 5, the output should be 120. For input 0, output should be 1.')}
+                maxLength={5000}
+                showCount
+              />
+            </Form.Item>
+          </>
+        )}
+
         {/* Explanation — collapsed by default */}
         <div style={{ marginBottom: 16 }}>
           <button
@@ -1343,7 +1424,14 @@ export default function QuizBuilder() {
             expected_answer: q.options[0] || ''
           }
         }
-        
+        if (q.question_type === 'code') {
+          return {
+            ...baseQuestion,
+            code_languages: q.options || ['python'],
+            grading_rubric: q.grading_rubric || '',
+          }
+        }
+
         return baseQuestion
       })
       console.log('Transformed questions:', transformedQuestions)
@@ -1757,7 +1845,17 @@ export default function QuizBuilder() {
                       ) : null
                     }
                   >
-              {question.question_type === 'word_cloud' ? (
+              {question.question_type === 'code' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text type="secondary" italic>
+                    {t('quiz.codeQuestionDescription', 'Code submission question — participants write and submit code')}
+                  </Text>
+                  <Text><strong>{t('codeEditor.selectLanguage', 'Languages')}:</strong> {(question.code_languages || question.options || ['python']).join(', ')}</Text>
+                  {(question.grading_rubric) && (
+                    <Text><strong>{t('quiz.gradingRubric', 'Criteria')}:</strong> {String(question.grading_rubric).slice(0, 80)}{question.grading_rubric.length > 80 ? '…' : ''}</Text>
+                  )}
+                </Space>
+              ) : question.question_type === 'word_cloud' ? (
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Text type="secondary" italic>
                     {t('quiz.wordCloudQuestionDescription')}
@@ -2008,6 +2106,7 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
+        grading_rubric: values.grading_rubric || null,
       }
 
       // Add options for choice-based question types
@@ -2041,6 +2140,9 @@ export default function QuizBuilder() {
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
         questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
+        questionData.correct_answer_index = null
+      } else if (values.question_type === 'code') {
+        questionData.options = values.code_languages && values.code_languages.length > 0 ? values.code_languages : ['python']
         questionData.correct_answer_index = null
       } else {
         questionData.options = null
@@ -2188,6 +2290,7 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
+        grading_rubric: values.grading_rubric || null,
       }
 
       // Add options for choice-based question types
@@ -2221,6 +2324,9 @@ export default function QuizBuilder() {
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
         questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
+        questionData.correct_answer_index = null
+      } else if (values.question_type === 'code') {
+        questionData.options = values.code_languages && values.code_languages.length > 0 ? values.code_languages : ['python']
         questionData.correct_answer_index = null
       } else {
         questionData.options = null

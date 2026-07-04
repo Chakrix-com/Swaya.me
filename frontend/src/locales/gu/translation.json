@@ -407,7 +407,18 @@
     "scheduleSection": "સમયપત્રક",
     "accessSection": "ઍક્સેસ",
     "minutes": "મિનિ",
-    "securityLabel": "સુરક્ષા અને નિગરાની"
+    "securityLabel": "સુરક્ષા અને નિગરાની",
+    "evaluateCode": "કોડ મૂલ્યાંકન કરો",
+    "evaluating": "મૂલ્યાંકન થઈ રહ્યું છે...",
+    "viewSubmissions": "સબમિશન જુઓ",
+    "codeLanguageRequired": "ઓછામાં ઓછી એક ભાષા પસંદ કરો",
+    "codeLanguageHelp": "સહભાગીઓ પસંદ કરેલ ભાષાઓમાં કોડ લખી શકે છે",
+    "gradingRubric": "ગ્રેડિંગ માપદંડ",
+    "gradingRubricHelp": "AI ન્યાયાધીશ માટે અપેક્ષિત આઉટપુટ અથવા ટેસ્ટ કેસ વર્ણવો",
+    "gradingRubricPlaceholder": "દા.ત. ઇનપુટ 5 માટે આઉટપુટ 120 હોવો જોઈએ (ફેક્ટોરિયલ)",
+    "codeQuestionDescription": "સહભાગીઓ કોડ લખે છે; AI પ્રશ્ન બંધ પછી મૂલ્યાંકન કરે છે",
+    "clickEvaluate": "AI મૂલ્યાંકન ચલાવવા પ્રશ્ન બંધ કર્યા પછી \"કોડ મૂલ્યાંકન કરો\" ક્લિક કરો",
+    "submissions": "સબમિશન"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
@@ -2374,5 +2385,23 @@
     "typePoll": "લાઇવ પોલ",
     "typeExam": "પરીક્ષા",
     "typeSurvey": "સર્વે"
+  },
+  "questionTypes": {
+    "code": "કોડ"
+  },
+  "codeEditor": {
+    "submit": "કોડ સબમિટ કરો",
+    "pending": "AI મૂલ્યાંકન બાકી છે...",
+    "pendingDetail": "તમારો કોડ સબમિટ થઈ ગયો છે. હોસ્ટ પ્રશ્ન બંધ કર્યા પછી પરિણામો દેખાશે.",
+    "language": "ભાષા",
+    "selectLanguage": "ભાષા પસંદ કરો"
+  },
+  "verdict": {
+    "AC": "સ્વીકૃત",
+    "WA": "ખોટો જવાબ",
+    "PE": "પ્રસ્તુતિ ભૂલ",
+    "RE": "રનટાઇમ ભૂલ",
+    "CE": "કમ્પાઇલેશન ભૂલ",
+    "TLE": "સમય મર્યાદા ઓળંગી"
   }
 }

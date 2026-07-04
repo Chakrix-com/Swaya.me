@@ -407,7 +407,18 @@
     "voiceError": "Voice input error: {{error}}",
     "voiceStartError": "Could not start voice input: {{error}}",
     "scaleRange": "1 — 2 — 3 — 4 — 5",
-    "securityLabel": "Security & Proctoring"
+    "securityLabel": "Security & Proctoring",
+    "evaluateCode": "Evaluate Code",
+    "evaluating": "Evaluating...",
+    "viewSubmissions": "View Submissions",
+    "codeLanguageRequired": "Select at least one language",
+    "codeLanguageHelp": "Participants can write code in the selected languages",
+    "gradingRubric": "Grading Rubric",
+    "gradingRubricHelp": "Describe expected output or test cases for the AI judge",
+    "gradingRubricPlaceholder": "e.g. For input 5, output should be 120 (factorial)",
+    "codeQuestionDescription": "Participants write code; AI evaluates after question closes",
+    "clickEvaluate": "Click \"Evaluate Code\" after closing the question to run AI evaluation",
+    "submissions": "Submissions"
   },
   "audience": {
     "joinQuiz": "Join Session",
@@ -2443,5 +2454,23 @@
     "typePoll": "Live Poll",
     "typeExam": "Test",
     "typeSurvey": "Survey"
+  },
+  "questionTypes": {
+    "code": "Code"
+  },
+  "codeEditor": {
+    "submit": "Submit Code",
+    "pending": "AI evaluation pending...",
+    "pendingDetail": "Your code has been submitted. Results will appear after the host closes the question.",
+    "language": "Language",
+    "selectLanguage": "Select language"
+  },
+  "verdict": {
+    "AC": "Accepted",
+    "WA": "Wrong Answer",
+    "PE": "Presentation Error",
+    "RE": "Runtime Error",
+    "CE": "Compilation Error",
+    "TLE": "Time Limit Exceeded"
   }
 }

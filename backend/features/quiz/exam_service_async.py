@@ -87,6 +87,7 @@ def _to_exam_question_response(q: Question) -> ExamQuestionResponse:
     return ExamQuestionResponse(
         id=q.id,
         text=q.text,
+        question_type=q.question_type.value if hasattr(q.question_type, 'value') else str(q.question_type),
         options=q.options,
         order=q.order,
         question_image_url=ImageService.to_absolute_url(q.question_image_url, _BASE_URL),
@@ -328,6 +329,7 @@ async def save_answer(
     session_token: str,
     question_id: int,
     selected_option_index: Optional[int],
+    text_answer: Optional[str] = None,
 ) -> dict:
     """Public — upsert a single answer during an exam."""
     result = await db.execute(
@@ -376,6 +378,7 @@ async def save_answer(
 
     if existing:
         existing.selected_option_index = selected_option_index
+        existing.text_answer = text_answer
         existing.is_correct = is_correct
     else:
         answer = Answer(
@@ -383,6 +386,7 @@ async def save_answer(
             participant_id=participant.id,
             question_id=question_id,
             selected_option_index=selected_option_index,
+            text_answer=text_answer,
             is_correct=is_correct,
         )
         db.add(answer)
@@ -439,32 +443,66 @@ async def submit_exam(
     wrong_count = 0
     unanswered_count = 0
 
+    # Auto-evaluate CODE answers using AI at submit time
+    from core.ai import router as _ai_router
+    import json as _json
+    for q in questions:
+        if q.question_type != QuestionType.CODE:
+            continue
+        answer = answers_by_qid.get(q.id)
+        if not answer or not answer.text_answer or answer.is_correct is not None:
+            continue
+        try:
+            payload = _json.loads(answer.text_answer)
+            lang = payload.get("language", "python")
+            code = payload.get("code", "")
+        except Exception:
+            lang, code = "python", answer.text_answer or ""
+        try:
+            ev = await _ai_router.evaluate_code(
+                language=lang,
+                code=code,
+                problem_statement=q.text or "",
+                grading_rubric=q.grading_rubric or "Evaluate correctness based on the problem statement.",
+            )
+            verdict = ev.get("verdict", "WA")
+            output = ev.get("output", "")
+            efficiency = ev.get("efficiency", "")
+            answer.is_correct = (verdict == "AC")
+            answer.ai_feedback = f"{verdict}: {output}" if output else verdict
+            if efficiency:
+                answer.ai_feedback += f"\n\nEfficiency: {efficiency}"
+        except Exception as e:
+            logger.warning("Auto-evaluate CODE at exam submit failed for answer %s: %s", answer.id, e)
+
     for q in questions:
         max_score += q.points
         answer = answers_by_qid.get(q.id)
-        participant_ans = answer.selected_option_index if answer else None
+        is_code = q.question_type == QuestionType.CODE
+        has_answer = bool(answer and answer.text_answer) if is_code else bool(answer and answer.selected_option_index is not None)
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
         neg_applied = 0
 
-        if participant_ans is None:
+        if not has_answer:
             unanswered_count += 1
         elif is_correct:
             correct_count += 1
             points_earned = q.points
             total_score += q.points
-        else:
+        elif is_correct is False:
             wrong_count += 1
             neg_applied = q.negative_points
             total_score -= q.negative_points
+        # is_correct is None (unevaluated) — answer submitted but verdict pending
 
         question_results.append(ExamQuestionResult(
             question_id=q.id,
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=participant_ans,
+            participant_answer=answer.selected_option_index if (not is_code and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
             points_possible=q.points,
@@ -552,19 +590,20 @@ async def get_my_result(
     for q in questions:
         max_score += q.points
         answer = answers_by_qid.get(q.id)
-        participant_ans = answer.selected_option_index if answer else None
+        is_code = q.question_type == QuestionType.CODE
+        has_answer = bool(answer and answer.text_answer) if is_code else bool(answer and answer.selected_option_index is not None)
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
         neg_applied = 0
 
-        if participant_ans is None:
+        if not has_answer:
             unanswered_count += 1
         elif is_correct:
             correct_count += 1
             points_earned = q.points
             total_score += q.points
-        else:
+        elif is_correct is False:
             wrong_count += 1
             neg_applied = q.negative_points
             total_score -= q.negative_points
@@ -574,7 +613,7 @@ async def get_my_result(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=participant_ans,
+            participant_answer=answer.selected_option_index if (not is_code and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
             points_possible=q.points,

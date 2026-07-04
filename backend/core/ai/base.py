@@ -86,6 +86,20 @@ class BaseAIProvider(ABC):
         """Semantic equivalence check. Default: exact match (safe fallback)."""
         return participant_answer.strip().lower() == expected_answer.strip().lower()
 
+    async def evaluate_code(
+        self,
+        language: str,
+        code: str,
+        problem_statement: str,
+        grading_rubric: str,
+    ) -> dict:
+        """
+        Simulate code execution and return a competitive-programming verdict.
+        Returns: {"verdict": "AC|WA|PE|RE|CE|TLE", "output": str, "explanation": str}
+        Default: always WA (safe fallback when no AI provider is configured).
+        """
+        return {"verdict": "WA", "output": "", "explanation": "AI evaluation unavailable"}
+
     async def list_available_models(self) -> list[str]:
         """Return model IDs available via this provider. Empty list if not applicable."""
         return []

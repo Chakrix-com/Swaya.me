@@ -111,5 +111,14 @@ async def grade_text_answer(participant_answer: str, expected_answer: str) -> bo
     return await get_light_provider().grade_text_answer(participant_answer, expected_answer)
 
 
+async def evaluate_code(
+    language: str,
+    code: str,
+    problem_statement: str,
+    grading_rubric: str,
+) -> dict:
+    return await get_primary_provider().evaluate_code(language, code, problem_statement, grading_rubric)
+
+
 async def list_available_models() -> list[str]:
     return await get_light_provider().list_available_models()

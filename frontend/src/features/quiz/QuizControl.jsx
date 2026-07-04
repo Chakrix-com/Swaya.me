@@ -38,6 +38,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, quizAPI, questionAPI, feedbackAPI } from '../../services/api'
+import CodeEditor from './components/CodeEditor'
 import './QuizControl.css'
 
 const { Title, Text } = Typography
@@ -57,6 +58,9 @@ export default function QuizControl() {
   const [feedbackRating, setFeedbackRating] = useState(0)
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [codeAnswers, setCodeAnswers] = useState(null)
+  const [codeEvaluating, setCodeEvaluating] = useState(false)
+  const [codeEvalResult, setCodeEvalResult] = useState(null)
   const [timerRemaining, setTimerRemaining] = useState(null)
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [lobbyParticipants, setLobbyParticipants] = useState([])
@@ -340,7 +344,8 @@ export default function QuizControl() {
   const modeAccent = isExam ? '#059669' : isPoll ? '#EA580C' : '#4F46E5'
   const isWordCloudQuestion = ['word_cloud', 'one_word'].includes(currentQuestion?.question_type)
   const isTextQuestion = ['single_line', 'paragraph'].includes(currentQuestion?.question_type)
-  const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion
+  const isCodeQuestion = currentQuestion?.question_type === 'code'
+  const isOptionQuestion = currentQuestion && !isWordCloudQuestion && !isTextQuestion && !isCodeQuestion
   const effectiveSessionStatus = results?.status || session?.status
   const normalizedSessionStatus = typeof effectiveSessionStatus === 'string' ? effectiveSessionStatus.toLowerCase() : ''
   const isSessionActive = normalizedSessionStatus === 'active'
@@ -359,6 +364,12 @@ export default function QuizControl() {
   const presentImmersiveTooltip = t('quiz.presentImmersiveTooltip', { defaultValue: 'Open immersive presenter mode in a new tab.' })
   const totalJoined = results?.total_participants || 0
   const answeredCount = currentQuestion?.total_answers || 0
+
+  // Reset code evaluation state when question changes
+  useEffect(() => {
+    setCodeAnswers(null)
+    setCodeEvalResult(null)
+  }, [currentQuestion?.id])
 
   useEffect(() => {
     if (!currentQuestion?.max_time_seconds || !currentQuestion?.timer_started_at) {
@@ -586,6 +597,7 @@ export default function QuizControl() {
                 {currentQuestion.question_type === 'single_line' && <Tag color="geekblue">{t('quizPresent.singleLine', { defaultValue: 'Single Line' })}</Tag>}
                 {currentQuestion.question_type === 'paragraph' && <Tag color="geekblue">{t('quizPresent.paragraph', { defaultValue: 'Paragraph' })}</Tag>}
                 {currentQuestion.question_type === 'scale' && <Tag color="gold">{t('quizPresent.scaleOneToFive', { defaultValue: 'Scale (1-5)' })}</Tag>}
+                {currentQuestion.question_type === 'code' && <Tag color="cyan">{t('questionTypes.code', 'Code')}</Tag>}
                 {currentQuestion.max_time_seconds && <Tag color="orange">{t('quiz.timerTag', { seconds: currentQuestion.max_time_seconds })}</Tag>}
                 <Tag color="green">{t('quiz.pointsTag', { points: currentQuestion.points || 1 })}</Tag>
               </Space>
@@ -599,7 +611,98 @@ export default function QuizControl() {
               <Alert message={`${answeredCount} ${t('quiz.responsesReceived')}`} type="info" showIcon />
 
               {/* Question body */}
-              {isWordCloudQuestion ? (
+              {isCodeQuestion ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      loading={codeEvaluating}
+                      onClick={async () => {
+                        const sid = session?.id
+                        const qid = currentQuestion?.question_id || currentQuestion?.id
+                        if (!sid || !qid) return
+                        setCodeEvaluating(true)
+                        try {
+                          const [evalRes, answersRes] = await Promise.all([
+                            sessionAPI.evaluateCode(sid, qid),
+                            sessionAPI.getCodeAnswers(sid, qid),
+                          ])
+                          setCodeEvalResult(evalRes.data)
+                          setCodeAnswers(answersRes.data.answers || [])
+                          message.success(`${t('quiz.evaluateCode', 'Evaluated')} ${evalRes.data.evaluated} ${t('quiz.submissions', 'submissions')}`)
+                        } catch (e) {
+                          message.error(e.response?.data?.detail || t('common.error', 'Error'))
+                        } finally {
+                          setCodeEvaluating(false)
+                        }
+                      }}
+                    >
+                      {t('quiz.evaluateCode', 'Evaluate Code (AI)')}
+                    </Button>
+                    {!codeAnswers && (
+                      <Button
+                        onClick={async () => {
+                          const sid = session?.id
+                          const qid = currentQuestion?.question_id || currentQuestion?.id
+                          if (!sid || !qid) return
+                          try {
+                            const res = await sessionAPI.getCodeAnswers(sid, qid)
+                            setCodeAnswers(res.data.answers || [])
+                          } catch (e) {
+                            message.error(e.response?.data?.detail || t('common.error', 'Error'))
+                          }
+                        }}
+                      >
+                        {t('quiz.viewSubmissions', 'View Submissions')}
+                      </Button>
+                    )}
+                  </Space>
+
+                  {codeEvalResult && (
+                    <Space wrap>
+                      {Object.entries(codeEvalResult.verdicts || {}).map(([v, n]) => n > 0 && (
+                        <Tag
+                          key={v}
+                          color={{ AC: 'success', WA: 'error', RE: 'purple', CE: 'default', PE: 'warning', TLE: 'blue' }[v] || 'default'}
+                        >
+                          {v}: {n}
+                        </Tag>
+                      ))}
+                    </Space>
+                  )}
+
+                  {codeAnswers && codeAnswers.length > 0 ? (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {codeAnswers.map((item, idx) => (
+                        <Card key={idx} size="small" title={
+                          <Space>
+                            <Text strong>{item.display_name || 'Guest'}</Text>
+                            <Tag color="blue">{item.language}</Tag>
+                            {item.verdict && (
+                              <Tag color={{ AC: 'success', WA: 'error', RE: 'purple', CE: 'default', PE: 'warning', TLE: 'blue' }[item.verdict] || 'default'}>
+                                {item.verdict}
+                              </Tag>
+                            )}
+                          </Space>
+                        }>
+                          <CodeEditor
+                            code={item.code}
+                            language={item.language}
+                            allowedLanguages={[item.language]}
+                            readOnly
+                            verdict={item.verdict}
+                            aiFeedback={item.ai_feedback}
+                          />
+                        </Card>
+                      ))}
+                    </Space>
+                  ) : answeredCount > 0 && !codeAnswers ? (
+                    <Alert message={`${answeredCount} ${t('quiz.responsesReceived')}`} description={t('quiz.clickEvaluate', 'Click "Evaluate Code" to run AI evaluation on all submissions.')} type="info" />
+                  ) : codeAnswers && codeAnswers.length === 0 ? (
+                    <Alert message={t('quizPresent.noResponsesYet', 'No responses yet')} type="warning" />
+                  ) : null}
+                </Space>
+              ) : isWordCloudQuestion ? (
                 wordCloudData.length > 0 ? (
                   <div style={{ width: '100%', height: 280, border: '1px solid #d9d9d9', borderRadius: 8, padding: 16, background: '#fafafa' }}>
                     <ReactWordcloud

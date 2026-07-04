@@ -44,6 +44,10 @@ class QuestionTypeEnum(str, Enum):
     SCALE = "scale"
     PARAGRAPH = "paragraph"
     ONE_WORD = "one_word"
+    CODE = "code"
+
+
+ALLOWED_CODE_LANGUAGES = {"python", "java", "cpp", "javascript", "typescript", "go", "rust", "csharp"}
 
 
 class TemplateScopeEnum(str, Enum):
@@ -73,6 +77,7 @@ class QuestionCreate(BaseModel):
     negative_points: int = Field(default=0, ge=0)
     is_required: bool = Field(default=False)
     answer_explanation: Optional[str] = Field(None, max_length=5000)
+    grading_rubric: Optional[str] = Field(None, max_length=5000)
 
     @validator('question_video_url')
     def validate_video_url(cls, v):
@@ -129,6 +134,16 @@ class QuestionCreate(BaseModel):
                 raise ValueError('One-word questions should not have options')
             if self.correct_answer_index is not None:
                 raise ValueError('One-word questions should not have a correct answer')
+        elif self.question_type == QuestionTypeEnum.CODE:
+            if not self.options or len(self.options) < 1:
+                raise ValueError('Code questions must specify at least one allowed language')
+            if len(self.options) > 8:
+                raise ValueError('Code questions can allow at most 8 languages')
+            invalid = [lang for lang in self.options if lang not in ALLOWED_CODE_LANGUAGES]
+            if invalid:
+                raise ValueError(f'Unsupported languages: {invalid}. Allowed: {sorted(ALLOWED_CODE_LANGUAGES)}')
+            if self.correct_answer_index is not None:
+                raise ValueError('Code questions should not have a correct answer index')
         return self
 
 
@@ -146,6 +161,7 @@ class QuestionUpdate(BaseModel):
     negative_points: Optional[int] = Field(default=None, ge=0)
     is_required: Optional[bool] = None
     answer_explanation: Optional[str] = Field(None, max_length=5000)
+    grading_rubric: Optional[str] = Field(None, max_length=5000)
 
 
 class QuestionResponse(BaseModel):
@@ -164,6 +180,7 @@ class QuestionResponse(BaseModel):
     negative_points: int = 0
     is_required: bool = False
     answer_explanation: Optional[str] = None
+    grading_rubric: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -449,6 +466,33 @@ class AnswerSubmitResponse(BaseModel):
     success: bool
     message: str
     is_correct: Optional[bool] = None  # Only revealed after question closes
+    ai_feedback: Optional[str] = None  # For CODE questions: verdict + simulated output
+
+
+class CodeEvaluateResponse(BaseModel):
+    """Response after batch code evaluation"""
+    question_id: int
+    evaluated: int
+    verdicts: dict  # {"AC": N, "WA": N, "RE": N, "CE": N, "TLE": N, "PE": N}
+
+
+class CodeAnswerItem(BaseModel):
+    """Single participant code submission"""
+    participant_id: int
+    display_name: Optional[str] = None
+    language: str
+    code: str
+    verdict: Optional[str] = None
+    ai_feedback: Optional[str] = None
+    submitted_at: Optional[str] = None
+
+
+class CodeAnswersResponse(BaseModel):
+    """All code submissions for a question (host view)"""
+    question_id: int
+    session_id: int
+    answers: List[CodeAnswerItem]
+    total: int
 
 
 class QuestionResultsResponse(BaseModel):
@@ -756,6 +800,7 @@ class ExamQuestionResponse(BaseModel):
     """Question as seen during exam (no correct answer revealed)"""
     id: int
     text: str
+    question_type: str = "mcq"
     options: Optional[List[str]] = None
     order: int
     question_image_url: Optional[str] = None
@@ -784,6 +829,7 @@ class ExamAnswerRequest(BaseModel):
     session_token: str
     question_id: int
     selected_option_index: Optional[int] = Field(None, ge=0)
+    text_answer: Optional[str] = Field(None, max_length=50000)
 
 
 class ExamSubmitRequest(BaseModel):

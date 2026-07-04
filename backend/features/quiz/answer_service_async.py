@@ -21,7 +21,8 @@ from features.quiz.schemas import (
     AnswerSubmitRequest, AnswerSubmitResponse,
     QuestionResultsResponse, SessionResultsResponse,
     WordCloudAnswerSubmitRequest, WordCloudResultsResponse,
-    LeaderboardEntry, LeaderboardResponse
+    LeaderboardEntry, LeaderboardResponse,
+    CodeAnswerItem, CodeAnswersResponse,
 )
 from shared.exceptions.quiz import (
     SessionNotFoundError, ParticipantNotFoundError, QuestionNotFoundError,
@@ -269,7 +270,7 @@ class AnswerServiceAsync:
         Same Redis-first strategy as submit_answer: participant identity and session
         state come from Redis; the DB only sees the final INSERT.
         """
-        _TEXT_TYPES = ("word_cloud", "single_line", "paragraph", "one_word")
+        _TEXT_TYPES = ("word_cloud", "single_line", "paragraph", "one_word", "code")
 
         # ── Redis fast path ────────────────────────────────────────────────────
         p_info = await self.redis.get_json(f"session_token:{session_token}")
@@ -308,19 +309,21 @@ class AnswerServiceAsync:
                 if not await self.redis.set_nx(dedup_key, "1", expire=86400):
                     raise DuplicateAnswerError("You have already answered this question")
 
-            check_content(text, "Answer")
-
-            options = q_data.get("options") or []
-            expected_answer = options[0] if options else None
+            # Skip content filter for code (may contain unusual patterns)
+            if q_type != "code":
+                check_content(text, "Answer")
 
             is_text_scored = q_type in ("single_line", "paragraph")
             is_correct = None
-            if is_text_scored and expected_answer:
-                from core.ai import router as _ai_router
-                is_correct = await _ai_router.grade_text_answer(
-                    participant_answer=text,
-                    expected_answer=str(expected_answer).strip(),
-                )
+            if is_text_scored:
+                options = q_data.get("options") or []
+                expected_answer = options[0] if options else None
+                if expected_answer:
+                    from core.ai import router as _ai_router
+                    is_correct = await _ai_router.grade_text_answer(
+                        participant_answer=text,
+                        expected_answer=str(expected_answer).strip(),
+                    )
 
             asyncio.create_task(_write_text_answer_bg(
                 session_id=session_id,
@@ -330,11 +333,12 @@ class AnswerServiceAsync:
                 is_correct=is_correct,
             ))
 
-            await self._update_word_cloud_aggregation(session_id, request.question_id, text)
+            if q_type != "code":
+                await self._update_word_cloud_aggregation(session_id, request.question_id, text)
 
             return AnswerSubmitResponse(
                 success=True,
-                message="Response submitted successfully",
+                message="Code submitted! AI evaluation pending..." if q_type == "code" else "Response submitted successfully",
                 is_correct=None,
             )
 
@@ -377,6 +381,7 @@ class AnswerServiceAsync:
             QuestionType.SINGLE_LINE,
             QuestionType.PARAGRAPH,
             QuestionType.ONE_WORD,
+            QuestionType.CODE,
         ):
             raise ValueError("This endpoint is for text-based questions only")
 
@@ -396,9 +401,10 @@ class AnswerServiceAsync:
             if dup.scalar_one_or_none():
                 raise DuplicateAnswerError("You have already answered this question")
 
-        expected_answer = (current_question.options or [None])[0]
-        check_content(text, "Answer")
+        if current_question.question_type != QuestionType.CODE:
+            check_content(text, "Answer")
 
+        expected_answer = (current_question.options or [None])[0]
         is_text_scored = current_question.question_type in (QuestionType.SINGLE_LINE, QuestionType.PARAGRAPH)
         is_correct = None
         if is_text_scored and expected_answer:
@@ -418,11 +424,12 @@ class AnswerServiceAsync:
         ))
         await db.commit()
 
-        await self._update_word_cloud_aggregation(session.id, request.question_id, text)
+        if current_question.question_type != QuestionType.CODE:
+            await self._update_word_cloud_aggregation(session.id, request.question_id, text)
 
         return AnswerSubmitResponse(
             success=True,
-            message="Response submitted successfully",
+            message="Code submitted! AI evaluation pending..." if current_question.question_type == QuestionType.CODE else "Response submitted successfully",
             is_correct=None,
         )
     
@@ -1108,6 +1115,58 @@ class AnswerServiceAsync:
             mcq_question_count=scored_question_count
         )
 
+    async def get_code_answers(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        question_id: int,
+    ) -> CodeAnswersResponse:
+        """Fetch all code submissions for a CODE question (host view)."""
+        answers_result = await db.execute(
+            select(Answer, Participant)
+            .join(Participant, Answer.participant_id == Participant.id)
+            .filter(
+                Answer.session_id == session_id,
+                Answer.question_id == question_id,
+            )
+        )
+        rows = answers_result.all()
+
+        items = []
+        for answer, participant in rows:
+            if not answer.text_answer:
+                continue
+            try:
+                payload = json.loads(answer.text_answer)
+                language = payload.get("language", "unknown")
+                code = payload.get("code", "")
+            except (json.JSONDecodeError, AttributeError):
+                language = "unknown"
+                code = answer.text_answer or ""
+
+            # Extract verdict from ai_feedback prefix (e.g. "AC: output\nexplanation")
+            verdict = None
+            if answer.ai_feedback:
+                first_line = answer.ai_feedback.split("\n")[0]
+                verdict = first_line.split(":")[0].strip() if ":" in first_line else first_line.strip()
+
+            items.append(CodeAnswerItem(
+                participant_id=participant.id,
+                display_name=participant.display_name,
+                language=language,
+                code=code,
+                verdict=verdict,
+                ai_feedback=answer.ai_feedback,
+                submitted_at=answer.created_at.isoformat() if answer.created_at else None,
+            ))
+
+        return CodeAnswersResponse(
+            question_id=question_id,
+            session_id=session_id,
+            answers=items,
+            total=len(items),
+        )
+
     async def _update_aggregation(
         self,
         session_id: int,
@@ -1119,6 +1178,75 @@ class AnswerServiceAsync:
         await self.redis.increment(key)
         await self.redis.expire(key, 86400)  # 24 hours
     
+    async def evaluate_code_answers(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        question_id: int,
+    ) -> dict:
+        """Batch evaluate all CODE answers for a question using AI simulation.
+
+        Fetches every Answer row for the question, calls evaluate_code() on each,
+        then writes is_correct and ai_feedback back to the DB.
+        Returns verdict summary: {"evaluated": N, "verdicts": {"AC": N, ...}}.
+        """
+        from core.ai import router as _ai_router
+
+        q_result = await db.execute(select(Question).filter(Question.id == question_id))
+        question = q_result.scalar_one_or_none()
+        if not question or question.question_type != QuestionType.CODE:
+            raise ValueError("Question not found or not a CODE type question")
+
+        answers_result = await db.execute(
+            select(Answer).filter(
+                Answer.session_id == session_id,
+                Answer.question_id == question_id,
+            )
+        )
+        answers = answers_result.scalars().all()
+
+        problem_statement = question.text or ""
+        grading_rubric = question.grading_rubric or "Evaluate correctness based on the problem statement."
+
+        verdict_counts: dict[str, int] = {"AC": 0, "WA": 0, "PE": 0, "RE": 0, "CE": 0, "TLE": 0}
+
+        for answer in answers:
+            if not answer.text_answer:
+                continue
+            try:
+                payload = json.loads(answer.text_answer)
+                language = payload.get("language", "python")
+                code = payload.get("code", "")
+            except (json.JSONDecodeError, AttributeError):
+                language = "unknown"
+                code = answer.text_answer
+
+            try:
+                result = await _ai_router.evaluate_code(
+                    language=language,
+                    code=code,
+                    problem_statement=problem_statement,
+                    grading_rubric=grading_rubric,
+                )
+            except Exception as e:
+                logger.warning("evaluate_code failed for answer %s: %s", answer.id, e)
+                result = {"verdict": "WA", "output": "", "explanation": "Evaluation error"}
+
+            verdict = result.get("verdict", "WA")
+            output = result.get("output", "")
+            efficiency = result.get("efficiency", "")
+
+            answer.is_correct = (verdict == "AC")
+            answer.ai_feedback = f"{verdict}: {output}" if output else verdict
+            if efficiency:
+                answer.ai_feedback += f"\n\nEfficiency: {efficiency}"
+
+            verdict_counts[verdict] = verdict_counts.get(verdict, 0) + 1
+
+        await db.commit()
+
+        return {"evaluated": len(answers), "verdicts": verdict_counts}
+
     async def _update_word_cloud_aggregation(
         self,
         session_id: int,

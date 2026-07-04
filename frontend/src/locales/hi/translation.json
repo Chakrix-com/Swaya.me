@@ -407,7 +407,18 @@
     "scheduleSection": "समय-सारणी",
     "accessSection": "पहुँच",
     "minutes": "मिनट",
-    "securityLabel": "सुरक्षा और निगरानी"
+    "securityLabel": "सुरक्षा और निगरानी",
+    "evaluateCode": "कोड मूल्यांकन करें",
+    "evaluating": "मूल्यांकन हो रहा है...",
+    "viewSubmissions": "सबमिशन देखें",
+    "codeLanguageRequired": "कम से कम एक भाषा चुनें",
+    "codeLanguageHelp": "प्रतिभागी चुनी गई भाषाओं में कोड लिख सकते हैं",
+    "gradingRubric": "ग्रेडिंग मानदंड",
+    "gradingRubricHelp": "AI जज के लिए अपेक्षित आउटपुट या टेस्ट केस बताएं",
+    "gradingRubricPlaceholder": "उदा. इनपुट 5 के लिए आउटपुट 120 होना चाहिए (फैक्टोरियल)",
+    "codeQuestionDescription": "प्रतिभागी कोड लिखते हैं; AI प्रश्न बंद होने के बाद मूल्यांकन करता है",
+    "clickEvaluate": "AI मूल्यांकन चलाने के लिए प्रश्न बंद करने के बाद \"कोड मूल्यांकन करें\" पर क्लिक करें",
+    "submissions": "सबमिशन"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -2374,5 +2385,23 @@
     "typePoll": "लाइव पोल",
     "typeExam": "टेस्ट",
     "typeSurvey": "सर्वे"
+  },
+  "questionTypes": {
+    "code": "कोड"
+  },
+  "codeEditor": {
+    "submit": "कोड जमा करें",
+    "pending": "AI मूल्यांकन लंबित...",
+    "pendingDetail": "आपका कोड जमा हो गया है। होस्ट प्रश्न बंद करने के बाद परिणाम दिखाई देंगे।",
+    "language": "भाषा",
+    "selectLanguage": "भाषा चुनें"
+  },
+  "verdict": {
+    "AC": "स्वीकृत",
+    "WA": "गलत उत्तर",
+    "PE": "प्रस्तुति त्रुटि",
+    "RE": "रनटाइम त्रुटि",
+    "CE": "संकलन त्रुटि",
+    "TLE": "समय सीमा पार"
   }
 }

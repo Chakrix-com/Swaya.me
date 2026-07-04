@@ -358,11 +358,10 @@ function Dashboard() {
 
   // ── Table action helpers ──────────────────────────────────────────────────
   const getPrimaryAction = (quiz) => {
-    if (quiz.has_active_session && quiz.active_session_id) return 'open'
-    if (quiz.status === 'ready' && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam') return 'launch'
-    if (quiz.status === 'draft') return 'edit'
     if (quiz.quiz_type === 'exam') return 'exam_results'
     if (quiz.quiz_type === 'offline_poll') return 'poll_results'
+    if (quiz.has_active_session && quiz.active_session_id) return 'open'
+    if (quiz.status === 'ready') return 'launch'
     return 'edit'
   }
 

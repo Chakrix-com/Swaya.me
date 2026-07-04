@@ -33,6 +33,11 @@ _MODEL_ALIASES = {
     "gemini-3.1-flash-lite-preview": "gemini-2.5-flash",
     "gemini-3-pro": "gemini-2.5-pro",
     "gemini-3-flash": "gemini-2.5-flash",
+    # Deprecated models — redirect to current equivalents
+    "gemini-2.0-flash": "gemini-2.5-flash",
+    "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
+    "gemini-1.5-flash": "gemini-2.5-flash",
+    "gemini-1.5-pro": "gemini-2.5-pro",
 }
 _DEFAULT_MODEL = "gemini-2.5-flash"
 
@@ -60,17 +65,45 @@ class GeminiProvider(BaseAIProvider):
         return f"{GEMINI_BASE}/{model}:generateContent?key={self._key}"
 
     async def _post(self, payload: dict, model: str, timeout: httpx.Timeout | None = None) -> dict:
+        import asyncio as _asyncio
+        _FALLBACK_CHAIN = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"]
+        models_to_try = [model]
+        for fb in _FALLBACK_CHAIN:
+            if fb != model:
+                models_to_try.append(fb)
+
+        last_error = None
         async with httpx.AsyncClient(timeout=timeout or self._timeout) as client:
-            try:
-                resp = await client.post(self._url(model), json=payload)
-                resp.raise_for_status()
-            except httpx.HTTPStatusError as e:
-                raise AIProviderError(f"Gemini API HTTP {e.response.status_code}: {e.response.text[:200]}")
-            except httpx.ConnectError:
-                raise AIProviderError("Cannot connect to Gemini API — check network")
-            except httpx.ReadTimeout:
-                raise AIProviderError("Gemini request timed out")
-        return resp.json()
+            for model_idx, attempt_model in enumerate(models_to_try):
+                for retry in range(3):
+                    try:
+                        resp = await client.post(self._url(attempt_model), json=payload)
+                        if resp.status_code == 503:
+                            last_error = AIProviderError(f"Gemini 503 on {attempt_model}")
+                            sleep_s = 2.0 * (retry + 1) + model_idx * 1.0
+                            logger.debug("Gemini 503 on %s retry=%d, sleeping %.1fs", attempt_model, retry, sleep_s)
+                            await _asyncio.sleep(sleep_s)
+                            continue
+                        resp.raise_for_status()
+                        return resp.json()
+                    except httpx.HTTPStatusError as e:
+                        sc = e.response.status_code
+                        if sc in (503, 429):
+                            last_error = AIProviderError(f"Gemini {sc} on {attempt_model}")
+                            sleep_s = 2.0 * (retry + 1) + model_idx * 1.0
+                            await _asyncio.sleep(sleep_s)
+                        elif sc == 404:
+                            # Model deprecated/removed — skip all retries, try next model
+                            last_error = AIProviderError(f"Gemini model not found: {attempt_model}")
+                            break
+                        else:
+                            raise AIProviderError(f"Gemini API HTTP {sc}: {e.response.text[:200]}")
+                    except httpx.ConnectError:
+                        raise AIProviderError("Cannot connect to Gemini API — check network")
+                    except httpx.ReadTimeout:
+                        raise AIProviderError("Gemini request timed out")
+                # all retries on this model exhausted — try next model
+        raise last_error or AIProviderError("All Gemini models unavailable")
 
     @staticmethod
     def _extract_text(data: dict) -> str:
@@ -209,6 +242,64 @@ class GeminiProvider(BaseAIProvider):
             return raw == "YES"
         except Exception:
             return participant_answer.strip().lower() == expected_answer.strip().lower()
+
+    async def evaluate_code(
+        self,
+        language: str,
+        code: str,
+        problem_statement: str,
+        grading_rubric: str,
+    ) -> dict:
+        if not self._key:
+            return {"verdict": "WA", "output": "", "explanation": "AI evaluation unavailable"}
+        system = (
+            "You are a strict programming judge. Your job is to check whether the submitted code "
+            "CORRECTLY SOLVES THE SPECIFIC PROBLEM stated in the prompt — not just whether it runs.\n\n"
+            "IMPORTANT: If the code solves a completely different problem (e.g. fibonacci code submitted "
+            "for a prime-checking question), that is WA — Wrong Answer — regardless of whether the code "
+            "itself is correct for that other problem.\n\n"
+            "Verdict rules:\n"
+            "- AC: code runs AND its output correctly answers the problem for all test cases\n"
+            "- WA: code runs but output is wrong OR the code solves a different problem entirely\n"
+            "- CE: syntax/compile error — cannot run at all\n"
+            "- RE: crashes / raises exception during execution\n"
+            "- TLE: infinite loop or hopelessly slow\n\n"
+            "Output field — simulate the code on these test cases (skip if CE, show error message if CE):\n"
+            "  If the code requires input: test with typical, boundary, and negative values appropriate "
+            "  for the problem. One line per test: 'n=<val>: <actual output or ERROR: <msg>>'.\n"
+            "  Show what the code ACTUALLY outputs — do NOT invent correct answers.\n"
+            "  Format as plain multi-line text (NOT a JSON array).\n\n"
+            "efficiency field (for host/teacher): 2-3 sentences on time complexity, space complexity, "
+            "optimality, and edge-case handling. If verdict is WA because wrong problem was solved, "
+            "state that clearly.\n\n"
+            "Return ONLY valid JSON: {\"verdict\": \"...\", \"output\": \"...\", \"efficiency\": \"...\"}"
+        )
+        user = (
+            f"Language: {language}\n\n"
+            f"Problem:\n{problem_statement}\n\n"
+            f"Grading context:\n{grading_rubric}\n\n"
+            f"Submitted code:\n```{language}\n{code}\n```"
+        )
+        # gemini-2.5-flash is a thinking model — needs large token budget for hidden reasoning + output
+        payload = self._gemini_payload(system, user, temperature=0.0, max_tokens=8192, json_mode=True)
+        try:
+            data = await self._post(payload, self._model_fast, timeout=httpx.Timeout(60.0, connect=10.0))
+            raw = self._extract_text(data)
+            parsed = _parse_json(raw)
+            verdict = str(parsed.get("verdict", "WA")).upper()
+            if verdict not in {"AC", "WA", "PE", "RE", "CE", "TLE"}:
+                verdict = "WA"
+            raw_output = parsed.get("output", "")
+            if isinstance(raw_output, list):
+                raw_output = "\n".join(str(x) for x in raw_output)
+            return {
+                "verdict": verdict,
+                "output": str(raw_output),
+                "efficiency": str(parsed.get("efficiency", "")),
+            }
+        except Exception as e:
+            logger.warning("Gemini evaluate_code failed: %s", e)
+            return {"verdict": "ERR", "output": "", "explanation": "AI evaluator temporarily unavailable — please try again in a moment"}
 
     async def list_available_models(self) -> list[str]:
         return []

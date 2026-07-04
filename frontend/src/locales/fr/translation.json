@@ -409,7 +409,18 @@
     "scheduleSection": "Calendrier",
     "accessSection": "Accès",
     "minutes": "min",
-    "securityLabel": "Sécurité et Surveillance"
+    "securityLabel": "Sécurité et Surveillance",
+    "evaluateCode": "Évaluer le code",
+    "evaluating": "Évaluation en cours...",
+    "viewSubmissions": "Voir les soumissions",
+    "codeLanguageRequired": "Sélectionnez au moins un langage",
+    "codeLanguageHelp": "Les participants peuvent écrire du code dans les langages sélectionnés",
+    "gradingRubric": "Critères d'évaluation",
+    "gradingRubricHelp": "Décrivez la sortie attendue ou les cas de test pour le juge IA",
+    "gradingRubricPlaceholder": "Ex. Pour l'entrée 5, la sortie doit être 120 (factorielle)",
+    "codeQuestionDescription": "Les participants écrivent du code ; l'IA évalue après la fermeture de la question",
+    "clickEvaluate": "Cliquez sur \"Évaluer le code\" après la fermeture de la question pour lancer l'évaluation IA",
+    "submissions": "Soumissions"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",
@@ -2376,5 +2387,23 @@
     "typePoll": "Sondage en direct",
     "typeExam": "Examen",
     "typeSurvey": "Enquête"
+  },
+  "questionTypes": {
+    "code": "Code"
+  },
+  "codeEditor": {
+    "submit": "Soumettre le code",
+    "pending": "Évaluation IA en attente...",
+    "pendingDetail": "Votre code a été soumis. Les résultats apparaîtront après que l'animateur ferme la question.",
+    "language": "Langage",
+    "selectLanguage": "Sélectionner le langage"
+  },
+  "verdict": {
+    "AC": "Accepté",
+    "WA": "Mauvaise réponse",
+    "PE": "Erreur de présentation",
+    "RE": "Erreur d'exécution",
+    "CE": "Erreur de compilation",
+    "TLE": "Temps limite dépassé"
   }
 }

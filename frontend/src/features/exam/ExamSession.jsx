@@ -16,10 +16,12 @@ import {
   TrophyOutlined, MinusCircleOutlined, PlusCircleOutlined, InfoCircleOutlined,
   FlagOutlined, SaveOutlined, MailOutlined, UnorderedListOutlined,
   DownloadOutlined, ShareAltOutlined, CopyOutlined, LinkedinFilled,
+  PlayCircleOutlined,
 } from '@ant-design/icons'
 import { examAPI, proctoringAPI } from '../../services/api'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
+import CodeEditor from '../quiz/components/CodeEditor'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
 import { ProctoringProvider, ProctoringGate } from '../proctoring'
@@ -510,10 +512,15 @@ function QuestionScreen({
   saving,
   isFlagged,
   onToggleFlag,
+  slug,
+  sessionToken,
 }) {
   const { t } = useTranslation()
   const { theme } = useContext(VisitorThemeContext)
+  const [runResult, setRunResult] = useState(null)
+  const [running, setRunning] = useState(false)
   const isLast = questionIndex === totalQuestions - 1
+  const isCode = question.question_type === 'code'
 
   const globalUrgent = globalSecondsLeft != null && globalSecondsLeft < 60
   const qUrgent = questionSecondsLeft != null && questionSecondsLeft < 10
@@ -564,7 +571,10 @@ function QuestionScreen({
         </div>
       )}
 
-      <Card bordered={false}>
+      <Card
+        bordered={true}
+        style={{ borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+      >
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <VideoEmbed url={question.question_video_url} />
           {question.question_image_url && (
@@ -574,8 +584,113 @@ function QuestionScreen({
               style={{ maxWidth: '100%', borderRadius: 8 }}
             />
           )}
-          <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
 
+          {/* Question text with CODE badge */}
+          <div>
+            {isCode && (
+              <Tag color="purple" style={{ marginBottom: 8 }}>
+                {t('questionTypes.code', 'Code')}
+              </Tag>
+            )}
+            <RichTextRenderer content={question.text} isDark={theme === 'dark'} />
+          </div>
+
+          {isCode ? (() => {
+            let parsed = { language: question.options?.[0] || 'python', code: '' }
+            if (selectedAnswer && typeof selectedAnswer === 'string') {
+              try { parsed = JSON.parse(selectedAnswer) } catch (_) {}
+            }
+
+            const handleRunCode = async () => {
+              if (!parsed.code.trim()) return
+              setRunning(true)
+              setRunResult(null)
+              try {
+                const res = await examAPI.runCode(slug, {
+                  session_token: sessionToken,
+                  question_id: question.id,
+                  language: parsed.language,
+                  code: parsed.code,
+                })
+                setRunResult(res.data)
+                setTimeout(() => {
+                  document.getElementById('run-result-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                }, 100)
+              } catch (e) {
+                const status = e?.response?.status
+                const msg = status === 429
+                  ? 'Too many requests — wait a moment and try again'
+                  : (e?.response?.data?.detail || e?.response?.data?.error || 'Evaluation failed')
+                setRunResult({ verdict: 'ERR', output: '', explanation: msg })
+              } finally {
+                setRunning(false)
+              }
+            }
+
+            const VERDICT_META = {
+              AC:  { label: '✓ Correct',             color: '#3fb950' },
+              WA:  { label: '✗ Wrong Answer',         color: '#f85149' },
+              CE:  { label: '✗ Compilation Error',    color: '#f85149' },
+              RE:  { label: '✗ Runtime Error',        color: '#e3b341' },
+              TLE: { label: '✗ Time Limit Exceeded',  color: '#1677ff' },
+            }
+
+            return (
+              <Space direction="vertical" style={{ width: '100%' }} size="small">
+                <CodeEditor
+                  code={parsed.code}
+                  language={parsed.language}
+                  allowedLanguages={question.options || ['python']}
+                  isDark={theme === 'dark'}
+                  onChange={(code) => { setRunResult(null); onAnswerSelect(JSON.stringify({ language: parsed.language, code })) }}
+                  onLanguageChange={(lang) => { setRunResult(null); onAnswerSelect(JSON.stringify({ language: lang, code: parsed.code })) }}
+                />
+                {/* Run code result */}
+                {runResult && (
+                  <div id="run-result-anchor" style={{
+                    border: '1px solid #30363d',
+                    borderRadius: 8,
+                    background: '#161b22',
+                    padding: '10px 14px',
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                  }}>
+                    {runResult.verdict === 'ERR' ? (
+                      <Text style={{ color: '#e3b341' }}>⚠ Evaluator busy — try again in a moment</Text>
+                    ) : (
+                      <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                        <Space>
+                          <Text style={{ color: '#8b949e' }}>Result:</Text>
+                          <Text style={{ color: VERDICT_META[runResult.verdict]?.color || '#e6edf3', fontWeight: 600 }}>
+                            {VERDICT_META[runResult.verdict]?.label || runResult.verdict}
+                          </Text>
+                        </Space>
+                        {runResult.output && (
+                          <div>
+                            <Text style={{ color: '#8b949e' }}>Output:</Text>
+                            <pre style={{ margin: '4px 0 0 0', color: '#e6edf3', whiteSpace: 'pre-wrap', fontSize: 13, maxHeight: 140, overflowY: 'auto' }}>
+                              {runResult.output}
+                            </pre>
+                          </div>
+                        )}
+                      </Space>
+                    )}
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    onClick={handleRunCode}
+                    loading={running}
+                    disabled={!parsed.code.trim()}
+                    icon={<PlayCircleOutlined />}
+                    style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
+                  >
+                    {running ? t('quiz.evaluating', 'Evaluating...') : 'Run Code'}
+                  </Button>
+                </div>
+              </Space>
+            )
+          })() : (
           <Radio.Group
             value={selectedAnswer}
             onChange={(e) => onAnswerSelect(e.target.value)}
@@ -604,23 +719,32 @@ function QuestionScreen({
               ))}
             </Space>
           </Radio.Group>
+          )}
 
           <Row justify="space-between" align="middle" style={{ marginTop: 8 }}>
             <Col>
-              <Space>
-                {!hasPerQuestionTimers && questionIndex > 0 && (
-                  <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
-                    {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
+              {/* Flag only shown for non-code questions */}
+              {!isCode && (
+                <Space>
+                  {!hasPerQuestionTimers && questionIndex > 0 && (
+                    <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
+                      {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
+                    </Button>
+                  )}
+                  <Button
+                    icon={<FlagOutlined />}
+                    onClick={() => onToggleFlag(question.id)}
+                    style={isFlagged ? { color: '#fa8c16', borderColor: '#ffa940', background: '#fff7e6' } : {}}
+                  >
+                    {isFlagged ? t('exam.flagged', 'Flagged') : t('exam.flagForReview', 'Flag')}
                   </Button>
-                )}
-                <Button
-                  icon={<FlagOutlined />}
-                  onClick={() => onToggleFlag(question.id)}
-                  style={isFlagged ? { color: '#fa8c16', borderColor: '#ffa940', background: '#fff7e6' } : {}}
-                >
-                  {isFlagged ? t('exam.flagged', 'Flagged') : t('exam.flagForReview', 'Flag')}
+                </Space>
+              )}
+              {isCode && !hasPerQuestionTimers && questionIndex > 0 && (
+                <Button icon={<ArrowLeftOutlined />} onClick={onPrev}>
+                  {t('exam.questionOf', { current: questionIndex, total: totalQuestions })}
                 </Button>
-              </Space>
+              )}
             </Col>
             <Col>
               <Space align="center">
@@ -986,10 +1110,12 @@ export default function ExamSession() {
     const q = questions[currentIdx]
     setAnswers(prev => ({ ...prev, [q.id]: optionIndex }))
     // Fire-and-forget save
+    const isCode = q.question_type === 'code'
     examAPI.saveAnswer(slug, {
       session_token: sessionToken,
       question_id: q.id,
-      selected_option_index: optionIndex,
+      selected_option_index: isCode ? null : optionIndex,
+      text_answer: isCode ? (typeof optionIndex === 'string' ? optionIndex : null) : null,
     }).catch(() => {})
   }
 
@@ -1000,10 +1126,12 @@ export default function ExamSession() {
     try {
       const q = questions[currentIdx]
       const optIdx = answers[q.id] ?? null
+      const isCode = q.question_type === 'code'
       await examAPI.saveAnswer(slug, {
         session_token: sessionToken,
         question_id: q.id,
-        selected_option_index: optIdx,
+        selected_option_index: isCode ? null : optIdx,
+        text_answer: isCode ? (typeof optIdx === 'string' ? optIdx : null) : null,
       })
       setCurrentIdx(ci => Math.min(ci + 1, questions.length - 1))
     } catch {
@@ -1047,10 +1175,12 @@ export default function ExamSession() {
           // Save current answer first
           const q = questions[currentIdx]
           const optIdx = answers[q.id] ?? null
+          const isCode = q.question_type === 'code'
           await examAPI.saveAnswer(slug, {
             session_token: sessionToken,
             question_id: q.id,
-            selected_option_index: optIdx,
+            selected_option_index: isCode ? null : optIdx,
+            text_answer: isCode ? (typeof optIdx === 'string' ? optIdx : null) : null,
           })
           // Final webcam snapshot before submit
           captureSnapshotRef.current?.()
@@ -1160,6 +1290,7 @@ export default function ExamSession() {
             <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken} onAutoSubmit={handleAutoSubmit}>
               <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
                 <QuestionScreen
+                  key={questions[currentIdx]?.id}
                   question={questions[currentIdx]}
                   questionIndex={currentIdx}
                   totalQuestions={questions.length}
@@ -1174,6 +1305,8 @@ export default function ExamSession() {
                   saving={saving}
                   isFlagged={flagged.has(questions[currentIdx]?.id)}
                   onToggleFlag={handleToggleFlag}
+                  slug={slug}
+                  sessionToken={sessionToken}
                 />
               </ProctoringGate>
             </ProctoringProvider>

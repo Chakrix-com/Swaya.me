@@ -48,6 +48,7 @@ class QuestionType(str, enum.Enum):
     SCALE = "scale"
     PARAGRAPH = "paragraph"
     ONE_WORD = "one_word"
+    CODE = "code"
 
 
 class TemplateScope(str, enum.Enum):
@@ -179,6 +180,7 @@ class Question(Base, TimestampMixin):
     negative_points = Column(Float, nullable=False, default=0, server_default="0")
     is_required = Column(Boolean, nullable=False, default=False, server_default="0")
     answer_explanation = Column(Text, nullable=True)
+    grading_rubric = Column(Text, nullable=True)
 
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
@@ -245,6 +247,7 @@ class Answer(Base, TimestampMixin):
     selected_option_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
     text_answer = Column(Text, nullable=True)  # For text-based questions
     is_correct = Column(Boolean, nullable=True)  # For MCQ only, null for word_cloud
+    ai_feedback = Column(Text, nullable=True)  # For CODE questions: verdict + simulated output
     
     # Relationships
     session = relationship("QuizSession", back_populates="answers")

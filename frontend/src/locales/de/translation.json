@@ -407,7 +407,18 @@
     "scheduleSection": "Zeitplan",
     "accessSection": "Zugang",
     "minutes": "Min",
-    "securityLabel": "Sicherheit & Überwachung"
+    "securityLabel": "Sicherheit & Überwachung",
+    "evaluateCode": "Code bewerten",
+    "evaluating": "Bewertung läuft...",
+    "viewSubmissions": "Einreichungen anzeigen",
+    "codeLanguageRequired": "Mindestens eine Sprache auswählen",
+    "codeLanguageHelp": "Teilnehmer können Code in den ausgewählten Sprachen schreiben",
+    "gradingRubric": "Bewertungsrubrik",
+    "gradingRubricHelp": "Beschreiben Sie die erwartete Ausgabe oder Testfälle für den KI-Richter",
+    "gradingRubricPlaceholder": "z.B. Für Eingabe 5 soll die Ausgabe 120 sein (Fakultät)",
+    "codeQuestionDescription": "Teilnehmer schreiben Code; KI bewertet nach dem Schließen der Frage",
+    "clickEvaluate": "Klicken Sie nach dem Schließen der Frage auf \"Code bewerten\", um die KI-Bewertung zu starten",
+    "submissions": "Einreichungen"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",
@@ -2374,5 +2385,23 @@
     "typePoll": "Live-Umfrage",
     "typeExam": "Prüfung",
     "typeSurvey": "Umfrage"
+  },
+  "questionTypes": {
+    "code": "Code"
+  },
+  "codeEditor": {
+    "submit": "Code einreichen",
+    "pending": "KI-Bewertung ausstehend...",
+    "pendingDetail": "Ihr Code wurde eingereicht. Ergebnisse erscheinen, nachdem der Host die Frage schließt.",
+    "language": "Sprache",
+    "selectLanguage": "Sprache auswählen"
+  },
+  "verdict": {
+    "AC": "Akzeptiert",
+    "WA": "Falsche Antwort",
+    "PE": "Präsentationsfehler",
+    "RE": "Laufzeitfehler",
+    "CE": "Kompilierungsfehler",
+    "TLE": "Zeitlimit überschritten"
   }
 }

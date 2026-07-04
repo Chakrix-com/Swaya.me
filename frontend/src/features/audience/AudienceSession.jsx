@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useContext, useCallback } from 'react'
 import EmojiReactionBar from './EmojiReactionBar'
 import VideoEmbed from '../quiz/components/VideoEmbed'
+import CodeEditor from '../quiz/components/CodeEditor'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -49,6 +50,9 @@ export default function AudienceSession() {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [wordCloudAnswer, setWordCloudAnswer] = useState('')
   const [wordCloudData, setWordCloudData] = useState([])
+  const [codeAnswer, setCodeAnswer] = useState('')
+  const [codeLanguage, setCodeLanguage] = useState('python')
+  const [codeVerdict, setCodeVerdict] = useState(null)
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -168,6 +172,10 @@ export default function AudienceSession() {
         setSelectedAnswer(null)
         setWordCloudAnswer('')
         setWordCloudData([])
+        setCodeAnswer('')
+        setCodeVerdict(null)
+        const firstLang = response.data.current_question?.options?.[0]
+        if (firstLang) setCodeLanguage(firstLang)
       }
 
       lastQuestionIdRef.current = newQuestionId
@@ -218,11 +226,19 @@ export default function AudienceSession() {
   }
 
   const handleSubmitAnswer = async () => {
-    if (isTextQuestion ? !wordCloudAnswer?.trim() : selectedAnswer === null) return
+    if (isCodeQuestion) {
+      if (!codeAnswer?.trim()) return
+    } else if (isTextQuestion ? !wordCloudAnswer?.trim() : selectedAnswer === null) return
 
     setLoading(true)
     try {
-      if (isTextQuestion) {
+      if (isCodeQuestion) {
+        await sessionAPI.submitWordCloudAnswer(sessionToken, {
+          question_id: currentQuestion.question_id,
+          text_answer: JSON.stringify({ language: codeLanguage, code: codeAnswer })
+        })
+        setSubmitted(true)
+      } else if (isTextQuestion) {
         await sessionAPI.submitWordCloudAnswer(sessionToken, {
           question_id: currentQuestion.question_id,
           text_answer: wordCloudAnswer.trim()
@@ -408,6 +424,7 @@ export default function AudienceSession() {
   const isWordCloud = currentQuestion?.question_type === 'word_cloud'
   const isOneWord = currentQuestion?.question_type === 'one_word'
   const isScaleQuestion = currentQuestion?.question_type === 'scale'
+  const isCodeQuestion = currentQuestion?.question_type === 'code'
   const isTextQuestion = ['word_cloud', 'one_word', 'single_line', 'paragraph'].includes(currentQuestion?.question_type)
   const isPoll = results?.quiz_type === 'poll'
   const displayTimerRemaining = currentQuestion?.max_time_seconds
@@ -724,8 +741,49 @@ export default function AudienceSession() {
                     )
                   })()}
 
+                  {/* ── CODE: unanswered ── */}
+                  {isCodeQuestion && !submitted && (
+                    <div className="aud2-text-answer-wrap">
+                      <CodeEditor
+                        code={codeAnswer}
+                        language={codeLanguage}
+                        allowedLanguages={currentQuestion.options || ['python']}
+                        onChange={setCodeAnswer}
+                        onLanguageChange={setCodeLanguage}
+                        isDark={theme === 'dark'}
+                      />
+                      <button
+                        className="aud2-submit-btn"
+                        disabled={!codeAnswer.trim() || loading}
+                        onClick={handleSubmitAnswer}
+                        style={{ marginTop: 8 }}
+                      >
+                        {loading ? '…' : t('codeEditor.submit', 'Submit Code')}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ── CODE: submitted (pending eval) ── */}
+                  {isCodeQuestion && submitted && (
+                    <div className="aud2-confirmed-panel">
+                      <span className="aud2-hero-icon" style={{ fontSize: 36 }}>⏳</span>
+                      <h3 className="aud2-confirmed-heading">{t('codeEditor.pending', 'Code submitted!')}</h3>
+                      <p className="aud2-subtext">{t('codeEditor.pendingDetail', 'AI evaluation will run when the host closes the question.')}</p>
+                      {codeVerdict && (
+                        <CodeEditor
+                          code={codeAnswer}
+                          language={codeLanguage}
+                          allowedLanguages={[codeLanguage]}
+                          readOnly
+                          isDark={theme === 'dark'}
+                          verdict={codeVerdict}
+                        />
+                      )}
+                    </div>
+                  )}
+
                   {/* ── MCQ / Poll: unanswered ── */}
-                  {!isTextQuestion && !isScaleQuestion && !submitted && (
+                  {!isTextQuestion && !isScaleQuestion && !isCodeQuestion && !submitted && (
                     <div className="aud2-options-list" role="radiogroup" aria-label={t('audience.chooseAnswer', { defaultValue: 'Choose your answer' })}>
                       {['A', 'B', 'C', 'D'].map((key) => {
                         const label = currentQuestion[`option_${key.toLowerCase()}`]
@@ -755,7 +813,7 @@ export default function AudienceSession() {
                   )}
 
                   {/* ── S4: Locked in (quiz, no reveal yet) ── */}
-                  {!isTextQuestion && !isScaleQuestion && submitted && !currentQuestion.correct_answer && !isPoll && (
+                  {!isTextQuestion && !isScaleQuestion && !isCodeQuestion && submitted && !currentQuestion.correct_answer && !isPoll && (
                     <div className="aud2-locked-panel">
                       <span className="aud2-locked-icon">⚡</span>
                       <h3 className="aud2-locked-heading">{t('audience.lockedIn', { defaultValue: 'Locked in!' })}</h3>
@@ -807,7 +865,7 @@ export default function AudienceSession() {
                   )}
 
                   {/* ── S5: MCQ reveal ── */}
-                  {!isPoll && !isScaleQuestion && !isTextQuestion && submitted && currentQuestion.correct_answer && (
+                  {!isPoll && !isScaleQuestion && !isTextQuestion && !isCodeQuestion && submitted && currentQuestion.correct_answer && (
                     <>
                       <div className={`aud2-status-banner aud2-status-banner--${selectedAnswer === currentQuestion.correct_answer ? 'correct' : 'wrong'}`}>
                         {selectedAnswer === currentQuestion.correct_answer

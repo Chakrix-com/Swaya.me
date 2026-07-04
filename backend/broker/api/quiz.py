@@ -30,7 +30,9 @@ from features.quiz.schemas import (
     SessionListResponse, TemplateDesignationRequest, TemplateQuizListItemResponse,
     FolderCreateRequest, FolderUpdateRequest, FolderAssignRequest, FolderResponse,
     FolderShareRequest, FolderShareEntry,
-    ResultsHubResponse
+    ResultsHubResponse,
+    CodeEvaluateResponse,
+    CodeAnswersResponse,
 )
 from features.quiz.quiz_service_async import QuizBuilderServiceAsync
 from features.quiz.schemas import OfflinePollPublishResponse
@@ -990,6 +992,31 @@ async def submit_word_cloud_answer(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
 
+@router.post("/sessions/{session_id}/questions/{question_id}/evaluate-code", response_model=CodeEvaluateResponse)
+async def evaluate_code_answers(
+    session_id: int,
+    question_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: AnswerServiceAsync = Depends(get_answer_service)
+):
+    """Batch-evaluate all CODE answers for a question using AI simulation (host-only)."""
+    try:
+        await _assert_host_session_access(db, session_id, current_user)
+        result = await service.evaluate_code_answers(db, session_id, question_id)
+        return CodeEvaluateResponse(
+            question_id=question_id,
+            evaluated=result["evaluated"],
+            verdicts=result["verdicts"],
+        )
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.get("/sessions/{session_id}/leaderboard", response_model=LeaderboardResponse)
 async def get_leaderboard(
     session_id: int,
@@ -1065,6 +1092,24 @@ async def get_session_reactions(
         return await service.get_reaction_aggregates(db, session_id)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/sessions/{session_id}/questions/{question_id}/code-answers", response_model=CodeAnswersResponse)
+async def get_code_answers(
+    session_id: int,
+    question_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: AnswerServiceAsync = Depends(get_answer_service)
+):
+    """Get all code submissions for a CODE question (host-only)."""
+    try:
+        await _assert_host_session_access(db, session_id, current_user)
+        return await service.get_code_answers(db, session_id, question_id)
+    except SessionNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/questions/{question_id}/word-cloud-results", response_model=WordCloudResultsResponse)

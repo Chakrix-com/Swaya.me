@@ -1292,6 +1292,48 @@ export default function QuizPresent() {
               t={t}
             />
           </>
+        ) : currentQ?.question_type === 'code' ? (
+          <>
+            {currentQ?.max_time_seconds ? (
+              <div style={{ marginBottom: 12 }}>
+                <Tag color="orange">{t('quiz.timerTag', { seconds: currentQ.max_time_seconds })}</Tag>
+                <span style={{ marginLeft: 8, color: 'rgba(255,255,255,0.85)' }}>
+                  {t('quiz.timeLeft', { seconds: displayTimerRemaining })}
+                </span>
+                <Progress
+                  percent={Math.max(0, Math.min(100, (Number(displayTimerRemaining) / Number(currentQ.max_time_seconds)) * 100))}
+                  size="small"
+                  showInfo={false}
+                  status={Number(displayTimerRemaining) <= 5 ? 'exception' : Number(displayTimerRemaining) <= 10 ? 'active' : 'normal'}
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            ) : null}
+            <div className="pv-question-wrap" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div className="pv-question-meta" style={{ flexShrink: 0 }}>
+                <Tag color="geekblue" style={{ fontSize: 13, padding: '2px 10px' }}>
+                  {t('quiz.question')} {qNumber} {t('quiz.of')} {totalQ}
+                </Tag>
+                <Tag color="purple">{t('questionTypes.code', 'Code')}</Tag>
+                <Tag color="default">{t('quizPresent.responsesCount', { count: currentQ.total_answers || 0 })}</Tag>
+              </div>
+              <VideoEmbed url={currentQ.question_video_url} />
+              {currentQ.question_image_url && (
+                <div className="pv-question-img-wrap" style={{ flexShrink: 0 }}>
+                  <img src={currentQ.question_image_url} alt={t('quiz.question')} className="pv-question-img" />
+                </div>
+              )}
+              <RichTextRenderer content={currentQ.text || currentQ.question_text} isDark={true} className="pv-question-text" style={{ flexShrink: 0 }} />
+              <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {(currentQ.options || []).map((lang) => (
+                  <Tag key={lang} color="geekblue" style={{ fontSize: 15, padding: '4px 14px' }}>{lang}</Tag>
+                ))}
+              </div>
+              <div style={{ marginTop: 32, color: 'rgba(255,255,255,0.55)', fontSize: 18, textAlign: 'center' }}>
+                {t('codeEditor.pending', 'AI evaluation pending after question closes')}
+              </div>
+            </div>
+          </>
         ) : currentQ?.question_type === 'single_line' || currentQ?.question_type === 'paragraph' ? (
           <>
             {currentQ?.max_time_seconds ? (

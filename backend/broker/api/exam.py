@@ -78,10 +78,61 @@ async def save_answer(slug: str, body: ExamAnswerRequest, db: AsyncSession = Dep
     """Public — upsert a single answer; updates last_activity_at."""
     try:
         return await svc.save_answer(
-            db, slug, body.session_token, body.question_id, body.selected_option_index
+            db, slug, body.session_token, body.question_id, body.selected_option_index,
+            text_answer=body.text_answer,
         )
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+class RunCodeRequest(BaseModel):
+    session_token: str
+    question_id: int
+    language: str
+    code: str
+
+
+import logging as _logging
+_run_code_log = _logging.getLogger("exam.run_code")
+
+
+@router.post("/e/{slug}/run-code")
+@limiter.limit("20/minute")
+async def run_code(request: Request, slug: str, body: RunCodeRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — participant tests their code; AI evaluates and returns verdict without saving."""
+    from core.ai import router as ai_router
+    from features.quiz.exam_service_async import _get_active_participant
+    from persistence.models.quiz import Quiz, Question, QuestionType
+    from sqlalchemy import select as _select
+
+    result = await db.execute(_select(Quiz).filter(Quiz.exam_slug == slug))
+    quiz = result.scalar_one_or_none()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Exam not found")
+
+    await _get_active_participant(db, quiz, body.session_token)
+
+    q_result = await db.execute(_select(Question).filter(Question.id == body.question_id, Question.quiz_id == quiz.id))
+    question = q_result.scalar_one_or_none()
+    if not question or question.question_type != QuestionType.CODE:
+        raise HTTPException(status_code=404, detail="Question not found or not a code question")
+
+    _run_code_log.warning("run_code called: slug=%s qid=%s lang=%s code_len=%d rubric=%r",
+        slug, body.question_id, body.language, len(body.code or ""),
+        (question.grading_rubric or "")[:80])
+    try:
+        ev = await ai_router.evaluate_code(
+            language=body.language,
+            code=body.code,
+            problem_statement=question.text or "",
+            grading_rubric=question.grading_rubric or "Evaluate correctness based on the problem statement.",
+        )
+    except Exception as e:
+        _run_code_log.error("run_code ai_router raised: %s %s", type(e).__name__, e)
+        raise HTTPException(status_code=503, detail=f"AI evaluation unavailable: {e}")
+
+    _run_code_log.warning("run_code result: verdict=%s explanation=%.80s", ev.get("verdict"), ev.get("explanation"))
+    return ev
 
 
 @router.post("/e/{slug}/submit", response_model=ExamSubmitResponse)

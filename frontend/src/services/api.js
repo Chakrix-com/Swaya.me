@@ -177,6 +177,10 @@ export const sessionAPI = {
       params: { format },
       responseType: 'blob',
     }),
+  evaluateCode: (sessionId, questionId) =>
+    api.post(`/quizzes/sessions/${sessionId}/questions/${questionId}/evaluate-code`),
+  getCodeAnswers: (sessionId, questionId) =>
+    api.get(`/quizzes/sessions/${sessionId}/questions/${questionId}/code-answers`),
 }
 
 // Stats API
@@ -233,6 +237,7 @@ export const examAPI = {
   requestOtp: (slug, data) => api.post(`/e/${slug}/request-otp`, data),
   start: (slug, data) => api.post(`/e/${slug}/start`, data),
   saveAnswer: (slug, data) => api.post(`/e/${slug}/answer`, data),
+  runCode: (slug, data) => api.post(`/e/${slug}/run-code`, data),
   submit: (slug, sessionToken) => api.post(`/e/${slug}/submit`, { session_token: sessionToken }),
   getMyResult: (slug, sessionToken) => api.post(`/e/${slug}/result`, { session_token: sessionToken }),
   getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),

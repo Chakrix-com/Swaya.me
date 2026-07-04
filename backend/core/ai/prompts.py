@@ -127,28 +127,40 @@ def _build_question_fields_and_schema(quiz_type: str) -> tuple[str, str]:
     # quiz or exam
     is_exam = quiz_type == "exam"
     question_fields = (
-        "Field requirements for every question:\n"
-        "- question_type: \"mcq\".\n"
-        "- text: the question text. Use HTML for formatting: <strong>, <em>. "
-        "IMPORTANT: any code snippet — even a single line or expression — MUST be wrapped in "
-        "<pre><code class=\"language-X\">…</code></pre> where X is the detected language "
-        "(e.g. language-python, language-sql, language-javascript, language-java, language-bash). "
-        "Short inline references to variable names, functions, or keywords use <code>name</code>.\n"
-        "- options: an array of exactly 4 distinct answer choices. "
-        "Apply the same code formatting rules to any option that contains code.\n"
-        "- correct_answer_index: 0-based index of the single correct option. "
-        "CRITICAL: distribute correct answers across ALL positions (0, 1, 2, 3) — "
-        "do NOT place the correct answer at index 0 for every question. "
-        "Across the full question set each position should appear roughly equally.\n"
-        "- explanation: 2-3 plain-text sentences explaining why the correct answer is right "
-        "and why the main wrong answers are incorrect. No HTML in explanation.\n"
-        "- image_suggestion: if a diagram, chart, map, or graph would genuinely help students "
-        "understand or answer this question, provide a short image search query (e.g. "
-        "'mitosis cell division stages diagram'). Otherwise set to null.\n"
-        "- option_image_suggestions: if the visual identity of an option IS the answer "
-        "(person, place, logo, product), set this to an array of short Google Image Search "
-        "queries, one per option (same length as the options array). "
-        "For all other questions, set it to null."
+        "Field requirements — each question must have question_type set to one of: \"mcq\", \"single_line\", or \"code\".\n"
+        "Generate a mix: approximately 60% mcq, 25% single_line, 15% code (adjust based on topic suitability).\n\n"
+
+        "MCQ (question_type: \"mcq\"):\n"
+        "- text: question text with HTML formatting (<strong>, <em>). "
+        "Any code snippet MUST be wrapped in <pre><code class=\"language-X\">…</code></pre>. "
+        "Inline code references use <code>name</code>.\n"
+        "- options: exactly 4 distinct answer choices (same code formatting rules apply).\n"
+        "- correct_answer_index: 0-based index. CRITICAL: spread across ALL positions 0–3 roughly equally.\n"
+        "- explanation: 2-3 plain-text sentences on why the correct answer is right.\n"
+        "- image_suggestion: short image search query if a diagram would help, else null.\n"
+        "- option_image_suggestions: array of image search queries (one per option) if options are "
+        "visual identities (people, places, logos); else null.\n\n"
+
+        "SINGLE_LINE (question_type: \"single_line\") — short text answer graded by AI:\n"
+        "- text: a question whose answer is a short phrase, number, name, or term.\n"
+        "- options: array with exactly ONE string — the expected correct answer (used for AI grading). "
+        "E.g. [\"O(log n)\"] or [\"mitochondria\"].\n"
+        "- correct_answer_index: null.\n"
+        "- explanation: 1-2 sentences explaining the correct answer.\n"
+        "- image_suggestion: null.\n"
+        "- option_image_suggestions: null.\n\n"
+
+        "CODE (question_type: \"code\") — participant writes code to solve a programming problem:\n"
+        "- text: a clear programming problem statement. Include examples if helpful.\n"
+        "- options: array of 1–3 allowed programming languages from: "
+        "[\"python\", \"java\", \"cpp\", \"javascript\", \"typescript\", \"go\", \"rust\", \"csharp\"]. "
+        "Default to [\"python\"] unless the topic implies a specific language.\n"
+        "- grading_rubric: describe what correct code should output for key test inputs "
+        "(e.g. \"For n=7: True, n=4: False, n=1: False, n=-1: False\"). Be specific.\n"
+        "- correct_answer_index: null.\n"
+        "- explanation: null.\n"
+        "- image_suggestion: null.\n"
+        "- option_image_suggestions: null.\n"
     )
     if is_exam:
         question_fields += (
@@ -165,10 +177,17 @@ def _build_question_fields_and_schema(quiz_type: str) -> tuple[str, str]:
     output_schema = (
         f'{{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
         f'{exam_schema_fields}'
-        f'"questions": [{{"question_type": "mcq", "text": "<question>", '
-        f'"options": ["<option1>", "<option2>", "<option3>", "<option4>"], "correct_answer_index": 2, '
-        f'"explanation": "<why correct is right>", "image_suggestion": null | "<search query>", '
-        f'"option_image_suggestions": null | ["<query_A>", "<query_B>", "<query_C>", "<query_D>"]}}]}}'
+        f'"questions": ['
+        f'{{"question_type": "mcq", "text": "<question>", '
+        f'"options": ["<A>", "<B>", "<C>", "<D>"], "correct_answer_index": 2, '
+        f'"explanation": "<why correct>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}}, '
+        f'{{"question_type": "single_line", "text": "<question>", '
+        f'"options": ["<expected answer>"], "correct_answer_index": null, '
+        f'"explanation": "<why this is the answer>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}}, '
+        f'{{"question_type": "code", "text": "<problem statement>", '
+        f'"options": ["python"], "correct_answer_index": null, '
+        f'"explanation": null, "image_suggestion": null, "option_image_suggestions": null, '
+        f'"grading_rubric": "<expected outputs for key test cases>"}}]}}'
     )
     return question_fields, output_schema
 
@@ -268,6 +287,36 @@ def parse_question_response(raw: str, quiz_type: str) -> dict:
                 "explanation": None,
                 "image_suggestion": None,
                 "option_image_suggestions": None,
+                "grading_rubric": None,
+            })
+        elif q_type == "single_line":
+            opts = q.get("options") or []
+            expected = str(opts[0]).strip() if opts else ""
+            explanation = q.get("explanation") or ""
+            result.append({
+                "question_type": "single_line",
+                "text": md_to_html(str(text)),
+                "options": [expected] if expected else None,
+                "correct_answer_index": None,
+                "explanation": md_to_html(explanation) if explanation else None,
+                "image_suggestion": None,
+                "option_image_suggestions": None,
+                "grading_rubric": None,
+            })
+        elif q_type == "code":
+            opts = q.get("options") or ["python"]
+            valid_langs = {"python", "java", "cpp", "javascript", "typescript", "go", "rust", "csharp"}
+            langs = [str(o).lower() for o in opts if str(o).lower() in valid_langs] or ["python"]
+            rubric = q.get("grading_rubric") or ""
+            result.append({
+                "question_type": "code",
+                "text": md_to_html(str(text)),
+                "options": langs,
+                "correct_answer_index": None,
+                "explanation": None,
+                "image_suggestion": None,
+                "option_image_suggestions": None,
+                "grading_rubric": str(rubric)[:2000] if rubric else None,
             })
         else:
             opts = q.get("options") or []
@@ -305,6 +354,7 @@ def parse_question_response(raw: str, quiz_type: str) -> dict:
                 "explanation": md_to_html(explanation) if explanation else None,
                 "image_suggestion": image_suggestion,
                 "option_image_suggestions": option_image_suggestions,
+                "grading_rubric": None,
             })
 
     suggested_duration = parsed.get("suggested_exam_duration_minutes")
