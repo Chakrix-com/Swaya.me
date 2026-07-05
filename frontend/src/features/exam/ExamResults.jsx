@@ -566,15 +566,15 @@ export default function ExamResults() {
   }
 
   const interviewColumn = {
-    title: 'Interview Sheet',
+    title: t('exam.interviewSheet'),
     key: 'interview',
     width: 160,
     render: (_, row) => {
       const genCount = interviewGenCounts[row.participant_id] || 0
       const atLimit = genCount >= 5
-      const label = genCount > 0 ? `Interview Sheet (${genCount}/5)` : 'Interview Sheet'
+      const label = genCount > 0 ? t('exam.interviewSheetWithCount', { count: genCount }) : t('exam.interviewSheet')
       return (
-        <Tooltip title={!row.is_completed ? 'Available after submission' : atLimit ? 'Regeneration limit reached (5/5)' : 'Generate AI interview questions'}>
+        <Tooltip title={!row.is_completed ? t('exam.interviewSheetTooltipNotComplete') : atLimit ? t('exam.interviewSheetTooltipLimit') : t('exam.interviewSheetTooltipGenerate')}>
           <Button
             size="small"
             icon={<RobotOutlined />}
@@ -964,7 +964,7 @@ export default function ExamResults() {
         title={
           <Space>
             <RobotOutlined />
-            <span>Interview Sheet — {interviewModal.name}</span>
+            <span>{t('exam.interviewSheetModalTitle', { name: interviewModal.name })}</span>
             {interviewModal.score != null && interviewModal.maxScore != null && (
               <Tag color="blue">{interviewModal.score}/{interviewModal.maxScore}</Tag>
             )}
@@ -979,10 +979,10 @@ export default function ExamResults() {
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <RobotOutlined style={{ fontSize: 40, color: '#4361ee', marginBottom: 12, display: 'block' }} />
               <div style={{ marginBottom: 16, color: '#555' }}>
-                Gemini will analyse this participant's answers and write personalised interview questions.
+                {t('exam.interviewSheetIntro')}
               </div>
               <Button type="primary" size="large" icon={<RobotOutlined />} onClick={handleGenerateSheet}>
-                Generate Interview Sheet
+                {t('exam.interviewSheetGenerateBtn')}
               </Button>
             </div>
           )}
@@ -990,7 +990,7 @@ export default function ExamResults() {
           {interviewLoading && (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
               <Spin size="large" />
-              <div style={{ marginTop: 16, color: '#555' }}>Gemini is writing your interview sheet…</div>
+              <div style={{ marginTop: 16, color: '#555' }}>{t('exam.interviewSheetGenerating')}</div>
             </div>
           )}
 
@@ -1001,7 +1001,7 @@ export default function ExamResults() {
               style={{ marginBottom: 12 }}
               action={
                 interviewGenCount < 5 && (
-                  <Button size="small" onClick={handleGenerateSheet}>Retry</Button>
+                  <Button size="small" onClick={handleGenerateSheet}>{t('exam.interviewSheetRetry')}</Button>
                 )
               }
             />
@@ -1016,8 +1016,8 @@ export default function ExamResults() {
                   disabled={interviewGenCount >= 5}
                 >
                   {interviewGenCount >= 5
-                    ? 'Regeneration limit reached (5/5)'
-                    : `Regenerate (${interviewGenCount}/5 used)`}
+                    ? t('exam.interviewSheetRegenLimit')
+                    : t('exam.interviewSheetRegenBtn', { count: interviewGenCount })}
                 </Button>
               </Space>
 
@@ -1037,14 +1037,14 @@ export default function ExamResults() {
               </div>
 
               {/* Deliver section */}
-              <Divider orientation="left" style={{ margin: '12px 0' }}>Deliver</Divider>
+              <Divider orientation="left" style={{ margin: '12px 0' }}>{t('exam.interviewSheetDeliver')}</Divider>
 
               {/* Email row */}
               <div style={{ marginBottom: 12 }}>
                 <Space.Compact style={{ width: '100%' }}>
                   <Input
                     prefix={<MailOutlined />}
-                    placeholder="Recipient email"
+                    placeholder={t('exam.interviewSheetRecipientEmail')}
                     value={interviewEmail}
                     onChange={e => { setInterviewEmail(e.target.value); setEmailSent(false) }}
                     style={{ flex: 1 }}
@@ -1056,19 +1056,19 @@ export default function ExamResults() {
                     loading={emailSending}
                     disabled={!interviewEmail.trim() || emailSending}
                   >
-                    Send
+                    {t('exam.interviewSheetSend')}
                   </Button>
                 </Space.Compact>
                 {emailSent && (
                   <div style={{ marginTop: 6, color: '#52c41a', fontSize: 13 }}>
-                    <CheckCircleOutlined style={{ marginRight: 4 }} />Email queued successfully.
+                    <CheckCircleOutlined style={{ marginRight: 4 }} />{t('exam.interviewSheetEmailQueued')}
                   </div>
                 )}
               </div>
 
               {/* Download row */}
               <Space>
-                <span style={{ color: '#555', fontSize: 13 }}>Download:</span>
+                <span style={{ color: '#555', fontSize: 13 }}>{t('exam.interviewSheetDownload')}</span>
                 <Button
                   size="small"
                   icon={<FilePdfOutlined />}
