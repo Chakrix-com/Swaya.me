@@ -849,6 +849,7 @@ class ExamQuestionResult(BaseModel):
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
     participant_answer: Optional[int] = None
+    participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
     points_earned: int = 0
     points_possible: int = 1
@@ -892,6 +893,7 @@ class ParticipantQuestionResult(BaseModel):
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
     participant_answer: Optional[int] = None
+    participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
     points_earned: int = 0
     points_possible: int = 1

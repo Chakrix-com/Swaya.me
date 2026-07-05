@@ -366,6 +366,9 @@ async def save_answer(
     is_correct = None
     if selected_option_index is not None:
         is_correct = (selected_option_index == question.correct_answer_index)
+    elif text_answer is not None and question.question_type == QuestionType.SINGLE_LINE:
+        expected = (question.options[0] if question.options else "").strip().lower()
+        is_correct = (text_answer.strip().lower() == expected) if expected else None
 
     # Upsert answer
     existing_result = await db.execute(
@@ -479,7 +482,12 @@ async def submit_exam(
         max_score += q.points
         answer = answers_by_qid.get(q.id)
         is_code = q.question_type == QuestionType.CODE
-        has_answer = bool(answer and answer.text_answer) if is_code else bool(answer and answer.selected_option_index is not None)
+        is_single_line = q.question_type == QuestionType.SINGLE_LINE
+        has_answer = (
+            bool(answer and answer.text_answer)
+            if (is_code or is_single_line)
+            else bool(answer and answer.selected_option_index is not None)
+        )
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
@@ -502,7 +510,8 @@ async def submit_exam(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=answer.selected_option_index if (not is_code and answer) else None,
+            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and answer) else None,
+            participant_text_answer=answer.text_answer if (is_single_line and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
             points_possible=q.points,
@@ -591,7 +600,12 @@ async def get_my_result(
         max_score += q.points
         answer = answers_by_qid.get(q.id)
         is_code = q.question_type == QuestionType.CODE
-        has_answer = bool(answer and answer.text_answer) if is_code else bool(answer and answer.selected_option_index is not None)
+        is_single_line = q.question_type == QuestionType.SINGLE_LINE
+        has_answer = (
+            bool(answer and answer.text_answer)
+            if (is_code or is_single_line)
+            else bool(answer and answer.selected_option_index is not None)
+        )
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
@@ -613,7 +627,8 @@ async def get_my_result(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=answer.selected_option_index if (not is_code and answer) else None,
+            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and answer) else None,
+            participant_text_answer=answer.text_answer if (is_single_line and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
             points_possible=q.points,
@@ -895,13 +910,15 @@ async def get_participant_detail(
         elif ans is None:
             unanswered += 1
 
+        is_sl = q.question_type == QuestionType.SINGLE_LINE
         question_results.append(ParticipantQuestionResult(
             question_id=q.id,
             order=q.order,
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=ans.selected_option_index if ans else None,
+            participant_answer=ans.selected_option_index if (ans and not is_sl) else None,
+            participant_text_answer=ans.text_answer if (ans and is_sl) else None,
             is_correct=ans.is_correct if ans else None,
             points_earned=max(0, points_earned),
             points_possible=q.points,
