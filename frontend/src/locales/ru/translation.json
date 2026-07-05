@@ -26,7 +26,8 @@
     "responses": "ответы",
     "typeHere": "Введите ваш ответ здесь...",
     "dismiss": "Закрыть",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "Посмотреть исходный код на GitHub"
   },
   "auth": {
     "login": "Вход",
@@ -501,7 +502,8 @@
       "offline_poll": "Опрос",
       "exam": "Тест"
     },
-    "chooseAnswer": "Выберите ответ"
+    "chooseAnswer": "Выберите ответ",
+    "getReady": "Приготовьтесь!"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",
@@ -558,7 +560,35 @@
     "questions": "вопросов",
     "joined": "присоединились",
     "avgCorrect": "ср. правильных",
-    "viewRecap": "Посмотреть итоги →"
+    "viewRecap": "Посмотреть итоги →",
+    "allActivities": "Все действия",
+    "allowEditing": "Разрешить редактирование",
+    "canEdit": "Может редактировать",
+    "currentlySharedWith": "Сейчас доступно для",
+    "deleteFolderConfirm": "Удалить {{name}}? Действия внутри будут перемещены в родительскую или корневую папку.",
+    "deleteFolderTitle": "Удалить папку",
+    "failedToLoadShares": "Не удалось загрузить общий доступ",
+    "failedToUpdateSharing": "Не удалось обновить общий доступ",
+    "folderSharingUpdated": "Общий доступ к папке обновлен",
+    "folderUpdated": "Папка обновлена",
+    "moveTo": "Переместить в (родительскую папку)",
+    "newSubfolder": "Новая подпапка",
+    "noMatch": "Нет совпадений",
+    "noOtherUsers": "Нет других пользователей в вашем рабочем пространстве",
+    "oneQuestion": "1 вопрос",
+    "renameMove": "Переименовать / Переместить",
+    "renameMoveFolder": "Переименовать / Переместить папку",
+    "rootNoParent": "Корень (без родительской папки)",
+    "saveFolderSharing": "Сохранить общий доступ",
+    "selectTeammates": "Выбрать коллег…",
+    "share": "Поделиться",
+    "shareFolderTitle": "Поделиться папкой: {{name}}",
+    "shareWith": "Поделиться с (по email / имени)",
+    "sharedWithCount": "Доступно для {{count}} пользователя(-ей)",
+    "tooltipNewFolder": "Новая папка",
+    "tooltipNewSubfolder": "Новая подпапка",
+    "viewAll": "Посмотреть все →",
+    "viewOnly": "Только просмотр"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -677,7 +707,10 @@
       "chartLegendActiveUsers": "Активные пользователи",
       "chartLegendTotalQuizzes": "Всего викторин",
       "chartLegendActiveSessions": "Активные сессии",
-      "failedToLoadStats": "Не удалось загрузить статистику"
+      "failedToLoadStats": "Не удалось загрузить статистику",
+      "activeHosts": "Активные хосты",
+      "noWeeklyData": "Нет данных о сессиях за последние 7 дней.",
+      "weeklyActiveHosts": "Еженедельные активные хосты"
     },
     "users": {
       "createUser": "Создать пользователя",
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "Участники должны ответить на этот вопрос, прежде чем продолжить.",
     "requiredWarning": "Этот вопрос обязателен. Пожалуйста, ответьте на него, чтобы продолжить.",
     "notPublished": "Этот тест не является офлайн-опросом или ещё не опубликован.",
-    "loadFailed": "Не удалось загрузить результаты"
+    "loadFailed": "Не удалось загрузить результаты",
+    "noResponsesYet": "Пока нет ответов.",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "Тест",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "Отправить",
     "interviewSheetEmailQueued": "Email успешно добавлен в очередь.",
     "interviewSheetDownload": "Скачать:",
-    "interviewSheetRetry": "Повторить"
+    "interviewSheetRetry": "Повторить",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "Не удалось загрузить данные участника.",
+    "downloadPdf": "Скачать PDF-отчет",
+    "downloadPdfBtn": "Скачать PDF",
+    "downloadPdfWithAi": "Скачать PDF-отчет (с ИИ)",
+    "emailFailed": "Не удалось",
+    "emailFailedContent": "Не удалось поставить письма в очередь. Пожалуйста, попробуйте снова.",
+    "emailResultSent": "Письмо с результатом отправлено",
+    "emailsQueued": "Письма в очереди",
+    "emailsQueuedContent": "Письма с результатами отправляются всем участникам.",
+    "emailsSentDone": "Письма отправлены ✓",
+    "fullReport": "Полный отчет",
+    "participantDetailTitle": "Детали участника",
+    "responsesCount": "{{count}} ответов",
+    "sendResultsContent_one": "Это отправит персонализированные результаты (оценка, разбивка по вопросам, сводка прокторинга) всем {{count}} завершившим участникам. Письма будут отправлены от имени \"{{name}}\". Это действие нельзя отменить.",
+    "sendResultsContent_other": "Это отправит персонализированные результаты (оценка, разбивка по вопросам, сводка прокторинга) всем {{count}} завершившим участникам. Письма будут отправлены от имени \"{{name}}\". Это действие нельзя отменить.",
+    "sendResultsOk": "Отправить сейчас",
+    "sendResultsTitle": "Отправить результаты участникам?",
+    "sendResultsToParticipants": "Отправить результаты участникам",
+    "senderNamePlaceholder": "Имя отправителя (по умолчанию: Swaya.me)",
+    "tagCorrect": "Правильно",
+    "tagNotAnswered": "Без ответа",
+    "tagTheirAnswer": "Их ответ"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "Включите надзор в настройках викторины для отслеживания честности участников.",
       "enabledNoData": "Надзор включён — данных участников пока нет.",
       "enabledNoDataDesc": "Данные о честности появятся здесь, когда участники начнут экзамен через проктируемый поток.",
-      "timeline": "Участник #{{id}} — Хронология нарушений"
+      "timeline": "Участник #{{id}} — Хронология нарушений",
+      "noSnapshots": "Для этого участника не записано снимков",
+      "webcamSnapshots": "Снимки с веб-камеры"
     },
     "settings": {
       "title": "Безопасность и надзор",
@@ -2297,7 +2357,8 @@
     "heading1": "Заголовок 1",
     "heading2": "Заголовок 2",
     "heading3": "Заголовок 3",
-    "heading4": "Заголовок 4"
+    "heading4": "Заголовок 4",
+    "link": "Ссылка"
   },
   "create": {
     "intentTitle": "Что нужно этому моменту?",
@@ -2420,5 +2481,14 @@
     "RE": "Ошибка выполнения",
     "CE": "Ошибка компиляции",
     "TLE": "Превышен лимит времени"
+  },
+  "sidebar": {
+    "end": "Завершить",
+    "liveSessions": "Активные сессии",
+    "open": "Открыть",
+    "sessionActive": "Сессия активна",
+    "stop": "Остановить",
+    "stopThisSession": "Остановить эту сессию?",
+    "stopThisSessionDesc": "Это завершит сессию для всех участников."
   }
 }

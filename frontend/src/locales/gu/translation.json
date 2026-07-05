@@ -26,7 +26,8 @@
     "responses": "પ્રતિભાવો",
     "typeHere": "અહીં તમારો જવાબ ટાઇપ કરો...",
     "dismiss": "રદ કરો",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "GitHub પર સ્રોત જુઓ"
   },
   "auth": {
     "login": "લૉગઇન",
@@ -501,7 +502,8 @@
       "offline_poll": "સર્વે",
       "exam": "ટેસ્ટ"
     },
-    "chooseAnswer": "તમારો જવાબ પસંદ કરો"
+    "chooseAnswer": "તમારો જવાબ પસંદ કરો",
+    "getReady": "તૈયાર થાઓ!"
   },
   "navigation": {
     "home": "મુખ્ય",
@@ -558,7 +560,10 @@
       "chartLegendActiveUsers": "સક્રિય વપરાશકર્તાઓ",
       "chartLegendTotalQuizzes": "કુલ ક્વિઝ",
       "chartLegendActiveSessions": "સક્રિય સત્રો",
-      "failedToLoadStats": "Failed to load statistics"
+      "failedToLoadStats": "Failed to load statistics",
+      "activeHosts": "સક્રિય હોસ્ટ્સ",
+      "noWeeklyData": "છેલ્લા 7 દિવસમાં કોઈ સત્ર ડેટા નથી.",
+      "weeklyActiveHosts": "સાપ્તાહિક સક્રિય હોસ્ટ્સ"
     },
     "users": {
       "createUser": "વપરાશકર્તા બનાવો",
@@ -1021,7 +1026,35 @@
     "questions": "પ્રશ્નો",
     "joined": "જોડાયા",
     "avgCorrect": "સરેરાશ સાચા",
-    "viewRecap": "સારાંશ જુઓ →"
+    "viewRecap": "સારાંશ જુઓ →",
+    "allActivities": "બધી પ્રવૃત્તિઓ",
+    "allowEditing": "સંપાદનની મંજૂરી આપો",
+    "canEdit": "સંપાદિત કરી શકો છો",
+    "currentlySharedWith": "હાલમાં આની સાથે શેર કરેલ છે",
+    "deleteFolderConfirm": "{{name}} કાઢી નાખો? અંદરની પ્રવૃત્તિઓ પેરેન્ટ અથવા રૂટમાં ખસેડવામાં આવશે.",
+    "deleteFolderTitle": "ફોલ્ડર કાઢી નાખો",
+    "failedToLoadShares": "શેર લોડ કરવામાં નિષ્ફળ",
+    "failedToUpdateSharing": "શેરિંગ અપડેટ કરવામાં નિષ્ફળ",
+    "folderSharingUpdated": "ફોલ્ડર શેરિંગ અપડેટ થયું",
+    "folderUpdated": "ફોલ્ડર અપડેટ થયું",
+    "moveTo": "આમાં ખસેડો (પેરેન્ટ ફોલ્ડર)",
+    "newSubfolder": "નવું સબફોલ્ડર",
+    "noMatch": "કોઈ મેચ નથી",
+    "noOtherUsers": "તમારા વર્કસ્પેસમાં અન્ય કોઈ વપરાશકર્તાઓ નથી",
+    "oneQuestion": "1 પ્રશ્ન",
+    "renameMove": "નામ બદલો / ખસેડો",
+    "renameMoveFolder": "ફોલ્ડરનું નામ બદલો / ખસેડો",
+    "rootNoParent": "રૂટ (કોઈ પેરેન્ટ નથી)",
+    "saveFolderSharing": "શેરિંગ સાચવો",
+    "selectTeammates": "ટીમમેટ્સ પસંદ કરો…",
+    "share": "શેર કરો",
+    "shareFolderTitle": "ફોલ્ડર શેર કરો: {{name}}",
+    "shareWith": "આની સાથે શેર કરો (ઈમેલ / નામ દ્વારા)",
+    "sharedWithCount": "{{count}} વપરાશકર્તા(ઓ) સાથે શેર કરેલ છે",
+    "tooltipNewFolder": "નવું ફોલ્ડર",
+    "tooltipNewSubfolder": "નવું સબફોલ્ડર",
+    "viewAll": "બધા જુઓ →",
+    "viewOnly": "ફક્ત જુઓ"
   },
   "pages": {
     "legal": {
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "સહભાગીઓએ આગળ જતાં પહેલાં આ પ્રશ્નનો જવાબ આપવો આવશ્યક છે.",
     "requiredWarning": "આ પ્રશ્ન ફરજિયાત છે. ચાલુ રાખવા માટે તેનો જવાબ આપો.",
     "notPublished": "આ ક્વિઝ ઓફલાઇન પોલ નથી અથવા હજી પ્રકાશિત થઈ નથી.",
-    "loadFailed": "પરિણામો લોડ કરવામાં નિષ્ફળ"
+    "loadFailed": "પરિણામો લોડ કરવામાં નિષ્ફળ",
+    "noResponsesYet": "હજુ સુધી કોઈ પ્રતિભાવો નથી.",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "ટેસ્ટ",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "મોકલો",
     "interviewSheetEmailQueued": "ઇમેઇલ સફળતાપૂર્વક ક્યૂમાં ઉમેરાઈ.",
     "interviewSheetDownload": "ડાઉનલોડ:",
-    "interviewSheetRetry": "ફરી પ્રયાસ કરો"
+    "interviewSheetRetry": "ફરી પ્રયાસ કરો",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "ભાગીદારની વિગતો લોડ કરી શકાઈ નથી.",
+    "downloadPdf": "PDF રિપોર્ટ ડાઉનલોડ કરો",
+    "downloadPdfBtn": "PDF ડાઉનલોડ કરો",
+    "downloadPdfWithAi": "PDF રિપોર્ટ ડાઉનલોડ કરો (AI સાથે)",
+    "emailFailed": "નિષ્ફળ",
+    "emailFailedContent": "ઈમેલ કતારબદ્ધ કરી શકાયા નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "emailResultSent": "પરિણામ ઈમેલ મોકલવામાં આવ્યો",
+    "emailsQueued": "ઈમેલ કતારબદ્ધ",
+    "emailsQueuedContent": "પરિણામ ઈમેલ બધા ભાગીદારોને મોકલવામાં આવી રહ્યા છે.",
+    "emailsSentDone": "ઈમેલ મોકલ્યા ✓",
+    "fullReport": "સંપૂર્ણ રિપોર્ટ",
+    "participantDetailTitle": "ભાગીદારની વિગત",
+    "responsesCount": "{{count}} પ્રતિભાવો",
+    "sendResultsContent_one": "આ {{count}} પૂર્ણ થયેલા ભાગીદારને વ્યક્તિગત પરિણામો (સ્કોર, પ્રશ્ન વિભાજન, પ્રોક્ટરિંગ સારાંશ) ઈમેલ કરશે. ઈમેલ \"{{name}}\" માંથી મોકલવામાં આવશે. આ પૂર્વવત્ કરી શકાશે નહીં.",
+    "sendResultsContent_other": "આ {{count}} પૂર્ણ થયેલા ભાગીદારોને વ્યક્તિગત પરિણામો (સ્કોર, પ્રશ્ન વિભાજન, પ્રોક્ટરિંગ સારાંશ) ઈમેલ કરશે. ઈમેલ \"{{name}}\" માંથી મોકલવામાં આવશે. આ પૂર્વવત્ કરી શકાશે નહીં.",
+    "sendResultsOk": "હવે મોકલો",
+    "sendResultsTitle": "ભાગીદારોને પરિણામો મોકલવા?",
+    "sendResultsToParticipants": "ભાગીદારોને પરિણામો મોકલો",
+    "senderNamePlaceholder": "મોકલનારનું નામ (ડિફોલ્ટ: Swaya.me)",
+    "tagCorrect": "સાચું",
+    "tagNotAnswered": "જવાબ આપ્યો નથી",
+    "tagTheirAnswer": "તેમનો જવાબ"
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "સહભાગી સત્યનિષ્ઠા ટ્રૅક કરવા ક્વિઝ સેટિંગ્સમાં પ્રૉક્ટરિંગ સક્ષમ કરો.",
       "enabledNoData": "પ્રૉક્ટરિંગ સક્ષમ — હજી સહભાગી ડેટા નથી.",
       "enabledNoDataDesc": "સહભાગીઓ પ્રૉક્ટર્ડ ફ્લો દ્વારા પરીક્ષા શરૂ કરે ત્યારે અહીં ડેટા દેખાશે.",
-      "timeline": "સહભાગી #{{id}} — ઉલ્લંઘન ટાઇમલાઇન"
+      "timeline": "સહભાગી #{{id}} — ઉલ્લંઘન ટાઇમલાઇન",
+      "noSnapshots": "આ ભાગીદાર માટે કોઈ સ્નેપશોટ રેકોર્ડ કરવામાં આવ્યા નથી",
+      "webcamSnapshots": "વેબકેમ સ્નેપશોટ"
     },
     "settings": {
       "title": "સુરક્ષા અને પ્રક્ટોરિંગ",
@@ -2297,7 +2357,8 @@
     "heading1": "શીર્ષક ૧",
     "heading2": "શીર્ષક ૨",
     "heading3": "શીર્ષક ૩",
-    "heading4": "શીર્ષક ૪"
+    "heading4": "શીર્ષક ૪",
+    "link": "લિંક"
   },
   "create": {
     "intentTitle": "આ ક્ષણ માટે શું જોઈએ?",
@@ -2420,5 +2481,14 @@
     "RE": "રનટાઇમ ભૂલ",
     "CE": "કમ્પાઇલેશન ભૂલ",
     "TLE": "સમય મર્યાદા ઓળંગી"
+  },
+  "sidebar": {
+    "end": "સમાપ્ત કરો",
+    "liveSessions": "લાઇવ સત્રો",
+    "open": "ખોલો",
+    "sessionActive": "સત્ર સક્રિય",
+    "stop": "રોકો",
+    "stopThisSession": "આ સત્ર રોકવું?",
+    "stopThisSessionDesc": "આ બધા ભાગીદારો માટે સત્ર સમાપ્ત કરશે."
   }
 }

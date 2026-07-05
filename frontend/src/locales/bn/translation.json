@@ -26,7 +26,8 @@
     "responses": "প্রতিক্রিয়া",
     "typeHere": "এখানে আপনার উত্তর টাইপ করুন...",
     "dismiss": "বাতিল করুন",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "GitHub-এ উৎস দেখুন"
   },
   "auth": {
     "login": "লগইন",
@@ -501,7 +502,8 @@
       "offline_poll": "সার্ভে",
       "exam": "টেস্ট"
     },
-    "chooseAnswer": "আপনার উত্তর বেছে নিন"
+    "chooseAnswer": "আপনার উত্তর বেছে নিন",
+    "getReady": "প্রস্তুত হন!"
   },
   "navigation": {
     "home": "হোম",
@@ -558,7 +560,10 @@
       "chartLegendActiveUsers": "সক্রিয় ব্যবহারকারী",
       "chartLegendTotalQuizzes": "মোট কুইজ",
       "chartLegendActiveSessions": "সক্রিয় সেশন",
-      "failedToLoadStats": "Failed to load statistics"
+      "failedToLoadStats": "Failed to load statistics",
+      "activeHosts": "সক্রিয় হোস্ট",
+      "noWeeklyData": "গত ৭ দিনে কোনো সেশন ডেটা নেই।",
+      "weeklyActiveHosts": "সাপ্তাহিক সক্রিয় হোস্ট"
     },
     "users": {
       "createUser": "ব্যবহারকারী তৈরি করুন",
@@ -1021,7 +1026,35 @@
     "questions": "প্রশ্ন",
     "joined": "যোগ দিয়েছেন",
     "avgCorrect": "গড় সঠিক",
-    "viewRecap": "সারাংশ দেখুন →"
+    "viewRecap": "সারাংশ দেখুন →",
+    "allActivities": "সমস্ত কার্যকলাপ",
+    "allowEditing": "সম্পাদনার অনুমতি দিন",
+    "canEdit": "সম্পাদনা করতে পারে",
+    "currentlySharedWith": "বর্তমানে এর সাথে শেয়ার করা হয়েছে",
+    "deleteFolderConfirm": "{{name}} মুছে ফেলবেন? এর ভেতরের কার্যকলাপগুলি মূল বা রুট ফোল্ডারে চলে যাবে।",
+    "deleteFolderTitle": "ফোল্ডার মুছুন",
+    "failedToLoadShares": "শেয়ার লোড করতে ব্যর্থ হয়েছে",
+    "failedToUpdateSharing": "শেয়ারিং আপডেট করতে ব্যর্থ হয়েছে",
+    "folderSharingUpdated": "ফোল্ডার শেয়ারিং আপডেট হয়েছে",
+    "folderUpdated": "ফোল্ডার আপডেট হয়েছে",
+    "moveTo": "এখানে সরান (প্যারেন্ট ফোল্ডার)",
+    "newSubfolder": "নতুন সাবফোল্ডার",
+    "noMatch": "কোনো মিল নেই",
+    "noOtherUsers": "আপনার ওয়ার্কস্পেসে অন্য কোনো ব্যবহারকারী নেই",
+    "oneQuestion": "১টি প্রশ্ন",
+    "renameMove": "নাম পরিবর্তন / সরান",
+    "renameMoveFolder": "ফোল্ডারের নাম পরিবর্তন / সরান",
+    "rootNoParent": "রুট (কোনো প্যারেন্ট নেই)",
+    "saveFolderSharing": "শেয়ারিং সংরক্ষণ করুন",
+    "selectTeammates": "সহকর্মীদের নির্বাচন করুন…",
+    "share": "শেয়ার করুন",
+    "shareFolderTitle": "ফোল্ডার শেয়ার করুন: {{name}}",
+    "shareWith": "এর সাথে শেয়ার করুন (ইমেল / নাম দ্বারা)",
+    "sharedWithCount": "{{count}} জন ব্যবহারকারীর সাথে শেয়ার করা হয়েছে",
+    "tooltipNewFolder": "নতুন ফোল্ডার",
+    "tooltipNewSubfolder": "নতুন সাবফোল্ডার",
+    "viewAll": "সব দেখুন →",
+    "viewOnly": "শুধুমাত্র দেখুন"
   },
   "pages": {
     "legal": {
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "অংশগ্রহণকারীদের এগিয়ে যাওয়ার আগে এই প্রশ্নের উত্তর দিতে হবে।",
     "requiredWarning": "এই প্রশ্নটি প্রয়োজনীয়। চালিয়ে যেতে এর উত্তর দিন।",
     "notPublished": "এই কুইজটি অফলাইন পোল নয় বা এখনও প্রকাশিত হয়নি।",
-    "loadFailed": "ফলাফল লোড করতে ব্যর্থ"
+    "loadFailed": "ফলাফল লোড করতে ব্যর্থ",
+    "noResponsesYet": "এখনো কোনো প্রতিক্রিয়া নেই।",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "টেস্ট",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "পাঠান",
     "interviewSheetEmailQueued": "ইমেইল সফলভাবে সারিতে যোগ করা হয়েছে।",
     "interviewSheetDownload": "ডাউনলোড:",
-    "interviewSheetRetry": "আবার চেষ্টা করুন"
+    "interviewSheetRetry": "আবার চেষ্টা করুন",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "অংশগ্রহণকারীর বিবরণ লোড করা যায়নি।",
+    "downloadPdf": "পিডিএফ রিপোর্ট ডাউনলোড করুন",
+    "downloadPdfBtn": "পিডিএফ ডাউনলোড করুন",
+    "downloadPdfWithAi": "পিডিএফ রিপোর্ট ডাউনলোড করুন (এআই সহ)",
+    "emailFailed": "ব্যর্থ হয়েছে",
+    "emailFailedContent": "ইমেলগুলি কিউতে রাখা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "emailResultSent": "ফলাফলের ইমেল পাঠানো হয়েছে",
+    "emailsQueued": "ইমেলগুলি কিউতে রাখা হয়েছে",
+    "emailsQueuedContent": "ফলাফলের ইমেলগুলি সমস্ত অংশগ্রহণকারীদের কাছে পাঠানো হচ্ছে।",
+    "emailsSentDone": "ইমেল পাঠানো হয়েছে ✓",
+    "fullReport": "সম্পূর্ণ রিপোর্ট",
+    "participantDetailTitle": "অংশগ্রহণকারীর বিবরণ",
+    "responsesCount": "{{count}}টি প্রতিক্রিয়া",
+    "sendResultsContent_one": "এটি সমস্ত {{count}} জন সম্পন্ন অংশগ্রহণকারীকে ব্যক্তিগতকৃত ফলাফল (স্কোর, প্রশ্নের বিশ্লেষণ, প্রক্টরিং সারাংশ) ইমেল করবে। ইমেলগুলি \"{{name}}\" থেকে পাঠানো হবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+    "sendResultsContent_other": "এটি সমস্ত {{count}} জন সম্পন্ন অংশগ্রহণকারীকে ব্যক্তিগতকৃত ফলাফল (স্কোর, প্রশ্নের বিশ্লেষণ, প্রক্টরিং সারাংশ) ইমেল করবে। ইমেলগুলি \"{{name}}\" থেকে পাঠানো হবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+    "sendResultsOk": "এখনই পাঠান",
+    "sendResultsTitle": "অংশগ্রহণকারীদের কাছে ফলাফল পাঠাবেন?",
+    "sendResultsToParticipants": "অংশগ্রহণকারীদের কাছে ফলাফল পাঠান",
+    "senderNamePlaceholder": "প্রেরকের নাম (ডিফল্ট: Swaya.me)",
+    "tagCorrect": "সঠিক",
+    "tagNotAnswered": "উত্তর দেওয়া হয়নি",
+    "tagTheirAnswer": "তাদের উত্তর"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "অংশগ্রহণকারীর সততা ট্র্যাক শুরু করতে কুইজ সেটিংসে প্রক্টরিং সক্রিয় করুন।",
       "enabledNoData": "প্রক্টরিং সক্রিয় — এখনো কোনো অংশগ্রহণকারীর ডেটা নেই।",
       "enabledNoDataDesc": "অংশগ্রহণকারীরা প্রক্টর্ড ফ্লো দিয়ে পরীক্ষা শুরু করলে এখানে ডেটা দেখা যাবে।",
-      "timeline": "অংশগ্রহণকারী #{{id}} — লঙ্ঘন টাইমলাইন"
+      "timeline": "অংশগ্রহণকারী #{{id}} — লঙ্ঘন টাইমলাইন",
+      "noSnapshots": "এই অংশগ্রহণকারীর জন্য কোনো স্ন্যাপশট রেকর্ড করা হয়নি",
+      "webcamSnapshots": "ওয়েবক্যাম স্ন্যাপশট"
     },
     "settings": {
       "title": "নিরাপত্তা ও প্রক্টরিং",
@@ -2297,7 +2357,8 @@
     "heading1": "শিরোনাম ১",
     "heading2": "শিরোনাম ২",
     "heading3": "শিরোনাম ৩",
-    "heading4": "শিরোনাম ৪"
+    "heading4": "শিরোনাম ৪",
+    "link": "লিঙ্ক"
   },
   "create": {
     "intentTitle": "এই মুহূর্তে কী দরকার?",
@@ -2420,5 +2481,14 @@
     "RE": "রানটাইম ত্রুটি",
     "CE": "কম্পাইলেশন ত্রুটি",
     "TLE": "সময়সীমা অতিক্রান্ত"
+  },
+  "sidebar": {
+    "end": "শেষ করুন",
+    "liveSessions": "লাইভ সেশন",
+    "open": "খুলুন",
+    "sessionActive": "সেশন সক্রিয়",
+    "stop": "থামুন",
+    "stopThisSession": "এই সেশনটি বন্ধ করবেন?",
+    "stopThisSessionDesc": "এটি সমস্ত অংশগ্রহণকারীদের জন্য সেশনটি শেষ করবে।"
   }
 }

@@ -26,7 +26,8 @@
     "responses": "Antworten",
     "typeHere": "Tippen Sie hier Ihre Antwort ein...",
     "dismiss": "Schließen",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "Quellcode auf GitHub ansehen"
   },
   "auth": {
     "login": "Anmelden",
@@ -501,7 +502,8 @@
       "offline_poll": "Umfrage",
       "exam": "Test"
     },
-    "chooseAnswer": "Wähle deine Antwort"
+    "chooseAnswer": "Wähle deine Antwort",
+    "getReady": "Machen Sie sich bereit!"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",
@@ -558,7 +560,35 @@
     "questions": "Fragen",
     "joined": "beigetreten",
     "avgCorrect": "ø richtig",
-    "viewRecap": "Zusammenfassung →"
+    "viewRecap": "Zusammenfassung →",
+    "allActivities": "Alle Aktivitäten",
+    "allowEditing": "Bearbeitung erlauben",
+    "canEdit": "Kann bearbeiten",
+    "currentlySharedWith": "Aktuell geteilt mit",
+    "deleteFolderConfirm": "{{name}} löschen? Aktivitäten darin werden in den übergeordneten Ordner oder das Stammverzeichnis verschoben.",
+    "deleteFolderTitle": "Ordner löschen",
+    "failedToLoadShares": "Freigaben konnten nicht geladen werden",
+    "failedToUpdateSharing": "Freigabe konnte nicht aktualisiert werden",
+    "folderSharingUpdated": "Ordnerfreigabe aktualisiert",
+    "folderUpdated": "Ordner aktualisiert",
+    "moveTo": "Verschieben nach (übergeordneter Ordner)",
+    "newSubfolder": "Neuer Unterordner",
+    "noMatch": "Keine Übereinstimmung",
+    "noOtherUsers": "Keine anderen Benutzer in Ihrem Arbeitsbereich",
+    "oneQuestion": "1 Frage",
+    "renameMove": "Umbenennen / Verschieben",
+    "renameMoveFolder": "Ordner umbenennen / verschieben",
+    "rootNoParent": "Stammverzeichnis (kein übergeordneter Ordner)",
+    "saveFolderSharing": "Freigabe speichern",
+    "selectTeammates": "Teammitglieder auswählen…",
+    "share": "Teilen",
+    "shareFolderTitle": "Ordner teilen: {{name}}",
+    "shareWith": "Teilen mit (per E-Mail / Name)",
+    "sharedWithCount": "Geteilt mit {{count}} Benutzer(n)",
+    "tooltipNewFolder": "Neuer Ordner",
+    "tooltipNewSubfolder": "Neuer Unterordner",
+    "viewAll": "Alle anzeigen →",
+    "viewOnly": "Nur anzeigen"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -677,7 +707,10 @@
       "chartLegendActiveUsers": "Aktive Benutzer",
       "chartLegendTotalQuizzes": "Quizze gesamt",
       "chartLegendActiveSessions": "Aktive Sitzungen",
-      "failedToLoadStats": "Statistiken konnten nicht geladen werden"
+      "failedToLoadStats": "Statistiken konnten nicht geladen werden",
+      "activeHosts": "Aktive Hosts",
+      "noWeeklyData": "Keine Sitzungsdaten in den letzten 7 Tagen.",
+      "weeklyActiveHosts": "Wöchentlich aktive Hosts"
     },
     "users": {
       "createUser": "Benutzer erstellen",
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "Teilnehmer müssen diese Frage beantworten, bevor sie fortfahren können.",
     "requiredWarning": "Diese Frage ist erforderlich. Bitte beantworten Sie sie, um fortzufahren.",
     "notPublished": "Dieses Quiz ist keine Offline-Umfrage oder wurde noch nicht veröffentlicht.",
-    "loadFailed": "Ergebnisse konnten nicht geladen werden"
+    "loadFailed": "Ergebnisse konnten nicht geladen werden",
+    "noResponsesYet": "Noch keine Antworten.",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "Test",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "Senden",
     "interviewSheetEmailQueued": "E-Mail erfolgreich in die Warteschlange gestellt.",
     "interviewSheetDownload": "Herunterladen:",
-    "interviewSheetRetry": "Erneut versuchen"
+    "interviewSheetRetry": "Erneut versuchen",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "Teilnehmerdetails konnten nicht geladen werden.",
+    "downloadPdf": "PDF-Bericht herunterladen",
+    "downloadPdfBtn": "PDF herunterladen",
+    "downloadPdfWithAi": "PDF-Bericht herunterladen (mit KI)",
+    "emailFailed": "Fehlgeschlagen",
+    "emailFailedContent": "E-Mails konnten nicht in die Warteschlange gestellt werden. Bitte versuchen Sie es erneut.",
+    "emailResultSent": "Ergebnis-E-Mail gesendet",
+    "emailsQueued": "E-Mails in Warteschlange",
+    "emailsQueuedContent": "Ergebnis-E-Mails werden an alle Teilnehmer gesendet.",
+    "emailsSentDone": "E-Mails gesendet ✓",
+    "fullReport": "Vollständiger Bericht",
+    "participantDetailTitle": "Teilnehmerdetails",
+    "responsesCount": "{{count}} Antworten",
+    "sendResultsContent_one": "Dadurch werden personalisierte Ergebnisse (Punktzahl, Fragenaufschlüsselung, Überwachungszusammenfassung) an den {{count}} abgeschlossenen Teilnehmer gesendet. E-Mails werden von „{{name}}“ gesendet. Dies kann nicht rückgängig gemacht werden.",
+    "sendResultsContent_other": "Dadurch werden personalisierte Ergebnisse (Punktzahl, Fragenaufschlüsselung, Überwachungszusammenfassung) an alle {{count}} abgeschlossenen Teilnehmer gesendet. E-Mails werden von „{{name}}“ gesendet. Dies kann nicht rückgängig gemacht werden.",
+    "sendResultsOk": "Jetzt senden",
+    "sendResultsTitle": "Ergebnisse an Teilnehmer senden?",
+    "sendResultsToParticipants": "Ergebnisse an Teilnehmer senden",
+    "senderNamePlaceholder": "Absendername (Standard: Swaya.me)",
+    "tagCorrect": "Richtig",
+    "tagNotAnswered": "Nicht beantwortet",
+    "tagTheirAnswer": "Ihre Antwort"
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "Aktivieren Sie die Beaufsichtigung in den Quiz-Einstellungen, um die Integrität der Teilnehmer zu verfolgen.",
       "enabledNoData": "Beaufsichtigung ist aktiviert — noch keine Teilnehmerdaten.",
       "enabledNoDataDesc": "Integritätsdaten erscheinen hier, sobald Teilnehmer die Prüfung über den beaufsichtigten Ablauf starten.",
-      "timeline": "Teilnehmer #{{id}} — Verstoß-Zeitverlauf"
+      "timeline": "Teilnehmer #{{id}} — Verstoß-Zeitverlauf",
+      "noSnapshots": "Keine Schnappschüsse für diesen Teilnehmer aufgezeichnet",
+      "webcamSnapshots": "Webcam-Schnappschüsse"
     },
     "settings": {
       "title": "Sicherheit & Überwachung",
@@ -2297,7 +2357,8 @@
     "heading1": "Überschrift 1",
     "heading2": "Überschrift 2",
     "heading3": "Überschrift 3",
-    "heading4": "Überschrift 4"
+    "heading4": "Überschrift 4",
+    "link": "Link"
   },
   "create": {
     "intentTitle": "Was braucht dieser Moment?",
@@ -2420,5 +2481,14 @@
     "RE": "Laufzeitfehler",
     "CE": "Kompilierungsfehler",
     "TLE": "Zeitlimit überschritten"
+  },
+  "sidebar": {
+    "end": "Beenden",
+    "liveSessions": "Live-Sitzungen",
+    "open": "Öffnen",
+    "sessionActive": "Sitzung aktiv",
+    "stop": "Stoppen",
+    "stopThisSession": "Diese Sitzung beenden?",
+    "stopThisSessionDesc": "Dadurch wird die Sitzung für alle Teilnehmer beendet."
   }
 }

@@ -26,7 +26,8 @@
     "responses": "respuestas",
     "typeHere": "Escribe tu respuesta aquí...",
     "dismiss": "Descartar",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "Ver código fuente en GitHub"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -501,7 +502,8 @@
       "offline_poll": "Encuesta",
       "exam": "Prueba"
     },
-    "chooseAnswer": "Elige tu respuesta"
+    "chooseAnswer": "Elige tu respuesta",
+    "getReady": "¡Prepárate!"
   },
   "dashboard": {
     "readyToLaunch": "Listo para lanzar",
@@ -558,7 +560,35 @@
     "questions": "preguntas",
     "joined": "participaron",
     "avgCorrect": "promedio correcto",
-    "viewRecap": "Ver resumen →"
+    "viewRecap": "Ver resumen →",
+    "allActivities": "Todas las actividades",
+    "allowEditing": "Permitir edición",
+    "canEdit": "Puede editar",
+    "currentlySharedWith": "Actualmente compartido con",
+    "deleteFolderConfirm": "¿Eliminar {{name}}? Las actividades internas se moverán a la carpeta principal o a la raíz.",
+    "deleteFolderTitle": "Eliminar carpeta",
+    "failedToLoadShares": "Error al cargar los elementos compartidos",
+    "failedToUpdateSharing": "Error al actualizar el uso compartido",
+    "folderSharingUpdated": "Uso compartido de la carpeta actualizado",
+    "folderUpdated": "Carpeta actualizada",
+    "moveTo": "Mover a (carpeta principal)",
+    "newSubfolder": "Nueva subcarpeta",
+    "noMatch": "Ninguna coincidencia",
+    "noOtherUsers": "No hay otros usuarios en tu espacio de trabajo",
+    "oneQuestion": "1 pregunta",
+    "renameMove": "Renombrar / Mover",
+    "renameMoveFolder": "Renombrar / Mover carpeta",
+    "rootNoParent": "Raíz (sin carpeta principal)",
+    "saveFolderSharing": "Guardar uso compartido",
+    "selectTeammates": "Seleccionar compañeros de equipo…",
+    "share": "Compartir",
+    "shareFolderTitle": "Compartir carpeta: {{name}}",
+    "shareWith": "Compartir con (por correo electrónico / nombre)",
+    "sharedWithCount": "Compartido con {{count}} usuario(s)",
+    "tooltipNewFolder": "Nueva carpeta",
+    "tooltipNewSubfolder": "Nueva subcarpeta",
+    "viewAll": "Ver todo →",
+    "viewOnly": "Solo ver"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -677,7 +707,10 @@
       "chartLegendActiveUsers": "Usuarios activos",
       "chartLegendTotalQuizzes": "Cuestionarios totales",
       "chartLegendActiveSessions": "Sesiones activas",
-      "failedToLoadStats": "Error al cargar estadísticas"
+      "failedToLoadStats": "Error al cargar estadísticas",
+      "activeHosts": "Hosts activos",
+      "noWeeklyData": "No hay datos de sesión en los últimos 7 días.",
+      "weeklyActiveHosts": "Hosts activos semanales"
     },
     "users": {
       "createUser": "Crear usuario",
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "Los participantes deben responder esta pregunta antes de continuar.",
     "requiredWarning": "Esta pregunta es obligatoria. Respóndela para continuar.",
     "notPublished": "Este cuestionario no es una encuesta sin conexión o aún no ha sido publicado.",
-    "loadFailed": "Error al cargar resultados"
+    "loadFailed": "Error al cargar resultados",
+    "noResponsesYet": "Aún no hay respuestas.",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "Prueba",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "Enviar",
     "interviewSheetEmailQueued": "Correo añadido a la cola con éxito.",
     "interviewSheetDownload": "Descargar:",
-    "interviewSheetRetry": "Reintentar"
+    "interviewSheetRetry": "Reintentar",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "No se pudo cargar el detalle del participante.",
+    "downloadPdf": "Descargar informe PDF",
+    "downloadPdfBtn": "Descargar PDF",
+    "downloadPdfWithAi": "Descargar informe PDF (con IA)",
+    "emailFailed": "Fallido",
+    "emailFailedContent": "No se pudieron poner los correos en cola. Por favor, inténtalo de nuevo.",
+    "emailResultSent": "Correo electrónico de resultados enviado",
+    "emailsQueued": "Correos electrónicos en cola",
+    "emailsQueuedContent": "Los correos electrónicos de resultados se están enviando a todos los participantes.",
+    "emailsSentDone": "Correos enviados ✓",
+    "fullReport": "Informe completo",
+    "participantDetailTitle": "Detalle del participante",
+    "responsesCount": "{{count}} respuestas",
+    "sendResultsContent_one": "Esto enviará por correo electrónico resultados personalizados (puntuación, desglose de preguntas, resumen de supervisión) al {{count}} participante completado. Los correos electrónicos se enviarán desde \"{{name}}\". Esto no se puede deshacer.",
+    "sendResultsContent_other": "Esto enviará por correo electrónico resultados personalizados (puntuación, desglose de preguntas, resumen de supervisión) a los {{count}} participantes completados. Los correos electrónicos se enviarán desde \"{{name}}\". Esto no se puede deshacer.",
+    "sendResultsOk": "Enviar ahora",
+    "sendResultsTitle": "¿Enviar resultados a los participantes?",
+    "sendResultsToParticipants": "Enviar resultados a los participantes",
+    "senderNamePlaceholder": "Nombre del remitente (predeterminado: Swaya.me)",
+    "tagCorrect": "Correcto",
+    "tagNotAnswered": "No respondido",
+    "tagTheirAnswer": "Su respuesta"
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "Habilite la supervisión en la configuración del cuestionario para comenzar a rastrear la integridad de los participantes.",
       "enabledNoData": "La supervisión está habilitada — aún no hay datos de participantes.",
       "enabledNoDataDesc": "Los datos de integridad aparecerán aquí una vez que los participantes inicien el examen a través del flujo supervisado.",
-      "timeline": "Participante #{{id}} — Línea de tiempo de infracciones"
+      "timeline": "Participante #{{id}} — Línea de tiempo de infracciones",
+      "noSnapshots": "No se registraron instantáneas para este participante",
+      "webcamSnapshots": "Instantáneas de la cámara web"
     },
     "settings": {
       "title": "Seguridad y Vigilancia",
@@ -2297,7 +2357,8 @@
     "heading1": "Encabezado 1",
     "heading2": "Encabezado 2",
     "heading3": "Encabezado 3",
-    "heading4": "Encabezado 4"
+    "heading4": "Encabezado 4",
+    "link": "Enlace"
   },
   "create": {
     "intentTitle": "¿Qué necesita este momento?",
@@ -2420,5 +2481,14 @@
     "RE": "Error en tiempo de ejecución",
     "CE": "Error de compilación",
     "TLE": "Límite de tiempo excedido"
+  },
+  "sidebar": {
+    "end": "Finalizar",
+    "liveSessions": "Sesiones en vivo",
+    "open": "Abrir",
+    "sessionActive": "Sesión activa",
+    "stop": "Detener",
+    "stopThisSession": "¿Detener esta sesión?",
+    "stopThisSessionDesc": "Esto finalizará la sesión para todos los participantes."
   }
 }

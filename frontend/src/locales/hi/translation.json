@@ -26,7 +26,8 @@
     "responses": "प्रतिक्रियाएं",
     "typeHere": "अपना उत्तर यहाँ लिखें...",
     "dismiss": "खारिज करें",
-    "langCode": "en"
+    "langCode": "en",
+    "viewOnGitHub": "स्रोत GitHub पर देखें"
   },
   "auth": {
     "login": "लॉगिन",
@@ -501,7 +502,8 @@
       "offline_poll": "सर्वेक्षण",
       "exam": "टेस्ट"
     },
-    "chooseAnswer": "अपना उत्तर चुनें"
+    "chooseAnswer": "अपना उत्तर चुनें",
+    "getReady": "तैयार हो जाइए!"
   },
   "navigation": {
     "home": "होम",
@@ -558,7 +560,10 @@
       "chartLegendActiveUsers": "सक्रिय उपयोगकर्ता",
       "chartLegendTotalQuizzes": "कुल क्विज़",
       "chartLegendActiveSessions": "सक्रिय सत्र",
-      "failedToLoadStats": "Failed to load statistics"
+      "failedToLoadStats": "Failed to load statistics",
+      "activeHosts": "सक्रिय होस्ट",
+      "noWeeklyData": "पिछले 7 दिनों में कोई सत्र डेटा नहीं।",
+      "weeklyActiveHosts": "साप्ताहिक सक्रिय होस्ट"
     },
     "users": {
       "createUser": "उपयोगकर्ता बनाएं",
@@ -1021,7 +1026,35 @@
     "questions": "प्रश्न",
     "joined": "शामिल हुए",
     "avgCorrect": "औसत सही",
-    "viewRecap": "सारांश देखें →"
+    "viewRecap": "सारांश देखें →",
+    "allActivities": "सभी गतिविधियाँ",
+    "allowEditing": "संपादन की अनुमति दें",
+    "canEdit": "संपादित कर सकते हैं",
+    "currentlySharedWith": "वर्तमान में इनके साथ साझा किया गया है",
+    "deleteFolderConfirm": "{{name}} को हटाएँ? अंदर की गतिविधियाँ मूल या रूट में चली जाएँगी।",
+    "deleteFolderTitle": "फ़ोल्डर हटाएँ",
+    "failedToLoadShares": "शेयर लोड करने में विफल",
+    "failedToUpdateSharing": "साझाकरण अपडेट करने में विफल",
+    "folderSharingUpdated": "फ़ोल्डर साझाकरण अपडेट किया गया",
+    "folderUpdated": "फ़ोल्डर अपडेट किया गया",
+    "moveTo": "इसमें ले जाएँ (मूल फ़ोल्डर)",
+    "newSubfolder": "नया सबफ़ोल्डर",
+    "noMatch": "कोई मिलान नहीं",
+    "noOtherUsers": "आपके कार्यक्षेत्र में कोई अन्य उपयोगकर्ता नहीं",
+    "oneQuestion": "1 प्रश्न",
+    "renameMove": "नाम बदलें / ले जाएँ",
+    "renameMoveFolder": "फ़ोल्डर का नाम बदलें / ले जाएँ",
+    "rootNoParent": "रूट (कोई मूल नहीं)",
+    "saveFolderSharing": "साझाकरण सहेजें",
+    "selectTeammates": "सहकर्मियों का चयन करें…",
+    "share": "साझा करें",
+    "shareFolderTitle": "फ़ोल्डर साझा करें: {{name}}",
+    "shareWith": "इनके साथ साझा करें (ईमेल / नाम से)",
+    "sharedWithCount": "{{count}} उपयोगकर्ता(ओं) के साथ साझा किया गया",
+    "tooltipNewFolder": "नया फ़ोल्डर",
+    "tooltipNewSubfolder": "नया सबफ़ोल्डर",
+    "viewAll": "सभी देखें →",
+    "viewOnly": "केवल देखें"
   },
   "pages": {
     "legal": {
@@ -1895,7 +1928,9 @@
     "requiredTooltip": "प्रतिभागियों को आगे बढ़ने से पहले इस प्रश्न का उत्तर देना होगा।",
     "requiredWarning": "यह प्रश्न आवश्यक है। जारी रखने के लिए इसका उत्तर दें।",
     "notPublished": "यह क्विज़ ऑफलाइन पोल नहीं है या अभी तक प्रकाशित नहीं हुई है।",
-    "loadFailed": "परिणाम लोड करने में विफल"
+    "loadFailed": "परिणाम लोड करने में विफल",
+    "noResponsesYet": "अभी तक कोई प्रतिक्रिया नहीं।",
+    "resultsEmailPlaceholder": "your@email.com"
   },
   "exam": {
     "typeLabel": "टेस्ट",
@@ -2079,7 +2114,30 @@
     "interviewSheetSend": "भेजें",
     "interviewSheetEmailQueued": "ईमेल सफलतापूर्वक कतार में जोड़ा गया।",
     "interviewSheetDownload": "डाउनलोड:",
-    "interviewSheetRetry": "पुनः प्रयास करें"
+    "interviewSheetRetry": "पुनः प्रयास करें",
+    "allowedDomainsPlaceholder": "natwest.com, rbs.com",
+    "couldNotLoadDetail": "प्रतिभागी विवरण लोड नहीं किया जा सका।",
+    "downloadPdf": "पीडीएफ रिपोर्ट डाउनलोड करें",
+    "downloadPdfBtn": "पीडीएफ डाउनलोड करें",
+    "downloadPdfWithAi": "पीडीएफ रिपोर्ट डाउनलोड करें (एआई के साथ)",
+    "emailFailed": "विफल",
+    "emailFailedContent": "ईमेल कतारबद्ध नहीं किए जा सके। कृपया पुनः प्रयास करें।",
+    "emailResultSent": "परिणाम ईमेल भेजा गया",
+    "emailsQueued": "ईमेल कतारबद्ध",
+    "emailsQueuedContent": "परिणाम ईमेल सभी प्रतिभागियों को भेजे जा रहे हैं।",
+    "emailsSentDone": "ईमेल भेजे गए ✓",
+    "fullReport": "पूरी रिपोर्ट",
+    "participantDetailTitle": "प्रतिभागी विवरण",
+    "responsesCount": "{{count}} प्रतिक्रियाएँ",
+    "sendResultsContent_one": "यह सभी {{count}} पूर्ण किए गए प्रतिभागी को व्यक्तिगत परिणाम (स्कोर, प्रश्न विश्लेषण, प्रॉक्टरिंग सारांश) ईमेल करेगा। ईमेल \"{{name}}\" से भेजे जाएंगे। इसे पूर्ववत नहीं किया जा सकता।",
+    "sendResultsContent_other": "यह सभी {{count}} पूर्ण किए गए प्रतिभागियों को व्यक्तिगत परिणाम (स्कोर, प्रश्न विश्लेषण, प्रॉक्टरिंग सारांश) ईमेल करेगा। ईमेल \"{{name}}\" से भेजे जाएंगे। इसे पूर्ववत नहीं किया जा सकता।",
+    "sendResultsOk": "अभी भेजें",
+    "sendResultsTitle": "प्रतिभागियों को परिणाम भेजें?",
+    "sendResultsToParticipants": "प्रतिभागियों को परिणाम भेजें",
+    "senderNamePlaceholder": "प्रेषक का नाम (डिफ़ॉल्ट: Swaya.me)",
+    "tagCorrect": "सही",
+    "tagNotAnswered": "उत्तर नहीं दिया गया",
+    "tagTheirAnswer": "उनका उत्तर"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",
@@ -2219,7 +2277,9 @@
       "notEnabledDesc": "प्रतिभागी अखंडता ट्रैक करने के लिए क्विज़ सेटिंग में प्रॉक्टरिंग सक्षम करें।",
       "enabledNoData": "प्रॉक्टरिंग सक्षम है — अभी तक कोई प्रतिभागी डेटा नहीं।",
       "enabledNoDataDesc": "जब प्रतिभागी प्रॉक्टर्ड फ्लो के माध्यम से परीक्षा शुरू करेंगे तो यहां डेटा दिखाई देगा।",
-      "timeline": "प्रतिभागी #{{id}} — उल्लंघन टाइमलाइन"
+      "timeline": "प्रतिभागी #{{id}} — उल्लंघन टाइमलाइन",
+      "noSnapshots": "इस प्रतिभागी के लिए कोई स्नैपशॉट रिकॉर्ड नहीं किया गया",
+      "webcamSnapshots": "वेबकैम स्नैपशॉट"
     },
     "settings": {
       "title": "सुरक्षा और निगरानी",
@@ -2297,7 +2357,8 @@
     "heading1": "शीर्षक 1",
     "heading2": "शीर्षक 2",
     "heading3": "शीर्षक 3",
-    "heading4": "शीर्षक 4"
+    "heading4": "शीर्षक 4",
+    "link": "लिंक"
   },
   "create": {
     "intentTitle": "इस पल को क्या चाहिए?",
@@ -2420,5 +2481,14 @@
     "RE": "रनटाइम त्रुटि",
     "CE": "संकलन त्रुटि",
     "TLE": "समय सीमा पार"
+  },
+  "sidebar": {
+    "end": "समाप्त करें",
+    "liveSessions": "लाइव सत्र",
+    "open": "खोलें",
+    "sessionActive": "सत्र सक्रिय है",
+    "stop": "रोकें",
+    "stopThisSession": "इस सत्र को रोकें?",
+    "stopThisSessionDesc": "यह सभी प्रतिभागियों के लिए सत्र समाप्त कर देगा।"
   }
 }
