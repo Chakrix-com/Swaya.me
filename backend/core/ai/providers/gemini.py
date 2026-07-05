@@ -110,7 +110,8 @@ class GeminiProvider(BaseAIProvider):
     @staticmethod
     def _extract_text(data: dict) -> str:
         try:
-            return data["candidates"][0]["content"]["parts"][0]["text"]
+            parts = data["candidates"][0]["content"]["parts"]
+            return "".join(p.get("text", "") for p in parts)
         except (KeyError, IndexError) as e:
             raise AIProviderError(f"Unexpected Gemini response structure: {e} — {str(data)[:200]}")
 
@@ -366,7 +367,7 @@ class GeminiProvider(BaseAIProvider):
         est_minutes = max(len(questions) * 3, 10)
 
         system = "You are an expert technical interviewer."
-        user = f"""Given an exam result for a candidate, generate a structured interview question sheet in Markdown.
+        user = f"""Generate a structured interview question sheet in Markdown for a candidate.
 
 Exam: {quiz_title}
 Candidate: {name}
@@ -380,29 +381,23 @@ Date: {today}
 {wrong_section.strip() if wrong_section else "(None — candidate answered all questions correctly)"}
 
 ---
-INSTRUCTIONS:
-1. For correctly answered questions: write 1–2 depth-probe questions per question.
-   Ask WHY the answer is correct, ask for edge cases, ask for real-world application.
-   Include the ideal expected answer.
-
-2. For incorrectly answered / skipped questions: write 1–2 gap-probe questions per question.
-   Approach from first principles. Surface the likely misconception.
-   Include the ideal expected answer AND the common misconception to watch for.
-
-3. Group by PART A (correct) and PART B (wrong/skipped).
-   If Part A has no questions, note "No correctly answered questions" and proceed to Part B.
-   If Part B has no questions, note "All questions answered correctly" and skip Part B.
-
-4. Add a PART C — Synthesis: 1 paragraph summarising the candidate's profile,
-   apparent strengths, concerning gaps, and a hire/train/pass recommendation.
-
-5. Start with a header: # Technical Interview — {name}
+INSTRUCTIONS (you MUST follow all of these exactly):
+1. Write probe questions for EVERY question listed above — do not skip any question.
+2. For each correctly answered question: write exactly 2 depth-probe questions + ideal expected answer.
+   Ask WHY the answer is correct, edge cases, and real-world application.
+3. For each incorrectly answered/skipped question: write exactly 2 gap-probe questions + ideal expected answer + common misconception to watch for.
+   Approach from first principles to surface the likely knowledge gap.
+4. PART A: cover all {len(correct_qs)} correctly answered question(s).
+   If none, write "No correctly answered questions."
+5. PART B: cover all {len(wrong_qs)} incorrectly answered/skipped question(s).
+   If none, write "All questions answered correctly."
+6. PART C — Synthesis: one paragraph summarising apparent strengths, concerning gaps, and a hire/train/pass recommendation.
+7. Header: # Technical Interview — {name}
    Include: Exam, Score, Recommended Duration (~{est_minutes} minutes).
+8. Output ONLY the Markdown. No preamble, no explanation, no code blocks wrapping the output."""
 
-6. Output ONLY the Markdown. No preamble, no explanation, no code blocks wrapping the output."""
-
-        payload = self._gemini_payload(system, user, temperature=0.5, max_tokens=8192)
-        data = await self._post(payload, self._model_fast, timeout=httpx.Timeout(120.0, connect=10.0))
+        payload = self._gemini_payload(system, user, temperature=0.2, max_tokens=16384)
+        data = await self._post(payload, self._model_fast, timeout=httpx.Timeout(180.0, connect=10.0))
         return self._extract_text(data).strip()
 
     async def list_available_models(self) -> list[str]:
