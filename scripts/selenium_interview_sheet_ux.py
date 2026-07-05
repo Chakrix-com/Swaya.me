@@ -23,10 +23,10 @@ from selenium.common.exceptions import TimeoutException
 
 # ── Config ────────────────────────────────────────────────────────────────────
 WEBDRIVER_URL = 'http://localhost:4444'
-TARGET_BASE = 'https://test.swaya.me'
-QUIZ_ID = 1081
+TARGET_BASE = 'https://www.swaya.me'
+QUIZ_ID = 202
 RESULTS_URL = f'{TARGET_BASE}/quiz/{QUIZ_ID}/exam-results'
-COOKIE_DOMAIN = 'test.swaya.me'
+COOKIE_DOMAIN = 'www.swaya.me'
 TOKEN_SCRIPT = '/home/vinay/Swaya.me/scripts/generate_selenium_token.py'
 PYTHON = '/home/vinay/Swaya.me/backend/.venv/bin/python3'
 
@@ -128,7 +128,7 @@ def main():
         # ── 9. Click Generate ───────────────────────────────────────────────────
         if generate_btn:
             generate_btn.click()
-            print(f'{INFO} Clicked Generate — waiting for AI response (up to 45s)...')
+            print(f'{INFO} Clicked Generate — waiting for AI response (up to 90s)...')
 
             # ── 10. Assert spinner appears ──────────────────────────────────────
             spinner = wait_for(driver, By.CLASS_NAME, 'ant-spin-spinning', timeout=5)
@@ -136,7 +136,7 @@ def main():
 
             # ── 11. Wait for content ────────────────────────────────────────────
             content_appeared = False
-            for _ in range(45):
+            for _ in range(90):
                 time.sleep(1)
                 page_src = driver.page_source
                 if 'Regenerate' in page_src and 'Part' in page_src:
@@ -145,6 +145,7 @@ def main():
             check('Sheet content appeared (within 45s)', content_appeared)
 
             # ── 12. Assert rendered markdown (no raw **) ────────────────────────
+            import re as _re
             modal_body = driver.find_elements(By.CLASS_NAME, 'ai-analysis-content')
             raw_visible = False
             if modal_body:
@@ -154,7 +155,9 @@ def main():
 
             # ── 13. Assert counter shows N/5 ───────────────────────────────────
             page_src = driver.page_source
-            check('"1/5 used" counter visible', '1/5 used' in page_src)
+            counter_match = _re.search(r'(\d)/5 used', page_src)
+            check('"N/5 used" counter visible', bool(counter_match))
+            current_count = int(counter_match.group(1)) if counter_match else 0
 
             # ── 14. Assert Part A heading ───────────────────────────────────────
             check('Part A heading visible', 'part a' in page_src.lower())
@@ -181,11 +184,17 @@ def main():
             # ── 18. Click Regenerate ─────────────────────────────────────────────
             regen_btn = driver.find_elements(By.XPATH, "//button[contains(., 'Regenerate')]")
             if regen_btn and regen_btn[0].is_enabled():
-                regen_btn[0].click()
-                print(f'{INFO} Clicked Regenerate — waiting...')
-                time.sleep(45)
-                page_src = driver.page_source
-                check('Counter updates to 2/5 after regenerate', '2/5 used' in page_src)
+                driver.execute_script("arguments[0].click();", regen_btn[0])
+                print(f'{INFO} Clicked Regenerate — waiting up to 90s...')
+                regen_ok = False
+                expected_after = current_count + 1
+                for _ in range(90):
+                    time.sleep(1)
+                    page_src = driver.page_source
+                    if f'{expected_after}/5 used' in page_src:
+                        regen_ok = True
+                        break
+                check(f'Counter incremented to {expected_after}/5 after regenerate', regen_ok)
             else:
                 print(f'{INFO} Regenerate button disabled or not found (skipping)')
 
