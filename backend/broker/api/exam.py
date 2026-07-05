@@ -9,7 +9,7 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from persistence.database_async import get_async_db
 from shared.utils.redis_client import get_redis, RedisClient
@@ -316,11 +316,22 @@ async def generate_interview_sheet_endpoint(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Authenticated host — generate a Gemini-powered interview sheet for one participant."""
-    from persistence.models.quiz import Quiz
+    from persistence.models.quiz import Quiz, FolderShare
 
-    quiz_result = await db.execute(select(Quiz).filter(Quiz.id == quiz_id))
+    shared_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id
+    )
+    quiz_result = await db.execute(
+        select(Quiz).filter(
+            Quiz.id == quiz_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(shared_folder_ids),
+            ),
+        )
+    )
     quiz = quiz_result.scalar_one_or_none()
-    if not quiz or quiz.tenant_id != current_user.tenant_id:
+    if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
     redis_key = f"interview_sheet_count:{quiz_id}:{participant_id}"
