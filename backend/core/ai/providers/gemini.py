@@ -2,8 +2,10 @@
 Google Gemini provider — implements BaseAIProvider using Gemini's REST API.
 Uses httpx directly to avoid SDK version dependency issues.
 """
+import html as _html_mod
 import json
 import logging
+import re as _re_mod
 
 import httpx
 
@@ -301,6 +303,14 @@ class GeminiProvider(BaseAIProvider):
             logger.warning("Gemini evaluate_code failed: %s", e)
             return {"verdict": "ERR", "output": "", "explanation": "AI evaluator temporarily unavailable — please try again in a moment"}
 
+    @staticmethod
+    def _strip_html(text: str) -> str:
+        if not text:
+            return text
+        text = _re_mod.sub(r'<[^>]+>', ' ', str(text))
+        text = _html_mod.unescape(text)
+        return _re_mod.sub(r'\s+', ' ', text).strip()
+
     async def generate_interview_sheet(self, participant_data: dict, quiz_title: str) -> str:
         """Generate a structured interview question sheet in Markdown from exam results."""
         if not self._key:
@@ -318,18 +328,20 @@ class GeminiProvider(BaseAIProvider):
         correct_qs = [q for q in questions if q.get("is_correct") is True]
         wrong_qs = [q for q in questions if q.get("is_correct") is not True]
 
+        sh = self._strip_html
+
         def _fmt_opts(opts):
             if not opts:
                 return "  (no options)"
-            return "\n".join(f"  {chr(65 + i)}. {o}" for i, o in enumerate(opts))
+            return "\n".join(f"  {chr(65 + i)}. {sh(o)}" for i, o in enumerate(opts))
 
         correct_section = ""
         for i, q in enumerate(correct_qs):
             opts = q.get("options") or []
             ci = q.get("correct_answer_index") or 0
-            correct_text = opts[ci] if opts and ci < len(opts) else "N/A"
+            correct_text = sh(opts[ci]) if opts and ci < len(opts) else "N/A"
             correct_section += (
-                f"\nQ{i + 1}: {q.get('question_text', '')}\n"
+                f"\nQ{i + 1}: {sh(q.get('question_text', ''))}\n"
                 f"Options:\n{_fmt_opts(opts)}\n"
                 f"Correct: Option {chr(65 + ci)} — {correct_text}\n"
             )
@@ -338,14 +350,14 @@ class GeminiProvider(BaseAIProvider):
         for i, q in enumerate(wrong_qs):
             opts = q.get("options") or []
             ci = q.get("correct_answer_index") or 0
-            correct_text = opts[ci] if opts and ci < len(opts) else "N/A"
+            correct_text = sh(opts[ci]) if opts and ci < len(opts) else "N/A"
             participant_idx = q.get("participant_answer")
             if participant_idx is not None and opts and participant_idx < len(opts):
-                chosen_text = opts[participant_idx]
+                chosen_text = sh(opts[participant_idx])
             else:
                 chosen_text = "Did not answer"
             wrong_section += (
-                f"\nQ{i + 1}: {q.get('question_text', '')}\n"
+                f"\nQ{i + 1}: {sh(q.get('question_text', ''))}\n"
                 f"Options:\n{_fmt_opts(opts)}\n"
                 f"Correct: Option {chr(65 + ci)} — {correct_text}\n"
                 f"Candidate chose: {chosen_text}\n"
