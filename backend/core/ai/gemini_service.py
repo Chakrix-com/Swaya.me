@@ -77,3 +77,7 @@ async def generate_participant_summary(
 
 async def analyze_exam_results(results: dict, custom_prompt: str | None = None) -> str:
     return await _primary.analyze_exam_results(results, custom_prompt)
+
+
+async def generate_interview_sheet(participant_data: dict, quiz_title: str) -> str:
+    return await _fast.generate_interview_sheet(participant_data, quiz_title)

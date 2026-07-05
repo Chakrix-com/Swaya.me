@@ -249,6 +249,12 @@ export const examAPI = {
   sendParticipantEmails: (quizId, senderName) =>
     api.post(`/quiz/${quizId}/send-participant-emails`, senderName ? { sender_name: senderName } : {}),
   getCertMeta: (token) => api.get(`/exam/cert-meta/${token}`),
+  generateInterviewSheet: (quizId, participantId) =>
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet`),
+  downloadInterviewSheet: (quizId, participantId, data) =>
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/download`, data, { responseType: 'blob' }),
+  emailInterviewSheet: (quizId, participantId, data) =>
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/email`, data),
 }
 
 // AI Generation API

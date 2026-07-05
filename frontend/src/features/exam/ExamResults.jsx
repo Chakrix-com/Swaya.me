@@ -72,6 +72,18 @@ export default function ExamResults() {
   const [sendingEmails, setSendingEmails] = useState(false)
   const [senderName, setSenderName] = useState('')
 
+  // Interview sheet modal
+  const [interviewModal, setInterviewModal] = useState({ open: false, participantId: null, name: '', email: '', score: 0, maxScore: 0, quizId: null })
+  const [interviewSheet, setInterviewSheet] = useState(null)
+  const [interviewLoading, setInterviewLoading] = useState(false)
+  const [interviewError, setInterviewError] = useState(null)
+  const [interviewGenCount, setInterviewGenCount] = useState(0)
+  const [interviewEmail, setInterviewEmail] = useState('')
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [downloadingFormat, setDownloadingFormat] = useState(null)
+  const [interviewGenCounts, setInterviewGenCounts] = useState({})
+
   // Participant exam-detail modal
   const [participantDetail, setParticipantDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -95,6 +107,86 @@ export default function ExamResults() {
       setParticipantDetail(null)
     } finally {
       setDetailLoading(false)
+    }
+  }
+
+  const openInterviewModal = (record) => {
+    setInterviewModal({
+      open: true,
+      participantId: record.participant_id,
+      name: record.display_name,
+      email: record.email || '',
+      score: record.score,
+      maxScore: record.max_score,
+      quizId: id,
+    })
+    setInterviewSheet(null)
+    setInterviewError(null)
+    setInterviewEmail(record.email || '')
+    setEmailSent(false)
+    setInterviewGenCount(interviewGenCounts[record.participant_id] || 0)
+  }
+
+  const handleGenerateSheet = async () => {
+    setInterviewLoading(true)
+    setInterviewError(null)
+    try {
+      const res = await examAPI.generateInterviewSheet(interviewModal.quizId, interviewModal.participantId)
+      setInterviewSheet(res.data.sheet)
+      setInterviewGenCount(res.data.generation_count)
+      setInterviewGenCounts(prev => ({ ...prev, [interviewModal.participantId]: res.data.generation_count }))
+    } catch (err) {
+      const status = err.response?.status
+      if (status === 429) {
+        setInterviewError('Regeneration limit reached (5/5). No more generations available for this participant.')
+      } else {
+        setInterviewError(err.response?.data?.detail || 'Failed to generate interview sheet. Please try again.')
+      }
+    } finally {
+      setInterviewLoading(false)
+    }
+  }
+
+  const handleDownloadSheet = async (format) => {
+    if (!interviewSheet) return
+    setDownloadingFormat(format)
+    try {
+      const res = await examAPI.downloadInterviewSheet(interviewModal.quizId, interviewModal.participantId, {
+        sheet: interviewSheet,
+        format,
+        participant_name: interviewModal.name,
+      })
+      const blob = new Blob([res.data])
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const slug = interviewModal.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'participant'
+      a.download = `${slug}_interview.${format}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      // silent — browser will show download error
+    } finally {
+      setDownloadingFormat(null)
+    }
+  }
+
+  const handleEmailSheet = async () => {
+    if (!interviewSheet || !interviewEmail.trim()) return
+    setEmailSending(true)
+    setEmailSent(false)
+    try {
+      await examAPI.emailInterviewSheet(interviewModal.quizId, interviewModal.participantId, {
+        sheet: interviewSheet,
+        participant_name: interviewModal.name,
+        recipient_email: interviewEmail.trim(),
+        quiz_title: results?.quiz_title || '',
+      })
+      setEmailSent(true)
+    } catch {
+      setEmailSent(false)
+    } finally {
+      setEmailSending(false)
     }
   }
 
@@ -473,12 +565,38 @@ export default function ExamResults() {
     ),
   }
 
+  const interviewColumn = {
+    title: 'Interview Sheet',
+    key: 'interview',
+    width: 160,
+    render: (_, row) => {
+      const genCount = interviewGenCounts[row.participant_id] || 0
+      const atLimit = genCount >= 5
+      const label = genCount > 0 ? `Interview Sheet (${genCount}/5)` : 'Interview Sheet'
+      return (
+        <Tooltip title={!row.is_completed ? 'Available after submission' : atLimit ? 'Regeneration limit reached (5/5)' : 'Generate AI interview questions'}>
+          <Button
+            size="small"
+            icon={<RobotOutlined />}
+            disabled={!row.is_completed}
+            onClick={(e) => { e.stopPropagation(); openInterviewModal(row) }}
+            style={{ fontSize: 12 }}
+          >
+            {label}
+          </Button>
+        </Tooltip>
+      )
+    },
+  }
+
   const tableColumns = hasProcData
-    ? [...baseColumns, ...proctoringColumns, actionColumn]
-    : [...baseColumns, { ...actionColumn, render: (_, row) => row.is_completed
-        ? <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>{t('exam.btnAnswers')}</Button>
-        : null
-      }]
+    ? [...baseColumns, ...proctoringColumns, actionColumn, interviewColumn]
+    : [...baseColumns, {
+        ...actionColumn,
+        render: (_, row) => row.is_completed
+          ? <Button size="small" onClick={(e) => { e.stopPropagation(); handleRowDetailClick(row) }}>{t('exam.btnAnswers')}</Button>
+          : null,
+      }, interviewColumn]
 
   return (
     <div style={{ padding: 24 }}>
@@ -835,6 +953,153 @@ export default function ExamResults() {
         {!detailLoading && !participantDetail && (
           <Alert type="error" message={t('exam.couldNotLoadDetail')} />
         )}
+      </Modal>
+
+      {/* Interview Sheet Modal */}
+      <Modal
+        open={interviewModal.open}
+        onCancel={() => setInterviewModal(prev => ({ ...prev, open: false }))}
+        footer={null}
+        width={920}
+        title={
+          <Space>
+            <RobotOutlined />
+            <span>Interview Sheet — {interviewModal.name}</span>
+            {interviewModal.score != null && interviewModal.maxScore != null && (
+              <Tag color="blue">{interviewModal.score}/{interviewModal.maxScore}</Tag>
+            )}
+          </Space>
+        }
+        destroyOnClose
+        styles={{ body: { maxHeight: '80vh', overflowY: 'auto' } }}
+      >
+        {/* Generate / Regenerate controls */}
+        <div style={{ marginBottom: 16 }}>
+          {!interviewSheet && !interviewLoading && !interviewError && (
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <RobotOutlined style={{ fontSize: 40, color: '#4361ee', marginBottom: 12, display: 'block' }} />
+              <div style={{ marginBottom: 16, color: '#555' }}>
+                Gemini will analyse this participant's answers and write personalised interview questions.
+              </div>
+              <Button type="primary" size="large" icon={<RobotOutlined />} onClick={handleGenerateSheet}>
+                Generate Interview Sheet
+              </Button>
+            </div>
+          )}
+
+          {interviewLoading && (
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <Spin size="large" />
+              <div style={{ marginTop: 16, color: '#555' }}>Gemini is writing your interview sheet…</div>
+            </div>
+          )}
+
+          {interviewError && !interviewLoading && (
+            <Alert
+              type="error"
+              message={interviewError}
+              style={{ marginBottom: 12 }}
+              action={
+                interviewGenCount < 5 && (
+                  <Button size="small" onClick={handleGenerateSheet}>Retry</Button>
+                )
+              }
+            />
+          )}
+
+          {interviewSheet && !interviewLoading && (
+            <>
+              <Space style={{ marginBottom: 12 }} wrap>
+                <Button
+                  icon={<SyncOutlined />}
+                  onClick={handleGenerateSheet}
+                  disabled={interviewGenCount >= 5}
+                >
+                  {interviewGenCount >= 5
+                    ? 'Regeneration limit reached (5/5)'
+                    : `Regenerate (${interviewGenCount}/5 used)`}
+                </Button>
+              </Space>
+
+              {/* Rendered Markdown preview */}
+              <div
+                className="ai-analysis-content"
+                style={{
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 8,
+                  padding: '16px 20px',
+                  marginBottom: 20,
+                  background: '#fafafa',
+                  minHeight: 200,
+                }}
+              >
+                <ReactMarkdown>{interviewSheet}</ReactMarkdown>
+              </div>
+
+              {/* Deliver section */}
+              <Divider orientation="left" style={{ margin: '12px 0' }}>Deliver</Divider>
+
+              {/* Email row */}
+              <div style={{ marginBottom: 12 }}>
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="Recipient email"
+                    value={interviewEmail}
+                    onChange={e => { setInterviewEmail(e.target.value); setEmailSent(false) }}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    type="primary"
+                    icon={<MailOutlined />}
+                    onClick={handleEmailSheet}
+                    loading={emailSending}
+                    disabled={!interviewEmail.trim() || emailSending}
+                  >
+                    Send
+                  </Button>
+                </Space.Compact>
+                {emailSent && (
+                  <div style={{ marginTop: 6, color: '#52c41a', fontSize: 13 }}>
+                    <CheckCircleOutlined style={{ marginRight: 4 }} />Email queued successfully.
+                  </div>
+                )}
+              </div>
+
+              {/* Download row */}
+              <Space>
+                <span style={{ color: '#555', fontSize: 13 }}>Download:</span>
+                <Button
+                  size="small"
+                  icon={<FilePdfOutlined />}
+                  loading={downloadingFormat === 'pdf'}
+                  disabled={downloadingFormat != null}
+                  onClick={() => handleDownloadSheet('pdf')}
+                >
+                  PDF
+                </Button>
+                <Button
+                  size="small"
+                  icon={<DownloadOutlined />}
+                  loading={downloadingFormat === 'docx'}
+                  disabled={downloadingFormat != null}
+                  onClick={() => handleDownloadSheet('docx')}
+                >
+                  Word
+                </Button>
+                <Button
+                  size="small"
+                  icon={<DownloadOutlined />}
+                  loading={downloadingFormat === 'md'}
+                  disabled={downloadingFormat != null}
+                  onClick={() => handleDownloadSheet('md')}
+                >
+                  Markdown
+                </Button>
+              </Space>
+            </>
+          )}
+        </div>
       </Modal>
 
       {/* Proctoring detail modal */}

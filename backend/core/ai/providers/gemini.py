@@ -301,5 +301,97 @@ class GeminiProvider(BaseAIProvider):
             logger.warning("Gemini evaluate_code failed: %s", e)
             return {"verdict": "ERR", "output": "", "explanation": "AI evaluator temporarily unavailable — please try again in a moment"}
 
+    async def generate_interview_sheet(self, participant_data: dict, quiz_title: str) -> str:
+        """Generate a structured interview question sheet in Markdown from exam results."""
+        if not self._key:
+            raise AIProviderError("GEMINI_KEY is not configured")
+
+        from datetime import datetime as _dt
+        today = _dt.now().strftime("%B %d, %Y")
+
+        name = participant_data.get("display_name", "Candidate")
+        score = participant_data.get("score", 0)
+        max_score = participant_data.get("max_score", 0)
+        percentage = participant_data.get("percentage", 0)
+        questions = participant_data.get("questions", [])
+
+        correct_qs = [q for q in questions if q.get("is_correct") is True]
+        wrong_qs = [q for q in questions if q.get("is_correct") is not True]
+
+        def _fmt_opts(opts):
+            if not opts:
+                return "  (no options)"
+            return "\n".join(f"  {chr(65 + i)}. {o}" for i, o in enumerate(opts))
+
+        correct_section = ""
+        for i, q in enumerate(correct_qs):
+            opts = q.get("options") or []
+            ci = q.get("correct_answer_index") or 0
+            correct_text = opts[ci] if opts and ci < len(opts) else "N/A"
+            correct_section += (
+                f"\nQ{i + 1}: {q.get('question_text', '')}\n"
+                f"Options:\n{_fmt_opts(opts)}\n"
+                f"Correct: Option {chr(65 + ci)} — {correct_text}\n"
+            )
+
+        wrong_section = ""
+        for i, q in enumerate(wrong_qs):
+            opts = q.get("options") or []
+            ci = q.get("correct_answer_index") or 0
+            correct_text = opts[ci] if opts and ci < len(opts) else "N/A"
+            participant_idx = q.get("participant_answer")
+            if participant_idx is not None and opts and participant_idx < len(opts):
+                chosen_text = opts[participant_idx]
+            else:
+                chosen_text = "Did not answer"
+            wrong_section += (
+                f"\nQ{i + 1}: {q.get('question_text', '')}\n"
+                f"Options:\n{_fmt_opts(opts)}\n"
+                f"Correct: Option {chr(65 + ci)} — {correct_text}\n"
+                f"Candidate chose: {chosen_text}\n"
+            )
+
+        est_minutes = max(len(questions) * 3, 10)
+
+        system = "You are an expert technical interviewer."
+        user = f"""Given an exam result for a candidate, generate a structured interview question sheet in Markdown.
+
+Exam: {quiz_title}
+Candidate: {name}
+Score: {score}/{max_score} ({percentage}%)
+Date: {today}
+
+=== QUESTIONS ANSWERED CORRECTLY ({len(correct_qs)}) ===
+{correct_section.strip() if correct_section else "(None — candidate did not answer any questions correctly)"}
+
+=== QUESTIONS ANSWERED INCORRECTLY OR SKIPPED ({len(wrong_qs)}) ===
+{wrong_section.strip() if wrong_section else "(None — candidate answered all questions correctly)"}
+
+---
+INSTRUCTIONS:
+1. For correctly answered questions: write 1–2 depth-probe questions per question.
+   Ask WHY the answer is correct, ask for edge cases, ask for real-world application.
+   Include the ideal expected answer.
+
+2. For incorrectly answered / skipped questions: write 1–2 gap-probe questions per question.
+   Approach from first principles. Surface the likely misconception.
+   Include the ideal expected answer AND the common misconception to watch for.
+
+3. Group by PART A (correct) and PART B (wrong/skipped).
+   If Part A has no questions, note "No correctly answered questions" and proceed to Part B.
+   If Part B has no questions, note "All questions answered correctly" and skip Part B.
+
+4. Add a PART C — Synthesis: 1 paragraph summarising the candidate's profile,
+   apparent strengths, concerning gaps, and a hire/train/pass recommendation.
+
+5. Start with a header: # Technical Interview — {name}
+   Include: Exam, Score, Recommended Duration (~{est_minutes} minutes).
+
+6. Output ONLY the Markdown. No preamble, no explanation, no code blocks wrapping the output."""
+
+        payload = self._gemini_payload(system, user, temperature=0.5, max_tokens=8192)
+        data = await self._post(payload, self._model_fast, timeout=httpx.Timeout(120.0, connect=10.0))
+        return self._extract_text(data).strip()
+
     async def list_available_models(self) -> list[str]:
         return []

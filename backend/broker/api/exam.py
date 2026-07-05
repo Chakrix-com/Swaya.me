@@ -1,6 +1,9 @@
 """
 Exam API — public and authenticated endpoints for exam participation and results.
 """
+import io
+import re as _re
+
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
@@ -27,7 +30,7 @@ from features.quiz.schemas import (
 from features.quiz import exam_service_async as svc
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError, InvalidQuizStatusError, ProctoringViolationError
 from core.auth.dependencies import get_current_user, CurrentUser, require_admin
-from core.ai.gemini_service import analyze_exam_results, GeminiError
+from core.ai.gemini_service import analyze_exam_results, generate_interview_sheet, GeminiError
 
 router = APIRouter(tags=["exam"])
 
@@ -284,6 +287,230 @@ async def unpublish_exam(
         raise HTTPException(status_code=404, detail=str(e))
     except (QuizValidationError, InvalidQuizStatusError) as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Interview Sheet endpoints ─────────────────────────────────────────────────
+
+_MAX_INTERVIEW_GENERATIONS = 5
+
+
+class InterviewSheetDownloadRequest(BaseModel):
+    sheet: str
+    format: str  # "pdf" | "docx" | "md"
+    participant_name: str
+
+
+class InterviewSheetEmailRequest(BaseModel):
+    sheet: str
+    participant_name: str
+    recipient_email: str
+    quiz_title: Optional[str] = None
+
+
+@router.post("/quiz/{quiz_id}/participants/{participant_id}/interview-sheet")
+async def generate_interview_sheet_endpoint(
+    quiz_id: int,
+    participant_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — generate a Gemini-powered interview sheet for one participant."""
+    from persistence.models.quiz import Quiz
+
+    quiz_result = await db.execute(select(Quiz).filter(Quiz.id == quiz_id))
+    quiz = quiz_result.scalar_one_or_none()
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    redis_key = f"interview_sheet_count:{quiz_id}:{participant_id}"
+    count = int(await redis.get(redis_key) or 0)
+    if count >= _MAX_INTERVIEW_GENERATIONS:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Regeneration limit ({_MAX_INTERVIEW_GENERATIONS}) reached for this participant.",
+        )
+
+    try:
+        detail = await svc.get_participant_detail(db, quiz_id, participant_id, current_user)
+    except QuizNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except QuizValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        sheet = await generate_interview_sheet(detail.model_dump(), quiz.title)
+    except GeminiError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    await redis.increment(redis_key)
+
+    return {
+        "sheet": sheet,
+        "participant_name": detail.display_name,
+        "generation_count": count + 1,
+        "max_generations": _MAX_INTERVIEW_GENERATIONS,
+    }
+
+
+def _name_slug(name: str) -> str:
+    return _re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_') or "participant"
+
+
+@router.post("/quiz/{quiz_id}/participants/{participant_id}/interview-sheet/download")
+async def download_interview_sheet(
+    quiz_id: int,
+    participant_id: int,
+    body: InterviewSheetDownloadRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — download the interview sheet as PDF, Word, or Markdown."""
+    slug = _name_slug(body.participant_name)
+
+    if body.format == "md":
+        return Response(
+            content=body.sheet.encode("utf-8"),
+            media_type="text/markdown",
+            headers={"Content-Disposition": f'attachment; filename="{slug}_interview.md"'},
+        )
+
+    if body.format == "docx":
+        from docx import Document as _Document
+
+        doc = _Document()
+        doc.core_properties.author = "Swaya.me"
+        doc.core_properties.subject = f"Interview Sheet — {body.participant_name}"
+
+        for line in body.sheet.split('\n'):
+            stripped = line.strip()
+            if not stripped:
+                doc.add_paragraph('')
+                continue
+            if stripped.startswith('### '):
+                doc.add_heading(stripped[4:], level=3)
+            elif stripped.startswith('## '):
+                doc.add_heading(stripped[3:], level=2)
+            elif stripped.startswith('# '):
+                doc.add_heading(stripped[2:], level=1)
+            elif stripped == '---':
+                doc.add_paragraph('─' * 50)
+            else:
+                para = doc.add_paragraph()
+                parts = _re.split(r'(\*\*.*?\*\*)', stripped)
+                for part in parts:
+                    if part.startswith('**') and part.endswith('**') and len(part) > 4:
+                        run = para.add_run(part[2:-2])
+                        run.bold = True
+                    else:
+                        para.add_run(part)
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        return Response(
+            content=buf.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{slug}_interview.docx"'},
+        )
+
+    if body.format == "pdf":
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import cm
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buf, pagesize=A4,
+            leftMargin=2 * cm, rightMargin=2 * cm,
+            topMargin=2 * cm, bottomMargin=2 * cm,
+        )
+        styles = getSampleStyleSheet()
+        h1 = ParagraphStyle('IH1', parent=styles['Heading1'], fontSize=18, spaceAfter=12)
+        h2 = ParagraphStyle('IH2', parent=styles['Heading2'], fontSize=14, spaceAfter=8, spaceBefore=14)
+        h3 = ParagraphStyle('IH3', parent=styles['Heading3'], fontSize=12, spaceAfter=6, spaceBefore=10)
+        body_s = ParagraphStyle('IBody', parent=styles['Normal'], fontSize=11, spaceAfter=4, leading=16)
+
+        def _esc(t):
+            return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+        story = []
+        for line in body.sheet.split('\n'):
+            stripped = line.strip()
+            if not stripped:
+                story.append(Spacer(1, 4))
+                continue
+            if stripped.startswith('### '):
+                story.append(Paragraph(_esc(stripped[4:]), h3))
+            elif stripped.startswith('## '):
+                story.append(Paragraph(_esc(stripped[3:]), h2))
+            elif stripped.startswith('# '):
+                story.append(Paragraph(_esc(stripped[2:]), h1))
+            elif stripped == '---':
+                story.append(Spacer(1, 10))
+            else:
+                escaped = _re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', _esc(stripped))
+                story.append(Paragraph(escaped, body_s))
+
+        doc.build(story)
+        return Response(
+            content=buf.getvalue(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{slug}_interview.pdf"'},
+        )
+
+    raise HTTPException(status_code=400, detail="format must be 'pdf', 'docx', or 'md'")
+
+
+@router.post("/quiz/{quiz_id}/participants/{participant_id}/interview-sheet/email")
+async def email_interview_sheet(
+    quiz_id: int,
+    participant_id: int,
+    body: InterviewSheetEmailRequest,
+    background_tasks: BackgroundTasks,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — email the interview sheet to a recipient."""
+    from core.auth.email_service import send_email
+    from markdown_it import MarkdownIt
+
+    md = MarkdownIt()
+    html_content = md.render(body.sheet)
+
+    quiz_title = body.quiz_title or "Assessment"
+    subject = f"Interview Sheet — {body.participant_name} | {quiz_title}"
+
+    sender_name = (
+        getattr(current_user, 'display_name', None)
+        or getattr(current_user, 'email', None)
+        or "Swaya.me"
+    )
+
+    html_body = f"""<!DOCTYPE html>
+<html>
+<head><style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a2e; max-width: 800px; margin: 0 auto; padding: 24px; }}
+  h1 {{ color: #1a1a2e; border-bottom: 2px solid #4361ee; padding-bottom: 8px; font-size: 22px; }}
+  h2 {{ color: #4361ee; margin-top: 24px; font-size: 17px; }}
+  h3 {{ color: #333; font-size: 14px; }}
+  p {{ line-height: 1.7; }}
+  hr {{ border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }}
+  .footer {{ margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #888; font-size: 12px; }}
+</style></head>
+<body>
+{html_content}
+<div class="footer">Generated by Swaya.me &mdash; Interview Sheet for {body.participant_name}</div>
+</body>
+</html>"""
+
+    background_tasks.add_task(
+        send_email,
+        subject=subject,
+        recipients=[body.recipient_email],
+        html_body=html_body,
+        sender_name=sender_name,
+    )
+
+    return {"queued": True}
 
 
 # ── Certificate endpoints (public — no auth) ───────────────────────────────────
