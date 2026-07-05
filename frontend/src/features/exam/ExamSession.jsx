@@ -521,6 +521,7 @@ function QuestionScreen({
   const [running, setRunning] = useState(false)
   const isLast = questionIndex === totalQuestions - 1
   const isCode = question.question_type === 'code'
+  const isSingleLine = question.question_type === 'single_line'
 
   const globalUrgent = globalSecondsLeft != null && globalSecondsLeft < 60
   const qUrgent = questionSecondsLeft != null && questionSecondsLeft < 10
@@ -690,7 +691,15 @@ function QuestionScreen({
                 </div>
               </Space>
             )
-          })() : (
+          })() : isSingleLine ? (
+            <Input
+              value={selectedAnswer || ''}
+              onChange={(e) => onAnswerSelect(e.target.value)}
+              placeholder="Type your answer here…"
+              size="large"
+              style={{ fontSize: 15 }}
+            />
+          ) : (
           <Radio.Group
             value={selectedAnswer}
             onChange={(e) => onAnswerSelect(e.target.value)}
@@ -1110,12 +1119,12 @@ export default function ExamSession() {
     const q = questions[currentIdx]
     setAnswers(prev => ({ ...prev, [q.id]: optionIndex }))
     // Fire-and-forget save
-    const isCode = q.question_type === 'code'
+    const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
     examAPI.saveAnswer(slug, {
       session_token: sessionToken,
       question_id: q.id,
-      selected_option_index: isCode ? null : optionIndex,
-      text_answer: isCode ? (typeof optionIndex === 'string' ? optionIndex : null) : null,
+      selected_option_index: isTextAnswer ? null : optionIndex,
+      text_answer: isTextAnswer ? (typeof optionIndex === 'string' ? optionIndex : null) : null,
     }).catch(() => {})
   }
 
@@ -1126,12 +1135,12 @@ export default function ExamSession() {
     try {
       const q = questions[currentIdx]
       const optIdx = answers[q.id] ?? null
-      const isCode = q.question_type === 'code'
+      const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
       await examAPI.saveAnswer(slug, {
         session_token: sessionToken,
         question_id: q.id,
-        selected_option_index: isCode ? null : optIdx,
-        text_answer: isCode ? (typeof optIdx === 'string' ? optIdx : null) : null,
+        selected_option_index: isTextAnswer ? null : optIdx,
+        text_answer: isTextAnswer ? (typeof optIdx === 'string' ? optIdx : null) : null,
       })
       setCurrentIdx(ci => Math.min(ci + 1, questions.length - 1))
     } catch {
@@ -1175,12 +1184,12 @@ export default function ExamSession() {
           // Save current answer first
           const q = questions[currentIdx]
           const optIdx = answers[q.id] ?? null
-          const isCode = q.question_type === 'code'
+          const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
           await examAPI.saveAnswer(slug, {
             session_token: sessionToken,
             question_id: q.id,
-            selected_option_index: isCode ? null : optIdx,
-            text_answer: isCode ? (typeof optIdx === 'string' ? optIdx : null) : null,
+            selected_option_index: isTextAnswer ? null : optIdx,
+            text_answer: isTextAnswer ? (typeof optIdx === 'string' ? optIdx : null) : null,
           })
           // Final webcam snapshot before submit
           captureSnapshotRef.current?.()
