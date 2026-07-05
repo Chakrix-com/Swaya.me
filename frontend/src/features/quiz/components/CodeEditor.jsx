@@ -2,16 +2,44 @@ import React, { useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { githubDark } from '@uiw/codemirror-theme-github';
 import { python } from '@codemirror/lang-python';
-import { java } from '@codemirror/lang-java';
+import { java, javaLanguage } from '@codemirror/lang-java';
+import { completeFromList } from '@codemirror/autocomplete';
 import { cpp } from '@codemirror/lang-cpp';
 import { javascript } from '@codemirror/lang-javascript';
 import { go } from '@codemirror/lang-go';
 import { rust } from '@codemirror/lang-rust';
 import { useTranslation } from 'react-i18next';
 
+const javaKeywordCompletion = javaLanguage.data.of({
+  autocomplete: completeFromList([
+    // Keywords
+    'abstract','assert','boolean','break','byte','case','catch','char','class',
+    'continue','default','do','double','else','enum','extends','final','finally',
+    'float','for','if','implements','import','instanceof','int','interface','long',
+    'native','new','package','private','protected','public','return','short',
+    'static','strictfp','super','switch','synchronized','this','throw','throws',
+    'transient','try','var','void','volatile','while','null','true','false',
+    // Common classes & interfaces
+    'String','System','Object','Integer','Long','Double','Float','Boolean',
+    'Character','Byte','Short','Math','StringBuilder','StringBuffer',
+    'ArrayList','LinkedList','HashMap','HashSet','TreeMap','TreeSet',
+    'LinkedHashMap','LinkedHashSet','Arrays','Collections','Optional',
+    'Stream','List','Map','Set','Queue','Deque','Iterator','Iterable',
+    'Comparable','Comparator','Runnable','Thread','Exception',
+    'RuntimeException','IOException','NullPointerException',
+    'IllegalArgumentException','IllegalStateException',
+    'IndexOutOfBoundsException','NumberFormatException',
+    // Common methods/snippets as labels
+    'System.out.println','System.err.println',
+  ].map(kw => ({
+    label: kw,
+    type: /^[A-Z]/.test(kw) || kw.includes('.') ? 'class' : 'keyword',
+  }))),
+});
+
 const LANGUAGE_EXTENSIONS = {
   python: python(),
-  java: java(),
+  java: [java(), javaKeywordCompletion],
   cpp: cpp(),
   javascript: javascript(),
   typescript: javascript({ typescript: true }),
@@ -53,10 +81,10 @@ export default function CodeEditor({
 }) {
   const { t } = useTranslation();
 
-  const extensions = useMemo(
-    () => [LANGUAGE_EXTENSIONS[language] || python()],
-    [language]
-  );
+  const extensions = useMemo(() => {
+    const ext = LANGUAGE_EXTENSIONS[language] || python();
+    return Array.isArray(ext) ? ext : [ext];
+  }, [language]);
 
   // Always use a dark theme for the code editor — better contrast and IDE feel
   const editorTheme = githubDark;
