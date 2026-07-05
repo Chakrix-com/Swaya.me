@@ -152,7 +152,7 @@ export default function CodeEditor({
           indentOnInput: true,
           bracketMatching: true,
           closeBrackets: true,
-          autocompletion: false,
+          autocompletion: true,
           highlightSelectionMatches: false,
         }}
       />
