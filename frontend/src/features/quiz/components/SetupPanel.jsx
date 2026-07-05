@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Tooltip, Alert } from 'antd';
+import { Form, Input, DatePicker, InputNumber, Switch, Button, Tooltip, Alert, Space } from 'antd';
 import {
   SaveOutlined, ThunderboltOutlined, LoadingOutlined,
   WarningOutlined, CheckOutlined,
@@ -162,7 +162,7 @@ export function SetupPanel({
           <Form.Item
             name="title"
             label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-            rules={[{ required: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+            rules={[{ required: true, whitespace: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
             style={{ marginBottom: 14 }}
           >
             <Input
@@ -228,6 +228,48 @@ export function SetupPanel({
             <Form.Item name="reaction_style" noStyle>
               <ReactionStylePicker disabled={isLiveMode} />
             </Form.Item>
+          </div>
+        )}
+
+        {/* ── Behaviour (quiz / poll only — not exam/offline poll) ── */}
+        {!isExam && !isOfflinePoll && (
+          <div className="sp-section">
+            <div className="sp-section-title">{t('quiz.behaviourSection', 'Behaviour')}</div>
+            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{t('quiz.shuffleQuestions', 'Shuffle questions')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--sw-text3)' }}>{t('quiz.shuffleQuestionsHint', 'Randomize question order for each participant')}</div>
+                </div>
+                <Form.Item name="shuffle_questions" valuePropName="checked" noStyle>
+                  <Switch disabled={isLiveMode} />
+                </Form.Item>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{t('quiz.shuffleOptions', 'Shuffle answer options')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--sw-text3)' }}>{t('quiz.shuffleOptionsHint', 'Randomize MCQ option order for each participant')}</div>
+                </div>
+                <Form.Item name="shuffle_options" valuePropName="checked" noStyle>
+                  <Switch disabled={isLiveMode} />
+                </Form.Item>
+              </div>
+              <Form.Item
+                name="default_question_time_seconds"
+                label={t('quiz.defaultQuestionTime', 'Default time per question (seconds)')}
+                extra={t('quiz.defaultQuestionTimeHint', 'Applied to questions with no individual time set. Leave blank for unlimited time.')}
+                style={{ marginBottom: 0 }}
+              >
+                <InputNumber
+                  min={5}
+                  max={3600}
+                  placeholder={t('quiz.unlimitedTime', '∞ unlimited')}
+                  addonAfter="s"
+                  style={{ width: 160 }}
+                  disabled={isLiveMode}
+                />
+              </Form.Item>
+            </Space>
           </div>
         )}
 
@@ -316,6 +358,14 @@ export function SetupPanel({
                 )}
               </Form.Item>
             </div>
+            <Form.Item
+              name="exam_results_email"
+              label={t('exam.resultsEmail', 'Email results to (optional)')}
+              extra={t('exam.resultsEmailHint', 'A summary of exam results will be emailed here when the session ends')}
+              style={{ marginTop: 12 }}
+            >
+              <Input type="email" placeholder={t('exam.resultsEmailPlaceholder', 'e.g. teacher@school.edu')} />
+            </Form.Item>
           </div>
         )}
 

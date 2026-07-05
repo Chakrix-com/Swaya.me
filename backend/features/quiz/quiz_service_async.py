@@ -926,6 +926,14 @@ class QuizBuilderServiceAsync:
                 raise QuizValidationError(f"Invalid reaction style: {request.reaction_style}")
             quiz.reaction_style = request.reaction_style
 
+        # Quiz behaviour
+        if 'shuffle_questions' in request.model_fields_set:
+            quiz.shuffle_questions = request.shuffle_questions or False
+        if 'shuffle_options' in request.model_fields_set:
+            quiz.shuffle_options = request.shuffle_options or False
+        if 'default_question_time_seconds' in request.model_fields_set:
+            quiz.default_question_time_seconds = request.default_question_time_seconds
+
         await db.commit()
         await db.refresh(quiz)
 
@@ -1422,4 +1430,7 @@ class QuizBuilderServiceAsync:
             proctoring_policy=getattr(quiz, 'proctoring_policy', None),
             skin=getattr(quiz, 'skin', None),
             reaction_style=getattr(quiz, 'reaction_style', None),
+            shuffle_questions=bool(getattr(quiz, 'shuffle_questions', False)),
+            shuffle_options=bool(getattr(quiz, 'shuffle_options', False)),
+            default_question_time_seconds=getattr(quiz, 'default_question_time_seconds', None),
         )

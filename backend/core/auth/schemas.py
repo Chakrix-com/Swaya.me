@@ -29,6 +29,7 @@ class UserLoginRequest(BaseModel):
     """User login request"""
     email: EmailStr
     password: str
+    remember: bool = False
 
 
 class UserResponse(BaseModel):

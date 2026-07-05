@@ -1048,7 +1048,7 @@ const QuestionForm = ({
           )}
           <div style={{ flex: 1 }} />
           {question ? (
-            /* Existing question: Prev / Next navigation (autosave handles saving) */
+            /* Existing question: Prev / Next navigation + Cancel (autosave handles saving) */
             <>
               <Button
                 size="small"
@@ -1073,6 +1073,7 @@ const QuestionForm = ({
               >
                 {t('common.next', 'Next')}
               </Button>
+              <Button size="small" icon={<CloseOutlined />} onClick={onCancel}>{t('common.cancel')}</Button>
             </>
           ) : (
             /* New question: explicit Add / Cancel */
@@ -1453,6 +1454,9 @@ export default function QuizBuilder() {
         exam_allowed_domains: response.data.exam_allowed_domains || undefined,
         skin: response.data.skin || null,
         reaction_style: response.data.reaction_style || null,
+        shuffle_questions: response.data.shuffle_questions || false,
+        shuffle_options: response.data.shuffle_options || false,
+        default_question_time_seconds: response.data.default_question_time_seconds || undefined,
       })
       // Auto-focus title for freshly created activities (skip-setup flow)
       if (isNewActivity) {
@@ -1476,7 +1480,7 @@ export default function QuizBuilder() {
       <Form.Item
         name="title"
         label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-        rules={[{ required: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+        rules={[{ required: true, whitespace: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
       >
         <Input
           placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
@@ -3131,20 +3135,26 @@ export default function QuizBuilder() {
             </div>
             <div className="qb-rail-list">
               {/* Setup entry */}
-              <div
+              <button
+                type="button"
+                role="tab"
+                aria-selected={stageView === 'setup'}
                 className={`qb-rail-entry${stageView === 'setup' ? ' qb-rail-entry--active' : ''}`}
                 onClick={() => { setStageView('setup'); setEditingQuestion(null); setMobileView('form') }}
               >
                 ⚙ {t('quiz.setupLabel', 'Setup')}
-              </div>
+              </button>
               {/* Proctoring entry — exam only */}
               {isExam && (
-                <div
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={stageView === 'proctoring'}
                   className={`qb-rail-entry${stageView === 'proctoring' ? ' qb-rail-entry--active' : ''}`}
                   onClick={() => { setStageView('proctoring'); setEditingQuestion(null); setMobileView('form') }}
                 >
                   🔒 {t('quiz.securityLabel', 'Security & Proctoring')}
-                </div>
+                </button>
               )}
               {quiz?.status === 'ready' && isExam && (
                 <div style={{ padding: '8px 10px', fontSize: 11, color: '#fa8c16', background: '#fff7e6', borderRadius: 6, margin: '4px 0 8px' }}>

@@ -247,6 +247,10 @@ class QuizUpdate(BaseModel):
     skin: Optional[str] = Field(None, max_length=32)
     # Emoji reactions
     reaction_style: Optional[str] = Field(None, max_length=32)
+    # Quiz behaviour
+    shuffle_questions: Optional[bool] = None
+    shuffle_options: Optional[bool] = None
+    default_question_time_seconds: Optional[int] = Field(None, ge=5, le=3600)
 
 
 class QuizResponse(BaseModel):
@@ -287,6 +291,10 @@ class QuizResponse(BaseModel):
     skin: Optional[str] = None
     # Emoji reactions
     reaction_style: Optional[str] = None
+    # Quiz behaviour
+    shuffle_questions: bool = False
+    shuffle_options: bool = False
+    default_question_time_seconds: Optional[int] = None
 
     class Config:
         from_attributes = True

@@ -114,6 +114,11 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     # Emoji reaction style for participant feedback (null = disabled)
     reaction_style = Column(String(32), nullable=True)
 
+    # Quiz behaviour
+    shuffle_questions = Column(Boolean, default=False, nullable=False, server_default="0")
+    shuffle_options = Column(Boolean, default=False, nullable=False, server_default="0")
+    default_question_time_seconds = Column(Integer, nullable=True)
+
     # Template gallery metadata
     template_category = Column(String(64), nullable=True)
     template_use_count = Column(Integer, default=0, nullable=False, server_default="0")

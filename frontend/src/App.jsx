@@ -22,6 +22,7 @@ import {
   AppstoreAddOutlined,
   TrophyOutlined,
   GithubOutlined,
+  KeyOutlined,
 } from '@ant-design/icons'
 import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -70,6 +71,7 @@ const OrganizationManagement = lazy(() => import('./features/admin/OrganizationM
 const FeedbackManagement = lazy(() => import('./features/admin/FeedbackManagement'))
 const PlatformQuizzes = lazy(() => import('./features/admin/PlatformQuizzes'))
 const TierManagement = lazy(() => import('./features/admin/TierManagement'))
+const NotFound = lazy(() => import('./features/home/NotFound'))
 
 import LanguageSwitcher from './components/LanguageSwitcher'
 import GlobalOverlay from './components/GlobalOverlay'
@@ -277,6 +279,12 @@ function AuthenticatedLayout({ children }) {
               icon: <CrownOutlined />,
               label: t('dashboard.plansTab', 'User Plans'),
               onClick: () => navigate('/plans'),
+            },
+            {
+              key: 'change-password',
+              icon: <KeyOutlined />,
+              label: t('auth.changePassword', 'Change Password'),
+              onClick: () => navigate('/forgot-password'),
             },
             ...(isAdmin ? [
               { type: 'divider' },
@@ -519,6 +527,7 @@ function AppRoutes() {
         <Route path="/quiz/:id/control" element={<QuizControl />} />
         <Route path="/quiz/:id/history" element={<QuizHistory />} />
         <Route path="/quiz/:id/recap/:sessionId" element={<SessionRecap />} />
+        <Route path="/quiz/:id/sessions" element={<QuizHistory />} />
         <Route path="/quiz/:id/offline-results" element={<OfflinePollResults />} />
         <Route path="/quiz/:id/exam-results" element={<ExamResults />} />
         <Route path="/quiz/:id/exam-results/integrity/:participantId" element={<IntegrityReport />} />
@@ -529,7 +538,7 @@ function AppRoutes() {
         <Route path="/admin/tier-management" element={<TierManagement />} />
         <Route path="/admin/feedback" element={<FeedbackManagement />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthenticatedLayout>
   )

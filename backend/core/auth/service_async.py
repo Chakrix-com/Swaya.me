@@ -4,6 +4,7 @@ Authentication service - async business logic for user auth
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
+from datetime import timedelta
 import re
 import logging
 
@@ -240,7 +241,8 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
     user.login_count += 1
     await db.commit()
     
-    # Generate access token
+    # Generate access token — extend TTL when "remember me" is checked
+    remember_days = 30 if getattr(request, 'remember', False) else None
     access_token = create_access_token(
         data={
             "sub": str(user.id),
@@ -248,13 +250,15 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
             "tenant_id": tenant.id,
             "tier": tenant.tier.value,
             "role": user.role.value
-        }
+        },
+        expires_delta=timedelta(days=remember_days) if remember_days else None,
     )
-    
+    expires_in = 86400 * remember_days if remember_days else 86400
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=86400,
+        expires_in=expires_in,
         user=UserResponse(
             id=user.id,
             email=user.email,

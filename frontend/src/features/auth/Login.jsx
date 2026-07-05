@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message, Typography, Space, Alert } from 'antd'
+import { Form, Input, Button, Card, message, Typography, Space, Alert, Checkbox } from 'antd'
 import { UserOutlined, LockOutlined, LoginOutlined, HomeOutlined } from '@ant-design/icons'
 
 const GOOGLE_LOGIN_URL = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/login`
@@ -99,8 +99,11 @@ function Login() {
               <Input.Password prefix={<LockOutlined />} placeholder={t('auth.password')} size="large" />
             </Form.Item>
 
-            <div style={{ textAlign: 'right', marginBottom: '8px', marginTop: '-6px' }}>
-              <Link to="/forgot-password" style={{ color: 'var(--visitor-accent)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '-6px' }}>
+              <Form.Item name="remember" valuePropName="checked" initialValue={false} noStyle>
+                <Checkbox style={{ fontSize: 13 }}>{t('auth.rememberMe', 'Remember me')}</Checkbox>
+              </Form.Item>
+              <Link to="/forgot-password" style={{ color: 'var(--visitor-accent)', fontSize: 13 }}>
                 {t('auth.forgotPassword')}
               </Link>
             </div>
