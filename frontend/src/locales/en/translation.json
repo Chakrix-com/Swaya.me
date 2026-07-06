@@ -418,7 +418,8 @@
     "gradingRubricPlaceholder": "e.g. For input 5, output should be 120 (factorial)",
     "codeQuestionDescription": "Participants write code; AI evaluates after question closes",
     "clickEvaluate": "Click \"Evaluate Code\" after closing the question to run AI evaluation",
-    "submissions": "Submissions"
+    "submissions": "Submissions",
+    "changeType": "Change type"
   },
   "audience": {
     "joinQuiz": "Join Session",

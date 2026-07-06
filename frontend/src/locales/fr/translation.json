@@ -421,7 +421,8 @@
     "gradingRubricPlaceholder": "Ex. Pour l'entrée 5, la sortie doit être 120 (factorielle)",
     "codeQuestionDescription": "Les participants écrivent du code ; l'IA évalue après la fermeture de la question",
     "clickEvaluate": "Cliquez sur \"Évaluer le code\" après la fermeture de la question pour lancer l'évaluation IA",
-    "submissions": "Soumissions"
+    "submissions": "Soumissions",
+    "changeType": "Changer le type"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",

@@ -419,7 +419,8 @@
     "gradingRubricPlaceholder": "દા.ત. ઇનપુટ 5 માટે આઉટપુટ 120 હોવો જોઈએ (ફેક્ટોરિયલ)",
     "codeQuestionDescription": "સહભાગીઓ કોડ લખે છે; AI પ્રશ્ન બંધ પછી મૂલ્યાંકન કરે છે",
     "clickEvaluate": "AI મૂલ્યાંકન ચલાવવા પ્રશ્ન બંધ કર્યા પછી \"કોડ મૂલ્યાંકન કરો\" ક્લિક કરો",
-    "submissions": "સબમિશન"
+    "submissions": "સબમિશન",
+    "changeType": "પ્રકાર બદલો"
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",

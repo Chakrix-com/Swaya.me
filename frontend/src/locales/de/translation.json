@@ -419,7 +419,8 @@
     "gradingRubricPlaceholder": "z.B. Für Eingabe 5 soll die Ausgabe 120 sein (Fakultät)",
     "codeQuestionDescription": "Teilnehmer schreiben Code; KI bewertet nach dem Schließen der Frage",
     "clickEvaluate": "Klicken Sie nach dem Schließen der Frage auf \"Code bewerten\", um die KI-Bewertung zu starten",
-    "submissions": "Einreichungen"
+    "submissions": "Einreichungen",
+    "changeType": "Typ ändern"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",

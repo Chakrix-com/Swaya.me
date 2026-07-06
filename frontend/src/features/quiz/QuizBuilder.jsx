@@ -393,7 +393,7 @@ const QuestionForm = ({
         {question && (
           <div className="qb-q-position">
             Q{questionIndex + 1}
-            <span className="qb-q-position-total"> · {totalQuestions} {totalQuestions !== 1 ? t('quiz.questions', 'questions') : 'question'}</span>
+            <span className="qb-q-position-total"> · {totalQuestions} {totalQuestions !== 1 ? t('quiz.questions', 'questions') : t('quiz.question', 'question')}</span>
           </div>
         )}
 
