@@ -1182,7 +1182,7 @@
       "feature8": "Sign in with Google or email — quick, no friction",
       "feature9": "11-language interface: English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, Russian",
       "feature10": "Tier-based plans: FREE, BASIC, PRO, and ENTERPRISE — upgrade for higher participant and question limits",
-      "feature11": "AI question generation — describe a topic and Gemini AI creates ready-to-use questions instantly",
+      "feature11": "AI question generation — describe a topic and AI creates ready-to-use questions instantly",
       "feature12": "Exam proctoring — optional webcam monitoring, fullscreen enforcement, and violation detection for Test sessions",
       "feature13": "Templates and folder organisation — reuse content from the platform library and keep your activities neatly grouped"
     },
@@ -1841,7 +1841,7 @@
     "numberOfQuestions": "Number of questions",
     "questionCount_one": "{{count}} question",
     "questionCount_other": "{{count}} questions",
-    "generating": "Generating with Gemini AI…",
+    "generating": "Generating with AI…",
     "generate": "Generate",
     "suggest": "Suggest",
     "back": "← Back",
@@ -2085,7 +2085,7 @@
     "aiAnalyseButton": "Analyse with AI",
     "aiReanalyseButton": "Re-analyse",
     "aiAnalysing": "Analysing…",
-    "aiAnalysingMessage": "Analysing results with Gemini AI…",
+    "aiAnalysingMessage": "Analysing results…",
     "aiAnalysisUnavailable": "Analysis is available once at least one participant has submitted.",
     "closeWindow": "Close",
     "timesUpTitle": "Time's Up!",
@@ -2152,9 +2152,9 @@
     "interviewSheetTooltipLimit": "Regeneration limit reached (5/5)",
     "interviewSheetTooltipGenerate": "Generate AI interview questions",
     "interviewSheetModalTitle": "Interview Sheet — {{name}}",
-    "interviewSheetIntro": "Gemini will analyse this participant's answers and write personalised interview questions.",
+    "interviewSheetIntro": "AI will analyse this participant's answers and write personalised interview questions.",
     "interviewSheetGenerateBtn": "Generate Interview Sheet",
-    "interviewSheetGenerating": "Gemini is writing your interview sheet…",
+    "interviewSheetGenerating": "Interview sheet is being prepared…",
     "interviewSheetRegenLimit": "Regeneration limit reached (5/5)",
     "interviewSheetRegenBtn": "Regenerate ({{count}}/5 used)",
     "interviewSheetDeliver": "Deliver",
@@ -2162,7 +2162,8 @@
     "interviewSheetSend": "Send",
     "interviewSheetEmailQueued": "Email queued successfully.",
     "interviewSheetDownload": "Download:",
-    "interviewSheetRetry": "Retry"
+    "interviewSheetRetry": "Retry",
+    "interviewSheetWait": "Hang on, this might take 4–5 minutes."
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
