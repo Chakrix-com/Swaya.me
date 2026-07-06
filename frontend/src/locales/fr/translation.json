@@ -2425,7 +2425,8 @@
     "scope_tenant": "Personnalisé",
     "searchPlaceholder": "Rechercher des modèles…",
     "empty": "Aucun modèle trouvé.",
-    "created": "Modèle créé — commencez à modifier !"
+    "created": "Modèle créé — commencez à modifier !",
+    "official": "Officiel"
   },
   "results": {
     "title": "Résultats",

@@ -2423,7 +2423,8 @@
     "scope_tenant": "Personalizada",
     "searchPlaceholder": "Buscar plantillas…",
     "empty": "No se encontraron plantillas.",
-    "created": "¡Plantilla creada — empieza a editar!"
+    "created": "¡Plantilla creada — empieza a editar!",
+    "official": "Oficial"
   },
   "results": {
     "title": "Resultados",

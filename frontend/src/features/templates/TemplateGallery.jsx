@@ -39,7 +39,7 @@ const TYPE_LABEL = {
   offline_poll: 'Poll',
 }
 
-const CATEGORY_TABS = ['all', 'classroom', 'all-hands', 'training', 'hiring', 'general', 'mine']
+const CATEGORY_TABS = ['all', 'classroom', 'all-hands', 'training', 'hiring', 'general', 'official', 'mine']
 
 function TemplateCard({ template, onUse, using }) {
   const { t } = useTranslation()
@@ -126,8 +126,9 @@ export default function TemplateGallery() {
 
     if (activeTab === 'mine') {
       items = items.filter(t => t.template_scope !== 'global')
+    } else if (activeTab === 'official') {
+      items = items.filter(t => t.template_scope === 'global')
     } else if (activeTab !== 'all') {
-      // Map UI tab to category field value
       const catMap = { 'all-hands': 'all-hands', classroom: 'classroom', training: 'training', hiring: 'hiring', general: 'general' }
       const cat = catMap[activeTab]
       items = items.filter(t => t.template_category === cat)
@@ -163,6 +164,7 @@ export default function TemplateGallery() {
     key: tab,
     label: tab === 'all' ? t('templates.all')
       : tab === 'all-hands' ? t('templates.allHands')
+      : tab === 'official' ? t('templates.official')
       : tab === 'mine' ? t('templates.myTemplates')
       : t(`templates.${tab}`),
   }))

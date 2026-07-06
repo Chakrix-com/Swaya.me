@@ -2437,7 +2437,8 @@
     "scope_tenant": "Custom",
     "searchPlaceholder": "Search templates…",
     "empty": "No templates found.",
-    "created": "Template created — start editing!"
+    "created": "Template created — start editing!",
+    "official": "Official"
   },
   "results": {
     "title": "Results",

@@ -2423,7 +2423,8 @@
     "scope_tenant": "Benutzerdefiniert",
     "searchPlaceholder": "Vorlagen suchen…",
     "empty": "Keine Vorlagen gefunden.",
-    "created": "Vorlage erstellt — mit der Bearbeitung beginnen!"
+    "created": "Vorlage erstellt — mit der Bearbeitung beginnen!",
+    "official": "Offiziell"
   },
   "results": {
     "title": "Ergebnisse",
