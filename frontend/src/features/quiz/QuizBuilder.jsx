@@ -1985,6 +1985,7 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
+        grading_rubric: values.grading_rubric || null,
       }
       if (values.question_type === 'mcq') {
         const mcqOptions = [values.option_a, values.option_b, values.option_c, values.option_d, ...(values.extra_options || [])].filter(opt => stripHtml(opt).length > 0)
