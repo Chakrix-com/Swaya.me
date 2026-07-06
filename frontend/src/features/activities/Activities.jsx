@@ -4,19 +4,21 @@ import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Button, Tag, Space, Popconfirm, Tooltip, message,
-  Input, Table, Typography, Badge, Dropdown, Select, Alert, Grid,
+  Input, Table, Typography, Badge, Select, Alert, Grid,
 } from 'antd'
 
 const { useBreakpoint } = Grid
 import {
   PlayCircleOutlined, EditOutlined, DeleteOutlined, CopyOutlined,
   FileTextOutlined, CheckCircleOutlined, HistoryOutlined, StarOutlined,
-  BarChartOutlined, MoreOutlined, LinkOutlined, WifiOutlined, EyeOutlined,
+  BarChartOutlined, LinkOutlined, WifiOutlined, EyeOutlined,
   StopOutlined, SearchOutlined, InboxOutlined, FilterOutlined,
   WarningOutlined, ThunderboltOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { quizAPI, sessionAPI } from '../../services/api'
+import MoreActionsMenu from '../../components/MoreActionsMenu'
+import '../dashboard/Dashboard.css'
 
 const { Title, Text } = Typography
 
@@ -287,37 +289,15 @@ export default function Activities() {
             {primaryAction === 'edit' && <Button size="small" icon={<EditOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/edit`)}>{t('quiz.continue', 'Continue')}</Button>}
             {primaryAction === 'exam_results' && <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)}>{t('exam.resultsTitle', 'Results')}</Button>}
             {primaryAction === 'poll_results' && <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)}>{t('offlinePoll.viewResults', 'Results')}</Button>}
-            <Dropdown
-              trigger={['click']}
-              dropdownRender={() => (
-                <div className="dashboard-more-menu">
-                  {getMoreMenuItems(quiz).map(item => {
-                    if (item.type === 'divider') return <div key="div" style={{ borderTop: `1px solid ${C.border}`, margin: '4px 0' }} />
-                    if (item.key === 'delete') {
-                      return (
-                        <Popconfirm key="delete" title={t('quiz.deleteConfirm', 'Delete this activity?')} description={t('quiz.deleteWarning', 'Cannot be undone.')} onConfirm={() => handleDeleteQuiz(quiz.id)} okText={t('common.delete', 'Delete')} okButtonProps={{ danger: true }} cancelText={t('common.cancel', 'Cancel')}>
-                          <div className="dashboard-more-menu-item dashboard-more-menu-item--danger"><DeleteOutlined /><span>{t('common.delete', 'Delete')}</span></div>
-                        </Popconfirm>
-                      )
-                    }
-                    if (item.key === 'stop') {
-                      return (
-                        <Popconfirm key="stop" title={t('quiz.stopActiveSessionConfirm', 'Stop session?')} onConfirm={() => handleStopActiveSession(quiz.active_session_id)} okText={t('quiz.stopQuizOk', 'Yes')} okButtonProps={{ danger: true }} cancelText={t('common.cancel', 'Cancel')}>
-                          <div className="dashboard-more-menu-item dashboard-more-menu-item--danger"><StopOutlined /><span>{t('quiz.stopActiveSession', 'Stop Session')}</span></div>
-                        </Popconfirm>
-                      )
-                    }
-                    return (
-                      <div key={item.key} className={`dashboard-more-menu-item${item.danger ? ' dashboard-more-menu-item--danger' : ''}`} onClick={item.onClick}>
-                        {item.icon}<span>{item.label}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            >
-              <Button size="small" icon={<MoreOutlined />} />
-            </Dropdown>
+            <MoreActionsMenu items={getMoreMenuItems(quiz).map(item => {
+              if (item.key === 'delete') {
+                return { ...item, confirm: { title: t('quiz.deleteConfirm', 'Delete this activity?'), description: t('quiz.deleteWarning', 'Cannot be undone.'), onConfirm: () => handleDeleteQuiz(quiz.id), okText: t('common.delete', 'Delete'), cancelText: t('common.cancel', 'Cancel') } }
+              }
+              if (item.key === 'stop') {
+                return { ...item, confirm: { title: t('quiz.stopActiveSessionConfirm', 'Stop session?'), onConfirm: () => handleStopActiveSession(quiz.active_session_id), okText: t('quiz.stopQuizOk', 'Yes'), cancelText: t('common.cancel', 'Cancel') } }
+              }
+              return item
+            })} />
           </Space>
         )
       },

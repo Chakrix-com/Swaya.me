@@ -144,6 +144,16 @@
   background: color-mix(in srgb, var(--sw-error) 10%, transparent);
 }
 
+.dashboard-more-menu-item--disabled {
+  color: var(--sw-text3);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dashboard-more-menu-item--disabled:hover {
+  background: transparent;
+}
+
 /* ── Mobile & tablet breakpoints ────────────────────────────────────────── */
 
 @media (max-width: 767px) {

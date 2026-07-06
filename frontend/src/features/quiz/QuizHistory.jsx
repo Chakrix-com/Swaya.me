@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Card,
   Button,
-  Dropdown,
   Space,
   Typography,
   Tag,
@@ -19,6 +18,8 @@ import {
   Alert,
   message,
 } from 'antd'
+import MoreActionsMenu from '../../components/MoreActionsMenu'
+import '../dashboard/Dashboard.css'
 import {
   DownloadOutlined,
   FilePdfOutlined,
@@ -341,19 +342,21 @@ export default function QuizHistory() {
                       {t('quiz.viewRecap', { defaultValue: 'Recap' })}
                     </Button>
                   )}
-                  <Dropdown
-                    menu={{ items: exportMenuItems(session.id) }}
-                    trigger={['click']}
+                  <MoreActionsMenu
+                    items={exportMenuItems(session.id)}
                     disabled={session.status !== 'ended'}
-                  >
-                    <Button
-                      size="small"
-                      icon={<DownloadOutlined />}
-                      loading={exportingSessionId === session.id}
-                    >
-                      {t('quiz.export')}
-                    </Button>
-                  </Dropdown>
+                    width={210}
+                    trigger={
+                      <Button
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        loading={exportingSessionId === session.id}
+                        disabled={session.status !== 'ended'}
+                      >
+                        {t('quiz.export')}
+                      </Button>
+                    }
+                  />
                 </Space>
               </div>
             )

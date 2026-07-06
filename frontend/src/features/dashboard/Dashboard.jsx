@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Button, Tag, Space, Popconfirm, Tooltip, message, Select, Spin,
-  Row, Col, Card, Modal, Input, Progress, Table, Typography, Badge, Dropdown,
+  Button, Tag, Space, Tooltip, message, Select, Spin,
+  Row, Col, Card, Modal, Input, Progress, Table, Typography, Badge,
 } from 'antd'
 import {
   PlusOutlined,
@@ -19,7 +19,6 @@ import {
   HistoryOutlined,
   StarOutlined,
   BarChartOutlined,
-  MoreOutlined,
   LinkOutlined,
   WifiOutlined,
   EyeOutlined,
@@ -28,6 +27,7 @@ import {
   SearchOutlined,
   InboxOutlined,
 } from '@ant-design/icons'
+import MoreActionsMenu from '../../components/MoreActionsMenu'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import CreateChooser from './CreateChooser'
@@ -566,79 +566,15 @@ function Dashboard() {
                 {t('offlinePoll.viewResults', 'Results')}
               </Button>
             )}
-            {/* Wrap destructive actions in their own handlers via Dropdown onClick */}
-            <Dropdown
-              trigger={['click']}
-              menu={{
-                items: getMoreMenuItems(quiz).map(item => ({
-                  ...item,
-                  onClick: item.key === 'delete' ? undefined : item.onClick,
-                })),
-                onClick: async ({ key }) => {
-                  if (key === 'delete') {
-                    // handled separately via Popconfirm — skip
-                  }
-                },
-              }}
-              dropdownRender={(menu) => (
-                <div>
-                  {/* Render the dropdown, but intercept delete */}
-                  <div className="dashboard-more-menu">
-                    {getMoreMenuItems(quiz).map(item => {
-                      if (item.type === 'divider') return <div key="div" style={{ borderTop: `1px solid ${C.border}`, margin: '4px 0' }} />
-                      if (item.key === 'delete') {
-                        return (
-                          <Popconfirm
-                            key="delete"
-                            title={t('quiz.deleteConfirm', 'Delete this quiz?')}
-                            description={t('quiz.deleteWarning', 'This action cannot be undone.')}
-                            onConfirm={() => handleDeleteQuiz(quiz.id)}
-                            okText={t('common.delete', 'Delete')}
-                            okButtonProps={{ danger: true }}
-                            cancelText={t('common.cancel', 'Cancel')}
-                          >
-                            <div className="dashboard-more-menu-item dashboard-more-menu-item--danger">
-                              <DeleteOutlined />
-                              <span>{t('common.delete', 'Delete')}</span>
-                            </div>
-                          </Popconfirm>
-                        )
-                      }
-                      if (item.key === 'stop') {
-                        return (
-                          <Popconfirm
-                            key="stop"
-                            title={t('quiz.stopActiveSessionConfirm', 'Stop active session?')}
-                            description={t('quiz.stopQuizConfirm', 'This will end the session for all participants.')}
-                            onConfirm={() => handleStopActiveSession(quiz.active_session_id)}
-                            okText={t('quiz.stopQuizOk', 'Yes, stop it')}
-                            okButtonProps={{ danger: true }}
-                            cancelText={t('common.cancel', 'Cancel')}
-                          >
-                            <div className="dashboard-more-menu-item dashboard-more-menu-item--danger">
-                              <StopOutlined />
-                              <span>{t('quiz.stopActiveSession', 'Stop Session')}</span>
-                            </div>
-                          </Popconfirm>
-                        )
-                      }
-                      return (
-                        <div
-                          key={item.key}
-                          className={`dashboard-more-menu-item${item.danger ? ' dashboard-more-menu-item--danger' : ''}`}
-                          onClick={item.onClick}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            >
-              <Button size="small" icon={<MoreOutlined />} />
-            </Dropdown>
+            <MoreActionsMenu items={getMoreMenuItems(quiz).map(item => {
+              if (item.key === 'delete') {
+                return { ...item, confirm: { title: t('quiz.deleteConfirm', 'Delete this quiz?'), description: t('quiz.deleteWarning', 'This action cannot be undone.'), onConfirm: () => handleDeleteQuiz(quiz.id), okText: t('common.delete', 'Delete'), cancelText: t('common.cancel', 'Cancel') } }
+              }
+              if (item.key === 'stop') {
+                return { ...item, confirm: { title: t('quiz.stopActiveSessionConfirm', 'Stop active session?'), description: t('quiz.stopQuizConfirm', 'This will end the session for all participants.'), onConfirm: () => handleStopActiveSession(quiz.active_session_id), okText: t('quiz.stopQuizOk', 'Yes, stop it'), cancelText: t('common.cancel', 'Cancel') } }
+              }
+              return item
+            })} />
           </Space>
         )
       },

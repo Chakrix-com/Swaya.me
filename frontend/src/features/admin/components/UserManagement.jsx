@@ -14,7 +14,6 @@ import {
   Row,
   Col,
   Tooltip,
-  Dropdown,
   Statistic
 } from 'antd';
 import {
@@ -33,6 +32,8 @@ import {
   DownloadOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import MoreActionsMenu from '../../../components/MoreActionsMenu';
+import '../../dashboard/Dashboard.css';
 import {
   fetchUsers,
   deleteUser,
@@ -371,9 +372,7 @@ const UserManagement = () => {
       key: 'actions',
       align: 'center',
       render: (_, record) => (
-        <Dropdown menu={getActionMenu(record)} trigger={['click']}>
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
+        <MoreActionsMenu items={getActionMenu(record).items} trigger={<Button type="text" icon={<MoreOutlined />} />} />
       ),
     },
   ];
