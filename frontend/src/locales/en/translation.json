@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "This page hit an unexpected error. Reloading usually fixes it.",
+    "reload": "Reload page",
+    "contactSupport": "If this keeps happening, contact support."
+  },
   "common": {
     "appTitle": "Swaya.me",
     "dashboard": "Dashboard",

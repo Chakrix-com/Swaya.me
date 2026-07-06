@@ -2,12 +2,20 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
+// Default timeout so a hung request fails visibly instead of leaving a
+// spinner/disabled button stuck forever. AI-generation and document-export
+// calls override this per-request with LONG_TIMEOUT since they legitimately
+// take longer than everyday CRUD calls.
+const DEFAULT_TIMEOUT = 45000
+const LONG_TIMEOUT = 120000
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,  // send HttpOnly access_token cookie automatically
+  timeout: DEFAULT_TIMEOUT,
 })
 
 // Handle expired/invalid session responses
@@ -176,6 +184,7 @@ export const sessionAPI = {
     api.get(`/quizzes/sessions/${sessionId}/export`, {
       params: { format },
       responseType: 'blob',
+      timeout: LONG_TIMEOUT,
     }),
   evaluateCode: (sessionId, questionId) =>
     api.post(`/quizzes/sessions/${sessionId}/questions/${questionId}/evaluate-code`),
@@ -243,32 +252,32 @@ export const examAPI = {
   getResults: (quizId) => api.get(`/quiz/${quizId}/exam-results`),
   getParticipantDetail: (quizId, participantId) => api.get(`/quiz/${quizId}/exam-results/participant/${participantId}`),
   analyzeResults: (quizId, customPrompt) =>
-    api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}),
+    api.post(`/quiz/${quizId}/analyze-results`, customPrompt ? { custom_prompt: customPrompt } : {}, { timeout: LONG_TIMEOUT }),
   publish: (quizId, freshStart = false) => api.post(`/quizzes/${quizId}/publish-exam`, null, { params: freshStart ? { fresh_start: true } : {} }),
   unpublish: (quizId) => api.post(`/quizzes/${quizId}/unpublish-exam`),
   sendParticipantEmails: (quizId, senderName) =>
     api.post(`/quiz/${quizId}/send-participant-emails`, senderName ? { sender_name: senderName } : {}),
   getCertMeta: (token) => api.get(`/exam/cert-meta/${token}`),
   generateInterviewSheet: (quizId, participantId) =>
-    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet`),
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet`, null, { timeout: LONG_TIMEOUT }),
   downloadInterviewSheet: (quizId, participantId, data) =>
-    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/download`, data, { responseType: 'blob' }),
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/download`, data, { responseType: 'blob', timeout: LONG_TIMEOUT }),
   emailInterviewSheet: (quizId, participantId, data) =>
-    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/email`, data),
+    api.post(`/quiz/${quizId}/participants/${participantId}/interview-sheet/email`, data, { timeout: LONG_TIMEOUT }),
 }
 
 // AI Generation API
 export const aiAPI = {
-  generateQuestions: (data) => api.post('/ai/generate/questions', data),
-  generateDistractors: (data) => api.post('/ai/generate/options', data),
-  generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data),
-  rewrite: (data) => api.post('/ai/rewrite', data),
+  generateQuestions: (data) => api.post('/ai/generate/questions', data, { timeout: LONG_TIMEOUT }),
+  generateDistractors: (data) => api.post('/ai/generate/options', data, { timeout: LONG_TIMEOUT }),
+  generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data, { timeout: LONG_TIMEOUT }),
+  rewrite: (data) => api.post('/ai/rewrite', data, { timeout: LONG_TIMEOUT }),
   listModels: () => api.get('/ai/models'),
   extractText: (file, url) => {
     const form = new FormData()
     if (file) form.append('file', file)
     if (url) form.append('url', url)
-    return api.post('/ai/extract-text', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    return api.post('/ai/extract-text', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: LONG_TIMEOUT })
   },
   streamGenerateQuestions: async (data, onQuestion, onDone, signal) => {
     const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
