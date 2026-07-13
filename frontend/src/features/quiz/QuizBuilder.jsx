@@ -1697,7 +1697,7 @@ export default function QuizBuilder() {
   )
 
   const renderQuestionsList = () => {
-    const isLive = quiz?.status === 'ready' && isExam
+    const isLive = isLiveMode
     return (
     <>
       <Divider>{t('quiz.questions')}</Divider>
@@ -1706,7 +1706,7 @@ export default function QuizBuilder() {
         <Alert
           type="info"
           showIcon
-          message={t('exam.questionsLockedNotice')}
+          message={isExam ? t('exam.questionsLockedNotice') : t('quiz.unpublishMessage')}
           style={{ marginBottom: 16 }}
         />
       )}
@@ -3182,9 +3182,9 @@ export default function QuizBuilder() {
                   🔒 {t('quiz.securityLabel', 'Security & Proctoring')}
                 </button>
               )}
-              {quiz?.status === 'ready' && isExam && (
+              {isLiveMode && (
                 <div style={{ padding: '8px 10px', fontSize: 11, color: '#fa8c16', background: '#fff7e6', borderRadius: 6, margin: '4px 0 8px' }}>
-                  {t('exam.questionsLockedNotice')}
+                  {isExam ? t('exam.questionsLockedNotice') : t('quiz.unpublishMessage')}
                 </div>
               )}
               {/* Filter toggle — shown when there are incomplete questions */}
@@ -3264,7 +3264,7 @@ export default function QuizBuilder() {
               )}
             </div>
             <div className="qb-rail-footer">
-              {!(quiz?.status === 'ready' && isExam) && (
+              {!isLiveMode && (
                 <>
                   <Button
                     type="primary"
