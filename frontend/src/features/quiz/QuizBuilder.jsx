@@ -2718,6 +2718,31 @@ export default function QuizBuilder() {
             max_time_seconds: null,
             from_ai: true,
           })
+        } else if (qType === 'single_line') {
+          await questionAPI.add(id, {
+            question_type: 'single_line',
+            text: q.text,
+            options: q.options && q.options.length > 0 ? q.options.slice(0, 1) : null,
+            correct_answer_index: null,
+            answer_explanation: q.explanation || null,
+            points: difficultyValues ? difficultyValues.points : 1,
+            negative_points: difficultyValues ? difficultyValues.negative_points : 0,
+            max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
+            from_ai: true,
+          })
+        } else if (qType === 'code') {
+          await questionAPI.add(id, {
+            question_type: 'code',
+            text: q.text,
+            options: q.options && q.options.length > 0 ? q.options : ['python'],
+            correct_answer_index: null,
+            answer_explanation: null,
+            grading_rubric: q.grading_rubric || null,
+            points: difficultyValues ? difficultyValues.points : 1,
+            negative_points: difficultyValues ? difficultyValues.negative_points : 0,
+            max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
+            from_ai: true,
+          })
         } else {
           // mcq (default)
           await questionAPI.add(id, {
@@ -3768,8 +3793,8 @@ export default function QuizBuilder() {
             )}
             {aiPreview.map((q, i) => {
               const qType = q.question_type || 'mcq'
-              const typeColors = { mcq: 'cyan', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange' }
-              const typeLabels = { mcq: 'MCQ', word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph') }
+              const typeColors = { mcq: 'cyan', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange', single_line: 'blue', code: 'volcano' }
+              const typeLabels = { mcq: 'MCQ', word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph'), single_line: t('quiz.singleLine', 'Short Answer'), code: t('quiz.code', 'Code') }
               const isEditing = editingPreviewIndex === i
               const isRegenerating = regeneratingIndex === i
 
