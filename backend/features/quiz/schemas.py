@@ -74,7 +74,7 @@ class QuestionCreate(BaseModel):
     option_images: Optional[dict[str, str]] = None  # {"A": "path", "B": "path", ...}
     points: int = Field(default=1, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
-    negative_points: int = Field(default=0, ge=0)
+    negative_points: float = Field(default=0, ge=0)
     is_required: bool = Field(default=False)
     answer_explanation: Optional[str] = Field(None, max_length=5000)
     grading_rubric: Optional[str] = Field(None, max_length=5000)
@@ -158,7 +158,7 @@ class QuestionUpdate(BaseModel):
     option_images: Optional[dict[str, str]] = None
     points: Optional[int] = Field(default=None, ge=1)
     max_time_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
-    negative_points: Optional[int] = Field(default=None, ge=0)
+    negative_points: Optional[float] = Field(default=None, ge=0)
     is_required: Optional[bool] = None
     answer_explanation: Optional[str] = Field(None, max_length=5000)
     grading_rubric: Optional[str] = Field(None, max_length=5000)
@@ -177,7 +177,7 @@ class QuestionResponse(BaseModel):
     option_images: Optional[dict[str, str]] = None
     points: int = 1
     max_time_seconds: Optional[int] = None
-    negative_points: int = 0
+    negative_points: float = 0
     is_required: bool = False
     answer_explanation: Optional[str] = None
     grading_rubric: Optional[str] = None
