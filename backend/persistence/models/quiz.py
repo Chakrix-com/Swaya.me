@@ -49,6 +49,7 @@ class QuestionType(str, enum.Enum):
     PARAGRAPH = "paragraph"
     ONE_WORD = "one_word"
     CODE = "code"
+    MCQ_MULTI = "mcq_multi"
 
 
 class TemplateScope(str, enum.Enum):
@@ -177,6 +178,8 @@ class Question(Base, TimestampMixin):
     order = Column(Integer, nullable=False)
     options = Column(JSON, nullable=True)  # List of 4 options for MCQ, null for word_cloud
     correct_answer_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
+    correct_answer_indices = Column(JSON, nullable=True)  # list[int], mcq_multi only
+    reveal_answer_count = Column(Boolean, nullable=False, default=False, server_default="0")  # mcq_multi only
     question_image_url = Column(String(500), nullable=True)  # Optional image for question text
     question_video_url = Column(String(500), nullable=True)  # Optional YouTube/Vimeo embed URL
     option_images = Column(JSON, nullable=True)  # Optional images for MCQ options: {"A": "path", "B": "path", ...}
@@ -250,6 +253,7 @@ class Answer(Base, TimestampMixin):
     participant_id = Column(Integer, ForeignKey('participants.id'), nullable=False)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False)
     selected_option_index = Column(Integer, nullable=True)  # 0-3 for MCQ, null for word_cloud
+    selected_option_indices = Column(JSON, nullable=True)  # list[int], mcq_multi only
     text_answer = Column(Text, nullable=True)  # For text-based questions
     is_correct = Column(Boolean, nullable=True)  # For MCQ only, null for word_cloud
     ai_feedback = Column(Text, nullable=True)  # For CODE questions: verdict + simulated output

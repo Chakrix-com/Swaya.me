@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Card, Button, Typography, Space, Progress, Radio, Input, Spin,
-  Alert, Tag, Divider, Row, Col, message
+  Alert, Tag, Divider, Row, Col, message, Checkbox
 } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
@@ -91,6 +91,7 @@ export default function OfflinePollSession() {
       for (const sa of (saved_answers || [])) {
         savedMap[sa.question_id] = {
           selected_option_index: sa.selected_option_index,
+          selected_option_indices: sa.selected_option_indices,
           text_answer: sa.text_answer,
         }
       }
@@ -353,7 +354,9 @@ export default function OfflinePollSession() {
     const question = questions[currentIndex]
     const answer = answers[question.id] || {}
     const isLast = currentIndex === questions.length - 1
-    const hasAnswer = answer.selected_option_index !== undefined || (answer.text_answer && answer.text_answer.trim())
+    const hasAnswer = answer.selected_option_index !== undefined
+      || (Array.isArray(answer.selected_option_indices) && answer.selected_option_indices.length > 0)
+      || (answer.text_answer && answer.text_answer.trim())
     const isBlocked = question.is_required && !hasAnswer
 
     return (
@@ -436,6 +439,50 @@ export default function OfflinePollSession() {
                   ))}
                 </Space>
               </Radio.Group>
+            )}
+
+            {/* Multi-select MCQ options */}
+            {question.question_type === 'mcq_multi' && (
+              <>
+                <Text type="secondary" style={{ display: 'block' }}>
+                  {question.required_answer_count
+                    ? t('quiz.chooseCorrectCount', { count: question.required_answer_count, defaultValue: 'Choose the correct {{count}} answers' })
+                    : t('quiz.selectAllThatApply', 'Select all that apply')}
+                </Text>
+                <Checkbox.Group
+                  value={answer.selected_option_indices || []}
+                  onChange={vals => handleAnswerChange(question.id, 'selected_option_indices', vals)}
+                  style={{ width: '100%' }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    {(question.options || []).map((opt, idx) => (
+                      <Checkbox
+                        key={idx}
+                        value={idx}
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          border: '1px solid var(--poll-border)',
+                          marginBottom: 4,
+                          background: (answer.selected_option_indices || []).includes(idx) ? 'var(--poll-radio-selected)' : 'var(--poll-surface)',
+                        }}
+                      >
+                        <Space>
+                          {question.option_images?.[['A', 'B', 'C', 'D', 'E'][idx]] && (
+                            <img
+                              src={question.option_images[['A', 'B', 'C', 'D', 'E'][idx]]}
+                              alt=""
+                              style={{ maxWidth: 60, borderRadius: 4 }}
+                            />
+                          )}
+                          {opt}
+                        </Space>
+                      </Checkbox>
+                    ))}
+                  </Space>
+                </Checkbox.Group>
+              </>
             )}
 
             {/* Text-based question types */}

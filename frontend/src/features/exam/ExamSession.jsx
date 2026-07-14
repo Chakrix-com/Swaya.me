@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Form, Input, Progress, Space,
   Alert, Spin, Row, Col, Tag, Statistic, Divider, Radio, Result,
-  Modal, Badge, message
+  Modal, Badge, message, Checkbox
 } from 'antd'
 import {
   ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
@@ -439,9 +439,11 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
 
 // ── Question Palette ─────────────────────────────────────────────────────────
 
+const hasAnswerValue = (val) => Array.isArray(val) ? val.length > 0 : val != null
+
 function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, collapsed, onToggle }) {
   const { t } = useTranslation()
-  const answered = questions.filter((q) => answers[q.id] != null).length
+  const answered = questions.filter((q) => hasAnswerValue(answers[q.id])).length
   const flaggedCount = flagged.size
 
   return (
@@ -467,7 +469,7 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
       {!collapsed && (
         <div style={{ padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {questions.map((q, i) => {
-            const isAnswered = answers[q.id] != null
+            const isAnswered = hasAnswerValue(answers[q.id])
             const isFlagged = flagged.has(q.id)
             const isCurrent = i === currentIdx
             let btnStyle = { minWidth: 36, fontWeight: isCurrent ? 700 : 400 }
@@ -522,6 +524,7 @@ function QuestionScreen({
   const isLast = questionIndex === totalQuestions - 1
   const isCode = question.question_type === 'code'
   const isSingleLine = question.question_type === 'single_line'
+  const isMulti = question.question_type === 'mcq_multi'
 
   const globalUrgent = globalSecondsLeft != null && globalSecondsLeft < 60
   const qUrgent = questionSecondsLeft != null && questionSecondsLeft < 10
@@ -699,6 +702,42 @@ function QuestionScreen({
               size="large"
               style={{ fontSize: 15 }}
             />
+          ) : isMulti ? (
+            <>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                {question.required_answer_count
+                  ? t('quiz.chooseCorrectCount', { count: question.required_answer_count, defaultValue: 'Choose the correct {{count}} answers' })
+                  : t('quiz.selectAllThatApply', 'Select all that apply')}
+              </Text>
+              <Checkbox.Group
+                value={Array.isArray(selectedAnswer) ? selectedAnswer : []}
+                onChange={(vals) => onAnswerSelect(vals)}
+                style={{ width: '100%' }}
+              >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {(question.options || []).map((opt, idx) => (
+                    <Checkbox
+                      key={idx}
+                      value={idx}
+                      className={`exam-radio-option${Array.isArray(selectedAnswer) && selectedAnswer.includes(idx) ? ' selected' : ''}`}
+                    >
+                      <Space>
+                        {question.option_images?.[String.fromCharCode(65 + idx)] && (
+                          <img
+                            src={question.option_images[String.fromCharCode(65 + idx)]}
+                            alt={`option ${idx}`}
+                            style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 4 }}
+                          />
+                        )}
+                        {opt?.includes('</')
+                          ? <span dangerouslySetInnerHTML={{ __html: opt }} />
+                          : opt}
+                      </Space>
+                    </Checkbox>
+                  ))}
+                </Space>
+              </Checkbox.Group>
+            </>
           ) : (
           <Radio.Group
             value={selectedAnswer}
@@ -1115,17 +1154,23 @@ export default function ExamSession() {
 
   // ── Save answer ───────────────────────────────────────────────────────────
 
+  const buildAnswerPayload = (q, value) => {
+    const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
+    const isMulti = q.question_type === 'mcq_multi'
+    return {
+      session_token: sessionToken,
+      question_id: q.id,
+      selected_option_index: (isTextAnswer || isMulti) ? null : (value ?? null),
+      selected_option_indices: isMulti ? (Array.isArray(value) ? value : []) : undefined,
+      text_answer: isTextAnswer ? (typeof value === 'string' ? value : null) : null,
+    }
+  }
+
   const handleAnswerSelect = (optionIndex) => {
     const q = questions[currentIdx]
     setAnswers(prev => ({ ...prev, [q.id]: optionIndex }))
     // Fire-and-forget save
-    const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
-    examAPI.saveAnswer(slug, {
-      session_token: sessionToken,
-      question_id: q.id,
-      selected_option_index: isTextAnswer ? null : optionIndex,
-      text_answer: isTextAnswer ? (typeof optionIndex === 'string' ? optionIndex : null) : null,
-    }).catch(() => {})
+    examAPI.saveAnswer(slug, buildAnswerPayload(q, optionIndex)).catch(() => {})
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -1135,13 +1180,7 @@ export default function ExamSession() {
     try {
       const q = questions[currentIdx]
       const optIdx = answers[q.id] ?? null
-      const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
-      await examAPI.saveAnswer(slug, {
-        session_token: sessionToken,
-        question_id: q.id,
-        selected_option_index: isTextAnswer ? null : optIdx,
-        text_answer: isTextAnswer ? (typeof optIdx === 'string' ? optIdx : null) : null,
-      })
+      await examAPI.saveAnswer(slug, buildAnswerPayload(q, optIdx))
       setCurrentIdx(ci => Math.min(ci + 1, questions.length - 1))
     } catch {
       // ignore
@@ -1184,13 +1223,7 @@ export default function ExamSession() {
           // Save current answer first
           const q = questions[currentIdx]
           const optIdx = answers[q.id] ?? null
-          const isTextAnswer = q.question_type === 'code' || q.question_type === 'single_line'
-          await examAPI.saveAnswer(slug, {
-            session_token: sessionToken,
-            question_id: q.id,
-            selected_option_index: isTextAnswer ? null : optIdx,
-            text_answer: isTextAnswer ? (typeof optIdx === 'string' ? optIdx : null) : null,
-          })
+          await examAPI.saveAnswer(slug, buildAnswerPayload(q, optIdx))
           // Final webcam snapshot before submit
           captureSnapshotRef.current?.()
           // Submit

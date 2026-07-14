@@ -144,17 +144,18 @@ class GeminiProvider(BaseAIProvider):
         language: str,
         quiz_type: str,
         existing_questions: list[str] | None = None,
+        allowed_question_types: list[str] | None = None,
     ) -> dict:
         if not self._key:
             raise AIProviderError("GEMINI_KEY is not configured")
         system, user = build_question_generation_content(
-            prompt, count, language, quiz_type, existing_questions
+            prompt, count, language, quiz_type, existing_questions, allowed_question_types
         )
         payload = self._gemini_payload(system, user, temperature=0.7, max_tokens=65536, json_mode=True)
         data = await self._post(payload, self._model)
         raw = self._extract_text(data)
         try:
-            return parse_question_response(raw, quiz_type)
+            return parse_question_response(raw, quiz_type, allowed_question_types)
         except (ValueError, json.JSONDecodeError) as e:
             logger.warning("Gemini question parse failed: %s | raw: %.300s", e, raw)
             raise AIProviderError(

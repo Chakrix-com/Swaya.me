@@ -45,6 +45,7 @@ class QuestionTypeEnum(str, Enum):
     PARAGRAPH = "paragraph"
     ONE_WORD = "one_word"
     CODE = "code"
+    MCQ_MULTI = "mcq_multi"
 
 
 ALLOWED_CODE_LANGUAGES = {"python", "java", "cpp", "javascript", "typescript", "go", "rust", "csharp"}
@@ -68,6 +69,8 @@ class QuestionCreate(BaseModel):
     text: str = Field(..., min_length=1, max_length=10000)
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
+    correct_answer_indices: Optional[List[int]] = None
+    reveal_answer_count: bool = Field(default=False)
     question_image_url: Optional[str] = Field(None, max_length=500)
     question_video_url: Optional[str] = Field(None, max_length=500)
     from_ai: bool = Field(default=False, description="Skip profanity filter for AI-generated content")
@@ -144,6 +147,23 @@ class QuestionCreate(BaseModel):
                 raise ValueError(f'Unsupported languages: {invalid}. Allowed: {sorted(ALLOWED_CODE_LANGUAGES)}')
             if self.correct_answer_index is not None:
                 raise ValueError('Code questions should not have a correct answer index')
+        elif self.question_type == QuestionTypeEnum.MCQ_MULTI:
+            if not self.options or len(self.options) < 2:
+                raise ValueError('Multi-select MCQ questions must have at least 2 options')
+            if len(self.options) > 10:
+                raise ValueError('Multi-select MCQ questions can have at most 10 options')
+            if any(not opt.strip() for opt in self.options):
+                raise ValueError('All options must be non-empty')
+            if self.correct_answer_index is not None:
+                raise ValueError('Multi-select MCQ questions should use correct_answer_indices, not correct_answer_index')
+            if not self.correct_answer_indices or len(self.correct_answer_indices) < 2:
+                raise ValueError('Multi-select MCQ questions require at least 2 correct answers')
+            if len(set(self.correct_answer_indices)) != len(self.correct_answer_indices):
+                raise ValueError('Multi-select MCQ correct_answer_indices must not contain duplicates')
+            if any(not (0 <= i < len(self.options)) for i in self.correct_answer_indices):
+                raise ValueError('Multi-select MCQ correct_answer_indices must reference existing options')
+        if self.question_type != QuestionTypeEnum.MCQ_MULTI and self.correct_answer_indices is not None:
+            raise ValueError('correct_answer_indices is only valid for mcq_multi questions')
         return self
 
 
@@ -153,6 +173,8 @@ class QuestionUpdate(BaseModel):
     text: Optional[str] = Field(None, min_length=1, max_length=10000)
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = Field(None, ge=0)
+    correct_answer_indices: Optional[List[int]] = None
+    reveal_answer_count: Optional[bool] = None
     question_image_url: Optional[str] = Field(None, max_length=500)
     question_video_url: Optional[str] = Field(None, max_length=500)
     option_images: Optional[dict[str, str]] = None
@@ -172,6 +194,9 @@ class QuestionResponse(BaseModel):
     options: Optional[List[str]] = None
     order: int
     correct_answer_index: Optional[int] = None  # Hidden during active session
+    correct_answer_indices: Optional[List[int]] = None  # Hidden during active session
+    reveal_answer_count: bool = False
+    required_answer_count: Optional[int] = None  # mcq_multi + reveal_answer_count: shown to participants
     question_image_url: Optional[str] = None
     question_video_url: Optional[str] = None
     option_images: Optional[dict[str, str]] = None
@@ -509,9 +534,11 @@ class QuestionResultsResponse(BaseModel):
     question_text: str
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
+    correct_answer_indices: Optional[List[int]] = None
     answer_distribution: List[int]  # Count per option
     total_answers: int
     participant_answer: Optional[int] = None  # What this participant answered
+    participant_answer_indices: Optional[List[int]] = None  # mcq_multi: what this participant answered
 
 
 class SessionResultsResponse(BaseModel):
@@ -725,6 +752,7 @@ class OfflineAnswerRequest(BaseModel):
     session_token: str
     question_id: int
     selected_option_index: Optional[int] = Field(None, ge=0)
+    selected_option_indices: Optional[List[int]] = None
     text_answer: Optional[str] = Field(None, min_length=1, max_length=2000)
 
 
@@ -816,6 +844,7 @@ class ExamQuestionResponse(BaseModel):
     option_images: Optional[dict] = None
     points: int = 1
     max_time_seconds: Optional[int] = None
+    required_answer_count: Optional[int] = None  # mcq_multi + reveal_answer_count: shown to participants
 
     class Config:
         from_attributes = True
@@ -837,6 +866,7 @@ class ExamAnswerRequest(BaseModel):
     session_token: str
     question_id: int
     selected_option_index: Optional[int] = Field(None, ge=0)
+    selected_option_indices: Optional[List[int]] = None
     text_answer: Optional[str] = Field(None, max_length=50000)
 
 
@@ -856,7 +886,9 @@ class ExamQuestionResult(BaseModel):
     question_text: str
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
+    correct_answer_indices: Optional[List[int]] = None
     participant_answer: Optional[int] = None
+    participant_answer_indices: Optional[List[int]] = None
     participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
     points_earned: int = 0
@@ -900,7 +932,9 @@ class ParticipantQuestionResult(BaseModel):
     question_text: str
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
+    correct_answer_indices: Optional[List[int]] = None
     participant_answer: Optional[int] = None
+    participant_answer_indices: Optional[List[int]] = None
     participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
     points_earned: int = 0
@@ -929,6 +963,7 @@ class ExamQuestionAnalytics(BaseModel):
     question_text: str
     options: Optional[List[str]] = None
     correct_answer_index: Optional[int] = None
+    correct_answer_indices: Optional[List[int]] = None
     answer_distribution: List[int] = []
     correct_count: int = 0
     total_answers: int = 0

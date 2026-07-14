@@ -54,6 +54,14 @@ def _to_question_response(q: Question) -> QuestionResponse:
         options=q.options,
         order=q.order,
         correct_answer_index=None,  # Never reveal to participants
+        correct_answer_indices=None,  # Never reveal to participants
+        required_answer_count=(
+            len(q.correct_answer_indices)
+            if q.question_type == QuestionType.MCQ_MULTI
+            and getattr(q, 'reveal_answer_count', False)
+            and q.correct_answer_indices
+            else None
+        ),
         question_image_url=ImageService.to_absolute_url(q.question_image_url, _BASE_URL),
         question_video_url=q.question_video_url,
         option_images={
@@ -135,6 +143,7 @@ async def join_or_resume(
                 {
                     "question_id": a.question_id,
                     "selected_option_index": a.selected_option_index,
+                    "selected_option_indices": a.selected_option_indices,
                     "text_answer": a.text_answer,
                 }
                 for a in participant.answers
@@ -177,6 +186,7 @@ async def save_answer(
     question_id: int,
     selected_option_index: Optional[int] = None,
     text_answer: Optional[str] = None,
+    selected_option_indices: Optional[List[int]] = None,
 ) -> dict:
     """Public — upsert a single answer for an offline poll participant."""
     # Load quiz
@@ -218,10 +228,16 @@ async def save_answer(
     if not question:
         raise QuizNotFoundError("Question not found")
 
-    # Compute is_correct for MCQ
+    # Compute is_correct for MCQ / MCQ_MULTI
     is_correct = None
     if question.question_type == QuestionType.MCQ and selected_option_index is not None:
         is_correct = (selected_option_index == question.correct_answer_index)
+    elif question.question_type == QuestionType.MCQ_MULTI and selected_option_indices is not None:
+        option_count = len(question.options or [])
+        if any(not (0 <= i < option_count) for i in selected_option_indices):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=422, detail="Invalid option index")
+        is_correct = set(selected_option_indices) == set(question.correct_answer_indices or [])
 
     # Content filter for text answers
     if text_answer:
@@ -243,6 +259,7 @@ async def save_answer(
 
     if existing:
         existing.selected_option_index = selected_option_index
+        existing.selected_option_indices = selected_option_indices
         existing.text_answer = text_answer
         existing.is_correct = is_correct
     else:
@@ -251,6 +268,7 @@ async def save_answer(
             participant_id=participant.id,
             question_id=question_id,
             selected_option_index=selected_option_index,
+            selected_option_indices=selected_option_indices,
             text_answer=text_answer,
             is_correct=is_correct,
         )
@@ -369,12 +387,18 @@ async def get_results(
         )
         answers = answers_result.scalars().all()
 
-        if question.question_type == QuestionType.MCQ:
+        if question.question_type in (QuestionType.MCQ, QuestionType.MCQ_MULTI):
             num_options = len(question.options) if question.options else 4
             distribution = [0] * num_options
-            for a in answers:
-                if a.selected_option_index is not None and 0 <= a.selected_option_index < num_options:
-                    distribution[a.selected_option_index] += 1
+            if question.question_type == QuestionType.MCQ_MULTI:
+                for a in answers:
+                    for idx in (a.selected_option_indices or []):
+                        if 0 <= idx < num_options:
+                            distribution[idx] += 1
+            else:
+                for a in answers:
+                    if a.selected_option_index is not None and 0 <= a.selected_option_index < num_options:
+                        distribution[a.selected_option_index] += 1
             question_results.append(OfflineResultsQuestionResponse(
                 question_id=question.id,
                 question_text=question.text,

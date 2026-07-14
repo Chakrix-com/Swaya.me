@@ -118,7 +118,7 @@ export default function OfflinePollResults() {
           </Title>
           <Text type="secondary">{qr.total_answers} {t('common.responses', 'responses')}</Text>
 
-          {qr.question_type === 'mcq' && qr.options && qr.answer_distribution && (
+          {(qr.question_type === 'mcq' || qr.question_type === 'mcq_multi') && qr.options && qr.answer_distribution && (
             <div style={{ marginTop: 16 }}>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart
@@ -168,7 +168,7 @@ export default function OfflinePollResults() {
             </div>
           )}
 
-          {qr.question_type !== 'mcq' && (!qr.word_frequencies || Object.keys(qr.word_frequencies).length === 0) && (
+          {qr.question_type !== 'mcq' && qr.question_type !== 'mcq_multi' && (!qr.word_frequencies || Object.keys(qr.word_frequencies).length === 0) && (
             <Paragraph type="secondary" style={{ marginTop: 8 }}>{t('offlinePoll.noResponsesYet')}</Paragraph>
           )}
         </Card>

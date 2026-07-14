@@ -92,7 +92,8 @@ class OllamaProvider(BaseAIProvider):
         return resp.json()["response"]
 
     async def generate_questions(self, prompt: str, count: int, language: str, quiz_type: str,
-                                 existing_questions: list[str] | None = None) -> dict:
+                                 existing_questions: list[str] | None = None,
+                                 allowed_question_types: list[str] | None = None) -> dict:
         raise AIProviderError(
             "Ollama does not support question generation. "
             "Set AI_PRIMARY_PROVIDER to gemini, openai_compat, or anthropic."

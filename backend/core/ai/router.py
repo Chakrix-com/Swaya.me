@@ -75,9 +75,10 @@ async def generate_questions(
     language: str,
     quiz_type: str,
     existing_questions: list[str] | None = None,
+    allowed_question_types: list[str] | None = None,
 ) -> dict:
     return await get_primary_provider().generate_questions(
-        prompt, count, language, quiz_type, existing_questions
+        prompt, count, language, quiz_type, existing_questions, allowed_question_types
     )
 
 

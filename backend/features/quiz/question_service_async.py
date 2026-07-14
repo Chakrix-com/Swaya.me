@@ -112,6 +112,8 @@ class QuestionServiceAsync:
             text=sanitized_text,
             options=sanitized_options,
             correct_answer_index=request.correct_answer_index,
+            correct_answer_indices=request.correct_answer_indices,
+            reveal_answer_count=request.reveal_answer_count,
             question_image_url=request.question_image_url,
             question_video_url=request.question_video_url,
             option_images=request.option_images,
@@ -171,6 +173,10 @@ class QuestionServiceAsync:
             question.options = [sanitize_plain(o) for o in request.options] if request.options else request.options
         if "correct_answer_index" in request.model_fields_set:
             question.correct_answer_index = request.correct_answer_index
+        if "correct_answer_indices" in request.model_fields_set:
+            question.correct_answer_indices = request.correct_answer_indices
+        if "reveal_answer_count" in request.model_fields_set:
+            question.reveal_answer_count = request.reveal_answer_count
         if "question_image_url" in request.model_fields_set:
             question.question_image_url = request.question_image_url
         if "question_video_url" in request.model_fields_set:
@@ -340,6 +346,8 @@ class QuestionServiceAsync:
             order=new_order,
             options=list(question.options) if question.options else None,
             correct_answer_index=question.correct_answer_index,
+            correct_answer_indices=list(question.correct_answer_indices) if question.correct_answer_indices else None,
+            reveal_answer_count=getattr(question, 'reveal_answer_count', False) or False,
             question_image_url=None,
             question_video_url=question.question_video_url,
             option_images=None,
@@ -363,6 +371,8 @@ class QuestionServiceAsync:
             options=question.options,
             order=question.order,
             correct_answer_index=question.correct_answer_index,
+            correct_answer_indices=question.correct_answer_indices,
+            reveal_answer_count=getattr(question, 'reveal_answer_count', False) or False,
             question_image_url=question.question_image_url,
             question_video_url=question.question_video_url,
             option_images=question.option_images,

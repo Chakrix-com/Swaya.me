@@ -80,88 +80,163 @@ def md_to_html(text: str) -> str:
 
 # ── Question generation ────────────────────────────────────────────────────────
 
-def _build_question_fields_and_schema(quiz_type: str) -> tuple[str, str]:
-    """Returns (question_fields, output_schema) for the given quiz type."""
+_MCQ_MULTI_FIELD_BLOCK = (
+    "MCQ_MULTI (question_type: \"mcq_multi\") — select-ALL-that-apply multiple choice:\n"
+    "- text: question text, same HTML formatting rules as MCQ.\n"
+    "- options: 2-6 distinct answer choices (same code formatting rules as MCQ).\n"
+    "- correct_answer_indices: array of AT LEAST 2 0-based indices that are all correct "
+    "(NOT correct_answer_index, which must be null for this type). "
+    "Write genuinely harder distractors than single-select MCQ — since more than one option "
+    "can be correct, avoid an obvious 'longest/most hedged option is correct' pattern.\n"
+    "- explanation: 2-3 plain-text sentences on why exactly those options are correct.\n"
+    "- image_suggestion: short image search query if a diagram would help, else null.\n"
+    "- option_image_suggestions: array of image search queries (one per option) if visual, else null.\n\n"
+)
+
+_MCQ_MULTI_SCHEMA_EXAMPLE = (
+    '{"question_type": "mcq_multi", "text": "<question>", '
+    '"options": ["<A>", "<B>", "<C>", "<D>"], "correct_answer_index": null, '
+    '"correct_answer_indices": [0, 2], '
+    '"explanation": "<why those are correct>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}'
+)
+
+
+def _build_question_fields_and_schema(quiz_type: str, allowed_types: list[str] | None = None) -> tuple[str, str]:
+    """Returns (question_fields, output_schema) for the given quiz type.
+
+    allowed_types restricts which question types the AI may emit — None means the
+    full default mix for quiz_type (unchanged historical behavior).
+    """
     if quiz_type == "poll":
+        types = [t for t in (allowed_types or ["word_cloud", "mcq"]) if t in ("word_cloud", "mcq")] or ["word_cloud", "mcq"]
+        type_list = " or ".join(f'"{t}"' for t in types)
+        blocks = []
+        if "word_cloud" in types:
+            blocks.append(
+                "  * word_cloud: open-ended, short-answer prompts (e.g. 'What one word describes your leadership style?'). "
+                "No options or correct_answer_index needed — set both to null."
+            )
+        if "mcq" in types:
+            blocks.append("  * mcq: standard multiple-choice opinion poll question.")
+        mix = " and ".join(f"{round(100/len(types))}% {t}" for t in types)
         question_fields = (
             "Field requirements for every question:\n"
-            "- question_type: must be either \"word_cloud\" or \"mcq\".\n"
-            "  * word_cloud: open-ended, short-answer prompts (e.g. 'What one word describes your leadership style?'). "
-            "No options or correct_answer_index needed — set both to null.\n"
-            "  * mcq: standard multiple-choice opinion poll question.\n"
+            f"- question_type: must be {type_list}.\n"
+            + "\n".join(blocks) + "\n"
             "- text: the question text.\n"
             "- options: array of 2-6 choices for mcq; null for word_cloud.\n"
             "- correct_answer_index: null (polls have no single correct answer).\n"
             "- explanation: null.\n"
-            "Generate a mix: approximately 40% word_cloud and 60% mcq."
+            f"Generate a mix: approximately {mix}."
         )
         output_schema = (
             '{"title": "<poll title>", "description": "<brief description>", '
-            '"questions": [{"question_type": "word_cloud"|"mcq", "text": "<question>", '
+            f'"questions": [{{"question_type": {type_list}, "text": "<question>", '
             '"options": ["<A>", "<B>", "..."] | null, "correct_answer_index": null, "explanation": null}]}'
         )
         return question_fields, output_schema
 
     if quiz_type == "offline_poll":
+        default_types = ["scale", "paragraph", "mcq"]
+        types = [t for t in (allowed_types or default_types) if t in ("scale", "paragraph", "mcq", "mcq_multi")] or default_types
+        type_list = " or ".join(f'"{t}"' for t in types)
+        blocks = []
+        if "scale" in types:
+            blocks.append(
+                "  * scale: Likert-style rating (e.g. 'Rate your satisfaction 1-5'). "
+                "No options or correct_answer_index needed — set both to null."
+            )
+        if "paragraph" in types:
+            blocks.append(
+                "  * paragraph: open-ended text response (e.g. 'What could we improve?'). "
+                "No options or correct_answer_index needed — set both to null."
+            )
+        if "mcq" in types:
+            blocks.append("  * mcq: standard multiple-choice question.")
+        if "mcq_multi" in types:
+            blocks.append("  * mcq_multi: select-all-that-apply multiple choice — see MCQ_MULTI field spec below.")
+        mix = ", ".join(f"{round(100/len(types))}% {t}" for t in types)
         question_fields = (
             "Field requirements for every question:\n"
-            "- question_type: must be \"scale\", \"paragraph\", or \"mcq\".\n"
-            "  * scale: Likert-style rating (e.g. 'Rate your satisfaction 1-5'). "
-            "No options or correct_answer_index needed — set both to null.\n"
-            "  * paragraph: open-ended text response (e.g. 'What could we improve?'). "
-            "No options or correct_answer_index needed — set both to null.\n"
-            "  * mcq: standard multiple-choice question.\n"
+            f"- question_type: must be {type_list}.\n"
+            + "\n".join(blocks) + "\n"
             "- text: the question text.\n"
-            "- options: array of 2-6 choices for mcq; null for scale and paragraph.\n"
-            "- correct_answer_index: null (surveys have no single correct answer).\n"
+            "- options: array of 2-6 choices for mcq/mcq_multi; null for scale and paragraph.\n"
+            "- correct_answer_index: null (surveys have no single correct answer), "
+            "unless question_type is mcq_multi — see below.\n"
             "- explanation: null.\n"
-            "Generate a mix: approximately 30% scale, 30% paragraph, 40% mcq."
+            f"Generate a mix: approximately {mix}."
         )
+        if "mcq_multi" in types:
+            question_fields += "\n\n" + _MCQ_MULTI_FIELD_BLOCK
         output_schema = (
             '{"title": "<survey title>", "description": "<brief description>", '
-            '"questions": [{"question_type": "scale"|"paragraph"|"mcq", "text": "<question>", '
+            f'"questions": [{{"question_type": {type_list}, "text": "<question>", '
             '"options": ["<A>", "<B>", "..."] | null, "correct_answer_index": null, "explanation": null}]}'
         )
         return question_fields, output_schema
 
     # quiz or exam
     is_exam = quiz_type == "exam"
+    default_types = ["mcq", "single_line", "code"]
+    types = [t for t in (allowed_types or default_types) if t in ("mcq", "mcq_multi", "single_line", "code")] or default_types
+    type_list = ", ".join(f'"{t}"' for t in types)
+
+    # Historical default mix was 60/25/15 for mcq/single_line/code; when the set is
+    # restricted, redistribute proportionally across whatever remains.
+    _DEFAULT_WEIGHTS = {"mcq": 60, "mcq_multi": 20, "single_line": 25, "code": 15}
+    total_weight = sum(_DEFAULT_WEIGHTS[t] for t in types)
+    mix = ", ".join(f"{round(_DEFAULT_WEIGHTS[t] / total_weight * 100)}% {t}" for t in types)
+
     question_fields = (
-        "Field requirements — each question must have question_type set to one of: \"mcq\", \"single_line\", or \"code\".\n"
-        "Generate a mix: approximately 60% mcq, 25% single_line, 15% code (adjust based on topic suitability).\n\n"
-
-        "MCQ (question_type: \"mcq\"):\n"
-        "- text: question text with HTML formatting (<strong>, <em>). "
-        "Any code snippet MUST be wrapped in <pre><code class=\"language-X\">…</code></pre>. "
-        "Inline code references use <code>name</code>.\n"
-        "- options: exactly 4 distinct answer choices (same code formatting rules apply).\n"
-        "- correct_answer_index: 0-based index. CRITICAL: spread across ALL positions 0–3 roughly equally.\n"
-        "- explanation: 2-3 plain-text sentences on why the correct answer is right.\n"
-        "- image_suggestion: short image search query if a diagram would help, else null.\n"
-        "- option_image_suggestions: array of image search queries (one per option) if options are "
-        "visual identities (people, places, logos); else null.\n\n"
-
-        "SINGLE_LINE (question_type: \"single_line\") — short text answer graded by AI:\n"
-        "- text: a question whose answer is a short phrase, number, name, or term.\n"
-        "- options: array with exactly ONE string — the expected correct answer (used for AI grading). "
-        "E.g. [\"O(log n)\"] or [\"mitochondria\"].\n"
-        "- correct_answer_index: null.\n"
-        "- explanation: 1-2 sentences explaining the correct answer.\n"
-        "- image_suggestion: null.\n"
-        "- option_image_suggestions: null.\n\n"
-
-        "CODE (question_type: \"code\") — participant writes code to solve a programming problem:\n"
-        "- text: a clear programming problem statement. Include examples if helpful.\n"
-        "- options: array of 1–3 allowed programming languages from: "
-        "[\"python\", \"java\", \"cpp\", \"javascript\", \"typescript\", \"go\", \"rust\", \"csharp\"]. "
-        "Default to [\"python\"] unless the topic implies a specific language.\n"
-        "- grading_rubric: describe what correct code should output for key test inputs "
-        "(e.g. \"For n=7: True, n=4: False, n=1: False, n=-1: False\"). Be specific.\n"
-        "- correct_answer_index: null.\n"
-        "- explanation: null.\n"
-        "- image_suggestion: null.\n"
-        "- option_image_suggestions: null.\n"
+        f"Field requirements — each question must have question_type set to one of: {type_list}.\n"
+        f"Generate a mix: approximately {mix} (adjust based on topic suitability).\n\n"
     )
+
+    if "mcq" in types:
+        question_fields += (
+            "MCQ (question_type: \"mcq\"):\n"
+            "- text: question text with HTML formatting (<strong>, <em>). "
+            "Any code snippet MUST be wrapped in <pre><code class=\"language-X\">…</code></pre>. "
+            "Inline code references use <code>name</code>.\n"
+            "- options: exactly 4 distinct answer choices (same code formatting rules apply).\n"
+            "- correct_answer_index: 0-based index. CRITICAL: spread across ALL positions 0–3 roughly equally.\n"
+            "- explanation: 2-3 plain-text sentences on why the correct answer is right.\n"
+            "- image_suggestion: short image search query if a diagram would help, else null.\n"
+            "- option_image_suggestions: array of image search queries (one per option) if options are "
+            "visual identities (people, places, logos); else null.\n\n"
+        )
+
+    if "mcq_multi" in types:
+        question_fields += _MCQ_MULTI_FIELD_BLOCK
+
+    if "single_line" in types:
+        question_fields += (
+            "SINGLE_LINE (question_type: \"single_line\") — short text answer graded by AI:\n"
+            "- text: a question whose answer is a short phrase, number, name, or term.\n"
+            "- options: array with exactly ONE string — the expected correct answer (used for AI grading). "
+            "E.g. [\"O(log n)\"] or [\"mitochondria\"].\n"
+            "- correct_answer_index: null.\n"
+            "- explanation: 1-2 sentences explaining the correct answer.\n"
+            "- image_suggestion: null.\n"
+            "- option_image_suggestions: null.\n\n"
+        )
+
+    if "code" in types:
+        question_fields += (
+            "CODE (question_type: \"code\") — participant writes code to solve a programming problem:\n"
+            "- text: a clear programming problem statement. Include examples if helpful.\n"
+            "- options: array of 1–3 allowed programming languages from: "
+            "[\"python\", \"java\", \"cpp\", \"javascript\", \"typescript\", \"go\", \"rust\", \"csharp\"]. "
+            "Default to [\"python\"] unless the topic implies a specific language.\n"
+            "- grading_rubric: describe what correct code should output for key test inputs "
+            "(e.g. \"For n=7: True, n=4: False, n=1: False, n=-1: False\"). Be specific.\n"
+            "- correct_answer_index: null.\n"
+            "- explanation: null.\n"
+            "- image_suggestion: null.\n"
+            "- option_image_suggestions: null.\n"
+        )
+
     if is_exam:
         question_fields += (
             "\n\nFor the top-level object, also include:\n"
@@ -174,20 +249,33 @@ def _build_question_fields_and_schema(quiz_type: str) -> tuple[str, str]:
     else:
         exam_schema_fields = ""
 
+    example_blocks = []
+    if "mcq" in types:
+        example_blocks.append(
+            '{"question_type": "mcq", "text": "<question>", '
+            '"options": ["<A>", "<B>", "<C>", "<D>"], "correct_answer_index": 2, '
+            '"explanation": "<why correct>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}'
+        )
+    if "mcq_multi" in types:
+        example_blocks.append(_MCQ_MULTI_SCHEMA_EXAMPLE)
+    if "single_line" in types:
+        example_blocks.append(
+            '{"question_type": "single_line", "text": "<question>", '
+            '"options": ["<expected answer>"], "correct_answer_index": null, '
+            '"explanation": "<why this is the answer>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}'
+        )
+    if "code" in types:
+        example_blocks.append(
+            '{"question_type": "code", "text": "<problem statement>", '
+            '"options": ["python"], "correct_answer_index": null, '
+            '"explanation": null, "image_suggestion": null, "option_image_suggestions": null, '
+            '"grading_rubric": "<expected outputs for key test cases>"}'
+        )
+
     output_schema = (
         f'{{"title": "<quiz title>", "description": "<brief description of what this quiz covers>", '
         f'{exam_schema_fields}'
-        f'"questions": ['
-        f'{{"question_type": "mcq", "text": "<question>", '
-        f'"options": ["<A>", "<B>", "<C>", "<D>"], "correct_answer_index": 2, '
-        f'"explanation": "<why correct>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}}, '
-        f'{{"question_type": "single_line", "text": "<question>", '
-        f'"options": ["<expected answer>"], "correct_answer_index": null, '
-        f'"explanation": "<why this is the answer>", "image_suggestion": null, "option_image_suggestions": null, "grading_rubric": null}}, '
-        f'{{"question_type": "code", "text": "<problem statement>", '
-        f'"options": ["python"], "correct_answer_index": null, '
-        f'"explanation": null, "image_suggestion": null, "option_image_suggestions": null, '
-        f'"grading_rubric": "<expected outputs for key test cases>"}}]}}'
+        f'"questions": [' + ', '.join(example_blocks) + ']}'
     )
     return question_fields, output_schema
 
@@ -198,9 +286,10 @@ def build_question_generation_content(
     language: str,
     quiz_type: str,
     existing_questions: list[str] | None = None,
+    allowed_types: list[str] | None = None,
 ) -> tuple[str, str]:
     """Returns (system_instruction, user_message) for question generation."""
-    question_fields, output_schema = _build_question_fields_and_schema(quiz_type)
+    question_fields, output_schema = _build_question_fields_and_schema(quiz_type, allowed_types)
 
     system_instruction = (
         "You are an expert quiz generator for an online quiz platform. "
@@ -246,13 +335,14 @@ def build_question_generation_messages(
     language: str,
     quiz_type: str,
     existing_questions: list[str] | None = None,
+    allowed_types: list[str] | None = None,
 ) -> list[dict]:
     """OpenAI/Anthropic [{role, content}] format for question generation."""
-    system, user = build_question_generation_content(prompt, count, language, quiz_type, existing_questions)
+    system, user = build_question_generation_content(prompt, count, language, quiz_type, existing_questions, allowed_types)
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
-def parse_question_response(raw: str, quiz_type: str) -> dict:
+def parse_question_response(raw: str, quiz_type: str, allowed_types: list[str] | None = None) -> dict:
     """
     Parse and normalise a question-generation JSON response from any provider.
 
@@ -276,6 +366,10 @@ def parse_question_response(raw: str, quiz_type: str) -> dict:
         q_type = q.get("question_type", "mcq")
         text = q.get("text", "")
         if not text:
+            continue
+        # Defensive filter: drop any question of a type the caller didn't ask for,
+        # in case the model hallucinates an excluded type despite instructions.
+        if allowed_types and q_type not in allowed_types:
             continue
 
         if q_type in ("word_cloud", "paragraph", "scale"):
@@ -317,6 +411,34 @@ def parse_question_response(raw: str, quiz_type: str) -> dict:
                 "image_suggestion": None,
                 "option_image_suggestions": None,
                 "grading_rubric": str(rubric)[:2000] if rubric else None,
+            })
+        elif q_type == "mcq_multi":
+            opts = q.get("options") or []
+            if len(opts) < 2:
+                continue
+            opts = opts[:10]
+            raw_indices = q.get("correct_answer_indices") or []
+            seen = []
+            for i in raw_indices:
+                try:
+                    i = int(i)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= i < len(opts) and i not in seen:
+                    seen.append(i)
+            if len(seen) < 2:
+                continue
+            explanation = q.get("explanation") or ""
+            result.append({
+                "question_type": "mcq_multi",
+                "text": md_to_html(str(text)),
+                "options": [md_to_html(str(o)) for o in opts],
+                "correct_answer_index": None,
+                "correct_answer_indices": sorted(seen),
+                "explanation": md_to_html(explanation) if explanation else None,
+                "image_suggestion": None,
+                "option_image_suggestions": None,
+                "grading_rubric": None,
             })
         else:
             opts = q.get("options") or []

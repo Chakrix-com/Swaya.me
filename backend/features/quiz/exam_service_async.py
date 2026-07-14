@@ -98,6 +98,13 @@ def _to_exam_question_response(q: Question) -> ExamQuestionResponse:
         } if q.option_images else None,
         points=q.points,
         max_time_seconds=q.max_time_seconds,
+        required_answer_count=(
+            len(q.correct_answer_indices)
+            if q.question_type == QuestionType.MCQ_MULTI
+            and getattr(q, 'reveal_answer_count', False)
+            and q.correct_answer_indices
+            else None
+        ),
     )
 
 
@@ -330,6 +337,7 @@ async def save_answer(
     question_id: int,
     selected_option_index: Optional[int],
     text_answer: Optional[str] = None,
+    selected_option_indices: Optional[List[int]] = None,
 ) -> dict:
     """Public — upsert a single answer during an exam."""
     result = await db.execute(
@@ -364,7 +372,13 @@ async def save_answer(
         raise QuizNotFoundError("Question not found")
 
     is_correct = None
-    if selected_option_index is not None:
+    if question.question_type == QuestionType.MCQ_MULTI:
+        if selected_option_indices is not None:
+            option_count = len(question.options or [])
+            if any(not (0 <= i < option_count) for i in selected_option_indices):
+                raise HTTPException(status_code=422, detail="Invalid option index")
+            is_correct = set(selected_option_indices) == set(question.correct_answer_indices or [])
+    elif selected_option_index is not None:
         is_correct = (selected_option_index == question.correct_answer_index)
     elif text_answer is not None and question.question_type == QuestionType.SINGLE_LINE:
         expected = (question.options[0] if question.options else "").strip().lower()
@@ -381,6 +395,7 @@ async def save_answer(
 
     if existing:
         existing.selected_option_index = selected_option_index
+        existing.selected_option_indices = selected_option_indices
         existing.text_answer = text_answer
         existing.is_correct = is_correct
     else:
@@ -389,6 +404,7 @@ async def save_answer(
             participant_id=participant.id,
             question_id=question_id,
             selected_option_index=selected_option_index,
+            selected_option_indices=selected_option_indices,
             text_answer=text_answer,
             is_correct=is_correct,
         )
@@ -483,11 +499,13 @@ async def submit_exam(
         answer = answers_by_qid.get(q.id)
         is_code = q.question_type == QuestionType.CODE
         is_single_line = q.question_type == QuestionType.SINGLE_LINE
-        has_answer = (
-            bool(answer and answer.text_answer)
-            if (is_code or is_single_line)
-            else bool(answer and answer.selected_option_index is not None)
-        )
+        is_multi = q.question_type == QuestionType.MCQ_MULTI
+        if is_code or is_single_line:
+            has_answer = bool(answer and answer.text_answer)
+        elif is_multi:
+            has_answer = bool(answer and answer.selected_option_indices)
+        else:
+            has_answer = bool(answer and answer.selected_option_index is not None)
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
@@ -510,7 +528,9 @@ async def submit_exam(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and answer) else None,
+            correct_answer_indices=q.correct_answer_indices,
+            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and not is_multi and answer) else None,
+            participant_answer_indices=answer.selected_option_indices if (is_multi and answer) else None,
             participant_text_answer=answer.text_answer if (is_single_line and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
@@ -601,11 +621,13 @@ async def get_my_result(
         answer = answers_by_qid.get(q.id)
         is_code = q.question_type == QuestionType.CODE
         is_single_line = q.question_type == QuestionType.SINGLE_LINE
-        has_answer = (
-            bool(answer and answer.text_answer)
-            if (is_code or is_single_line)
-            else bool(answer and answer.selected_option_index is not None)
-        )
+        is_multi = q.question_type == QuestionType.MCQ_MULTI
+        if is_code or is_single_line:
+            has_answer = bool(answer and answer.text_answer)
+        elif is_multi:
+            has_answer = bool(answer and answer.selected_option_indices)
+        else:
+            has_answer = bool(answer and answer.selected_option_index is not None)
         is_correct = answer.is_correct if answer else None
 
         points_earned = 0
@@ -627,7 +649,9 @@ async def get_my_result(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and answer) else None,
+            correct_answer_indices=q.correct_answer_indices,
+            participant_answer=answer.selected_option_index if (not is_code and not is_single_line and not is_multi and answer) else None,
+            participant_answer_indices=answer.selected_option_indices if (is_multi and answer) else None,
             participant_text_answer=answer.text_answer if (is_single_line and answer) else None,
             is_correct=is_correct,
             points_earned=points_earned,
@@ -800,7 +824,11 @@ async def get_exam_results(
         for a in all_answers:
             if a.question_id == q.id:
                 total_answers_q += 1
-                if a.selected_option_index is not None and 0 <= a.selected_option_index < num_options:
+                if q.question_type == QuestionType.MCQ_MULTI:
+                    for idx in (a.selected_option_indices or []):
+                        if 0 <= idx < num_options:
+                            distribution[idx] += 1
+                elif a.selected_option_index is not None and 0 <= a.selected_option_index < num_options:
                     distribution[a.selected_option_index] += 1
                 if a.is_correct:
                     correct_count_q += 1
@@ -810,6 +838,7 @@ async def get_exam_results(
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
+            correct_answer_indices=q.correct_answer_indices,
             answer_distribution=distribution,
             correct_count=correct_count_q,
             total_answers=total_answers_q,
@@ -911,13 +940,16 @@ async def get_participant_detail(
             unanswered += 1
 
         is_sl = q.question_type == QuestionType.SINGLE_LINE
+        is_multi = q.question_type == QuestionType.MCQ_MULTI
         question_results.append(ParticipantQuestionResult(
             question_id=q.id,
             order=q.order,
             question_text=q.text,
             options=q.options,
             correct_answer_index=q.correct_answer_index,
-            participant_answer=ans.selected_option_index if (ans and not is_sl) else None,
+            correct_answer_indices=q.correct_answer_indices,
+            participant_answer=ans.selected_option_index if (ans and not is_sl and not is_multi) else None,
+            participant_answer_indices=ans.selected_option_indices if (ans and is_multi) else None,
             participant_text_answer=ans.text_answer if (ans and is_sl) else None,
             is_correct=ans.is_correct if ans else None,
             points_earned=max(0, points_earned),
@@ -1265,11 +1297,14 @@ async def send_participant_results_emails(quiz_id: int, sender_name: str | None 
 
                 for q in questions:
                     answer = p_ans.get(q.id)
+                    is_multi = q.question_type == QuestionType.MCQ_MULTI
                     participant_ans = answer.selected_option_index if answer else None
+                    participant_ans_indices = answer.selected_option_indices if (answer and is_multi) else None
+                    has_answer = bool(participant_ans_indices) if is_multi else (participant_ans is not None)
                     is_correct = answer.is_correct if answer else None
                     points_earned = neg_applied = 0
 
-                    if participant_ans is None:
+                    if not has_answer:
                         unanswered_count += 1
                     elif is_correct:
                         correct_count += 1
@@ -1283,7 +1318,9 @@ async def send_participant_results_emails(quiz_id: int, sender_name: str | None 
                         question_text=q.text,
                         options=q.options,
                         correct_answer_index=q.correct_answer_index,
+                        correct_answer_indices=q.correct_answer_indices,
                         participant_answer=participant_ans,
+                        participant_answer_indices=participant_ans_indices,
                         is_correct=is_correct,
                         points_earned=points_earned,
                         points_possible=q.points,

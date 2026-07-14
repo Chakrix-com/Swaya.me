@@ -828,6 +828,8 @@ class QuizBuilderServiceAsync:
                     order=question.order,
                     options=list(question.options) if question.options else None,
                     correct_answer_index=question.correct_answer_index,
+                    correct_answer_indices=list(question.correct_answer_indices) if question.correct_answer_indices else None,
+                    reveal_answer_count=bool(getattr(question, 'reveal_answer_count', False)),
                     question_image_url=question.question_image_url,
                     question_video_url=question.question_video_url,
                     option_images=dict(question.option_images) if question.option_images else None,
@@ -1179,6 +1181,8 @@ class QuizBuilderServiceAsync:
                         order=question.order,
                         options=list(question.options) if question.options else None,
                         correct_answer_index=question.correct_answer_index,
+                        correct_answer_indices=list(question.correct_answer_indices) if question.correct_answer_indices else None,
+                        reveal_answer_count=bool(getattr(question, 'reveal_answer_count', False)),
                         question_image_url=question.question_image_url,
                         question_video_url=question.question_video_url,
                         option_images=dict(question.option_images) if question.option_images else None,
@@ -1361,6 +1365,22 @@ class QuizBuilderServiceAsync:
                     raise QuizValidationError("Text questions can have at most one expected answer")
                 if question.correct_answer_index is not None:
                     raise QuizValidationError("Text questions cannot have a correct answer index")
+            elif question.question_type == QuestionType.MCQ_MULTI:
+                if quiz.quiz_type not in (QuizType.EXAM, QuizType.OFFLINE_POLL):
+                    raise QuizValidationError(
+                        "Multi-select MCQ questions are only supported in exams and offline polls"
+                    )
+                if not question.options or len(question.options) < 2:
+                    raise QuizValidationError("Multi-select MCQ questions must have at least 2 options")
+                if len(question.options) > 10:
+                    raise QuizValidationError("Multi-select MCQ questions can have at most 10 options")
+                if not question.correct_answer_indices or len(question.correct_answer_indices) < 2:
+                    raise QuizValidationError("Multi-select MCQ questions require at least 2 correct answers")
+                if any(
+                    not (0 <= i < len(question.options))
+                    for i in question.correct_answer_indices
+                ):
+                    raise QuizValidationError("Multi-select MCQ correct answer indices must reference existing options")
     
     def _to_quiz_response(self, quiz: Quiz) -> QuizResponse:
         """Convert quiz to response model"""
@@ -1388,6 +1408,8 @@ class QuizBuilderServiceAsync:
                     options=q.options,
                     order=q.order,
                     correct_answer_index=q.correct_answer_index,
+                    correct_answer_indices=q.correct_answer_indices,
+                    reveal_answer_count=bool(getattr(q, 'reveal_answer_count', False)),
                     question_image_url=ImageService.to_absolute_url(
                         q.question_image_url, base_url
                     ),

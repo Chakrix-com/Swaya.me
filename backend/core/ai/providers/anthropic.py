@@ -139,13 +139,14 @@ class AnthropicProvider(BaseAIProvider):
         language: str,
         quiz_type: str,
         existing_questions: list[str] | None = None,
+        allowed_question_types: list[str] | None = None,
     ) -> dict:
-        msgs = build_question_generation_messages(prompt, count, language, quiz_type, existing_questions)
+        msgs = build_question_generation_messages(prompt, count, language, quiz_type, existing_questions, allowed_question_types)
         # Prepend JSON-only instruction to system (Anthropic has no json_mode)
         msgs[0]["content"] = "Output ONLY valid JSON — no markdown, no prose, no fences.\n\n" + msgs[0]["content"]
         raw = await self._chat(msgs, temperature=0.7, max_tokens=16384)
         try:
-            return parse_question_response(raw, quiz_type)
+            return parse_question_response(raw, quiz_type, allowed_question_types)
         except (ValueError, json.JSONDecodeError) as e:
             logger.warning("Anthropic question parse failed: %s | raw: %.300s", e, raw)
             raise AIProviderError(

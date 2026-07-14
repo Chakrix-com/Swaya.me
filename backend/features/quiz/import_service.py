@@ -26,28 +26,28 @@ class ExcelImportService:
             "quiz": "Quiz", "test": "Test",
             "col_type": "Type *", "col_text": "Question Text *", "col_ans": "Correct Answer *", 
             "col_points": "Points", "col_neg": "Neg. Marks", "col_time": "Time (sec)",
-            "mcq": "MCQ", "single_line": "Single Line"
+            "mcq": "MCQ", "single_line": "Single Line", "mcq_multi": "Multi-Select MCQ"
         },
         "de": {
             "meta_title": "Titel *", "meta_desc": "Beschreibung", "meta_dur": "Dauer (m)", "meta_type": "Quiz-Typ *",
             "quiz": "Quiz", "test": "Test",
             "col_type": "Typ *", "col_text": "Fragetext *", "col_ans": "Korrekte Antwort *", 
             "col_points": "Punkte", "col_neg": "Negativpunkte", "col_time": "Zeit (Sek.)",
-            "mcq": "MCQ", "single_line": "Einzeiler"
+            "mcq": "MCQ", "single_line": "Einzeiler", "mcq_multi": "Mehrfachauswahl-MCQ"
         },
         "fr": {
             "meta_title": "Titre *", "meta_desc": "Description", "meta_dur": "Durée (m)", "meta_type": "Type de quiz *",
             "quiz": "Quiz", "test": "Test",
             "col_type": "Type *", "col_text": "Texte de la question *", "col_ans": "Réponse correcte *", 
             "col_points": "Points", "col_neg": "Points négatifs", "col_time": "Temps (sec)",
-            "mcq": "QCM", "single_line": "Ligne unique"
+            "mcq": "QCM", "single_line": "Ligne unique", "mcq_multi": "QCM à choix multiples"
         },
         "hi": {
             "meta_title": "शीर्षक *", "meta_desc": "विवरण", "meta_dur": "अवधि (m)", "meta_type": "क्विज़ का प्रकार *",
             "quiz": "क्विज़", "test": "परीक्षा",
             "col_type": "प्रकार *", "col_text": "प्रश्न पाठ *", "col_ans": "सही उत्तर *", 
             "col_points": "अंक", "col_neg": "नकारात्मक अंक", "col_time": "समय (sec)",
-            "mcq": "MCQ", "single_line": "एक पंक्ति"
+            "mcq": "MCQ", "single_line": "एक पंक्ति", "mcq_multi": "बहु-चयन MCQ"
         }
     }
 
@@ -74,6 +74,22 @@ class ExcelImportService:
         if 0 <= index <= 9:
             return chr(ord('A') + index)
         return ""
+
+    @classmethod
+    def _chars_to_indices(cls, chars: str) -> List[int]:
+        """"AC" -> [0, 2]. Invalid/duplicate letters are dropped."""
+        if not chars:
+            return []
+        seen = []
+        for ch in chars.upper():
+            idx = cls._char_to_index(ch)
+            if idx is not None and idx not in seen:
+                seen.append(idx)
+        return seen
+
+    @classmethod
+    def _indices_to_chars(cls, indices: List[int]) -> str:
+        return "".join(cls._index_to_char(i) for i in sorted(indices or []))
 
     async def parse_excel(self, file_content: bytes) -> Dict[str, Any]:
         """Parse the XLSX file and return raw data for validation"""
@@ -105,6 +121,8 @@ class ExcelImportService:
                 q_type = "mcq"
                 if any(variant in raw_type for variant in ["Single", "Ligne", "Einzeiler", "एक पंक्ति"]):
                     q_type = "single_line"
+                elif "Multi" in raw_type:
+                    q_type = "mcq_multi"
                 
                 questions.append({
                     "type": q_type,
@@ -148,20 +166,30 @@ class ExcelImportService:
             if q["type"] == "mcq":
                 if len(options) < 2:
                     row_errors.append("MCQ requires at least 2 options")
-                
+
                 correct_index = self._char_to_index(q["answer"])
                 if correct_index is None:
                     row_errors.append(f"Invalid correct option: {q['answer']}. Use A-J.")
                 elif correct_index >= len(options):
                     row_errors.append(f"Option {q['answer']} is selected, but only {len(options)} options provided.")
-            
+
+            elif q["type"] == "mcq_multi":
+                if len(options) < 2:
+                    row_errors.append("Multi-select MCQ requires at least 2 options")
+
+                multi_indices = self._chars_to_indices(q["answer"])
+                if len(multi_indices) < 2:
+                    row_errors.append(f"Multi-select MCQ requires at least 2 correct letters (e.g. AC): got '{q['answer']}'")
+                elif any(i >= len(options) for i in multi_indices):
+                    row_errors.append(f"Correct answer '{q['answer']}' references an option beyond the {len(options)} provided")
+
             elif q["type"] == "single_line":
                 if not q["answer"] or q["answer"] == "-":
                     row_errors.append("Expected Answer is mandatory for Single Line questions")
-            
+
             validated_questions.append({
                 "index": idx,
-                "type": "MCQ" if q["type"] == "mcq" else "Single Line",
+                "type": "MCQ" if q["type"] == "mcq" else "Multi-Select MCQ" if q["type"] == "mcq_multi" else "Single Line",
                 "text": q["text"],
                 "answer": q["answer"],
                 "points": q["points"],
@@ -224,21 +252,27 @@ class ExcelImportService:
 
         # Create Questions
         for idx, q in enumerate(data["questions"]):
-            # validated questions use "MCQ"/"Single Line"; raw use "mcq"/"single_line"
+            # validated questions use "MCQ"/"Multi-Select MCQ"/"Single Line"; raw use "mcq"/"mcq_multi"/"single_line"
             raw_type = str(q.get("type", "MCQ")).strip().upper()
-            q_type = QuestionType.MCQ if raw_type in ("MCQ", "MCQ") else QuestionType.SINGLE_LINE
-            if "SINGLE" in raw_type or "LINE" in raw_type:
+            if "MULTI" in raw_type:
+                q_type = QuestionType.MCQ_MULTI
+            elif "SINGLE" in raw_type or "LINE" in raw_type:
                 q_type = QuestionType.SINGLE_LINE
+            else:
+                q_type = QuestionType.MCQ
 
             db_options = []
             correct_index = None
+            correct_indices = None
 
             if q_type == QuestionType.MCQ:
                 db_options = q["options"]
                 correct_index = self._char_to_index(q["answer"])
+            elif q_type == QuestionType.MCQ_MULTI:
+                db_options = q["options"]
+                correct_indices = self._chars_to_indices(q["answer"])
             else:
                 db_options = [q["answer"]]
-                correct_index = None
 
             question = Question(
                 quiz_id=quiz.id,
@@ -247,6 +281,7 @@ class ExcelImportService:
                 order=idx,
                 options=[str(o).strip() for o in db_options],
                 correct_answer_index=correct_index,
+                correct_answer_indices=correct_indices,
                 points=float(q["points"] or 1),
                 negative_points=float(q["neg_marks"] if q["neg_marks"] is not None else 0),
                 max_time_seconds=int(q["time_limit"] or 30)
@@ -326,12 +361,15 @@ class ExcelImportService:
         # Data rows
         questions = draft_data.get("questions", [])
         for r_idx, q in enumerate(questions, 6):
-            q_type = L["mcq"] if q.get("type", "mcq") == "mcq" else L["single_line"]
+            q_raw_type = q.get("type", "mcq")
+            q_type = L["mcq"] if q_raw_type == "mcq" else L["mcq_multi"] if q_raw_type == "mcq_multi" else L["single_line"]
             text = q.get("text", "")
-            
+
             ans = ""
-            if (q.get("type", "mcq") == "mcq"):
+            if q_raw_type == "mcq":
                 ans = self._index_to_char(q.get("correct_answer_index", 0))
+            elif q_raw_type == "mcq_multi":
+                ans = self._indices_to_chars(q.get("correct_answer_indices", []))
             else:
                 ans = q.get("expected_answer", "") or q.get("answer", "")
 

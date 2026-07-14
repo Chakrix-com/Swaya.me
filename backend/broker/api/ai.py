@@ -30,6 +30,7 @@ class GenerateQuestionsRequest(BaseModel):
     language: str = Field("en", max_length=10, description="Language code, e.g. en, hi, fr")
     quiz_type: str = Field("quiz", max_length=20, description="Type of quiz: quiz, exam, poll, offline_poll")
     existing_questions: Optional[list[str]] = Field(None, description="Texts of already-existing questions to avoid duplicating")
+    allowed_question_types: Optional[list[str]] = Field(None, description="Restrict generation to these question types; omit/None for the full default mix for quiz_type")
     # Legacy field — ignored, kept for backward compatibility
     topic: Optional[str] = Field(None, description="Deprecated: use prompt instead")
     model: Optional[str] = Field(None, description="Ignored — Gemini model is used")
@@ -40,6 +41,7 @@ class GeneratedQuestion(BaseModel):
     question_type: str = "mcq"
     options: Optional[list[str]] = None
     correct_answer_index: Optional[int] = None
+    correct_answer_indices: Optional[list[int]] = None
     explanation: Optional[str] = None
     image_suggestion: Optional[str] = None
     option_image_suggestions: Optional[list[str]] = None
@@ -123,6 +125,7 @@ async def api_generate_questions(
             language=req.language,
             quiz_type=req.quiz_type,
             existing_questions=req.existing_questions or None,
+            allowed_question_types=req.allowed_question_types or None,
         )
     except AIProviderError as e:
         logger.error("AI question generation failed: %s", e)
@@ -177,6 +180,7 @@ async def api_generate_questions_stream(
                 language=req.language,
                 quiz_type=req.quiz_type,
                 existing_questions=req.existing_questions or None,
+                allowed_question_types=req.allowed_question_types or None,
             )
         )
         try:

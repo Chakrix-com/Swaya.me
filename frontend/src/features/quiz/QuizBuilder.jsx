@@ -80,6 +80,7 @@ const getQuestionTypeLabel = (type, t) => {
     paragraph: t('quiz.paragraph'),
     one_word: t('quiz.oneWord'),
     code: t('questionTypes.code', 'Code'),
+    mcq_multi: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ'),
   }
   return labels[type] || t('quiz.multipleChoice')
 }
@@ -147,6 +148,7 @@ const QuestionForm = ({
   const [explanationOpen, setExplanationOpen] = useState(false)
   const [mediaVideoOpen, setMediaVideoOpen] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState('0')
+  const [selectedAnswers, setSelectedAnswers] = useState(new Set())
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
   const [extraRichOpts, setExtraRichOpts] = useState([])
   const [questionVideoUrl, setQuestionVideoUrl] = useState(null)
@@ -200,7 +202,7 @@ const QuestionForm = ({
         is_required: question.is_required ?? false,
         answer_explanation: question.answer_explanation ?? '',
       }
-      if (question.question_type === 'mcq') {
+      if (question.question_type === 'mcq' || question.question_type === 'mcq_multi') {
         const existingOptionCount = question.options?.length || 2
         setMcqBaseOptionCount(Math.min(4, Math.max(2, existingOptionCount)))
         formValues.option_a = question.options?.[0] || ''
@@ -208,7 +210,14 @@ const QuestionForm = ({
         formValues.option_c = question.options?.[2] || ''
         formValues.option_d = question.options?.[3] || ''
         formValues.extra_options = question.options?.slice(4) || []
-        formValues.correct_answer = isPoll ? undefined : String(question.correct_answer_index ?? 0)
+        if (question.question_type === 'mcq_multi') {
+          const indices = question.correct_answer_indices || []
+          formValues.correct_answers = indices
+          formValues.reveal_answer_count = question.reveal_answer_count || false
+          setSelectedAnswers(new Set(indices))
+        } else {
+          formValues.correct_answer = isPoll ? undefined : String(question.correct_answer_index ?? 0)
+        }
       }
       if (question.question_type === 'code') {
         formValues.code_languages = question.code_languages || question.options || ['python']
@@ -256,7 +265,10 @@ const QuestionForm = ({
         option_d: '',
         extra_options: [],
         correct_answer: isPoll ? undefined : '0',
+        correct_answers: [],
+        reveal_answer_count: false,
       })
+      setSelectedAnswers(new Set())
       setQuestionType('mcq')
       setTypeChipsExpanded(true)
       setExplanationOpen(false)
@@ -281,14 +293,30 @@ const QuestionForm = ({
     if (nextType === 'mcq') {
       setMcqBaseOptionCount(2)
       setSelectedAnswer('0')
+      setSelectedAnswers(new Set())
       questionForm.setFieldsValue({
         option_c: undefined,
         option_d: undefined,
         extra_options: [],
         correct_answer: isPoll ? undefined : '0',
+        correct_answers: undefined,
+        reveal_answer_count: false,
+      })
+    }
+    if (nextType === 'mcq_multi') {
+      setMcqBaseOptionCount(2)
+      setSelectedAnswers(new Set())
+      questionForm.setFieldsValue({
+        option_c: undefined,
+        option_d: undefined,
+        extra_options: [],
+        correct_answer: undefined,
+        correct_answers: [],
+        reveal_answer_count: false,
       })
     }
     if (nextType === 'word_cloud' || nextType === 'single_line' || nextType === 'paragraph') {
+      setSelectedAnswers(new Set())
       questionForm.setFieldsValue({
         option_a: undefined,
         option_b: undefined,
@@ -296,10 +324,13 @@ const QuestionForm = ({
         option_d: undefined,
         extra_options: [],
         correct_answer: undefined,
+        correct_answers: undefined,
+        reveal_answer_count: false,
         expected_answer: undefined,
       })
     }
     if (nextType === 'code') {
+      setSelectedAnswers(new Set())
       questionForm.setFieldsValue({
         option_a: undefined,
         option_b: undefined,
@@ -307,6 +338,8 @@ const QuestionForm = ({
         option_d: undefined,
         extra_options: [],
         correct_answer: undefined,
+        correct_answers: undefined,
+        reveal_answer_count: false,
         expected_answer: undefined,
         code_languages: ['python'],
       })
@@ -324,6 +357,14 @@ const QuestionForm = ({
   }
 
   const normalizeCorrectAnswerAfterOptionCountChange = (nextOptionCount) => {
+    if (questionType === 'mcq_multi') {
+      setSelectedAnswers(prev => {
+        const next = new Set(Array.from(prev).filter(i => i < nextOptionCount))
+        questionForm.setFieldsValue({ correct_answers: Array.from(next).sort((a, b) => a - b) })
+        return next
+      })
+      return
+    }
     if (isPoll) return
     const current = Number(questionForm.getFieldValue('correct_answer'))
     if (!Number.isInteger(current) || current >= nextOptionCount) {
@@ -403,6 +444,7 @@ const QuestionForm = ({
             <div className="qb-type-chips">
               {[
                 { value: 'mcq', label: t('quiz.multipleChoice'), show: true },
+                { value: 'mcq_multi', label: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ'), show: isExam || isOfflinePoll },
                 { value: 'single_line', label: t('quiz.singleLine'), show: !isPoll || isOfflinePoll === false },
                 { value: 'word_cloud', label: t('quiz.wordCloud'), show: isPoll },
                 { value: 'scale', label: t('quizPresent.scaleOneToFive'), show: isPoll },
@@ -615,11 +657,26 @@ const QuestionForm = ({
             : <Text type="warning" style={{ display: 'block', marginBottom: 8 }}>{t('quiz.videoUrlInvalid')}</Text>
         })()}
 
-        {questionType === 'mcq' && (
+        {(questionType === 'mcq' || questionType === 'mcq_multi') && (() => {
+          const isMulti = questionType === 'mcq_multi'
+          return (
           <>
-            {/* Hidden correct_answer field — value set via letter dot clicks */}
-            {!isPoll && (
+            {/* Hidden correct_answer field(s) — value set via letter dot clicks */}
+            {!isPoll && !isMulti && (
               <Form.Item name="correct_answer" hidden rules={[{ required: true, message: t('quiz.correctAnswerRequired') }]}>
+                <Input />
+              </Form.Item>
+            )}
+            {isMulti && (
+              <Form.Item
+                name="correct_answers"
+                hidden
+                rules={[{
+                  validator: (_, v) => (Array.isArray(v) && v.length >= 2)
+                    ? Promise.resolve()
+                    : Promise.reject(t('quiz.selectAtLeastTwoCorrect', 'Select at least 2 correct answers')),
+                }]}
+              >
                 <Input />
               </Form.Item>
             )}
@@ -633,7 +690,7 @@ const QuestionForm = ({
               { key: 'option_d', imgKey: 'D', tempKey: 'optionD', richKey: 'option_d', label: 'D', index: 3, show: mcqBaseOptionCount >= 4, required: false, req: null, ph: t('quiz.optionDPlaceholder') },
             ].filter(o => o.show).map(opt => {
               const isRich = !!useRichTextOptions[opt.richKey]
-              const isCorrect = !isPoll && selectedAnswer === String(opt.index)
+              const isCorrect = isMulti ? selectedAnswers.has(opt.index) : (!isPoll && selectedAnswer === String(opt.index))
               const hasImg = !!optionImages[opt.imgKey]
               const rules = isRich
                 ? [{ validator: (_, v) => stripHtml(v) ? Promise.resolve() : Promise.reject(opt.req || '') }]
@@ -644,13 +701,23 @@ const QuestionForm = ({
                   <div className="qb-opt-row">
                     <button
                       type="button"
-                      className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
+                      className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${(isPoll && !isMulti) ? ' qb-opt-dot--poll' : ''}`}
                       onClick={() => {
+                        if (isMulti) {
+                          setSelectedAnswers(prev => {
+                            const next = new Set(prev)
+                            if (next.has(opt.index)) next.delete(opt.index)
+                            else next.add(opt.index)
+                            questionForm.setFieldsValue({ correct_answers: Array.from(next).sort((a, b) => a - b) })
+                            return next
+                          })
+                          return
+                        }
                         if (isPoll) return
                         setSelectedAnswer(String(opt.index))
                         questionForm.setFieldsValue({ correct_answer: String(opt.index) })
                       }}
-                      title={isPoll ? undefined : t('quiz.markCorrect', 'Mark as correct answer')}
+                      title={isMulti ? t('quiz.markCorrect', 'Mark as correct answer') : (isPoll ? undefined : t('quiz.markCorrect', 'Mark as correct answer'))}
                     >
                       {opt.label}
                     </button>
@@ -722,15 +789,25 @@ const QuestionForm = ({
                   {fields.map((field) => {
                     const isRich = !!extraRichOpts[field.name]
                     const extraIndex = mcqBaseOptionCount + field.name
-                    const isCorrect = !isPoll && selectedAnswer === String(extraIndex)
+                    const isCorrect = isMulti ? selectedAnswers.has(extraIndex) : (!isPoll && selectedAnswer === String(extraIndex))
                     const extraLabel = String.fromCharCode(65 + extraIndex)
                     return (
                       <div key={field.key} className={`qb-option-card${isCorrect ? ' qb-option-card--correct' : ''}`}>
                         <div className="qb-opt-row">
                           <button
                             type="button"
-                            className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${isPoll ? ' qb-opt-dot--poll' : ''}`}
+                            className={`qb-opt-dot${isCorrect ? ' qb-opt-dot--correct' : ''}${(isPoll && !isMulti) ? ' qb-opt-dot--poll' : ''}`}
                             onClick={() => {
+                              if (isMulti) {
+                                setSelectedAnswers(prev => {
+                                  const next = new Set(prev)
+                                  if (next.has(extraIndex)) next.delete(extraIndex)
+                                  else next.add(extraIndex)
+                                  questionForm.setFieldsValue({ correct_answers: Array.from(next).sort((a, b) => a - b) })
+                                  return next
+                                })
+                                return
+                              }
                               if (isPoll) return
                               setSelectedAnswer(String(extraIndex))
                               questionForm.setFieldsValue({ correct_answer: String(extraIndex) })
@@ -823,8 +900,14 @@ const QuestionForm = ({
                 </>
               )}
             </Form.List>
+            {isMulti && (
+              <Form.Item name="reveal_answer_count" valuePropName="checked" style={{ marginBottom: 12 }}>
+                <Checkbox>{t('quiz.revealAnswerCountLabel', 'Tell participants how many correct answers to pick')}</Checkbox>
+              </Form.Item>
+            )}
           </>
-        )}
+          )
+        })()}
 
         {questionType === 'one_word' && (
           <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
@@ -1203,6 +1286,7 @@ export default function QuizBuilder() {
   const [aiStreamCount, setAiStreamCount] = useState(0)
   const aiAbortRef = useRef(null)
   const [aiStyle, setAiStyle] = useState('general')
+  const [aiSelectedTypes, setAiSelectedTypes] = useState(null) // null = not yet initialized for this quiz_type
   const [aiExamSuggDuration, setAiExamSuggDuration] = useState(null)
   const [aiExamSuggProctoring, setAiExamSuggProctoring] = useState(null)
   const [aiExamSuggDismissed, setAiExamSuggDismissed] = useState(false)
@@ -1257,8 +1341,9 @@ export default function QuizBuilder() {
           negative_points: q.negative_points,
           max_time_seconds: q.max_time_seconds,
           correct_answer_index: q.correct_answer_index,
+          correct_answer_indices: q.correct_answer_indices,
           expected_answer: q.expected_answer,
-          options: (q.question_type === 'mcq' || q.question_type === 'scale') 
+          options: (q.question_type === 'mcq' || q.question_type === 'mcq_multi' || q.question_type === 'scale')
             ? [q.option_a, q.option_b, q.option_c, q.option_d, ...(q.extra_options || [])]
             : [q.expected_answer]
         }))
@@ -1405,18 +1490,19 @@ export default function QuizBuilder() {
         }
         
         // Only transform options for MCQ questions
-        if ((q.question_type === 'mcq' || q.question_type === 'scale') && q.options) {
+        if ((q.question_type === 'mcq' || q.question_type === 'mcq_multi' || q.question_type === 'scale') && q.options) {
           return {
             ...baseQuestion,
             option_a: q.options[0],
             option_b: q.options[1],
             option_c: q.options[2],
             option_d: q.options[3],
-            extra_options: q.question_type === 'mcq' ? (q.options.slice(4) || []) : [],
+            extra_options: (q.question_type === 'mcq' || q.question_type === 'mcq_multi') ? (q.options.slice(4) || []) : [],
             option_e: q.options[4],
             correct_answer: q.question_type === 'mcq'
               ? String(q.correct_answer_index ?? 0)
-              : String(q.correct_answer_index ?? 0)
+              : String(q.correct_answer_index ?? 0),
+            correct_answers: q.question_type === 'mcq_multi' ? (q.correct_answer_indices || []) : undefined,
           }
         }
         if ((q.question_type === 'single_line' || q.question_type === 'paragraph') && q.options) {
@@ -1714,7 +1800,7 @@ export default function QuizBuilder() {
       {!isLive && editingQuestion !== 'new' && (
         <Button
           icon={<ThunderboltOutlined />}
-          onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
+          onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null); setAiSelectedTypes(null) }}
           style={{ marginTop: 12, marginBottom: 8, width: '100%' }}
           size="large"
           disabled={!!editingQuestion}
@@ -1913,13 +1999,17 @@ export default function QuizBuilder() {
                       if (letterIndex >= 0) correctIndex = letterIndex
                     }
 
+                    const isMultiQ = question.question_type === 'mcq_multi'
+                    const correctIndicesSet = new Set(question.correct_answer_indices || [])
+
                     return mcqOptions.map((opt, idx) => {
                       const letter = String.fromCharCode(65 + idx)
+                      const isCorrectOpt = isMultiQ ? correctIndicesSet.has(idx) : idx === correctIndex
                       return (
                         <div key={`${question.id}-opt-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                           <Text style={{ whiteSpace: 'nowrap', paddingTop: 2 }}>{letter}:</Text>
                           <RichTextRenderer content={opt} style={{ flex: 1 }} />
-                          {!isPoll && idx === correctIndex && <Tag color="green" style={{ flexShrink: 0 }}>{t('quiz.correct')}</Tag>}
+                          {!isPoll && isCorrectOpt && <Tag color="green" style={{ flexShrink: 0 }}>{t('quiz.correct')}</Tag>}
                         </div>
                       )
                     })
@@ -1993,15 +2083,31 @@ export default function QuizBuilder() {
         questionData.options = mcqOptions
         const selected = Number(values.correct_answer)
         questionData.correct_answer_index = isPoll ? null : selected
+        questionData.correct_answer_indices = null
+        questionData.reveal_answer_count = false
+      } else if (values.question_type === 'mcq_multi') {
+        const mcqOptions = [values.option_a, values.option_b, values.option_c, values.option_d, ...(values.extra_options || [])].filter(opt => stripHtml(opt).length > 0)
+        if (mcqOptions.length < 2) { setSaveStatus('idle'); return }
+        if (!Array.isArray(values.correct_answers) || values.correct_answers.length < 2) { setSaveStatus('idle'); return }
+        questionData.options = mcqOptions
+        questionData.correct_answer_index = null
+        questionData.correct_answer_indices = values.correct_answers
+        questionData.reveal_answer_count = !!values.reveal_answer_count
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
+        questionData.correct_answer_indices = null
+        questionData.reveal_answer_count = false
       } else if (values.question_type === 'single_line' || values.question_type === 'paragraph') {
         questionData.options = isPoll || !values.expected_answer ? [] : [values.expected_answer]
         questionData.correct_answer_index = null
+        questionData.correct_answer_indices = null
+        questionData.reveal_answer_count = false
       } else {
         questionData.options = null
         questionData.correct_answer_index = null
+        questionData.correct_answer_indices = null
+        questionData.reveal_answer_count = false
       }
       await questionAPI.update(questionId, questionData)
       // Update local question state so rail status dots refresh without a full reload
@@ -2140,6 +2246,32 @@ export default function QuizBuilder() {
           message.error(t('quiz.correctAnswerRequired'))
           return
         }
+      } else if (values.question_type === 'mcq_multi') {
+        const mcqOptions = [
+          values.option_a,
+          values.option_b,
+          values.option_c,
+          values.option_d,
+          ...(values.extra_options || []),
+        ]
+          .filter((opt) => stripHtml(opt).length > 0)
+        if (mcqOptions.length < 2) {
+          message.error(t('quiz.mcqMinOptions'))
+          return
+        }
+        const lowerOpts = mcqOptions.map((o) => stripHtml(o).toLowerCase())
+        if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
+          message.error(t('quiz.mcqDuplicateOptions'))
+          return
+        }
+        if (!Array.isArray(values.correct_answers) || values.correct_answers.length < 2) {
+          message.error(t('quiz.selectAtLeastTwoCorrect', 'Select at least 2 correct answers'))
+          return
+        }
+        questionData.options = mcqOptions
+        questionData.correct_answer_index = null
+        questionData.correct_answer_indices = values.correct_answers
+        questionData.reveal_answer_count = !!values.reveal_answer_count
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
@@ -2324,6 +2456,32 @@ export default function QuizBuilder() {
           message.error(t('quiz.correctAnswerRequired'))
           return
         }
+      } else if (values.question_type === 'mcq_multi') {
+        const mcqOptions = [
+          values.option_a,
+          values.option_b,
+          values.option_c,
+          values.option_d,
+          ...(values.extra_options || []),
+        ]
+          .filter((opt) => stripHtml(opt).length > 0)
+        if (mcqOptions.length < 2) {
+          message.error(t('quiz.mcqMinOptions'))
+          return
+        }
+        const lowerOpts = mcqOptions.map((o) => stripHtml(o).toLowerCase())
+        if (lowerOpts.some((o, i) => lowerOpts.indexOf(o) !== i)) {
+          message.error(t('quiz.mcqDuplicateOptions'))
+          return
+        }
+        if (!Array.isArray(values.correct_answers) || values.correct_answers.length < 2) {
+          message.error(t('quiz.selectAtLeastTwoCorrect', 'Select at least 2 correct answers'))
+          return
+        }
+        questionData.options = mcqOptions
+        questionData.correct_answer_index = null
+        questionData.correct_answer_indices = values.correct_answers
+        questionData.reveal_answer_count = !!values.reveal_answer_count
       } else if (values.question_type === 'scale') {
         questionData.options = ['1', '2', '3', '4', '5']
         questionData.correct_answer_index = isPoll ? null : Number(values.correct_answer)
@@ -2556,6 +2714,42 @@ export default function QuizBuilder() {
     hard: { points: 4, negative_points: 1, max_time_seconds: 90 },
   }
 
+  // Question types the AI can generate, per quiz_type — mcq_multi only where the
+  // builder itself allows it (exam / offline_poll).
+  const getAiTypeOptions = () => {
+    const qType = quiz?.quiz_type || initialQuizType || 'quiz'
+    if (qType === 'poll') {
+      return [
+        { value: 'mcq', label: t('quiz.multipleChoice') },
+        { value: 'word_cloud', label: t('quiz.wordCloud') },
+      ]
+    }
+    if (qType === 'offline_poll') {
+      return [
+        { value: 'mcq', label: t('quiz.multipleChoice') },
+        { value: 'mcq_multi', label: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ') },
+        { value: 'scale', label: t('quizPresent.scaleOneToFive') },
+        { value: 'paragraph', label: t('quiz.paragraph') },
+      ]
+    }
+    if (qType === 'exam') {
+      return [
+        { value: 'mcq', label: t('quiz.multipleChoice') },
+        { value: 'mcq_multi', label: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ') },
+        { value: 'single_line', label: t('quiz.singleLine') },
+        { value: 'code', label: t('questionTypes.code', 'Code') },
+      ]
+    }
+    // live quiz — mcq_multi is not supported here (Live-quiz tap-to-submit flow, §3.4/§3.5)
+    return [
+      { value: 'mcq', label: t('quiz.multipleChoice') },
+      { value: 'single_line', label: t('quiz.singleLine') },
+      { value: 'code', label: t('questionTypes.code', 'Code') },
+    ]
+  }
+  const aiTypeOptions = getAiTypeOptions()
+  const effectiveAiTypes = aiSelectedTypes ?? aiTypeOptions.map(o => o.value)
+
   const handleAiExtract = async (file, url) => {
     setAiExtracting(true)
     setAiExtractError(null)
@@ -2616,6 +2810,7 @@ export default function QuizBuilder() {
           language: i18n.language,
           quiz_type: quizType,
           existing_questions: existingQTexts,
+          allowed_question_types: effectiveAiTypes,
         },
         (q) => {
           setAiPreview(prev => [...prev, { ...q, selected: true }])
@@ -2743,6 +2938,19 @@ export default function QuizBuilder() {
             max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
             from_ai: true,
           })
+        } else if (qType === 'mcq_multi') {
+          await questionAPI.add(id, {
+            question_type: 'mcq_multi',
+            text: q.text,
+            options: q.options,
+            correct_answer_index: null,
+            correct_answer_indices: q.correct_answer_indices,
+            answer_explanation: q.explanation || null,
+            points: difficultyValues ? difficultyValues.points : 1,
+            negative_points: difficultyValues ? difficultyValues.negative_points : 0,
+            max_time_seconds: difficultyValues ? difficultyValues.max_time_seconds : null,
+            from_ai: true,
+          })
         } else {
           // mcq (default)
           await questionAPI.add(id, {
@@ -2792,6 +3000,7 @@ export default function QuizBuilder() {
         count: 1,
         language: i18n.language,
         quiz_type: quizType,
+        allowed_question_types: effectiveAiTypes,
       })
       const newQ = res.data.questions[0]
       if (newQ) {
@@ -3191,8 +3400,11 @@ export default function QuizBuilder() {
               {(() => {
                 const incompleteCount = questions.filter(q => {
                   const hasText = !!stripHtml(q.text).trim()
-                  const hasCa = Number.isInteger(q.correct_answer_index) && q.correct_answer_index >= 0
-                  const needsCa = q.question_type === 'mcq' && !isPoll
+                  const isMultiQ = q.question_type === 'mcq_multi'
+                  const hasCa = isMultiQ
+                    ? Array.isArray(q.correct_answer_indices) && q.correct_answer_indices.length >= 2
+                    : Number.isInteger(q.correct_answer_index) && q.correct_answer_index >= 0
+                  const needsCa = isMultiQ || (q.question_type === 'mcq' && !isPoll)
                   return !hasText || (needsCa && !hasCa)
                 }).length
                 if (incompleteCount === 0) return null
@@ -3211,8 +3423,11 @@ export default function QuizBuilder() {
                 <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
                   {questions.map((question, index) => {
                     const hasText = !!stripHtml(question.text).trim()
-                    const hasCa = !Number.isInteger(question.correct_answer_index) ? false : question.correct_answer_index >= 0
-                    const needsCa = question.question_type === 'mcq' && !isPoll
+                    const isMultiQ = question.question_type === 'mcq_multi'
+                    const hasCa = isMultiQ
+                      ? Array.isArray(question.correct_answer_indices) && question.correct_answer_indices.length >= 2
+                      : (!Number.isInteger(question.correct_answer_index) ? false : question.correct_answer_index >= 0)
+                    const needsCa = isMultiQ || (question.question_type === 'mcq' && !isPoll)
                     const statusCls = !hasText ? 'qb-q-status-dot--empty' : (needsCa && !hasCa) ? 'qb-q-status-dot--warn' : 'qb-q-status-dot--ok'
                     const isIncomplete = !hasText || (needsCa && !hasCa)
                     if (railFilter === 'incomplete' && !isIncomplete) return null
@@ -3277,7 +3492,7 @@ export default function QuizBuilder() {
                   <Button
                     icon={<ThunderboltOutlined />}
                     block
-                    onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null) }}
+                    onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null); setAiSelectedTypes(null) }}
                   >
                     {t('ai.generateWithAI')}
                   </Button>
@@ -3713,6 +3928,14 @@ export default function QuizBuilder() {
                 </Radio.Group>
               </div>
             )}
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 6 }}>{t('ai.questionTypesLabel', 'Question types to generate')}</Text>
+              <Checkbox.Group
+                value={effectiveAiTypes}
+                onChange={(vals) => setAiSelectedTypes(vals)}
+                options={aiTypeOptions}
+              />
+            </div>
             {aiError && <Alert type="error" message={aiError} showIcon />}
             <Button
               type="primary"
@@ -3793,8 +4016,8 @@ export default function QuizBuilder() {
             )}
             {aiPreview.map((q, i) => {
               const qType = q.question_type || 'mcq'
-              const typeColors = { mcq: 'cyan', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange', single_line: 'blue', code: 'volcano' }
-              const typeLabels = { mcq: 'MCQ', word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph'), single_line: t('quiz.singleLine', 'Short Answer'), code: t('quiz.code', 'Code') }
+              const typeColors = { mcq: 'cyan', mcq_multi: 'gold', word_cloud: 'purple', scale: 'geekblue', paragraph: 'orange', single_line: 'blue', code: 'volcano' }
+              const typeLabels = { mcq: 'MCQ', mcq_multi: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ'), word_cloud: t('quiz.wordCloud'), scale: t('quizPresent.scaleOneToFive'), paragraph: t('quiz.paragraph'), single_line: t('quiz.singleLine', 'Short Answer'), code: t('quiz.code', 'Code') }
               const isEditing = editingPreviewIndex === i
               const isRegenerating = regeneratingIndex === i
 
@@ -3824,6 +4047,7 @@ export default function QuizBuilder() {
                                 text: stripHtml(q.text) || q.text,
                                 options: (q.options || []).map(o => stripHtml(o) || o),
                                 correct_answer_index: q.correct_answer_index ?? 0,
+                                correct_answer_indices: q.correct_answer_indices || [],
                               })
                             }}
                             disabled={regeneratingIndex !== null || editingPreviewIndex !== null}
@@ -3847,18 +4071,28 @@ export default function QuizBuilder() {
                         placeholder={t('quiz.enterQuestion')}
                         style={{ fontWeight: 600 }}
                       />
-                      {qType === 'mcq' && editingData.options.map((opt, oi) => (
+                      {(qType === 'mcq' || qType === 'mcq_multi') && editingData.options.map((opt, oi) => {
+                        const isMultiQ = qType === 'mcq_multi'
+                        const isCorrectOpt = isMultiQ
+                          ? (editingData.correct_answer_indices || []).includes(oi)
+                          : oi === editingData.correct_answer_index
+                        return (
                         <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span
                             style={{
                               flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              background: oi === editingData.correct_answer_index ? '#52c41a' : '#f0f0f0',
-                              color: oi === editingData.correct_answer_index ? '#fff' : '#666',
+                              background: isCorrectOpt ? '#52c41a' : '#f0f0f0',
+                              color: isCorrectOpt ? '#fff' : '#666',
                               cursor: 'pointer', fontSize: 11, fontWeight: 700,
                             }}
                             title={t('ai.setCorrect', 'Mark as correct')}
-                            onClick={() => setEditingData(d => ({ ...d, correct_answer_index: oi }))}
+                            onClick={() => setEditingData(d => {
+                              if (!isMultiQ) return { ...d, correct_answer_index: oi }
+                              const cur = new Set(d.correct_answer_indices || [])
+                              if (cur.has(oi)) cur.delete(oi); else cur.add(oi)
+                              return { ...d, correct_answer_indices: Array.from(cur).sort((a, b) => a - b) }
+                            })}
                           >
                             {String.fromCharCode(65 + oi)}
                           </span>
@@ -3873,14 +4107,21 @@ export default function QuizBuilder() {
                             style={{ flex: 1 }}
                           />
                         </div>
-                      ))}
+                        )
+                      })}
                       <Space>
                         <Button
                           size="small"
                           type="primary"
                           onClick={() => {
                             setAiPreview(prev => prev.map((item, idx) =>
-                              idx === i ? { ...item, text: editingData.text, options: editingData.options, correct_answer_index: editingData.correct_answer_index } : item
+                              idx === i ? {
+                                ...item,
+                                text: editingData.text,
+                                options: editingData.options,
+                                correct_answer_index: editingData.correct_answer_index,
+                                correct_answer_indices: editingData.correct_answer_indices,
+                              } : item
                             ))
                             setEditingPreviewIndex(null)
                             setEditingData(null)
@@ -3901,12 +4142,16 @@ export default function QuizBuilder() {
                       <div style={{ fontWeight: 600, marginBottom: 8 }}>
                         <RichTextRenderer content={q.text} />
                       </div>
-                      {qType === 'mcq' && q.options && (
+                      {(qType === 'mcq' || qType === 'mcq_multi') && q.options && (
                         <div>
-                          {q.options.map((opt, oi) => (
+                          {q.options.map((opt, oi) => {
+                            const isCorrectOpt = qType === 'mcq_multi'
+                              ? (q.correct_answer_indices || []).includes(oi)
+                              : oi === q.correct_answer_index
+                            return (
                             <div key={oi} style={{
                               display: 'flex', alignItems: 'baseline', gap: 4,
-                              color: oi === q.correct_answer_index ? '#52c41a' : 'rgba(0,0,0,0.45)',
+                              color: isCorrectOpt ? '#52c41a' : 'rgba(0,0,0,0.45)',
                               marginBottom: 2,
                             }}>
                               <span style={{ flexShrink: 0, fontWeight: 500 }}>
@@ -3923,11 +4168,12 @@ export default function QuizBuilder() {
                                   >🔍</Button>
                                 </Tooltip>
                               )}
-                              {oi === q.correct_answer_index && !isPoll && (
+                              {isCorrectOpt && !isPoll && (
                                 <Tag color="green" style={{ marginLeft: 4, flexShrink: 0 }}>{t('ai.correct')}</Tag>
                               )}
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
                       {qType === 'scale' && (

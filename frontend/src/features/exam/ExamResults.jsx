@@ -769,7 +769,9 @@ export default function ExamResults() {
               </Col>
             </Row>
 
-            {qa.options && qa.answer_distribution && (
+            {qa.options && qa.answer_distribution && (() => {
+              const correctIndices = new Set(qa.correct_answer_indices || (qa.correct_answer_index != null ? [qa.correct_answer_index] : []))
+              return (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart
                   data={qa.options.map((opt, i) => {
@@ -778,7 +780,7 @@ export default function ExamResults() {
                       name: plain.length > 24 ? plain.slice(0, 24) + '…' : plain,
                       fullText: plain,
                       count: qa.answer_distribution[i] || 0,
-                      isCorrect: i === qa.correct_answer_index,
+                      isCorrect: correctIndices.has(i),
                     }
                   })}
                   margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
@@ -791,13 +793,14 @@ export default function ExamResults() {
                     {qa.options.map((_, i) => (
                       <Cell
                         key={i}
-                        fill={i === qa.correct_answer_index ? '#52c41a' : '#1890ff'}
+                        fill={correctIndices.has(i) ? '#52c41a' : '#1890ff'}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            )}
+              )
+            })()}
             {idx < results.question_analytics.length - 1 && <Divider />}
           </div>
         ))}
@@ -900,7 +903,7 @@ export default function ExamResults() {
             <List
               dataSource={participantDetail.questions}
               renderItem={(q, idx) => {
-                const answered = q.participant_answer != null
+                const answered = q.participant_answer != null || (Array.isArray(q.participant_answer_indices) && q.participant_answer_indices.length > 0)
                 const color = q.is_correct === true ? '#f6ffed' : q.is_correct === false ? '#fff2f0' : '#fafafa'
                 const borderColor = q.is_correct === true ? '#b7eb8f' : q.is_correct === false ? '#ffa39e' : '#d9d9d9'
                 return (
@@ -919,8 +922,12 @@ export default function ExamResults() {
                           {q.options && (
                             <div style={{ marginTop: 6 }}>
                               {q.options.map((opt, i) => {
-                                const isChosen = i === q.participant_answer
-                                const isCorrect = i === q.correct_answer_index
+                                const isChosen = Array.isArray(q.participant_answer_indices)
+                                  ? q.participant_answer_indices.includes(i)
+                                  : i === q.participant_answer
+                                const isCorrect = Array.isArray(q.correct_answer_indices)
+                                  ? q.correct_answer_indices.includes(i)
+                                  : i === q.correct_answer_index
                                 return (
                                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                                     <span style={{

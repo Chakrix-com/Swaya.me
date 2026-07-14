@@ -50,7 +50,8 @@ async def save_answer(slug: str, body: OfflineAnswerRequest, db: AsyncSession = 
     try:
         return await svc.save_answer(
             db, slug, body.session_token, body.question_id,
-            body.selected_option_index, body.text_answer
+            body.selected_option_index, body.text_answer,
+            selected_option_indices=body.selected_option_indices,
         )
     except QuizNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
