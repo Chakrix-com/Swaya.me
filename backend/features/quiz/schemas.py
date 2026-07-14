@@ -814,8 +814,8 @@ class ExamInfoResponse(BaseModel):
     has_per_question_timers: bool = False
     require_email: bool = False
     # Scoring summary
-    points_per_correct: int = 1
-    negative_points_per_wrong: int = 0
+    points_per_correct: float = 1
+    negative_points_per_wrong: float = 0
     scoring_varies: bool = False
 
 
@@ -891,16 +891,16 @@ class ExamQuestionResult(BaseModel):
     participant_answer_indices: Optional[List[int]] = None
     participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
-    points_earned: int = 0
-    points_possible: int = 1
-    negative_points_applied: int = 0
+    points_earned: float = 0
+    points_possible: float = 1
+    negative_points_applied: float = 0
     answer_explanation: Optional[str] = None
 
 
 class ExamSubmitResponse(BaseModel):
     """Score shown immediately after submit"""
-    total_score: int
-    max_score: int
+    total_score: float
+    max_score: float
     percentage: float
     correct_count: int
     wrong_count: int
@@ -915,8 +915,8 @@ class ExamLeaderboardEntry(BaseModel):
     rank: Optional[int] = None
     display_name: str
     email: Optional[str] = None
-    score: int
-    max_score: int
+    score: float
+    max_score: float
     percentage: float
     correct_count: int
     time_taken_seconds: Optional[float] = None
@@ -937,8 +937,8 @@ class ParticipantQuestionResult(BaseModel):
     participant_answer_indices: Optional[List[int]] = None
     participant_text_answer: Optional[str] = None
     is_correct: Optional[bool] = None
-    points_earned: int = 0
-    points_possible: int = 1
+    points_earned: float = 0
+    points_possible: float = 1
 
 
 class ParticipantDetailResponse(BaseModel):
@@ -946,8 +946,8 @@ class ParticipantDetailResponse(BaseModel):
     participant_id: int
     display_name: str
     email: Optional[str] = None
-    score: int
-    max_score: int
+    score: float
+    max_score: float
     percentage: float
     correct_count: int
     wrong_count: int
@@ -982,7 +982,7 @@ class ExamResultsResponse(BaseModel):
     total_completed: int
     total_abandoned: int
     average_score: float
-    max_score: int
+    max_score: float
     leaderboard: List[ExamLeaderboardEntry]
     question_analytics: List[ExamQuestionAnalytics]
     participant_emails_sent: bool = False
