@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Tree, Spin, Button, Tooltip, Modal, Form, Input,
-  message, Switch, List, Avatar, Space, Tag, theme,
+  message, Switch, List, Avatar, Space, Tag,
 } from 'antd'
 import {
   FolderFilled, FolderOpenFilled, FolderAddOutlined, MoreOutlined,
@@ -14,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { setFolders } from '../store/quizSlice'
 import { quizAPI, authAPI } from '../services/api'
+import MoreActionsMenu from './MoreActionsMenu'
 import SafeMultiSelect from './SafeMultiSelect'
 import SafeTreeSelect from './SafeTreeSelect'
 import './SidebarFolderTree.css'
@@ -26,63 +26,6 @@ function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getF
   const hasChildren = (node.children || []).length > 0
   const isSelected = selectedFolderId === node.id
   const isShared = !!node.is_shared_to_me
-
-  const { token } = theme.useToken()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
-  const triggerRef = useRef(null)
-  const popupRef = useRef(null)
-
-  const POPUP_WIDTH = 170
-  const ITEM_HEIGHT = 30
-  const DIVIDER_HEIGHT = 9 // 1px line + 4px margin top/bottom
-  const CONTAINER_PADDING = 8 // 4px top + 4px bottom
-
-  const openMenu = () => {
-    const items = getFolderMenu(node)
-    const estimatedHeight = CONTAINER_PADDING +
-      items.reduce((h, item) => h + (item.type === 'divider' ? DIVIDER_HEIGHT : ITEM_HEIGHT), 0)
-
-    const rect = triggerRef.current.getBoundingClientRect()
-    const margin = 8
-
-    // Prefer opening below, right-aligned to the trigger — but flip/nudge to
-    // stay fully on screen instead of getting clipped by the sidebar's own
-    // scroll container (which position:absolute inside it can't escape).
-    let top = rect.bottom + 4
-    if (top + estimatedHeight > window.innerHeight - margin) {
-      top = rect.top - estimatedHeight - 4
-    }
-    let left = rect.right - POPUP_WIDTH
-    if (left < margin) left = margin
-    if (left + POPUP_WIDTH > window.innerWidth - margin) left = window.innerWidth - margin - POPUP_WIDTH
-
-    setMenuPos({ top, left })
-    setMenuOpen(true)
-  }
-
-  useEffect(() => {
-    if (!menuOpen) return
-
-    const onOutsideClick = (e) => {
-      if (
-        triggerRef.current && !triggerRef.current.contains(e.target) &&
-        popupRef.current && !popupRef.current.contains(e.target)
-      ) {
-        setMenuOpen(false)
-      }
-    }
-    const onEscape = (e) => {
-      if (e.key === 'Escape') setMenuOpen(false)
-    }
-
-    document.addEventListener('mousedown', onOutsideClick)
-    document.addEventListener('keydown', onEscape)
-    return () => {
-      document.removeEventListener('mousedown', onOutsideClick)
-      document.removeEventListener('keydown', onEscape)
-    }
-  }, [menuOpen])
 
   return (
     <>
@@ -118,61 +61,11 @@ function FolderNode({ node, depth, selectedFolderId, onSelect, onCreateSub, getF
               <Button type="text" size="small" icon={<FolderAddOutlined />}
                 className="sf2-action-btn" onClick={() => onCreateSub(node.id)} />
             </Tooltip>
-            <span ref={triggerRef} style={{ position: 'relative', display: 'inline-block' }}>
-              <Button type="text" size="small" icon={<MoreOutlined />} className="sf2-action-btn"
-                onClick={() => (menuOpen ? setMenuOpen(false) : openMenu())} />
-            </span>
-            {menuOpen && createPortal(
-              <div
-                ref={popupRef}
-                style={{
-                  position: 'fixed',
-                  top: menuPos.top,
-                  left: menuPos.left,
-                  width: POPUP_WIDTH,
-                  boxSizing: 'border-box',
-                  fontSize: token.fontSize,
-                  lineHeight: 'normal',
-                  background: token.colorBgElevated,
-                  border: `1px solid ${token.colorBorderSecondary}`,
-                  borderRadius: token.borderRadiusLG,
-                  boxShadow: token.boxShadowSecondary,
-                  padding: 4,
-                  zIndex: 1050,
-                }}
-              >
-                {getFolderMenu(node).map((item, i) => (
-                  item.type === 'divider' ? (
-                    <div key={`div-${i}`} style={{ height: 1, background: token.colorSplit, margin: '4px 0' }} />
-                  ) : (
-                    <div
-                      key={item.key}
-                      onClick={() => { item.onClick?.(); setMenuOpen(false) }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        boxSizing: 'border-box',
-                        height: 30,
-                        padding: '0 12px',
-                        borderRadius: token.borderRadiusSM,
-                        cursor: 'pointer',
-                        color: token.colorText,
-                        fontSize: token.fontSize,
-                        lineHeight: '30px',
-                        whiteSpace: 'nowrap',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = token.controlItemBgHover }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </div>
-                  )
-                ))}
-              </div>,
-              document.body
-            )}
+            <MoreActionsMenu
+              width={170}
+              items={getFolderMenu(node)}
+              trigger={<Button type="text" size="small" icon={<MoreOutlined />} className="sf2-action-btn" />}
+            />
           </span>
         )}
       </div>

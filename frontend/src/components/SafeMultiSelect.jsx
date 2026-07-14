@@ -4,36 +4,30 @@ import { CloseOutlined, SearchOutlined } from '@ant-design/icons'
 
 // Deliberately not using antd's Select here — same click-race bug as
 // Dropdown (both share @rc-component/trigger's mousedown/pointerdown
-// coordination). This is a hand-rolled multi-select with its own open/close
-// state and a single outside-click listener, matching the pattern already
-// proven safe in ThemePicker / the profile menu.
+// coordination). This does NOT use a raw document.addEventListener
+// ('mousedown', ...) listener for outside-click-to-close either — that
+// depends on a real mousedown/mouseup/click sequence arriving in the
+// expected order, which is fragile over remote-desktop input redirection
+// (and untestable via a JS-level .click(), which never fires mousedown at
+// all). Instead an invisible full-viewport div renders behind the dropdown
+// panel and closes it via a plain React onClick, the same synchronous
+// synthetic-click mechanism every other button in this app already uses.
+// Not portaled — kept as a normal nested child so it stays in the same
+// stacking context as an ancestor Modal, rather than a document.body portal
+// potentially painting above the Modal's own mask.
 function SafeMultiSelect({ value = [], onChange, options = [], placeholder, notFoundContent, style }) {
   const { token } = theme.useToken()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
   const inputRef = useRef(null)
+
+  const close = () => { setOpen(false); setQuery('') }
 
   useEffect(() => {
     if (!open) return
-    const onOutsideClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false)
-        setQuery('')
-      }
-    }
-    const onEscape = (e) => {
-      if (e.key === 'Escape') {
-        setOpen(false)
-        setQuery('')
-      }
-    }
-    document.addEventListener('mousedown', onOutsideClick)
+    const onEscape = (e) => { if (e.key === 'Escape') close() }
     document.addEventListener('keydown', onEscape)
-    return () => {
-      document.removeEventListener('mousedown', onOutsideClick)
-      document.removeEventListener('keydown', onEscape)
-    }
+    return () => document.removeEventListener('keydown', onEscape)
   }, [open])
 
   const selectedOptions = useMemo(
@@ -61,7 +55,7 @@ function SafeMultiSelect({ value = [], onChange, options = [], placeholder, notF
   }
 
   return (
-    <span ref={containerRef} style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
+    <span style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
       <div
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0) }}
         style={{
@@ -99,18 +93,20 @@ function SafeMultiSelect({ value = [], onChange, options = [], placeholder, notF
         />
       </div>
       {open && (
-        <div
-          className="sw-multiselect-panel"
-          style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-            maxHeight: 220, overflowY: 'auto', boxSizing: 'border-box',
-            background: token.colorBgElevated,
-            border: `1px solid ${token.colorBorderSecondary}`,
-            borderRadius: token.borderRadiusLG,
-            boxShadow: token.boxShadowSecondary,
-            padding: 4, zIndex: 1050,
-          }}
-        >
+        <>
+          <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 1049 }} />
+          <div
+            className="sw-multiselect-panel"
+            style={{
+              position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+              maxHeight: 220, overflowY: 'auto', boxSizing: 'border-box',
+              background: token.colorBgElevated,
+              border: `1px solid ${token.colorBorderSecondary}`,
+              borderRadius: token.borderRadiusLG,
+              boxShadow: token.boxShadowSecondary,
+              padding: 4, zIndex: 1050,
+            }}
+          >
           {filteredOptions.length === 0 ? (
             <div style={{ padding: '8px 12px', fontSize: 13, color: token.colorTextTertiary, display: 'flex', alignItems: 'center', gap: 6 }}>
               <SearchOutlined style={{ fontSize: 12 }} />
@@ -139,7 +135,8 @@ function SafeMultiSelect({ value = [], onChange, options = [], placeholder, notF
               )
             })
           )}
-        </div>
+          </div>
+        </>
       )}
     </span>
   )
