@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Tree, Spin, Button, Tooltip, Modal, Form, Input,
-  TreeSelect, message, Switch, List, Avatar, Space, Tag, theme,
+  message, Switch, List, Avatar, Space, Tag, theme,
 } from 'antd'
 import {
   FolderFilled, FolderOpenFilled, FolderAddOutlined, MoreOutlined,
@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { setFolders } from '../store/quizSlice'
 import { quizAPI, authAPI } from '../services/api'
 import SafeMultiSelect from './SafeMultiSelect'
+import SafeTreeSelect from './SafeTreeSelect'
 import './SidebarFolderTree.css'
 
 const ROOT_KEY = 'swayame-root'
@@ -447,8 +448,8 @@ function SidebarFolderTree() {
             <Input autoFocus />
           </Form.Item>
           <Form.Item name="parent_id" label={t('dashboard.parentFolder')}>
-            <TreeSelect allowClear treeData={folderTreeData}
-              placeholder={t('dashboard.noParentRoot')} treeDefaultExpandAll />
+            <SafeTreeSelect allowClear treeData={folderTreeData}
+              placeholder={t('dashboard.noParentRoot')} />
           </Form.Item>
         </Form>
       </Modal>
@@ -462,9 +463,9 @@ function SidebarFolderTree() {
             <Input autoFocus />
           </Form.Item>
           <Form.Item name="parent_id" label={t('dashboard.moveTo')}>
-            <TreeSelect allowClear
+            <SafeTreeSelect allowClear
               treeData={folderTreeData.filter(n => n.value !== renameTarget?.id)}
-              placeholder={t('dashboard.rootNoParent')} treeDefaultExpandAll />
+              placeholder={t('dashboard.rootNoParent')} />
           </Form.Item>
         </Form>
       </Modal>
