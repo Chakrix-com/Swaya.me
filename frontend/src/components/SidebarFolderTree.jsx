@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Tree, Spin, Button, Tooltip, Modal, Form, Input,
-  TreeSelect, message, Switch, Select, List, Avatar, Space, Tag, theme,
+  TreeSelect, message, Switch, List, Avatar, Space, Tag, theme,
 } from 'antd'
 import {
   FolderFilled, FolderOpenFilled, FolderAddOutlined, MoreOutlined,
@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { setFolders } from '../store/quizSlice'
 import { quizAPI, authAPI } from '../services/api'
+import SafeMultiSelect from './SafeMultiSelect'
 import './SidebarFolderTree.css'
 
 const ROOT_KEY = 'swayame-root'
@@ -485,9 +486,9 @@ function SidebarFolderTree() {
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
             <div>
               <div style={{ fontWeight: 600, marginBottom: 6 }}>{t('dashboard.shareWith')}</div>
-              <Select
-                mode="multiple" style={{ width: '100%' }} placeholder={t('dashboard.selectTeammates')}
-                value={shareUserIds} onChange={setShareUserIds} optionFilterProp="label"
+              <SafeMultiSelect
+                style={{ width: '100%' }} placeholder={t('dashboard.selectTeammates')}
+                value={shareUserIds} onChange={setShareUserIds}
                 options={tenantUsers.filter(u => u.id !== user?.id).map(u => ({ value: u.id, label: u.email }))}
                 notFoundContent={tenantUsers.length === 0 ? t('dashboard.noOtherUsers') : t('dashboard.noMatch')}
               />
