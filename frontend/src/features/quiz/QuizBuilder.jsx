@@ -59,6 +59,7 @@ import {
 } from 'antd'
 import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FontColorsOutlined, LinkOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { QRCodeCanvas } from 'qrcode.react'
 import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
 import VideoEmbed, { getVideoEmbedUrl } from './components/VideoEmbed'
@@ -3694,6 +3695,13 @@ export default function QuizBuilder() {
           >
             {examLinkModal.url}
           </Text>
+          {examLinkModal.url && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+              <div style={{ background: '#fff', padding: 12, borderRadius: 8, border: `1px solid ${token.colorBorderSecondary}` }}>
+                <QRCodeCanvas value={examLinkModal.url} size={160} level="H" includeMargin={false} />
+              </div>
+            </div>
+          )}
         </Space>
       </SafeModal>
 
