@@ -3,6 +3,7 @@ import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS as DndCSS } from '@dnd-kit/utilities'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
 import {
@@ -1246,7 +1247,7 @@ export default function QuizBuilder() {
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
   const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
   const isLiveMode = quiz?.status === 'ready'
-  const currentUser = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user: currentUser } = useSelector((state) => state.auth)
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
 
   // Rewrite state for main form fields
