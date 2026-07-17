@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Tree, Spin, Button, Tooltip, Modal, Form, Input,
+  Tree, Spin, Button, Tooltip, Form, Input,
   message, Switch, List, Avatar, Space, Tag,
 } from 'antd'
 import {
@@ -16,6 +16,7 @@ import { quizAPI, authAPI } from '../services/api'
 import MoreActionsMenu from './MoreActionsMenu'
 import SafeMultiSelect from './SafeMultiSelect'
 import SafeTreeSelect from './SafeTreeSelect'
+import SafeModal from './SafeModal'
 import './SidebarFolderTree.css'
 
 const ROOT_KEY = 'swayame-root'
@@ -332,7 +333,7 @@ function SidebarFolderTree() {
       </div>
 
       {/* ── Modals ── */}
-      <Modal title={t('dashboard.newFolder')} open={createOpen}
+      <SafeModal title={t('dashboard.newFolder')} open={createOpen}
         onCancel={() => { setCreateOpen(false); createForm.resetFields() }}
         onOk={handleCreate} confirmLoading={createLoading}>
         <Form form={createForm} layout="vertical">
@@ -345,9 +346,9 @@ function SidebarFolderTree() {
               placeholder={t('dashboard.noParentRoot')} />
           </Form.Item>
         </Form>
-      </Modal>
+      </SafeModal>
 
-      <Modal title={t('dashboard.renameMoveFolder')} open={renameOpen}
+      <SafeModal title={t('dashboard.renameMoveFolder')} open={renameOpen}
         onCancel={() => { setRenameOpen(false); renameForm.resetFields() }}
         onOk={handleRename} confirmLoading={renameLoading}>
         <Form form={renameForm} layout="vertical">
@@ -361,16 +362,16 @@ function SidebarFolderTree() {
               placeholder={t('dashboard.rootNoParent')} />
           </Form.Item>
         </Form>
-      </Modal>
+      </SafeModal>
 
-      <Modal title={t('dashboard.deleteFolderTitle')} open={deleteOpen}
+      <SafeModal title={t('dashboard.deleteFolderTitle')} open={deleteOpen}
         onCancel={() => { setDeleteOpen(false); setDeleteTarget(null) }}
         onOk={handleDelete} confirmLoading={deleteLoading}
         okButtonProps={{ danger: true }} okText={t('common.delete')}>
         <p>{t('dashboard.deleteFolderConfirm', { name: deleteTarget?.name })}</p>
-      </Modal>
+      </SafeModal>
 
-      <Modal
+      <SafeModal
         title={<Space><ShareAltOutlined /> {t('dashboard.shareFolderTitle', { name: shareTarget?.name })}</Space>}
         open={shareOpen} onCancel={() => setShareOpen(false)}
         onOk={handleSaveShare} confirmLoading={shareLoading} okText={t('dashboard.saveFolderSharing')}>
@@ -409,7 +410,7 @@ function SidebarFolderTree() {
             )}
           </Space>
         )}
-      </Modal>
+      </SafeModal>
     </div>
   )
 }
