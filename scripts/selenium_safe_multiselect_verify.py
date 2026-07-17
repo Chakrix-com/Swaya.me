@@ -105,11 +105,11 @@ def main():
         driver.execute_script("arguments[0].click();", share_item)
         time.sleep(1)
 
-        modal = wait_for(driver, By.CLASS_NAME, 'ant-modal-content', timeout=5)
+        modal = wait_for(driver, By.CLASS_NAME, 'sw-safemodal-panel', timeout=5)
         check('Share modal opened', modal is not None)
 
         # The SafeMultiSelect input box
-        ms_input = wait_for(driver, By.XPATH, "//div[contains(@class,'ant-modal-content')]//input[@placeholder]", timeout=5)
+        ms_input = wait_for(driver, By.XPATH, "//div[contains(@class,'sw-safemodal-panel')]//input[@placeholder]", timeout=5)
         if not check('SafeMultiSelect input found', ms_input is not None):
             driver.save_screenshot('/tmp/safe_multiselect_no_input.png')
             return
@@ -121,7 +121,7 @@ def main():
         panel_visible = len(driver.find_elements(By.CLASS_NAME, 'sw-multiselect-panel')) > 0
         check('SafeMultiSelect dropdown panel opened on click', panel_visible)
 
-        checkboxes = driver.find_elements(By.XPATH, "//div[contains(@class,'ant-modal-content')]//input[@type='checkbox']")
+        checkboxes = driver.find_elements(By.XPATH, "//div[contains(@class,'sw-safemodal-panel')]//input[@type='checkbox']")
         print(f'{INFO} {len(checkboxes)} selectable teammate option(s) found')
 
         if checkboxes:
@@ -145,13 +145,21 @@ def main():
                 chip_count_after = len(driver.find_elements(By.CLASS_NAME, 'sw-multiselect-chip'))
                 check('Removing chip via its "x" works', chip_count_after == chip_count_before - 1)
 
-        # Outside click (on modal title) should close the multiselect panel, not the whole modal
-        title = driver.find_element(By.CLASS_NAME, 'ant-modal-header')
-        driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", title)
+        # Outside click should close the multiselect panel, not the whole modal.
+        # SafeMultiSelect closes via a plain React onClick on its own
+        # full-viewport click-catcher (z-index 1049) — not a document-level
+        # mousedown listener (that's the whole point of the pattern: no raw
+        # listener whose event-order assumptions can race). So the correct
+        # simulation is a real click on that click-catcher itself, not a
+        # synthetic mousedown dispatched at some unrelated element.
+        ms_masks = driver.find_elements(By.CSS_SELECTOR, "div[style*='z-index: 1049']")
+        check('SafeMultiSelect click-catcher mask present while open', len(ms_masks) > 0)
+        if ms_masks:
+            driver.execute_script("arguments[0].click();", ms_masks[0])
         time.sleep(0.5)
         panel_after_outside_click = len(driver.find_elements(By.CLASS_NAME, 'sw-multiselect-panel')) > 0
         check('Dropdown panel closes on outside click (modal itself stays open)', not panel_after_outside_click)
-        modal_still_present = len(driver.find_elements(By.CLASS_NAME, 'ant-modal-content')) > 0
+        modal_still_present = len(driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')) > 0
         check('Modal remains open (not accidentally dismissed)', modal_still_present)
 
         driver.save_screenshot('/tmp/safe_multiselect_final.png')

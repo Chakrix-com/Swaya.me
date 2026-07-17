@@ -44,19 +44,14 @@ def wait_for(driver, by, value, timeout=15, visible=True):
 
 
 def wait_for_open_modal(driver, timeout=5):
-    """SidebarFolderTree keeps all 4 Modals mounted at all times; only the
-    currently-open one's .ant-modal-wrap has display != none. Poll for that
-    directly instead of a bare class-name visibility check, which only ever
-    inspects the first DOM match."""
+    """SafeModal (unlike antd Modal) is a controlled `if (!open) return null`
+    component — it has zero DOM presence while closed, and each of
+    SidebarFolderTree's 4 SafeModal instances only portals its
+    .sw-safemodal-panel while its own `open` is true. So a bare class-name
+    presence check is sufficient; no display:none polling needed."""
     end = time.time() + timeout
     while time.time() < end:
-        found = driver.execute_script("""
-            const wraps = document.querySelectorAll('.ant-modal-wrap');
-            for (const w of wraps) {
-                if (getComputedStyle(w).display !== 'none') return true;
-            }
-            return false;
-        """)
+        found = len(driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')) > 0
         if found:
             return True
         time.sleep(0.2)
@@ -64,23 +59,15 @@ def wait_for_open_modal(driver, timeout=5):
 
 
 def get_open_modal_content(driver, timeout=5):
-    """Return the WebElement for the .ant-modal-content of whichever modal is
-    currently open (display != none on its ancestor .ant-modal-wrap) — all 4
-    SidebarFolderTree modals stay mounted, so a bare class-name lookup can't
-    tell which one is actually visible."""
+    """Return the WebElement for whichever SafeModal panel is currently
+    mounted. Only one of SidebarFolderTree's 4 SafeModal instances is ever
+    open at a time, and a closed SafeModal has no DOM presence at all, so
+    the first (and only) .sw-safemodal-panel match is always the right one."""
     end = time.time() + timeout
     while time.time() < end:
-        el = driver.execute_script("""
-            const wraps = document.querySelectorAll('.ant-modal-wrap');
-            for (const w of wraps) {
-                if (getComputedStyle(w).display !== 'none') {
-                    return w.querySelector('.ant-modal-content');
-                }
-            }
-            return null;
-        """)
-        if el is not None:
-            return el
+        els = driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')
+        if els:
+            return els[0]
         time.sleep(0.2)
     return None
 
@@ -158,17 +145,14 @@ def run(base_url, cookie_domain, token, label):
                         closed = False
                         for _ in range(20):
                             time.sleep(0.3)
-                            wrap_hidden = driver.execute_script("""
-                                const wrap = document.querySelector('.ant-modal-wrap');
-                                return wrap ? getComputedStyle(wrap).display === 'none' : true;
-                            """)
-                            if wrap_hidden:
+                            panel_gone = len(driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')) == 0
+                            if panel_gone:
                                 closed = True
                                 break
                         check(f'{label}: Cancel (real click) closes Rename modal within 6s', closed)
                         page_interactive = driver.execute_script("""
                             const el = document.elementFromPoint(50, 50);
-                            return el ? !el.closest('.ant-modal-wrap') : true;
+                            return el ? !el.closest('.sw-safemodal-mask') : true;
                         """)
                         check(f'{label}: page interactive after closing Rename modal', page_interactive)
 
@@ -201,17 +185,14 @@ def run(base_url, cookie_domain, token, label):
                         closed = False
                         for _ in range(20):
                             time.sleep(0.3)
-                            wrap_hidden = driver.execute_script("""
-                                const wrap = document.querySelector('.ant-modal-wrap');
-                                return wrap ? getComputedStyle(wrap).display === 'none' : true;
-                            """)
-                            if wrap_hidden:
+                            panel_gone = len(driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')) == 0
+                            if panel_gone:
                                 closed = True
                                 break
                         check(f'{label}: Cancel (real click) closes Share modal within 6s', closed)
                         page_interactive = driver.execute_script("""
                             const el = document.elementFromPoint(50, 50);
-                            return el ? !el.closest('.ant-modal-wrap') : true;
+                            return el ? !el.closest('.sw-safemodal-mask') : true;
                         """)
                         check(f'{label}: page interactive after closing Share modal', page_interactive)
 

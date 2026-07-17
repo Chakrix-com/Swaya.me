@@ -78,46 +78,43 @@ def main():
         driver.execute_script("arguments[0].click();", rename_items[0])
         time.sleep(1)
 
-        modal = wait_for(driver, By.CLASS_NAME, 'ant-modal-content', timeout=5)
+        modal = wait_for(driver, By.CLASS_NAME, 'sw-safemodal-panel', timeout=5)
         check('Rename modal opened', modal is not None)
 
-        name_input = wait_for(driver, By.XPATH, "//div[contains(@class,'ant-modal-body')]//input[not(@type='checkbox')]", timeout=5)
+        name_input = wait_for(driver, By.XPATH, "//div[contains(@class,'sw-safemodal-body')]//input[not(@type='checkbox')]", timeout=5)
         check('Name input present and typeable', name_input is not None)
         if name_input:
             name_input.send_keys(' (edited)')
 
         # Open the SafeTreeSelect (Move To) picker
-        picker = wait_for(driver, By.XPATH, "//div[contains(@class,'ant-modal-body')]//div[@style[contains(.,'cursor: pointer')]]", timeout=5)
+        picker = wait_for(driver, By.XPATH, "//div[contains(@class,'sw-safemodal-body')]//div[@style[contains(.,'cursor: pointer')]]", timeout=5)
         check('SafeTreeSelect picker box found', picker is not None)
         if picker:
             driver.execute_script("arguments[0].click();", picker)
             time.sleep(0.5)
-            options_visible = len(driver.find_elements(By.XPATH, "//div[contains(@class,'ant-modal-body')]//div[contains(@style,'zIndex: 1050') or contains(@style,'z-index: 1050')]")) > 0
+            options_visible = len(driver.find_elements(By.XPATH, "//div[contains(@class,'sw-safemodal-body')]//div[contains(@style,'zIndex: 1050') or contains(@style,'z-index: 1050')]")) > 0
             check('SafeTreeSelect dropdown opened', options_visible)
             # close it again by clicking the picker box itself
             driver.execute_script("arguments[0].click();", picker)
             time.sleep(0.3)
 
         # Now the critical check: are Cancel/Save buttons in the modal footer clickable?
-        cancel_btn = wait_for(driver, By.XPATH, "//div[contains(@class,'ant-modal-footer')]//button[.//span[text()='Cancel']]", timeout=5)
+        cancel_btn = wait_for(driver, By.XPATH, "//div[contains(@class,'sw-safemodal-footer')]//button[.//span[text()='Cancel']]", timeout=5)
         check('Cancel button found in modal footer', cancel_btn is not None)
         if cancel_btn:
             rect = cancel_btn.rect
             check('Cancel button has nonzero size (not collapsed/hidden)', rect['width'] > 0 and rect['height'] > 0)
             driver.execute_script("arguments[0].click();", cancel_btn)
             time.sleep(0.5)
-            # SidebarFolderTree keeps all 4 Modals (Create/Rename/Delete/Share) mounted
-            # at all times, toggling only .ant-modal-wrap's display — so checking for
-            # zero .ant-modal-content nodes site-wide is never true. Check the actual
-            # visibility gate instead.
-            wrap_hidden = driver.execute_script("""
-                const wrap = document.querySelector('.ant-modal-wrap');
-                return wrap ? getComputedStyle(wrap).display === 'none' : true;
-            """)
-            check('Clicking Cancel actually closes the modal (buttons are responsive)', wrap_hidden)
+            # SafeModal (unlike antd Modal) does not stay mounted with
+            # display:none when closed — it's a controlled `if (!open) return
+            # null` component, so a closed SafeModal has zero DOM presence at
+            # all. Absence of .sw-safemodal-panel is itself the closed signal.
+            modal_closed = len(driver.find_elements(By.CLASS_NAME, 'sw-safemodal-panel')) == 0
+            check('Clicking Cancel actually closes the modal (buttons are responsive)', modal_closed)
             page_interactive = driver.execute_script("""
                 const el = document.elementFromPoint(50, 50);
-                return el ? !el.closest('.ant-modal-wrap') : true;
+                return el ? !el.closest('.sw-safemodal-mask') : true;
             """)
             check('Page remains interactive after closing (no zombie overlay)', page_interactive)
 
