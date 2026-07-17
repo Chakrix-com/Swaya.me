@@ -63,6 +63,7 @@ import ImageUpload from './components/ImageUpload'
 import VideoEmbed, { getVideoEmbedUrl } from './components/VideoEmbed'
 import RichTextEditor from './components/RichTextEditor'
 import RichTextRenderer from './components/RichTextRenderer'
+import SafeModal from '../../components/SafeModal'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
@@ -3623,7 +3624,7 @@ export default function QuizBuilder() {
       )}
 
       {/* Poll link modal for offline polls */}
-      <Modal
+      <SafeModal
         title={t('offlinePoll.publishActivate', 'Poll Published!')}
         open={pollLinkModal.open}
         onCancel={() => setPollLinkModal({ open: false, url: '' })}
@@ -3643,10 +3644,10 @@ export default function QuizBuilder() {
             {pollLinkModal.url}
           </Text>
         </Space>
-      </Modal>
+      </SafeModal>
 
       {/* Batch continuity confirm modal */}
-      <Modal
+      <SafeModal
         title={t('exam.batchConfirmTitle')}
         open={batchConfirmModal.open}
         onCancel={() => setBatchConfirmModal({ open: false })}
@@ -3667,10 +3668,10 @@ export default function QuizBuilder() {
           />
           <Text type="secondary">{t('exam.batchConfirmHint')}</Text>
         </Space>
-      </Modal>
+      </SafeModal>
 
       {/* Exam link modal */}
-      <Modal
+      <SafeModal
         title={t('exam.publishSuccess')}
         open={examLinkModal.open}
         onCancel={() => setExamLinkModal({ open: false, url: '' })}
@@ -3693,7 +3694,7 @@ export default function QuizBuilder() {
             {examLinkModal.url}
           </Text>
         </Space>
-      </Modal>
+      </SafeModal>
 
       {/* AI Generate Questions Modal */}
       <Modal
