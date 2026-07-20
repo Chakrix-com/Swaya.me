@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Table, Space, Tag, Statistic,
-  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, Modal, List,
+  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, message, List,
   Badge, Timeline, Image
 } from 'antd'
 const { TextArea } = Input
@@ -25,6 +25,7 @@ import { exportExamResultsPDF } from './exportPDF'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import ReactMarkdown from 'react-markdown'
 import SafeModal from '../../components/SafeModal'
+import SafeConfirm from '../../components/SafeConfirm'
 import './ExamResults.css'
 
 const { Title, Text } = Typography
@@ -71,6 +72,7 @@ export default function ExamResults() {
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AI_PROMPT)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
   const [sendingEmails, setSendingEmails] = useState(false)
+  const [sendEmailsConfirmOpen, setSendEmailsConfirmOpen] = useState(false)
   const [senderName, setSenderName] = useState('')
 
   // Interview sheet modal
@@ -272,28 +274,23 @@ export default function ExamResults() {
   }
 
   const handleSendEmails = () => {
-    const completed = results?.total_completed ?? 0
-    const nameLabel = senderName.trim() || 'Swaya.me'
-    Modal.confirm({
-      title: t('exam.sendResultsTitle'),
-      content: t('exam.sendResultsContent', { count: completed, name: nameLabel }),
-      okText: t('exam.sendResultsOk'),
-      cancelText: t('common.cancel'),
-      onOk: async () => {
-        setSendingEmails(true)
-        try {
-          await examAPI.sendParticipantEmails(id, senderName.trim() || null)
-          Modal.success({ title: t('exam.emailsQueued'), content: t('exam.emailsQueuedContent') })
-          // Refresh results so the button flips to "Emails Sent ✓"
-          const updated = await examAPI.getResults(id)
-          setResults(updated.data)
-        } catch {
-          Modal.error({ title: t('exam.emailFailed'), content: t('exam.emailFailedContent') })
-        } finally {
-          setSendingEmails(false)
-        }
-      },
-    })
+    setSendEmailsConfirmOpen(true)
+  }
+
+  const doSendEmails = async () => {
+    setSendEmailsConfirmOpen(false)
+    setSendingEmails(true)
+    try {
+      await examAPI.sendParticipantEmails(id, senderName.trim() || null)
+      message.success(t('exam.emailsQueuedContent'))
+      // Refresh results so the button flips to "Emails Sent ✓"
+      const updated = await examAPI.getResults(id)
+      setResults(updated.data)
+    } catch {
+      message.error(t('exam.emailFailedContent'))
+    } finally {
+      setSendingEmails(false)
+    }
   }
 
   // Merge leaderboard with proctoring data and compute both rankings
@@ -1226,6 +1223,17 @@ export default function ExamResults() {
           </>
         )}
       </SafeModal>
+
+      <SafeConfirm
+        open={sendEmailsConfirmOpen}
+        title={t('exam.sendResultsTitle')}
+        description={t('exam.sendResultsContent', { count: results?.total_completed ?? 0, name: senderName.trim() || 'Swaya.me' })}
+        okText={t('exam.sendResultsOk')}
+        cancelText={t('common.cancel')}
+        danger={false}
+        onConfirm={doSendEmails}
+        onCancel={() => setSendEmailsConfirmOpen(false)}
+      />
     </div>
   )
 }
