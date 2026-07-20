@@ -42,15 +42,17 @@ function SafeModal({
   children,
   width = 420,
   maskClosable = true,
+  borderRadius,
+  closable = true,
 }) {
   const { token } = theme.useToken()
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !closable) return
     const onEscape = (e) => { if (e.key === 'Escape') onCancel?.() }
     document.addEventListener('keydown', onEscape)
     return () => document.removeEventListener('keydown', onEscape)
-  }, [open, onCancel])
+  }, [open, closable, onCancel])
 
   if (!open) return null
 
@@ -67,7 +69,7 @@ function SafeModal({
     <>
       <div
         className="sw-safemodal-mask"
-        onClick={() => { if (maskClosable !== false) onCancel?.() }}
+        onClick={() => { if (closable && maskClosable !== false) onCancel?.() }}
         style={{
           position: 'fixed', inset: 0, zIndex: 2000,
           background: 'rgba(0, 0, 0, 0.45)',
@@ -86,25 +88,29 @@ function SafeModal({
             position: 'relative', pointerEvents: 'auto',
             width, maxWidth: '100%', boxSizing: 'border-box',
             background: token.colorBgElevated,
-            borderRadius: token.borderRadiusLG,
+            borderRadius: borderRadius ?? token.borderRadiusLG,
             boxShadow: token.boxShadowSecondary,
           }}
         >
-          <div
-            className="sw-safemodal-header"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '16px 20px', borderBottom: `1px solid ${token.colorBorderSecondary}`,
-              fontSize: 16, fontWeight: 600, color: token.colorText,
-            }}
-          >
-            <div>{title}</div>
-            <CloseOutlined
-              className="sw-safemodal-close"
-              style={{ fontSize: 14, color: token.colorTextTertiary, cursor: 'pointer' }}
-              onClick={() => onCancel?.()}
-            />
-          </div>
+          {(title || closable) && (
+            <div
+              className="sw-safemodal-header"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 20px', borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                fontSize: 16, fontWeight: 600, color: token.colorText,
+              }}
+            >
+              <div>{title}</div>
+              {closable && (
+                <CloseOutlined
+                  className="sw-safemodal-close"
+                  style={{ fontSize: 14, color: token.colorTextTertiary, cursor: 'pointer' }}
+                  onClick={() => onCancel?.()}
+                />
+              )}
+            </div>
+          )}
           <div className="sw-safemodal-body" style={{ padding: 20, color: token.colorText }}>
             {children}
           </div>
