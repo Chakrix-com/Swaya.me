@@ -126,7 +126,7 @@ export default function IntegrityReport() {
       examAPI.getResults(quizId).catch(() => null),
       proctoringAPI.getReport(quizId).catch(() => ({ data: [] })),
     ]).then(([resultsRes, procRes]) => {
-      const participants = resultsRes?.data?.participants || []
+      const participants = resultsRes?.data?.leaderboard || []
       const p = participants.find(p2 => p2.participant_id === pid) || null
       setParticipant(p)
       setAllResults(resultsRes?.data)
@@ -182,12 +182,6 @@ export default function IntegrityReport() {
   const adjustedScore = (rawScore != null && intScore != null)
     ? Math.round(rawScore * (intScore / 100) * 10) / 10
     : rawScore
-
-  // Compute adjusted rank across all participants
-  const mergedParticipants = (allResults?.participants || []).map(p => {
-    const proc = null // simplified — adjusted rank shown as label only
-    return p
-  })
 
   return (
     <div style={{ padding: '24px', maxWidth: 1000, margin: '0 auto' }}>
