@@ -16,7 +16,6 @@ import {
   Space,
   List,
   Radio,
-  Popconfirm,
   Typography,
   Divider,
   Tag,
@@ -45,7 +44,6 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons'
 import {
-  Modal,
   Checkbox,
   Select,
   Segmented,
@@ -66,6 +64,7 @@ import VideoEmbed, { getVideoEmbedUrl } from './components/VideoEmbed'
 import RichTextEditor from './components/RichTextEditor'
 import RichTextRenderer from './components/RichTextRenderer'
 import SafeModal from '../../components/SafeModal'
+import SafeConfirm from '../../components/SafeConfirm'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
@@ -1244,6 +1243,7 @@ export default function QuizBuilder() {
   const [pollLinkModal, setPollLinkModal] = useState({ open: false, url: '' })
   const [examLinkModal, setExamLinkModal] = useState({ open: false, url: '' })
   const [batchConfirmModal, setBatchConfirmModal] = useState({ open: false })
+  const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState(null)
   const isPoll = quiz?.quiz_type === 'poll' || quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'poll') || (!quiz && initialQuizType === 'offline_poll')
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
   const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
@@ -1920,20 +1920,13 @@ export default function QuizBuilder() {
                             />
                           </Tooltip>
                         )}
-                        <Popconfirm
-                          title={t('quiz.deleteQuestionConfirm')}
-                          onConfirm={() => handleDeleteQuestion(question.id)}
-                          okText={t('common.submit')}
-                          cancelText={t('common.cancel')}
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
                           disabled={!!editingQuestion}
-                        >
-                          <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            disabled={!!editingQuestion}
-                          />
-                        </Popconfirm>
+                          onClick={() => setConfirmDeleteQuestionId(question.id)}
+                        />
                       </Space>
                       ) : null
                     }
@@ -3706,7 +3699,7 @@ export default function QuizBuilder() {
       </SafeModal>
 
       {/* AI Generate Questions Modal */}
-      <Modal
+      <SafeModal
         title={<Space><ThunderboltOutlined />{t('ai.generateQuestionsTitle')}</Space>}
         open={aiModalOpen}
         onCancel={() => { setAiModalOpen(false); setAiStep('input'); setAiPreview([]); setAiError(null); setAiExtractedText(''); setAiExtractError(null); setAiSourceTab('topic') }}
@@ -4227,7 +4220,16 @@ export default function QuizBuilder() {
             </Button>
           </Space>
         )}
-      </Modal>
+      </SafeModal>
+
+      <SafeConfirm
+        open={!!confirmDeleteQuestionId}
+        title={t('quiz.deleteQuestionConfirm')}
+        okText={t('common.submit')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => { handleDeleteQuestion(confirmDeleteQuestionId); setConfirmDeleteQuestionId(null) }}
+        onCancel={() => setConfirmDeleteQuestionId(null)}
+      />
     </div>
   )
 }
