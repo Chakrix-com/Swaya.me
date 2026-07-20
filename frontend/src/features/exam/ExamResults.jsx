@@ -392,7 +392,10 @@ export default function ExamResults() {
   const hasProcData = proctoringEnabled || violationData.length > 0
 
   const rankCell = (rank, record) => {
-    if (!record.is_completed) return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
+    if (!record.is_completed) {
+      if (record.is_abandoned) return <Tag color="default">{t('exam.abandoned', 'Abandoned')}</Tag>
+      return <Tag icon={<SyncOutlined spin />} color="processing">{t('exam.inProgress')}</Tag>
+    }
     return <Text>{rank}</Text>
   }
 
