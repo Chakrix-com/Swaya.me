@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { Spin, Tag, Rate, Progress, Modal } from 'antd'
+import { Spin, Tag, Rate, Progress } from 'antd'
+import SafeModal from '../../components/SafeModal'
 import { TeamOutlined, TrophyOutlined, LeftOutlined, RightOutlined, UserOutlined, ThunderboltOutlined, ClockCircleOutlined, CheckOutlined, CloseOutlined, FullscreenOutlined } from '@ant-design/icons'
 import { QRCodeCanvas } from 'qrcode.react'
 import ReactWordcloud from 'react-wordcloud'
@@ -731,11 +732,10 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
             </div>
             <span className="pv-qr-label">{t('quizPresent.scanToJoin', { defaultValue: 'Scan to join' })}</span>
           </div>
-          <Modal
+          <SafeModal
             open={qrModalOpen}
             onCancel={() => setQrModalOpen(false)}
             footer={null}
-            centered
             title={t('quizPresent.scanToJoin', { defaultValue: 'Scan to join' })}
             width={480}
           >
@@ -743,7 +743,7 @@ function Sidebar({ quizTitle, joinCode, joinUrl, participantCount, leaderboard, 
               <QRCodeCanvas value={joinUrl} size={380} level="H" includeMargin={true} />
               <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>{joinUrl}</div>
             </div>
-          </Modal>
+          </SafeModal>
           <div className="pv-join-code-wrap">
             <span className="pv-join-code-label">{t('quiz.joinCode')}</span>
             <span className="pv-join-code">{joinCode}</span>
