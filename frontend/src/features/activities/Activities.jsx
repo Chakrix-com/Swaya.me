@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Button, Tag, Space, Popconfirm, Tooltip, message,
+  Button, Tag, Space, Tooltip, message,
   Input, Table, Typography, Badge, Select, Alert, Grid,
 } from 'antd'
+import SafeConfirm from '../../components/SafeConfirm'
 
 const { useBreakpoint } = Grid
 import {
@@ -68,6 +69,8 @@ export default function Activities() {
   const [sortBy, setSortBy] = useState('created_at')
   const [selectedRowKeys, setSelectedRowKeys] = useState([])
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [confirmBulkArchive, setConfirmBulkArchive] = useState(false)
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
 
   const loadQuizzes = useCallback(async (includeArchived) => {
     try {
@@ -383,12 +386,8 @@ export default function Activities() {
           message={
             <Space>
               <Text strong>{selectedRowKeys.length} {t('activities.selected', 'selected')}</Text>
-              <Popconfirm title={t('activities.bulkArchiveConfirm', `Archive ${selectedRowKeys.length} activities?`)} onConfirm={handleBulkArchive} okText={t('quiz.archive', 'Archive')} cancelText={t('common.cancel', 'Cancel')}>
-                <Button size="small" icon={<InboxOutlined />} loading={bulkLoading}>{t('quiz.archive', 'Archive')}</Button>
-              </Popconfirm>
-              <Popconfirm title={t('activities.bulkDeleteConfirm', `Delete ${selectedRowKeys.length} activities?`)} description={t('quiz.deleteWarning', 'Cannot be undone.')} onConfirm={handleBulkDelete} okText={t('common.delete', 'Delete')} okButtonProps={{ danger: true }} cancelText={t('common.cancel', 'Cancel')}>
-                <Button size="small" icon={<DeleteOutlined />} danger loading={bulkLoading}>{t('common.delete', 'Delete')}</Button>
-              </Popconfirm>
+              <Button size="small" icon={<InboxOutlined />} loading={bulkLoading} onClick={() => setConfirmBulkArchive(true)}>{t('quiz.archive', 'Archive')}</Button>
+              <Button size="small" icon={<DeleteOutlined />} danger loading={bulkLoading} onClick={() => setConfirmBulkDelete(true)}>{t('common.delete', 'Delete')}</Button>
               <Button size="small" onClick={() => setSelectedRowKeys([])}>{t('common.clear', 'Clear')}</Button>
             </Space>
           }
@@ -396,6 +395,25 @@ export default function Activities() {
           showIcon={false}
         />
       )}
+
+      <SafeConfirm
+        open={confirmBulkArchive}
+        title={t('activities.bulkArchiveConfirm', `Archive ${selectedRowKeys.length} activities?`)}
+        okText={t('quiz.archive', 'Archive')}
+        cancelText={t('common.cancel', 'Cancel')}
+        danger={false}
+        onConfirm={() => { setConfirmBulkArchive(false); handleBulkArchive() }}
+        onCancel={() => setConfirmBulkArchive(false)}
+      />
+      <SafeConfirm
+        open={confirmBulkDelete}
+        title={t('activities.bulkDeleteConfirm', `Delete ${selectedRowKeys.length} activities?`)}
+        description={t('quiz.deleteWarning', 'Cannot be undone.')}
+        okText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
+        onConfirm={() => { setConfirmBulkDelete(false); handleBulkDelete() }}
+        onCancel={() => setConfirmBulkDelete(false)}
+      />
 
       <Table
         rowKey="id"
