@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Popconfirm } from 'antd'
+import { Button } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
+import SafeConfirm from './SafeConfirm'
 
 // Deliberately not using antd's Dropdown here — that's built on
 // @rc-component/trigger's mousedown/pointerdown coordination, which is
@@ -24,6 +25,7 @@ const CONTAINER_PADDING = 12
 function MoreActionsMenu({ items, trigger, disabled = false, width = 190 }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [confirmItem, setConfirmItem] = useState(null)
   const triggerRef = useRef(null)
 
   const openMenu = () => {
@@ -77,17 +79,13 @@ function MoreActionsMenu({ items, trigger, disabled = false, width = 190 }) {
 
               if (item.confirm && !item.disabled) {
                 return (
-                  <Popconfirm
+                  <div
                     key={item.key}
-                    title={item.confirm.title}
-                    description={item.confirm.description}
-                    onConfirm={() => { item.confirm.onConfirm(); setOpen(false) }}
-                    okText={item.confirm.okText}
-                    okButtonProps={{ danger: true }}
-                    cancelText={item.confirm.cancelText}
+                    className={itemClass}
+                    onClick={() => { setConfirmItem(item); setOpen(false) }}
                   >
-                    <div className={itemClass}>{label}</div>
-                  </Popconfirm>
+                    {label}
+                  </div>
                 )
               }
               return (
@@ -103,6 +101,17 @@ function MoreActionsMenu({ items, trigger, disabled = false, width = 190 }) {
           </div>
         </>,
         document.body
+      )}
+      {confirmItem && (
+        <SafeConfirm
+          open={!!confirmItem}
+          title={confirmItem.confirm.title}
+          description={confirmItem.confirm.description}
+          okText={confirmItem.confirm.okText}
+          cancelText={confirmItem.confirm.cancelText}
+          onConfirm={() => { confirmItem.confirm.onConfirm(); setConfirmItem(null) }}
+          onCancel={() => setConfirmItem(null)}
+        />
       )}
     </span>
   )
