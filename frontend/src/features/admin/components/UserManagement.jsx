@@ -8,7 +8,6 @@ import {
   Select,
   Tag,
   Space,
-  Modal,
   message,
   Card,
   Row,
@@ -111,22 +110,14 @@ const UserManagement = () => {
     setIsFormVisible(true);
   };
 
-  const handleDeleteUser = (userId, userName) => {
-    Modal.confirm({
-      title: t('admin.users.deleteUser'),
-      content: t('admin.users.deleteConfirm', { userName }),
-      okText: t('admin.users.delete'),
-      okType: 'danger',
-      onOk: async () => {
-        try {
-          await dispatch(deleteUser(userId)).unwrap();
-          message.success(t('admin.users.userDeletedSuccess'));
-          loadUsers();
-        } catch (err) {
-          message.error(err.message || t('admin.users.userDeletedError'));
-        }
-      },
-    });
+  const handleDeleteUser = async (userId) => {
+    try {
+      await dispatch(deleteUser(userId)).unwrap();
+      message.success(t('admin.users.userDeletedSuccess'));
+      loadUsers();
+    } catch (err) {
+      message.error(err.message || t('admin.users.userDeletedError'));
+    }
   };
 
   const handleFormSuccess = () => {
@@ -276,7 +267,13 @@ const UserManagement = () => {
         label: t('admin.users.deleteUser'),
         icon: <DeleteOutlined />,
         danger: true,
-        onClick: () => handleDeleteUser(record.id, record.email),
+        confirm: {
+          title: t('admin.users.deleteUser'),
+          description: t('admin.users.deleteConfirm', { userName: record.email }),
+          onConfirm: () => handleDeleteUser(record.id),
+          okText: t('admin.users.delete'),
+          cancelText: t('common.cancel', 'Cancel'),
+        },
         disabled: record.id === currentUser?.id, // Can't delete yourself
       },
     ],
