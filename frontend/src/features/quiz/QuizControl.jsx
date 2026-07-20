@@ -15,10 +15,10 @@ import {
   Alert,
   Input,
   Table,
-  Popconfirm,
-  Modal,
   Divider,
 } from 'antd'
+import SafeModal from '../../components/SafeModal'
+import SafeConfirm from '../../components/SafeConfirm'
 import {
   PlayCircleOutlined,
   ArrowRightOutlined,
@@ -63,6 +63,8 @@ export default function QuizControl() {
   const [codeEvalResult, setCodeEvalResult] = useState(null)
   const [timerRemaining, setTimerRemaining] = useState(null)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [confirmSkipTimer, setConfirmSkipTimer] = useState(false)
+  const [confirmStopQuiz, setConfirmStopQuiz] = useState(false)
   const [lobbyParticipants, setLobbyParticipants] = useState([])
 
   useEffect(() => {
@@ -398,18 +400,9 @@ export default function QuizControl() {
 
   const nextButton = (
     timedQuestionActive ? (
-      <Popconfirm
-        title={t('quiz.timerOverrideTitle', { defaultValue: 'Skip this timed question early?' })}
-        description={t('quiz.timerOverrideDescription', { defaultValue: 'This question has an active timer. Continue only if you want to override it now.' })}
-        onConfirm={handleAdvanceQuestion}
-        okText={t('quiz.timerOverrideOk', { defaultValue: 'Yes, continue' })}
-        cancelText={t('common.cancel')}
-        placement="left"
-      >
-        <Button type="primary" block size="large" icon={isLastQuestion ? <CheckCircleOutlined /> : <ArrowRightOutlined />} loading={loading}>
-          {isLastQuestion ? t('quiz.finish') : t('quiz.nextQuestion')} <kbd className="qc-kbd">{isLastQuestion ? '↵' : '→'}</kbd>
-        </Button>
-      </Popconfirm>
+      <Button type="primary" block size="large" icon={isLastQuestion ? <CheckCircleOutlined /> : <ArrowRightOutlined />} loading={loading} onClick={() => setConfirmSkipTimer(true)}>
+        {isLastQuestion ? t('quiz.finish') : t('quiz.nextQuestion')} <kbd className="qc-kbd">{isLastQuestion ? '↵' : '→'}</kbd>
+      </Button>
     ) : (
       <Button
         type="primary"
@@ -425,23 +418,9 @@ export default function QuizControl() {
   )
 
   const stopButton = (
-    <Popconfirm
-      title={t('quiz.stopQuizTitle')}
-      description={
-        timedQuestionActive
-          ? t('quiz.timerEndOverrideDescription', { defaultValue: 'A timer is running. Ending now overrides it. Results are saved to History.' })
-          : t('quiz.stopQuizSaved', { defaultValue: 'Results are saved to History.' })
-      }
-      onConfirm={handleEndSession}
-      okText={t('quiz.stopQuizOk')}
-      cancelText={t('common.cancel')}
-      okButtonProps={{ danger: true }}
-      placement="left"
-    >
-      <Button danger block icon={<CloseCircleOutlined />} loading={loading}>
-        {t('quiz.stopQuiz')}
-      </Button>
-    </Popconfirm>
+    <Button danger block icon={<CloseCircleOutlined />} loading={loading} onClick={() => setConfirmStopQuiz(true)}>
+      {t('quiz.stopQuiz')}
+    </Button>
   )
 
   // ── Leaderboard table (rendered in stage pane) ─────────────────────────────
@@ -924,11 +903,10 @@ export default function QuizControl() {
       </div>{/* end rail */}
 
       {/* QR enlarge modal */}
-      <Modal
+      <SafeModal
         open={qrModalOpen}
         onCancel={() => setQrModalOpen(false)}
         footer={null}
-        centered
         title={t('quiz.joinInformation')}
         width={480}
       >
@@ -936,7 +914,31 @@ export default function QuizControl() {
           <QRCodeCanvas value={joinUrl} size={380} level="H" includeMargin />
           <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>{joinUrl}</div>
         </div>
-      </Modal>
+      </SafeModal>
+
+      <SafeConfirm
+        open={confirmSkipTimer}
+        title={t('quiz.timerOverrideTitle', { defaultValue: 'Skip this timed question early?' })}
+        description={t('quiz.timerOverrideDescription', { defaultValue: 'This question has an active timer. Continue only if you want to override it now.' })}
+        okText={t('quiz.timerOverrideOk', { defaultValue: 'Yes, continue' })}
+        cancelText={t('common.cancel')}
+        danger={false}
+        onConfirm={() => { setConfirmSkipTimer(false); handleAdvanceQuestion() }}
+        onCancel={() => setConfirmSkipTimer(false)}
+      />
+      <SafeConfirm
+        open={confirmStopQuiz}
+        title={t('quiz.stopQuizTitle')}
+        description={
+          timedQuestionActive
+            ? t('quiz.timerEndOverrideDescription', { defaultValue: 'A timer is running. Ending now overrides it. Results are saved to History.' })
+            : t('quiz.stopQuizSaved', { defaultValue: 'Results are saved to History.' })
+        }
+        okText={t('quiz.stopQuizOk')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => { setConfirmStopQuiz(false); handleEndSession() }}
+        onCancel={() => setConfirmStopQuiz(false)}
+      />
     </div>
   )
 }
