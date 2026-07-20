@@ -207,15 +207,29 @@ def test_exam_flow():
         log("\n--- STEP 5: Answer questions ---")
         answered = 0
         for attempt in range(100):
-            # Dismiss any open Ant Design modal/confirm dialog first
-            # Look for modal overlay — if present, click its primary/confirm button
+            # Dismiss any open confirm dialog first — either antd's Modal
+            # (legacy) or SafeModal/SafeConfirm (frontend/src/components/
+            # SafeModal.jsx, sw-safemodal-* classes; see
+            # _private/modal-popconfirm-vdi-audit-tasks-20260720.md T17,
+            # which replaced ExamSession's Modal.confirm submit dialog with
+            # SafeConfirm). Look for either overlay — if present, click its
+            # primary/confirm button (scoped to inside the dialog so it
+            # can't match the original trigger button hidden behind it).
             modal_overlays = driver.find_elements(By.CSS_SELECTOR, ".ant-modal-wrap:not([style*='display: none'])")
+            safemodal_panels = driver.find_elements(By.CLASS_NAME, "sw-safemodal-panel")
             if modal_overlays:
                 # Try to click confirm/submit inside modal (not Cancel)
                 modal_btns = driver.find_elements(By.XPATH,
                     "//div[contains(@class,'ant-modal')]//button[contains(., 'Submit') or contains(., 'Yes') or contains(., 'Confirm') or contains(., 'OK')]")
                 if modal_btns:
                     driver.execute_script("arguments[0].click();", modal_btns[0])
+                    time.sleep(2)
+                    continue
+            if safemodal_panels:
+                confirm_btns = [b for b in safemodal_panels[0].find_elements(By.XPATH,
+                    ".//button[contains(., 'Submit') or contains(., 'Yes') or contains(., 'Confirm') or contains(., 'OK')]") if b.is_displayed()]
+                if confirm_btns:
+                    driver.execute_script("arguments[0].click();", confirm_btns[0])
                     time.sleep(2)
                     continue
 
