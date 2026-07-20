@@ -976,7 +976,7 @@ export default function ExamResults() {
         }
       >
         {/* Generate / Regenerate controls */}
-        <div style={{ marginBottom: 16, maxHeight: '80vh', overflowY: 'auto' }}>
+        <div style={{ marginBottom: 16 }}>
           {!interviewSheet && !interviewLoading && !interviewError && (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <RobotOutlined style={{ fontSize: 40, color: '#4361ee', marginBottom: 12, display: 'block' }} />

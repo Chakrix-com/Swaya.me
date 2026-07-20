@@ -87,6 +87,8 @@ function SafeModal({
           style={{
             position: 'relative', pointerEvents: 'auto',
             width, maxWidth: '100%', boxSizing: 'border-box',
+            maxHeight: 'calc(100vh - 32px)',
+            display: 'flex', flexDirection: 'column',
             background: token.colorBgElevated,
             borderRadius: borderRadius ?? token.borderRadiusLG,
             boxShadow: token.boxShadowSecondary,
@@ -99,6 +101,7 @@ function SafeModal({
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '16px 20px', borderBottom: `1px solid ${token.colorBorderSecondary}`,
                 fontSize: 16, fontWeight: 600, color: token.colorText,
+                flexShrink: 0,
               }}
             >
               <div>{title}</div>
@@ -111,7 +114,7 @@ function SafeModal({
               )}
             </div>
           )}
-          <div className="sw-safemodal-body" style={{ padding: 20, color: token.colorText }}>
+          <div className="sw-safemodal-body" style={{ padding: 20, color: token.colorText, overflowY: 'auto', minHeight: 0 }}>
             {children}
           </div>
           {resolvedFooter !== null && (
@@ -120,6 +123,7 @@ function SafeModal({
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
                 padding: '12px 20px', borderTop: `1px solid ${token.colorBorderSecondary}`,
+                flexShrink: 0,
               }}
             >
               {resolvedFooter}
