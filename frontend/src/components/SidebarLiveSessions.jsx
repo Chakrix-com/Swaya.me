@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { Collapse, Badge, Button, Popconfirm, Space, message } from 'antd'
+import { Collapse, Badge, Button, Space, message } from 'antd'
 import { WifiOutlined, StopOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { setQuizzes } from '../store/quizSlice'
 import { sessionAPI } from '../services/api'
+import SafeConfirm from './SafeConfirm'
 import './SidebarLiveSessions.css'
 
 function SidebarLiveSessions() {
@@ -13,6 +14,7 @@ function SidebarLiveSessions() {
   const dispatch = useDispatch()
   const { quizzes } = useSelector(s => s.quiz)
   const { t } = useTranslation()
+  const [confirmSessionId, setConfirmSessionId] = useState(null)
 
   const activeSessions = useMemo(
     () => (quizzes || []).filter(q => q.has_active_session),
@@ -63,23 +65,15 @@ function SidebarLiveSessions() {
               >
                 {t('sidebar.open')}
               </Button>
-              <Popconfirm
-                title={t('sidebar.stopThisSession')}
-                description={t('sidebar.stopThisSessionDesc')}
-                onConfirm={() => handleStop(quiz.active_session_id)}
-                okText={t('sidebar.stop')}
-                okButtonProps={{ danger: true }}
-                cancelText={t('common.cancel')}
+              <Button
+                danger
+                size="small"
+                icon={<StopOutlined />}
+                style={{ fontSize: 11, height: 24 }}
+                onClick={() => setConfirmSessionId(quiz.active_session_id)}
               >
-                <Button
-                  danger
-                  size="small"
-                  icon={<StopOutlined />}
-                  style={{ fontSize: 11, height: 24 }}
-                >
-                  {t('sidebar.end')}
-                </Button>
-              </Popconfirm>
+                {t('sidebar.end')}
+              </Button>
             </Space>
           </div>
         ))}
@@ -94,6 +88,15 @@ function SidebarLiveSessions() {
         ghost
         items={collapseItems}
         className="sidebar-live-collapse"
+      />
+      <SafeConfirm
+        open={!!confirmSessionId}
+        title={t('sidebar.stopThisSession')}
+        description={t('sidebar.stopThisSessionDesc')}
+        okText={t('sidebar.stop')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => { handleStop(confirmSessionId); setConfirmSessionId(null) }}
+        onCancel={() => setConfirmSessionId(null)}
       />
     </div>
   )
