@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, Button } from 'antd';
+import { Button } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import SafeModal from '../../components/SafeModal';
 
 export function ProctoringOverlay({ violationsLeft, onDismiss }) {
   const { t } = useTranslation();
@@ -25,7 +26,7 @@ export function ProctoringOverlay({ violationsLeft, onDismiss }) {
   }, [violationsLeft]);
 
   return (
-    <Modal
+    <SafeModal
       open
       closable={false}
       footer={
@@ -35,7 +36,6 @@ export function ProctoringOverlay({ violationsLeft, onDismiss }) {
           </Button>
         ) : null
       }
-      centered
       width={420}
     >
       <div style={{ textAlign: 'center', padding: '8px 0' }}>
@@ -59,6 +59,6 @@ export function ProctoringOverlay({ violationsLeft, onDismiss }) {
           </p>
         )}
       </div>
-    </Modal>
+    </SafeModal>
   );
 }
