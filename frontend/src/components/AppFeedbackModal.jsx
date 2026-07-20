@@ -1,9 +1,10 @@
 import { useState, useEffect, useContext } from 'react'
-import { Modal, Rate, Button, Space, Typography, App as AntApp } from 'antd'
+import { Rate, Button, Space, Typography, App as AntApp } from 'antd'
 import { useTranslation } from 'react-i18next'
 import RichTextEditor from '../features/quiz/components/RichTextEditor'
 import { appFeedbackAPI } from '../services/api'
 import { VisitorThemeContext } from '../App'
+import SafeModal from './SafeModal'
 
 const { Text } = Typography
 
@@ -48,11 +49,10 @@ export default function AppFeedbackModal({ open, onClose }) {
   }
 
   return (
-    <Modal
+    <SafeModal
       open={open}
       onCancel={onClose}
       title={t('appFeedback.modalTitle')}
-      destroyOnClose
       footer={
         <Space>
           <Button onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
@@ -81,6 +81,6 @@ export default function AppFeedbackModal({ open, onClose }) {
           <Rate value={rating} onChange={setRating} />
         </Space>
       </Space>
-    </Modal>
+    </SafeModal>
   )
 }
