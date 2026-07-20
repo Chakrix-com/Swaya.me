@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Modal, Form, Input, Select, Switch, message } from 'antd';
+import { Form, Input, Select, Switch, message } from 'antd';
 import { createUser, updateUser } from '../../../store/slices/userManagementSlice';
+import SafeModal from '../../../components/SafeModal';
 
 const { Option } = Select;
 
@@ -93,7 +94,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
   };
 
   return (
-    <Modal
+    <SafeModal
       title={isEditing ? t('admin.userForm.editUserTitle') : t('admin.userForm.createUserTitle')}
       open={visible}
       onOk={handleSubmit}
@@ -178,7 +179,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
           <Switch />
         </Form.Item>
       </Form>
-    </Modal>
+    </SafeModal>
   );
 };
 
