@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Modal, Input, InputNumber, Button, Divider, Select, Radio, Space, Grid } from 'antd'
+import { Input, InputNumber, Button, Divider, Select, Radio, Space, Grid } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import SafeModal from '../../components/SafeModal'
 
 const { useBreakpoint } = Grid
 import {
@@ -95,17 +96,14 @@ export default function CreateChooser({ open, onClose }) {
   }
 
   return (
-    <Modal
+    <SafeModal
       open={open}
       onCancel={onClose}
       footer={null}
-      centered
       width={isMobile ? 'calc(100vw - 24px)' : 860}
-      styles={{
-        body: { padding: isMobile ? '20px 16px 16px' : '32px 28px 28px' },
-        content: { borderRadius: 20 },
-      }}
+      borderRadius={20}
     >
+      <div style={{ margin: -20, padding: isMobile ? '20px 16px 16px' : '32px 28px 28px' }}>
       <div style={{ textAlign: 'center', marginBottom: isMobile ? 16 : 28 }}>
         <div style={{ fontSize: isMobile ? 17 : 22, fontWeight: 700, color: 'var(--sw-text1)' }}>
           {t('create.intentTitle', 'What does this moment need?')}
@@ -246,6 +244,7 @@ export default function CreateChooser({ open, onClose }) {
           </Button>
         </div>
       </div>
-    </Modal>
+      </div>
+    </SafeModal>
   )
 }
