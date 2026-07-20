@@ -8,8 +8,9 @@ import { useTranslation } from 'react-i18next'
 import {
   Card, Typography, Button, Form, Input, Progress, Space,
   Alert, Spin, Row, Col, Tag, Statistic, Divider, Radio, Result,
-  Modal, Badge, message, Checkbox
+  Badge, message, Checkbox
 } from 'antd'
+import SafeConfirm from '../../components/SafeConfirm'
 import {
   ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined,
   QuestionCircleOutlined, ArrowRightOutlined, ArrowLeftOutlined,
@@ -968,6 +969,7 @@ export default function ExamSession() {
 
   const [starting, setStarting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false)
   const [recoveryToken, setRecoveryToken] = useState(null)
   const [recovering, setRecovering] = useState(false)
 
@@ -1209,36 +1211,33 @@ export default function ExamSession() {
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = () => {
-    Modal.confirm({
-      title: t('exam.submitExam'),
-      content: t('exam.submitConfirm'),
-      okText: t('common.submit'),
-      cancelText: t('common.cancel'),
-      onOk: async () => {
-        setPhase('submitting')  // unmount ProctoringProvider before async calls
-        stopGlobalTimer()
-        stopQuestionTimer()
-        setSaving(true)
-        try {
-          // Save current answer first
-          const q = questions[currentIdx]
-          const optIdx = answers[q.id] ?? null
-          await examAPI.saveAnswer(slug, buildAnswerPayload(q, optIdx))
-          // Final webcam snapshot before submit
-          captureSnapshotRef.current?.()
-          // Submit
-          const res = await examAPI.submit(slug, sessionToken)
-          try { sessionStorage.removeItem(`exam_session_${slug}`) } catch {}
-          setExamResult(res.data)
-          setPhase('score')
-        } catch (err) {
-          setError(err.response?.data?.detail || t('common.error'))
-          setPhase('error')
-        } finally {
-          setSaving(false)
-        }
-      }
-    })
+    setSubmitConfirmOpen(true)
+  }
+
+  const doSubmit = async () => {
+    setSubmitConfirmOpen(false)
+    setPhase('submitting')  // unmount ProctoringProvider before async calls
+    stopGlobalTimer()
+    stopQuestionTimer()
+    setSaving(true)
+    try {
+      // Save current answer first
+      const q = questions[currentIdx]
+      const optIdx = answers[q.id] ?? null
+      await examAPI.saveAnswer(slug, buildAnswerPayload(q, optIdx))
+      // Final webcam snapshot before submit
+      captureSnapshotRef.current?.()
+      // Submit
+      const res = await examAPI.submit(slug, sessionToken)
+      try { sessionStorage.removeItem(`exam_session_${slug}`) } catch {}
+      setExamResult(res.data)
+      setPhase('score')
+    } catch (err) {
+      setError(err.response?.data?.detail || t('common.error'))
+      setPhase('error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // ── Crash recovery submit ────────────────────────────────────────────────
@@ -1382,6 +1381,17 @@ export default function ExamSession() {
           <ScoreScreen result={examResult} quizTitle={examInfo?.title} participantEmail={participantEmail} onBack={() => navigate('/')} />
         )}
       </div>
+
+      <SafeConfirm
+        open={submitConfirmOpen}
+        title={t('exam.submitExam')}
+        description={t('exam.submitConfirm')}
+        okText={t('common.submit')}
+        cancelText={t('common.cancel')}
+        danger={false}
+        onConfirm={doSubmit}
+        onCancel={() => setSubmitConfirmOpen(false)}
+      />
     </div>
   )
 }
