@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Button, Tag, Space, Tooltip, message, Select, Spin,
-  Row, Col, Card, Modal, Input, Progress, Table, Typography, Badge,
+  Row, Col, Card, Input, Progress, Table, Typography, Badge,
 } from 'antd'
+import SafeModal from '../../components/SafeModal'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -1011,7 +1012,7 @@ function Dashboard() {
         {/* ── Modals ──────────────────────────────────────────────────── */}
         <CreateChooser open={chooserOpen} onClose={() => setChooserOpen(false)} />
 
-        <Modal
+        <SafeModal
           title={t('quiz.templateLibrary', 'Template Library')}
           open={templateModalOpen}
           onCancel={() => setTemplateModalOpen(false)}
@@ -1054,7 +1055,7 @@ function Dashboard() {
               },
             ]}
           />
-        </Modal>
+        </SafeModal>
 
       </div>
     </div>
