@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-  Table, Button, Modal, Form, Input, Select, message, Space, Tag, Progress, Card, Statistic, Row, Col
+  Table, Button, Form, Input, Select, message, Space, Tag, Progress, Card, Statistic, Row, Col
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, TeamOutlined, UserOutlined, SettingOutlined
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { organizationAPI } from '../../services/api'
+import SafeModal from '../../components/SafeModal'
 import './Admin.css'
 
 const { Option } = Select
@@ -19,8 +20,10 @@ function OrganizationManagement() {
   const [adminModalVisible, setAdminModalVisible] = useState(false)
   const [selectedOrg, setSelectedOrg] = useState(null)
   const [admins, setAdmins] = useState([])
+  const [quotaEditRecord, setQuotaEditRecord] = useState(null)
   const [form] = Form.useForm()
   const [adminForm] = Form.useForm()
+  const [quotaForm] = Form.useForm()
 
   useEffect(() => {
     fetchOrganizations()
@@ -218,32 +221,8 @@ function OrganizationManagement() {
           type="link"
           icon={<EditOutlined />}
           onClick={() => {
-            Modal.confirm({
-              title: t('admin.orgs.updateQuotaTitle'),
-              content: (
-                <Form
-                  id="quota-form"
-                  onFinish={(values) => {
-                    handleUpdateQuota(record.id, values.quota)
-                    Modal.destroyAll()
-                  }}
-                  initialValues={{ quota: record.user_quota }}
-                >
-                  <Form.Item
-                    name="quota"
-                    label={t('admin.orgs.newQuota')}
-                    rules={[{ required: true, message: t('admin.orgs.quotaRequired') }]}
-                  >
-                    <Input type="number" min={1} />
-                  </Form.Item>
-                </Form>
-              ),
-              onOk: () => {
-                document.getElementById('quota-form').dispatchEvent(
-                  new Event('submit', { cancelable: true, bubbles: true })
-                )
-              }
-            })
+            quotaForm.setFieldsValue({ quota: record.user_quota })
+            setQuotaEditRecord(record)
           }}
         >
           {t('admin.orgs.updateQuota')}
@@ -330,7 +309,7 @@ function OrganizationManagement() {
       </Card>
 
       {/* Create Organization Modal */}
-      <Modal
+      <SafeModal
         title={t('admin.orgs.createOrg')}
         open={createModalVisible}
         onCancel={() => {
@@ -388,10 +367,10 @@ function OrganizationManagement() {
             </Space>
           </Form.Item>
         </Form>
-      </Modal>
+      </SafeModal>
 
       {/* Manage Admins Modal */}
-      <Modal
+      <SafeModal
         title={t('admin.orgs.adminsForOrganization', { orgName: selectedOrg?.name || '' })}
         open={adminModalVisible}
         onCancel={() => {
@@ -476,7 +455,31 @@ function OrganizationManagement() {
           pagination={false}
           scroll={{ x: true }}
         />
-      </Modal>
+      </SafeModal>
+
+      {/* Update Quota Modal */}
+      <SafeModal
+        title={t('admin.orgs.updateQuotaTitle')}
+        open={!!quotaEditRecord}
+        onCancel={() => setQuotaEditRecord(null)}
+        onOk={() => quotaForm.submit()}
+      >
+        <Form
+          form={quotaForm}
+          onFinish={(values) => {
+            handleUpdateQuota(quotaEditRecord.id, values.quota)
+            setQuotaEditRecord(null)
+          }}
+        >
+          <Form.Item
+            name="quota"
+            label={t('admin.orgs.newQuota')}
+            rules={[{ required: true, message: t('admin.orgs.quotaRequired') }]}
+          >
+            <Input type="number" min={1} />
+          </Form.Item>
+        </Form>
+      </SafeModal>
     </div>
   )
 }
