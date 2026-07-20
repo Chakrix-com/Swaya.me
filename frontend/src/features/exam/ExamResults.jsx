@@ -24,6 +24,7 @@ import dayjs from 'dayjs'
 import { exportExamResultsPDF } from './exportPDF'
 import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import ReactMarkdown from 'react-markdown'
+import SafeModal from '../../components/SafeModal'
 import './ExamResults.css'
 
 const { Title, Text } = Typography
@@ -865,7 +866,7 @@ export default function ExamResults() {
       </Card>
 
       {/* Participant exam-detail modal */}
-      <Modal
+      <SafeModal
         open={detailOpen}
         onCancel={() => setDetailOpen(false)}
         footer={null}
@@ -875,7 +876,6 @@ export default function ExamResults() {
             ? `${participantDetail.display_name}${participantDetail.email ? ` — ${participantDetail.email}` : ''}`
             : t('exam.participantDetailTitle')
         }
-        destroyOnClose
       >
         {detailLoading && (
           <div style={{ textAlign: 'center', padding: 40 }}>
@@ -960,10 +960,10 @@ export default function ExamResults() {
         {!detailLoading && !participantDetail && (
           <Alert type="error" message={t('exam.couldNotLoadDetail')} />
         )}
-      </Modal>
+      </SafeModal>
 
       {/* Interview Sheet Modal */}
-      <Modal
+      <SafeModal
         open={interviewModal.open}
         onCancel={() => setInterviewModal(prev => ({ ...prev, open: false }))}
         footer={null}
@@ -977,11 +977,9 @@ export default function ExamResults() {
             )}
           </Space>
         }
-        destroyOnClose
-        styles={{ body: { maxHeight: '80vh', overflowY: 'auto' } }}
       >
         {/* Generate / Regenerate controls */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, maxHeight: '80vh', overflowY: 'auto' }}>
           {!interviewSheet && !interviewLoading && !interviewError && (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <RobotOutlined style={{ fontSize: 40, color: '#4361ee', marginBottom: 12, display: 'block' }} />
@@ -1108,10 +1106,10 @@ export default function ExamResults() {
             </>
           )}
         </div>
-      </Modal>
+      </SafeModal>
 
       {/* Proctoring detail modal */}
-      <Modal
+      <SafeModal
         title={
           <Space>
             <CameraOutlined />
@@ -1227,7 +1225,7 @@ export default function ExamResults() {
             )}
           </>
         )}
-      </Modal>
+      </SafeModal>
     </div>
   )
 }
