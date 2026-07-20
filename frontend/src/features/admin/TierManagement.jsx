@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, Form, Input, InputNumber, Modal, Space, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Space, Table, Tag, Typography, message } from 'antd'
+import SafeModal from '../../components/SafeModal'
 import { EditOutlined } from '@ant-design/icons'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -150,7 +151,7 @@ function TierManagement() {
         />
       </Card>
 
-      <Modal
+      <SafeModal
         title={selected ? t('admin.tierManagementPage.editTierWithName', { tier: selected.tier }) : t('admin.tierManagementPage.editTier')}
         open={isModalOpen}
         onCancel={() => {
@@ -180,7 +181,7 @@ function TierManagement() {
             <Input placeholder={t('admin.tierManagementPage.featuresPlaceholder')} />
           </Form.Item>
         </Form>
-      </Modal>
+      </SafeModal>
     </div>
   )
 }
