@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   Button, Tag, Space, Tooltip, message, Select, Spin,
-  Row, Col, Card, Input, Progress, Table, Typography, Badge,
+  Row, Col, Card, Input, Progress, Table, Typography, Badge, Form,
 } from 'antd'
 import SafeModal from '../../components/SafeModal'
+import SafeTreeSelect from '../../components/SafeTreeSelect'
 import {
   PlusOutlined,
   PlayCircleOutlined,
@@ -27,6 +28,7 @@ import {
   AppstoreOutlined,
   SearchOutlined,
   InboxOutlined,
+  FolderOutlined,
 } from '@ant-design/icons'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
@@ -137,6 +139,9 @@ function Dashboard() {
   })
 
   const [chooserOpen, setChooserOpen] = useState(false)
+  const [moveFolderTarget, setMoveFolderTarget] = useState(null)
+  const [moveFolderValue, setMoveFolderValue] = useState(undefined)
+  const [moveFolderSaving, setMoveFolderSaving] = useState(false)
   const [homeStats, setHomeStats] = useState(null)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templates, setTemplates] = useState([])
@@ -222,6 +227,33 @@ function Dashboard() {
       message.error((typeof detail === 'string' ? detail : null) || t('quiz.duplicateFailed', { defaultValue: 'Failed to duplicate quiz' }))
     }
   }
+
+  const openMoveFolder = (quiz) => {
+    setMoveFolderTarget(quiz)
+    setMoveFolderValue(quiz.folder_id ?? undefined)
+  }
+
+  const handleMoveQuizFolder = async () => {
+    if (!moveFolderTarget) return
+    setMoveFolderSaving(true)
+    try {
+      await quizAPI.assignFolder(moveFolderTarget.id, moveFolderValue ?? null)
+      message.success(t('dashboard.folderAssigned', 'Folder updated'))
+      setMoveFolderTarget(null)
+      loadQuizzes(showArchived)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('dashboard.folderAssignFailed', 'Failed to update folder'))
+    } finally {
+      setMoveFolderSaving(false)
+    }
+  }
+
+  const folderTreeData = useMemo(() => {
+    const map = (nodes) => (nodes || []).map(n => ({
+      value: n.id, title: n.name, children: map(n.children || []),
+    }))
+    return map(folders)
+  }, [folders])
 
   const handleStopActiveSession = async (sessionId) => {
     try {
@@ -396,6 +428,12 @@ function Dashboard() {
       label: t('quiz.duplicate', 'Duplicate'),
       icon: <CopyOutlined />,
       onClick: () => handleDuplicateQuiz(quiz.id),
+    },
+    {
+      key: 'move_folder',
+      label: t('dashboard.moveToFolder', 'Move to Folder'),
+      icon: <FolderOutlined />,
+      onClick: () => openMoveFolder(quiz),
     },
     {
       key: 'history',
@@ -1055,6 +1093,28 @@ function Dashboard() {
               },
             ]}
           />
+        </SafeModal>
+
+        <SafeModal
+          title={t('dashboard.moveToFolder', 'Move to Folder')}
+          open={!!moveFolderTarget}
+          onCancel={() => setMoveFolderTarget(null)}
+          onOk={handleMoveQuizFolder}
+          confirmLoading={moveFolderSaving}
+          okText={t('common.save', 'Save')}
+          cancelText={t('common.cancel', 'Cancel')}
+        >
+          <Form layout="vertical">
+            <Form.Item label={t('dashboard.assignFolder', 'Assign folder')}>
+              <SafeTreeSelect
+                allowClear
+                value={moveFolderValue}
+                onChange={setMoveFolderValue}
+                treeData={folderTreeData}
+                placeholder={t('dashboard.rootNoParent', 'Root (no parent)')}
+              />
+            </Form.Item>
+          </Form>
         </SafeModal>
 
       </div>

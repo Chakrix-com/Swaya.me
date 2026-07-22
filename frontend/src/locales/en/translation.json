@@ -598,6 +598,7 @@
     "renameMoveFolder": "Rename / Move Folder",
     "moveTo": "Move to (parent folder)",
     "rootNoParent": "Root (no parent)",
+    "moveToFolder": "Move to Folder",
     "deleteFolderTitle": "Delete folder",
     "deleteFolderConfirm": "Delete {{name}}? Activities inside will move to the parent or root.",
     "shareFolderTitle": "Share folder: {{name}}",

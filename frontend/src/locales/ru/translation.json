@@ -605,6 +605,7 @@
     "oneQuestion": "1 вопрос",
     "renameMove": "Переименовать / Переместить",
     "renameMoveFolder": "Переименовать / Переместить папку",
+    "moveToFolder": "Переместить в папку",
     "rootNoParent": "Корень (без родительской папки)",
     "saveFolderSharing": "Сохранить общий доступ",
     "selectTeammates": "Выбрать коллег…",

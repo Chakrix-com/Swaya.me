@@ -605,6 +605,7 @@
     "oneQuestion": "1 question",
     "renameMove": "Renommer / Déplacer",
     "renameMoveFolder": "Renommer / Déplacer le dossier",
+    "moveToFolder": "Déplacer vers un dossier",
     "rootNoParent": "Racine (aucun parent)",
     "saveFolderSharing": "Enregistrer le partage",
     "selectTeammates": "Sélectionner des coéquipiers…",
