@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { theme } from 'antd'
 import { CloseCircleFilled, DownOutlined } from '@ant-design/icons'
 
@@ -12,9 +13,14 @@ import { CloseCircleFilled, DownOutlined } from '@ant-design/icons'
 // all). Instead an invisible full-viewport div renders behind the dropdown
 // panel and closes it via a plain React onClick, the same synchronous
 // synthetic-click mechanism every other button in this app already uses.
-// Not portaled — kept as a normal nested child so it stays in the same
-// stacking context as an ancestor Modal, rather than a document.body portal
-// potentially painting above the Modal's own mask.
+//
+// Portaled to document.body with fixed positioning (getBoundingClientRect
+// off the trigger, same pattern as MoreActionsMenu) rather than a nested
+// absolute child — this is used inside SafeModal, and a nested child gets
+// clipped by the modal body's `overflow-y: auto` once the option list is
+// taller than the space left in the modal (bug: list appeared to "hide" once
+// there were more than a couple of folders). Portal z-index must clear
+// SafeModal's mask/panel (2000/2001).
 function flatten(nodes, depth = 0, out = []) {
   for (const n of nodes) {
     out.push({ value: n.value, title: n.title, depth })
@@ -23,9 +29,13 @@ function flatten(nodes, depth = 0, out = []) {
   return out
 }
 
+const PANEL_MAX_HEIGHT = 260
+
 function SafeTreeSelect({ value, onChange, treeData = [], placeholder, allowClear = true, style }) {
   const { token } = theme.useToken()
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+  const triggerRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -36,6 +46,18 @@ function SafeTreeSelect({ value, onChange, treeData = [], placeholder, allowClea
 
   const flatOptions = useMemo(() => flatten(treeData), [treeData])
   const selected = flatOptions.find((o) => o.value === value)
+
+  const handleToggle = () => {
+    if (open) { setOpen(false); return }
+    const rect = triggerRef.current.getBoundingClientRect()
+    const margin = 8
+    let top = rect.bottom + 4
+    if (top + PANEL_MAX_HEIGHT > window.innerHeight - margin) {
+      top = Math.max(margin, rect.top - PANEL_MAX_HEIGHT - 4)
+    }
+    setPos({ top, left: rect.left, width: rect.width })
+    setOpen(true)
+  }
 
   const handleSelect = (v) => {
     onChange(v)
@@ -48,9 +70,9 @@ function SafeTreeSelect({ value, onChange, treeData = [], placeholder, allowClea
   }
 
   return (
-    <span style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
+    <span ref={triggerRef} style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
       <div
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           minHeight: 32, boxSizing: 'border-box', width: '100%',
@@ -67,18 +89,18 @@ function SafeTreeSelect({ value, onChange, treeData = [], placeholder, allowClea
         )}
         <DownOutlined style={{ fontSize: 10, color: token.colorTextQuaternary }} />
       </div>
-      {open && (
+      {open && createPortal(
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1049 }} />
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 2009 }} />
           <div
             style={{
-              position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-              maxHeight: 260, overflowY: 'auto', boxSizing: 'border-box',
+              position: 'fixed', top: pos.top, left: pos.left, width: pos.width,
+              maxHeight: PANEL_MAX_HEIGHT, overflowY: 'auto', boxSizing: 'border-box',
               background: token.colorBgElevated,
               border: `1px solid ${token.colorBorderSecondary}`,
               borderRadius: token.borderRadiusLG,
               boxShadow: token.boxShadowSecondary,
-              padding: 4, zIndex: 1050,
+              padding: 4, zIndex: 2010,
             }}
           >
             {flatOptions.length === 0 ? (
@@ -106,7 +128,8 @@ function SafeTreeSelect({ value, onChange, treeData = [], placeholder, allowClea
               })
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </span>
   )
