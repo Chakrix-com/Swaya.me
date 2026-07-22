@@ -208,11 +208,24 @@ async def request_exam_otp(
       <p style="color:#888;font-size:13px">This code expires in 10 minutes. Do not share it.</p>
     </div>
     """
-    await send_email(
+    sent = await send_email(
         subject=f"Your exam OTP — {safe_title}",
         recipients=[email],
         html_body=html_body,
     )
+    if not sent:
+        # Transient SMTP failures happen (e.g. relay-side rejections) — one immediate retry
+        # before telling the candidate, rather than silently claiming success on the first try.
+        sent = await send_email(
+            subject=f"Your exam OTP — {safe_title}",
+            recipients=[email],
+            html_body=html_body,
+        )
+    if not sent:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not send the OTP email right now. Please try again in a moment.",
+        )
     return {"sent": True}
 
 
