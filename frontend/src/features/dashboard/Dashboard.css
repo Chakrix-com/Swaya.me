@@ -110,49 +110,10 @@
   text-align: center;
 }
 
-/* ── More menu dropdown ──────────────────────────────────────────────────── */
-.dashboard-more-menu {
-  background: var(--sw-card);
-  border-radius: 12px;
-  border: 1px solid var(--sw-border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  padding: 6px;
-  min-width: 180px;
-}
-
-.dashboard-more-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--sw-text2);
-  transition: background 0.1s;
-}
-
-.dashboard-more-menu-item:hover {
-  background: var(--sw-hover);
-}
-
-.dashboard-more-menu-item--danger {
-  color: var(--sw-error);
-}
-
-.dashboard-more-menu-item--danger:hover {
-  background: color-mix(in srgb, var(--sw-error) 10%, transparent);
-}
-
-.dashboard-more-menu-item--disabled {
-  color: var(--sw-text3);
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.dashboard-more-menu-item--disabled:hover {
-  background: transparent;
-}
+/* Folder/row "..." menu styling (.dashboard-more-menu*) now lives in
+   MoreActionsMenu.css, imported by the component itself -- moved out of
+   here since MoreActionsMenu is used from routes that never load this
+   route's own CSS chunk (see MoreActionsMenu.css for why). */
 
 /* ── Mobile & tablet breakpoints ────────────────────────────────────────── */
 

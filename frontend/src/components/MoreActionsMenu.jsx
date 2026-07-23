@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Button } from 'antd'
 import { MoreOutlined } from '@ant-design/icons'
 import SafeConfirm from './SafeConfirm'
+import './MoreActionsMenu.css'
 
 // Deliberately not using antd's Dropdown here — that's built on
 // @rc-component/trigger's mousedown/pointerdown coordination, which is
