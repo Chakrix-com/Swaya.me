@@ -145,6 +145,21 @@ class UserManagementServiceAsync:
         
         return UserResponse.model_validate(new_user)
     
+    async def lookup_by_email(self, email: str, current_user: User) -> Optional["UserLookupResponse"]:
+        """Resolve an exact email to a minimal user record, across any tenant.
+
+        Deliberately not a directory/search — exact match only, and the
+        response excludes role/tenant/tier/activity fields. Used to let a
+        folder owner add a user from a different org to a share by email,
+        without exposing that org's user list.
+        """
+        from core.user_management.schemas import UserLookupResponse
+        result = await self.db.execute(select(User).filter(User.email == email))
+        user = result.scalar_one_or_none()
+        if not user:
+            return None
+        return UserLookupResponse(id=user.id, email=user.email, display_name=user.full_name)
+
     async def get_user(self, user_id: int, current_user: User) -> UserResponse:
         """Get user by ID"""
         result = await self.db.execute(

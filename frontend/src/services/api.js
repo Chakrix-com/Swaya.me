@@ -50,6 +50,7 @@ export const authAPI = {
   getTierPlans: () => api.get('/auth/tier-plans'),
   googleCallback: (code, state) => api.get('/auth/google/callback', { params: { code, state } }),
   getTenantUsers: () => api.get('/users', { params: { per_page: 100 } }),
+  lookupUserByEmail: (email) => api.get('/users/lookup', { params: { email } }),
 }
 
 // Quiz API

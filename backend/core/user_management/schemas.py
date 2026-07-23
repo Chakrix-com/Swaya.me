@@ -60,6 +60,15 @@ class UserListResponse(BaseModel):
     pages: int
 
 
+class UserLookupResponse(BaseModel):
+    """Minimal cross-tenant lookup result — deliberately excludes role/tenant/tier/
+    activity fields since the requester may not belong to the same org as the
+    matched user (e.g. resolving an email to add to a folder share)."""
+    id: int
+    email: str
+    display_name: Optional[str] = None
+
+
 # User Statistics
 class UserStats(BaseModel):
     """User statistics"""

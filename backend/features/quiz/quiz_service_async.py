@@ -359,18 +359,17 @@ class QuizBuilderServiceAsync:
         if not folder:
             raise QuizNotFoundError("Folder not found or not owned by you")
 
-        # Validate that all users belong to the same tenant
+        # Any existing user account may be shared with, regardless of tenant —
+        # folder sharing is intentionally cross-org (e.g. sharing a test with an
+        # external reviewer). Just confirm the accounts exist.
         if request.user_ids:
             users = (
                 await db.execute(
-                    select(User).filter(
-                        User.id.in_(request.user_ids),
-                        User.tenant_id == current_user.tenant_id,
-                    )
+                    select(User).filter(User.id.in_(request.user_ids))
                 )
             ).scalars().all()
             if len(users) != len(request.user_ids):
-                raise QuizValidationError("One or more users not found in your tenant")
+                raise QuizValidationError("One or more users not found")
         else:
             users = []
 

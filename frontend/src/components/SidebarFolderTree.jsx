@@ -210,11 +210,16 @@ function SidebarFolderTree() {
   const [shareCanEdit, setShareCanEdit] = useState(false)
   const [shareCurrentShares, setShareCurrentShares] = useState([])
   const [tenantUsers, setTenantUsers] = useState([])
+  const [extraShareUsers, setExtraShareUsers] = useState([])
+  const [lookupEmail, setLookupEmail] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
 
   const openShare = async (rn) => {
     setShareTarget(rn)
     setShareOpen(true)
     setShareLoading(true)
+    setExtraShareUsers([])
+    setLookupEmail('')
     try {
       const [sharesRes, usersRes] = await Promise.all([
         quizAPI.getFolderShares(rn.id),
@@ -231,6 +236,44 @@ function SidebarFolderTree() {
       setShareLoading(false)
     }
   }
+
+  // Sharing works across orgs (not just teammates) — resolve an exact email
+  // to a user account and add them alongside the tenant-teammate picker.
+  const handleAddByEmail = async () => {
+    const email = lookupEmail.trim()
+    if (!email) return
+    setLookupLoading(true)
+    try {
+      const res = await authAPI.lookupUserByEmail(email)
+      const found = res.data
+      if (!found) {
+        message.error(t('dashboard.noAccountForEmail', 'No Swaya.me account found for this email'))
+        return
+      }
+      if (found.id === user?.id) {
+        message.error(t('dashboard.cannotShareWithSelf', "You can't share a folder with yourself"))
+        return
+      }
+      setExtraShareUsers(prev => prev.some(u => u.id === found.id) ? prev : [...prev, found])
+      setShareUserIds(prev => prev.includes(found.id) ? prev : [...prev, found.id])
+      setLookupEmail('')
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('dashboard.lookupFailed', 'Lookup failed'))
+    } finally {
+      setLookupLoading(false)
+    }
+  }
+
+  // Combine teammate picker + any already-shared or newly-looked-up users
+  // (who may belong to a different org) so their email renders as a chip
+  // instead of silently disappearing from the selected list.
+  const shareOptions = useMemo(() => {
+    const map = new Map()
+    tenantUsers.filter(u => u.id !== user?.id).forEach(u => map.set(u.id, { value: u.id, label: u.email }))
+    shareCurrentShares.forEach(s => { if (!map.has(s.user_id)) map.set(s.user_id, { value: s.user_id, label: s.email }) })
+    extraShareUsers.forEach(u => { if (!map.has(u.id)) map.set(u.id, { value: u.id, label: u.email }) })
+    return Array.from(map.values())
+  }, [tenantUsers, shareCurrentShares, extraShareUsers, user])
 
   const handleSaveShare = async () => {
     if (!shareTarget) return
@@ -384,9 +427,21 @@ function SidebarFolderTree() {
               <SafeMultiSelect
                 style={{ width: '100%' }} placeholder={t('dashboard.selectTeammates')}
                 value={shareUserIds} onChange={setShareUserIds}
-                options={tenantUsers.filter(u => u.id !== user?.id).map(u => ({ value: u.id, label: u.email }))}
+                options={shareOptions}
                 notFoundContent={tenantUsers.length === 0 ? t('dashboard.noOtherUsers') : t('dashboard.noMatch')}
               />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>{t('dashboard.orShareByEmail', 'Or share with anyone by email')}</div>
+              <Space.Compact style={{ width: '100%' }}>
+                <Input
+                  value={lookupEmail}
+                  onChange={(e) => setLookupEmail(e.target.value)}
+                  onPressEnter={handleAddByEmail}
+                  placeholder={t('dashboard.enterEmailPlaceholder', 'name@example.com')}
+                />
+                <Button onClick={handleAddByEmail} loading={lookupLoading}>{t('common.add', 'Add')}</Button>
+              </Space.Compact>
             </div>
             <Space>
               <span style={{ fontSize: 13 }}>{t('dashboard.allowEditing')}</span>

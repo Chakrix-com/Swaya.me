@@ -10,7 +10,7 @@ from persistence.database_async import get_async_db
 from persistence.models.core import User, UserRole
 from core.user_management.schemas import (
     UserCreate, UserUpdate, UserResponse, UserListResponse,
-    UserPasswordUpdate, UserStats, ActivityLogListResponse
+    UserPasswordUpdate, UserStats, ActivityLogListResponse, UserLookupResponse
 )
 from core.user_management.service_async import UserManagementServiceAsync
 from core.auth.dependencies import get_current_user, CurrentUser
@@ -63,6 +63,21 @@ async def list_users(
         is_active=is_active,
         tenant_id=tenant_id
     )
+
+
+@router.get("/lookup", response_model=Optional[UserLookupResponse])
+async def lookup_user_by_email(
+    email: str,
+    current_user = Depends(get_current_user_from_context),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Resolve an exact email to a minimal user record, across any tenant.
+    Used to add a user from a different org to a folder share by email.
+    Returns null if no account exists for that email.
+    """
+    service = UserManagementServiceAsync(db)
+    return await service.lookup_by_email(email, current_user)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
