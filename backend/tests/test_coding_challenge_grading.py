@@ -12,7 +12,7 @@ import pytest
 
 from features.coding_challenge import grading_service_async as gsvc
 from persistence.models.quiz import (
-    CodeWorkspace, CodeSubmission, CodeSubmissionStatus, Question,
+    CodeWorkspace, CodeSubmission, CodeSubmissionStatus, CodeWorkspaceStatus, Question,
 )
 
 
@@ -256,6 +256,38 @@ def _mock_session(submission, workspace, question):
     session_cls.return_value.__aenter__ = AsyncMock(return_value=db)
     session_cls.return_value.__aexit__ = AsyncMock(return_value=False)
     return session_cls, db
+
+
+# ── _cleanup ─────────────────────────────────────────────────────────────────
+
+def test_cleanup_marks_workspace_destroyed_after_successful_delete():
+    """Regression for the gap found in Phase 9.2's live walkthrough: delete_workspace
+    genuinely removed the real Coder resource, but nothing ever set the DB row's
+    status to DESTROYED, leaving it stuck at SUBMITTED forever."""
+    workspace = _fixture_workspace()
+    db = AsyncMock()
+    db.commit = AsyncMock()
+
+    with patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
+         patch("features.coding_challenge.coding_challenge_service_async.cancel_lifetime_cap_job"):
+        asyncio.run(gsvc._cleanup(db, workspace))
+
+    assert workspace.status == CodeWorkspaceStatus.DESTROYED
+    db.commit.assert_called_once()
+
+
+def test_cleanup_leaves_status_unset_when_delete_workspace_fails():
+    workspace = _fixture_workspace()
+    db = AsyncMock()
+    db.commit = AsyncMock()
+
+    with patch.object(gsvc.coder_client, "delete_workspace",
+                       AsyncMock(side_effect=Exception("coder delete broken"))), \
+         patch("features.coding_challenge.coding_challenge_service_async.cancel_lifetime_cap_job"):
+        asyncio.run(gsvc._cleanup(db, workspace))
+
+    assert workspace.status != CodeWorkspaceStatus.DESTROYED
+    db.commit.assert_not_called()
 
 
 # ── Ordering guard ───────────────────────────────────────────────────────────

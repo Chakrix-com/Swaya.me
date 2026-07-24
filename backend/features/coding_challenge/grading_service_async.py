@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from persistence.models.quiz import (
-    CodeWorkspace, CodeSubmission, CodeSubmissionStatus, Question,
+    CodeWorkspace, CodeSubmission, CodeSubmissionStatus, CodeWorkspaceStatus, Question,
 )
 from features.coding_challenge import coder_client
 
@@ -160,14 +160,20 @@ def _build_score_breakdown(ai_scores: dict, functional_correctness: int, time_ta
     return breakdown, round(total)
 
 
-async def _cleanup(workspace_name: str) -> None:
+async def _cleanup(db, workspace: CodeWorkspace) -> None:
     """Cancels the now-unneeded lifetime-cap job and deletes the workspace — always
     runs at the end of the pipeline regardless of which outcome (graded/
-    partial_failed/failed) was reached."""
+    partial_failed/failed) was reached. Marks the row DESTROYED only once the real
+    Coder resource is confirmed gone — found via Phase 9.2's live walkthrough that
+    this status update was previously missing entirely, leaving every workspace row
+    stuck at SUBMITTED in the DB forever even after `coder list` showed it deleted."""
     from features.coding_challenge.coding_challenge_service_async import cancel_lifetime_cap_job
+    workspace_name = workspace.coder_workspace_name
     cancel_lifetime_cap_job(workspace_name)
     try:
         await coder_client.delete_workspace(workspace_name)
+        workspace.status = CodeWorkspaceStatus.DESTROYED
+        await db.commit()
     except Exception as e:
         logger.warning("_cleanup: delete_workspace(%s) failed: %s", workspace_name, e)
 
@@ -226,7 +232,7 @@ async def run_grading_job(submission_id: int) -> None:
             submission.status = CodeSubmissionStatus.FAILED
             submission.error_message = str(e)
             await db.commit()
-            await _cleanup(workspace_name)
+            await _cleanup(db, workspace)
             return
 
         # ── Everything above is now harvested and safe — a failure from here on is
@@ -265,4 +271,4 @@ async def run_grading_job(submission_id: int) -> None:
         submission.graded_at = datetime.utcnow()
         await db.commit()
 
-        await _cleanup(workspace_name)
+        await _cleanup(db, workspace)
