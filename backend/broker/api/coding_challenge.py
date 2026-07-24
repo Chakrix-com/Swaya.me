@@ -329,3 +329,59 @@ async def get_coding_challenge_status(token: str, db: AsyncSession = Depends(get
     elif submission.status in (CodeSubmissionStatus.FAILED, CodeSubmissionStatus.PARTIAL_FAILED):
         response["error_message"] = submission.error_message
     return response
+
+
+@router.get("/quiz-builder/questions/{question_id}/coding-challenge-review")
+async def get_coding_challenge_review(
+    question_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Authenticated host — examiner review, one entry per candidate who has a
+    workspace for this question (a question can have many candidates via repeated
+    /invite calls). All candidate-originated text (transcript, timeline, test
+    output) is returned as plain strings — the frontend must render it as inert
+    text, never dangerouslySetInnerHTML."""
+    question = await db.get(Question, question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    quiz = await db.get(Quiz, question.quiz_id)
+    if not quiz or quiz.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Not authorised")
+
+    result = await db.execute(
+        select(CodeWorkspace).filter(CodeWorkspace.question_id == question_id)
+    )
+    workspaces = result.scalars().all()
+
+    entries = []
+    for workspace in workspaces:
+        result = await db.execute(
+            select(CodeSubmission).filter(CodeSubmission.workspace_id == workspace.id)
+        )
+        submission = result.scalar_one_or_none()
+        entry = {
+            "candidate_email": workspace.candidate_email,
+            "workspace_status": workspace.status.value,
+            "submission": None,
+        }
+        if submission:
+            entry["submission"] = {
+                "status": submission.status.value,
+                "test_output": submission.test_output,
+                "passed_count": submission.passed_count,
+                "total_count": submission.total_count,
+                "score_breakdown": submission.score_breakdown,
+                "ai_score": submission.ai_score,
+                "ai_verdict": submission.ai_verdict,
+                "ai_rationale": submission.ai_rationale,
+                "ai_token_usage": submission.ai_token_usage,
+                "code_timeline": submission.code_timeline,
+                "ai_transcript_raw": submission.ai_transcript_raw,
+                "error_message": submission.error_message,
+                "submitted_at": submission.submitted_at,
+                "graded_at": submission.graded_at,
+            }
+        entries.append(entry)
+
+    return {"question_id": question_id, "candidates": entries}
