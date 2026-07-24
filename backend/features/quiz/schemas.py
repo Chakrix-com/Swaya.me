@@ -83,6 +83,11 @@ class QuestionCreate(BaseModel):
     is_required: bool = Field(default=False)
     answer_explanation: Optional[str] = Field(None, max_length=5000)
     grading_rubric: Optional[str] = Field(None, max_length=5000)
+    git_repo_url: Optional[str] = Field(None, max_length=500)
+    test_command: Optional[str] = Field(None, max_length=255)
+    hidden_test_content: Optional[str] = Field(None, max_length=20000)
+    hidden_test_filename: Optional[str] = Field(None, max_length=255)
+    time_budget_seconds: Optional[int] = Field(None, ge=1)
 
     @validator('question_video_url')
     def validate_video_url(cls, v):
@@ -186,6 +191,11 @@ class QuestionUpdate(BaseModel):
     is_required: Optional[bool] = None
     answer_explanation: Optional[str] = Field(None, max_length=5000)
     grading_rubric: Optional[str] = Field(None, max_length=5000)
+    git_repo_url: Optional[str] = Field(None, max_length=500)
+    test_command: Optional[str] = Field(None, max_length=255)
+    hidden_test_content: Optional[str] = Field(None, max_length=20000)
+    hidden_test_filename: Optional[str] = Field(None, max_length=255)
+    time_budget_seconds: Optional[int] = Field(None, ge=1)
 
 
 class QuestionResponse(BaseModel):
@@ -208,6 +218,11 @@ class QuestionResponse(BaseModel):
     is_required: bool = False
     answer_explanation: Optional[str] = None
     grading_rubric: Optional[str] = None
+    git_repo_url: Optional[str] = None
+    test_command: Optional[str] = None
+    hidden_test_content: Optional[str] = None
+    hidden_test_filename: Optional[str] = None
+    time_budget_seconds: Optional[int] = None
 
     class Config:
         from_attributes = True

@@ -122,6 +122,12 @@ class QuestionServiceAsync:
             negative_points=request.negative_points,
             is_required=request.is_required,
             answer_explanation=sanitized_explanation,
+            grading_rubric=request.grading_rubric,
+            git_repo_url=request.git_repo_url,
+            test_command=request.test_command,
+            hidden_test_content=request.hidden_test_content,
+            hidden_test_filename=request.hidden_test_filename,
+            time_budget_seconds=request.time_budget_seconds,
             order=next_order
         )
         
@@ -193,6 +199,18 @@ class QuestionServiceAsync:
             question.is_required = request.is_required
         if "answer_explanation" in request.model_fields_set:
             question.answer_explanation = sanitize_html(request.answer_explanation) if request.answer_explanation else request.answer_explanation
+        if "grading_rubric" in request.model_fields_set:
+            question.grading_rubric = request.grading_rubric
+        if "git_repo_url" in request.model_fields_set:
+            question.git_repo_url = request.git_repo_url
+        if "test_command" in request.model_fields_set:
+            question.test_command = request.test_command
+        if "hidden_test_content" in request.model_fields_set:
+            question.hidden_test_content = request.hidden_test_content
+        if "hidden_test_filename" in request.model_fields_set:
+            question.hidden_test_filename = request.hidden_test_filename
+        if "time_budget_seconds" in request.model_fields_set:
+            question.time_budget_seconds = request.time_budget_seconds
 
         await db.commit()
         await db.refresh(question)
@@ -356,6 +374,12 @@ class QuestionServiceAsync:
             negative_points=getattr(question, 'negative_points', 0) or 0,
             is_required=getattr(question, 'is_required', False) or False,
             answer_explanation=question.answer_explanation,
+            grading_rubric=question.grading_rubric,
+            git_repo_url=question.git_repo_url,
+            test_command=question.test_command,
+            hidden_test_content=question.hidden_test_content,
+            hidden_test_filename=question.hidden_test_filename,
+            time_budget_seconds=question.time_budget_seconds,
         )
         db.add(copy)
         await db.commit()
@@ -381,4 +405,10 @@ class QuestionServiceAsync:
             negative_points=getattr(question, 'negative_points', 0) or 0,
             is_required=getattr(question, 'is_required', False) or False,
             answer_explanation=question.answer_explanation,
+            grading_rubric=question.grading_rubric,
+            git_repo_url=question.git_repo_url,
+            test_command=question.test_command,
+            hidden_test_content=question.hidden_test_content,
+            hidden_test_filename=question.hidden_test_filename,
+            time_budget_seconds=question.time_budget_seconds,
         )
