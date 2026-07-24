@@ -136,6 +136,27 @@ async def revoke_token(token_name: str, cli_path: str = DEFAULT_CLI_PATH) -> Non
         raise CoderClientError(f"revoke_token({token_name}) failed", rc, stderr)
 
 
+async def _exec_bash_lc(workspace_name: str, script: str, input_data: Optional[bytes] = None,
+                         timeout: Optional[float] = None, cli_path: str = DEFAULT_CLI_PATH) -> tuple[str, str, int]:
+    """
+    Runs `bash -lc <script>` in a workspace via `coder ssh <ws> -- <combined>`.
+
+    **Load-bearing detail, found via Phase 9's real end-to-end walkthrough**: `bash`,
+    `-lc`, and `script` must be passed as ONE combined, self-quoted string — not as
+    3 separate argv elements. `coder ssh <ws> -- a b c` does not preserve multiple
+    trailing arguments as an argv array the way a local `exec()` would; passing
+    `"bash", "-lc", script` separately silently truncates or mis-splits `script` at
+    whitespace once it crosses the SSH exec boundary (confirmed empirically: even
+    `bash -lc "echo hello"` as 3 args produced no output, while the identical
+    command as one pre-quoted string worked correctly). Combining locally with
+    `shlex.quote` before handing it to `coder` as a single trailing argument avoids
+    this entirely.
+    """
+    combined = f"bash -lc {shlex.quote(script)}"
+    return await _run("ssh", workspace_name, "--", combined,
+                       input_data=input_data, cli_path=cli_path, timeout=timeout)
+
+
 async def exec_in_workspace(workspace_name: str, command: str, timeout: Optional[float] = None,
                              cli_path: str = DEFAULT_CLI_PATH) -> tuple[str, str, int]:
     """
@@ -152,8 +173,7 @@ async def exec_in_workspace(workspace_name: str, command: str, timeout: Optional
     must go through write_file_to_workspace's stdin-piped path instead, never here.
     """
     script = f"cd {DEFAULT_WORKING_DIR} && {command}"
-    return await _run("ssh", workspace_name, "--", "bash", "-lc", script,
-                       cli_path=cli_path, timeout=timeout)
+    return await _exec_bash_lc(workspace_name, script, cli_path=cli_path, timeout=timeout)
 
 
 async def write_file_to_workspace(workspace_name: str, remote_path: str, content: str,
@@ -164,14 +184,21 @@ async def write_file_to_workspace(workspace_name: str, remote_path: str, content
     argument-length issues for potentially large content (hidden test bodies).
     `remote_path` itself IS shell-quoted when building the mkdir/cat command, since
     it's host-authored data landing inside a shell string.
+
+    A relative path is resolved by `cd`-ing into `~/project` UNQUOTED first (so
+    normal tilde expansion applies), then operating on the plain relative path —
+    **found via Phase 9's real walkthrough**: embedding `~/project/...` directly
+    inside a `shlex.quote()`'d string breaks tilde expansion entirely (quoting
+    suppresses it, since expansion is a shell-parse-time behavior, not something
+    `mkdir`/`cat` do on their own), silently creating a literal `~`-named directory
+    instead of resolving to the home directory.
     """
-    if not remote_path.startswith("/"):
-        remote_path = f"{DEFAULT_WORKING_DIR}/{remote_path}"
-    quoted_path = shlex.quote(remote_path)
-    script = f"mkdir -p $(dirname {quoted_path}) && cat > {quoted_path}"
-    _, stderr, rc = await _run(
-        "ssh", workspace_name, "--", "bash", "-lc", script,
-        input_data=content.encode(), cli_path=cli_path,
-    )
+    if remote_path.startswith("/"):
+        quoted_path = shlex.quote(remote_path)
+        script = f"mkdir -p $(dirname {quoted_path}) && cat > {quoted_path}"
+    else:
+        quoted_path = shlex.quote(remote_path)
+        script = f"cd {DEFAULT_WORKING_DIR} && mkdir -p $(dirname {quoted_path}) && cat > {quoted_path}"
+    _, stderr, rc = await _exec_bash_lc(workspace_name, script, input_data=content.encode(), cli_path=cli_path)
     if rc != 0:
         raise CoderClientError(f"write_file_to_workspace({workspace_name}, {remote_path}) failed", rc, stderr)

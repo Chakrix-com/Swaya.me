@@ -120,7 +120,7 @@ def test_exec_in_workspace_always_cds_to_project_first():
     with _patch_subprocess(stdout=b"hello\n") as mock_exec:
         stdout, stderr, rc = asyncio.run(coder_client.exec_in_workspace("ws-1", "pytest -q"))
     args, _ = mock_exec.call_args
-    assert args == ("coder", "ssh", "ws-1", "--", "bash", "-lc", "cd ~/project && pytest -q")
+    assert args == ("coder", "ssh", "ws-1", "--", "bash -lc 'cd ~/project && pytest -q'")
     assert stdout == "hello\n"
     assert rc == 0
 
@@ -144,11 +144,15 @@ def test_write_file_to_workspace_pipes_content_via_stdin_not_command_line():
     with _patch_subprocess() as mock_exec:
         asyncio.run(coder_client.write_file_to_workspace("ws-1", "test_hidden.py", "def test(): pass"))
     args, kwargs = mock_exec.call_args
-    assert args[:5] == ("coder", "ssh", "ws-1", "--", "bash")
-    script = args[6]
-    assert "test_hidden.py" in script
+    # bash/-lc/script are combined into ONE trailing argv element — confirmed via
+    # Phase 9's real walkthrough that coder ssh mishandles multiple separate
+    # trailing arguments (silently mis-splits a multi-word script at whitespace).
+    assert args[:4] == ("coder", "ssh", "ws-1", "--")
+    combined = args[4]
+    assert combined.startswith("bash -lc ")
+    assert "test_hidden.py" in combined
     # the actual content never appears in the argv-visible command string
-    assert "def test(): pass" not in script
+    assert "def test(): pass" not in combined
     assert kwargs["stdin"] == asyncio.subprocess.PIPE
 
 
@@ -156,8 +160,13 @@ def test_write_file_to_workspace_relative_path_resolved_against_project_dir():
     with _patch_subprocess() as mock_exec:
         asyncio.run(coder_client.write_file_to_workspace("ws-1", "sub/dir/test_hidden.py", "x"))
     args, _ = mock_exec.call_args
-    script = args[6]
-    assert "~/project/sub/dir/test_hidden.py" in script
+    combined = args[4]
+    # cd ~/project unquoted (tilde expands normally) then a plain relative path —
+    # NOT "~/project/sub/dir/..." embedded inside shlex.quote, which was confirmed
+    # (Phase 9) to break tilde expansion entirely, since quoting is shell-parse-time
+    # and suppresses it, while mkdir/cat just receive whatever literal string.
+    assert "cd ~/project &&" in combined
+    assert "sub/dir/test_hidden.py" in combined
 
 
 def test_write_file_to_workspace_quotes_remote_path():
@@ -168,12 +177,11 @@ def test_write_file_to_workspace_quotes_remote_path():
     with _patch_subprocess() as mock_exec:
         asyncio.run(coder_client.write_file_to_workspace("ws-1", malicious_path, "x"))
     args, _ = mock_exec.call_args
-    script = args[6]
-    tokens = _shlex.split(script)
-    full_path = f"~/project/{malicious_path}"
-    # the whole malicious string must appear intact as (part of) a single shell token,
-    # never split into separate tokens the way bare `; rm -rf /.py` would parse
-    assert any(full_path in tok for tok in tokens)
+    combined = args[4]
+    tokens = _shlex.split(combined)
+    # the whole malicious string must appear intact as its own shell token, never
+    # split into separate tokens the way bare `; rm -rf /.py` would parse
+    assert any(malicious_path in tok for tok in tokens)
     assert "rm" not in tokens
     assert "-rf" not in tokens
 
