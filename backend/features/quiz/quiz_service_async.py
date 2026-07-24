@@ -1422,6 +1422,11 @@ class QuizBuilderServiceAsync:
                     negative_points=getattr(q, 'negative_points', 0) or 0,
                     answer_explanation=q.answer_explanation,
                     grading_rubric=q.grading_rubric,
+                    git_repo_url=getattr(q, 'git_repo_url', None),
+                    test_command=getattr(q, 'test_command', None),
+                    hidden_test_content=getattr(q, 'hidden_test_content', None),
+                    hidden_test_filename=getattr(q, 'hidden_test_filename', None),
+                    time_budget_seconds=getattr(q, 'time_budget_seconds', None),
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],
