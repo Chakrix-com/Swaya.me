@@ -80,12 +80,35 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 - in org.junit.tests.SomeClassT
 
 Tests run: 2, Failures: 1, Errors: 0, Skipped: 0 - in org.junit.tests.OtherClassTest
 
-Results :
+Results:
 
 Tests run: 5, Failures: 1, Errors: 0, Skipped: 0
 
 [INFO] BUILD FAILURE
 """
+
+# Byte-for-byte real `mvn test` output, captured during Phase 9.2's live
+# end-to-end walkthrough (quiz 13/question 6, 2026-07-24) via the actual
+# coder_client.exec_in_workspace path — not a hand-written approximation.
+# Maven auto-detects color support even under a non-interactive `coder ssh`
+# exec (ANSI escapes wrap tokens including the `Results:` header itself), and
+# every line carries a `[INFO] ` prefix with no space before the colon
+# (`[INFO] Results:`, not the bare `Results :` originally assumed).
+_REAL_SUREFIRE_OUTPUT_WITH_ANSI = (
+    "[\x1b[1;34mINFO\x1b[m] -------------------------------------------------------\n"
+    "[\x1b[1;34mINFO\x1b[m]  T E S T S\n"
+    "[\x1b[1;34mINFO\x1b[m] -------------------------------------------------------\n"
+    "[\x1b[1;34mINFO\x1b[m] Running com.swaya.demo.\x1b[1mPalindromeCheckerTest\x1b[m\n"
+    "[\x1b[1;34mINFO\x1b[m] \x1b[1;32mTests run: \x1b[0;1;32m3\x1b[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.064 s -- in com.swaya.demo.\x1b[1mPalindromeCheckerTest\x1b[m\n"
+    "[\x1b[1;34mINFO\x1b[m] Running com.swaya.demo.\x1b[1mPalindromeCheckerHiddenTest\x1b[m\n"
+    "[\x1b[1;34mINFO\x1b[m] \x1b[1;32mTests run: \x1b[0;1;32m3\x1b[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in com.swaya.demo.\x1b[1mPalindromeCheckerHiddenTest\x1b[m\n"
+    "[\x1b[1;34mINFO\x1b[m] \n"
+    "[\x1b[1;34mINFO\x1b[m] Results:\n"
+    "[\x1b[1;34mINFO\x1b[m] \n"
+    "[\x1b[1;34mINFO\x1b[m] \x1b[1;32mTests run: 6, Failures: 0, Errors: 0, Skipped: 0\x1b[m\n"
+    "[\x1b[1;34mINFO\x1b[m] \n"
+    "[\x1b[1;34mINFO\x1b[m] \x1b[1mBUILD SUCCESS\x1b[m\n"
+)
 
 
 def test_run_tests_java_parses_aggregate_not_per_class_subtotal():
@@ -98,6 +121,21 @@ def test_run_tests_java_parses_aggregate_not_per_class_subtotal():
         test_output, passed, total = asyncio.run(gsvc._run_tests("ws-1", "mvn test"))
     assert total == 5
     assert passed == 4  # 5 - 1 failure - 0 errors - 0 skipped
+
+
+def test_run_tests_java_parses_real_ansi_colored_maven_output():
+    """Regression for the bug found in Phase 9.2's live walkthrough: real `mvn
+    test` output (via coder_client.exec_in_workspace) carries ANSI escapes and a
+    `[INFO] ` prefix on the `Results:` header and summary line, so a match
+    against a bare 'Results :' silently never fires, leaving passed/total None
+    despite a genuine BUILD SUCCESS with every test passing."""
+    async def fake_exec(workspace_name, command):
+        return _REAL_SUREFIRE_OUTPUT_WITH_ANSI, None, 0
+
+    with patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec):
+        test_output, passed, total = asyncio.run(gsvc._run_tests("ws-1", "mvn test"))
+    assert total == 6
+    assert passed == 6
 
 
 def test_run_tests_java_no_results_header_returns_none():

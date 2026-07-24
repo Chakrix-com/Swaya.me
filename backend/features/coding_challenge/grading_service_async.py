@@ -31,6 +31,18 @@ _WEIGHTS = {
 _SUREFIRE_SUMMARY_RE = re.compile(
     r"^Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)\s*$"
 )
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
+_MAVEN_LOG_PREFIX_RE = re.compile(r"^\[(?:INFO|WARNING|ERROR)\]\s?")
+
+
+def _clean_maven_line(line: str) -> str:
+    """Maven auto-detects color support even under a non-interactive `coder ssh`
+    exec, wrapping tokens (including the `Results:` header itself) in ANSI escape
+    codes, and every line — `Results:` included — carries a `[INFO]/[WARNING]/[ERROR] `
+    level prefix with no space before the colon. Confirmed against real `mvn test`
+    output during Phase 9.2's live walkthrough (quiz 13/question 6) — matching a
+    bare 'Results :' (as originally assumed) never fires against it."""
+    return _MAVEN_LOG_PREFIX_RE.sub("", _ANSI_ESCAPE_RE.sub("", line)).strip()
 
 
 def _detect_language(test_command: str) -> str:
@@ -69,9 +81,9 @@ async def _run_tests(workspace_name: str, test_command: str) -> tuple[str, Optio
     test_output, _, _ = await coder_client.exec_in_workspace(workspace_name, test_command)
     lines = test_output.splitlines()
     for i, line in enumerate(lines):
-        if line.strip() == "Results :":
+        if _clean_maven_line(line) == "Results:":
             for candidate in lines[i + 1:]:
-                match = _SUREFIRE_SUMMARY_RE.match(candidate.strip())
+                match = _SUREFIRE_SUMMARY_RE.match(_clean_maven_line(candidate))
                 if match:
                     total, failures, errors, skipped = (int(x) for x in match.groups())
                     return test_output, total - failures - errors - skipped, total
