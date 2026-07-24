@@ -128,10 +128,17 @@ async def mint_session_url(workspace_name: str, ide_type: str, coder_url: str,
 
 
 async def revoke_token(token_name: str, cli_path: str = DEFAULT_CLI_PATH) -> None:
-    """`coder tokens rm <name> -y`. Note: this alone does not end an already-open
-    candidate browser session — confirmed during spike #3/#4 — the caller must also
-    stop_workspace()/start_workspace() to close that window durably."""
-    _, stderr, rc = await _run("tokens", "rm", token_name, "-y", cli_path=cli_path)
+    """`coder tokens rm <name>` — unlike every other coder subcommand this wrapper
+    calls, `tokens remove` has no `-y` confirmation flag at all and errors out if
+    passed one (found via Phase 9's real walkthrough: every revoke_token call was
+    silently failing with a CLI argument-parsing error, tolerated by /submit's
+    try/except but leaving every candidate token alive — this had already surfaced
+    once during Phase 1's spike #3 testing too, but that finding wasn't carried
+    into this implementation at the time). Note: revoking alone does not end an
+    already-open candidate browser session — confirmed during spike #3/#4 — the
+    caller must also stop_workspace()/start_workspace() to close that window
+    durably."""
+    _, stderr, rc = await _run("tokens", "rm", token_name, cli_path=cli_path)
     if rc != 0:
         raise CoderClientError(f"revoke_token({token_name}) failed", rc, stderr)
 

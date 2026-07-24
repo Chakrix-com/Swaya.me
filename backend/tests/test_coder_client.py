@@ -111,7 +111,9 @@ def test_revoke_token_calls_expected_args():
     with _patch_subprocess() as mock_exec:
         asyncio.run(coder_client.revoke_token("ws-1-session"))
     args, _ = mock_exec.call_args
-    assert args == ("coder", "tokens", "rm", "ws-1-session", "-y")
+    # NOTE: no -y here — `coder tokens remove` has no confirmation flag at all and
+    # errors out if passed one (unlike every other coder subcommand this module calls).
+    assert args == ("coder", "tokens", "rm", "ws-1-session")
 
 
 # ── exec_in_workspace ────────────────────────────────────────────────────────
