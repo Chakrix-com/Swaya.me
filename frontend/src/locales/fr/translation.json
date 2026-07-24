@@ -2533,7 +2533,6 @@
     "otpIntro": "Nous enverrons un code de vérification à 6 chiffres à {{email}} avant que vous puissiez commencer.",
     "chooseIde": "Choisissez votre IDE",
     "ideCodeServer": "Éditeur de code (navigateur)",
-    "ideIntellij": "IntelliJ",
     "sendCode": "Envoyer le code de vérification",
     "otpRateLimited": "Trop de tentatives. Veuillez patienter quelques minutes et réessayer.",
     "otpSent": "Nous avons envoyé un code à 6 chiffres à {{email}}.",

@@ -29,7 +29,6 @@ router = APIRouter(tags=["coding-challenge"])
 
 _IDE_TEMPLATE_MAP_SETTING = {
     "code_server": "code_server_template_name",
-    "intellij": "intellij_template_name",
 }
 
 
@@ -117,7 +116,7 @@ async def get_coding_challenge_info(token: str, db: AsyncSession = Depends(get_a
         "quiz_title": quiz.title,
         "problem_statement": problem_statement,
         "candidate_email": payload["candidate_email"],
-        "ide_choices": ["code_server", "intellij"],
+        "ide_choices": ["code_server"],
     }
 
 

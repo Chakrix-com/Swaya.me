@@ -2531,7 +2531,6 @@
     "otpIntro": "Wir senden einen 6-stelligen Bestätigungscode an {{email}}, bevor Sie beginnen können.",
     "chooseIde": "Wählen Sie Ihre IDE",
     "ideCodeServer": "Code-Editor (Browser)",
-    "ideIntellij": "IntelliJ",
     "sendCode": "Bestätigungscode senden",
     "otpRateLimited": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.",
     "otpSent": "Wir haben einen 6-stelligen Code an {{email}} gesendet.",

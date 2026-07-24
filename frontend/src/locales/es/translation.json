@@ -2531,7 +2531,6 @@
     "otpIntro": "Enviaremos un código de verificación de 6 dígitos a {{email}} antes de que puedas comenzar.",
     "chooseIde": "Elige tu IDE",
     "ideCodeServer": "Editor de código (navegador)",
-    "ideIntellij": "IntelliJ",
     "sendCode": "Enviar código de verificación",
     "otpRateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
     "otpSent": "Enviamos un código de 6 dígitos a {{email}}.",

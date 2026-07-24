@@ -90,16 +90,18 @@ function StartStep({ info, onStarted, startError, onClearStartError }) {
       <Card bordered={false}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Text>{t('codingChallenge.otpIntro', { email: info.candidate_email })}</Text>
-          <div>
-            <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('codingChallenge.chooseIde')}</Text>
-            <Radio.Group value={ideType} onChange={(e) => setIdeType(e.target.value)}>
-              {(info.ide_choices || []).map((choice) => (
-                <Radio.Button key={choice} value={choice}>
-                  {choice === 'code_server' ? t('codingChallenge.ideCodeServer') : t('codingChallenge.ideIntellij')}
-                </Radio.Button>
-              ))}
-            </Radio.Group>
-          </div>
+          {(info.ide_choices || []).length > 1 && (
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('codingChallenge.chooseIde')}</Text>
+              <Radio.Group value={ideType} onChange={(e) => setIdeType(e.target.value)}>
+                {(info.ide_choices || []).map((choice) => (
+                  <Radio.Button key={choice} value={choice}>
+                    {choice === 'code_server' ? t('codingChallenge.ideCodeServer') : choice}
+                  </Radio.Button>
+                ))}
+              </Radio.Group>
+            </div>
+          )}
           {otpError && <Alert type="error" showIcon message={otpError} />}
           <Button type="primary" size="large" loading={sendingOtp} onClick={handleSendOtp}>
             {t('codingChallenge.sendCode')}

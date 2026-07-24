@@ -2537,7 +2537,6 @@
     "otpIntro": "We'll send a 6-digit verification code to {{email}} before you can start.",
     "chooseIde": "Choose your IDE",
     "ideCodeServer": "Code Editor (Browser)",
-    "ideIntellij": "IntelliJ",
     "sendCode": "Send verification code",
     "otpRateLimited": "Too many attempts. Please wait a few minutes and try again.",
     "otpSent": "We sent a 6-digit code to {{email}}.",

@@ -164,7 +164,7 @@ def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
 
 def test_start_schedules_lifetime_cap_job_with_correct_deadline():
     token = _make_token()
-    body = router_mod.StartRequest(ide_type="intellij", otp="123456")
+    body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
     quiz = Quiz(id=1, tenant_id=1, event_id=1, title="Q")
     db = _mock_db(existing_workspace=None, active_count=0, question=question, quiz=quiz)

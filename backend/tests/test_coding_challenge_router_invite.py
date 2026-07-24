@@ -118,7 +118,7 @@ def test_get_coding_challenge_info_returns_expected_shape():
     assert result["quiz_title"] == "My Challenge"
     assert result["problem_statement"] == "# Problem\nDo the thing"
     assert result["candidate_email"] == "candidate@example.com"
-    assert set(result["ide_choices"]) == {"code_server", "intellij"}
+    assert set(result["ide_choices"]) == {"code_server"}
 
 
 def test_get_coding_challenge_info_404_when_question_missing():

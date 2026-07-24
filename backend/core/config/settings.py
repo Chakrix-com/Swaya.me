@@ -201,7 +201,6 @@ class CoderSettings(BaseSettings):
     max_concurrent_workspaces: int = Field(default=5, alias="MAX_CONCURRENT_WORKSPACES")
     workspace_max_lifetime_seconds: int = Field(default=5400, alias="WORKSPACE_MAX_LIFETIME_SECONDS")
     code_server_template_name: str = Field(default="code-server-multi", alias="CODE_SERVER_TEMPLATE_NAME")
-    intellij_template_name: str = Field(default="intellij-multi", alias="INTELLIJ_TEMPLATE_NAME")
     service_account_username: str = Field(default="swaya-backend-svc", alias="CODER_SERVICE_ACCOUNT_USERNAME")
 
     model_config = SettingsConfigDict(
