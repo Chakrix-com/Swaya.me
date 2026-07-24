@@ -4,10 +4,12 @@ verification (mirrors the existing exam OTP pattern), and startup reconciliation
 for scheduled jobs that don't survive a backend restart on their own.
 """
 import logging
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import httpx
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,6 +48,36 @@ def decode_invite_token(token: str) -> dict:
         if field not in payload:
             raise HTTPException(status_code=400, detail="Invalid invite link")
     return payload
+
+
+_GITHUB_URL_RE = re.compile(r"github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?/?$")
+_FALLBACK_PROBLEM_STATEMENT = (
+    "Could not fetch the problem statement README from the starter repo. "
+    "Please open the repo link directly for instructions."
+)
+
+
+async def fetch_readme(git_repo_url: str) -> str:
+    """
+    Fetches the starter repo's README for display as the problem statement — plain
+    httpx GET against raw.githubusercontent.com, no auth (public repos only, per
+    scope). Tries main then master. Graceful fallback text if unreachable.
+    """
+    match = _GITHUB_URL_RE.search(git_repo_url.strip())
+    if not match:
+        return _FALLBACK_PROBLEM_STATEMENT
+    owner, repo = match.group(1), match.group(2)
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for branch in ("main", "master"):
+            for filename in ("README.md", "README"):
+                url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{filename}"
+                try:
+                    resp = await client.get(url)
+                    if resp.status_code == 200:
+                        return resp.text
+                except httpx.HTTPError:
+                    continue
+    return _FALLBACK_PROBLEM_STATEMENT
 
 
 # ── Email OTP verification (mirrors request_exam_otp / start_exam) ─────────
