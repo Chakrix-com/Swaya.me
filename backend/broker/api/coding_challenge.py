@@ -295,3 +295,37 @@ async def submit_coding_challenge(
         )
 
     return {"status": "queued"}
+
+
+@router.get("/coding-challenge/{token}/status")
+async def get_coding_challenge_status(token: str, db: AsyncSession = Depends(get_async_db)):
+    """Public — candidate-facing polling endpoint. Frontend polls this every few
+    seconds (capped at a max poll duration client-side) until it reaches a terminal
+    status."""
+    payload = svc.decode_invite_token(token)
+
+    result = await db.execute(
+        select(CodeWorkspace).filter(
+            CodeWorkspace.quiz_id == payload["quiz_id"],
+            CodeWorkspace.question_id == payload["question_id"],
+            CodeWorkspace.candidate_email == payload["candidate_email"],
+        )
+    )
+    workspace = result.scalar_one_or_none()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="No workspace found — call /start first")
+
+    result = await db.execute(
+        select(CodeSubmission).filter(CodeSubmission.workspace_id == workspace.id)
+    )
+    submission = result.scalar_one_or_none()
+    if not submission:
+        return {"status": "not_submitted"}
+
+    response = {"status": submission.status.value}
+    if submission.status == CodeSubmissionStatus.GRADED:
+        response["ai_score"] = submission.ai_score
+        response["ai_verdict"] = submission.ai_verdict
+    elif submission.status in (CodeSubmissionStatus.FAILED, CodeSubmissionStatus.PARTIAL_FAILED):
+        response["error_message"] = submission.error_message
+    return response
