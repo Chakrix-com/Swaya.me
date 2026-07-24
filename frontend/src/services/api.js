@@ -241,6 +241,18 @@ export const offlinePollAPI = {
 // Quiz Publish Offline
 export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offline`)
 
+// Coding Challenge API
+export const codingChallengeAPI = {
+  getInfo: (token) => api.get(`/coding-challenge/${token}`),
+  requestOtp: (token) => api.post(`/coding-challenge/${token}/request-otp`),
+  start: (token, ideType, otp) => api.post(`/coding-challenge/${token}/start`, { ide_type: ideType, otp }),
+  submit: (token) => api.post(`/coding-challenge/${token}/submit`),
+  getStatus: (token) => api.get(`/coding-challenge/${token}/status`),
+  invite: (quizId, candidateEmail) =>
+    api.post(`/quizzes/${quizId}/coding-challenge/invite`, { candidate_email: candidateEmail }),
+  getReview: (questionId) => api.get(`/quiz-builder/questions/${questionId}/coding-challenge-review`),
+}
+
 // Exam API
 export const examAPI = {
   getInfo: (slug) => api.get(`/e/${slug}`),

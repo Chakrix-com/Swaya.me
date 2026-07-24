@@ -43,6 +43,12 @@ import OfflinePollSession from './features/offline-poll/OfflinePollSession'
 import ExamSession from './features/exam/ExamSession'
 
 // Heavy or Host-only routes (lazily loaded)
+// CodingChallengeSession is lazy (not alongside ExamSession above) specifically
+// because it pulls in react-markdown for README rendering — eager-loading it
+// pushed the main bundle from 4.38MB to 5.26MB and broke the PWA precache
+// limit (react-markdown was previously only reachable via ExamResults' own
+// lazy chunk, never the eager entry bundle).
+const CodingChallengeSession = lazy(() => import('./features/coding-challenge/CodingChallengeSession'))
 const PrivacyPolicy = lazy(() => import('./features/home/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('./features/home/TermsOfService'))
 const About = lazy(() => import('./features/home/About'))
@@ -469,27 +475,31 @@ function AppRoutes() {
     )
   }
 
-  // Join, session, present, offline poll, and exam routes are always public
+  // Join, session, present, offline poll, exam, and coding-challenge routes are always public
   if (
     location.pathname.startsWith('/join') ||
     location.pathname.startsWith('/session') ||
     location.pathname.startsWith('/present') ||
     location.pathname.startsWith('/poll') ||
     location.pathname.startsWith('/e/') ||
+    location.pathname.startsWith('/c/') ||
     location.pathname.startsWith('/cert/')
   ) {
     return (
       <PublicLayout>
-        <Routes>
-          <Route path="/join" element={<AudienceJoin />} />
-          <Route path="/join/:joinCode" element={<AudienceJoin />} />
-          <Route path="/session/:sessionId" element={<AudienceSession />} />
-          <Route path="/present/:sessionId" element={<QuizPresent />} />
-          <Route path="/poll/:slug" element={<OfflinePollSession />} />
-          <Route path="/e/:slug" element={<ExamSession />} />
-          <Route path="/cert/:token" element={<CertificatePage />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <Suspense fallback={<div style={{ padding: 40, textAlign: 'center' }}><Spin size="large" /></div>}>
+          <Routes>
+            <Route path="/join" element={<AudienceJoin />} />
+            <Route path="/join/:joinCode" element={<AudienceJoin />} />
+            <Route path="/session/:sessionId" element={<AudienceSession />} />
+            <Route path="/present/:sessionId" element={<QuizPresent />} />
+            <Route path="/poll/:slug" element={<OfflinePollSession />} />
+            <Route path="/e/:slug" element={<ExamSession />} />
+            <Route path="/c/:token" element={<CodingChallengeSession />} />
+            <Route path="/cert/:token" element={<CertificatePage />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Suspense>
       </PublicLayout>
     )
   }
