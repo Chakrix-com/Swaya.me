@@ -174,6 +174,17 @@ async def start_coding_challenge(
     )
     existing = result.scalar_one_or_none()
     if existing and existing.status in (CodeWorkspaceStatus.PROVISIONING, CodeWorkspaceStatus.ACTIVE):
+        # mint_session_url derives a deterministic token name from the workspace name
+        # (see Workspace isolation), so re-minting for a returning candidate without
+        # revoking the still-live token from their first /start collides with
+        # "a token with this name already exists" — found live via a real candidate
+        # hitting this exact path (their second /start on an already-active
+        # workspace), which burned their one-time OTP on the crash with no recovery.
+        if existing.coder_token_name:
+            try:
+                await coder_client.revoke_token(existing.coder_token_name)
+            except Exception as e:
+                logger.warning("start: revoke_token(%s) failed before re-mint: %s", existing.coder_token_name, e)
         workspace_url, token_name = await coder_client.mint_session_url(
             existing.coder_workspace_name, body.ide_type, settings.coder.url,
             settings.coder.service_account_username,

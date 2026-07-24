@@ -135,6 +135,59 @@ def test_start_reconnects_to_existing_active_workspace_without_reprovisioning():
     db.commit.assert_called_once()
 
 
+def test_start_revokes_old_token_before_reminting_on_reconnect():
+    """Regression for a real bug hit by a real candidate: mint_session_url derives a
+    deterministic token name from the workspace name, so re-minting for a returning
+    candidate without revoking the still-live token from their first /start collides
+    with 'a token with this name already exists', crashing with a 500 that burns the
+    candidate's one-time OTP with no recovery path."""
+    token = _make_token()
+    body = router_mod.StartRequest(ide_type="code_server", otp="123456")
+    existing = CodeWorkspace(
+        id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
+        ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
+        coder_token_name="cc-1-10-abcd1234-session",
+        status=CodeWorkspaceStatus.ACTIVE,
+    )
+    db = _mock_db(existing_workspace=existing)
+    redis = AsyncMock()
+
+    with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
+         patch.object(router_mod.coder_client, "revoke_token", AsyncMock()) as mock_revoke, \
+         patch.object(router_mod.coder_client, "mint_session_url",
+                       AsyncMock(return_value=("https://sandbox/reconnect-url", "tok-name-2"))) as mock_mint:
+        result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
+
+    mock_revoke.assert_called_once_with("cc-1-10-abcd1234-session")
+    mock_mint.assert_called_once()
+    assert result == {"workspace_url": "https://sandbox/reconnect-url"}
+
+
+def test_start_tolerates_revoke_failure_before_remint():
+    """A stale/already-expired old token failing to revoke must not block the
+    re-mint — same tolerant pattern used at /submit's own revoke_token call."""
+    token = _make_token()
+    body = router_mod.StartRequest(ide_type="code_server", otp="123456")
+    existing = CodeWorkspace(
+        id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
+        ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
+        coder_token_name="cc-1-10-abcd1234-session",
+        status=CodeWorkspaceStatus.ACTIVE,
+    )
+    db = _mock_db(existing_workspace=existing)
+    redis = AsyncMock()
+
+    with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
+         patch.object(router_mod.coder_client, "revoke_token",
+                       AsyncMock(side_effect=Exception("token already gone"))), \
+         patch.object(router_mod.coder_client, "mint_session_url",
+                       AsyncMock(return_value=("https://sandbox/reconnect-url", "tok-name-2"))) as mock_mint:
+        result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
+
+    mock_mint.assert_called_once()
+    assert result == {"workspace_url": "https://sandbox/reconnect-url"}
+
+
 def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
     """An idempotency-check hit on a long-abandoned/destroyed row must not block a
     genuinely fresh provision."""
