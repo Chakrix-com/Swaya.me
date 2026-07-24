@@ -194,6 +194,24 @@ class AIRoutingSettings(BaseSettings):
     )
 
 
+class CoderSettings(BaseSettings):
+    """Coder sandbox integration (coding-challenge feature)."""
+    url: str = Field(default="https://sandbox.swaya.me", alias="CODER_URL")
+    cli_path: str = Field(default="coder", alias="CODER_CLI_PATH")
+    max_concurrent_workspaces: int = Field(default=5, alias="MAX_CONCURRENT_WORKSPACES")
+    workspace_max_lifetime_seconds: int = Field(default=5400, alias="WORKSPACE_MAX_LIFETIME_SECONDS")
+    code_server_template_name: str = Field(default="code-server-multi", alias="CODE_SERVER_TEMPLATE_NAME")
+    intellij_template_name: str = Field(default="intellij-multi", alias="INTELLIJ_TEMPLATE_NAME")
+    service_account_username: str = Field(default="swaya-backend-svc", alias="CODER_SERVICE_ACCOUNT_USERNAME")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        protected_namespaces=(),
+    )
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
@@ -205,6 +223,7 @@ class Settings(BaseSettings):
     ollama: OllamaSettings = Field(default_factory=OllamaSettings)
     gemini: GeminiSettings = Field(default_factory=GeminiSettings)
     ai: AIRoutingSettings = Field(default_factory=AIRoutingSettings)
+    coder: CoderSettings = Field(default_factory=CoderSettings)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -101,6 +101,34 @@ class BaseAIProvider(ABC):
         """
         return {"verdict": "WA", "output": "", "explanation": "AI evaluation unavailable"}
 
+    async def assess_coding_challenge(
+        self,
+        problem_statement: str,
+        grading_rubric: str,
+        code_timeline: str,
+        ai_transcript: str,
+    ) -> dict:
+        """
+        Judge the 5 LLM-scored coding-challenge criteria (AI-usage efficiency, prompt
+        quality, validation discipline, code quality, architecture) from the candidate's
+        commit timeline and Claude Code transcript. Does NOT judge functional
+        correctness — that's computed deterministically from test results, kept out of
+        the LLM's hands so grading integrity doesn't depend on the model resisting a
+        prompt-injection attempt embedded in candidate-authored content.
+        Returns: {"ai_usage_efficiency": int, "prompt_quality": int,
+                  "validation_discipline": int, "code_quality": int,
+                  "architecture": int, "rationale": str} — each score 0-100.
+        Default: neutral mid-score fallback when no AI provider is configured.
+        """
+        return {
+            "ai_usage_efficiency": 50,
+            "prompt_quality": 50,
+            "validation_discipline": 50,
+            "code_quality": 50,
+            "architecture": 50,
+            "rationale": "AI assessment unavailable",
+        }
+
     async def list_available_models(self) -> list[str]:
         """Return model IDs available via this provider. Empty list if not applicable."""
         return []

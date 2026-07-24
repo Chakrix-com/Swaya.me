@@ -121,5 +121,22 @@ async def evaluate_code(
     return await get_primary_provider().evaluate_code(language, code, problem_statement, grading_rubric)
 
 
+async def assess_coding_challenge(
+    problem_statement: str,
+    grading_rubric: str,
+    code_timeline: str,
+    ai_transcript: str,
+) -> dict:
+    """
+    Returns the 5 LLM-judged coding-challenge sub-scores + rationale. Does not take
+    test_output — functional correctness is computed deterministically by the caller,
+    never by the LLM. Exceptions propagate (unlike evaluate_code's swallow-and-fallback
+    behavior) so the caller's retry-then-partial_failed logic can detect a real failure.
+    """
+    return await get_primary_provider().assess_coding_challenge(
+        problem_statement, grading_rubric, code_timeline, ai_transcript
+    )
+
+
 async def list_available_models() -> list[str]:
     return await get_light_provider().list_available_models()
