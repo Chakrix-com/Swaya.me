@@ -3,7 +3,7 @@ Quiz feature domain models
 """
 from sqlalchemy import Column, Integer, BigInteger, Float, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
+from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME, LONGTEXT as MYSQL_LONGTEXT
 from sqlalchemy.orm import relationship
 import enum
 
@@ -24,6 +24,7 @@ class QuizType(str, enum.Enum):
     POLL = "poll"
     OFFLINE_POLL = "offline_poll"
     EXAM = "exam"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 class QuizSessionStatus(str, enum.Enum):
@@ -50,6 +51,7 @@ class QuestionType(str, enum.Enum):
     ONE_WORD = "one_word"
     CODE = "code"
     MCQ_MULTI = "mcq_multi"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 class TemplateScope(str, enum.Enum):
@@ -190,9 +192,101 @@ class Question(Base, TimestampMixin):
     answer_explanation = Column(Text, nullable=True)
     grading_rubric = Column(Text, nullable=True)
 
+    # CODING_CHALLENGE fields
+    git_repo_url = Column(String(500), nullable=True)
+    test_command = Column(String(255), nullable=True, default="pytest -q", server_default="pytest -q")
+    hidden_test_content = Column(Text, nullable=True)
+    hidden_test_filename = Column(String(255), nullable=True)
+    time_budget_seconds = Column(Integer, nullable=True)
+
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
     answers = relationship("Answer", back_populates="question")
+
+
+class CodeWorkspaceStatus(str, enum.Enum):
+    """Coding-challenge Coder workspace lifecycle status"""
+    PROVISIONING = "provisioning"
+    ACTIVE = "active"
+    SUBMITTED = "submitted"
+    ABANDONED = "abandoned"
+    DESTROYED = "destroyed"
+
+
+class CodeWorkspace(Base, TimestampMixin, TenantMixin):
+    """
+    A candidate's per-workspace Coder sandbox for a CODING_CHALLENGE question.
+    """
+    __tablename__ = "code_workspaces"
+    __table_args__ = (
+        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', name='uq_code_workspace_quiz_question_email'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
+    candidate_email = Column(String(255), nullable=False, index=True)
+    ide_type = Column(String(20), nullable=False)  # code_server | intellij
+    coder_workspace_name = Column(String(255), nullable=False, unique=True)
+    coder_token_name = Column(String(255), nullable=True)
+    status = Column(
+        SQLEnum(CodeWorkspaceStatus, values_callable=lambda obj: [e.value for e in obj]),
+        default=CodeWorkspaceStatus.PROVISIONING,
+        nullable=False,
+        server_default=CodeWorkspaceStatus.PROVISIONING.value,
+    )
+    workspace_url = Column(String(1000), nullable=True)
+    submitted_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    destroyed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
+    # Relationships
+    quiz = relationship("Quiz")
+    question = relationship("Question")
+    submission = relationship("CodeSubmission", back_populates="workspace", uselist=False)
+
+
+class CodeSubmissionStatus(str, enum.Enum):
+    """Coding-challenge grading pipeline status"""
+    QUEUED = "queued"
+    GRADING = "grading"
+    GRADED = "graded"
+    FAILED = "failed"
+    PARTIAL_FAILED = "partial_failed"
+
+
+class CodeSubmission(Base, TimestampMixin):
+    """
+    A candidate's submitted coding-challenge solution and its (possibly async, possibly
+    partial) grading outcome. Inserted at /submit time, not at /start.
+    """
+    __tablename__ = "code_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey('code_workspaces.id'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
+    test_output = Column(Text, nullable=True)
+    passed_count = Column(Integer, nullable=True)
+    total_count = Column(Integer, nullable=True)
+    ai_transcript_raw = Column(MYSQL_LONGTEXT, nullable=True)
+    code_timeline = Column(MYSQL_LONGTEXT, nullable=True)
+    ai_token_usage = Column(JSON, nullable=True)
+    score_breakdown = Column(JSON, nullable=True)
+    ai_score = Column(Integer, nullable=True)
+    ai_verdict = Column(String(50), nullable=True)
+    ai_rationale = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
+    status = Column(
+        SQLEnum(CodeSubmissionStatus, values_callable=lambda obj: [e.value for e in obj]),
+        default=CodeSubmissionStatus.QUEUED,
+        nullable=False,
+        server_default=CodeSubmissionStatus.QUEUED.value,
+    )
+    submitted_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    graded_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
+    # Relationships
+    workspace = relationship("CodeWorkspace", back_populates="submission")
+    question = relationship("Question")
 
 
 class QuizSession(Base, TimestampMixin, TenantMixin):

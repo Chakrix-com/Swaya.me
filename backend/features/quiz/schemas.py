@@ -20,6 +20,7 @@ class QuizTypeEnum(str, Enum):
     POLL = "poll"
     OFFLINE_POLL = "offline_poll"
     EXAM = "exam"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 class SessionStatusEnum(str, Enum):
@@ -46,6 +47,7 @@ class QuestionTypeEnum(str, Enum):
     ONE_WORD = "one_word"
     CODE = "code"
     MCQ_MULTI = "mcq_multi"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 ALLOWED_CODE_LANGUAGES = {"python", "java", "cpp", "javascript", "typescript", "go", "rust", "csharp"}
