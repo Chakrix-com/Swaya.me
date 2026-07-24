@@ -68,6 +68,7 @@ const QuizHistory = lazy(() => import('./features/quiz/QuizHistory'))
 const SessionRecap = lazy(() => import('./features/quiz/SessionRecap'))
 const OfflinePollResults = lazy(() => import('./features/offline-poll/OfflinePollResults'))
 const ExamResults = lazy(() => import('./features/exam/ExamResults'))
+const CodingChallengeReview = lazy(() => import('./features/coding-challenge/CodingChallengeReview'))
 const IntegrityReport = lazy(() => import('./features/exam/IntegrityReport'))
 const CertificatePage = lazy(() => import('./features/exam/CertificatePage'))
 const QuizPresent = lazy(() => import('./features/quiz/QuizPresent'))
@@ -540,6 +541,7 @@ function AppRoutes() {
         <Route path="/quiz/:id/sessions" element={<QuizHistory />} />
         <Route path="/quiz/:id/offline-results" element={<OfflinePollResults />} />
         <Route path="/quiz/:id/exam-results" element={<ExamResults />} />
+        <Route path="/quiz/coding-challenge-review/:questionId" element={<CodingChallengeReview />} />
         <Route path="/quiz/:id/exam-results/integrity/:participantId" element={<IntegrityReport />} />
         <Route path="/admin/statistics" element={<Statistics />} />
         <Route path="/admin/users" element={<UserManagement />} />

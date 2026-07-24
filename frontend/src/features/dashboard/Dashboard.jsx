@@ -29,6 +29,7 @@ import {
   SearchOutlined,
   InboxOutlined,
   FolderOutlined,
+  CodeOutlined,
 } from '@ant-design/icons'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
@@ -105,6 +106,17 @@ const ACTIVITY_TYPES = [
     iconColor: 'var(--sw-tile-opoll-fg)',
     Icon: AppstoreOutlined,
   },
+  {
+    key: 'coding_challenge',
+    titleKey: 'codingChallenge.createCodingChallenge',
+    defaultTitle: 'Coding Challenge',
+    descKey: 'codingChallenge.emptyStateDesc',
+    defaultDesc: 'A real browser IDE with AI pair-programming, auto-graded.',
+    bg: 'var(--sw-tile-cc-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-cc-fg)',
+    Icon: CodeOutlined,
+  },
 ]
 
 // ── Status tag config ─────────────────────────────────────────────────────────
@@ -120,6 +132,7 @@ const TYPE_TAG = {
   exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  labelKey: 'activities.typeExam' },
   poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  labelKey: 'activities.typePoll' },
   offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', labelKey: 'activities.typeSurvey' },
+  coding_challenge: { bg: 'var(--sw-tile-cc-bg)', color: 'var(--sw-tile-cc-fg)', labelKey: 'activities.typeCodingChallenge' },
 }
 
 const TEMPLATE_CACHE_KEY = 'templateQuizIds'

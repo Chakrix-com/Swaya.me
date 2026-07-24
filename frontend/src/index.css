@@ -203,6 +203,8 @@ canvas {
   --sw-tile-poll-fg:    #EA580C;
   --sw-tile-opoll-bg:   #FDF2F8;
   --sw-tile-opoll-fg:   #DB2777;
+  --sw-tile-cc-bg:      #E0F2FE;
+  --sw-tile-cc-fg:      #0284C7;
   --sw-tile-icon-bg:    #FFFFFF;
   --sw-chip-ready-bg:   #DCFCE7;
   --sw-chip-ready-fg:   #166534;
