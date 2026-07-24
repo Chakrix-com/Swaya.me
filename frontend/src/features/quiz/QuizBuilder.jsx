@@ -3212,6 +3212,13 @@ export default function QuizBuilder() {
                   {t('codingChallenge.inviteCandidate', 'Invite Candidate')}
                 </Button>
               </Tooltip>
+              {questions.find(q => q.question_type === 'coding_challenge') && (
+                <Button
+                  onClick={() => navigate(`/quiz/coding-challenge-review/${questions.find(q => q.question_type === 'coding_challenge').id}`)}
+                >
+                  {t('codingChallenge.viewSubmissions', 'View Submissions')}
+                </Button>
+              )}
               <Tooltip title={t('tooltip.unpublishQuiz')}>
                 <Button type="default" onClick={handleUnpublish} loading={loading}>
                   {t('quiz.unpublishQuiz')}
