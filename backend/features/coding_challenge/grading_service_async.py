@@ -9,6 +9,8 @@ import re
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy import update
+
 from persistence.models.quiz import (
     CodeWorkspace, CodeSubmission, CodeSubmissionStatus, CodeWorkspaceStatus, Question,
 )
@@ -269,6 +271,32 @@ async def run_grading_job(submission_id: int) -> None:
             submission.status = CodeSubmissionStatus.GRADED
 
         submission.graded_at = datetime.utcnow()
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception as e:
+            # The one commit in this job with no earlier try/except around it — found
+            # live (Phase 11) when a real, non-quiet `mvn test` run's ANSI-colored
+            # output exceeded test_output's old TEXT cap, crashing this exact commit
+            # and stranding the submission at `grading` forever (nothing upstream
+            # ever sets a terminal status on this path). Root cause fixed by widening
+            # the column, but this commit itself still had no failure handling at
+            # all — a persistence failure here must still reach a terminal status,
+            # never leave the row stuck, per this feature's own EV-6 principle. Falls
+            # back to a minimal raw UPDATE that excludes the large harvested fields,
+            # since those are the most likely cause of a repeat failure.
+            logger.error("run_grading_job: final commit failed for submission %s: %s", submission_id, e)
+            await db.rollback()
+            await db.execute(
+                update(CodeSubmission)
+                .where(CodeSubmission.id == submission_id)
+                .values(
+                    status=CodeSubmissionStatus.PARTIAL_FAILED,
+                    error_message=f"grading computed but could not be persisted: {e}"[:2000],
+                    graded_at=datetime.utcnow(),
+                )
+            )
+            await db.commit()
+            await _cleanup(db, workspace)
+            return
 
         await _cleanup(db, workspace)

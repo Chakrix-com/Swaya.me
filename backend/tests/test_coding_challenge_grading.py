@@ -435,3 +435,43 @@ def test_grading_job_success_path_persists_graded_with_full_breakdown():
     assert submission.ai_verdict == "pass"
     assert submission.score_breakdown is not None
     assert submission.graded_at is not None
+
+
+def test_grading_job_final_commit_failure_falls_back_to_partial_failed():
+    """Regression for the bug found live in Phase 11: a real, non-quiet `mvn test`
+    run's output was too large for the (since-widened) test_output column, and the
+    final commit — previously with no try/except at all — crashed uncaught, leaving
+    the submission stuck at `grading` forever. Any future persist failure at this
+    point must still reach a terminal status via the raw-UPDATE fallback."""
+    submission = _fixture_submission()
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    session_cls, db = _mock_session(submission, workspace, question)
+    db.commit = AsyncMock(side_effect=[None, Exception("Data too long for column"), None])
+
+    async def fake_exec(workspace_name, command):
+        if "--json-report" in command:
+            return "", None, 0
+        if command.startswith("cat /tmp"):
+            return json.dumps({"summary": {"passed": 5, "total": 5}}), None, 0
+        return "output", None, 0
+
+    with patch("persistence.database_async.AsyncSessionLocal", session_cls), \
+         patch.object(gsvc.coder_client, "stop_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
+         patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
+         patch("core.ai.router.assess_coding_challenge",
+               AsyncMock(return_value={"ai_usage_efficiency": 90, "prompt_quality": 90,
+                                        "validation_discipline": 90, "code_quality": 90,
+                                        "architecture": 90, "rationale": "excellent"})), \
+         patch.object(gsvc, "_cleanup", AsyncMock()) as mock_cleanup:
+        asyncio.run(gsvc.run_grading_job(1))
+
+    db.rollback.assert_called_once()
+    db.execute.assert_called_once()
+    update_stmt = db.execute.call_args[0][0]
+    compiled_values = update_stmt.compile().params
+    assert compiled_values["status"] == CodeSubmissionStatus.PARTIAL_FAILED
+    assert "could not be persisted" in compiled_values["error_message"]
+    mock_cleanup.assert_called_once()  # still cleans up rather than leaking the workspace

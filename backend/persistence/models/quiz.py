@@ -264,7 +264,7 @@ class CodeSubmission(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(Integer, ForeignKey('code_workspaces.id'), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
-    test_output = Column(Text, nullable=True)
+    test_output = Column(MYSQL_LONGTEXT, nullable=True)
     passed_count = Column(Integer, nullable=True)
     total_count = Column(Integer, nullable=True)
     ai_transcript_raw = Column(MYSQL_LONGTEXT, nullable=True)
