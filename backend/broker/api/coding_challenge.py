@@ -3,6 +3,7 @@ Coding Challenge API — authenticated host endpoints (invite, examiner review) 
 the public candidate flow at /coding-challenge/{token}/...
 """
 import hashlib
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -17,9 +18,12 @@ from core.auth.dependencies import get_current_user, CurrentUser
 from core.config.settings import settings
 from persistence.models.quiz import (
     Quiz, QuizType, Question, QuestionType, CodeWorkspace, CodeWorkspaceStatus,
+    CodeSubmission, CodeSubmissionStatus,
 )
 from features.coding_challenge import coding_challenge_service_async as svc
 from features.coding_challenge import coder_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["coding-challenge"])
 
@@ -222,3 +226,72 @@ async def start_coding_challenge(
     svc.schedule_lifetime_cap_job(workspace.id, workspace_name, lifetime_deadline)
 
     return {"workspace_url": workspace_url}
+
+
+@router.post("/coding-challenge/{token}/submit")
+async def submit_coding_challenge(
+    token: str,
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Public — fast, idempotent. Only revoke_token happens synchronously; everything
+    else (test execution, transcript harvest, AI scoring) is a scheduled job."""
+    from apscheduler.triggers.date import DateTrigger
+    from core.stats import scheduler as stats_scheduler
+    from features.coding_challenge.grading_service_async import run_grading_job
+
+    payload = svc.decode_invite_token(token)
+    quiz_id, question_id, candidate_email = (
+        payload["quiz_id"], payload["question_id"], payload["candidate_email"],
+    )
+
+    result = await db.execute(
+        select(CodeWorkspace).filter(
+            CodeWorkspace.quiz_id == quiz_id,
+            CodeWorkspace.question_id == question_id,
+            CodeWorkspace.candidate_email == candidate_email,
+        )
+    )
+    workspace = result.scalar_one_or_none()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="No workspace found — call /start first")
+
+    # Idempotency check: a second /submit for an already-submitted workspace returns
+    # the existing status instead of re-revoking and re-scheduling a second grading job.
+    result = await db.execute(
+        select(CodeSubmission).filter(CodeSubmission.workspace_id == workspace.id)
+    )
+    existing_submission = result.scalar_one_or_none()
+    if existing_submission:
+        return {"status": existing_submission.status.value}
+
+    # The one synchronous, load-bearing call: this is the actual mechanism behind
+    # "no further edits from this instant".
+    if workspace.coder_token_name:
+        try:
+            await coder_client.revoke_token(workspace.coder_token_name)
+        except Exception as e:
+            logger.warning("submit: revoke_token(%s) failed: %s", workspace.coder_token_name, e)
+
+    workspace.status = CodeWorkspaceStatus.SUBMITTED
+    workspace.submitted_at = datetime.utcnow()
+
+    submission = CodeSubmission(
+        workspace_id=workspace.id,
+        question_id=question_id,
+        status=CodeSubmissionStatus.QUEUED,
+        submitted_at=datetime.utcnow(),
+    )
+    db.add(submission)
+    await db.commit()
+    await db.refresh(submission)
+
+    if stats_scheduler.scheduler:
+        stats_scheduler.scheduler.add_job(
+            run_grading_job,
+            trigger=DateTrigger(run_date=datetime.utcnow()),
+            args=[submission.id],
+            id=f"coding-challenge-grading:{submission.id}",
+            replace_existing=True,
+        )
+
+    return {"status": "queued"}
