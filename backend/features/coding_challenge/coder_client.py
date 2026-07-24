@@ -22,10 +22,21 @@ DEFAULT_WORKING_DIR = "~/project"
 
 
 class CoderClientError(Exception):
-    """Raised when a coder CLI subprocess call fails unexpectedly."""
+    """Raised when a coder CLI subprocess call fails unexpectedly. Folds returncode/
+    stderr into the exception's own message (not just attributes) — found via a real
+    Phase 10 resilience test that every catch site across this feature logs/persists
+    failures via plain `str(e)`/`%s`, which previously showed only the generic
+    "<call> failed" text and silently dropped the actual CLI stderr/exit code that
+    would explain why, including in the error_message an examiner sees on a failed
+    CodeSubmission."""
 
     def __init__(self, message: str, returncode: Optional[int] = None, stderr: str = ""):
-        super().__init__(message)
+        full_message = message
+        if stderr:
+            full_message = f"{full_message}: {stderr.strip()}"
+        if returncode is not None:
+            full_message = f"{full_message} (rc={returncode})"
+        super().__init__(full_message)
         self.returncode = returncode
         self.stderr = stderr
 

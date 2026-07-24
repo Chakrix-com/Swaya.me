@@ -48,6 +48,16 @@ def test_create_workspace_raises_on_nonzero_exit():
     assert "boom" in exc_info.value.stderr
 
 
+def test_coder_client_error_str_includes_stderr_and_returncode():
+    """Regression for a Phase 10 finding: every catch site in this feature logs/
+    persists failures via plain str(e) — the message alone must carry the real
+    CLI stderr/exit code, or that diagnostic information is silently lost even
+    though it's captured on the exception's own attributes."""
+    err = CoderClientError("delete_workspace(ws-1) failed", returncode=1, stderr="not found")
+    assert "not found" in str(err)
+    assert "rc=1" in str(err)
+
+
 def test_delete_workspace_calls_expected_args():
     with _patch_subprocess() as mock_exec:
         asyncio.run(coder_client.delete_workspace("ws-1"))
