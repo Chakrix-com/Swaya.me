@@ -128,17 +128,27 @@ async def mint_session_url(workspace_name: str, ide_type: str, coder_url: str,
 
 
 async def revoke_token(token_name: str, cli_path: str = DEFAULT_CLI_PATH) -> None:
-    """`coder tokens rm <name>` — unlike every other coder subcommand this wrapper
-    calls, `tokens remove` has no `-y` confirmation flag at all and errors out if
-    passed one (found via Phase 9's real walkthrough: every revoke_token call was
-    silently failing with a CLI argument-parsing error, tolerated by /submit's
+    """`coder tokens rm <name> --delete` — unlike every other coder subcommand this
+    wrapper calls, `tokens remove` has no `-y` confirmation flag at all and errors
+    out if passed one (found via Phase 9's real walkthrough: every revoke_token call
+    was silently failing with a CLI argument-parsing error, tolerated by /submit's
     try/except but leaving every candidate token alive — this had already surfaced
     once during Phase 1's spike #3 testing too, but that finding wasn't carried
-    into this implementation at the time). Note: revoking alone does not end an
-    already-open candidate browser session — confirmed during spike #3/#4 — the
-    caller must also stop_workspace()/start_workspace() to close that window
-    durably."""
-    _, stderr, rc = await _run("tokens", "rm", token_name, cli_path=cli_path)
+    into this implementation at the time).
+
+    `--delete` is required, not optional: without it, `tokens remove` only expires
+    the token but leaves its NAME permanently reserved (also found via Phase 9's
+    walkthrough — a second /start attempt against the same deterministic
+    workspace-derived token_name failed with "A token with name ... already
+    exists" even after the first token had been "removed"). This project has no
+    audit-trail need for these ephemeral per-session tokens, so a hard delete
+    (freeing the name for the next mint_session_url call against the same
+    workspace) is the correct choice here, not the softer expire-only default.
+
+    Note: revoking alone does not end an already-open candidate browser session —
+    confirmed during spike #3/#4 — the caller must also stop_workspace()/
+    start_workspace() to close that window durably."""
+    _, stderr, rc = await _run("tokens", "rm", token_name, "--delete", cli_path=cli_path)
     if rc != 0:
         raise CoderClientError(f"revoke_token({token_name}) failed", rc, stderr)
 

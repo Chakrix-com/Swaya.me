@@ -113,7 +113,10 @@ def test_revoke_token_calls_expected_args():
     args, _ = mock_exec.call_args
     # NOTE: no -y here — `coder tokens remove` has no confirmation flag at all and
     # errors out if passed one (unlike every other coder subcommand this module calls).
-    assert args == ("coder", "tokens", "rm", "ws-1-session")
+    # --delete IS required though — without it the token is only expired, not
+    # removed, and its name stays permanently reserved, breaking any later
+    # mint_session_url call against the same deterministic token_name.
+    assert args == ("coder", "tokens", "rm", "ws-1-session", "--delete")
 
 
 # ── exec_in_workspace ────────────────────────────────────────────────────────
