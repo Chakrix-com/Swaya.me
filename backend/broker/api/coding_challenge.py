@@ -2,11 +2,12 @@
 Coding Challenge API — authenticated host endpoints (invite, examiner review) and
 the public candidate flow at /coding-challenge/{token}/...
 """
-from datetime import timedelta
+import hashlib
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from persistence.database_async import get_async_db
@@ -14,10 +15,23 @@ from shared.utils.redis_client import get_redis, RedisClient
 from shared.utils.rate_limiter import limiter
 from core.auth.dependencies import get_current_user, CurrentUser
 from core.config.settings import settings
-from persistence.models.quiz import Quiz, QuizType, Question, QuestionType
+from persistence.models.quiz import (
+    Quiz, QuizType, Question, QuestionType, CodeWorkspace, CodeWorkspaceStatus,
+)
 from features.coding_challenge import coding_challenge_service_async as svc
+from features.coding_challenge import coder_client
 
 router = APIRouter(tags=["coding-challenge"])
+
+_IDE_TEMPLATE_MAP_SETTING = {
+    "code_server": "code_server_template_name",
+    "intellij": "intellij_template_name",
+}
+
+
+class StartRequest(BaseModel):
+    ide_type: str
+    otp: str
 
 
 class InviteRequest(BaseModel):
@@ -114,3 +128,97 @@ async def request_coding_challenge_otp(
     """Public — send a 6-digit OTP to the email already embedded in the invite JWT."""
     payload = svc.decode_invite_token(token)
     return await svc.request_coding_challenge_otp(payload["jti"], payload["candidate_email"], redis)
+
+
+def _derive_workspace_name(quiz_id: int, question_id: int, candidate_email: str) -> str:
+    """Deterministic per-(quiz, question, candidate) workspace name — this is what
+    makes the invite link effectively single-use without the JWT itself needing to
+    be one-time (a repeat /start reconnects to the same workspace, see idempotency
+    check below)."""
+    email_hash = hashlib.sha256(candidate_email.lower().encode()).hexdigest()[:8]
+    return f"cc-{quiz_id}-{question_id}-{email_hash}"
+
+
+@router.post("/coding-challenge/{token}/start")
+async def start_coding_challenge(
+    token: str,
+    body: StartRequest,
+    db: AsyncSession = Depends(get_async_db),
+    redis: RedisClient = Depends(get_redis),
+):
+    """Public — verify OTP, check capacity, provision (or reconnect to) the
+    candidate's own Coder workspace."""
+    payload = svc.decode_invite_token(token)
+    quiz_id, question_id, candidate_email = (
+        payload["quiz_id"], payload["question_id"], payload["candidate_email"],
+    )
+
+    if body.ide_type not in _IDE_TEMPLATE_MAP_SETTING:
+        raise HTTPException(status_code=400, detail="Invalid ide_type")
+
+    otp_ok = await svc.verify_coding_challenge_otp(payload["jti"], candidate_email, body.otp, redis)
+    if not otp_ok:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+
+    # Idempotency check first: a returning candidate reconnects to their own
+    # already-running workspace rather than provisioning a second one.
+    result = await db.execute(
+        select(CodeWorkspace).filter(
+            CodeWorkspace.quiz_id == quiz_id,
+            CodeWorkspace.question_id == question_id,
+            CodeWorkspace.candidate_email == candidate_email,
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing and existing.status in (CodeWorkspaceStatus.PROVISIONING, CodeWorkspaceStatus.ACTIVE):
+        workspace_url, token_name = await coder_client.mint_session_url(
+            existing.coder_workspace_name, body.ide_type, settings.coder.url,
+            settings.coder.service_account_username,
+        )
+        existing.workspace_url = workspace_url
+        existing.coder_token_name = token_name
+        await db.commit()
+        return {"workspace_url": workspace_url}
+
+    # Concurrency cap — checked before provisioning a genuinely new workspace.
+    result = await db.execute(
+        select(func.count()).select_from(CodeWorkspace).filter(
+            CodeWorkspace.status.in_([CodeWorkspaceStatus.PROVISIONING, CodeWorkspaceStatus.ACTIVE])
+        )
+    )
+    active_count = result.scalar_one()
+    if active_count >= settings.coder.max_concurrent_workspaces:
+        raise HTTPException(status_code=429, detail="Sandbox is at capacity, please try again shortly")
+
+    question = await db.get(Question, question_id)
+    quiz = await db.get(Quiz, quiz_id)
+    if not question or not quiz:
+        raise HTTPException(status_code=404, detail="Coding challenge not found")
+
+    workspace_name = _derive_workspace_name(quiz_id, question_id, candidate_email)
+    template_name = getattr(settings.coder, _IDE_TEMPLATE_MAP_SETTING[body.ide_type])
+
+    await coder_client.create_workspace(workspace_name, template_name, question.git_repo_url or "")
+    workspace_url, token_name = await coder_client.mint_session_url(
+        workspace_name, body.ide_type, settings.coder.url, settings.coder.service_account_username,
+    )
+
+    workspace = CodeWorkspace(
+        tenant_id=quiz.tenant_id,
+        quiz_id=quiz_id,
+        question_id=question_id,
+        candidate_email=candidate_email,
+        ide_type=body.ide_type,
+        coder_workspace_name=workspace_name,
+        coder_token_name=token_name,
+        status=CodeWorkspaceStatus.ACTIVE,
+        workspace_url=workspace_url,
+    )
+    db.add(workspace)
+    await db.commit()
+    await db.refresh(workspace)
+
+    lifetime_deadline = workspace.created_at + timedelta(seconds=settings.coder.workspace_max_lifetime_seconds)
+    svc.schedule_lifetime_cap_job(workspace.id, workspace_name, lifetime_deadline)
+
+    return {"workspace_url": workspace_url}
