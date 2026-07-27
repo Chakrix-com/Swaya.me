@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Form, Input, Select, Switch, message } from 'antd';
+import { Form, Input, Switch, message, theme } from 'antd';
 import { createUser, updateUser } from '../../../store/slices/userManagementSlice';
 import SafeModal from '../../../components/SafeModal';
-
-const { Option } = Select;
 
 const UserForm = ({ visible, user, onSuccess, onCancel }) => {
   const { t } = useTranslation();
@@ -13,6 +11,29 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
   const { loading } = useSelector((state) => state.userManagement);
   const { user: currentUser } = useSelector((state) => state.auth);
   const [form] = Form.useForm();
+  const { token } = theme.useToken();
+
+  const arrowSvg = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="${token.colorPrimary}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+  )}`;
+
+  const nativeSelectStyle = {
+    boxSizing: 'border-box',
+    width: '100%',
+    height: 32,
+    lineHeight: '30px',
+    borderRadius: token.borderRadius,
+    border: `1px solid ${token.colorBorder}`,
+    background: `${token.colorBgContainer} url("${arrowSvg}") no-repeat right 8px center / 10px`,
+    color: token.colorText,
+    padding: '0 28px 0 11px',
+    fontFamily: 'inherit',
+    fontSize: 14,
+    cursor: 'pointer',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+  };
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const isEditing = !!user;
@@ -151,23 +172,23 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
           name="role"
           rules={[{ required: true, message: t('admin.userForm.roleRequired') }]}
         >
-          <Select placeholder={t('admin.userForm.rolePlaceholder')}>
+          <select style={nativeSelectStyle}>
             {getAvailableRoles().map((role) => (
-              <Option key={role.value} value={role.value}>
+              <option key={role.value} value={role.value}>
                 {role.label}
-              </Option>
+              </option>
             ))}
-          </Select>
+          </select>
         </Form.Item>
 
         {isSuperAdmin && isEditing && (
           <Form.Item label={t('admin.users.tier')} name="tier">
-            <Select placeholder={t('admin.users.tier')}>
-              <Option value="free">{t('admin.orgs.tierFree')}</Option>
-              <Option value="basic">{t('admin.orgs.tierBasic')}</Option>
-              <Option value="pro">{t('admin.orgs.tierPro')}</Option>
-              <Option value="enterprise">{t('admin.orgs.tierEnterprise')}</Option>
-            </Select>
+            <select style={nativeSelectStyle}>
+              <option value="free">{t('admin.orgs.tierFree')}</option>
+              <option value="basic">{t('admin.orgs.tierBasic')}</option>
+              <option value="pro">{t('admin.orgs.tierPro')}</option>
+              <option value="enterprise">{t('admin.orgs.tierEnterprise')}</option>
+            </select>
           </Form.Item>
         )}
 
