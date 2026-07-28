@@ -359,6 +359,8 @@ async def update_quiz(
         return await service.update_quiz(db, quiz_id, request, current_user)
     except QuizNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (QuizValidationError, ValueError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except InvalidQuizStatusError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

@@ -703,17 +703,10 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizResponse:
         """Mark/unmark a quiz as template"""
-        result = await db.execute(
-            select(Quiz)
-            .filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user,
+            options=[selectinload(Quiz.questions), selectinload(Quiz.folder)],
         )
-        quiz = result.scalar_one_or_none()
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
 
         if request.is_template:
             quiz.is_template = True
@@ -1050,18 +1043,9 @@ class QuizBuilderServiceAsync:
         from apscheduler.triggers.date import DateTrigger
         from core.stats import scheduler as stats_scheduler
 
-        result = await db.execute(
-            select(Quiz)
-            .filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-            .options(selectinload(Quiz.questions))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user, options=[selectinload(Quiz.questions)]
         )
-        quiz = result.scalar_one_or_none()
-
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
 
         if quiz.quiz_type != QuizType.OFFLINE_POLL:
             raise InvalidQuizStatusError("Quiz is not an offline poll")

@@ -2,7 +2,7 @@
 Session Management Service - Start, control, and end quiz sessions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func, and_
+from sqlalchemy import select, update, delete, func, and_, or_
 from sqlalchemy.orm import selectinload, joinedload, contains_eager
 from typing import Optional
 import secrets
@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from apscheduler.triggers.date import DateTrigger
 from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
-    QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType
+    QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType, FolderShare
 )
 from persistence.models.core import Event, Tenant, UserRole
 from features.quiz.schemas import (
@@ -565,18 +565,25 @@ class SessionServiceAsync:
             if stale_closed_count:
                 await db.commit()
 
-        # Get quiz
+        # Get quiz — owned by this tenant, or in a folder shared with edit access
+        editable_folder_ids = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id,
+            FolderShare.can_edit == True,
+        )
         result = await db.execute(
             select(Quiz).filter(
                 Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
+                or_(
+                    Quiz.tenant_id == current_user.tenant_id,
+                    Quiz.folder_id.in_(editable_folder_ids),
+                ),
             )
         )
         quiz = result.scalar_one_or_none()
-        
+
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
-        
+
         if quiz.status != QuizStatus.READY:
             raise InvalidQuizStatusError("Quiz must be in READY status to start")
 
@@ -1292,9 +1299,18 @@ class SessionServiceAsync:
         current_user: CurrentUser
     ) -> SessionListResponse:
         """List all past sessions for a quiz with participant and response counts"""
-        # Verify quiz belongs to this tenant
+        # Verify quiz belongs to this tenant, or is in a folder shared with the user
+        shared_folder_ids = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id
+        )
         quiz_result = await db.execute(
-            select(Quiz).filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+            select(Quiz).filter(
+                Quiz.id == quiz_id,
+                or_(
+                    Quiz.tenant_id == current_user.tenant_id,
+                    Quiz.folder_id.in_(shared_folder_ids),
+                ),
+            )
         )
         quiz = quiz_result.scalar_one_or_none()
         if not quiz:

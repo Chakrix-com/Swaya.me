@@ -1000,9 +1000,19 @@ async def publish_exam(
     from apscheduler.triggers.date import DateTrigger
     from core.stats import scheduler as stats_scheduler
 
+    editable_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id,
+        FolderShare.can_edit == True,
+    )
     result = await db.execute(
         select(Quiz)
-        .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
+        .filter(
+            Quiz.id == quiz_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(editable_folder_ids),
+            ),
+        )
         .options(selectinload(Quiz.questions))
     )
     quiz = result.scalar_one_or_none()
@@ -1107,10 +1117,17 @@ async def unpublish_exam(
     current_user: CurrentUser,
 ) -> dict:
     """Auth-required — unpublish an exam (revert to DRAFT, invalidate slug)."""
+    editable_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id,
+        FolderShare.can_edit == True,
+    )
     result = await db.execute(
         select(Quiz).filter(
             Quiz.id == quiz_id,
-            Quiz.tenant_id == current_user.tenant_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(editable_folder_ids),
+            ),
         )
     )
     quiz = result.scalar_one_or_none()

@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 
 from persistence.models.quiz import (
     Quiz, QuizType, QuizSession, QuizSessionStatus,
-    Question, QuestionType, Participant, Answer,
+    Question, QuestionType, Participant, Answer, FolderShare,
 )
 from features.quiz.schemas import (
     QuestionResponse,
@@ -345,10 +345,19 @@ async def get_results(
     current_user,
 ) -> OfflineResultsResponse:
     """Auth-required — return aggregated results for an offline poll."""
+    shared_folder_ids = select(FolderShare.folder_id).filter(
+        FolderShare.shared_with_user_id == current_user.user_id
+    )
     result = await db.execute(
         select(Quiz)
         .options(selectinload(Quiz.questions))
-        .filter(Quiz.poll_slug == slug, Quiz.tenant_id == current_user.tenant_id)
+        .filter(
+            Quiz.poll_slug == slug,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(shared_folder_ids),
+            ),
+        )
     )
     quiz = result.scalar_one_or_none()
     if not quiz:
