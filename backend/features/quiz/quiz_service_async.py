@@ -74,6 +74,34 @@ class QuizBuilderServiceAsync:
         names.reverse()
         return names
 
+    async def _get_editable_quiz(
+        self,
+        db: AsyncSession,
+        quiz_id: int,
+        current_user: CurrentUser,
+        options: Optional[list] = None,
+    ) -> Quiz:
+        """Fetch a quiz the current user may modify: owned by their tenant, or in a
+        folder shared to them with edit access."""
+        editable_folder_ids = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id,
+            FolderShare.can_edit == True,
+        )
+        query = select(Quiz).filter(
+            Quiz.id == quiz_id,
+            or_(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.folder_id.in_(editable_folder_ids),
+            ),
+        )
+        for option in options or []:
+            query = query.options(option)
+        result = await db.execute(query)
+        quiz = result.scalar_one_or_none()
+        if not quiz:
+            raise QuizNotFoundError("Quiz not found")
+        return quiz
+
     def _folder_to_tree(self, folder: QuizFolder, parents: dict[int, Optional[QuizFolder]], by_parent: dict[Optional[int], list[QuizFolder]], share_count_map: dict[int, int] | None = None) -> FolderResponse:
         path_names = self._folder_path_names_with_lookup(folder, parents)
         children = sorted(by_parent.get(folder.id, []), key=lambda f: (f.sort_order, f.name.lower(), f.id))
@@ -430,24 +458,24 @@ class QuizBuilderServiceAsync:
         ]
 
     async def assign_quiz_folder(self, db: AsyncSession, quiz_id: int, folder_id: Optional[int], current_user: CurrentUser) -> QuizResponse:
-        result = await db.execute(
-            select(Quiz)
-            .filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user,
+            options=[selectinload(Quiz.questions), selectinload(Quiz.folder)],
         )
-        quiz = result.scalar_one_or_none()
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
 
         if folder_id is not None:
+            editable_folder_ids = select(FolderShare.folder_id).filter(
+                FolderShare.shared_with_user_id == current_user.user_id,
+                FolderShare.can_edit == True,
+            )
             folder = (
                 await db.execute(
                     select(QuizFolder).filter(
                         QuizFolder.id == folder_id,
-                        QuizFolder.tenant_id == current_user.tenant_id,
+                        or_(
+                            QuizFolder.tenant_id == current_user.tenant_id,
+                            QuizFolder.id.in_(editable_folder_ids),
+                        ),
                     )
                 )
             ).scalar_one_or_none()
@@ -859,16 +887,7 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizResponse:
         """Update quiz (only in DRAFT status)"""
-        result = await db.execute(
-            select(Quiz).filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-        )
-        quiz = result.scalar_one_or_none()
-        
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
+        quiz = await self._get_editable_quiz(db, quiz_id, current_user)
 
         # Always allow proctoring_policy updates on published exams; all other edits require DRAFT
         if quiz.status != QuizStatus.DRAFT:
@@ -947,16 +966,7 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ):
         """Delete quiz and all dependent data (sessions, participants, answers, feedback)."""
-        result = await db.execute(
-            select(Quiz).filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-        )
-        quiz = result.scalar_one_or_none()
-
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
+        quiz = await self._get_editable_quiz(db, quiz_id, current_user)
 
         if quiz.status not in (QuizStatus.DRAFT, QuizStatus.READY, QuizStatus.ARCHIVED):
             raise InvalidQuizStatusError("Quiz cannot be deleted in its current status")
@@ -1013,19 +1023,10 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizResponse:
         """Publish quiz (validate and change status to READY)"""
-        result = await db.execute(
-            select(Quiz)
-            .filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-            .options(selectinload(Quiz.questions))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user, options=[selectinload(Quiz.questions)]
         )
-        quiz = result.scalar_one_or_none()
-        
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
-        
+
         if quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Quiz is already published")
         
@@ -1143,18 +1144,9 @@ class QuizBuilderServiceAsync:
     ) -> QuizResponse:
         """Duplicate quiz and all its questions as a new DRAFT quiz"""
         try:
-            result = await db.execute(
-                select(Quiz)
-                .filter(
-                    Quiz.id == quiz_id,
-                    Quiz.tenant_id == current_user.tenant_id
-                )
-                .options(selectinload(Quiz.questions))
+            source_quiz = await self._get_editable_quiz(
+                db, quiz_id, current_user, options=[selectinload(Quiz.questions)]
             )
-            source_quiz = result.scalar_one_or_none()
-
-            if not source_quiz:
-                raise QuizNotFoundError("Quiz not found")
 
             duplicate_title = f"{source_quiz.title} (Copy)"
             if len(duplicate_title) > 255:
@@ -1214,17 +1206,8 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizResponse:
         """Unpublish quiz (revert status to DRAFT for editing)"""
-        result = await db.execute(
-            select(Quiz).filter(
-                Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
-            )
-        )
-        quiz = result.scalar_one_or_none()
-        
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
-        
+        quiz = await self._get_editable_quiz(db, quiz_id, current_user)
+
         if quiz.status == QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Quiz is already in DRAFT status")
         
@@ -1242,14 +1225,10 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizListResponse:
         """Soft-archive a quiz — hidden from default list but recoverable."""
-        result = await db.execute(
-            select(Quiz)
-            .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
-            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user,
+            options=[selectinload(Quiz.questions), selectinload(Quiz.folder)],
         )
-        quiz = result.scalar_one_or_none()
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
         if quiz.archived_at is not None:
             raise InvalidQuizStatusError("Quiz is already archived")
         quiz.archived_at = datetime.utcnow()
@@ -1289,14 +1268,10 @@ class QuizBuilderServiceAsync:
         current_user: CurrentUser
     ) -> QuizListResponse:
         """Restore an archived quiz back to its previous status."""
-        result = await db.execute(
-            select(Quiz)
-            .filter(Quiz.id == quiz_id, Quiz.tenant_id == current_user.tenant_id)
-            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        quiz = await self._get_editable_quiz(
+            db, quiz_id, current_user,
+            options=[selectinload(Quiz.questions), selectinload(Quiz.folder)],
         )
-        quiz = result.scalar_one_or_none()
-        if not quiz:
-            raise QuizNotFoundError("Quiz not found")
         if quiz.archived_at is None:
             raise InvalidQuizStatusError("Quiz is not archived")
         quiz.archived_at = None

@@ -2,7 +2,7 @@
 Question Management Service - Add, edit, delete, reorder questions (Async)
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, or_
 from sqlalchemy.orm import selectinload, contains_eager
 from typing import List
 
@@ -13,6 +13,7 @@ from persistence.models.quiz import (
     SessionQuestionTiming,
     QuizStatus,
     QuestionType,
+    FolderShare,
 )
 from features.quiz.schemas import QuestionCreate, QuestionUpdate, QuestionResponse
 from shared.exceptions.quiz import (
@@ -31,7 +32,19 @@ class QuestionServiceAsync:
     
     def __init__(self, tier_service: TierService):
         self.tier_service = tier_service
-    
+
+    def _editable_quiz_condition(self, current_user: CurrentUser):
+        """Quiz.tenant_id/Quiz.folder_id filter: owned by the user's tenant, or in a
+        folder shared to them with edit access."""
+        editable_folder_ids = select(FolderShare.folder_id).filter(
+            FolderShare.shared_with_user_id == current_user.user_id,
+            FolderShare.can_edit == True,
+        )
+        return or_(
+            Quiz.tenant_id == current_user.tenant_id,
+            Quiz.folder_id.in_(editable_folder_ids),
+        )
+
     async def add_question(
         self,
         db: AsyncSession,
@@ -61,15 +74,15 @@ class QuestionServiceAsync:
             select(Quiz)
             .filter(
                 Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
+                self._editable_quiz_condition(current_user),
             )
             .options(selectinload(Quiz.questions))
         )
         quiz = result.scalar_one_or_none()
-        
+
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
-        
+
         if quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only add questions to DRAFT quizzes")
         
@@ -144,15 +157,15 @@ class QuestionServiceAsync:
             .join(Quiz)
             .filter(
                 Question.id == question_id,
-                Quiz.tenant_id == current_user.tenant_id
+                self._editable_quiz_condition(current_user),
             )
             .options(contains_eager(Question.quiz))
         )
         question = result.scalar_one_or_none()
-        
+
         if not question:
             raise QuestionNotFoundError("Question not found")
-        
+
         if question.quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only edit questions in DRAFT quizzes")
 
@@ -211,15 +224,15 @@ class QuestionServiceAsync:
             .join(Quiz)
             .filter(
                 Question.id == question_id,
-                Quiz.tenant_id == current_user.tenant_id
+                self._editable_quiz_condition(current_user),
             )
             .options(contains_eager(Question.quiz))
         )
         question = result.scalar_one_or_none()
-        
+
         if not question:
             raise QuestionNotFoundError("Question not found")
-        
+
         if question.quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only delete questions from DRAFT quizzes")
         
@@ -272,14 +285,14 @@ class QuestionServiceAsync:
         result = await db.execute(
             select(Quiz).filter(
                 Quiz.id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id
+                self._editable_quiz_condition(current_user),
             )
         )
         quiz = result.scalar_one_or_none()
-        
+
         if not quiz:
             raise QuizNotFoundError("Quiz not found")
-        
+
         if quiz.status != QuizStatus.DRAFT:
             raise InvalidQuizStatusError("Can only reorder questions in DRAFT quizzes")
         
@@ -312,7 +325,7 @@ class QuestionServiceAsync:
             .filter(
                 Question.id == question_id,
                 Question.quiz_id == quiz_id,
-                Quiz.tenant_id == current_user.tenant_id,
+                self._editable_quiz_condition(current_user),
             )
             .options(contains_eager(Question.quiz))
         )
