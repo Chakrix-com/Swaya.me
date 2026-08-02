@@ -194,13 +194,18 @@ def test_start_tolerates_revoke_failure_before_remint():
 
 def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
     """An idempotency-check hit on a long-abandoned/destroyed row must not block a
-    genuinely fresh provision."""
+    genuinely fresh provision — and must reuse that row rather than INSERT a new
+    one, since both coder_workspace_name and (quiz_id, question_id,
+    candidate_email, attempt_number) are uniquely constrained on this table, so a
+    fresh INSERT for the same attempt always collides against the real DB (a bug
+    this test didn't catch until it asserted db.add was never called — the mock
+    alone doesn't enforce uniqueness)."""
     token = _make_token()
     body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     stale = CodeWorkspace(
         id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
         ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
-        status=CodeWorkspaceStatus.DESTROYED,
+        status=CodeWorkspaceStatus.DESTROYED, destroyed_at=datetime(2026, 1, 1),
     )
     question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
     quiz = Quiz(id=1, tenant_id=1, event_id=1, title="Q")
@@ -212,9 +217,15 @@ def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
          patch.object(router_mod.coder_client, "mint_session_url",
                        AsyncMock(return_value=("https://sandbox/new-url", "tok-new"))), \
          patch.object(router_mod.svc, "schedule_lifetime_cap_job"):
-        asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
+        result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
     mock_create.assert_called_once()  # DOES re-provision since the old one is gone
+    db.add.assert_not_called()  # reuses the existing row in place, never a fresh INSERT
+    assert stale.status == CodeWorkspaceStatus.ACTIVE
+    assert stale.workspace_url == "https://sandbox/new-url"
+    assert stale.coder_token_name == "tok-new"
+    assert stale.destroyed_at is None
+    assert result["workspace_url"] == "https://sandbox/new-url"
 
 
 # ── Lifetime-cap job scheduling ─────────────────────────────────────────────
