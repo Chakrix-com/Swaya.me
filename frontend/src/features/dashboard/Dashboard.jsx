@@ -186,7 +186,8 @@ function Dashboard() {
       const res = await quizAPI.createCodingChallengeDefault()
       navigate(`/quiz/${res.data.id}/edit?type=coding_challenge&justCreated=1`)
     } catch (err) {
-      message.error(err?.response?.data?.detail || t('codingChallenge.createFailed'))
+      const detail = err?.response?.data?.detail
+      message.error(detail === 'upgrade_required' ? t('codingChallenge.upgradeRequired') : (detail || t('codingChallenge.createFailed')))
       setCreatingChallenge(false)
     }
   }

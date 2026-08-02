@@ -200,6 +200,15 @@ async def seed_tier_configurations(db: AsyncSession):
             max_questions=1000,
             max_concurrent_events=50,
             features=None
+        ),
+        TierConfiguration(
+            # Same quota limits as PRO — the extra coding-challenge capability is
+            # granted via can_host_coding_challenge(), not a limit on this row.
+            tier=TierEnum.CODING_CHALLENGE_PRO,
+            max_participants=1000,
+            max_questions=100,
+            max_concurrent_events=5,
+            features=None
         )
     ]
     

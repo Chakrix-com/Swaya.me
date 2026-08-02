@@ -15,6 +15,10 @@ class TierEnum(str, enum.Enum):
     BASIC = "basic"
     PRO = "pro"
     ENTERPRISE = "enterprise"
+    # Per-user override tier (see User.tier_override) — not a tenant-wide plan.
+    # Grants PRO's exact quota limits plus the ability to host coding-challenge
+    # quizzes, to one specific user regardless of their tenant's own tier.
+    CODING_CHALLENGE_PRO = "coding_challenge_pro"
 
 
 class UserRole(str, enum.Enum):
@@ -57,7 +61,13 @@ class User(Base, TimestampMixin):
     full_name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user, server_default="user")
-    
+
+    # Per-user tier override — independent of tenant.tier, which is a whole-org plan.
+    # Set by a super_admin to grant this specific user extra powers (e.g.
+    # CODING_CHALLENGE_PRO) without upgrading every co-tenant. NULL means "use the
+    # tenant's own tier" (see CurrentUser.effective_tier in core/auth/dependencies.py).
+    tier_override = Column(SQLEnum(TierEnum), nullable=True)
+
     # Email Verification
     is_email_verified = Column(Boolean, default=False, nullable=False, server_default="0")
     email_verification_token = Column(String(255), nullable=True)

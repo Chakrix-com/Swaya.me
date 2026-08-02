@@ -15,7 +15,7 @@ from persistence.models.quiz import (
     Quiz, QuizSession, Participant, Question, Answer, SessionQuestionTiming,
     QuizStatus, QuizSessionStatus, QuestionStatus, QuestionType, QuizType, FolderShare
 )
-from persistence.models.core import Event, Tenant, UserRole
+from persistence.models.core import Event, Tenant
 from features.quiz.schemas import (
     SessionStartRequest, SessionResponse, SessionJoinRequest, SessionJoinResponse,
     SessionListItemResponse, SessionListResponse, SessionStatusEnum,
@@ -602,15 +602,15 @@ class SessionServiceAsync:
         if existing_session:
             return await self._to_session_response(db, existing_session)
         
-        # Check concurrent events limit (super admins bypass this limit)
-        if current_user.user.role != UserRole.super_admin:
-            can_create = await self.tier_service.check_concurrent_events_limit(
-                db,
-                current_user.tenant_id,
-                current_user.tenant.tier
-            )
-            if not can_create:
-                raise TierLimitExceededError("Concurrent events limit reached")
+        # Check concurrent events limit (effective_tier already accounts for
+        # super_admin's unconditional ENTERPRISE bypass and per-user overrides)
+        can_create = await self.tier_service.check_concurrent_events_limit(
+            db,
+            current_user.tenant_id,
+            current_user.effective_tier
+        )
+        if not can_create:
+            raise TierLimitExceededError("Concurrent events limit reached")
         
         # Invalidate participants from previous sessions of this quiz
         # This forces them to rejoin when a new session starts

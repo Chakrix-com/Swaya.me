@@ -781,7 +781,11 @@
       "roleSuperAdmin": "সুপার অ্যাডমিন",
       "roleAdmin": "অ্যাডমিন",
       "roleUser": "ব্যবহারকারী",
-      "roleViewer": "দর্শক"
+      "roleViewer": "দর্শক",
+      "tierOverride": "ব্যক্তিগত ওভাররাইড",
+      "tierOverrideHelp": "এটি এই নির্দিষ্ট ব্যবহারকারীকে তাদের টেন্যান্টের স্তরের পাশাপাশি অতিরিক্ত ক্ষমতা প্রদান করে, অন্য কারো অ্যাক্সেস পরিবর্তন না করেই।",
+      "tierOverrideNone": "কোনোটি নয় (টেন্যান্ট স্তর ব্যবহার করুন)",
+      "tierOverrideCodingChallengePro": "কোডিং চ্যালেঞ্জ প্রো"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -1021,6 +1025,9 @@
     "currentPlan": "বর্তমান পরিকল্পনা",
     "upgradeTo": "{{tier}}-এ আপগ্রেড করুন",
     "plansNote": "আপনার পরিকল্পনা আপগ্রেড করতে info@chakrix.net-এ যোগাযোগ করুন।",
+    "tierCodingChallengePro": "কোডিং চ্যালেঞ্জ প্রো",
+    "tierCodingChallengeProDesc": "সমস্ত PRO সীমা, সেইসাথে কোডিং চ্যালেঞ্জ হোস্ট করার ক্ষমতা",
+    "requestAccess": "অ্যাক্সেসের অনুরোধ করুন",
     "archivedDesc": "সম্পন্ন কার্যক্রম",
     "createActivityTitle": "আজ আপনি কী তৈরি করতে চান?",
     "createNew": "নতুন তৈরি করুন",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "সম্পাদনা করুন",
     "previewMarkdown": "প্রিভিউ",
     "createFailed": "কোডিং চ্যালেঞ্জ তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "upgradeRequired": "কোডিং চ্যালেঞ্জ তৈরি করতে কোডিং চ্যালেঞ্জ প্রো-তে আপগ্রেড করুন।",
     "loadingChallenge": "আপনার চ্যালেঞ্জ সেট করা হচ্ছে...",
     "publishBlockedHint": "প্রকাশ করার আগে একটি স্টার্টার রিপো URL যোগ করুন এবং প্লেসহোল্ডার সমস্যার বিবরণ পরিবর্তন করুন।",
     "generateWithAiHint": "সমস্যার বিবরণকে সম্পূর্ণ, বিস্তারিত চ্যালেঞ্জে প্রসারিত করতে AI ব্যবহার করুন",

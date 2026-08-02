@@ -781,7 +781,11 @@
       "roleSuperAdmin": "सुपर एडमिन",
       "roleAdmin": "एडमिन",
       "roleUser": "उपयोगकर्ता",
-      "roleViewer": "दर्शक"
+      "roleViewer": "दर्शक",
+      "tierOverride": "व्यक्तिगत ओवरराइड",
+      "tierOverrideHelp": "यह इस विशिष्ट उपयोगकर्ता को उनके टेनेंट के टियर के अतिरिक्त विशेष अधिकार देता है, बिना किसी और की पहुंच बदले।",
+      "tierOverrideNone": "कोई नहीं (टेनेंट टियर उपयोग करें)",
+      "tierOverrideCodingChallengePro": "कोडिंग चैलेंज प्रो"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -1021,6 +1025,9 @@
     "currentPlan": "वर्तमान प्लान",
     "upgradeTo": "{{tier}} में अपग्रेड करें",
     "plansNote": "अपना प्लान अपग्रेड करने के लिए info@chakrix.net से संपर्क करें।",
+    "tierCodingChallengePro": "कोडिंग चैलेंज प्रो",
+    "tierCodingChallengeProDesc": "सभी PRO सीमाएं, साथ ही कोडिंग चैलेंज होस्ट करने की क्षमता",
+    "requestAccess": "एक्सेस का अनुरोध करें",
     "archivedDesc": "पूर्ण गतिविधियां",
     "createActivityTitle": "आज आप क्या बनाना चाहते हैं?",
     "createNew": "नया बनाएं",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "संपादित करें",
     "previewMarkdown": "पूर्वावलोकन",
     "createFailed": "कोडिंग चैलेंज नहीं बनाया जा सका। कृपया पुनः प्रयास करें।",
+    "upgradeRequired": "कोडिंग चैलेंज बनाने के लिए कोडिंग चैलेंज प्रो में अपग्रेड करें।",
     "loadingChallenge": "आपका चैलेंज सेट किया जा रहा है...",
     "publishBlockedHint": "प्रकाशित करने से पहले एक स्टार्टर रिपॉ URL जोड़ें और प्लेसहोल्डर समस्या विवरण बदलें।",
     "generateWithAiHint": "समस्या विवरण को पूर्ण, विस्तृत चैलेंज में विस्तारित करने के लिए AI का उपयोग करें",

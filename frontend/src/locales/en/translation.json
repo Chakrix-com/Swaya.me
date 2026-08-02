@@ -561,6 +561,9 @@
     "currentPlan": "Current Plan",
     "upgradeTo": "Upgrade to {{tier}}",
     "plansNote": "Contact info@chakrix.net to upgrade your plan.",
+    "tierCodingChallengePro": "Coding Challenge Pro",
+    "tierCodingChallengeProDesc": "All PRO limits, plus hosting Coding Challenges",
+    "requestAccess": "Request Access",
     "archivedDesc": "Completed activities",
     "createActivityTitle": "What would you like to create today?",
     "createNew": "Create New",
@@ -957,7 +960,11 @@
       "roleSuperAdmin": "Super Admin",
       "roleAdmin": "Admin",
       "roleUser": "User",
-      "roleViewer": "Viewer"
+      "roleViewer": "Viewer",
+      "tierOverride": "Individual Override",
+      "tierOverrideHelp": "Grants this specific user extra powers on top of their tenant's tier, without changing anyone else's access.",
+      "tierOverrideNone": "None (use tenant tier)",
+      "tierOverrideCodingChallengePro": "Coding Challenge Pro"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -2644,6 +2651,7 @@
     "editMarkdown": "Edit",
     "previewMarkdown": "Preview",
     "createFailed": "Could not create the coding challenge. Please try again.",
+    "upgradeRequired": "Upgrade to Coding Challenge Pro to create coding challenges.",
     "loadingChallenge": "Setting up your challenge...",
     "publishBlockedHint": "Add a starter repo URL and replace the placeholder problem statement before publishing.",
     "generateWithAiHint": "Use AI to elaborate the problem statement into a complete, detailed challenge",

@@ -555,6 +555,9 @@
     "currentPlan": "Plan actual",
     "upgradeTo": "Actualizar a {{tier}}",
     "plansNote": "Contacta info@chakrix.net para actualizar tu plan.",
+    "tierCodingChallengePro": "Coding Challenge Pro",
+    "tierCodingChallengeProDesc": "Todos los límites de PRO, además de poder alojar Coding Challenges",
+    "requestAccess": "Solicitar acceso",
     "archivedDesc": "Actividades completadas",
     "createActivityTitle": "¿Qué te gustaría crear hoy?",
     "createNew": "Crear nuevo",
@@ -934,7 +937,11 @@
       "roleSuperAdmin": "Super administrador",
       "roleAdmin": "Administrador",
       "roleUser": "Usuario",
-      "roleViewer": "Visualizador"
+      "roleViewer": "Visualizador",
+      "tierOverride": "Anulación individual",
+      "tierOverrideHelp": "Otorga a este usuario específico poderes adicionales además del nivel de su organización, sin cambiar el acceso de nadie más.",
+      "tierOverrideNone": "Ninguno (usar nivel de la organización)",
+      "tierOverrideCodingChallengePro": "Coding Challenge Pro"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "Editar",
     "previewMarkdown": "Vista previa",
     "createFailed": "No se pudo crear el desafío de programación. Inténtalo de nuevo.",
+    "upgradeRequired": "Actualiza a Coding Challenge Pro para crear desafíos de programación.",
     "loadingChallenge": "Configurando tu desafío...",
     "publishBlockedHint": "Agrega una URL de repositorio inicial y reemplaza el enunciado de marcador de posición antes de publicar.",
     "generateWithAiHint": "Usa IA para desarrollar el enunciado en un desafío completo y detallado",
