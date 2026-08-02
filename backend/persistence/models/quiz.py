@@ -167,6 +167,15 @@ class FolderShare(Base):
     folder = relationship("QuizFolder", back_populates="shares")
 
 
+class CodingResultVisibility(str, enum.Enum):
+    """How much of a graded coding-challenge result the candidate sees. Always
+    gated on submission status == GRADED regardless of this value — see
+    /coding-challenge/{token}/status."""
+    HIDDEN = "hidden"
+    STATUS_ONLY = "status_only"
+    FULL = "full"
+
+
 class Question(Base, TimestampMixin):
     """
     Question definition - part of a quiz
@@ -198,6 +207,13 @@ class Question(Base, TimestampMixin):
     hidden_test_content = Column(Text, nullable=True)
     hidden_test_filename = Column(String(255), nullable=True)
     time_budget_seconds = Column(Integer, nullable=True)
+    # Host-overridden grading criteria weights (percentages, must sum to 100).
+    # Null = use the platform default weights (grading_service_async._WEIGHTS).
+    grading_weights = Column(JSON, nullable=True)
+    result_visibility = Column(
+        SQLEnum(CodingResultVisibility, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False, default=CodingResultVisibility.HIDDEN, server_default="hidden",
+    )
 
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
@@ -219,13 +235,17 @@ class CodeWorkspace(Base, TimestampMixin, TenantMixin):
     """
     __tablename__ = "code_workspaces"
     __table_args__ = (
-        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', name='uq_code_workspace_quiz_question_email'),
+        # One row per attempt, not per candidate — attempt_number lets a host grant a
+        # re-invite after a terminal attempt without colliding with the prior one.
+        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', 'attempt_number',
+                          name='uq_code_workspace_quiz_question_email_attempt'),
     )
 
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
     candidate_email = Column(String(255), nullable=False, index=True)
+    attempt_number = Column(Integer, nullable=False, default=1, server_default="1")
     ide_type = Column(String(20), nullable=False)  # code_server | intellij
     coder_workspace_name = Column(String(255), nullable=False, unique=True)
     coder_token_name = Column(String(255), nullable=True)
@@ -243,6 +263,37 @@ class CodeWorkspace(Base, TimestampMixin, TenantMixin):
     quiz = relationship("Quiz")
     question = relationship("Question")
     submission = relationship("CodeSubmission", back_populates="workspace", uselist=False)
+
+
+class CodingChallengeInvite(Base, TimestampMixin, TenantMixin):
+    """
+    Tracks that a candidate was invited to a CODING_CHALLENGE question. The
+    invite link itself is a stateless signed JWT — this table is the only
+    record of "who was invited" that exists before (or absent) the candidate
+    ever starting, since CodeWorkspace isn't created until they do.
+    created_at = first invited, updated_at = most recently re-invited (used
+    to derive Pending/Expired status against the JWT's fixed validity window,
+    rather than storing a status that could drift out of sync).
+    """
+    __tablename__ = "coding_challenge_invites"
+    __table_args__ = (
+        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', name='uq_cc_invite_quiz_question_email'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
+    candidate_email = Column(String(255), nullable=False, index=True)
+    invited_by_user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    email_sent = Column(Boolean, nullable=False, default=True, server_default="1")
+    # Which attempt the most recent invite email targets — lets the review screen
+    # show "re-invited, awaiting attempt 2" even though no CodeWorkspace row exists
+    # yet for that attempt (one isn't created until the candidate actually starts).
+    latest_invited_attempt_number = Column(Integer, nullable=False, default=1, server_default="1")
+
+    # Relationships
+    quiz = relationship("Quiz")
+    question = relationship("Question")
 
 
 class CodeSubmissionStatus(str, enum.Enum):

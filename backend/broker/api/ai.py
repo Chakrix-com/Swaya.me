@@ -342,3 +342,33 @@ async def api_rewrite(
         logger.error("AI rewrite failed: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
     return RewriteResponse(rewritten=rewritten, model=settings.ai.light_provider)
+
+
+class GenerateCodingChallengeProblemRequest(BaseModel):
+    topic: str = Field(..., min_length=1, max_length=300)
+    language: str = Field("en", max_length=10)
+
+
+class GenerateCodingChallengeProblemResponse(BaseModel):
+    problem_statement: str
+
+
+@router.post("/generate-coding-challenge-problem", response_model=GenerateCodingChallengeProblemResponse)
+@limiter.limit("10/minute", key_func=get_user_id_key)
+async def api_generate_coding_challenge_problem(
+    request: Request,
+    req: GenerateCodingChallengeProblemRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Generate a full coding-challenge problem statement from a short topic, in the
+    same Background/Task/Requirements/Constraints & Scale/Examples structure as the
+    authoring template. Distinct from /rewrite, which only polishes existing text."""
+    try:
+        problem_statement = await ai_router.generate_coding_challenge_problem(
+            topic=req.topic,
+            language=req.language,
+        )
+    except AIProviderError as e:
+        logger.error("AI coding-challenge problem generation failed: %s", e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI service temporarily unavailable. Please try again.")
+    return GenerateCodingChallengeProblemResponse(problem_statement=problem_statement)

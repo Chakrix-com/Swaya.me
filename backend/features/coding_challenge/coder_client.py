@@ -204,6 +204,31 @@ async def exec_in_workspace(workspace_name: str, command: str, timeout: Optional
     return await _exec_bash_lc(workspace_name, script, cli_path=cli_path, timeout=timeout)
 
 
+async def wait_for_app_ready(workspace_name: str, port: int = 13337, timeout: float = 40.0,
+                              cli_path: str = DEFAULT_CLI_PATH) -> bool:
+    """`coder create` only waits for the agent to connect, not for the code-server
+    registry module's own startup script to finish installing/launching code-server
+    inside the container — handing the candidate a session URL before that's done
+    causes a real "connection refused" 502 on their very first open (confirmed live).
+    Polls from inside the workspace until the port is actually accepting connections.
+    Returns False (not True) on timeout — caller proceeds anyway rather than blocking
+    /start indefinitely; this just makes the common case reliable, not a guarantee."""
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        try:
+            _, _, rc = await exec_in_workspace(
+                workspace_name, f"curl -sf -o /dev/null http://localhost:{port}",
+                timeout=10.0, cli_path=cli_path,
+            )
+        except Exception:
+            rc = 1
+        if rc == 0:
+            return True
+        await asyncio.sleep(2)
+    return False
+
+
 async def write_file_to_workspace(workspace_name: str, remote_path: str, content: str,
                                    cli_path: str = DEFAULT_CLI_PATH) -> None:
     """

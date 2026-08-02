@@ -736,6 +736,30 @@ def build_rewrite_messages(text: str, context: str, language: str) -> list[dict]
     ]
 
 
+def build_generate_coding_challenge_messages(topic: str, language: str) -> list[dict]:
+    system = (
+        "You write coding-challenge problem statements for a technical assessment platform, "
+        "in the style of Stanford/CS50/competitive-programming problem sets. Given a short topic, "
+        "produce ONE complete, realistic problem statement in Markdown with EXACTLY these sections, "
+        "in this order, using these exact headings:\n\n"
+        "## Background\n(1-2 sentences on the real-world scenario)\n\n"
+        "## Task\n(what exactly the candidate must build — specific and imperative)\n\n"
+        "## Requirements\n(a bullet list of concrete functional requirements)\n\n"
+        "## Constraints & Scale\n(a bullet list with concrete numbers — input size, time limit, and "
+        "throughput/latency/concurrency targets where relevant to the topic)\n\n"
+        "## Examples\n(one worked example, as an Input code block followed by an Output code block, "
+        "optionally with a short bullet-point explanation of the output — final and concise, with no "
+        "visible reasoning, self-correction, or second-guessing)\n\n"
+        "Do not include the topic text verbatim as a heading or restate these instructions. "
+        "Return ONLY the Markdown problem statement, nothing else — no preamble, no commentary."
+    )
+    user = f"Topic: {topic}\n\nWrite the problem statement in {language}."
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
 def build_grade_messages(participant_answer: str, expected_answer: str) -> list[dict]:
     return [
         {"role": "system", "content": "You are a quiz answer grader. Reply with exactly one word: YES or NO."},

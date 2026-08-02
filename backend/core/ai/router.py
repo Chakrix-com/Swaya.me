@@ -108,6 +108,10 @@ async def rewrite_text(text: str, context: str = "quiz question", language: str 
     return await get_light_provider().rewrite_text(text, context, language)
 
 
+async def generate_coding_challenge_problem(topic: str, language: str = "en") -> str:
+    return await get_primary_provider().generate_coding_challenge_problem(topic, language)
+
+
 async def grade_text_answer(participant_answer: str, expected_answer: str) -> bool:
     return await get_light_provider().grade_text_answer(participant_answer, expected_answer)
 

@@ -128,6 +128,8 @@ class QuestionServiceAsync:
             hidden_test_content=request.hidden_test_content,
             hidden_test_filename=request.hidden_test_filename,
             time_budget_seconds=request.time_budget_seconds,
+            grading_weights=request.grading_weights,
+            result_visibility=request.result_visibility,
             order=next_order
         )
         
@@ -211,6 +213,10 @@ class QuestionServiceAsync:
             question.hidden_test_filename = request.hidden_test_filename
         if "time_budget_seconds" in request.model_fields_set:
             question.time_budget_seconds = request.time_budget_seconds
+        if "grading_weights" in request.model_fields_set:
+            question.grading_weights = request.grading_weights
+        if "result_visibility" in request.model_fields_set:
+            question.result_visibility = request.result_visibility
 
         await db.commit()
         await db.refresh(question)
@@ -380,6 +386,8 @@ class QuestionServiceAsync:
             hidden_test_content=question.hidden_test_content,
             hidden_test_filename=question.hidden_test_filename,
             time_budget_seconds=question.time_budget_seconds,
+            grading_weights=question.grading_weights,
+            result_visibility=getattr(question, 'result_visibility', None),
         )
         db.add(copy)
         await db.commit()
@@ -411,4 +419,6 @@ class QuestionServiceAsync:
             hidden_test_content=question.hidden_test_content,
             hidden_test_filename=question.hidden_test_filename,
             time_budget_seconds=question.time_budget_seconds,
+            grading_weights=question.grading_weights,
+            result_visibility=getattr(question, 'result_visibility', None),
         )

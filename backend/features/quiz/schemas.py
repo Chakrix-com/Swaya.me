@@ -6,6 +6,35 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
+# Host-editable grading criteria for a coding_challenge question. Mirrors
+# grading_service_async._WEIGHTS minus "proctoring" — proctoring is excluded
+# from the editable set because it's currently stubbed to always score full
+# credit (no proctoring integration exists yet for coding challenges), so
+# exposing a weight control for it would be misleading. When grading_weights
+# is set on a question, run_grading_job uses exactly these keys instead of
+# the platform default — see _build_score_breakdown's weights parameter.
+GRADING_WEIGHT_CRITERIA = {
+    "functional_correctness", "ai_usage_efficiency", "prompt_quality",
+    "validation_discipline", "code_quality", "architecture", "time_taken",
+}
+
+
+def _validate_grading_weights(v):
+    if v is None:
+        return v
+    if not isinstance(v, dict) or not v:
+        raise ValueError('grading_weights must be a non-empty object of criterion -> percentage')
+    unknown = set(v.keys()) - GRADING_WEIGHT_CRITERIA
+    if unknown:
+        raise ValueError(f'Unknown grading criteria: {sorted(unknown)}. Allowed: {sorted(GRADING_WEIGHT_CRITERIA)}')
+    for key, weight in v.items():
+        if not isinstance(weight, (int, float)) or isinstance(weight, bool) or weight < 0:
+            raise ValueError(f'Weight for "{key}" must be a non-negative number')
+    total = sum(v.values())
+    if abs(total - 100) > 0.5:
+        raise ValueError(f'Grading weights must sum to 100 (got {total})')
+    return v
+
 
 class QuizStatusEnum(str, Enum):
     """Quiz status"""
@@ -53,6 +82,16 @@ class QuestionTypeEnum(str, Enum):
 ALLOWED_CODE_LANGUAGES = {"python", "java", "cpp", "javascript", "typescript", "go", "rust", "csharp"}
 
 
+class CodingResultVisibilityEnum(str, Enum):
+    """How much of a graded coding-challenge result the candidate sees on their own
+    session page. Always gated server-side on status == GRADED regardless of this
+    setting — a system failure never reveals anything to the candidate, no matter
+    what the host picked."""
+    HIDDEN = "hidden"          # generic "submission received" only; host follows up separately
+    STATUS_ONLY = "status_only"  # qualitative signal, no numbers
+    FULL = "full"               # numeric score + verdict (legacy default behaviour)
+
+
 class TemplateScopeEnum(str, Enum):
     """Template visibility scope"""
     TENANT = "tenant"
@@ -88,6 +127,12 @@ class QuestionCreate(BaseModel):
     hidden_test_content: Optional[str] = Field(None, max_length=20000)
     hidden_test_filename: Optional[str] = Field(None, max_length=255)
     time_budget_seconds: Optional[int] = Field(None, ge=1)
+    grading_weights: Optional[dict] = None
+    result_visibility: CodingResultVisibilityEnum = Field(default=CodingResultVisibilityEnum.HIDDEN)
+
+    @validator('grading_weights')
+    def validate_grading_weights(cls, v):
+        return _validate_grading_weights(v)
 
     @validator('question_video_url')
     def validate_video_url(cls, v):
@@ -196,6 +241,12 @@ class QuestionUpdate(BaseModel):
     hidden_test_content: Optional[str] = Field(None, max_length=20000)
     hidden_test_filename: Optional[str] = Field(None, max_length=255)
     time_budget_seconds: Optional[int] = Field(None, ge=1)
+    grading_weights: Optional[dict] = None
+    result_visibility: Optional[CodingResultVisibilityEnum] = None
+
+    @validator('grading_weights')
+    def validate_grading_weights(cls, v):
+        return _validate_grading_weights(v)
 
 
 class QuestionResponse(BaseModel):
@@ -223,6 +274,8 @@ class QuestionResponse(BaseModel):
     hidden_test_content: Optional[str] = None
     hidden_test_filename: Optional[str] = None
     time_budget_seconds: Optional[int] = None
+    grading_weights: Optional[dict] = None
+    result_visibility: Optional[CodingResultVisibilityEnum] = None
 
     class Config:
         from_attributes = True

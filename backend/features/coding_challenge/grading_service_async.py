@@ -13,6 +13,7 @@ from sqlalchemy import update
 
 from persistence.models.quiz import (
     CodeWorkspace, CodeSubmission, CodeSubmissionStatus, CodeWorkspaceStatus, Question,
+    Quiz, CodingResultVisibility,
 )
 from features.coding_challenge import coder_client
 
@@ -139,9 +140,20 @@ def _compute_time_taken(created_at: datetime, submitted_at: datetime,
     return max(0, round(100 * (1 - (duration - time_budget_seconds) / time_budget_seconds)))
 
 
-def _build_score_breakdown(ai_scores: dict, functional_correctness: int, time_taken: int) -> tuple[dict, int]:
+def _build_score_breakdown(
+    ai_scores: dict, functional_correctness: int, time_taken: int,
+    weights: Optional[dict] = None,
+) -> tuple[dict, int]:
     """Backend computes the final weighted score itself — never trusts the LLM
-    to do the arithmetic. Returns (score_breakdown, ai_score)."""
+    to do the arithmetic. Returns (score_breakdown, ai_score).
+
+    `weights` is the host's per-question override (Question.grading_weights),
+    falling back to the platform default _WEIGHTS when not set. A host-provided
+    override intentionally has no "proctoring" key (see schemas.py's
+    GRADING_WEIGHT_CRITERIA) — proctoring is simply excluded from that
+    question's score rather than defaulted, since it's stubbed full-credit
+    and never meant to be host-configurable."""
+    weights = weights or _WEIGHTS
     all_scores = {
         "functional_correctness": functional_correctness,
         "ai_usage_efficiency": ai_scores.get("ai_usage_efficiency", 0),
@@ -154,7 +166,7 @@ def _build_score_breakdown(ai_scores: dict, functional_correctness: int, time_ta
     }
     breakdown = {}
     total = 0.0
-    for criterion, weight in _WEIGHTS.items():
+    for criterion, weight in weights.items():
         score = all_scores[criterion]
         contribution = score * weight / 100
         breakdown[criterion] = {"weight": weight, "score": score, "contribution": round(contribution, 2)}
@@ -185,7 +197,6 @@ async def run_grading_job(submission_id: int) -> None:
     Hidden test injection section): stop -> start -> hidden-test write -> exec ->
     transcript harvest -> timeline harvest -> AI scoring -> cleanup."""
     from persistence.database_async import AsyncSessionLocal
-    from core.ai.router import assess_coding_challenge
 
     async with AsyncSessionLocal() as db:
         submission = await db.get(CodeSubmission, submission_id)
@@ -239,64 +250,138 @@ async def run_grading_job(submission_id: int) -> None:
 
         # ── Everything above is now harvested and safe — a failure from here on is
         # recoverable (partial_failed), not a total loss ────────────────────────
-        ai_result = None
-        last_error: Optional[Exception] = None
-        for _attempt in range(2):  # one retry
-            try:
-                ai_result = await assess_coding_challenge(
-                    question.text, question.grading_rubric or "",
-                    submission.code_timeline or "", submission.ai_transcript_raw or "",
-                )
-                break
-            except Exception as e:
-                last_error = e
-                logger.warning("run_grading_job: assess_coding_challenge attempt failed: %s", e)
-
-        functional_correctness = _compute_functional_correctness(
-            submission.passed_count, submission.total_count
-        )
-        time_taken = _compute_time_taken(
-            workspace.created_at, submission.submitted_at or datetime.utcnow(), question.time_budget_seconds
-        )
-
-        if ai_result is None:
-            submission.status = CodeSubmissionStatus.PARTIAL_FAILED
-            submission.error_message = str(last_error)
-        else:
-            score_breakdown, ai_score = _build_score_breakdown(ai_result, functional_correctness, time_taken)
-            submission.score_breakdown = score_breakdown
-            submission.ai_score = ai_score
-            submission.ai_verdict = "pass" if ai_score >= 50 else "fail"
-            submission.ai_rationale = ai_result.get("rationale", "")
-            submission.status = CodeSubmissionStatus.GRADED
-
-        submission.graded_at = datetime.utcnow()
-        try:
-            await db.commit()
-        except Exception as e:
-            # The one commit in this job with no earlier try/except around it — found
-            # live (Phase 11) when a real, non-quiet `mvn test` run's ANSI-colored
-            # output exceeded test_output's old TEXT cap, crashing this exact commit
-            # and stranding the submission at `grading` forever (nothing upstream
-            # ever sets a terminal status on this path). Root cause fixed by widening
-            # the column, but this commit itself still had no failure handling at
-            # all — a persistence failure here must still reach a terminal status,
-            # never leave the row stuck, per this feature's own EV-6 principle. Falls
-            # back to a minimal raw UPDATE that excludes the large harvested fields,
-            # since those are the most likely cause of a repeat failure.
-            logger.error("run_grading_job: final commit failed for submission %s: %s", submission_id, e)
-            await db.rollback()
-            await db.execute(
-                update(CodeSubmission)
-                .where(CodeSubmission.id == submission_id)
-                .values(
-                    status=CodeSubmissionStatus.PARTIAL_FAILED,
-                    error_message=f"grading computed but could not be persisted: {e}"[:2000],
-                    graded_at=datetime.utcnow(),
-                )
-            )
-            await db.commit()
-            await _cleanup(db, workspace)
-            return
-
+        await _run_ai_scoring(db, submission, workspace, question)
         await _cleanup(db, workspace)
+
+
+async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspace, question: Question) -> None:
+    """Shared by the fresh-grading pipeline and the host-triggered regrade path
+    (regrade_submission below) — scores an already-harvested submission (code_timeline
+    + ai_transcript_raw already persisted) and commits a terminal status. Does NOT
+    touch the Coder workspace itself; caller decides whether cleanup is needed."""
+    from core.ai.router import assess_coding_challenge
+
+    ai_result = None
+    last_error: Optional[Exception] = None
+    for _attempt in range(2):  # one retry
+        try:
+            ai_result = await assess_coding_challenge(
+                question.text, question.grading_rubric or "",
+                submission.code_timeline or "", submission.ai_transcript_raw or "",
+            )
+            break
+        except Exception as e:
+            last_error = e
+            logger.warning("_run_ai_scoring: assess_coding_challenge attempt failed: %s", e)
+
+    functional_correctness = _compute_functional_correctness(
+        submission.passed_count, submission.total_count
+    )
+    time_taken = _compute_time_taken(
+        workspace.created_at, submission.submitted_at or datetime.utcnow(), question.time_budget_seconds
+    )
+
+    if ai_result is None:
+        submission.status = CodeSubmissionStatus.PARTIAL_FAILED
+        submission.error_message = str(last_error)
+    else:
+        score_breakdown, ai_score = _build_score_breakdown(
+            ai_result, functional_correctness, time_taken, weights=question.grading_weights
+        )
+        submission.score_breakdown = score_breakdown
+        submission.ai_score = ai_score
+        submission.ai_verdict = "pass" if ai_score >= 50 else "fail"
+        submission.ai_rationale = ai_result.get("rationale", "")
+        submission.status = CodeSubmissionStatus.GRADED
+        submission.error_message = None
+
+    submission.graded_at = datetime.utcnow()
+    try:
+        await db.commit()
+    except Exception as e:
+        # The one commit in this job with no earlier try/except around it — found
+        # live (Phase 11) when a real, non-quiet `mvn test` run's ANSI-colored
+        # output exceeded test_output's old TEXT cap, crashing this exact commit
+        # and stranding the submission at `grading` forever (nothing upstream
+        # ever sets a terminal status on this path). Root cause fixed by widening
+        # the column, but this commit itself still had no failure handling at
+        # all — a persistence failure here must still reach a terminal status,
+        # never leave the row stuck, per this feature's own EV-6 principle. Falls
+        # back to a minimal raw UPDATE that excludes the large harvested fields,
+        # since those are the most likely cause of a repeat failure.
+        logger.error("_run_ai_scoring: final commit failed for submission %s: %s", submission.id, e)
+        await db.rollback()
+        await db.execute(
+            update(CodeSubmission)
+            .where(CodeSubmission.id == submission.id)
+            .values(
+                status=CodeSubmissionStatus.PARTIAL_FAILED,
+                error_message=f"grading computed but could not be persisted: {e}"[:2000],
+                graded_at=datetime.utcnow(),
+            )
+        )
+        await db.commit()
+        return
+
+    if submission.status == CodeSubmissionStatus.GRADED:
+        await _send_completion_email(db, submission, workspace, question)
+
+
+async def _send_completion_email(db, submission: CodeSubmission, workspace: CodeWorkspace, question: Question) -> None:
+    """Only fires for status_only/full visibility — in hidden mode the candidate is
+    told upfront the host will follow up separately, so an automated email here
+    would contradict that promise. Never fires for a failed grade; that's a system
+    problem the host resolves quietly, not something the candidate is told about."""
+    if question.result_visibility not in (CodingResultVisibility.STATUS_ONLY, CodingResultVisibility.FULL):
+        return
+    try:
+        from core.auth.email_service import send_email
+        from features.coding_challenge.coding_challenge_service_async import create_invite_token
+
+        quiz = await db.get(Quiz, workspace.quiz_id)
+        token = create_invite_token(workspace.quiz_id, question.id, workspace.candidate_email)
+        import os
+        frontend_url = os.getenv("FRONTEND_URL", "https://www.swaya.me")
+        result_url = f"{frontend_url}/c/{token}"
+
+        html_body = f"""
+        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto">
+          <h2 style="color:#1677ff">Your submission has been reviewed</h2>
+          <p>Quiz: <strong>{quiz.title if quiz else ''}</strong></p>
+          <p>Your coding challenge submission has finished processing.</p>
+          <p><a href="{result_url}" style="display:inline-block;padding:10px 20px;background:#1677ff;
+             color:#fff;border-radius:6px;text-decoration:none">View Your Result</a></p>
+        </div>
+        """
+        await send_email(
+            subject=f"Your submission has been reviewed — {quiz.title if quiz else 'Coding Challenge'}",
+            recipients=[workspace.candidate_email],
+            html_body=html_body,
+        )
+    except Exception as e:
+        logger.warning("_send_completion_email: failed for submission %s: %s", submission.id, e)
+
+
+async def regrade_submission(submission_id: int) -> bool:
+    """Host-triggered recovery for a PARTIAL_FAILED submission (harvest succeeded,
+    only the AI-scoring call failed) — re-scores using the already-persisted
+    code_timeline/ai_transcript_raw. No workspace involved: it was already destroyed
+    by _cleanup at the end of the original run_grading_job regardless of outcome.
+    Returns False (no-op) if the submission isn't in a regradable state — a FAILED
+    submission never harvested anything, so there is nothing to re-score."""
+    from persistence.database_async import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+        submission = await db.get(CodeSubmission, submission_id)
+        if not submission or submission.status != CodeSubmissionStatus.PARTIAL_FAILED:
+            return False
+        workspace = await db.get(CodeWorkspace, submission.workspace_id)
+        question = await db.get(Question, submission.question_id)
+        if not workspace or not question:
+            return False
+
+        submission.status = CodeSubmissionStatus.GRADING
+        await db.commit()
+
+        await _run_ai_scoring(db, submission, workspace, question)
+        return True

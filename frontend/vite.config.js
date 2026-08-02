@@ -9,9 +9,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // We register the SW ourselves in main.jsx (with an explicit reload on
+      // update) instead of the plugin's auto-injected script, which only
+      // calls navigator.serviceWorker.register() and never reloads an
+      // already-open tab — that's what forced a manual unregister+hard-
+      // refresh after every deploy during development.
+      injectRegister: false,
       // Only cache the app shell — API calls are never cached
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
         globIgnores: ['assets/help-screens/**'],
         runtimeCaching: [
@@ -81,6 +87,15 @@ export default defineConfig({
     },
   },
   build: {
+    // Vite's default (empty the out dir first, then write) creates a real
+    // window where sw.js and index.html briefly don't exist on disk at all —
+    // any service-worker update check that lands in that window gets a 404
+    // and gives up until its next scheduled retry. Writing files in place
+    // instead removes that window; hashed asset chunks just accumulate
+    // across rebuilds in this dev environment as a result (fine — they're
+    // harmless clutter, not a correctness issue, and can be swept
+    // periodically if it matters).
+    emptyOutDir: false,
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

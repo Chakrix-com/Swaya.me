@@ -14,11 +14,12 @@ import {
   FileTextOutlined, CheckCircleOutlined, HistoryOutlined, StarOutlined,
   BarChartOutlined, LinkOutlined, WifiOutlined, EyeOutlined,
   StopOutlined, SearchOutlined, InboxOutlined, FilterOutlined,
-  WarningOutlined, ThunderboltOutlined,
+  WarningOutlined, ThunderboltOutlined, ShareAltOutlined,
 } from '@ant-design/icons'
 import { setQuizzes } from '../../store/quizSlice'
 import { quizAPI, sessionAPI } from '../../services/api'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
+import InviteCandidatesModal from '../quiz/components/InviteCandidatesModal'
 import '../dashboard/Dashboard.css'
 
 const { Title, Text } = Typography
@@ -44,6 +45,7 @@ const TYPE_TAG = {
   exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  labelKey: 'activities.typeExam' },
   poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  labelKey: 'activities.typePoll' },
   offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', labelKey: 'activities.typeSurvey' },
+  coding_challenge: { bg: 'var(--sw-tile-cc-bg)', color: 'var(--sw-tile-cc-fg)', labelKey: 'activities.typeCodingChallenge' },
 }
 
 const STATUS_TAG = {
@@ -71,6 +73,8 @@ export default function Activities() {
   const [bulkLoading, setBulkLoading] = useState(false)
   const [confirmBulkArchive, setConfirmBulkArchive] = useState(false)
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+  const [inviteModalQuizId, setInviteModalQuizId] = useState(null)
+  const [loadingCandidatesFor, setLoadingCandidatesFor] = useState(null)
 
   const loadQuizzes = useCallback(async (includeArchived) => {
     try {
@@ -157,6 +161,23 @@ export default function Activities() {
     }
   }
 
+  const handleViewCandidates = async (quiz) => {
+    setLoadingCandidatesFor(quiz.id)
+    try {
+      const res = await quizAPI.get(quiz.id)
+      const question = (res.data.questions || []).find(q => q.question_type === 'coding_challenge')
+      if (!question) {
+        message.error(t('codingChallenge.noChallengeQuestion', 'This activity has no coding-challenge question yet'))
+        return
+      }
+      navigate(`/quiz/coding-challenge-review/${question.id}`)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('common.error', 'Something went wrong'))
+    } finally {
+      setLoadingCandidatesFor(null)
+    }
+  }
+
   const handleToggleTemplate = async (quiz) => {
     try {
       if (quiz.is_template) await quizAPI.removeTemplate(quiz.id)
@@ -199,6 +220,7 @@ export default function Activities() {
 
   const getPrimaryAction = (quiz) => {
     if (quiz.has_active_session && quiz.active_session_id) return 'open'
+    if (quiz.status === 'ready' && quiz.quiz_type === 'coding_challenge') return 'send_invite'
     if (quiz.status === 'ready' && quiz.quiz_type !== 'offline_poll' && quiz.quiz_type !== 'exam') return 'launch'
     if (quiz.status === 'draft') return 'edit'
     if (quiz.quiz_type === 'exam') return 'exam_results'
@@ -217,6 +239,12 @@ export default function Activities() {
   }
 
   const getMoreMenuItems = (quiz) => [
+    ...(quiz.quiz_type === 'coding_challenge' && quiz.status === 'ready'
+      ? [{ key: 'send_invite', label: t('codingChallenge.inviteCandidates', 'Invite Candidates'), icon: <ShareAltOutlined />, onClick: () => setInviteModalQuizId(quiz.id) }]
+      : []),
+    ...(quiz.quiz_type === 'coding_challenge' && (quiz.question_count || 0) > 0
+      ? [{ key: 'view_candidates', label: t('codingChallenge.viewSubmissions', 'Candidates'), icon: <EyeOutlined />, disabled: loadingCandidatesFor === quiz.id, onClick: () => handleViewCandidates(quiz) }]
+      : []),
     { key: 'edit', label: t('common.edit', 'Edit'), icon: <EditOutlined />, onClick: () => navigate(`/quiz/${quiz.id}/edit`) },
     { key: 'duplicate', label: t('quiz.duplicate', 'Duplicate'), icon: <CopyOutlined />, onClick: () => handleDuplicateQuiz(quiz.id) },
     { key: 'history', label: t('quiz.history', 'History'), icon: <HistoryOutlined />, onClick: () => navigate(`/quiz/${quiz.id}/sessions`) },
@@ -282,16 +310,41 @@ export default function Activities() {
     {
       title: t('common.actions', 'Actions'),
       key: 'actions',
-      width: 200,
+      width: 100,
       render: (_, quiz) => {
         const primaryAction = getPrimaryAction(quiz)
         return (
           <Space size={6}>
-            {primaryAction === 'launch' && <Button type="primary" size="small" icon={<PlayCircleOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/control`)} style={{ background: C.success, borderColor: C.success }}>{t('quiz.startQuiz', 'Launch')}</Button>}
-            {primaryAction === 'open' && <Button type="primary" size="small" icon={<WifiOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/control`)}>{t('quiz.openRoom', 'Open Room')}</Button>}
-            {primaryAction === 'edit' && <Button size="small" icon={<EditOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/edit`)}>{t('quiz.continue', 'Continue')}</Button>}
-            {primaryAction === 'exam_results' && <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)}>{t('exam.resultsTitle', 'Results')}</Button>}
-            {primaryAction === 'poll_results' && <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)}>{t('offlinePoll.viewResults', 'Results')}</Button>}
+            {primaryAction === 'launch' && (
+              <Tooltip title={t('quiz.startQuiz', 'Launch')}>
+                <Button type="primary" shape="circle" size="small" icon={<PlayCircleOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/control`)} style={{ background: C.success, borderColor: C.success }} />
+              </Tooltip>
+            )}
+            {primaryAction === 'send_invite' && (
+              <Tooltip title={t('codingChallenge.inviteCandidates', 'Invite Candidates')}>
+                <Button type="primary" shape="circle" size="small" icon={<ShareAltOutlined />} onClick={() => setInviteModalQuizId(quiz.id)} />
+              </Tooltip>
+            )}
+            {primaryAction === 'open' && (
+              <Tooltip title={t('quiz.openRoom', 'Open Room')}>
+                <Button type="primary" shape="circle" size="small" icon={<WifiOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/control`)} />
+              </Tooltip>
+            )}
+            {primaryAction === 'edit' && (
+              <Tooltip title={t('quiz.continue', 'Continue')}>
+                <Button shape="circle" size="small" icon={<EditOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/edit`)} />
+              </Tooltip>
+            )}
+            {primaryAction === 'exam_results' && (
+              <Tooltip title={t('exam.resultsTitle', 'Results')}>
+                <Button shape="circle" size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/exam-results`)} />
+              </Tooltip>
+            )}
+            {primaryAction === 'poll_results' && (
+              <Tooltip title={t('offlinePoll.viewResults', 'Results')}>
+                <Button shape="circle" size="small" icon={<EyeOutlined />} onClick={() => navigate(`/quiz/${quiz.id}/offline-results`)} />
+              </Tooltip>
+            )}
             <MoreActionsMenu items={getMoreMenuItems(quiz).map(item => {
               if (item.key === 'delete') {
                 return { ...item, confirm: { title: t('quiz.deleteConfirm', 'Delete this activity?'), description: t('quiz.deleteWarning', 'Cannot be undone.'), onConfirm: () => handleDeleteQuiz(quiz.id), okText: t('common.delete', 'Delete'), cancelText: t('common.cancel', 'Cancel') } }
@@ -347,6 +400,7 @@ export default function Activities() {
             { value: 'poll', label: t('activities.typePoll') },
             { value: 'exam', label: t('activities.typeExam') },
             { value: 'offline_poll', label: t('activities.typeSurvey') },
+            { value: 'coding_challenge', label: t('activities.typeCodingChallenge') },
           ]}
         />
         <Select
@@ -426,6 +480,13 @@ export default function Activities() {
         style={{ background: C.bgCard, borderRadius: 12 }}
         rowClassName="activity-table-row"
         locale={{ emptyText: <div style={{ padding: '32px', color: C.text3 }}>{t('quiz.noQuizzes', 'No activities found.')}</div> }}
+      />
+
+      <InviteCandidatesModal
+        open={!!inviteModalQuizId}
+        quizId={inviteModalQuizId}
+        onClose={() => setInviteModalQuizId(null)}
+        t={t}
       />
     </div>
   )

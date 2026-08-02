@@ -118,6 +118,8 @@ class BaseAIProvider(ABC):
         Returns: {"ai_usage_efficiency": int, "prompt_quality": int,
                   "validation_discipline": int, "code_quality": int,
                   "architecture": int, "rationale": str} — each score 0-100.
+        rationale is newline-delimited short bullet points (providers should ask
+        the model for an array and join with "\n"), not one long paragraph.
         Default: neutral mid-score fallback when no AI provider is configured.
         """
         return {
@@ -132,3 +134,14 @@ class BaseAIProvider(ABC):
     async def list_available_models(self) -> list[str]:
         """Return model IDs available via this provider. Empty list if not applicable."""
         return []
+
+    async def generate_coding_challenge_problem(self, topic: str, language: str = "en") -> str:
+        """
+        Generate a complete coding-challenge problem statement (Background/Task/
+        Requirements/Constraints & Scale/Examples) from a short host-supplied topic.
+        Unlike rewrite_text, this generates fresh content rather than polishing
+        existing text, and needs a larger output budget than a short rewrite.
+        Default: raises, since not every provider is worth wiring up for this —
+        callers should surface the error rather than silently doing nothing.
+        """
+        raise AIProviderError("Problem generation is not supported by the configured AI provider")

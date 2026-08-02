@@ -30,16 +30,22 @@ _INTERRUPTED_MESSAGE = "interrupted by a backend restart, needs manual re-grade"
 # ── JWT invite ───────────────────────────────────────────────────────────────
 
 def create_invite_token(quiz_id: int, question_id: int, candidate_email: str,
+                         attempt_number: int = 1,
                          expires_delta: Optional[timedelta] = None) -> str:
-    """Signed invite link payload: quiz_id, question_id, candidate_email, exp."""
+    """Signed invite link payload: quiz_id, question_id, candidate_email, attempt_number, exp."""
     return create_access_token(
-        {"quiz_id": quiz_id, "question_id": question_id, "candidate_email": candidate_email.lower()},
+        {
+            "quiz_id": quiz_id, "question_id": question_id, "candidate_email": candidate_email.lower(),
+            "attempt_number": attempt_number,
+        },
         expires_delta=expires_delta or timedelta(days=7),
     )
 
 
 def decode_invite_token(token: str) -> dict:
-    """Decodes and validates a coding-challenge invite token's required claims."""
+    """Decodes and validates a coding-challenge invite token's required claims.
+    attempt_number defaults to 1 for links minted before this claim existed —
+    every invite already sent keeps working unchanged."""
     try:
         payload = decode_access_token(token)
     except (InvalidTokenError, ExpiredTokenError) as e:
@@ -47,6 +53,7 @@ def decode_invite_token(token: str) -> dict:
     for field in ("quiz_id", "question_id", "candidate_email", "jti"):
         if field not in payload:
             raise HTTPException(status_code=400, detail="Invalid invite link")
+    payload.setdefault("attempt_number", 1)
     return payload
 
 

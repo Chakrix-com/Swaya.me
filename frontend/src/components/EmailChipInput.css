@@ -1,0 +1,7 @@
+@keyframes sw-email-chip-flash {
+  0%, 100% { box-shadow: none; }
+  30% { box-shadow: 0 0 0 2px var(--sw-warning, #d97706); }
+}
+.sw-email-chip--flash {
+  animation: sw-email-chip-flash 0.45s ease;
+}
