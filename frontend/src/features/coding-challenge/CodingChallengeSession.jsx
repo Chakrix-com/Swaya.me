@@ -39,7 +39,25 @@ function formatMinutes(seconds) {
 function splitProblemStatement(markdown) {
   if (!markdown) return { challengeName: null, body: markdown }
   const lines = markdown.split('\n')
-  const h1Index = lines.findIndex((l) => /^#\s+/.test(l.trim()))
+  // A line starting with '#' only looks like a heading if it's not inside a
+  // fenced code block (```...```) - e.g. a Python comment like "# raises
+  // ValueError" in an example's output would otherwise be misread as the
+  // challenge's H1 title, and then stripped out of the body, corrupting the
+  // fence (confirmed live: exactly this happened with a "# raises
+  // InsufficientFundsError..." comment inside an example).
+  let inFence = false
+  let h1Index = -1
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim()
+    if (/^```/.test(trimmed)) {
+      inFence = !inFence
+      continue
+    }
+    if (!inFence && /^#\s+/.test(trimmed)) {
+      h1Index = i
+      break
+    }
+  }
   if (h1Index === -1) return { challengeName: null, body: markdown }
   const challengeName = lines[h1Index].replace(/^#\s+/, '').replace(/^coding challenge:?\s*/i, '').trim()
   const bodyLines = [...lines.slice(0, h1Index), ...lines.slice(h1Index + 1)]
