@@ -37,7 +37,13 @@
     "viewOnGitHub": "View source on GitHub",
     "close": "Close",
     "status": "Status",
-    "all": "All"
+    "all": "All",
+    "no": "No",
+    "off": "OFF",
+    "on": "ON",
+    "prev": "Prev",
+    "refresh": "Refresh",
+    "yes": "Yes"
   },
   "auth": {
     "login": "Login",
@@ -101,7 +107,9 @@
     "emailInvalid": "Please enter a valid email",
     "passwordRequired": "Password is required",
     "continueWithGoogle": "Continue with Google",
-    "forgotPassword": "Forgot Password?"
+    "forgotPassword": "Forgot Password?",
+    "changePassword": "Change Password",
+    "rememberMe": "Remember me"
   },
   "quiz": {
     "myQuizzes": "My Quizzes",
@@ -454,7 +462,25 @@
     "codeQuestionDescription": "Participants write code; AI evaluates after question closes",
     "clickEvaluate": "Click \"Evaluate Code\" after closing the question to run AI evaluation",
     "submissions": "Submissions",
-    "changeType": "Change type"
+    "changeType": "Change type",
+    "behaviourSection": "Behaviour",
+    "copyLink": "Link",
+    "correctAnswerRequired": "Please select the correct answer",
+    "defaultQuestionTime": "Default time per question (seconds)",
+    "defaultQuestionTimeHint": "Applied to questions with no individual time set. Leave blank for unlimited time.",
+    "madeTemplate": "Made template",
+    "moreParticipants": "more participants",
+    "removedTemplate": "Removed template",
+    "run": "Run",
+    "shuffleOptions": "Shuffle answer options",
+    "shuffleOptionsHint": "Randomize MCQ option order for each participant",
+    "shuffleQuestions": "Shuffle questions",
+    "shuffleQuestionsHint": "Randomize question order for each participant",
+    "unlimitedTime": "∞ unlimited",
+    "unpublishToEditBannerTitleExam": "✏️ Unpublish to edit settings",
+    "unpublishToEditBannerTitleQuiz": "✏️ Unpublish → Edit → Republish",
+    "unpublishToEditBannerDescExam": "This test is live. Unpublish it to make changes, then republish when ready.",
+    "unpublishToEditBannerDescQuiz": "This activity is published and live. Unpublish it to edit settings, then republish when ready."
   },
   "audience": {
     "joinQuiz": "Join Session",
@@ -538,7 +564,13 @@
       "exam": "Test"
     },
     "chooseAnswer": "Choose your answer",
-    "getReady": "Get ready!"
+    "getReady": "Get ready!",
+    "answered": "answered",
+    "quizEndedByHost": "The host has ended the quiz.",
+    "quizEndedByHostTitle": "Quiz ended by host",
+    "quizEndedEarlyNote": "The host ended this session early. Your score reflects questions answered so far.",
+    "responses": "responses",
+    "wrong": "Wrong"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",
@@ -632,7 +664,8 @@
     "share": "Share",
     "tooltipNewFolder": "New folder",
     "tooltipNewSubfolder": "New subfolder",
-    "folderUpdated": "Folder updated"
+    "folderUpdated": "Folder updated",
+    "noFolders": "No folders yet"
   },
   "create": {
     "intentTitle": "What does this moment need?",
@@ -649,7 +682,8 @@
     "aiOr": "or let AI draft it",
     "aiPlaceholder": "\"10 questions on photosynthesis for class 9, Hindi\"",
     "aiCountLabel": "Questions:",
-    "aiGenerate": "Generate"
+    "aiGenerate": "Generate",
+    "aiTypeLabel": "Type:"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -1180,7 +1214,15 @@
       "quote": "The quiz got them excited. The report is why we kept the subscription.",
       "quoteCite": "— What we build for: both halves of that sentence",
       "ctaTitle": "The next session could be yours",
-      "ctaSub": "Create a quiz, a poll, or a test now. Share the code. Watch the room light up — or settle down and focus. Free to start."
+      "ctaSub": "Create a quiz, a poll, or a test now. Share the code. Watch the room light up — or settle down and focus. Free to start.",
+      "ctaAlreadyMember": "Already a member?",
+      "joinBtn": "Join",
+      "joinCodeLabel": "Enter join code",
+      "pathAudienceSub": "No app, no account needed",
+      "pathAudienceTitle": "Got a join code?",
+      "pathHostSub": "Log in to your dashboard",
+      "pathHostTitle": "I'm hosting",
+      "pathOr": "or"
     }
   },
   "pages": {
@@ -2213,7 +2255,25 @@
     "interviewSheetEmailQueued": "Email queued successfully.",
     "interviewSheetDownload": "Download:",
     "interviewSheetRetry": "Retry",
-    "interviewSheetWait": "Hang on, this might take 4–5 minutes."
+    "interviewSheetWait": "Hang on, this might take 4–5 minutes.",
+    "abandoned": "Abandoned",
+    "adjustedScoreExplain": "Adjusted score",
+    "analysisError": "Failed to analyze results. Please try again.",
+    "backToResults": "Back to results",
+    "integrityLoadFailed": "Failed to load integrity report.",
+    "integrityReport": "Integrity Report",
+    "integrityScore": "Integrity Score",
+    "marksRank": "Marks rank",
+    "noProctoringData": "No proctoring data recorded for this candidate",
+    "noWebcamSnapshots": "No webcam snapshots were captured for this session.",
+    "resultsEmailHint": "A summary of exam results will be emailed here when the session ends",
+    "score": "Score",
+    "sessionLocked": "Session locked",
+    "timeTaken": "Time taken",
+    "violationEvents": "violation event(s)",
+    "violationTimeline": "Violation Timeline",
+    "webcamDenied": "Webcam was denied by the candidate",
+    "webcamSnapshots": "Webcam Snapshots"
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",
@@ -2761,5 +2821,9 @@
     "journeyStatusDone": "Completed",
     "journeyStatusCurrent": "In progress",
     "journeyStatusUpcoming": "Waiting"
+  },
+  "errors": {
+    "backToDashboard": "Back to Dashboard",
+    "notFoundSubtitle": "This activity doesn't exist or has been removed."
   }
 }

@@ -21,10 +21,23 @@ from core.security.password import hash_password, verify_password
 
 class UserManagementServiceAsync:
     """Async service for managing users"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
+    async def _to_user_response(self, user: User) -> UserResponse:
+        """Enrich a single-user response with tier/tenant_name. User has no
+        ORM-backed tier/tenant_name of its own — those live on Tenant — so
+        every call site returning one UserResponse must populate them
+        explicitly here or they silently stay null (unlike list_users, which
+        already does this via its own eager-loaded to_response helper)."""
+        data = UserResponse.model_validate(user)
+        tenant = await self.db.get(Tenant, user.tenant_id)
+        if tenant:
+            data.tier = tenant.tier.value
+            data.tenant_name = tenant.name
+        return data
+
     async def create_user(
         self,
         user_create: UserCreate,
@@ -143,7 +156,7 @@ class UserManagementServiceAsync:
             details={"email": new_user.email, "role": new_user.role.value, "managed_by": managed_by_admin_id}
         )
         
-        return UserResponse.model_validate(new_user)
+        return await self._to_user_response(new_user)
     
     async def lookup_by_email(self, email: str, current_user: User) -> Optional["UserLookupResponse"]:
         """Resolve an exact email to a minimal user record, across any tenant.
@@ -179,8 +192,8 @@ class UserManagementServiceAsync:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot access user from different tenant"
                 )
-        
-        return UserResponse.model_validate(user)
+
+        return await self._to_user_response(user)
     
     async def list_users(
         self,
@@ -321,8 +334,8 @@ class UserManagementServiceAsync:
             resource_id=user.id,
             details=user_update.model_dump(exclude_unset=True)
         )
-        
-        return UserResponse.model_validate(user)
+
+        return await self._to_user_response(user)
     
     async def delete_user(self, user_id: int, current_user: User) -> dict:
         """Delete user (soft delete by setting is_active=False)"""

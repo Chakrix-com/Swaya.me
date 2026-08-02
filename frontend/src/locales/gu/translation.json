@@ -31,7 +31,13 @@
     "viewOnGitHub": "GitHub પર સ્રોત જુઓ",
     "close": "બંધ કરો",
     "status": "સ્થિતિ",
-    "all": "બધા"
+    "all": "બધા",
+    "no": "ના",
+    "off": "બંધ",
+    "on": "ચાલુ",
+    "prev": "પાછળ",
+    "refresh": "રિફ્રેશ",
+    "yes": "હા"
   },
   "auth": {
     "login": "લૉગઇન",
@@ -95,7 +101,9 @@
     "emailInvalid": "કૃપા કરી માન્ય ઈમેઈલ દાખલ કરો",
     "passwordRequired": "પાસવર્ડ જરૂરી છે",
     "continueWithGoogle": "Google સાથે ચાલુ રાખો",
-    "forgotPassword": "પાસવર્ડ ભૂલી ગયા?"
+    "forgotPassword": "પાસવર્ડ ભૂલી ગયા?",
+    "changePassword": "પાસવર્ડ બદલો",
+    "rememberMe": "મને યાદ રાખો"
   },
   "quiz": {
     "myQuizzes": "મારા ક્વિઝ",
@@ -448,7 +456,25 @@
     "codeQuestionDescription": "સહભાગીઓ કોડ લખે છે; AI પ્રશ્ન બંધ પછી મૂલ્યાંકન કરે છે",
     "clickEvaluate": "AI મૂલ્યાંકન ચલાવવા પ્રશ્ન બંધ કર્યા પછી \"કોડ મૂલ્યાંકન કરો\" ક્લિક કરો",
     "submissions": "સબમિશન",
-    "changeType": "પ્રકાર બદલો"
+    "changeType": "પ્રકાર બદલો",
+    "behaviourSection": "વર્તણૂક",
+    "copyLink": "લિંક",
+    "correctAnswerRequired": "કૃપા કરીને સાચો જવાબ પસંદ કરો",
+    "defaultQuestionTime": "પ્રતિ પ્રશ્ન ડિફોલ્ટ સમય (સેકન્ડ)",
+    "defaultQuestionTimeHint": "જે પ્રશ્નો માટે અલગ સમય નક્કી નથી તેમના માટે લાગુ પડે છે. અમર્યાદિત સમય માટે ખાલી છોડો.",
+    "madeTemplate": "ટેમ્પલેટ બનાવ્યું",
+    "moreParticipants": "વધુ સહભાગીઓ",
+    "removedTemplate": "ટેમ્પલેટ દૂર કર્યું",
+    "run": "ચલાવો",
+    "shuffleOptions": "જવાબના વિકલ્પો શફલ કરો",
+    "shuffleOptionsHint": "દરેક સહભાગી માટે MCQ વિકલ્પોનો ક્રમ રેન્ડમ કરો",
+    "shuffleQuestions": "પ્રશ્નો શફલ કરો",
+    "shuffleQuestionsHint": "દરેક સહભાગી માટે પ્રશ્નોનો ક્રમ રેન્ડમ કરો",
+    "unlimitedTime": "∞ અમર્યાદિત",
+    "unpublishToEditBannerTitleExam": "✏️ સેટિંગ્સ બદલવા માટે અનપબ્લિશ કરો",
+    "unpublishToEditBannerTitleQuiz": "✏️ અનપબ્લિશ → એડિટ → ફરીથી પબ્લિશ કરો",
+    "unpublishToEditBannerDescExam": "આ પરીક્ષા લાઈવ છે. ફેરફાર કરવા માટે તેને અનપબ્લિશ કરો, અને તૈયાર થયા પછી ફરીથી પબ્લિશ કરો.",
+    "unpublishToEditBannerDescQuiz": "આ પ્રવૃત્તિ પબ્લિશ થયેલ અને લાઈવ છે. સેટિંગ્સ બદલવા માટે તેને અનપબ્લિશ કરો, અને તૈયાર થયા પછી ફરીથી પબ્લિશ કરો."
   },
   "audience": {
     "joinQuiz": "સેશનમાં જોડાઓ",
@@ -532,7 +558,13 @@
       "exam": "ટેસ્ટ"
     },
     "chooseAnswer": "તમારો જવાબ પસંદ કરો",
-    "getReady": "તૈયાર થાઓ!"
+    "getReady": "તૈયાર થાઓ!",
+    "answered": "જવાબ આપ્યો",
+    "quizEndedByHost": "હોસ્ટ દ્વારા ક્વિઝ સમાપ્ત કરવામાં આવી છે.",
+    "quizEndedByHostTitle": "હોસ્ટ દ્વારા ક્વિઝ સમાપ્ત",
+    "quizEndedEarlyNote": "હોસ્ટે આ સત્ર વહેલું સમાપ્ત કર્યું છે. તમારો સ્કોર અત્યાર સુધી આપેલા જવાબો પર આધારિત છે.",
+    "responses": "પ્રતિભાવો",
+    "wrong": "ખોટું"
   },
   "navigation": {
     "home": "મુખ્ય",
@@ -1001,7 +1033,15 @@
       "quote": "Quiz એ તેમને ઉત્સાહિત કર્યા. રિપોર્ટને કારણે જ અમે સબ્સ્ક્રિપ્શન ચાલુ રાખ્યું.",
       "quoteCite": "— અમે જેના માટે બનાવીએ છીએ: તે વાક્યના બંને ભાગો",
       "ctaTitle": "આગામી સત્ર તમારું હોઈ શકે છે",
-      "ctaSub": "હમણાં જ એક Quiz, Poll અથવા Test બનાવો. કોડ શેર કરો. રૂમને ઉત્સાહિત થતા જુઓ — અથવા શાંત થઈને ધ્યાન કેન્દ્રિત કરતા જુઓ. શરૂ કરવા માટે મફત."
+      "ctaSub": "હમણાં જ એક Quiz, Poll અથવા Test બનાવો. કોડ શેર કરો. રૂમને ઉત્સાહિત થતા જુઓ — અથવા શાંત થઈને ધ્યાન કેન્દ્રિત કરતા જુઓ. શરૂ કરવા માટે મફત.",
+      "ctaAlreadyMember": "પહેલેથી જ સભ્ય છો?",
+      "joinBtn": "જોડાઓ",
+      "joinCodeLabel": "જોઈન કોડ દાખલ કરો",
+      "pathAudienceSub": "કોઈ એપ કે એકાઉન્ટની જરૂર નથી",
+      "pathAudienceTitle": "જોઈન કોડ છે?",
+      "pathHostSub": "તમારા ડેશબોર્ડમાં લોગ ઇન કરો",
+      "pathHostTitle": "હું હોસ્ટ કરી રહ્યો છું",
+      "pathOr": "અથવા"
     }
   },
   "dashboard": {
@@ -1096,7 +1136,8 @@
     "tooltipNewFolder": "નવું ફોલ્ડર",
     "tooltipNewSubfolder": "નવું સબફોલ્ડર",
     "viewAll": "બધા જુઓ →",
-    "viewOnly": "ફક્ત જુઓ"
+    "viewOnly": "ફક્ત જુઓ",
+    "noFolders": "હજુ સુધી કોઈ ફોલ્ડર્સ નથી"
   },
   "pages": {
     "legal": {
@@ -2181,7 +2222,25 @@
     "tagCorrect": "સાચું",
     "tagNotAnswered": "જવાબ આપ્યો નથી",
     "tagTheirAnswer": "તેમનો જવાબ",
-    "interviewSheetWait": "થોડીક રાહ જુઓ, આ 4–5 મિનિટ લઈ શકે છે."
+    "interviewSheetWait": "થોડીક રાહ જુઓ, આ 4–5 મિનિટ લઈ શકે છે.",
+    "abandoned": "ત્યજી દેવાયેલ",
+    "adjustedScoreExplain": "એડજસ્ટ કરેલ સ્કોર",
+    "analysisError": "પરિણામોનું વિશ્લેષણ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "backToResults": "પરિણામો પર પાછા જાઓ",
+    "integrityLoadFailed": "ઇન્ટિગ્રિટી રિપોર્ટ લોડ કરવામાં નિષ્ફળ.",
+    "integrityReport": "ઇન્ટિગ્રિટી રિપોર્ટ",
+    "integrityScore": "ઇન્ટિગ્રિટી સ્કોર",
+    "marksRank": "માર્ક્સ રેન્ક",
+    "noProctoringData": "આ ઉમેદવાર માટે કોઈ પ્રોક્ટરિંગ ડેટા નોંધાયેલ નથી",
+    "noWebcamSnapshots": "આ સત્ર માટે કોઈ વેબકેમ સ્નેપશોટ લેવામાં આવ્યા નથી.",
+    "resultsEmailHint": "સત્ર સમાપ્ત થાય ત્યારે પરીક્ષાના પરિણામોનો સારાંશ અહીં ઈમેલ કરવામાં આવશે",
+    "score": "સ્કોર",
+    "sessionLocked": "સત્ર લોક છે",
+    "timeTaken": "લીધેલ સમય",
+    "violationEvents": "ઉલ્લંઘન ઘટના(ઓ)",
+    "violationTimeline": "ઉલ્લંઘન સમયરેખા",
+    "webcamDenied": "ઉમેદવાર દ્વારા વેબકેમ નકારવામાં આવ્યું હતું",
+    "webcamSnapshots": "વેબકેમ સ્નેપશોટ્સ"
   },
   "appFeedback": {
     "floatButtonTooltip": "પ્રતિક્રિયા શેર કરો",
@@ -2419,7 +2478,8 @@
     "aiOr": "અથવા AI દ્વારા ડ્રાફ્ટ કરો",
     "aiPlaceholder": "\"ધોરણ 9 માટે ગુજરાતીમાં પ્રકાશ સંશ્લેષણ પર 10 પ્રશ્નો\"",
     "aiCountLabel": "પ્રશ્નો:",
-    "aiGenerate": "જનરેટ કરો"
+    "aiGenerate": "જનરેટ કરો",
+    "aiTypeLabel": "પ્રકાર:"
   },
   "activities": {
     "title": "પ્રવૃત્તિઓ",
@@ -2755,5 +2815,15 @@
     "reinviteSuccess": "{{email}} ને ફરીથી આમંત્રિત કરાયા",
     "attemptBadge": "પ્રયાસ {{number}}",
     "attemptHistoryHeading": "પ્રયાસ ઇતિહાસ"
+  },
+  "errors": {
+    "backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",
+    "notFoundSubtitle": "આ પ્રવૃત્તિ અસ્તિત્વમાં નથી અથવા દૂર કરવામાં આવી છે."
+  },
+  "errorBoundary": {
+    "title": "કંઈક ખોટું થયું",
+    "description": "આ પેજ પર અણધારી ભૂલ આવી છે. ફરીથી લોડ કરવાથી સામાન્ય રીતે તે ઠીક થઈ જાય છે.",
+    "reload": "પેજ રિલોડ કરો",
+    "contactSupport": "જો આ વારંવાર થતું હોય, તો સપોર્ટનો સંપર્ક કરો."
   }
 }

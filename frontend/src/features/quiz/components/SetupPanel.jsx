@@ -201,8 +201,8 @@ export function SetupPanel({
         <div className="sp-live-banner">
           <WarningOutlined className="sp-live-banner-icon" />
           <div className="sp-live-banner-text">
-            <strong>{t('quiz.unpublishToEditBannerTitle', isExam ? '✏️ Unpublish to edit settings' : '✏️ Unpublish → Edit → Republish')}</strong>
-            <span>{t('quiz.unpublishToEditBannerDesc', isExam ? 'This test is live. Unpublish it to make changes, then republish when ready.' : 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}</span>
+            <strong>{isExam ? t('quiz.unpublishToEditBannerTitleExam', '✏️ Unpublish to edit settings') : t('quiz.unpublishToEditBannerTitleQuiz', '✏️ Unpublish → Edit → Republish')}</strong>
+            <span>{isExam ? t('quiz.unpublishToEditBannerDescExam', 'This test is live. Unpublish it to make changes, then republish when ready.') : t('quiz.unpublishToEditBannerDescQuiz', 'This activity is published and live. Unpublish it to edit settings, then republish when ready.')}</span>
           </div>
           <Button size="small" onClick={onUnpublish} loading={loading}>
             {isExam ? t('exam.unpublishExam') : isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}

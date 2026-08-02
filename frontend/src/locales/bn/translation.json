@@ -31,7 +31,13 @@
     "viewOnGitHub": "GitHub-এ উৎস দেখুন",
     "close": "বন্ধ করুন",
     "status": "অবস্থা",
-    "all": "সব"
+    "all": "সব",
+    "no": "না",
+    "off": "বন্ধ",
+    "on": "চালু",
+    "prev": "পূর্ববর্তী",
+    "refresh": "রিফ্রেশ",
+    "yes": "হ্যাঁ"
   },
   "auth": {
     "login": "লগইন",
@@ -95,7 +101,9 @@
     "emailInvalid": "একটি বৈধ ইমেইল দিন",
     "passwordRequired": "পাসওয়ার্ড আবশ্যক",
     "continueWithGoogle": "Google দিয়ে চালিয়ে যান",
-    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?"
+    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?",
+    "changePassword": "পাসওয়ার্ড পরিবর্তন করুন",
+    "rememberMe": "আমাকে মনে রাখুন"
   },
   "quiz": {
     "myQuizzes": "আমার প্রশ্নোত্তর",
@@ -448,7 +456,25 @@
     "codeQuestionDescription": "অংশগ্রহণকারীরা কোড লেখেন; প্রশ্ন বন্ধের পরে AI মূল্যায়ন করে",
     "clickEvaluate": "AI মূল্যায়ন চালাতে প্রশ্ন বন্ধের পরে \"কোড মূল্যায়ন করুন\" ক্লিক করুন",
     "submissions": "সাবমিশন",
-    "changeType": "ধরন পরিবর্তন করুন"
+    "changeType": "ধরন পরিবর্তন করুন",
+    "behaviourSection": "আচরণ",
+    "copyLink": "লিঙ্ক",
+    "correctAnswerRequired": "অনুগ্রহ করে সঠিক উত্তরটি নির্বাচন করুন",
+    "defaultQuestionTime": "প্রতি প্রশ্নের জন্য ডিফল্ট সময় (সেকেন্ড)",
+    "defaultQuestionTimeHint": "যেসব প্রশ্নে আলাদা সময় সেট করা নেই সেখানে এটি প্রযোজ্য হবে। অসীম সময়ের জন্য খালি রাখুন।",
+    "madeTemplate": "টেমপ্লেট তৈরি হয়েছে",
+    "moreParticipants": "আরও অংশগ্রহণকারী",
+    "removedTemplate": "টেমপ্লেট মুছে ফেলা হয়েছে",
+    "run": "চালান",
+    "shuffleOptions": "উত্তরের অপশন এলোমেলো করুন",
+    "shuffleOptionsHint": "প্রতি অংশগ্রহণকারীর জন্য এমসিকিউ অপশনের ক্রম এলোমেলো করুন",
+    "shuffleQuestions": "প্রশ্ন এলোমেলো করুন",
+    "shuffleQuestionsHint": "প্রতি অংশগ্রহণকারীর জন্য প্রশ্নের ক্রম এলোমেলো করুন",
+    "unlimitedTime": "∞ অসীম",
+    "unpublishToEditBannerTitleExam": "✏️ সেটিংস পরিবর্তন করতে আনপাবলিশ করুন",
+    "unpublishToEditBannerTitleQuiz": "✏️ আনপাবলিশ → এডিট → রিপাবলিশ",
+    "unpublishToEditBannerDescExam": "এই পরীক্ষাটি বর্তমানে লাইভ আছে। পরিবর্তন করতে এটি আনপাবলিশ করুন এবং প্রস্তুত হলে পুনরায় পাবলিশ করুন।",
+    "unpublishToEditBannerDescQuiz": "এই অ্যাক্টিভিটিটি পাবলিশ করা হয়েছে এবং লাইভ আছে। সেটিংস পরিবর্তন করতে এটি আনপাবলিশ করুন এবং প্রস্তুত হলে পুনরায় পাবলিশ করুন।"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",
@@ -532,7 +558,13 @@
       "exam": "টেস্ট"
     },
     "chooseAnswer": "আপনার উত্তর বেছে নিন",
-    "getReady": "প্রস্তুত হন!"
+    "getReady": "প্রস্তুত হন!",
+    "answered": "উত্তর দেওয়া হয়েছে",
+    "quizEndedByHost": "হোস্ট কুইজটি শেষ করেছেন।",
+    "quizEndedByHostTitle": "হোস্ট কর্তৃক কুইজ সমাপ্ত",
+    "quizEndedEarlyNote": "হোস্ট এই সেশনটি আগেই শেষ করেছেন। আপনার স্কোর এখন পর্যন্ত দেওয়া উত্তরের ভিত্তিতে নির্ধারিত হয়েছে।",
+    "responses": "প্রতিক্রিয়া",
+    "wrong": "ভুল"
   },
   "navigation": {
     "home": "হোম",
@@ -1001,7 +1033,15 @@
       "quote": "Quiz তাদের উত্তেজিত করেছিল। আর রিপোর্টটিই হলো কারণ যার জন্য আমরা সাবস্ক্রিপশন রেখে দিয়েছি।",
       "quoteCite": "— আমরা যেটির জন্য তৈরি করি: সেই বাক্যের উভয় অংশ",
       "ctaTitle": "পরের সেশনটি আপনার হতে পারে",
-      "ctaSub": "এখনই একটি Quiz, Poll, অথবা Test তৈরি করুন। কোডটি শেয়ার করুন। রুমটিকে প্রাণবন্ত হতে দেখুন — অথবা শান্ত হয়ে মনোযোগ দিতে দেখুন। বিনামূল্যে শুরু করুন।"
+      "ctaSub": "এখনই একটি Quiz, Poll, অথবা Test তৈরি করুন। কোডটি শেয়ার করুন। রুমটিকে প্রাণবন্ত হতে দেখুন — অথবা শান্ত হয়ে মনোযোগ দিতে দেখুন। বিনামূল্যে শুরু করুন।",
+      "ctaAlreadyMember": "ইতিমধ্যে সদস্য?",
+      "joinBtn": "যোগ দিন",
+      "joinCodeLabel": "জয়েন কোড লিখুন",
+      "pathAudienceSub": "কোনো অ্যাপ বা অ্যাকাউন্টের প্রয়োজন নেই",
+      "pathAudienceTitle": "জয়েন কোড আছে?",
+      "pathHostSub": "আপনার ড্যাশবোর্ডে লগ ইন করুন",
+      "pathHostTitle": "আমি হোস্ট করছি",
+      "pathOr": "অথবা"
     }
   },
   "dashboard": {
@@ -1096,7 +1136,8 @@
     "tooltipNewFolder": "নতুন ফোল্ডার",
     "tooltipNewSubfolder": "নতুন সাবফোল্ডার",
     "viewAll": "সব দেখুন →",
-    "viewOnly": "শুধুমাত্র দেখুন"
+    "viewOnly": "শুধুমাত্র দেখুন",
+    "noFolders": "এখনও কোনো ফোল্ডার নেই"
   },
   "pages": {
     "legal": {
@@ -2181,7 +2222,25 @@
     "tagCorrect": "সঠিক",
     "tagNotAnswered": "উত্তর দেওয়া হয়নি",
     "tagTheirAnswer": "তাদের উত্তর",
-    "interviewSheetWait": "একটু অপেক্ষা করুন, এটি 4–5 মিনিট সময় নিতে পারে।"
+    "interviewSheetWait": "একটু অপেক্ষা করুন, এটি 4–5 মিনিট সময় নিতে পারে।",
+    "abandoned": "পরিত্যক্ত",
+    "adjustedScoreExplain": "সমন্বিত স্কোর",
+    "analysisError": "ফলাফল বিশ্লেষণ করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "backToResults": "ফলাফলে ফিরে যান",
+    "integrityLoadFailed": "ইন্টিগ্রিটি রিপোর্ট লোড করা যায়নি।",
+    "integrityReport": "ইন্টিগ্রিটি রিপোর্ট",
+    "integrityScore": "ইন্টিগ্রিটি স্কোর",
+    "marksRank": "মার্কস র‍্যাঙ্ক",
+    "noProctoringData": "এই প্রার্থীর জন্য কোনো প্রক্টরিং ডেটা রেকর্ড করা হয়নি",
+    "noWebcamSnapshots": "এই সেশনের জন্য কোনো ওয়েবক্যাম স্ন্যাপশট নেওয়া হয়নি।",
+    "resultsEmailHint": "সেশন শেষ হলে পরীক্ষার ফলাফলের একটি সারাংশ এখানে ইমেইল করা হবে",
+    "score": "স্কোর",
+    "sessionLocked": "সেশন লক করা হয়েছে",
+    "timeTaken": "সময় লেগেছে",
+    "violationEvents": "লঙ্ঘন ইভেন্ট(গুলি)",
+    "violationTimeline": "লঙ্ঘনের সময়রেখা",
+    "webcamDenied": "প্রার্থী ওয়েবক্যাম ব্যবহারের অনুমতি দেননি",
+    "webcamSnapshots": "ওয়েবক্যাম স্ন্যাপশট"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",
@@ -2419,7 +2478,8 @@
     "aiOr": "অথবা AI দিয়ে ড্রাফট করুন",
     "aiPlaceholder": "\"ক্লাস ৯-এর জন্য বাংলায় সালোকসংশ্লেষণ নিয়ে ১০টি প্রশ্ন\"",
     "aiCountLabel": "প্রশ্ন:",
-    "aiGenerate": "জেনারেট করুন"
+    "aiGenerate": "জেনারেট করুন",
+    "aiTypeLabel": "ধরন:"
   },
   "activities": {
     "title": "কার্যক্রম",
@@ -2755,5 +2815,15 @@
     "reinviteSuccess": "{{email}} কে পুনরায় আমন্ত্রণ জানানো হয়েছে",
     "attemptBadge": "প্রচেষ্টা {{number}}",
     "attemptHistoryHeading": "প্রচেষ্টার ইতিহাস"
+  },
+  "errors": {
+    "backToDashboard": "ড্যাশবোর্ডে ফিরে যান",
+    "notFoundSubtitle": "এই অ্যাক্টিভিটিটি নেই অথবা সরিয়ে ফেলা হয়েছে।"
+  },
+  "errorBoundary": {
+    "title": "কিছু একটা ভুল হয়েছে",
+    "description": "এই পেজটিতে একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। রিলোড করলে সাধারণত এটি ঠিক হয়ে যায়।",
+    "reload": "পেজ রিলোড করুন",
+    "contactSupport": "যদি এটি বারবার ঘটতে থাকে, তবে সাপোর্টের সাথে যোগাযোগ করুন।"
   }
 }

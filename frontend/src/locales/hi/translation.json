@@ -31,7 +31,13 @@
     "viewOnGitHub": "स्रोत GitHub पर देखें",
     "close": "बंद करें",
     "status": "स्थिति",
-    "all": "सभी"
+    "all": "सभी",
+    "no": "नहीं",
+    "off": "बंद",
+    "on": "चालू",
+    "prev": "पिछला",
+    "refresh": "रीफ्रेश करें",
+    "yes": "हाँ"
   },
   "auth": {
     "login": "लॉगिन",
@@ -95,7 +101,9 @@
     "emailInvalid": "कृपया एक वैध ईमेल दर्ज करें",
     "passwordRequired": "पासवर्ड आवश्यक है",
     "continueWithGoogle": "Google से जारी रखें",
-    "forgotPassword": "पासवर्ड भूल गए?"
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "changePassword": "पासवर्ड बदलें",
+    "rememberMe": "मुझे याद रखें"
   },
   "quiz": {
     "myQuizzes": "मेरी क्विज़",
@@ -448,7 +456,25 @@
     "codeQuestionDescription": "प्रतिभागी कोड लिखते हैं; AI प्रश्न बंद होने के बाद मूल्यांकन करता है",
     "clickEvaluate": "AI मूल्यांकन चलाने के लिए प्रश्न बंद करने के बाद \"कोड मूल्यांकन करें\" पर क्लिक करें",
     "submissions": "सबमिशन",
-    "changeType": "प्रकार बदलें"
+    "changeType": "प्रकार बदलें",
+    "behaviourSection": "व्यवहार",
+    "copyLink": "लिंक",
+    "correctAnswerRequired": "कृपया सही उत्तर चुनें",
+    "defaultQuestionTime": "प्रति प्रश्न डिफ़ॉल्ट समय (सेकंड)",
+    "defaultQuestionTimeHint": "उन प्रश्नों पर लागू होता है जिनके लिए कोई व्यक्तिगत समय निर्धारित नहीं है। असीमित समय के लिए खाली छोड़ें।",
+    "madeTemplate": "टेम्पलेट बनाया गया",
+    "moreParticipants": "और प्रतिभागी",
+    "removedTemplate": "टेम्पलेट हटाया गया",
+    "run": "चलाएं",
+    "shuffleOptions": "उत्तर विकल्प बदलें (शफल)",
+    "shuffleOptionsHint": "प्रत्येक प्रतिभागी के लिए MCQ विकल्पों का क्रम रैंडम करें",
+    "shuffleQuestions": "प्रश्न बदलें (शफल)",
+    "shuffleQuestionsHint": "प्रत्येक प्रतिभागी के लिए प्रश्नों का क्रम रैंडम करें",
+    "unlimitedTime": "∞ असीमित",
+    "unpublishToEditBannerTitleExam": "✏️ संपादित करने के लिए अनपब्लिश करें",
+    "unpublishToEditBannerTitleQuiz": "✏️ अनपब्लिश → संपादित करें → पुनः प्रकाशित करें",
+    "unpublishToEditBannerDescExam": "यह परीक्षा लाइव है। बदलाव करने के लिए इसे अनपब्लिश करें, फिर तैयार होने पर पुनः प्रकाशित करें।",
+    "unpublishToEditBannerDescQuiz": "यह गतिविधि प्रकाशित और लाइव है। सेटिंग्स संपादित करने के लिए इसे अनपब्लिश करें, फिर तैयार होने पर पुनः प्रकाशित करें।"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -532,7 +558,13 @@
       "exam": "टेस्ट"
     },
     "chooseAnswer": "अपना उत्तर चुनें",
-    "getReady": "तैयार हो जाइए!"
+    "getReady": "तैयार हो जाइए!",
+    "answered": "उत्तर दिया",
+    "quizEndedByHost": "होस्ट ने क्विज़ समाप्त कर दी है।",
+    "quizEndedByHostTitle": "होस्ट द्वारा क्विज़ समाप्त",
+    "quizEndedEarlyNote": "होस्ट ने यह सत्र समय से पहले समाप्त कर दिया है। आपका स्कोर अब तक दिए गए उत्तरों पर आधारित है।",
+    "responses": "प्रतिक्रियाएं",
+    "wrong": "गलत"
   },
   "navigation": {
     "home": "होम",
@@ -1001,7 +1033,15 @@
       "quote": "Quiz ने उन्हें उत्साहित कर दिया। रिपोर्ट ही वह कारण है जिसकी वजह से हमने सब्सक्रिप्शन जारी रखा।",
       "quoteCite": "— हम किसके लिए निर्माण करते हैं: उस वाक्य के दोनों हिस्से",
       "ctaTitle": "अगला सत्र आपका हो सकता है",
-      "ctaSub": "अभी एक Quiz, Poll, या Test बनाएं। कोड शेयर करें। कमरे को उत्साह से भरते हुए देखें — या शांत होकर ध्यान केंद्रित करते हुए। शुरू करने के लिए मुफ्त।"
+      "ctaSub": "अभी एक Quiz, Poll, या Test बनाएं। कोड शेयर करें। कमरे को उत्साह से भरते हुए देखें — या शांत होकर ध्यान केंद्रित करते हुए। शुरू करने के लिए मुफ्त।",
+      "ctaAlreadyMember": "पहले से सदस्य हैं?",
+      "joinBtn": "शामिल हों",
+      "joinCodeLabel": "जॉइन कोड दर्ज करें",
+      "pathAudienceSub": "कोई ऐप या अकाउंट की आवश्यकता नहीं",
+      "pathAudienceTitle": "जॉइन कोड है?",
+      "pathHostSub": "अपने डैशबोर्ड पर लॉग इन करें",
+      "pathHostTitle": "मैं होस्ट कर रहा हूँ",
+      "pathOr": "या"
     }
   },
   "dashboard": {
@@ -1096,7 +1136,8 @@
     "tooltipNewFolder": "नया फ़ोल्डर",
     "tooltipNewSubfolder": "नया सबफ़ोल्डर",
     "viewAll": "सभी देखें →",
-    "viewOnly": "केवल देखें"
+    "viewOnly": "केवल देखें",
+    "noFolders": "अभी तक कोई फ़ोल्डर नहीं है"
   },
   "pages": {
     "legal": {
@@ -2181,7 +2222,25 @@
     "tagCorrect": "सही",
     "tagNotAnswered": "उत्तर नहीं दिया गया",
     "tagTheirAnswer": "उनका उत्तर",
-    "interviewSheetWait": "थोड़ा रुकें, इसमें 4–5 मिनट लग सकते हैं।"
+    "interviewSheetWait": "थोड़ा रुकें, इसमें 4–5 मिनट लग सकते हैं।",
+    "abandoned": "छोड़ दिया गया",
+    "adjustedScoreExplain": "समायोजित स्कोर",
+    "analysisError": "परिणामों का विश्लेषण करने में विफल। कृपया पुनः प्रयास करें।",
+    "backToResults": "परिणामों पर वापस जाएं",
+    "integrityLoadFailed": "अखंडता रिपोर्ट लोड करने में विफल।",
+    "integrityReport": "अखंडता रिपोर्ट",
+    "integrityScore": "अखंडता स्कोर",
+    "marksRank": "अंक रैंक",
+    "noProctoringData": "इस उम्मीदवार के लिए कोई प्रॉक्टरिंग डेटा रिकॉर्ड नहीं किया गया",
+    "noWebcamSnapshots": "इस सत्र के लिए कोई वेबकैम स्नैपशॉट कैप्चर नहीं किया गया।",
+    "resultsEmailHint": "सत्र समाप्त होने पर परीक्षा परिणामों का सारांश यहाँ ईमेल कर दिया जाएगा",
+    "score": "स्कोर",
+    "sessionLocked": "सत्र लॉक है",
+    "timeTaken": "लिया गया समय",
+    "violationEvents": "उल्लंघन घटना(एं)",
+    "violationTimeline": "उल्लंघन समयरेखा",
+    "webcamDenied": "उम्मीदवार द्वारा वेबकैम की अनुमति नहीं दी गई",
+    "webcamSnapshots": "वेबकैम स्नैपशॉट"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",
@@ -2419,7 +2478,8 @@
     "aiOr": "या AI से ड्राफ़्ट करें",
     "aiPlaceholder": "\"कक्षा 9 के लिए हिंदी में प्रकाश संश्लेषण पर 10 प्रश्न\"",
     "aiCountLabel": "प्रश्न:",
-    "aiGenerate": "जनरेट करें"
+    "aiGenerate": "जनरेट करें",
+    "aiTypeLabel": "प्रकार:"
   },
   "activities": {
     "title": "गतिविधियाँ",
@@ -2755,5 +2815,15 @@
     "reinviteSuccess": "{{email}} को फिर से आमंत्रित किया गया",
     "attemptBadge": "प्रयास {{number}}",
     "attemptHistoryHeading": "प्रयास इतिहास"
+  },
+  "errors": {
+    "backToDashboard": "डैशबोर्ड पर वापस जाएं",
+    "notFoundSubtitle": "यह गतिविधि मौजूद नहीं है या हटा दी गई है।"
+  },
+  "errorBoundary": {
+    "title": "कुछ गलत हो गया",
+    "description": "इस पेज पर एक अनपेक्षित त्रुटि आई है। रीलोड करने से आमतौर पर यह ठीक हो जाता है।",
+    "reload": "पेज रीलोड करें",
+    "contactSupport": "यदि ऐसा बार-बार हो रहा है, तो सहायता टीम से संपर्क करें।"
   }
 }

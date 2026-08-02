@@ -31,7 +31,13 @@
     "viewOnGitHub": "Quellcode auf GitHub ansehen",
     "close": "Schließen",
     "status": "Status",
-    "all": "Alle"
+    "all": "Alle",
+    "no": "Nein",
+    "off": "AUS",
+    "on": "AN",
+    "prev": "Zurück",
+    "refresh": "Aktualisieren",
+    "yes": "Ja"
   },
   "auth": {
     "login": "Anmelden",
@@ -95,7 +101,9 @@
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail ein",
     "passwordRequired": "Passwort ist erforderlich",
     "continueWithGoogle": "Mit Google fortfahren",
-    "forgotPassword": "Passwort vergessen?"
+    "forgotPassword": "Passwort vergessen?",
+    "changePassword": "Passwort ändern",
+    "rememberMe": "Angemeldet bleiben"
   },
   "quiz": {
     "myQuizzes": "Meine Quizze",
@@ -448,7 +456,25 @@
     "codeQuestionDescription": "Teilnehmer schreiben Code; KI bewertet nach dem Schließen der Frage",
     "clickEvaluate": "Klicken Sie nach dem Schließen der Frage auf \"Code bewerten\", um die KI-Bewertung zu starten",
     "submissions": "Einreichungen",
-    "changeType": "Typ ändern"
+    "changeType": "Typ ändern",
+    "behaviourSection": "Verhalten",
+    "copyLink": "Link",
+    "correctAnswerRequired": "Bitte wählen Sie die richtige Antwort aus",
+    "defaultQuestionTime": "Standardzeit pro Frage (Sekunden)",
+    "defaultQuestionTimeHint": "Gilt für Fragen ohne individuelle Zeitvorgabe. Leer lassen für unbegrenzte Zeit.",
+    "madeTemplate": "Vorlage erstellt",
+    "moreParticipants": "weitere Teilnehmer",
+    "removedTemplate": "Vorlage entfernt",
+    "run": "Starten",
+    "shuffleOptions": "Antwortoptionen mischen",
+    "shuffleOptionsHint": "Reihenfolge der Multiple-Choice-Optionen für jeden Teilnehmer zufällig anordnen",
+    "shuffleQuestions": "Fragen mischen",
+    "shuffleQuestionsHint": "Reihenfolge der Fragen für jeden Teilnehmer zufällig anordnen",
+    "unlimitedTime": "∞ unbegrenzt",
+    "unpublishToEditBannerTitleExam": "✏️ Veröffentlichung aufheben zum Bearbeiten der Einstellungen",
+    "unpublishToEditBannerTitleQuiz": "✏️ Veröffentlichung aufheben → Bearbeiten → Neu veröffentlichen",
+    "unpublishToEditBannerDescExam": "Dieser Test ist live. Heben Sie die Veröffentlichung auf, um Änderungen vorzunehmen, und veröffentlichen Sie ihn erneut, wenn Sie bereit sind.",
+    "unpublishToEditBannerDescQuiz": "Diese Aktivität ist veröffentlicht und live. Heben Sie die Veröffentlichung auf, um Einstellungen zu bearbeiten, und veröffentlichen Sie sie erneut, wenn Sie bereit sind."
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",
@@ -532,7 +558,13 @@
       "exam": "Test"
     },
     "chooseAnswer": "Wähle deine Antwort",
-    "getReady": "Machen Sie sich bereit!"
+    "getReady": "Machen Sie sich bereit!",
+    "answered": "beantwortet",
+    "quizEndedByHost": "Der Gastgeber hat das Quiz beendet.",
+    "quizEndedByHostTitle": "Quiz vom Gastgeber beendet",
+    "quizEndedEarlyNote": "Der Gastgeber hat diese Sitzung vorzeitig beendet. Ihr Ergebnis spiegelt die bisher beantworteten Fragen wider.",
+    "responses": "Antworten",
+    "wrong": "Falsch"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",
@@ -626,7 +658,8 @@
     "tooltipNewFolder": "Neuer Ordner",
     "tooltipNewSubfolder": "Neuer Unterordner",
     "viewAll": "Alle anzeigen →",
-    "viewOnly": "Nur anzeigen"
+    "viewOnly": "Nur anzeigen",
+    "noFolders": "Noch keine Ordner"
   },
   "quizPresent": {
     "participantsJoined_one": "{{count}} participant joined",
@@ -1157,7 +1190,15 @@
       "quote": "Das Quiz hat sie begeistert. Der Bericht ist der Grund, warum wir das Abonnement behalten haben.",
       "quoteCite": "— Wofür wir bauen: beide Hälften dieses Satzes",
       "ctaTitle": "Die nächste Session könnte deine sein",
-      "ctaSub": "Erstelle jetzt ein Quiz, eine Poll oder einen Test. Teile den Code. Beobachte, wie der Raum auflebt — oder zur Ruhe kommt und sich konzentriert. Kostenlos starten."
+      "ctaSub": "Erstelle jetzt ein Quiz, eine Poll oder einen Test. Teile den Code. Beobachte, wie der Raum auflebt — oder zur Ruhe kommt und sich konzentriert. Kostenlos starten.",
+      "ctaAlreadyMember": "Bereits Mitglied?",
+      "joinBtn": "Beitreten",
+      "joinCodeLabel": "Beitrittscode eingeben",
+      "pathAudienceSub": "Keine App, kein Konto erforderlich",
+      "pathAudienceTitle": "Haben Sie einen Beitrittscode?",
+      "pathHostSub": "Melden Sie sich bei Ihrem Dashboard an",
+      "pathHostTitle": "Ich bin Gastgeber",
+      "pathOr": "oder"
     }
   },
   "pages": {
@@ -2181,7 +2222,25 @@
     "tagCorrect": "Richtig",
     "tagNotAnswered": "Nicht beantwortet",
     "tagTheirAnswer": "Ihre Antwort",
-    "interviewSheetWait": "Bitte warten, dies kann 4–5 Minuten dauern."
+    "interviewSheetWait": "Bitte warten, dies kann 4–5 Minuten dauern.",
+    "abandoned": "Abgebrochen",
+    "adjustedScoreExplain": "Angepasstes Ergebnis",
+    "analysisError": "Ergebnisanalyse fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "backToResults": "Zurück zu den Ergebnissen",
+    "integrityLoadFailed": "Integritätsbericht konnte nicht geladen werden.",
+    "integrityReport": "Integritätsbericht",
+    "integrityScore": "Integritätswert",
+    "marksRank": "Rangliste",
+    "noProctoringData": "Keine Überwachungsdaten für diesen Kandidaten aufgezeichnet",
+    "noWebcamSnapshots": "Für diese Sitzung wurden keine Webcam-Schnappschüsse aufgenommen.",
+    "resultsEmailHint": "Eine Zusammenfassung der Prüfungsergebnisse wird nach Ende der Sitzung an diese Adresse gesendet",
+    "score": "Ergebnis",
+    "sessionLocked": "Sitzung gesperrt",
+    "timeTaken": "Benötigte Zeit",
+    "violationEvents": "Verstoßereignis(se)",
+    "violationTimeline": "Verstoß-Zeitstrahl",
+    "webcamDenied": "Webcam wurde vom Kandidaten verweigert",
+    "webcamSnapshots": "Webcam-Schnappschüsse"
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",
@@ -2419,7 +2478,8 @@
     "aiOr": "oder mit KI erstellen lassen",
     "aiPlaceholder": "\"10 Fragen zur Fotosynthese für Klasse 9 auf Deutsch\"",
     "aiCountLabel": "Fragen:",
-    "aiGenerate": "Generieren"
+    "aiGenerate": "Generieren",
+    "aiTypeLabel": "Typ:"
   },
   "activities": {
     "title": "Aktivitäten",
@@ -2755,5 +2815,15 @@
     "reinviteSuccess": "{{email}} wurde erneut eingeladen",
     "attemptBadge": "Versuch {{number}}",
     "attemptHistoryHeading": "Versuchsverlauf"
+  },
+  "errors": {
+    "backToDashboard": "Zurück zum Dashboard",
+    "notFoundSubtitle": "Diese Aktivität existiert nicht oder wurde entfernt."
+  },
+  "errorBoundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Ein Neuladen hilft meistens.",
+    "reload": "Seite neu laden",
+    "contactSupport": "Falls das Problem weiterhin besteht, kontaktieren Sie den Support."
   }
 }

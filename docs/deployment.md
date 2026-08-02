@@ -275,7 +275,7 @@ sudo tail -f /var/log/nginx/error.log
 ## Health Check
 
 ```bash
-curl https://www.swaya.me/api/health
+curl https://www.swaya.me/api/v1/health
 # → {"status": "ok"}
 ```
 
