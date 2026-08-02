@@ -107,15 +107,29 @@ resource "coder_agent" "main" {
     # which is not guaranteed to run before this one - so poll for the code-server binary
     # rather than assume ordering (confirmed necessary: no --depends_on/ordering is set
     # between this agent's startup_script and the module's own install script).
+    # Poll window was 60x2s=120s, but the module's own install + code-server startup
+    # together measured ~145-150s in practice - the binary wasn't in PATH yet when the
+    # loop gave up, and with no else branch this failed completely silently (confirmed
+    # live: a real candidate saw no extension and no error, on the very first attempt).
+    # Widened to 90x2s=180s and made failure/success explicit in the log instead of
+    # silent. Output is also now redirected - an unredirected backgrounded subshell here
+    # was separately triggering Coder's own "output pipes were not closed" warning,
+    # which flags the whole startup script as errored even when everything succeeds.
     (
-      for i in $(seq 1 60); do
+      for i in $(seq 1 90); do
         command -v code-server >/dev/null 2>&1 && break
         sleep 2
       done
       if command -v code-server >/dev/null 2>&1; then
-        code-server --install-extension anthropic.claude-code || true
+        if code-server --install-extension anthropic.claude-code; then
+          echo "claude-code extension installed"
+        else
+          echo "claude-code extension install FAILED"
+        fi
+      else
+        echo "claude-code extension install skipped: code-server binary never appeared within poll window"
       fi
-    ) &
+    ) >/tmp/claude-extension-install.log 2>&1 &
 
     # --- swaya-snapshot-loop: manual-edit safety net, every ~2 minutes ---
     # No systemd in this container (Coder agent runs directly as PID 1), so this is a
