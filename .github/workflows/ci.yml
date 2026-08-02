@@ -65,7 +65,7 @@ jobs:
       - name: Run migrations
         run: |
           cd backend
-          alembic upgrade head
+          python -m alembic upgrade head
 
       - name: Run tests
         run: |
