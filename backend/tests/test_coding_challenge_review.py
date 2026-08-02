@@ -10,19 +10,36 @@ from fastapi import HTTPException
 from broker.api import coding_challenge as router_mod
 from persistence.models.quiz import (
     Quiz, Question, CodeWorkspace, CodeWorkspaceStatus, CodeSubmission, CodeSubmissionStatus,
+    CodingChallengeInvite,
 )
 
 
-def _mock_db(question, quiz, workspaces, submissions_by_workspace_id):
+def _mock_db(question, quiz, workspaces, submissions_by_workspace_id, invites=None):
     db = AsyncMock()
+    invites_result = MagicMock()
+    invites_result.scalars.return_value.all.return_value = invites or []
     ws_result = MagicMock()
     ws_result.scalars.return_value.all.return_value = workspaces
-    sub_results = []
-    for ws in workspaces:
+
+    call_count = {"n": 0}
+
+    async def execute_side_effect(query):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return invites_result
+        if call_count["n"] == 2:
+            return ws_result
+        # The endpoint iterates candidates via a Python set (all_emails), so
+        # per-workspace submission queries don't fire in `workspaces` list order —
+        # resolve the right submission from the query's own bound workspace_id
+        # instead of relying on call sequence.
+        params = query.compile().params
+        workspace_id = next(v for k, v in params.items() if k.startswith("workspace_id"))
         r = MagicMock()
-        r.scalar_one_or_none.return_value = submissions_by_workspace_id.get(ws.id)
-        sub_results.append(r)
-    db.execute = AsyncMock(side_effect=[ws_result, *sub_results])
+        r.scalar_one_or_none.return_value = submissions_by_workspace_id.get(workspace_id)
+        return r
+
+    db.execute = AsyncMock(side_effect=execute_side_effect)
     db.get = AsyncMock(side_effect=[question, quiz])
     return db
 
@@ -108,4 +125,4 @@ def test_review_empty_when_no_candidates_yet():
     db = _mock_db(question, quiz, [], {})
     current_user = MagicMock(tenant_id=5)
     result = asyncio.run(router_mod.get_coding_challenge_review(10, db, current_user))
-    assert result == {"question_id": 10, "candidates": []}
+    assert result == {"question_id": 10, "quiz_id": 1, "has_custom_weights": False, "candidates": []}

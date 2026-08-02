@@ -8,9 +8,22 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
+from starlette.requests import Request
 
 from broker.api import coding_challenge as router_mod
 from persistence.models.quiz import Quiz, QuizType, Question, QuestionType
+
+
+def _fake_request() -> Request:
+    """invite_candidate is rate-limited via @limiter.limit(key_func=get_user_id_key),
+    which reads the Authorization header off the raw Request — a minimal ASGI scope
+    is enough to satisfy it without going through FastAPI's actual HTTP stack."""
+    return Request({
+        "type": "http", "method": "POST",
+        "path": "/api/v1/quizzes/1/coding-challenge/invite",
+        "headers": [(b"authorization", b"Bearer x.eyJzdWIiOiI3In0.y")],
+        "client": ("127.0.0.1", 1234), "query_string": b"", "app": None,
+    })
 
 
 def _fixture_quiz(quiz_type=QuizType.CODING_CHALLENGE, tenant_id=1) -> Quiz:
@@ -76,15 +89,22 @@ def test_get_coding_challenge_question_missing_question_400():
 def test_invite_candidate_mints_token_and_sends_email():
     quiz = _fixture_quiz(tenant_id=5)
     question = _fixture_question()
-    db = _mock_db_with_scalar_results(quiz, question)
-    current_user = MagicMock(tenant_id=5)
-    body = router_mod.InviteRequest(candidate_email="candidate@example.com")
+    # invite_candidate: quiz lookup, question lookup, per-candidate latest-workspace
+    # lookup (none), per-candidate existing-invite lookup (none) — 4 execute calls.
+    db = _mock_db_with_scalar_results(quiz, question, None, None)
+    tenant = MagicMock()
+    tenant.name = "Acme"
+    db.get = AsyncMock(return_value=tenant)
+    db.commit = AsyncMock()
+    db.add = MagicMock()
+    current_user = MagicMock(tenant_id=5, user_id=7)
+    body = router_mod.InviteRequest(candidate_emails=["candidate@example.com"])
 
     with patch("core.auth.email_service.send_email", AsyncMock(return_value=True)) as mock_send:
-        result = asyncio.run(router_mod.invite_candidate(1, body, db, current_user))
+        result = asyncio.run(router_mod.invite_candidate(_fake_request(), 1, body, db, current_user))
 
-    assert result["sent"] is True
-    assert "/c/" in result["invite_url"]
+    assert result[0].sent is True
+    assert "/c/" in result[0].invite_url
     mock_send.assert_called_once()
     recipients = mock_send.call_args.kwargs.get("recipients") or mock_send.call_args[1].get("recipients")
     assert recipients == ["candidate@example.com"]
@@ -95,10 +115,10 @@ def test_invite_candidate_rejects_cross_tenant_access():
     question = _fixture_question()
     db = _mock_db_with_scalar_results(quiz, question)
     current_user = MagicMock(tenant_id=999)  # different tenant
-    body = router_mod.InviteRequest(candidate_email="candidate@example.com")
+    body = router_mod.InviteRequest(candidate_emails=["candidate@example.com"])
 
     with pytest.raises(HTTPException) as exc_info:
-        asyncio.run(router_mod.invite_candidate(1, body, db, current_user))
+        asyncio.run(router_mod.invite_candidate(_fake_request(), 1, body, db, current_user))
     assert exc_info.value.status_code == 403
 
 
@@ -107,15 +127,18 @@ def test_invite_candidate_rejects_cross_tenant_access():
 def test_get_coding_challenge_info_returns_expected_shape():
     question = _fixture_question()
     quiz = _fixture_quiz()
+    tenant = MagicMock()
+    tenant.name = "Acme"
     token = router_mod.svc.create_invite_token(1, 10, "candidate@example.com")
 
     db = AsyncMock()
-    db.get = AsyncMock(side_effect=[question, quiz])
+    db.get = AsyncMock(side_effect=[question, quiz, tenant])
 
     with patch.object(router_mod.svc, "fetch_readme", AsyncMock(return_value="# Problem\nDo the thing")):
         result = asyncio.run(router_mod.get_coding_challenge_info(token, db))
 
     assert result["quiz_title"] == "My Challenge"
+    assert result["tenant_name"] == "Acme"
     assert result["problem_statement"] == "# Problem\nDo the thing"
     assert result["candidate_email"] == "candidate@example.com"
     assert set(result["ide_choices"]) == {"code_server"}

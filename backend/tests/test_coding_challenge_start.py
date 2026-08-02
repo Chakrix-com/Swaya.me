@@ -103,7 +103,9 @@ def test_start_allows_when_under_capacity():
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
     mock_create.assert_called_once()
-    assert result == {"workspace_url": "https://sandbox/url"}
+    assert result["workspace_url"] == "https://sandbox/url"
+    assert result["effective_time_budget_seconds"] == router_mod.settings.coder.workspace_max_lifetime_seconds
+    assert result["workspace_created_at"].endswith("Z")
     mock_schedule.assert_called_once()
 
 
@@ -115,7 +117,7 @@ def test_start_reconnects_to_existing_active_workspace_without_reprovisioning():
     existing = CodeWorkspace(
         id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
         ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
-        status=CodeWorkspaceStatus.ACTIVE,
+        status=CodeWorkspaceStatus.ACTIVE, created_at=datetime.utcnow(),
     )
     db = _mock_db(existing_workspace=existing)
     redis = AsyncMock()
@@ -131,7 +133,9 @@ def test_start_reconnects_to_existing_active_workspace_without_reprovisioning():
         "cc-1-10-abcd1234", "code_server", router_mod.settings.coder.url,
         router_mod.settings.coder.service_account_username,
     )
-    assert result == {"workspace_url": "https://sandbox/reconnect-url"}
+    assert result["workspace_url"] == "https://sandbox/reconnect-url"
+    assert result["workspace_created_at"].endswith("Z")
+    assert result["effective_time_budget_seconds"] == router_mod.settings.coder.workspace_max_lifetime_seconds
     db.commit.assert_called_once()
 
 
@@ -147,7 +151,7 @@ def test_start_revokes_old_token_before_reminting_on_reconnect():
         id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
         ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
         coder_token_name="cc-1-10-abcd1234-session",
-        status=CodeWorkspaceStatus.ACTIVE,
+        status=CodeWorkspaceStatus.ACTIVE, created_at=datetime.utcnow(),
     )
     db = _mock_db(existing_workspace=existing)
     redis = AsyncMock()
@@ -160,7 +164,7 @@ def test_start_revokes_old_token_before_reminting_on_reconnect():
 
     mock_revoke.assert_called_once_with("cc-1-10-abcd1234-session")
     mock_mint.assert_called_once()
-    assert result == {"workspace_url": "https://sandbox/reconnect-url"}
+    assert result["workspace_url"] == "https://sandbox/reconnect-url"
 
 
 def test_start_tolerates_revoke_failure_before_remint():
@@ -172,7 +176,7 @@ def test_start_tolerates_revoke_failure_before_remint():
         id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
         ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
         coder_token_name="cc-1-10-abcd1234-session",
-        status=CodeWorkspaceStatus.ACTIVE,
+        status=CodeWorkspaceStatus.ACTIVE, created_at=datetime.utcnow(),
     )
     db = _mock_db(existing_workspace=existing)
     redis = AsyncMock()
@@ -185,7 +189,7 @@ def test_start_tolerates_revoke_failure_before_remint():
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
     mock_mint.assert_called_once()
-    assert result == {"workspace_url": "https://sandbox/reconnect-url"}
+    assert result["workspace_url"] == "https://sandbox/reconnect-url"
 
 
 def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
