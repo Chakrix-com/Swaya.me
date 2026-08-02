@@ -37,6 +37,29 @@
   color: var(--sw-text2, #555);
 }
 
+/* Coding-challenge live-status message — sits inline in the topbar itself
+   instead of its own separate strip inside the stage content below. */
+.qb-topbar-live-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.qb-topbar-live-warning .anticon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
 .qb-topbar-type-badge {
   font-size: 11px;
   font-weight: 600;
@@ -190,6 +213,36 @@
 .qb-rail-entry:hover,
 .qb-rail-entry--active { background: var(--sw-bg, #f0f0f0); color: var(--sw-text1, #1a1a2e); }
 
+/* Coding-challenge "Challenge Setup" entry — reset native <button> chrome and
+   match the Problem question-card's padding/icon layout so the two rows in
+   this rail (Challenge Setup + Problem) line up exactly. Scoped to this one
+   button only; other quiz types' Setup/Security entries are untouched. */
+.qb-rail-entry--cc {
+  padding: 5px 6px 5px 2px;
+  border: none;
+  background: none;
+  outline: none;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+.qb-rail-entry--cc:hover {
+  background: var(--sw-bg, #f5f5f5);
+}
+/* Selected state needs to actually be visible — the shared .qb-rail-entry--active
+   rule uses --sw-bg, which is nearly the same colour as the rail's own white
+   background. Match the tinted highlight .qb-q-card--active already uses for
+   a selected question, so "Challenge Setup" vs "Problem" is clearly readable
+   as selected/not-selected. Scoped to this element only. */
+.qb-rail-entry--cc.qb-rail-entry--active {
+  background: var(--sw-primary-soft, #ede9fe);
+}
+/* The gear glyph reads smaller than the vector file icon it sits next to at
+   the same font-size — bump it one step up so it's not near-invisible. */
+.qb-q-file-icon.qb-rail-entry--cc-icon {
+  font-size: 15px;
+}
+
 /* Question cards */
 .qb-q-card {
   display: flex;
@@ -214,6 +267,19 @@
 }
 .qb-q-card:hover    { background: var(--sw-bg, #f5f5f5); }
 .qb-q-card--active  { background: var(--sw-primary-soft, #ede9fe); }
+
+/* Coding-challenge "Problem" card — single line only (no preview snippet
+   under it), so vertically center like the Challenge Setup entry above it
+   instead of top-aligning for a multi-line card. */
+.qb-q-card--cc {
+  align-items: center;
+}
+.qb-q-card--cc .qb-q-card-meta {
+  margin-bottom: 0;
+}
+.qb-q-card--cc .qb-q-file-icon {
+  margin-top: 0;
+}
 
 .qb-q-drag-handle {
   font-size: 14px;
@@ -249,6 +315,12 @@
   font-weight: 700;
   color: var(--sw-text2, #555);
   flex-shrink: 0;
+}
+/* Match the "Problem" label to the Challenge Setup entry's font exactly
+   (12px/500, not the 11px/700 used for regular Q1/Q2/... numbering). */
+.qb-q-num--cc {
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .qb-q-type-tag {
@@ -385,6 +457,38 @@
 .qb-chip--time { color: var(--sw-text3, #795548); border-color: var(--sw-border, #d7ccc8); }
 .qb-chip--time:hover { border-color: var(--sw-primary, #4f46e5); color: var(--sw-primary, #4f46e5); }
 
+/* ── AI generate trigger (Problem Statement label row, coding challenge) ── */
+.qb-ai-generate-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #7C3AED 40%, transparent);
+  background: color-mix(in srgb, #7C3AED 8%, transparent);
+  color: #7C3AED;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.qb-ai-generate-trigger:hover,
+.qb-ai-generate-trigger--active {
+  background: color-mix(in srgb, #7C3AED 16%, transparent);
+  border-color: #7C3AED;
+}
+.qb-ai-generate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+}
+.qb-ai-generate-row .ant-input {
+  flex: 1;
+}
+
 /* ── Question compose box ────────────────────────────────────────────────── */
 .qb-compose-box {
   border: 1px solid var(--sw-border, #d9d9d9);
@@ -464,6 +568,60 @@
   gap: 4px;
 }
 .qb-explanation-toggle:hover { color: var(--sw-primary, #6366f1); }
+
+.qb-cc-grading-hint {
+  font-size: 12px;
+  color: var(--sw-text3, #888);
+  background: var(--sw-bg, #f8fafc);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 4px;
+}
+
+/* ── Problem statement markdown preview ──────────────────────────────────
+   Renders react-markdown output — no built-in styling of its own, so this
+   gives it the same visual weight as the rest of the app (matches what the
+   candidate's session page renders the same field into). */
+.qb-md-preview {
+  min-height: 200px;
+  padding: 14px 16px;
+  border: 1px solid var(--sw-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--sw-surface, #fff);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sw-text1, #1a1a2e);
+}
+.qb-md-preview h1, .qb-md-preview h2, .qb-md-preview h3 {
+  margin: 16px 0 8px;
+  font-weight: 700;
+  color: var(--sw-text1, #1a1a2e);
+}
+.qb-md-preview h2:first-child, .qb-md-preview h1:first-child { margin-top: 0; }
+.qb-md-preview h1 { font-size: 18px; }
+.qb-md-preview h2 { font-size: 16px; }
+.qb-md-preview h3 { font-size: 14px; }
+.qb-md-preview p { margin: 0 0 10px; }
+.qb-md-preview ul, .qb-md-preview ol { margin: 0 0 10px; padding-left: 22px; }
+.qb-md-preview li { margin-bottom: 4px; }
+.qb-md-preview code {
+  background: var(--sw-bg, #f0f0f0);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-family: monospace;
+}
+.qb-md-preview pre {
+  background: var(--sw-bg, #f8fafc);
+  border: 1px solid var(--sw-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 0 0 10px;
+}
+.qb-md-preview pre code { background: none; padding: 0; }
+.qb-md-preview strong { font-weight: 700; }
+.qb-md-preview em { color: var(--sw-text3, #888); }
 
 /* ── Compact form footer row (Points · Neg · Time · Save) ───────────────── */
 /* ── Question position indicator ────────────────────────────────────────── */
@@ -702,6 +860,13 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+/* Challenge Setup's content is short and fixed — don't rely on overflow:auto's
+   own fits-or-doesn't detection, which is razor-thin at the exact threshold
+   and can show a scrollbar from a sub-pixel rounding difference alone even
+   when nothing is actually clipped. No scroll container here at all instead. */
+.qb-stage--no-scroll {
+  overflow-y: visible;
 }
 
 /* Empty state when no question is selected */

@@ -58,6 +58,17 @@ async def lifespan(app: FastAPI):
     start_scheduler()
     print("✓  Statistics scheduler started")
 
+    # Reconcile coding-challenge scheduled jobs/submissions a restart would otherwise
+    # have silently dropped (must run after the scheduler itself has started)
+    try:
+        from persistence.database_async import AsyncSessionLocal
+        from features.coding_challenge.coding_challenge_service_async import reconcile_on_startup
+        async with AsyncSessionLocal() as reconcile_db:
+            summary = await reconcile_on_startup(reconcile_db)
+        print(f"✓  Coding-challenge reconciliation: {summary}")
+    except Exception as e:
+        print(f"⚠  Coding-challenge reconciliation skipped: {e}")
+
     # Seed proctoring platform rules
     try:
         from persistence.database_async import AsyncSessionLocal

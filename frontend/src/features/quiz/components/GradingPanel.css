@@ -1,0 +1,145 @@
+/* ── Grading Panel — coding challenge only ───────────────────────────── */
+
+.gp-wrap {
+  background: transparent;
+}
+
+.gp-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--sw-border, #e5e7eb);
+  border-left: 3px solid transparent;
+}
+/* No divider trailing the last section. */
+.gp-wrap > .gp-section:last-child {
+  border-bottom: none;
+}
+
+.gp-section--accent-info {
+  border-left-color: var(--sw-info, #3b82f6);
+  background: color-mix(in srgb, var(--sw-info, #3b82f6) 4%, transparent);
+}
+
+.gp-section--accent-primary {
+  border-left-color: var(--sw-primary, #6366f1);
+  background: color-mix(in srgb, var(--sw-primary, #6366f1) 4%, transparent);
+}
+
+.gp-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--sw-text1, #1a1a2e);
+  margin-bottom: 12px;
+}
+
+.gp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.gp-section-header .gp-section-title {
+  margin-bottom: 0;
+}
+
+/* Compact key-left / value-right settings row, same idiom as SetupPanel's
+   Appearance row (Zoom-style settings list). */
+.gp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+}
+.gp-row-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text1, #1a1a2e);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.gp-row-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sw-text3, #888);
+}
+.gp-row-value {
+  flex-shrink: 0;
+  width: 280px;
+  max-width: 45%;
+}
+.gp-row--weight .gp-row-value {
+  width: 110px;
+  max-width: 110px;
+}
+
+.gp-toggle {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  color: var(--sw-text2, #555);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.gp-toggle:hover {
+  color: var(--sw-primary, #6366f1);
+}
+
+.gp-hidden-test {
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: var(--sw-bg, #f8fafc);
+  border-radius: 6px;
+}
+
+/* Description-style textarea with an AI-rewrite icon floating inside its
+   own border — same pattern as the Description field on Challenge Setup. */
+.gp-desc-wrap {
+  position: relative;
+}
+.gp-desc-ai {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+}
+
+.gp-weight-sum {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.gp-weight-sum--ok {
+  background: color-mix(in srgb, var(--sw-success, #10b981) 15%, transparent);
+  color: var(--sw-success, #10b981);
+}
+.gp-weight-sum--bad {
+  background: color-mix(in srgb, var(--sw-warning, #f59e0b) 15%, transparent);
+  color: var(--sw-warning, #f59e0b);
+}
+
+.gp-weights-hint {
+  font-size: 11px;
+  color: var(--sw-text3, #888);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.gp-reset-link {
+  background: none;
+  border: none;
+  padding: 8px 0 0;
+  color: var(--sw-text3, #888);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.gp-reset-link:hover {
+  color: var(--sw-primary, #6366f1);
+}

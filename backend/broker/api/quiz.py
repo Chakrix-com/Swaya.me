@@ -155,6 +155,16 @@ async def create_quiz(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
+@router.post("/coding-challenges/default", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+async def create_default_coding_challenge(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: CurrentUser = Depends(get_current_user),
+    service: QuizBuilderServiceAsync = Depends(get_quiz_service)
+):
+    """One-click coding-challenge creation: auto-numbered 'Default N' title, pre-provisioned Problem question, lands host directly in the edit studio."""
+    return await service.create_default_coding_challenge(db, current_user)
+
+
 @router.get("/{quiz_id:int}", response_model=QuizResponse)
 async def get_quiz(
     quiz_id: int,

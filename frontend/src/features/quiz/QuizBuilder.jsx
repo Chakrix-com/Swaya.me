@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useContext, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, memo, useContext, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS as DndCSS } from '@dnd-kit/utilities'
@@ -42,6 +42,9 @@ import {
   HolderOutlined,
   FolderFilled,
   FileTextOutlined,
+  EyeOutlined,
+  LockOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 import {
   Checkbox,
@@ -58,17 +61,20 @@ import {
 import { CopyOutlined, ShareAltOutlined, DownloadOutlined, InboxOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FontColorsOutlined, LinkOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { QRCodeCanvas } from 'qrcode.react'
-import { quizAPI, questionAPI, aiAPI, examAPI } from '../../services/api'
+import { quizAPI, questionAPI, aiAPI, examAPI, codingChallengeAPI } from '../../services/api'
 import ImageUpload from './components/ImageUpload'
 import VideoEmbed, { getVideoEmbedUrl } from './components/VideoEmbed'
 import RichTextEditor from './components/RichTextEditor'
 import RichTextRenderer from './components/RichTextRenderer'
+import ReactMarkdown from 'react-markdown'
 import SafeModal from '../../components/SafeModal'
 import SafeConfirm from '../../components/SafeConfirm'
 import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
 import { SetupPanel } from './components/SetupPanel'
+import { GradingPanel } from './components/GradingPanel'
+import InviteCandidatesModal from './components/InviteCandidatesModal'
 import { skins } from '../../themes/skins'
 
 const { Title, Text } = Typography
@@ -83,6 +89,7 @@ const getQuestionTypeLabel = (type, t) => {
     one_word: t('quiz.oneWord'),
     code: t('questionTypes.code', 'Code'),
     mcq_multi: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ'),
+    coding_challenge: t('codingChallenge.questionTypeLabel', 'Coding Challenge'),
   }
   return labels[type] || t('quiz.multipleChoice')
 }
@@ -97,6 +104,64 @@ const CODE_LANGUAGE_OPTIONS = [
   { value: 'rust', label: 'Rust' },
   { value: 'csharp', label: 'C#' },
 ]
+
+// Host-editable coding-challenge grading criteria — mirrors the backend's
+// GRADING_WEIGHT_CRITERIA (features/quiz/schemas.py). "Proctoring" is
+// intentionally excluded: it's stubbed to always score full credit (no
+// proctoring integration exists yet for coding challenges), so a weight
+// control for it would be misleading. Order here is display order.
+const GRADING_WEIGHT_CRITERIA = [
+  'functional_correctness', 'ai_usage_efficiency', 'prompt_quality',
+  'validation_discipline', 'code_quality', 'architecture', 'time_taken',
+]
+// A clean, round starting point that sums to 100 — used to pre-fill the
+// weight editor when a challenge has no custom weights yet, and by "Reset
+// to defaults". Not the same as the platform's actual fallback weights
+// (which include a fixed 5% for Proctoring) — this set only exists so a
+// host who opts into custom weights starts from a sensible, valid state.
+const GRADING_WEIGHT_DEFAULTS = {
+  functional_correctness: 25, ai_usage_efficiency: 20, prompt_quality: 15,
+  validation_discipline: 15, code_quality: 15, architecture: 5, time_taken: 5,
+}
+
+// Starting scaffold for a new coding-challenge problem statement — the
+// candidate-facing session page already renders this field with ReactMarkdown
+// (see CodingChallengeSession.jsx), so writing it in this structure gets a
+// properly formatted, CS50/Stanford-style problem page for free. This is
+// placeholder CONTENT the host overwrites, not UI chrome, so — consistent
+// with how other DB-stored content in this app isn't translated — it's
+// authored in English only rather than routed through i18n.
+const CODING_CHALLENGE_PROBLEM_TEMPLATE = `## Background
+
+_One or two sentences on the real-world scenario this problem is based on._
+
+## Task
+
+_What exactly should the candidate build? Be specific and imperative._
+
+## Requirements
+
+- Requirement 1
+- Requirement 2
+
+## Constraints & Scale
+
+- Input size: up to N records/requests
+- Time limit: must complete within X seconds for the scale above
+- (if relevant) Throughput, latency, or concurrency targets — e.g. "handle 1,000 writes/sec with p99 < 200ms"
+
+## Examples
+
+**Input:**
+\`\`\`
+...
+\`\`\`
+
+**Output:**
+\`\`\`
+...
+\`\`\`
+`
 
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
 
@@ -113,7 +178,7 @@ const SortableItem = ({ id, disabled, children, marginBottom = 16 }) => {
 }
 
 // QuestionForm component - extracted to prevent recreation on parent re-renders
-const QuestionForm = ({
+const QuestionForm = forwardRef(({
   question,
   onSave,
   onCancel,
@@ -133,12 +198,14 @@ const QuestionForm = ({
   isPoll,
   isExam,
   isOfflinePoll,
+  isCodingChallenge,
   language,
   isAdmin,
   t
-}) => {
+}, ref) => {
   const { message } = App.useApp()
   const [questionForm] = Form.useForm()
+  useImperativeHandle(ref, () => ({ submit: () => questionForm.submit() }), [questionForm])
   const [questionType, setQuestionType] = useState('mcq')
   const [mcqBaseOptionCount, setMcqBaseOptionCount] = useState(2)
   const [aiSuggestOpen, setAiSuggestOpen] = useState(false)
@@ -148,7 +215,11 @@ const QuestionForm = ({
   const [useRichText, setUseRichText] = useState(false)
   const [typeChipsExpanded, setTypeChipsExpanded] = useState(true)
   const [explanationOpen, setExplanationOpen] = useState(false)
+  const [hiddenTestOpen, setHiddenTestOpen] = useState(false)
   const [mediaVideoOpen, setMediaVideoOpen] = useState(false)
+  const [mdPreview, setMdPreview] = useState(false)
+  const [aiGenOpen, setAiGenOpen] = useState(false)
+  const [aiGenTopic, setAiGenTopic] = useState('')
   const [selectedAnswer, setSelectedAnswer] = useState('0')
   const [selectedAnswers, setSelectedAnswers] = useState(new Set())
   const [useRichTextOptions, setUseRichTextOptions] = useState({ option_a: false, option_b: false, option_c: false, option_d: false })
@@ -159,6 +230,7 @@ const QuestionForm = ({
   const watchedPoints = Form.useWatch('points', questionForm)
   const watchedNegPoints = Form.useWatch('negative_points', questionForm)
   const watchedMaxTime = Form.useWatch('max_time_seconds', questionForm)
+  const watchedText = Form.useWatch('text', questionForm)
 
   const toggleOptRich = (key) => {
     setUseRichTextOptions((prev) => {
@@ -225,10 +297,20 @@ const QuestionForm = ({
         formValues.code_languages = question.code_languages || question.options || ['python']
         formValues.grading_rubric = question.grading_rubric || ''
       }
+      if (question.question_type === 'coding_challenge') {
+        formValues.git_repo_url = question.git_repo_url || ''
+        formValues.test_command = question.test_command || 'pytest -q'
+        formValues.grading_rubric = question.grading_rubric || ''
+        formValues.time_budget_seconds = question.time_budget_seconds
+          ? Math.round(question.time_budget_seconds / 60) : undefined
+        formValues.hidden_test_filename = question.hidden_test_filename || ''
+        formValues.hidden_test_content = question.hidden_test_content || ''
+      }
       questionForm.setFieldsValue(formValues)
       setQuestionType(question.question_type || 'mcq')
       setTypeChipsExpanded(!question.text)
       setExplanationOpen(!!question.answer_explanation)
+      setHiddenTestOpen(!!(question.hidden_test_filename || question.hidden_test_content))
       setMediaVideoOpen(!!question.question_video_url)
       setSelectedAnswer(isPoll ? '-1' : String(question.correct_answer_index ?? 0))
 
@@ -269,10 +351,18 @@ const QuestionForm = ({
         correct_answer: isPoll ? undefined : '0',
         correct_answers: [],
         reveal_answer_count: false,
+        // A coding-challenge quiz has exactly one question type available — default
+        // the actual form field to it too, not just the React state below, since
+        // the submit handler reads values.question_type from the form, not
+        // questionType from component state (they're two different things and
+        // must be kept in sync explicitly, same as the pill-chip click handler
+        // already does for every other type).
+        question_type: isCodingChallenge ? 'coding_challenge' : 'mcq',
+        text: isCodingChallenge ? CODING_CHALLENGE_PROBLEM_TEMPLATE : undefined,
       })
       setSelectedAnswers(new Set())
-      setQuestionType('mcq')
-      setTypeChipsExpanded(true)
+      setQuestionType(isCodingChallenge ? 'coding_challenge' : 'mcq')
+      setTypeChipsExpanded(!isCodingChallenge)
       setExplanationOpen(false)
       setMediaVideoOpen(false)
       setSelectedAnswer(isPoll ? '-1' : '0')
@@ -394,6 +484,26 @@ const QuestionForm = ({
   const rewriteIcon = (fieldName) =>
     rewriting[fieldName] ? <LoadingOutlined spin /> : <ThunderboltOutlined />
 
+  // Distinct from the "Rewrite" button below (which polishes whatever text is
+  // already there) — this generates a fresh problem statement from a short
+  // topic, in the same Background/Task/Requirements/Constraints & Scale/
+  // Examples structure as the starting template, replacing the field outright.
+  const handleGenerateProblem = async () => {
+    const topic = aiGenTopic.trim()
+    if (!topic) return
+    setRewriting(prev => ({ ...prev, problem_generate: true }))
+    try {
+      const res = await aiAPI.generateCodingChallengeProblem({ topic, language: language || 'en' })
+      questionForm.setFieldsValue({ text: res.data.problem_statement })
+      setAiGenOpen(false)
+      setAiGenTopic('')
+    } catch (err) {
+      message.error(err?.response?.data?.detail || t('codingChallenge.generateFailed', 'Could not generate a problem statement. Please try again.'))
+    } finally {
+      setRewriting(prev => ({ ...prev, problem_generate: false }))
+    }
+  }
+
   const handleAiSuggestPrompt = async () => {
     if (!aiSuggestTopic.trim()) return
     setAiSuggesting(true)
@@ -417,7 +527,11 @@ const QuestionForm = ({
 
   return (
     <div onBlur={handleFormBlur}>
-    <Card style={{ marginBottom: 16, width: '100%' }}>
+    <Card
+      style={isCodingChallenge ? { marginBottom: 0, width: '100%', background: 'transparent', boxShadow: 'none' } : { marginBottom: 16, width: '100%' }}
+      bordered={!isCodingChallenge}
+      styles={isCodingChallenge ? { body: { padding: 0 } } : undefined}
+    >
       <Form
         form={questionForm}
         layout="vertical"
@@ -432,27 +546,36 @@ const QuestionForm = ({
           correct_answer: isPoll ? undefined : '0'
         }}
       >
-        {/* Question position indicator */}
-        {question && (
+        {/* Question position indicator — coding challenges skip this: the
+            rail already shows "Problem" selected, so repeating it here is
+            the same redundancy already removed from Challenge Setup. */}
+        {question && !isCodingChallenge && (
           <div className="qb-q-position">
             Q{questionIndex + 1}
             <span className="qb-q-position-total"> · {totalQuestions} {totalQuestions !== 1 ? t('quiz.questions', 'questions') : t('quiz.question', 'question')}</span>
           </div>
         )}
 
-        {/* Question type — pill chips */}
-        <Form.Item name="question_type" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+        {/* Question type — pill chips. Coding challenges skip this entirely:
+            there is exactly one type, it's never changeable, so a "type" UI
+            (and a "Change type" link that only ever re-offers the same single
+            option) has nothing real to show. */}
+        <Form.Item name="question_type" rules={[{ required: true }]} style={{ marginBottom: isCodingChallenge ? 0 : 12, display: isCodingChallenge ? 'none' : undefined }}>
           {typeChipsExpanded ? (
             <div className="qb-type-chips">
               {[
-                { value: 'mcq', label: t('quiz.multipleChoice'), show: true },
+                { value: 'mcq', label: t('quiz.multipleChoice'), show: !isCodingChallenge },
                 { value: 'mcq_multi', label: t('quiz.multipleChoiceMulti', 'Multi-Select MCQ'), show: isExam || isOfflinePoll },
-                { value: 'single_line', label: t('quiz.singleLine'), show: !isPoll || isOfflinePoll === false },
+                { value: 'single_line', label: t('quiz.singleLine'), show: (!isPoll || isOfflinePoll === false) && !isCodingChallenge },
                 { value: 'word_cloud', label: t('quiz.wordCloud'), show: isPoll },
                 { value: 'scale', label: t('quizPresent.scaleOneToFive'), show: isPoll },
                 { value: 'paragraph', label: t('quiz.paragraph'), show: isOfflinePoll },
                 { value: 'one_word', label: t('quiz.oneWord'), show: isPoll },
-                { value: 'code', label: t('questionTypes.code', 'Code'), show: !isPoll },
+                { value: 'code', label: t('questionTypes.code', 'Code'), show: !isPoll && !isCodingChallenge },
+                // A coding-challenge quiz has exactly one problem, of exactly this
+                // dedicated type — never mixed with mcq/code/etc (see the data
+                // model's single-problem-per-challenge scope).
+                { value: 'coding_challenge', label: t('codingChallenge.questionTypeLabel', 'Coding Challenge'), show: isCodingChallenge },
               ].filter(c => c.show).map(chip => (
                 <button
                   key={chip.value}
@@ -478,10 +601,20 @@ const QuestionForm = ({
 
         <Form.Item
           label={
+            <div style={{ width: '100%' }}>
             <div className="qb-question-label-row">
-              <span className="qb-question-label-text">{t('quiz.question')}</span>
+              <span className="qb-question-label-text">{isCodingChallenge ? t('codingChallenge.problemStatementLabel', 'Problem Statement') : t('quiz.question')}</span>
+              {isCodingChallenge && (
+                <button
+                  type="button"
+                  className={`qb-ai-generate-trigger${aiGenOpen ? ' qb-ai-generate-trigger--active' : ''}`}
+                  onClick={() => setAiGenOpen(v => !v)}
+                >
+                  <ThunderboltOutlined /> {t('ai.generateWithAI')}
+                </button>
+              )}
               <div className="qb-scoring-chips">
-                {!isPoll && (
+                {!isPoll && !isCodingChallenge && (
                   <Popover
                     content={
                       <InputNumber
@@ -517,7 +650,7 @@ const QuestionForm = ({
                     <span className="qb-chip qb-chip--neg">– {watchedNegPoints ?? 0}</span>
                   </Popover>
                 )}
-                {!isOfflinePoll && (
+                {!isOfflinePoll && !isCodingChallenge && (
                   <Popover
                     content={
                       <InputNumber
@@ -540,6 +673,24 @@ const QuestionForm = ({
                 )}
               </div>
             </div>
+            {isCodingChallenge && aiGenOpen && (
+              <div className="qb-ai-generate-row">
+                <Input
+                  size="small"
+                  autoFocus
+                  placeholder={t('codingChallenge.generatePromptPlaceholder', 'e.g. a REST API rate limiter, an LRU cache, an inventory sync job')}
+                  value={aiGenTopic}
+                  onChange={(e) => setAiGenTopic(e.target.value)}
+                  onPressEnter={handleGenerateProblem}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Button size="small" type="primary" loading={rewriting['problem_generate']} onClick={handleGenerateProblem}>
+                  {t('ai.generate', 'Generate')}
+                </Button>
+                <Button size="small" type="text" onClick={() => setAiGenOpen(false)}>✕</Button>
+              </div>
+            )}
+            </div>
           }
           style={{ marginBottom: 0 }}
         >
@@ -553,29 +704,50 @@ const QuestionForm = ({
               {useRichText ? (
                 <RichTextEditor
                   isDark={theme === 'dark'}
-                  placeholder={t('quiz.enterQuestion')}
+                  placeholder={isCodingChallenge ? t('codingChallenge.problemStatementPlaceholder', 'Describe the problem the candidate needs to solve…') : t('quiz.enterQuestion')}
                 />
               ) : (
                 <TextArea
-                  rows={3}
-                  placeholder={t('quiz.enterQuestion')}
+                  rows={isCodingChallenge ? 16 : 3}
+                  placeholder={isCodingChallenge ? t('codingChallenge.problemStatementPlaceholder', 'Describe the problem the candidate needs to solve…') : t('quiz.enterQuestion')}
                   spellCheck="true"
                   lang={t('common.langCode', { defaultValue: 'en' })}
                   onContextMenu={(e) => e.stopPropagation()}
+                  style={isCodingChallenge && mdPreview ? { display: 'none' } : { fontFamily: isCodingChallenge ? 'monospace' : undefined }}
                 />
               )}
             </Form.Item>
+            {/* Markdown preview — the candidate session page already renders this
+                field with ReactMarkdown, so this shows the host exactly what a
+                candidate will see, instead of raw ## / ** / ``` syntax. */}
+            {isCodingChallenge && mdPreview && (
+              <div className="qb-md-preview">
+                <ReactMarkdown>{watchedText || t('codingChallenge.problemStatementPlaceholder', 'Describe the problem the candidate needs to solve…')}</ReactMarkdown>
+              </div>
+            )}
             {/* Compose strip: format · image · video ──── rewrite */}
             <div className="qb-compose-strip">
-              <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
-                <button
-                  type="button"
-                  className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
-                  onClick={() => setUseRichText(v => !v)}
-                >
-                  <FontColorsOutlined />
-                </button>
-              </Tooltip>
+              {isCodingChallenge ? (
+                <Tooltip title={mdPreview ? t('codingChallenge.editMarkdown', 'Edit') : t('codingChallenge.previewMarkdown', 'Preview')}>
+                  <button
+                    type="button"
+                    className={`qb-aa-btn${mdPreview ? ' qb-aa-btn--active' : ''}`}
+                    onClick={() => setMdPreview(v => !v)}
+                  >
+                    {mdPreview ? <EditOutlined /> : <EyeOutlined />}
+                  </button>
+                </Tooltip>
+              ) : (
+                <Tooltip title={useRichText ? t('quiz.simpleTextToggle') : t('tooltip.richTextToggleQuestion')}>
+                  <button
+                    type="button"
+                    className={`qb-aa-btn${useRichText ? ' qb-aa-btn--active' : ''}`}
+                    onClick={() => setUseRichText(v => !v)}
+                  >
+                    <FontColorsOutlined />
+                  </button>
+                </Tooltip>
+              )}
               {questionImageUrl ? (
                 <div className="qb-media-thumb">
                   <img src={questionImageUrl} alt="" style={{ height: 28, borderRadius: 4, objectFit: 'cover' }} />
@@ -622,17 +794,18 @@ const QuestionForm = ({
                   loading={rewriting['text']}
                   style={{ fontSize: 12 }}
                   onClick={() => {
+                    const rewriteContext = isCodingChallenge ? 'coding challenge problem statement' : isPoll ? 'poll question' : 'quiz question'
                     if (useRichText) {
                       const rawHtml = questionForm.getFieldValue('text') || ''
                       const plain = rawHtml.replace(/<[^>]*>/g, '').trim()
                       if (!plain) return
                       setRewriting(prev => ({ ...prev, text: true }))
-                      aiAPI.rewrite({ text: plain, context: isPoll ? 'poll question' : 'quiz question', language: language || 'en' })
+                      aiAPI.rewrite({ text: plain, context: rewriteContext, language: language || 'en' })
                         .then(res => questionForm.setFieldsValue({ text: res.data.rewritten }))
                         .catch(() => {})
                         .finally(() => setRewriting(prev => ({ ...prev, text: false })))
                     } else {
-                      handleRewrite('text', isPoll ? 'poll question' : 'quiz question')
+                      handleRewrite('text', rewriteContext)
                     }
                   }}
                 >
@@ -1067,7 +1240,23 @@ const QuestionForm = ({
             </Form.Item>
             <Form.Item
               name="grading_rubric"
-              label={t('quiz.gradingRubric', 'Expected Output / Grading Criteria')}
+              label={(
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span>{t('quiz.gradingRubric', 'Expected Output / Grading Criteria')}</span>
+                  <Tooltip title={t('ai.rewriteWithAIModel')}>
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={rewriteIcon('grading_rubric')}
+                      loading={rewriting['grading_rubric']}
+                      style={{ fontSize: 12 }}
+                      onClick={() => handleRewrite('grading_rubric', 'expected output / grading criteria for a code question')}
+                    >
+                      {t('ai.rewrite')}
+                    </Button>
+                  </Tooltip>
+                </div>
+              )}
               help={t('quiz.gradingRubricHelp', 'Describe the expected output or test cases. The AI uses this to judge submissions.')}
             >
               <Input.TextArea
@@ -1080,7 +1269,14 @@ const QuestionForm = ({
           </>
         )}
 
-        {/* Explanation — collapsed by default */}
+        {questionType === 'coding_challenge' && (
+          <div className="qb-cc-grading-hint">
+            💡 {t('codingChallenge.problemGradingHint', 'Starter repo, tests, grading rubric, and time budget are configured on the Grading tab.')}
+          </div>
+        )}
+
+        {/* Explanation — collapsed by default (not applicable to coding challenges) */}
+        {!isCodingChallenge && (
         <div style={{ marginBottom: 16 }}>
           <button
             type="button"
@@ -1103,6 +1299,7 @@ const QuestionForm = ({
             </Form.Item>
           )}
         </div>
+        )}
 
         {/* Hidden form bindings for scoring — values managed via label chips */}
         {!isPoll && (
@@ -1121,7 +1318,14 @@ const QuestionForm = ({
           </Form.Item>
         )}
 
-        {/* Footer row: Required toggle (offline poll only) + Prev / Next */}
+        {/* Footer row: Required toggle (offline poll only) + Prev / Next.
+            For an EXISTING coding-challenge question, none of this applies —
+            there's only ever one problem (no Prev/Next to navigate between),
+            and autosave-on-blur already saves it (same mechanism every other
+            question type also gets, just the only one visible here since
+            there's no Cancel to fall back to) — so the whole row, border
+            included, is skipped entirely rather than rendering empty. */}
+        {!(question && isCodingChallenge) && (
         <div className="qb-footer-row">
           {isOfflinePoll && (
             <div className="qb-footer-field">
@@ -1176,11 +1380,12 @@ const QuestionForm = ({
             </>
           )}
         </div>
+        )}
       </Form>
     </Card>
     </div>
   )
-}
+})
 
 // Memoize QuestionForm with default shallow prop comparison to avoid stale form values.
 const MemoizedQuestionForm = memo(QuestionForm)
@@ -1192,6 +1397,13 @@ export default function QuizBuilder() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const [form] = Form.useForm()
+  const [gradingForm] = Form.useForm()
+  const [gradingLoading, setGradingLoading] = useState(false)
+  // Lets the topbar's Save button (coding-challenge Problem tab only) trigger
+  // the question form's own validated submit — QuestionForm owns its Form
+  // instance locally (unlike Setup/Grading, whose forms live up here), so a
+  // ref is how an external button reaches in and calls .submit() on it.
+  const problemFormRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [quiz, setQuiz] = useState(null)
   const [questions, setQuestions] = useState([])
@@ -1221,11 +1433,12 @@ export default function QuizBuilder() {
   // Extract query params for initial creation (e.g. ?type=poll or ?type=offline_poll)
   const searchParams = new URLSearchParams(location.search)
   const rawType = searchParams.get('type')?.toLowerCase()
-  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : (rawType === 'exam' || rawType === 'test') ? 'exam' : 'quiz'
+  const initialQuizType = rawType === 'poll' ? 'poll' : rawType === 'offline_poll' ? 'offline_poll' : (rawType === 'exam' || rawType === 'test') ? 'exam' : rawType === 'coding_challenge' ? 'coding_challenge' : 'quiz'
   const aiPromptParam = searchParams.get('ai_prompt') || ''
   const aiCountParam = parseInt(searchParams.get('ai_count') || '5', 10) || 5
   const aiContentTypeParam = searchParams.get('ai_content_type') || 'general'
   const aiDifficultyParam = searchParams.get('ai_difficulty') || 'medium'
+  const justCreated = searchParams.get('justCreated') === '1'
   const aiAutoOpen = searchParams.get('ai_auto_open') === '1'
   const isNewActivity = searchParams.get('new') === '1'
 
@@ -1242,11 +1455,13 @@ export default function QuizBuilder() {
   const [savingForAI, setSavingForAI] = useState(false)
   const [pollLinkModal, setPollLinkModal] = useState({ open: false, url: '' })
   const [examLinkModal, setExamLinkModal] = useState({ open: false, url: '' })
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const [batchConfirmModal, setBatchConfirmModal] = useState({ open: false })
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState(null)
   const isPoll = quiz?.quiz_type === 'poll' || quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'poll') || (!quiz && initialQuizType === 'offline_poll')
   const isOfflinePoll = quiz?.quiz_type === 'offline_poll' || (!quiz && initialQuizType === 'offline_poll')
   const isExam = quiz?.quiz_type === 'exam' || (!quiz && initialQuizType === 'exam')
+  const isCodingChallenge = quiz?.quiz_type === 'coding_challenge' || (!quiz && initialQuizType === 'coding_challenge')
   const isLiveMode = quiz?.status === 'ready'
   const { user: currentUser } = useSelector((state) => state.auth)
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
@@ -1254,13 +1469,13 @@ export default function QuizBuilder() {
   // Rewrite state for main form fields
   const [mainRewriting, setMainRewriting] = useState({})
 
-  const handleMainRewrite = async (fieldName, context) => {
-    const val = form.getFieldValue(fieldName)
+  const handleMainRewrite = async (fieldName, context, targetForm = form) => {
+    const val = targetForm.getFieldValue(fieldName)
     if (!val?.trim()) return
     setMainRewriting(prev => ({ ...prev, [fieldName]: true }))
     try {
       const res = await aiAPI.rewrite({ text: val.trim(), context, language: i18n.language })
-      form.setFieldsValue({ [fieldName]: res.data.rewritten })
+      targetForm.setFieldsValue({ [fieldName]: res.data.rewritten })
     } catch {
       // silently fail
     } finally {
@@ -1467,6 +1682,32 @@ export default function QuizBuilder() {
     }
   }, [id, quiz])
 
+  // Coding challenges never have "several questions to pick from" — landing on
+  // the generic empty state ("Select a question on the left") is pure friction.
+  // Default straight into Challenge Setup once, on first load only (a ref guard
+  // rather than a stageView/editingQuestion condition, so it can never re-fire
+  // later and yank the host back to Setup mid-edit).
+  const hasSetDefaultStageRef = useRef(false)
+  useEffect(() => {
+    if (quiz && quiz.quiz_type === 'coding_challenge' && !hasSetDefaultStageRef.current) {
+      hasSetDefaultStageRef.current = true
+      setStageView('setup')
+    }
+  }, [quiz])
+
+  // Fresh "Default N" draft — auto-focus + select-all the Title field so
+  // renaming is a single keystroke away, no click needed. Fires once, then
+  // strips ?justCreated=1 from the URL so a refresh doesn't re-trigger it.
+  const titleInputRef = useRef(null)
+  const hasAutoFocusedTitleRef = useRef(false)
+  useEffect(() => {
+    if (quiz && justCreated && quiz.quiz_type === 'coding_challenge' && !hasAutoFocusedTitleRef.current) {
+      hasAutoFocusedTitleRef.current = true
+      setTimeout(() => titleInputRef.current?.focus({ cursor: 'all' }), 150)
+      navigate(location.pathname, { replace: true })
+    }
+  }, [quiz, justCreated])
+
   // Reset autosave status when switching questions (clears any error state)
   useEffect(() => {
     setSaveStatus('idle')
@@ -1546,6 +1787,14 @@ export default function QuizBuilder() {
         shuffle_questions: response.data.shuffle_questions || false,
         shuffle_options: response.data.shuffle_options || false,
         default_question_time_seconds: response.data.default_question_time_seconds || undefined,
+        ...(response.data.quiz_type === 'coding_challenge' ? (() => {
+          const ccQ = (response.data.questions || []).find(q => q.question_type === 'coding_challenge')
+          return {
+            git_repo_url: ccQ?.git_repo_url || '',
+            test_command: ccQ?.test_command || 'pytest -q',
+            time_budget_seconds: ccQ?.time_budget_seconds ? Math.round(ccQ.time_budget_seconds / 60) : 120,
+          }
+        })() : {}),
       })
       // Auto-focus title for freshly created activities (skip-setup flow)
       if (isNewActivity) {
@@ -1568,11 +1817,11 @@ export default function QuizBuilder() {
       </Form.Item>
       <Form.Item
         name="title"
-        label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-        rules={[{ required: true, whitespace: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+        label={isCodingChallenge ? t('codingChallenge.titleLabel', 'Coding Challenge Title') : isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
+        rules={[{ required: true, whitespace: true, message: isCodingChallenge ? t('codingChallenge.titleRequired', 'Please enter a title') : isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
       >
         <Input
-          placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
+          placeholder={isCodingChallenge ? t('codingChallenge.enterTitle', 'Enter coding challenge title') : isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
           size="large"
           spellCheck="true"
           lang={i18n.language}
@@ -1592,11 +1841,11 @@ export default function QuizBuilder() {
 
       <Form.Item
         name="description"
-        label={isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
+        label={isCodingChallenge ? t('codingChallenge.descriptionLabel', 'Description') : isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
       >
         <TextArea
           rows={3}
-          placeholder={isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
+          placeholder={isCodingChallenge ? t('codingChallenge.enterDescription', 'Enter coding challenge description (optional)') : isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
           spellCheck="true"
           lang={i18n.language}
         />
@@ -1821,6 +2070,7 @@ export default function QuizBuilder() {
           isPoll={isPoll}
           isExam={isExam}
           isOfflinePoll={isOfflinePoll}
+          isCodingChallenge={isCodingChallenge}
           language={i18n.language}
           isAdmin={isAdmin}
           questionImageUrl={questionImageUrl}
@@ -1861,6 +2111,7 @@ export default function QuizBuilder() {
                     isPoll={isPoll}
                     isExam={isExam}
                     isOfflinePoll={isOfflinePoll}
+          isCodingChallenge={isCodingChallenge}
                     language={i18n.language}
                     isAdmin={isAdmin}
                     questionImageUrl={questionImageUrl}
@@ -1931,7 +2182,27 @@ export default function QuizBuilder() {
                       ) : null
                     }
                   >
-              {question.question_type === 'code' ? (
+              {question.question_type === 'coding_challenge' ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text type="secondary" italic>
+                    {t('codingChallenge.questionDescription', 'Coding challenge — candidates get a real browser IDE with AI pair-programming, auto-graded')}
+                  </Text>
+                  {question.git_repo_url && (
+                    <Text><strong>{t('codingChallenge.gitRepoUrl', 'Starter repo URL')}:</strong> {question.git_repo_url}</Text>
+                  )}
+                  {question.test_command && (
+                    <Text><strong>{t('codingChallenge.testCommand', 'Test command')}:</strong> <code>{question.test_command}</code></Text>
+                  )}
+                  {question.hidden_test_filename && (
+                    <Text type="secondary">{t('codingChallenge.hasHiddenTest', 'Includes a hidden test')}</Text>
+                  )}
+                  {quiz?.status === 'ready' && (
+                    <Button size="small" onClick={() => navigate(`/quiz/coding-challenge-review/${question.id}`)}>
+                      {t('codingChallenge.viewSubmissions', 'View Submissions')}
+                    </Button>
+                  )}
+                </Space>
+              ) : question.question_type === 'code' ? (
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Text type="secondary" italic>
                     {t('quiz.codeQuestionDescription', 'Code submission question — participants write and submit code')}
@@ -2071,7 +2342,20 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
-        grading_rubric: values.grading_rubric || null,
+        // grading_rubric/git_repo_url/test_command/hidden_test_*/time_budget_seconds are
+        // owned exclusively by the Grading tab's own save (handleSaveGrading) for
+        // coding_challenge questions — omitted here (not sent as null) so saving the
+        // Problem statement can never clobber values set on the Grading tab. The
+        // "code" question type still has its own grading_rubric input, so it's
+        // included for every OTHER question type as before.
+        ...(values.question_type === 'coding_challenge' ? {} : {
+          grading_rubric: values.grading_rubric || null,
+          git_repo_url: values.git_repo_url || null,
+          test_command: values.test_command || null,
+          hidden_test_filename: values.hidden_test_filename || null,
+          hidden_test_content: values.hidden_test_content || null,
+          time_budget_seconds: values.time_budget_seconds ? values.time_budget_seconds * 60 : null,
+        }),
       }
       if (values.question_type === 'mcq') {
         const mcqOptions = [values.option_a, values.option_b, values.option_c, values.option_d, ...(values.extra_options || [])].filter(opt => stripHtml(opt).length > 0)
@@ -2147,6 +2431,24 @@ export default function QuizBuilder() {
       exam_allowed_domains: rawValues.exam_allowed_domains?.trim() || null,
     }
     delete values.exam_time_limit_minutes
+    // git_repo_url/test_command/time_budget_seconds render on this Setup form
+    // for coding challenges, but they live on the Question row, not the Quiz
+    // row — Quiz's own schema doesn't have these fields. Pull them out here
+    // and save them via a scoped question PATCH after the quiz save succeeds,
+    // rather than sending them to quizAPI.update (which would either be
+    // silently dropped or rejected).
+    const ccRepoFields = isCodingChallenge
+      ? {
+          git_repo_url: values.git_repo_url || null,
+          test_command: values.test_command || null,
+          time_budget_seconds: values.time_budget_seconds ? values.time_budget_seconds * 60 : null,
+        }
+      : null
+    if (isCodingChallenge) {
+      delete values.git_repo_url
+      delete values.test_command
+      delete values.time_budget_seconds
+    }
     // Include proctoring policy in the same save (single unified request)
     if (id && proctoringPolicy !== null && (isExam || quiz?.quiz_type === 'offline_poll')) {
       // Normalise: write explicit { enabled: false } for every known rule that wasn't toggled on,
@@ -2167,6 +2469,10 @@ export default function QuizBuilder() {
     try {
       if (id) {
         await quizAPI.update(id, values)
+        if (ccRepoFields) {
+          const ccQuestion = questions.find(q => q.question_type === 'coding_challenge')
+          if (ccQuestion) await questionAPI.update(ccQuestion.id, ccRepoFields)
+        }
         message.success(isExam ? t('exam.saveSuccess') : isOfflinePoll ? t('quiz.saveOfflinePollSuccess') : isPoll ? t('quiz.savePollSuccess') : t('quiz.saveSuccess'))
         loadQuiz()
       } else {
@@ -2195,6 +2501,40 @@ export default function QuizBuilder() {
     }
   }
 
+  // Silent autosave for the Challenge Setup tab (coding challenges only) —
+  // fires on field blur. Unlike handleSaveQuiz (the explicit Save button)
+  // this must not pop a message toast or refetch the whole quiz on every
+  // blur, since that would steal focus and flicker mid-typing. It updates
+  // local state in place instead, and reuses the same saveStatus indicator
+  // that question-level autosave already drives.
+  const handleSetupAutoSave = useCallback(async (values) => {
+    if (!id || !isCodingChallenge) return
+    if (!values.title?.trim()) return
+    setSaveStatus('saving')
+    try {
+      const quizFields = {
+        title: values.title,
+        description: values.description || null,
+        skin: values.skin || null,
+      }
+      await quizAPI.update(id, quizFields)
+      const ccFields = {
+        git_repo_url: values.git_repo_url || null,
+        test_command: values.test_command || null,
+        time_budget_seconds: values.time_budget_seconds ? values.time_budget_seconds * 60 : null,
+      }
+      const ccQuestion = questions.find(q => q.question_type === 'coding_challenge')
+      if (ccQuestion) await questionAPI.update(ccQuestion.id, ccFields)
+      setQuiz(q => q ? { ...q, ...quizFields } : q)
+      setQuestions(qs => qs.map(q => q.id === ccQuestion?.id ? { ...q, ...ccFields } : q))
+      setSaveStatus('saved')
+      clearTimeout(saveStatusTimerRef.current)
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
+    } catch {
+      setSaveStatus('error')
+    }
+  }, [id, isCodingChallenge, questions])
+
   const handleAddQuestion = useCallback(async (values) => {
     if (!id) {
       message.warning(t('quiz.saveQuizFirst'))
@@ -2213,7 +2553,20 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
-        grading_rubric: values.grading_rubric || null,
+        // grading_rubric/git_repo_url/test_command/hidden_test_*/time_budget_seconds are
+        // owned exclusively by the Grading tab's own save (handleSaveGrading) for
+        // coding_challenge questions — omitted here (not sent as null) so saving the
+        // Problem statement can never clobber values set on the Grading tab. The
+        // "code" question type still has its own grading_rubric input, so it's
+        // included for every OTHER question type as before.
+        ...(values.question_type === 'coding_challenge' ? {} : {
+          grading_rubric: values.grading_rubric || null,
+          git_repo_url: values.git_repo_url || null,
+          test_command: values.test_command || null,
+          hidden_test_filename: values.hidden_test_filename || null,
+          hidden_test_content: values.hidden_test_content || null,
+          time_budget_seconds: values.time_budget_seconds ? values.time_budget_seconds * 60 : null,
+        }),
       }
 
       // Add options for choice-based question types
@@ -2423,7 +2776,20 @@ export default function QuizBuilder() {
         is_required: values.is_required ?? false,
         answer_explanation: values.answer_explanation || null,
         question_video_url: values.question_video_url || null,
-        grading_rubric: values.grading_rubric || null,
+        // grading_rubric/git_repo_url/test_command/hidden_test_*/time_budget_seconds are
+        // owned exclusively by the Grading tab's own save (handleSaveGrading) for
+        // coding_challenge questions — omitted here (not sent as null) so saving the
+        // Problem statement can never clobber values set on the Grading tab. The
+        // "code" question type still has its own grading_rubric input, so it's
+        // included for every OTHER question type as before.
+        ...(values.question_type === 'coding_challenge' ? {} : {
+          grading_rubric: values.grading_rubric || null,
+          git_repo_url: values.git_repo_url || null,
+          test_command: values.test_command || null,
+          hidden_test_filename: values.hidden_test_filename || null,
+          hidden_test_content: values.hidden_test_content || null,
+          time_budget_seconds: values.time_budget_seconds ? values.time_budget_seconds * 60 : null,
+        }),
       }
 
       // Add options for choice-based question types
@@ -2510,6 +2876,55 @@ export default function QuizBuilder() {
       setLoading(false)
     }
   }, [t, loadQuiz, isPoll])
+
+  // Grading tab — a partial PATCH scoped to its own fields only (repo/tests/
+  // rubric/time budget/weights). Deliberately does NOT include `text` or any
+  // other Problem-tab field, so it can never clobber the problem statement
+  // even though both tabs edit the same underlying Question row.
+  const handleSaveGrading = useCallback(async (values) => {
+    const ccQuestion = questions.find(q => q.question_type === 'coding_challenge')
+    if (!ccQuestion) return
+    let grading_weights = null
+    const weightEntries = GRADING_WEIGHT_CRITERIA.map(c => [c, values[`weight_${c}`]])
+    const anyWeightSet = weightEntries.some(([, v]) => v !== undefined && v !== null && v !== '')
+    if (anyWeightSet) {
+      grading_weights = {}
+      for (const [criterion, v] of weightEntries) {
+        grading_weights[criterion] = Number(v) || 0
+      }
+      const total = Object.values(grading_weights).reduce((a, b) => a + b, 0)
+      if (Math.abs(total - 100) > 0.5) {
+        message.error(t('codingChallenge.weightsMustSumTo100', 'Grading weights must sum to 100% (currently {{total}}%)', { total }))
+        return
+      }
+    }
+    setGradingLoading(true)
+    try {
+      const payload = {
+        // git_repo_url/test_command/time_budget_seconds are owned by the Setup
+        // tab's own save now — not included here, so saving Grading can never
+        // clobber them.
+        hidden_test_filename: values.hidden_test_filename || null,
+        hidden_test_content: values.hidden_test_content || null,
+        grading_rubric: values.grading_rubric || null,
+        grading_weights,
+        result_visibility: values.result_visibility || 'hidden',
+      }
+      await questionAPI.update(ccQuestion.id, payload)
+      setQuestions(qs => qs.map(q => q.id === ccQuestion.id ? { ...q, ...payload } : q))
+      message.success(t('codingChallenge.gradingSaveSuccess', 'Grading settings saved'))
+    } catch (error) {
+      let detail = error.response?.data?.detail
+      if (Array.isArray(detail)) {
+        detail = detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ')
+      } else if (typeof detail === 'object') {
+        detail = JSON.stringify(detail)
+      }
+      message.error(detail || t('quiz.updateQuestionError'))
+    } finally {
+      setGradingLoading(false)
+    }
+  }, [questions, t])
 
   const handleDeleteQuestion = async (questionId) => {
     setLoading(true)
@@ -2627,6 +3042,13 @@ export default function QuizBuilder() {
       } else if (isOfflinePoll) {
         const res = await quizAPI.publishOffline(id)
         setPollLinkModal({ open: true, url: res.data.poll_url })
+        await loadQuiz()
+      } else if (isCodingChallenge) {
+        // No live session/control room for a coding challenge — candidates are
+        // invited individually (see the Invite Candidate button), not via one
+        // shared link, so publishing just marks the quiz ready.
+        await quizAPI.publish(id)
+        message.success(t('quiz.publishSuccess'))
         await loadQuiz()
       } else {
         await quizAPI.publish(id)
@@ -3019,6 +3441,27 @@ export default function QuizBuilder() {
     }
     return t(`quiz.${statusMap[status] || 'statusDraft'}`)
   }
+
+  // The freshly-created "Default N" draft navigates straight into the
+  // studio before the GET has resolved — show the studio shell loading
+  // rather than a flash of the generic "no questions yet" empty state.
+  if (id && isCodingChallenge && !quiz) {
+    return (
+      <div className="qb-studio" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <Spin size="large" tip={t('codingChallenge.loadingChallenge', 'Setting up your challenge...')} />
+      </div>
+    )
+  }
+
+  // Block publishing an untouched "Default N" scaffold to real candidates —
+  // either the problem statement is still the placeholder template, or the
+  // repo URL was never set, both of which mean the challenge isn't ready.
+  const ccQuestionForGate = isCodingChallenge ? questions.find(q => q.question_type === 'coding_challenge') : null
+  const isUneditedDefaultChallenge = isCodingChallenge && !!ccQuestionForGate && (
+    !ccQuestionForGate.git_repo_url ||
+    (ccQuestionForGate.text || '').trim() === CODING_CHALLENGE_PROBLEM_TEMPLATE.trim()
+  )
+
   return (
     <div className={id ? 'qb-studio' : 'quiz-builder-page'} style={!id ? { padding: 24 } : undefined}>
       {id ? (
@@ -3028,8 +3471,14 @@ export default function QuizBuilder() {
             <Button type="text" size="small" icon={<LeftOutlined />} onClick={() => navigate('/dashboard')}>
               {t('quiz.backDashboard')}
             </Button>
+            {isCodingChallenge && quiz && isLiveMode && (
+              <span className="qb-topbar-live-warning">
+                <WarningOutlined />
+                {t('codingChallenge.liveStripText', 'This challenge is live — unpublish to edit the problem or settings.')}
+              </span>
+            )}
           </div>
-          {quiz && (
+          {quiz && !isCodingChallenge && (
             <span className="qb-topbar-type-badge">
               {isExam ? t('exam.typeLabel') : isOfflinePoll ? t('offlinePoll.typeLabel', 'Poll') : isPoll ? t('quiz.poll', 'Online Poll') : t('quiz.quizTypeLabel', 'Online Quiz')}
             </span>
@@ -3042,13 +3491,58 @@ export default function QuizBuilder() {
               ) : ''}
           </span>
           {quiz && quiz.status === 'draft' && questions.length >= 1 && (
-            <Tooltip title={t('tooltip.publishQuiz')}>
-              <Button type="primary" icon={<RocketOutlined />} onClick={handlePublish} loading={loading}>
-                {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
-              </Button>
+            <Tooltip title={isUneditedDefaultChallenge ? t('codingChallenge.publishBlockedHint', 'Add a starter repo URL and replace the placeholder problem statement before publishing.') : isCodingChallenge ? t('codingChallenge.publishChallenge', 'Publish Challenge') : t('tooltip.publishQuiz')}>
+              {isCodingChallenge ? (
+                <Button
+                  shape="circle"
+                  icon={<RocketOutlined />}
+                  onClick={handlePublish}
+                  loading={loading}
+                  disabled={isUneditedDefaultChallenge}
+                  style={{ background: 'var(--sw-primary)', borderColor: 'var(--sw-primary)', color: '#fff' }}
+                />
+              ) : (
+                <Button type="primary" icon={<RocketOutlined />} onClick={handlePublish} loading={loading}>
+                  {isExam ? t('exam.publishActivate') : isOfflinePoll ? t('offlinePoll.publishActivate', 'Publish & Activate') : isPoll ? t('quiz.publishPoll') : t('quiz.publishQuiz')}
+                </Button>
+              )}
             </Tooltip>
           )}
-          {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && (
+          {quiz && quiz.status === 'draft' && isCodingChallenge && stageView === 'setup' && (
+            <Tooltip title={t('codingChallenge.saveButton', 'Save Challenge')}>
+              <Button
+                shape="circle"
+                icon={<SaveOutlined />}
+                loading={loading}
+                onClick={() => form.submit()}
+                style={{ background: 'var(--sw-success)', borderColor: 'var(--sw-success)', color: '#fff' }}
+              />
+            </Tooltip>
+          )}
+          {quiz && quiz.status === 'draft' && isCodingChallenge && stageView === 'grading' && (
+            <Tooltip title={t('codingChallenge.saveGrading', 'Save Grading Settings')}>
+              <Button
+                shape="circle"
+                icon={<SaveOutlined />}
+                loading={gradingLoading}
+                onClick={() => gradingForm.submit()}
+                style={{ background: 'var(--sw-success)', borderColor: 'var(--sw-success)', color: '#fff' }}
+              />
+            </Tooltip>
+          )}
+          {quiz && quiz.status === 'draft' && isCodingChallenge
+            && editingQuestion && editingQuestion === questions.find(q => q.question_type === 'coding_challenge')?.id && (
+            <Tooltip title={t('codingChallenge.saveProblem', 'Save Problem')}>
+              <Button
+                shape="circle"
+                icon={<SaveOutlined />}
+                loading={loading}
+                onClick={() => problemFormRef.current?.submit()}
+                style={{ background: 'var(--sw-success)', borderColor: 'var(--sw-success)', color: '#fff' }}
+              />
+            </Tooltip>
+          )}
+          {quiz && quiz.status === 'ready' && !isOfflinePoll && !isExam && !isCodingChallenge && (
             <>
               <Button type="primary" icon={<RocketOutlined />} onClick={() => navigate(`/quiz/${id}/control`)}>
                 {isPoll ? t('quiz.startPoll') : t('quiz.startSession')}
@@ -3057,6 +3551,43 @@ export default function QuizBuilder() {
                 <Button type="default" onClick={handleUnpublish} loading={loading}>
                   {isPoll ? t('quiz.unpublishPoll') : t('quiz.unpublishQuiz')}
                 </Button>
+              </Tooltip>
+            </>
+          )}
+          {quiz && quiz.status === 'ready' && isCodingChallenge && (
+            <>
+              <Tooltip title={t('codingChallenge.inviteCandidates', 'Invite Candidates')}>
+                <Button
+                  shape="circle"
+                  type="primary"
+                  icon={<ShareAltOutlined />}
+                  onClick={() => setInviteModalOpen(true)}
+                />
+              </Tooltip>
+              {questions.find(q => q.question_type === 'coding_challenge') && (
+                <Tooltip title={t('codingChallenge.viewSubmissions', 'View Submissions')}>
+                  <Button
+                    shape="circle"
+                    icon={<EyeOutlined />}
+                    onClick={() => navigate(`/quiz/coding-challenge-review/${questions.find(q => q.question_type === 'coding_challenge').id}`)}
+                    style={{ borderColor: 'var(--sw-info)', color: 'var(--sw-info)' }}
+                  />
+                </Tooltip>
+              )}
+              {(stageView === 'setup' || stageView === 'grading'
+                || (editingQuestion && editingQuestion === questions.find(q => q.question_type === 'coding_challenge')?.id)) && (
+                <Tooltip title={t('codingChallenge.unpublishToSaveHint', 'Unpublish to edit settings')}>
+                  <Button shape="circle" icon={<SaveOutlined />} disabled />
+                </Tooltip>
+              )}
+              <Tooltip title={t('quiz.unpublishQuiz')}>
+                <Button
+                  shape="circle"
+                  icon={<LockOutlined />}
+                  onClick={handleUnpublish}
+                  loading={loading}
+                  style={{ borderColor: 'var(--sw-warning)', color: 'var(--sw-warning)' }}
+                />
               </Tooltip>
             </>
           )}
@@ -3140,7 +3671,7 @@ export default function QuizBuilder() {
                   <div style={{ padding: '16px 0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <Text type="secondary">
-                         {isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
+                         {isCodingChallenge ? t('codingChallenge.typeInfo', "Host-authored coding problem with a real browser IDE and AI pair-programming. Candidates are invited individually by email, auto-graded.") : isExam ? t('exam.typeInfo') : isOfflinePoll ? t('offlinePoll.typeInfo') : isPoll ? t('quiz.pollTypeInfo') : t('quiz.quizTypeInfo')}
                       </Text>
                       {isExam && (
                         <Button
@@ -3173,7 +3704,7 @@ export default function QuizBuilder() {
                           loading={loading && !savingForAI}
                           style={{ minWidth: 180 }}
                         >
-                          {isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz')}
+                          {isCodingChallenge ? t('codingChallenge.createCodingChallenge', 'Coding Challenge') : isExam ? t('exam.createExam') : isOfflinePoll ? t('offlinePoll.createOfflinePoll', 'Create Offline Poll') : isPoll ? t('quiz.createPoll') : t('quiz.createQuiz')}
                         </Button>
                         <Button
                           size="large"
@@ -3370,11 +3901,31 @@ export default function QuizBuilder() {
                 type="button"
                 role="tab"
                 aria-selected={stageView === 'setup'}
-                className={`qb-rail-entry${stageView === 'setup' ? ' qb-rail-entry--active' : ''}`}
+                className={`qb-rail-entry${isCodingChallenge ? ' qb-rail-entry--cc' : ''}${stageView === 'setup' ? ' qb-rail-entry--active' : ''}`}
                 onClick={() => { setStageView('setup'); setEditingQuestion(null); setMobileView('form') }}
               >
-                ⚙ {t('quiz.setupLabel', 'Setup')}
+                {isCodingChallenge ? (
+                  <>
+                    <span className="qb-q-file-icon qb-rail-entry--cc-icon">⚙</span>
+                    <span>{t('codingChallenge.challengeSetupLabel', 'Challenge Setup')}</span>
+                  </>
+                ) : (
+                  <>⚙ {t('quiz.setupLabel', 'Setup')}</>
+                )}
               </button>
+              {/* Grading entry — coding challenge only */}
+              {isCodingChallenge && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={stageView === 'grading'}
+                  className={`qb-rail-entry qb-rail-entry--cc${stageView === 'grading' ? ' qb-rail-entry--active' : ''}`}
+                  onClick={() => { setStageView('grading'); setEditingQuestion(null); setMobileView('form') }}
+                >
+                  <span className="qb-q-file-icon qb-rail-entry--cc-icon">⚖️</span>
+                  <span>{t('codingChallenge.gradingLabel', 'Grading')}</span>
+                </button>
+              )}
               {/* Proctoring entry — exam only */}
               {isExam && (
                 <button
@@ -3387,7 +3938,7 @@ export default function QuizBuilder() {
                   🔒 {t('quiz.securityLabel', 'Security & Proctoring')}
                 </button>
               )}
-              {isLiveMode && (
+              {isLiveMode && !isCodingChallenge && (
                 <div style={{ padding: '8px 10px', fontSize: 11, color: '#fa8c16', background: '#fff7e6', borderRadius: 6, margin: '4px 0 8px' }}>
                   {isExam ? t('exam.questionsLockedNotice') : t('quiz.unpublishMessage')}
                 </div>
@@ -3438,7 +3989,7 @@ export default function QuizBuilder() {
                       >
                         {({ dragHandleProps }) => (
                           <div
-                            className={`qb-q-card${isActive ? ' qb-q-card--active' : ''}`}
+                            className={`qb-q-card${question.question_type === 'coding_challenge' ? ' qb-q-card--cc' : ''}${isActive ? ' qb-q-card--active' : ''}`}
                             onClick={() => { setEditingQuestion(question.id); setStageView(null); setMobileView('form') }}
                           >
                             {isDraftQuiz && (
@@ -3447,19 +3998,27 @@ export default function QuizBuilder() {
                             <div className="qb-q-card-body">
                               <div className="qb-q-card-meta">
                                 <FileTextOutlined className="qb-q-file-icon" />
-                                <span className="qb-q-num">Q{index + 1}</span>
-                                <span className="qb-q-type-tag">{getQuestionTypeLabel(question.question_type, t)}</span>
+                                {question.question_type === 'coding_challenge' ? (
+                                  <span className="qb-q-num qb-q-num--cc">{t('codingChallenge.problemNavLabel', 'Problem')}</span>
+                                ) : (
+                                  <>
+                                    <span className="qb-q-num">Q{index + 1}</span>
+                                    <span className="qb-q-type-tag">{getQuestionTypeLabel(question.question_type, t)}</span>
+                                  </>
+                                )}
                                 <span className={`qb-q-status-dot ${statusCls}`} />
-                                {question.points !== undefined && question.points !== 1 && (
+                                {question.question_type !== 'coding_challenge' && question.points !== undefined && question.points !== 1 && (
                                   <span className="qb-q-chip">★{question.points}</span>
                                 )}
-                                {question.max_time_seconds && (
+                                {question.question_type !== 'coding_challenge' && question.max_time_seconds && (
                                   <span className="qb-q-chip">⏱{question.max_time_seconds}s</span>
                                 )}
                               </div>
-                              <div className="qb-q-preview">
-                                {stripHtml(question.text).slice(0, 40) || t('quiz.untitled', 'Untitled')}
-                              </div>
+                              {question.question_type !== 'coding_challenge' && (
+                                <div className="qb-q-preview">
+                                  {stripHtml(question.text).slice(0, 40) || t('quiz.untitled', 'Untitled')}
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -3474,31 +4033,34 @@ export default function QuizBuilder() {
                 </div>
               )}
             </div>
+            {/* Only render the footer bar (and its top divider) when it actually
+                has a button inside — otherwise an empty bordered strip shows up
+                as a stray line at the bottom of the rail for no reason. */}
+            {!isLiveMode && (!isCodingChallenge || questions.length === 0) && (
             <div className="qb-rail-footer">
-              {!isLiveMode && (
-                <>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    block
-                    onClick={() => { setEditingQuestion('new'); setStageView(null); setMobileView('form') }}
-                  >
-                    {t('quiz.addQuestion')}
-                  </Button>
-                  <Button
-                    icon={<ThunderboltOutlined />}
-                    block
-                    onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null); setAiSelectedTypes(null) }}
-                  >
-                    {t('ai.generateWithAI')}
-                  </Button>
-                </>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                block
+                onClick={() => { setEditingQuestion('new'); setStageView(null); setMobileView('form') }}
+              >
+                {isCodingChallenge ? t('codingChallenge.problemNavLabel', 'Problem') : t('quiz.addQuestion')}
+              </Button>
+              {!isCodingChallenge && (
+                <Button
+                  icon={<ThunderboltOutlined />}
+                  block
+                  onClick={() => { setAiModalOpen(true); setAiStep('input'); setAiError(null); setAiSelectedTypes(null) }}
+                >
+                  {t('ai.generateWithAI')}
+                </Button>
               )}
             </div>
+            )}
           </div>
 
           {/* Right stage — all existing edit content */}
-          <div className={`qb-stage${mobileView === 'list' ? ' qb-stage--mobile-hidden' : ''}`}>
+          <div className={`qb-stage${mobileView === 'list' ? ' qb-stage--mobile-hidden' : ''}${isCodingChallenge && stageView === 'setup' ? ' qb-stage--no-scroll' : ''}`}>
             {/* Mobile-only back button */}
             <Button
               className="qb-mobile-back"
@@ -3518,14 +4080,31 @@ export default function QuizBuilder() {
                 isExam={isExam}
                 isPoll={isPoll}
                 isOfflinePoll={isOfflinePoll}
+          isCodingChallenge={isCodingChallenge}
                 isLiveMode={isLiveMode}
                 loading={loading}
                 mainRewriting={mainRewriting}
+                titleInputRef={titleInputRef}
+                onAutoSave={handleSetupAutoSave}
                 onSave={() => form.submit()}
                 onFinish={handleSaveQuiz}
                 onUnpublish={handleUnpublish}
                 onMainRewrite={handleMainRewrite}
                 i18n={i18n}
+                t={t}
+              />
+            ) : stageView === 'grading' ? (
+              /* ── Grading panel (coding challenge only) ── */
+              <GradingPanel
+                question={questions.find(q => q.question_type === 'coding_challenge')}
+                form={gradingForm}
+                isLiveMode={isLiveMode}
+                loading={gradingLoading}
+                mainRewriting={mainRewriting}
+                onFinish={handleSaveGrading}
+                onMainRewrite={handleMainRewrite}
+                criteria={GRADING_WEIGHT_CRITERIA}
+                defaults={GRADING_WEIGHT_DEFAULTS}
                 t={t}
               />
             ) : stageView === 'proctoring' ? (
@@ -3557,6 +4136,7 @@ export default function QuizBuilder() {
                 isPoll={isPoll}
                 isExam={isExam}
                 isOfflinePoll={isOfflinePoll}
+          isCodingChallenge={isCodingChallenge}
                 language={i18n.language}
                 isAdmin={isAdmin}
                 questionImageUrl={questionImageUrl}
@@ -3578,6 +4158,7 @@ export default function QuizBuilder() {
                 return (
                   <MemoizedQuestionForm
                     key={`edit-${q.id}`}
+                    ref={isCodingChallenge ? problemFormRef : undefined}
                     question={q}
                     questionIndex={qIndex}
                     totalQuestions={questions.length}
@@ -3589,6 +4170,7 @@ export default function QuizBuilder() {
                     isPoll={isPoll}
                     isExam={isExam}
                     isOfflinePoll={isOfflinePoll}
+          isCodingChallenge={isCodingChallenge}
                     language={i18n.language}
                     isAdmin={isAdmin}
                     questionImageUrl={questionImageUrl}
@@ -3697,6 +4279,14 @@ export default function QuizBuilder() {
           )}
         </Space>
       </SafeModal>
+
+      {/* Coding challenge invite modal */}
+      <InviteCandidatesModal
+        open={inviteModalOpen}
+        quizId={id}
+        onClose={() => setInviteModalOpen(false)}
+        t={t}
+      />
 
       {/* AI Generate Questions Modal */}
       <SafeModal
