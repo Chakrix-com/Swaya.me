@@ -199,12 +199,18 @@ def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
     candidate_email, attempt_number) are uniquely constrained on this table, so a
     fresh INSERT for the same attempt always collides against the real DB (a bug
     this test didn't catch until it asserted db.add was never called — the mock
-    alone doesn't enforce uniqueness)."""
+    alone doesn't enforce uniqueness). Must also revoke the stale row's old
+    session token before minting a new one — delete_workspace is just
+    `coder delete`, which doesn't revoke API tokens, and the token name is
+    deterministic (derived from workspace_name), so re-minting without revoking
+    first collides too (confirmed live: this exact sequence — reprovision after
+    abandonment — hit both collisions back to back on test.swaya.me)."""
     token = _make_token()
     body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     stale = CodeWorkspace(
         id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
         ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
+        coder_token_name="cc-1-10-abcd1234-session",
         status=CodeWorkspaceStatus.DESTROYED, destroyed_at=datetime(2026, 1, 1),
     )
     question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
@@ -214,17 +220,48 @@ def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
 
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
          patch.object(router_mod.coder_client, "create_workspace", AsyncMock()) as mock_create, \
+         patch.object(router_mod.coder_client, "revoke_token", AsyncMock()) as mock_revoke, \
          patch.object(router_mod.coder_client, "mint_session_url",
                        AsyncMock(return_value=("https://sandbox/new-url", "tok-new"))), \
          patch.object(router_mod.svc, "schedule_lifetime_cap_job"):
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
     mock_create.assert_called_once()  # DOES re-provision since the old one is gone
+    mock_revoke.assert_called_once_with("cc-1-10-abcd1234-session")  # old token revoked before re-mint
     db.add.assert_not_called()  # reuses the existing row in place, never a fresh INSERT
     assert stale.status == CodeWorkspaceStatus.ACTIVE
     assert stale.workspace_url == "https://sandbox/new-url"
     assert stale.coder_token_name == "tok-new"
     assert stale.destroyed_at is None
+    assert result["workspace_url"] == "https://sandbox/new-url"
+
+
+def test_start_reprovision_tolerates_revoke_failure_before_remint():
+    """Same tolerant pattern as the reconnect branch's own revoke call — a stale/
+    already-expired old token failing to revoke must not block the reprovision."""
+    token = _make_token()
+    body = router_mod.StartRequest(ide_type="code_server", otp="123456")
+    stale = CodeWorkspace(
+        id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
+        ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
+        coder_token_name="cc-1-10-abcd1234-session",
+        status=CodeWorkspaceStatus.ABANDONED, destroyed_at=datetime(2026, 1, 1),
+    )
+    question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
+    quiz = Quiz(id=1, tenant_id=1, event_id=1, title="Q")
+    db = _mock_db(existing_workspace=stale, active_count=0, question=question, quiz=quiz)
+    redis = AsyncMock()
+
+    with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
+         patch.object(router_mod.coder_client, "create_workspace", AsyncMock()), \
+         patch.object(router_mod.coder_client, "revoke_token",
+                       AsyncMock(side_effect=Exception("token already gone"))), \
+         patch.object(router_mod.coder_client, "mint_session_url",
+                       AsyncMock(return_value=("https://sandbox/new-url", "tok-new"))) as mock_mint, \
+         patch.object(router_mod.svc, "schedule_lifetime_cap_job"):
+        result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
+
+    mock_mint.assert_called_once()
     assert result["workspace_url"] == "https://sandbox/new-url"
 
 
