@@ -65,12 +65,12 @@ jobs:
       - name: Run migrations
         run: |
           cd backend
-          alembic upgrade head
+          python -m alembic upgrade head
 
       - name: Run tests
         run: |
           cd backend
-          pytest --tb=short -q || ([ $? -eq 5 ] && echo "No tests collected — skipping")
+          python -m pytest --tb=short -q || ([ $? -eq 5 ] && echo "No tests collected — skipping")
 
   frontend:
     name: Frontend lint & build
