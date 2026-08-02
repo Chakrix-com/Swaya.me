@@ -518,23 +518,48 @@ async def start_coding_challenge(
     ready = await coder_client.wait_for_app_ready(workspace_name)
     if not ready:
         logger.warning("start: workspace %s not confirmed ready before timeout, proceeding anyway", workspace_name)
+    if existing and existing.coder_token_name:
+        # Reprovisioning a terminal (abandoned/destroyed) attempt: delete_workspace
+        # is just `coder delete`, which does not revoke the workspace's API token —
+        # the token name is deterministic (derived from workspace_name), so minting
+        # a fresh one below collides with the still-existing one from the original
+        # session. Same "revoke before re-mint" rule as the reconnect branch above.
+        try:
+            await coder_client.revoke_token(existing.coder_token_name)
+        except Exception as e:
+            logger.warning("start: revoke_token(%s) failed before reprovision re-mint: %s",
+                            existing.coder_token_name, e)
     workspace_url, token_name = await coder_client.mint_session_url(
         workspace_name, body.ide_type, settings.coder.url, settings.coder.service_account_username,
     )
 
-    workspace = CodeWorkspace(
-        tenant_id=quiz.tenant_id,
-        quiz_id=quiz_id,
-        question_id=question_id,
-        candidate_email=candidate_email,
-        attempt_number=attempt_number,
-        ide_type=body.ide_type,
-        coder_workspace_name=workspace_name,
-        coder_token_name=token_name,
-        status=CodeWorkspaceStatus.ACTIVE,
-        workspace_url=workspace_url,
-    )
-    db.add(workspace)
+    if existing:
+        # `existing` here is a terminal-but-not-SUBMITTED row (abandoned/destroyed) —
+        # both coder_workspace_name and (quiz_id, question_id, candidate_email,
+        # attempt_number) are uniquely constrained, so a fresh INSERT for the same
+        # attempt always collides. Reuse the row in place instead of creating a new
+        # one; created_at resets so the candidate gets a full fresh time budget.
+        workspace = existing
+        workspace.ide_type = body.ide_type
+        workspace.coder_token_name = token_name
+        workspace.status = CodeWorkspaceStatus.ACTIVE
+        workspace.workspace_url = workspace_url
+        workspace.created_at = datetime.utcnow()
+        workspace.destroyed_at = None
+    else:
+        workspace = CodeWorkspace(
+            tenant_id=quiz.tenant_id,
+            quiz_id=quiz_id,
+            question_id=question_id,
+            candidate_email=candidate_email,
+            attempt_number=attempt_number,
+            ide_type=body.ide_type,
+            coder_workspace_name=workspace_name,
+            coder_token_name=token_name,
+            status=CodeWorkspaceStatus.ACTIVE,
+            workspace_url=workspace_url,
+        )
+        db.add(workspace)
     await db.commit()
     await db.refresh(workspace)
 

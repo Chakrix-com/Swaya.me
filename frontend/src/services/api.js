@@ -246,7 +246,12 @@ export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offli
 export const codingChallengeAPI = {
   getInfo: (token) => api.get(`/coding-challenge/${token}`),
   requestOtp: (token) => api.post(`/coding-challenge/${token}/request-otp`),
-  start: (token, ideType, otp) => api.post(`/coding-challenge/${token}/start`, { ide_type: ideType, otp }),
+  // Real Coder workspace provisioning (terraform apply against the sandbox) —
+  // measured ~56s in practice, well past DEFAULT_TIMEOUT. A frontend timeout
+  // here doesn't stop the backend request, so the workspace still gets created
+  // and the candidate is left looking at an error for a workspace that's
+  // actually about to be ready.
+  start: (token, ideType, otp) => api.post(`/coding-challenge/${token}/start`, { ide_type: ideType, otp }, { timeout: LONG_TIMEOUT }),
   submit: (token) => api.post(`/coding-challenge/${token}/submit`),
   getStatus: (token) => api.get(`/coding-challenge/${token}/status`),
   invite: (quizId, candidateEmails) =>

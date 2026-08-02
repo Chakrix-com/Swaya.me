@@ -301,7 +301,7 @@ cmd_deploy_test() {
     nginx_reload
 
     sleep 2
-    health_check "test.swaya.me" 8001 "test.swaya.me"
+    health_check "test.swaya.me" 8004 "test.swaya.me"
     success "Test deploy complete → https://test.swaya.me"
 }
 
@@ -547,7 +547,7 @@ cmd_releases() {
 # ─── Command: migrate-test ───────────────────────────────────────────────────
 cmd_migrate_test() {
     header "Alembic migrate → test DB (swayame_test)"
-    (cd "$DEV_BACKEND" && "$TEST_VENV/bin/alembic" upgrade head)
+    (cd "$DEV_BACKEND" && PYTHONPATH="$DEV_BACKEND" "$TEST_VENV/bin/alembic" upgrade head)
     success "Test DB migrations applied."
 }
 
@@ -563,7 +563,7 @@ cmd_migrate_live() {
 # ─── Command: health ─────────────────────────────────────────────────────────
 cmd_health() {
     header "Health Checks"
-    health_check "test.swaya.me" 8001 "test.swaya.me" || true
+    health_check "test.swaya.me" 8004 "test.swaya.me" || true
     health_check "www.swaya.me"  8000 "www.swaya.me"  || true
 
     # Show currently deployed version on live
