@@ -301,6 +301,14 @@ class UserManagementServiceAsync:
             if tenant:
                 tenant.tier = user_update.tier
 
+        # tier_override is nullable and must support being explicitly cleared
+        # back to None, so (unlike the fields above) check for presence in the
+        # payload rather than "is not None".
+        if "tier_override" in user_update.model_fields_set:
+            if not AuthorizationService.is_super_admin(current_user):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only super admins can set tier_override")
+            user.tier_override = user_update.tier_override
+
         await self.db.commit()
         await self.db.refresh(user)
         

@@ -27,6 +27,10 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
     role: Optional[UserRole] = None
     tier: Optional[TierEnum] = None
+    # Per-user tier override (super_admin only) — see User.tier_override.
+    # A sentinel isn't needed for "clear the override" because the frontend
+    # always sends this field explicitly (None means "no override").
+    tier_override: Optional[TierEnum] = None
 
 
 class UserPasswordUpdate(BaseModel):
@@ -49,6 +53,7 @@ class UserResponse(UserBase):
     updated_at: datetime
     tier: Optional[str] = None
     tenant_name: Optional[str] = None
+    tier_override: Optional[TierEnum] = None
 
 
 class UserListResponse(BaseModel):

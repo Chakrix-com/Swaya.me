@@ -781,7 +781,11 @@
       "roleSuperAdmin": "ಸೂಪರ್ ಅಡ್ಮಿನ್",
       "roleAdmin": "ಅಡ್ಮಿನ್",
       "roleUser": "ಬಳಕೆದಾರ",
-      "roleViewer": "ವೀಕ್ಷಕ"
+      "roleViewer": "ವೀಕ್ಷಕ",
+      "tierOverride": "ವೈಯಕ್ತಿಕ ಓವರ್‌ರೈಡ್",
+      "tierOverrideHelp": "ಇದು ಈ ನಿರ್ದಿಷ್ಟ ಬಳಕೆದಾರರಿಗೆ ಅವರ ಟೆನೆಂಟ್‌ನ ಶ್ರೇಣಿಗಿಂತ ಹೆಚ್ಚುವರಿ ಅಧಿಕಾರಗಳನ್ನು ನೀಡುತ್ತದೆ, ಇತರರ ಪ್ರವೇಶವನ್ನು ಬದಲಾಯಿಸದೆ.",
+      "tierOverrideNone": "ಯಾವುದೂ ಇಲ್ಲ (ಟೆನೆಂಟ್ ಶ್ರೇಣಿ ಬಳಸಿ)",
+      "tierOverrideCodingChallengePro": "ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್ ಪ್ರೊ"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -1021,6 +1025,9 @@
     "currentPlan": "ಪ್ರಸ್ತುತ ಯೋಜನೆ",
     "upgradeTo": "{{tier}} ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ",
     "plansNote": "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಲು info@chakrix.net ಅನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+    "tierCodingChallengePro": "ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್ ಪ್ರೊ",
+    "tierCodingChallengeProDesc": "ಎಲ್ಲಾ PRO ಮಿತಿಗಳು, ಜೊತೆಗೆ ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್‌ಗಳನ್ನು ಹೋಸ್ಟ್ ಮಾಡುವ ಸಾಮರ್ಥ್ಯ",
+    "requestAccess": "ಪ್ರವೇಶಕ್ಕಾಗಿ ವಿನಂತಿಸಿ",
     "archivedDesc": "ಮುಗಿದ ಚಟುವಟಿಕೆಗಳು",
     "createActivityTitle": "ಇಂದು ನೀವು ಏನು ರಚಿಸಲು ಬಯಸುತ್ತೀರಿ?",
     "createNew": "ಹೊಸದನ್ನು ರಚಿಸಿ",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "ಸಂಪಾದಿಸಿ",
     "previewMarkdown": "ಮುನ್ನೋಟ",
     "createFailed": "ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್ ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "upgradeRequired": "ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್‌ಗಳನ್ನು ರಚಿಸಲು ಕೋಡಿಂಗ್ ಚಾಲೆಂಜ್ ಪ್ರೊಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.",
     "loadingChallenge": "ನಿಮ್ಮ ಚಾಲೆಂಜ್ ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ...",
     "publishBlockedHint": "ಪ್ರಕಟಿಸುವ ಮೊದಲು ಸ್ಟಾರ್ಟರ್ ರೆಪೊ URL ಸೇರಿಸಿ ಮತ್ತು ಪ್ಲೇಸ್‌ಹೋಲ್ಡರ್ ಸಮಸ್ಯೆ ವಿವರಣೆಯನ್ನು ಬದಲಾಯಿಸಿ.",
     "generateWithAiHint": "ಸಮಸ್ಯೆ ವಿವರಣೆಯನ್ನು ಸಂಪೂರ್ಣ, ವಿವರವಾದ ಚಾಲೆಂಜ್ ಆಗಿ ವಿಸ್ತರಿಸಲು AI ಬಳಸಿ",

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 from persistence.database_async import get_async_db
 from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
 from core.auth.service_async import register_user, login_user
-from core.auth.dependencies import get_current_user
+from core.auth.dependencies import get_current_user, can_host_coding_challenge
 from core.security.jwt import revoke_token
 from shared.utils.redis_client import get_redis, RedisClient
 from core.auth.email_service import send_welcome_email
@@ -119,9 +119,10 @@ async def get_me(
         full_name=current_user.user.full_name,
         tenant_id=current_user.tenant.id,
         tenant_name=current_user.tenant.name,
-        tier=current_user.tenant.tier.value,
+        tier=current_user.tier,
         is_active=current_user.user.is_active,
-        role=current_user.user.role.value
+        role=current_user.user.role.value,
+        can_host_coding_challenge=can_host_coding_challenge(current_user)
     )
 
 

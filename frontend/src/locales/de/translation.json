@@ -555,6 +555,9 @@
     "currentPlan": "Aktueller Plan",
     "upgradeTo": "Auf {{tier}} upgraden",
     "plansNote": "Kontaktiere info@chakrix.net, um deinen Plan zu upgraden.",
+    "tierCodingChallengePro": "Coding Challenge Pro",
+    "tierCodingChallengeProDesc": "Alle PRO-Limits, plus die Möglichkeit, Coding Challenges zu hosten",
+    "requestAccess": "Zugang anfordern",
     "archivedDesc": "Abgeschlossene Aktivitäten",
     "createActivityTitle": "Was möchten Sie heute erstellen?",
     "createNew": "Neu erstellen",
@@ -934,7 +937,11 @@
       "roleSuperAdmin": "Super-Administrator",
       "roleAdmin": "Administrator",
       "roleUser": "Benutzer",
-      "roleViewer": "Betrachter"
+      "roleViewer": "Betrachter",
+      "tierOverride": "Individuelle Überschreibung",
+      "tierOverrideHelp": "Gewährt diesem bestimmten Benutzer zusätzliche Berechtigungen über die Stufe seines Mandanten hinaus, ohne den Zugriff anderer zu ändern.",
+      "tierOverrideNone": "Keine (Mandantenstufe verwenden)",
+      "tierOverrideCodingChallengePro": "Coding Challenge Pro"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "Bearbeiten",
     "previewMarkdown": "Vorschau",
     "createFailed": "Die Coding Challenge konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "upgradeRequired": "Aktualisieren Sie auf Coding Challenge Pro, um Coding Challenges zu erstellen.",
     "loadingChallenge": "Ihre Challenge wird eingerichtet...",
     "publishBlockedHint": "Fügen Sie eine Start-Repo-URL hinzu und ersetzen Sie die Platzhalter-Problemstellung vor der Veröffentlichung.",
     "generateWithAiHint": "Nutzen Sie KI, um die Problemstellung zu einer vollständigen, detaillierten Challenge auszuarbeiten",

@@ -38,8 +38,9 @@ from shared.exceptions.quiz import (
     QuizNotFoundError, QuestionNotFoundError, QuizValidationError,
     InvalidQuizStatusError, TierLimitExceededError
 )
+from fastapi import HTTPException, status
 from core.config.tier_service import TierService
-from core.auth.dependencies import CurrentUser
+from core.auth.dependencies import CurrentUser, can_host_coding_challenge
 from core.storage import ImageService
 
 # Kept in sync with CODING_CHALLENGE_PROBLEM_TEMPLATE in
@@ -576,7 +577,10 @@ class QuizBuilderServiceAsync:
         # Explicitly determine quiz type
         raw_type = request.quiz_type.value if hasattr(request.quiz_type, 'value') else str(request.quiz_type)
         q_type = QuizType.EXAM if any(k in raw_type.lower() for k in ["exam", "test"]) else QuizType(raw_type)
-        
+
+        if q_type == QuizType.CODING_CHALLENGE and not can_host_coding_challenge(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="upgrade_required")
+
         # Create quiz
         quiz = Quiz(
             tenant_id=current_user.tenant_id,
@@ -619,6 +623,9 @@ class QuizBuilderServiceAsync:
         hosts creating challenges at the same time never see each other's
         numbering jump around).
         """
+        if not can_host_coding_challenge(current_user):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="upgrade_required")
+
         result = await db.execute(
             select(Quiz.title)
             .join(Event, Quiz.event_id == Event.id)
@@ -913,7 +920,7 @@ class QuizBuilderServiceAsync:
         if template_quiz.tenant_id != current_user.tenant_id and scope_value != TemplateScope.GLOBAL.value:
             raise QuizNotFoundError("Template quiz not found")
 
-        tier_limits = await self.tier_service.get_tier_config(db, current_user.tenant.tier)
+        tier_limits = await self.tier_service.get_tier_config(db, current_user.effective_tier)
         max_questions = tier_limits["max_questions"]
         if len(template_quiz.questions) > max_questions:
             raise TierLimitExceededError(f"Template has {len(template_quiz.questions)} questions, but your tier allows {max_questions}")

@@ -47,6 +47,7 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
         role: user.role,
         is_active: user.is_active,
         tier: user.tier ? user.tier.toLowerCase() : undefined,
+        tier_override: user.tier_override ? user.tier_override.toLowerCase() : '',
       });
     } else if (visible) {
       // Reset form when creating
@@ -65,11 +66,15 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
       if (isEditing) {
         // Update existing user
         const originalTier = user.tier ? user.tier.toLowerCase() : undefined;
+        const originalTierOverride = user.tier_override ? user.tier_override.toLowerCase() : '';
         const updates = {
           full_name: values.full_name,
           role: values.role,
           is_active: values.is_active,
           ...(isSuperAdmin && values.tier && values.tier !== originalTier ? { tier: values.tier } : {}),
+          ...(isSuperAdmin && values.tier_override !== originalTierOverride
+            ? { tier_override: values.tier_override || null }
+            : {}),
         };
 
         await dispatch(updateUser({ userId: user.id, updates })).unwrap();
@@ -188,6 +193,19 @@ const UserForm = ({ visible, user, onSuccess, onCancel }) => {
               <option value="basic">{t('admin.orgs.tierBasic')}</option>
               <option value="pro">{t('admin.orgs.tierPro')}</option>
               <option value="enterprise">{t('admin.orgs.tierEnterprise')}</option>
+            </select>
+          </Form.Item>
+        )}
+
+        {isSuperAdmin && isEditing && (
+          <Form.Item
+            label={t('admin.userForm.tierOverride')}
+            name="tier_override"
+            extra={t('admin.userForm.tierOverrideHelp')}
+          >
+            <select style={nativeSelectStyle}>
+              <option value="">{t('admin.userForm.tierOverrideNone')}</option>
+              <option value="coding_challenge_pro">{t('admin.userForm.tierOverrideCodingChallengePro')}</option>
             </select>
           </Form.Item>
         )}

@@ -557,6 +557,9 @@
     "currentPlan": "Текущий план",
     "upgradeTo": "Перейти на {{tier}}",
     "plansNote": "Свяжитесь с info@chakrix.net для обновления плана.",
+    "tierCodingChallengePro": "Coding Challenge Pro",
+    "tierCodingChallengeProDesc": "Все лимиты PRO, плюс возможность проводить испытания по программированию",
+    "requestAccess": "Запросить доступ",
     "archivedDesc": "Завершённые мероприятия",
     "createActivityTitle": "Что вы хотите создать сегодня?",
     "createNew": "Создать новое",
@@ -936,7 +939,11 @@
       "roleSuperAdmin": "Супер-администратор",
       "roleAdmin": "Администратор",
       "roleUser": "Пользователь",
-      "roleViewer": "Наблюдатель"
+      "roleViewer": "Наблюдатель",
+      "tierOverride": "Индивидуальное переопределение",
+      "tierOverrideHelp": "Предоставляет этому конкретному пользователю дополнительные права сверх уровня его организации, не изменяя доступ других пользователей.",
+      "tierOverrideNone": "Нет (использовать уровень организации)",
+      "tierOverrideCodingChallengePro": "Coding Challenge Pro"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -2640,6 +2647,7 @@
     "editMarkdown": "Редактировать",
     "previewMarkdown": "Предпросмотр",
     "createFailed": "Не удалось создать испытание по программированию. Попробуйте снова.",
+    "upgradeRequired": "Перейдите на Coding Challenge Pro, чтобы создавать испытания по программированию.",
     "loadingChallenge": "Настраиваем ваше испытание...",
     "publishBlockedHint": "Перед публикацией добавьте URL стартового репозитория и замените текст-заполнитель условия задачи.",
     "generateWithAiHint": "Используйте ИИ, чтобы развернуть условие задачи в полноценное, подробное испытание",

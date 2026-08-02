@@ -15,6 +15,7 @@ from persistence.models.quiz import Quiz, Question, QuizStatus, QuestionType
 from core.security.password import hash_password, verify_password
 from core.security.jwt import create_access_token
 from core.auth.schemas import UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse
+from core.auth.dependencies import CurrentUser, can_host_coding_challenge
 from shared.exceptions.auth import (
     InvalidCredentialsError,
     UserNotFoundError,
@@ -163,6 +164,7 @@ async def register_user(db: AsyncSession, request: UserRegisterRequest) -> Token
     # or just returning user data could work. We'll return dummy token here and let frontend route to verify.
     # Alternatively, just return `is_email_verified` state in user so frontend knows.
     
+    _cu = CurrentUser(user=user, tenant=tenant)
     return TokenResponse(
         access_token="pending_verification",
         token_type="bearer",
@@ -173,9 +175,10 @@ async def register_user(db: AsyncSession, request: UserRegisterRequest) -> Token
             full_name=user.full_name,
             tenant_id=tenant.id,
             tenant_name=tenant.name,
-            tier=tenant.tier.value,
+            tier=_cu.tier,
             is_active=user.is_active,
-            role=user.role.value
+            role=user.role.value,
+            can_host_coding_challenge=can_host_coding_challenge(_cu)
         )
     )
 
@@ -255,6 +258,7 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
     )
     expires_in = 86400 * remember_days if remember_days else 86400
 
+    _cu = CurrentUser(user=user, tenant=tenant)
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -265,9 +269,10 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
             full_name=user.full_name,
             tenant_id=tenant.id,
             tenant_name=tenant.name,
-            tier=tenant.tier.value,
+            tier=_cu.tier,
             is_active=user.is_active,
-            role=user.role.value
+            role=user.role.value,
+            can_host_coding_challenge=can_host_coding_challenge(_cu)
         )
     )
 
@@ -365,6 +370,7 @@ async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict
         "role": user.role.value,
     })
 
+    _cu = CurrentUser(user=user, tenant=tenant)
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -375,9 +381,10 @@ async def oauth_login_or_register(db: AsyncSession, provider: str, profile: dict
             full_name=user.full_name,
             tenant_id=tenant.id,
             tenant_name=tenant.name,
-            tier=tenant.tier.value,
+            tier=_cu.tier,
             is_active=user.is_active,
             role=user.role.value,
+            can_host_coding_challenge=can_host_coding_challenge(_cu)
         )
     )
 

@@ -8,7 +8,8 @@ import { authAPI } from '../../services/api'
 const { Title, Text } = Typography
 
 const TIER_ORDER = ['free', 'basic', 'pro', 'enterprise']
-const TIER_COLOR = { free: '#8c8c8c', basic: '#6366F1', pro: '#7C3AED', enterprise: '#D97706' }
+const TIER_COLOR = { free: '#8c8c8c', basic: '#6366F1', pro: '#7C3AED', enterprise: '#D97706', coding_challenge_pro: '#0D9488' }
+const CODING_CHALLENGE_PRO_TIER = 'coding_challenge_pro'
 
 export default function UserPlans() {
   const { t } = useTranslation()
@@ -20,7 +21,12 @@ export default function UserPlans() {
   }, [])
 
   const currentTier = user?.tier || 'free'
-  const currentTierIdx = TIER_ORDER.indexOf(currentTier)
+  // Coding Challenge Pro is a per-user add-on (grants PRO's quota limits, not a
+  // strict upgrade step above enterprise), so rank it alongside PRO for the
+  // standard-tier upgrade-arrow logic below.
+  const currentTierIdx = TIER_ORDER.indexOf(currentTier === CODING_CHALLENGE_PRO_TIER ? 'pro' : currentTier)
+  const codingChallengeProPlan = tierPlans?.find(p => p.tier === CODING_CHALLENGE_PRO_TIER)
+  const hasCodingChallengePro = currentTier === CODING_CHALLENGE_PRO_TIER
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1000, margin: '0 auto', width: '100%' }}>
@@ -107,6 +113,67 @@ export default function UserPlans() {
                 </Col>
               )
             })}
+            {codingChallengeProPlan && (
+              <Col xs={24} sm={12} lg={6}>
+                <Card
+                  style={{
+                    borderColor: hasCodingChallengePro ? TIER_COLOR.coding_challenge_pro : '#E5E7EB',
+                    borderWidth: hasCodingChallengePro ? 2 : 1,
+                    borderRadius: 16,
+                    height: '100%',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: hasCodingChallengePro
+                      ? `0 4px 20px ${TIER_COLOR.coding_challenge_pro}22`
+                      : '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {hasCodingChallengePro && (
+                    <Tag
+                      color={TIER_COLOR.coding_challenge_pro}
+                      style={{ position: 'absolute', top: 0, right: 0, borderRadius: '0 0 0 6px', margin: 0, fontWeight: 600, fontSize: 11 }}
+                    >
+                      {t('dashboard.currentPlan', 'Current Plan')}
+                    </Tag>
+                  )}
+                  <div style={{ textAlign: 'center', marginBottom: 16, marginTop: hasCodingChallengePro ? 4 : 0 }}>
+                    <Tag color={TIER_COLOR.coding_challenge_pro} style={{ fontSize: 14, padding: '3px 14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {t('dashboard.tierCodingChallengePro', 'Coding Challenge Pro')}
+                    </Tag>
+                  </div>
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <CheckCircleOutlined style={{ color: TIER_COLOR.coding_challenge_pro, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13 }}>{t('dashboard.tierCodingChallengeProDesc', 'All PRO limits, plus hosting Coding Challenges')}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <CheckCircleOutlined style={{ color: TIER_COLOR.coding_challenge_pro, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13 }}>
+                        <strong>{codingChallengeProPlan.max_participants.toLocaleString()}</strong>{' '}{t('dashboard.tierTooltipParticipants').toLowerCase()}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <CheckCircleOutlined style={{ color: TIER_COLOR.coding_challenge_pro, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13 }}>
+                        <strong>{codingChallengeProPlan.max_questions}</strong>{' '}{t('dashboard.tierTooltipQuestions').toLowerCase()}
+                      </span>
+                    </div>
+                    {!hasCodingChallengePro && (
+                      <Button
+                        type="primary"
+                        block
+                        size="small"
+                        href="mailto:info@chakrix.net?subject=Request%20Coding%20Challenge%20Pro%20Access"
+                        style={{ background: TIER_COLOR.coding_challenge_pro, borderColor: TIER_COLOR.coding_challenge_pro, marginTop: 8 }}
+                        icon={<ArrowUpOutlined />}
+                      >
+                        {t('dashboard.requestAccess', 'Request Access')}
+                      </Button>
+                    )}
+                  </Space>
+                </Card>
+              </Col>
+            )}
           </Row>
           <Text type="secondary" style={{ fontSize: 12 }}>
             {t('dashboard.plansNote', 'Contact info@chakrix.net to upgrade your plan.')}

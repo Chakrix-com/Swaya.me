@@ -8,7 +8,7 @@ from sqlalchemy import select
 from typing import Optional
 
 from persistence.database_async import get_async_db
-from persistence.models.core import User, Tenant
+from persistence.models.core import User, Tenant, UserRole, TierEnum
 from core.security.jwt import decode_access_token, is_token_revoked
 from shared.exceptions.auth import InvalidTokenError, ExpiredTokenError
 from shared.utils.redis_client import get_redis, RedisClient
@@ -16,6 +16,23 @@ from shared.utils.redis_client import get_redis, RedisClient
 # auto_error=False so we can fall back to the HttpOnly cookie
 security = HTTPBearer(auto_error=False)
 security_optional = HTTPBearer(auto_error=False)
+
+
+def _resolve_effective_tier(user: User, tenant: Tenant) -> TierEnum:
+    """A user's tier for host-initiated actions: super_admin always gets every
+    feature (ENTERPRISE), otherwise a per-user override wins over the tenant's
+    own tier, falling back to the tenant's tier when no override is set."""
+    if user.role == UserRole.super_admin:
+        return TierEnum.ENTERPRISE
+    return user.tier_override or tenant.tier
+
+
+def can_host_coding_challenge(current_user: "CurrentUser") -> bool:
+    """Whether this user may create/start coding-challenge quizzes."""
+    return (
+        current_user.user.role == UserRole.super_admin
+        or current_user.effective_tier == TierEnum.CODING_CHALLENGE_PRO
+    )
 
 
 class CurrentUser:
@@ -27,7 +44,8 @@ class CurrentUser:
         self.user_id = user.id
         self.tenant_id = tenant.id
         self.email = user.email
-        self.tier = tenant.tier.value
+        self.effective_tier = _resolve_effective_tier(user, tenant)
+        self.tier = self.effective_tier.value
 
 
 async def _resolve_token(token: str, db: AsyncSession, redis: RedisClient) -> "CurrentUser":

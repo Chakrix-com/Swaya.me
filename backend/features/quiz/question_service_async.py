@@ -88,7 +88,7 @@ class QuestionServiceAsync:
         
         # Check tier limits
         current_count = len(quiz.questions)
-        tier = current_user.tenant.tier
+        tier = current_user.effective_tier
         
         can_add = await self.tier_service.check_question_limit(
             db,

@@ -42,7 +42,8 @@ class UserResponse(BaseModel):
     tier: str
     is_active: bool
     role: Optional[str] = "user"  # Add role field
-    
+    can_host_coding_challenge: bool = False
+
     class Config:
         from_attributes = True
 

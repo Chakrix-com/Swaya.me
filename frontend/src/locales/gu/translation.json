@@ -781,7 +781,11 @@
       "roleSuperAdmin": "સુપર એડમિન",
       "roleAdmin": "એડમિન",
       "roleUser": "વપરાશકર્તા",
-      "roleViewer": "દર્શક"
+      "roleViewer": "દર્શક",
+      "tierOverride": "વ્યક્તિગત ઓવરરાઇડ",
+      "tierOverrideHelp": "આ આ ચોક્કસ વપરાશકર્તાને તેમના ટેનન્ટના ટાયર ઉપરાંત વધારાની શક્તિઓ આપે છે, અન્ય કોઈની ઍક્સેસ બદલ્યા વિના.",
+      "tierOverrideNone": "કંઈ નહીં (ટેનન્ટ ટાયર વાપરો)",
+      "tierOverrideCodingChallengePro": "કોડિંગ ચેલેન્જ પ્રો"
     },
     "feedbackPage": {
       "accessDenied": "Access denied",
@@ -1021,6 +1025,9 @@
     "currentPlan": "વર્તમાન યોજના",
     "upgradeTo": "{{tier}} પર અપગ્રેડ કરો",
     "plansNote": "તમારી યોજના અપગ્રેડ કરવા માટે info@chakrix.net પર સંપર્ક કરો.",
+    "tierCodingChallengePro": "કોડિંગ ચેલેન્જ પ્રો",
+    "tierCodingChallengeProDesc": "તમામ PRO મર્યાદાઓ, ઉપરાંત કોડિંગ ચેલેન્જ હોસ્ટ કરવાની ક્ષમતા",
+    "requestAccess": "ઍક્સેસ માટે વિનંતી કરો",
     "archivedDesc": "પૂર્ણ થયેલી પ્રવૃત્તિઓ",
     "createActivityTitle": "આજે તમે શું બનાવવા માંગો છો?",
     "createNew": "નવું બનાવો",
@@ -2638,6 +2645,7 @@
     "editMarkdown": "સંપાદિત કરો",
     "previewMarkdown": "પૂર્વાવલોકન",
     "createFailed": "કોડિંગ ચેલેન્જ બનાવી શકાયો નહીં. કૃપા કરી ફરી પ્રયાસ કરો.",
+    "upgradeRequired": "કોડિંગ ચેલેન્જ બનાવવા માટે કોડિંગ ચેલેન્જ પ્રોમાં અપગ્રેડ કરો.",
     "loadingChallenge": "તમારો ચેલેન્જ સેટ કરી રહ્યાં છીએ...",
     "publishBlockedHint": "પ્રકાશિત કરતા પહેલા સ્ટાર્ટર રીપો URL ઉમેરો અને પ્લેસહોલ્ડર સમસ્યાનું વર્ણન બદલો.",
     "generateWithAiHint": "સમસ્યાના વર્ણનને સંપૂર્ણ, વિગતવાર ચેલેન્જમાં વિસ્તૃત કરવા AI નો ઉપયોગ કરો",
