@@ -36,6 +36,13 @@ def seed_tier_configurations(db: Session):
             features=None
         ),
         TierConfiguration(
+            tier=TierEnum.BASIC,
+            max_participants=200,
+            max_questions=30,
+            max_concurrent_events=2,
+            features=None
+        ),
+        TierConfiguration(
             tier=TierEnum.PRO,
             max_participants=1000,
             max_questions=100,
@@ -47,6 +54,15 @@ def seed_tier_configurations(db: Session):
             max_participants=10000,
             max_questions=1000,
             max_concurrent_events=50,
+            features=None
+        ),
+        TierConfiguration(
+            # Same quota limits as PRO — the extra coding-challenge capability is
+            # granted via can_host_coding_challenge(), not a limit on this row.
+            tier=TierEnum.CODING_CHALLENGE_PRO,
+            max_participants=1000,
+            max_questions=100,
+            max_concurrent_events=5,
             features=None
         )
     ]

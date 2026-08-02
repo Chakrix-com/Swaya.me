@@ -38,7 +38,11 @@ See [`docs/self-hosting/ai.md`](docs/self-hosting/ai.md) for the full provider m
 
 ## Local Development Setup
 
-Follow the [Quick Start](README.md#quick-start-docker) in the README to get the stack running. For active development, the native (non-Docker) setup is faster for hot-reload iteration.
+For the full walkthrough (DB/Redis, AI provider keys, seeding, coding-challenge
+sandbox VMs), see [docs/self-hosting/getting-started.md](docs/self-hosting/getting-started.md).
+The condensed version: follow the [Quick Start](README.md#quick-start-docker) in
+the README to get the stack running. For active development, the native
+(non-Docker) setup below is faster for hot-reload iteration.
 
 ### Backend
 

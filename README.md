@@ -88,6 +88,9 @@ Real-time updates use **Server-Sent Events** (SSE), not WebSockets — see [docs
 
 ## Quick Start (Docker)
 
+> For the full walkthrough — AI provider keys, the coding-challenge sandbox VMs,
+> troubleshooting — see [docs/self-hosting/getting-started.md](docs/self-hosting/getting-started.md).
+
 ### Prerequisites
 - Docker & Docker Compose
 - Git
@@ -197,6 +200,9 @@ Swaya.me/
 
 | Document | Description |
 |---|---|
+| [docs/self-hosting/getting-started.md](docs/self-hosting/getting-started.md) | The full local-setup walkthrough: clone → DB/Redis → AI keys → coding-challenge VMs → run |
+| [docs/self-hosting/ai.md](docs/self-hosting/ai.md) | AI provider matrix — Gemini, OpenAI, Groq, Anthropic, Ollama, local LM Studio/vLLM |
+| [docs/self-hosting/coding-challenge-vms.md](docs/self-hosting/coding-challenge-vms.md) | Setting up the Coder sandbox VM for the `coding_challenge` quiz type |
 | [docs/architecture.md](docs/architecture.md) | System overview, SSE realtime flow, service layer, data model |
 | [docs/features.md](docs/features.md) | All activity types, AI features, export, admin tools |
 | [docs/tech-choices.md](docs/tech-choices.md) | Why FastAPI, MySQL, SSE, cookies — with tradeoffs |

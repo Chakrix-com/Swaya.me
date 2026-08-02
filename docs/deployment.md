@@ -68,6 +68,8 @@ Optional:
 |---|---|
 | `OLLAMA_BASE_URL` | Local Ollama endpoint for offline AI |
 | `UPLOADS_BASE_DIR` | Path for uploaded files (default: `backend/uploads`) |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Alternative AI providers — see [self-hosting/ai.md](self-hosting/ai.md) |
+| `CODER_URL` and related `CODER_*` vars | Only needed for the `coding_challenge` quiz type — a separate sandbox VM, not part of this base deployment. See [self-hosting/coding-challenge-vms.md](self-hosting/coding-challenge-vms.md) |
 
 ### 4. Database Setup
 

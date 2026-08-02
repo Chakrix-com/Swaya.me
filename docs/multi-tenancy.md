@@ -76,7 +76,8 @@ current_user: CurrentUser = Depends(require_super_admin)
 
 ## Tier System
 
-Each tenant is assigned a tier: `FREE`, `BASIC`, `PRO`, or `ENTERPRISE`. Tier limits control:
+Each tenant is assigned a tier: `FREE`, `BASIC`, `PRO`, `ENTERPRISE`, or
+`CODING_CHALLENGE_PRO`. Tier limits control:
 
 | Limit | Description |
 |---|---|
@@ -84,6 +85,10 @@ Each tenant is assigned a tier: `FREE`, `BASIC`, `PRO`, or `ENTERPRISE`. Tier li
 | `max_questions` | Maximum questions per quiz |
 | `max_concurrent_sessions` | How many live sessions can run simultaneously |
 | `features` | JSON blob of enabled feature flags (e.g., proctoring, AI, export) |
+
+`CODING_CHALLENGE_PRO` carries the same quota limits as `PRO` — its distinct
+purpose is unlocking creation of `coding_challenge`-type quizzes (see
+"Per-user tier override" below), not different limits.
 
 ### Enforcement
 
@@ -103,7 +108,33 @@ The cache TTL means a tier upgrade takes effect within 5 minutes without a serve
 | `max_questions` | 10 |
 | `max_concurrent_sessions` | 1 |
 
-Higher tiers are configured per-tenant in the `tier_config` table (not hard-coded), so limits can be customized per customer.
+Higher tiers are configured per-tenant in the `tier_configurations` table (not hard-coded), so limits can be customized per customer.
+
+### Per-user tier override
+
+Tier is normally a whole-tenant setting (`Tenant.tier`), but a super_admin can
+also grant an **individual user** `CODING_CHALLENGE_PRO` without upgrading
+their entire organization, via `User.tier_override` (nullable). This is for
+cases like "one host at a FREE-tier org needs to run coding challenges" without
+upgrading every co-tenant.
+
+Resolution order, computed once per request as `CurrentUser.effective_tier`
+(`core/auth/dependencies.py`):
+1. `super_admin` users always resolve to `ENTERPRISE`, regardless of their
+   tenant's or their own tier — super admins get every feature unconditionally.
+2. Otherwise, `user.tier_override` wins if set.
+3. Otherwise, falls back to `tenant.tier`.
+
+`can_host_coding_challenge(current_user)` — `True` for `super_admin` or when
+`effective_tier == CODING_CHALLENGE_PRO` — gates creation of
+`coding_challenge`-type quizzes. All other host-initiated tier checks (question
+count, concurrent sessions) also use `effective_tier`, so an override or
+super_admin status correctly raises those limits too, not just the
+coding-challenge gate.
+
+Only a super_admin can set or clear another user's `tier_override` (via the
+admin Edit User form, or `PUT /users/{id}` with `tier_override: "coding_challenge_pro"` /
+`tier_override: null`).
 
 ---
 
