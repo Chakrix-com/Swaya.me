@@ -30,8 +30,10 @@ import {
   InboxOutlined,
   FolderOutlined,
   CodeOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
+import InviteCandidatesModal from '../quiz/components/InviteCandidatesModal'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import CreateChooser from './CreateChooser'
@@ -163,6 +165,8 @@ function Dashboard() {
 
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState(null)
+  const [inviteModalQuizId, setInviteModalQuizId] = useState(null)
+  const [loadingCandidatesFor, setLoadingCandidatesFor] = useState(null)
   const [showArchived, setShowArchived] = useState(false)
   const [creatingChallenge, setCreatingChallenge] = useState(false)
 
@@ -382,7 +386,7 @@ function Dashboard() {
 
   // P2-4: Up next = non-archived ready quizzes (live-runnable types), up to 4
   const upNextQuizzes = useMemo(() => (quizzes || [])
-    .filter(q => !q.archived_at && q.status === 'ready' && q.quiz_type !== 'exam' && q.quiz_type !== 'offline_poll')
+    .filter(q => !q.archived_at && q.status === 'ready' && q.quiz_type !== 'exam' && q.quiz_type !== 'offline_poll' && q.quiz_type !== 'coding_challenge')
     .slice(0, 4), [quizzes])
 
   // P2-4: Continue editing = 3 most recently updated drafts
@@ -418,6 +422,22 @@ function Dashboard() {
 
   // ── Up Next helpers ───────────────────────────────────────────────────────
   const handleStartSession = (quiz) => navigate(`/quiz/${quiz.id}/control`)
+  const handleViewCandidates = async (quiz) => {
+    setLoadingCandidatesFor(quiz.id)
+    try {
+      const res = await quizAPI.get(quiz.id)
+      const question = (res.data.questions || []).find(q => q.question_type === 'coding_challenge')
+      if (!question) {
+        message.error(t('codingChallenge.noChallengeQuestion', 'This activity has no coding-challenge question yet'))
+        return
+      }
+      navigate(`/quiz/coding-challenge-review/${question.id}`)
+    } catch (e) {
+      message.error(e?.response?.data?.detail || t('common.error', 'Something went wrong'))
+    } finally {
+      setLoadingCandidatesFor(null)
+    }
+  }
   const handleCopyLink = (quiz) => {
     const url = quiz.poll_url || quiz.exam_url || `${window.location.origin}/join`
     navigator.clipboard.writeText(url)
@@ -429,6 +449,7 @@ function Dashboard() {
     if (quiz.quiz_type === 'exam') return 'exam_results'
     if (quiz.quiz_type === 'offline_poll') return 'poll_results'
     if (quiz.has_active_session && quiz.active_session_id) return 'open'
+    if (quiz.status === 'ready' && quiz.quiz_type === 'coding_challenge') return 'send_invite'
     if (quiz.status === 'ready') return 'launch'
     return 'edit'
   }
@@ -452,6 +473,12 @@ function Dashboard() {
   }
 
   const getMoreMenuItems = (quiz) => [
+    ...(quiz.quiz_type === 'coding_challenge' && quiz.status === 'ready'
+      ? [{ key: 'send_invite', label: t('codingChallenge.inviteCandidates', 'Invite Candidates'), icon: <ShareAltOutlined />, onClick: () => setInviteModalQuizId(quiz.id) }]
+      : []),
+    ...(quiz.quiz_type === 'coding_challenge' && (quiz.question_count || 0) > 0
+      ? [{ key: 'view_candidates', label: t('codingChallenge.viewSubmissions', 'Candidates'), icon: <EyeOutlined />, disabled: loadingCandidatesFor === quiz.id, onClick: () => handleViewCandidates(quiz) }]
+      : []),
     {
       key: 'edit',
       label: t('common.edit', 'Edit'),
@@ -611,6 +638,16 @@ function Dashboard() {
                 onClick={() => navigate(`/quiz/${quiz.id}/control`)}
               >
                 {t('quiz.openRoom', 'Open Room')}
+              </Button>
+            )}
+            {primaryAction === 'send_invite' && (
+              <Button
+                type="primary"
+                size="small"
+                icon={<ShareAltOutlined />}
+                onClick={() => setInviteModalQuizId(quiz.id)}
+              >
+                {t('codingChallenge.inviteCandidates', 'Invite Candidates')}
               </Button>
             )}
             {primaryAction === 'edit' && (
@@ -1156,6 +1193,13 @@ function Dashboard() {
             </Form.Item>
           </Form>
         </SafeModal>
+
+        <InviteCandidatesModal
+          open={!!inviteModalQuizId}
+          quizId={inviteModalQuizId}
+          onClose={() => setInviteModalQuizId(null)}
+          t={t}
+        />
 
       </div>
     </div>
