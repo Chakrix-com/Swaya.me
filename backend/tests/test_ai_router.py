@@ -131,7 +131,7 @@ def test_router_exposes_all_wrapper_functions():
     required = [
         "generate_questions", "validate_quiz_prompt", "generate_participant_summary",
         "analyze_exam_results", "generate_distractors", "generate_poll_prompt",
-        "rewrite_text", "grade_text_answer", "list_available_models",
+        "rewrite_text", "grade_text_answer", "list_available_models", "assess_coding_challenge",
     ]
     for fn in required:
         assert callable(getattr(ai_router, fn, None)), f"router missing: {fn}"

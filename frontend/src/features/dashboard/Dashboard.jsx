@@ -29,6 +29,7 @@ import {
   SearchOutlined,
   InboxOutlined,
   FolderOutlined,
+  CodeOutlined,
 } from '@ant-design/icons'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import { setQuizzes, setFolders } from '../../store/quizSlice'
@@ -105,6 +106,17 @@ const ACTIVITY_TYPES = [
     iconColor: 'var(--sw-tile-opoll-fg)',
     Icon: AppstoreOutlined,
   },
+  {
+    key: 'coding_challenge',
+    titleKey: 'codingChallenge.createCodingChallenge',
+    defaultTitle: 'Coding Challenge',
+    descKey: 'codingChallenge.emptyStateDesc',
+    defaultDesc: 'A real browser IDE with AI pair-programming, auto-graded.',
+    bg: 'var(--sw-tile-cc-bg)',
+    iconBg: 'var(--sw-tile-icon-bg)',
+    iconColor: 'var(--sw-tile-cc-fg)',
+    Icon: CodeOutlined,
+  },
 ]
 
 // ── Status tag config ─────────────────────────────────────────────────────────
@@ -120,6 +132,7 @@ const TYPE_TAG = {
   exam:         { bg: 'var(--sw-tile-exam-bg)',  color: 'var(--sw-tile-exam-fg)',  labelKey: 'activities.typeExam' },
   poll:         { bg: 'var(--sw-tile-poll-bg)',  color: 'var(--sw-tile-poll-fg)',  labelKey: 'activities.typePoll' },
   offline_poll: { bg: 'var(--sw-tile-opoll-bg)', color: 'var(--sw-tile-opoll-fg)', labelKey: 'activities.typeSurvey' },
+  coding_challenge: { bg: 'var(--sw-tile-cc-bg)', color: 'var(--sw-tile-cc-fg)', labelKey: 'activities.typeCodingChallenge' },
 }
 
 const TEMPLATE_CACHE_KEY = 'templateQuizIds'
@@ -151,6 +164,28 @@ function Dashboard() {
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [creatingChallenge, setCreatingChallenge] = useState(false)
+
+  // Coding challenges skip the generic quiz-settings form entirely — one
+  // click auto-provisions a "Default N" draft (server-numbered per host)
+  // with its Problem question already scaffolded, and lands straight in
+  // the full edit studio. Every other activity type keeps the existing
+  // settings-form flow untouched.
+  const handleCreateActivityClick = async (type) => {
+    if (type.key !== 'coding_challenge') {
+      navigate(`/quiz/new?type=${type.key}`)
+      return
+    }
+    if (creatingChallenge) return
+    setCreatingChallenge(true)
+    try {
+      const res = await quizAPI.createCodingChallengeDefault()
+      navigate(`/quiz/${res.data.id}/edit?type=coding_challenge&justCreated=1`)
+    } catch (err) {
+      message.error(err?.response?.data?.detail || t('codingChallenge.createFailed'))
+      setCreatingChallenge(false)
+    }
+  }
 
   const selectedFolderId = useMemo(() => {
     const raw = searchParams.get('folder')
@@ -692,14 +727,15 @@ function Dashboard() {
             {ACTIVITY_TYPES.map(type => (
               <Col xs={12} sm={12} md={6} key={type.key}>
                 <Card
-                  hoverable
-                  onClick={() => navigate(`/quiz/new?type=${type.key}`)}
+                  hoverable={!(type.key === 'coding_challenge' && creatingChallenge)}
+                  onClick={() => handleCreateActivityClick(type)}
                   style={{
                     background: type.bg,
                     border: 'none',
                     borderRadius: 16,
-                    cursor: 'pointer',
+                    cursor: type.key === 'coding_challenge' && creatingChallenge ? 'wait' : 'pointer',
                     height: '100%',
+                    opacity: type.key === 'coding_challenge' && creatingChallenge ? 0.6 : 1,
                     transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                   }}
                   styles={{ body: { padding: 20 } }}
@@ -712,7 +748,9 @@ function Dashboard() {
                     marginBottom: 14,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}>
-                    <type.Icon style={{ fontSize: 24, color: type.iconColor }} />
+                    {type.key === 'coding_challenge' && creatingChallenge
+                      ? <Spin size="small" />
+                      : <type.Icon style={{ fontSize: 24, color: type.iconColor }} />}
                   </div>
                   <div style={{ fontWeight: 700, color: C.text1, fontSize: 15, marginBottom: 6 }}>
                     {t(type.titleKey, type.defaultTitle)}
@@ -1006,11 +1044,13 @@ function Dashboard() {
                   <Row gutter={[16, 16]} justify="center">
                     {ACTIVITY_TYPES.map(type => (
                       <Col xs={12} sm={12} md={6} key={type.key}>
-                        <Card hoverable onClick={() => navigate(`/quiz/new?type=${type.key}`)}
-                          style={{ borderTop: `3px solid ${type.iconColor}`, cursor: 'pointer', borderRadius: 12 }}
+                        <Card hoverable={!(type.key === 'coding_challenge' && creatingChallenge)} onClick={() => handleCreateActivityClick(type)}
+                          style={{ borderTop: `3px solid ${type.iconColor}`, cursor: type.key === 'coding_challenge' && creatingChallenge ? 'wait' : 'pointer', borderRadius: 12, opacity: type.key === 'coding_challenge' && creatingChallenge ? 0.6 : 1 }}
                           styles={{ body: { padding: '20px 16px', textAlign: 'center' } }}
                         >
-                          <type.Icon style={{ fontSize: 28, color: type.iconColor, marginBottom: 8 }} />
+                          {type.key === 'coding_challenge' && creatingChallenge
+                            ? <Spin size="small" style={{ marginBottom: 8 }} />
+                            : <type.Icon style={{ fontSize: 28, color: type.iconColor, marginBottom: 8 }} />}
                           <div style={{ fontWeight: 600, color: C.text1, marginBottom: 4 }}>{t(type.titleKey, type.defaultTitle)}</div>
                           <div style={{ fontSize: 12, color: C.text3 }}>{t(type.descKey, type.defaultDesc)}</div>
                         </Card>

@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Tooltip, Alert, Space } from 'antd';
+import { Form, Input, DatePicker, InputNumber, Switch, Button, Tooltip, Alert, Space, theme } from 'antd';
 import {
   SaveOutlined, ThunderboltOutlined, LoadingOutlined,
-  WarningOutlined, CheckOutlined,
+  WarningOutlined, CheckOutlined, InfoCircleOutlined,
 } from '@ant-design/icons';
 import { skins } from '../../../themes/skins';
 import './SetupPanel.css';
+import './GradingPanel.css'; // reuses .gp-row / .gp-section--accent-info for the Environment section
 
 const { TextArea } = Input;
 
@@ -38,6 +39,45 @@ function ReactionStylePicker({ value, onChange, disabled }) {
         );
       })}
     </div>
+  );
+}
+
+// Compact single-line skin picker for coding challenges — a native <select>
+// styled with antd theme tokens (not antd's Select — banned for new UI here,
+// see frontend/CLAUDE.md), matching the header's LanguageSwitcher pattern.
+function SkinSelect({ value, onChange, disabled }) {
+  const { token } = theme.useToken();
+  const arrowSvg = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="${token.colorPrimary}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+  )}`;
+  return (
+    <select
+      value={value ?? 'default'}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value === 'default' ? null : e.target.value)}
+      style={{
+        boxSizing: 'border-box',
+        width: 95,
+        height: 30,
+        lineHeight: '28px',
+        borderRadius: token.borderRadius,
+        border: `1px solid ${token.colorBorder}`,
+        background: `${token.colorBgContainer} url("${arrowSvg}") no-repeat right 8px center / 10px`,
+        color: token.colorText,
+        padding: '0 26px 0 10px',
+        fontFamily: 'inherit',
+        fontSize: 13,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+        appearance: 'none',
+        WebkitAppearance: 'none',
+        MozAppearance: 'none',
+      }}
+    >
+      {Object.values(skins).map((skin) => (
+        <option key={skin.id} value={skin.id}>{skin.emoji} {skin.name}</option>
+      ))}
+    </select>
   );
 }
 
@@ -75,6 +115,7 @@ export function SetupPanel({
   isExam,
   isPoll,
   isOfflinePoll,
+  isCodingChallenge,
   isLiveMode,
   loading,
   mainRewriting,
@@ -82,18 +123,27 @@ export function SetupPanel({
   onUnpublish,
   onMainRewrite,
   onFinish,
+  onAutoSave,
+  titleInputRef,
   i18n,
   t,
 }) {
-  const typeLabel = isExam
-    ? t('exam.typeLabel')
-    : isOfflinePoll
-      ? t('offlinePoll.typeLabel', 'Poll')
-      : isPoll
-        ? t('quiz.poll', 'Online Poll')
-        : t('quiz.quizTypeLabel', 'Online Quiz');
+  const handleFormBlur = (e) => {
+    if (!onAutoSave || !isCodingChallenge) return
+    if (e.currentTarget.contains(e.relatedTarget)) return
+    onAutoSave(form.getFieldsValue(true))
+  }
+  const typeLabel = isCodingChallenge
+    ? t('codingChallenge.questionTypeLabel', 'Coding Challenge')
+    : isExam
+      ? t('exam.typeLabel')
+      : isOfflinePoll
+        ? t('offlinePoll.typeLabel', 'Poll')
+        : isPoll
+          ? t('quiz.poll', 'Online Poll')
+          : t('quiz.quizTypeLabel', 'Online Quiz');
 
-  const typeColor = isExam ? '#059669' : isOfflinePoll ? '#DB2777' : isPoll ? '#EA580C' : '#4F46E5';
+  const typeColor = isCodingChallenge ? '#0284C7' : isExam ? '#059669' : isOfflinePoll ? '#DB2777' : isPoll ? '#EA580C' : '#4F46E5';
 
   const statusLabel = quiz?.status === 'ready'
     ? t('quiz.statusReady')
@@ -101,45 +151,53 @@ export function SetupPanel({
       ? t('quiz.statusArchived')
       : t('quiz.statusDraft');
 
-  const saveLabel = isExam
-    ? t('exam.saveSettings')
-    : isOfflinePoll
-      ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll')
-      : isPoll
-        ? t('quiz.updatePoll')
-        : t('quiz.editQuiz');
+  const saveLabel = isCodingChallenge
+    ? t('codingChallenge.saveButton', 'Save Challenge')
+    : isExam
+      ? t('exam.saveSettings')
+      : isOfflinePoll
+        ? t('offlinePoll.updateOfflinePoll', 'Update Offline Poll')
+        : isPoll
+          ? t('quiz.updatePoll')
+          : t('quiz.editQuiz');
 
   return (
-    <div className="sp-wrap">
-      {/* ── Header ── */}
-      <div className="sp-header">
-        <div className="sp-header-left">
-          <span className="sp-header-icon">⚙</span>
-          <span className="sp-header-title">{t('quiz.setupLabel', 'Setup')}</span>
-          {quiz && (
-            <span className="sp-header-badges">
-              <span className={`sp-badge sp-badge--status${quiz.status === 'ready' ? ' sp-badge--live' : ''}`}>
-                {statusLabel}
+    <div className={`sp-wrap${isCodingChallenge ? ' sp-wrap--cc' : ''}`}>
+      {/* ── Header — skipped for coding challenges: the rail nav already
+           identifies this as "Challenge Setup", and status/type are visible
+           in the page topbar, so repeating them here just costs vertical
+           space. The Save/Unpublish actions live in the topbar too. ── */}
+      {!isCodingChallenge && (
+        <div className="sp-header">
+          <div className="sp-header-left">
+            <span className="sp-header-icon">⚙</span>
+            <span className="sp-header-title">{t('quiz.setupLabel', 'Setup')}</span>
+            {quiz && (
+              <span className="sp-header-badges">
+                <span className={`sp-badge sp-badge--status${quiz.status === 'ready' ? ' sp-badge--live' : ''}`}>
+                  {statusLabel}
+                </span>
+                <span className="sp-badge" style={{ background: `${typeColor}15`, color: typeColor, borderColor: `${typeColor}40` }}>
+                  {typeLabel}
+                </span>
               </span>
-              <span className="sp-badge" style={{ background: `${typeColor}15`, color: typeColor, borderColor: `${typeColor}40` }}>
-                {typeLabel}
-              </span>
-            </span>
-          )}
+            )}
+          </div>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            loading={loading}
+            disabled={isLiveMode}
+            onClick={onSave}
+          >
+            {saveLabel}
+          </Button>
         </div>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          loading={loading}
-          disabled={isLiveMode}
-          onClick={onSave}
-        >
-          {saveLabel}
-        </Button>
-      </div>
+      )}
 
-      {/* ── Live lock banner ── */}
-      {isLiveMode && (
+      {/* ── Live lock banner — for coding challenges this now lives inline
+           in the page topbar instead, so nothing renders here. ── */}
+      {isLiveMode && !isCodingChallenge && (
         <div className="sp-live-banner">
           <WarningOutlined className="sp-live-banner-icon" />
           <div className="sp-live-banner-text">
@@ -152,21 +210,23 @@ export function SetupPanel({
         </div>
       )}
 
+      <div onBlur={handleFormBlur}>
       <Form form={form} layout="vertical" onFinish={onFinish} disabled={isLiveMode}>
         <Form.Item name="quiz_type" hidden><Input /></Form.Item>
 
         {/* ── Basics ── */}
         <div className="sp-section">
-          <div className="sp-section-title">{t('quiz.basicsSection', 'Basics')}</div>
+          {!isCodingChallenge && <div className="sp-section-title">{t('quiz.basicsSection', 'Basics')}</div>}
 
           <Form.Item
             name="title"
-            label={isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
-            rules={[{ required: true, whitespace: true, message: isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
+            label={isCodingChallenge ? t('codingChallenge.titleLabelShort', 'Title') : isExam ? t('exam.examTitle') : isOfflinePoll ? t('offlinePoll.pollTitle', 'Offline Poll Title') : isPoll ? t('quiz.pollTitle') : t('quiz.quizTitle')}
+            rules={[{ required: true, whitespace: true, message: isCodingChallenge ? t('codingChallenge.titleRequired', 'Please enter a title') : isExam ? t('exam.examTitleRequired') : isOfflinePoll ? t('offlinePoll.pollTitleRequired', 'Please enter a title') : isPoll ? t('quiz.pollTitleRequired') : t('quiz.quizTitleRequired') }]}
             style={{ marginBottom: 14 }}
           >
             <Input
-              placeholder={isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
+              ref={titleInputRef}
+              placeholder={isCodingChallenge ? t('codingChallenge.enterTitle', 'Enter coding challenge title') : isExam ? t('exam.enterExamTitle') : isOfflinePoll ? t('offlinePoll.enterPollTitle', 'Enter offline poll title') : isPoll ? t('quiz.enterPollTitle') : t('quiz.enterQuizTitle')}
               size="large"
               spellCheck="true"
               lang={i18n.language}
@@ -177,7 +237,7 @@ export function SetupPanel({
                     size="small"
                     icon={mainRewriting['title'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
                     loading={mainRewriting['title']}
-                    onClick={() => onMainRewrite('title', isExam ? 'exam title' : isPoll ? 'poll title' : 'quiz title')}
+                    onClick={() => onMainRewrite('title', isCodingChallenge ? 'coding challenge title' : isExam ? 'exam title' : isPoll ? 'poll title' : 'quiz title')}
                   />
                 </Tooltip>
               )}
@@ -185,43 +245,114 @@ export function SetupPanel({
           </Form.Item>
 
           <Form.Item
-            name="description"
-            label={isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
+            label={isCodingChallenge ? t('codingChallenge.descriptionLabel', 'Description') : isExam ? t('exam.examDescription') : isOfflinePoll ? t('offlinePoll.pollDescription', 'Description') : isPoll ? t('quiz.pollDescription') : t('quiz.quizDescription')}
             style={{ marginBottom: 0 }}
           >
-            <div className="sp-desc-wrap">
-              <TextArea
-                rows={3}
-                placeholder={isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
-                spellCheck="true"
-                lang={i18n.language}
-              />
+            <div className={`sp-desc-wrap${isCodingChallenge ? ' sp-desc-wrap--cc' : ''}`}>
+              {/* name must live on this inner, direct-child Form.Item — antd only
+                  wires value/onChange into an immediate child, so nesting the real
+                  control inside the wrapper div (as the outer Form.Item's child)
+                  silently disconnects it from form state: it always renders empty
+                  regardless of a saved value, and saving would wipe that value to
+                  null. Found via the Grading tab reusing this exact pattern. */}
+              <Form.Item name="description" noStyle>
+                <TextArea
+                  rows={isCodingChallenge ? 2 : 3}
+                  placeholder={isCodingChallenge ? t('codingChallenge.enterDescription', 'Enter coding challenge description (optional)') : isExam ? t('exam.enterExamDescription') : isOfflinePoll ? t('offlinePoll.enterPollDescription', 'Enter offline poll description (optional)') : isPoll ? t('quiz.enterPollDescription') : t('quiz.enterQuizDescription')}
+                  spellCheck="true"
+                  lang={i18n.language}
+                  style={isCodingChallenge ? { paddingRight: 32 } : undefined}
+                />
+              </Form.Item>
               <div className="sp-desc-ai">
-                <Button
-                  size="small"
-                  type="text"
-                  icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
-                  loading={mainRewriting['description']}
-                  onClick={() => onMainRewrite('description', isPoll ? 'poll description' : 'quiz description')}
-                >
-                  {t('ai.rewrite')}
-                </Button>
+                {isCodingChallenge ? (
+                  <Tooltip title={t('ai.rewriteWithAI')}>
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                      loading={mainRewriting['description']}
+                      onClick={() => onMainRewrite('description', 'coding challenge description')}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={mainRewriting['description'] ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+                    loading={mainRewriting['description']}
+                    onClick={() => onMainRewrite('description', isPoll ? 'poll description' : 'quiz description')}
+                  >
+                    {t('ai.rewrite')}
+                  </Button>
+                )}
               </div>
             </div>
           </Form.Item>
         </div>
 
-        {/* ── Appearance ── */}
-        <div className="sp-section">
-          <div className="sp-section-title">{t('quiz.appearanceSection', 'Appearance')}</div>
-          <div className="sp-section-label">{t('quiz.skinLabel', 'Participant skin')}</div>
-          <Form.Item name="skin" noStyle>
-            <SkinCard disabled={isLiveMode} t={t} />
-          </Form.Item>
-        </div>
+        {/* ── Environment (coding challenge only) — repo/test command are how the
+             candidate's workspace runs, not a grading judgment call, so they live
+             here rather than on the Grading tab. ── */}
+        {isCodingChallenge && (
+          <div className="gp-section gp-section--accent-info" style={{ borderBottom: '1px solid var(--sw-border, #e5e7eb)' }}>
+            <div className="gp-section-title">🔗 {t('codingChallenge.environmentSectionTitle', 'Environment')}</div>
+            <div className="gp-row">
+              <label className="gp-row-label">
+                {t('codingChallenge.gitRepoUrl', 'Starter repo URL')}
+                <span className="gp-row-hint">{t('codingChallenge.gitRepoUrlHelp', 'A public GitHub repo. The candidate\'s workspace clones it — the language is whatever this repo already is, never a candidate-facing choice.')}</span>
+              </label>
+              <Form.Item name="git_repo_url" noStyle rules={[{ required: true, message: t('codingChallenge.gitRepoUrlRequired', 'Please enter the starter repo URL') }]}>
+                <Input className="gp-row-value" placeholder="https://github.com/your-org/starter-repo" />
+              </Form.Item>
+            </div>
+            <div className="gp-row">
+              <label className="gp-row-label">
+                {t('codingChallenge.testCommand', 'Test command')}
+                <span className="gp-row-hint">{t('codingChallenge.testCommandHelp', 'For Java repos, use a command that recompiles (e.g. "mvn test", not "mvn surefire:test") — otherwise a hidden test won\'t be picked up.')}</span>
+              </label>
+              <Form.Item name="test_command" noStyle>
+                <Input className="gp-row-value" placeholder="pytest -q" />
+              </Form.Item>
+            </div>
+          </div>
+        )}
 
-        {/* ── Reactions (not for exam) ── */}
-        {!isExam && (
+        {/* ── Time Limit (coding challenge only) ── */}
+        {isCodingChallenge && (
+          <div className="sp-section sp-section--inline">
+            <span className="sp-section-label--inline">
+              {t('codingChallenge.timeBudget', 'Time Limit (minutes)')}
+              <Tooltip title={t('codingChallenge.timeBudgetHelp')}>
+                <InfoCircleOutlined style={{ marginLeft: 6, color: 'var(--sw-text3, #999)', cursor: 'help' }} />
+              </Tooltip>
+            </span>
+            <Form.Item name="time_budget_seconds" noStyle initialValue={120}>
+              <InputNumber min={1} style={{ width: 95 }} />
+            </Form.Item>
+          </div>
+        )}
+
+        {/* ── Appearance ── */}
+        {isCodingChallenge ? (
+          <div className="sp-section sp-section--inline">
+            <span className="sp-section-label sp-section-label--inline">{t('quiz.skinLabel', 'Participant skin')}</span>
+            <Form.Item name="skin" noStyle>
+              <SkinSelect disabled={isLiveMode} />
+            </Form.Item>
+          </div>
+        ) : (
+          <div className="sp-section">
+            <div className="sp-section-title">{t('quiz.appearanceSection', 'Appearance')}</div>
+            <div className="sp-section-label">{t('quiz.skinLabel', 'Participant skin')}</div>
+            <Form.Item name="skin" noStyle>
+              <SkinCard disabled={isLiveMode} t={t} />
+            </Form.Item>
+          </div>
+        )}
+
+        {/* ── Reactions (not for exam / coding challenge) ── */}
+        {!isExam && !isCodingChallenge && (
           <div className="sp-section">
             <div className="sp-section-title">{t('quiz.reactionsSection', 'Participant Reactions')}</div>
             <div className="sp-section-label">{t('quiz.reactionsHint', 'Let participants react after the session ends')}</div>
@@ -231,8 +362,8 @@ export function SetupPanel({
           </div>
         )}
 
-        {/* ── Behaviour (quiz / poll only — not exam/offline poll) ── */}
-        {!isExam && !isOfflinePoll && (
+        {/* ── Behaviour (quiz / poll only — not exam/offline poll/coding challenge) ── */}
+        {!isExam && !isOfflinePoll && !isCodingChallenge && (
           <div className="sp-section">
             <div className="sp-section-title">{t('quiz.behaviourSection', 'Behaviour')}</div>
             <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -369,21 +500,25 @@ export function SetupPanel({
           </div>
         )}
 
-        {/* ── Save footer ── */}
-        <div className="sp-save-footer">
-          <Button
-            type="primary"
-            size="large"
-            icon={<SaveOutlined />}
-            loading={loading}
-            disabled={isLiveMode}
-            onClick={onSave}
-            block
-          >
-            {saveLabel}
-          </Button>
-        </div>
+        {/* ── Save footer — coding challenges already have Save in the
+             topbar, so skip the duplicate down here. ── */}
+        {!isCodingChallenge && (
+          <div className="sp-save-footer">
+            <Button
+              type="primary"
+              size="large"
+              icon={<SaveOutlined />}
+              loading={loading}
+              disabled={isLiveMode}
+              onClick={onSave}
+              block
+            >
+              {saveLabel}
+            </Button>
+          </div>
+        )}
       </Form>
+      </div>
     </div>
   );
 }

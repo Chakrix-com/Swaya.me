@@ -1,0 +1,373 @@
+.coding-challenge-session {
+  --cc-accent: #5a2d81;
+  /* Matches the checkmark color on the actual graded Result screen (ResultStep's
+     "graded" branch) exactly, rather than the app's separate --sw-success token,
+     so the journey's "done" green is the same green a candidate sees at the finish. */
+  --cc-result-green: #52c41a;
+}
+
+/* ── Top header row — capsule / title / capsule, single line ────────────────── */
+
+.cc-page-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.cc-header-capsule {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--cc-accent);
+  padding: 6px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.cc-header-capsule--left {
+  justify-self: start;
+}
+
+.cc-header-capsule--right {
+  justify-self: end;
+}
+
+.cc-page-title {
+  margin: 0 !important;
+  justify-self: center;
+  text-align: center;
+  color: var(--cc-accent) !important;
+}
+
+.cc-panel-heading {
+  text-align: center;
+  color: var(--cc-accent) !important;
+  margin: 0 0 12px !important;
+}
+
+.cc-columns {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.cc-col-sticky {
+  position: sticky;
+  top: 76px;
+}
+
+.cc-journey-card,
+.cc-problem-card,
+.cc-action-card {
+  border-radius: 10px;
+  border: 1px solid var(--sw-border, #e5e7eb);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The action panel's content genuinely changes size by phase — the "Getting
+   Started" guidelines + OTP form is naturally taller than the compact
+   post-workspace view — and since all three columns stretch to match
+   whichever is tallest right now, the whole row would otherwise shrink once
+   that taller phase-1 content goes away. This floor keeps the row's height
+   stable across the whole flow instead of jumping shorter after /start. */
+.cc-action-card {
+  min-height: 510px;
+}
+
+.cc-journey-card .ant-card-body,
+.cc-action-card .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.cc-action-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cc-journey-card {
+  background: color-mix(in srgb, var(--cc-accent) 6%, var(--sw-card, #fff));
+}
+
+.cc-problem-card {
+  background: color-mix(in srgb, var(--cc-accent) 6%, var(--sw-card, #fff));
+}
+
+.cc-action-card {
+  background: color-mix(in srgb, var(--cc-accent) 6%, var(--sw-card, #fff));
+}
+
+/* ── Problem panel ────────────────────────────────────────────────────────── */
+
+.cc-challenge-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cc-challenge-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sw-text1, #1a1a1a);
+}
+
+.cc-problem-subbox {
+  position: relative;
+}
+
+.cc-github-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #181717;
+  color: #fff;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.cc-github-badge:hover {
+  background: #2b2b2b;
+  color: #fff;
+}
+
+.cc-guideline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cc-guideline-icon {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.cc-guideline-icon--time {
+  color: var(--sw-info, #3b82f6);
+  background: color-mix(in srgb, var(--sw-info, #3b82f6) 14%, transparent);
+}
+
+.cc-guideline-icon--grading {
+  color: var(--cc-accent);
+  background: color-mix(in srgb, var(--cc-accent) 14%, transparent);
+}
+
+.cc-guideline-icon--ai {
+  color: #db2777;
+  background: color-mix(in srgb, #db2777 14%, transparent);
+}
+
+/* ── Journey rail — pulsing live step, filled connector, centered content ───── */
+
+.cc-journey-card {
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--cc-accent) 14%, transparent);
+}
+
+/* Amazon-tracker layout: one column of icons pinned to a fixed left position
+   (not dead-centered — shifted left to leave room for the stage name on the
+   right of each icon), with a single continuous line running straight through
+   every icon's center. */
+.cc-journey-icons {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex: 1;
+  padding-left: 18px;
+}
+
+.cc-journey-track,
+.cc-journey-track-fill {
+  position: absolute;
+  top: 19px;
+  left: 37px;
+  width: 3px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.cc-journey-track {
+  bottom: 19px;
+  background: var(--sw-border, #d9d9d9);
+  z-index: 0;
+}
+
+.cc-journey-track-fill {
+  background: var(--cc-result-green);
+  z-index: 1;
+  transition: height 0.3s ease;
+}
+
+.cc-journey-icon-slot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cc-journey-label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.cc-journey-label--done {
+  color: var(--cc-result-green);
+  font-weight: 600;
+}
+
+.cc-journey-label--current {
+  color: var(--sw-warning, #d97706);
+  font-weight: 700;
+}
+
+.cc-journey-label--upcoming {
+  color: var(--sw-text3, #999);
+}
+
+.cc-journey-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.cc-journey-icon-wrap--current::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--sw-warning, #d97706);
+  animation: cc-pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes cc-pulse-ring {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-journey-icon-wrap--current::before {
+    animation: none;
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.cc-journey-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 2px solid;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+.cc-journey-icon--done {
+  background: var(--cc-result-green);
+  border-color: var(--cc-result-green);
+  color: #fff;
+}
+
+.cc-journey-icon--current {
+  background: var(--sw-warning, #d97706);
+  border-color: var(--sw-warning, #d97706);
+  color: #fff;
+  transform: scale(1.15);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--sw-warning, #d97706) 40%, transparent);
+}
+
+.cc-journey-icon--upcoming {
+  background: transparent;
+  border-color: var(--sw-border, #d9d9d9);
+  color: var(--sw-text3, #999);
+}
+
+/* ── Timer ────────────────────────────────────────────────────────────────── */
+
+.cc-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cc-timer--grace {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text2, #666);
+  background: var(--sw-surface, #f5f5f5);
+}
+
+.cc-timer--normal {
+  color: var(--sw-text1, #1a1a1a);
+  background: color-mix(in srgb, var(--sw-info, #3b82f6) 8%, transparent);
+}
+
+.cc-timer--warning {
+  color: var(--sw-warning, #d97706);
+  background: color-mix(in srgb, var(--sw-warning, #d97706) 10%, transparent);
+}
+
+.cc-timer--danger {
+  color: var(--sw-error, #ef4444);
+  background: color-mix(in srgb, var(--sw-error, #ef4444) 10%, transparent);
+  font-size: 15px;
+}
+
+@media (max-width: 1100px) {
+  .cc-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-col-sticky {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-page-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 8px;
+  }
+
+  .cc-header-capsule--left,
+  .cc-header-capsule--right {
+    justify-self: center;
+  }
+}

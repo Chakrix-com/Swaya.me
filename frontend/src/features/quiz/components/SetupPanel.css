@@ -7,6 +7,16 @@
   margin-bottom: 24px;
 }
 
+/* Coding challenge: drop the card chrome (border/background/radius) so the
+   panel isn't a "box within a box" floating inside the already-padded
+   .qb-stage — it should just flow flush, same as the rail does. */
+.sp-wrap--cc {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
 /* ── Header ────────────────────────────────────────────────────────────── */
 .sp-header {
   display: flex;
@@ -104,10 +114,53 @@
   opacity: 0.85;
 }
 
+/* Condensed single-line variant — coding challenge only. Same warning
+   palette as .sp-live-banner but no title/description split and no
+   button (the Save/Unpublish actions live in the page topbar instead). */
+.sp-live-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 500;
+}
+.sp-live-strip .anticon {
+  color: #d97706;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
 /* ── Sections ──────────────────────────────────────────────────────────── */
 .sp-section {
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--sw-border, #e5e7eb);
+}
+/* No divider trailing the last section — it was reading as a stray line with
+   nothing below it once the page stopped needing to scroll. */
+.sp-wrap > .sp-section:last-child,
+.sp-wrap > .gp-section:last-child {
+  border-bottom: none;
+}
+
+/* Coding challenge: compact single-line Appearance row — a full section
+   header + label + card grid is too much space for one cosmetic setting. */
+.sp-section--inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 20px;
+}
+.sp-section-label--inline {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text1, #1a1a2e);
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .sp-section-title {
@@ -135,6 +188,16 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 4px;
+}
+
+/* Coding challenge: float the AI-rewrite button inside the textarea's own
+   border (bottom-right corner), matching how the Title input embeds its
+   rewrite button as a suffix inside its box, instead of as a row below. */
+.sp-desc-wrap--cc .sp-desc-ai {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  margin-top: 0;
 }
 
 /* ── Inline row (schedule + access fields) ─────────────────────────────── */

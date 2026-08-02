@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime
 import os
+import re
 import secrets
 
 from persistence.models.quiz import (
@@ -40,6 +41,41 @@ from shared.exceptions.quiz import (
 from core.config.tier_service import TierService
 from core.auth.dependencies import CurrentUser
 from core.storage import ImageService
+
+# Kept in sync with CODING_CHALLENGE_PROBLEM_TEMPLATE in
+# frontend/src/features/quiz/QuizBuilder.jsx — used only when a default
+# coding challenge is auto-provisioned server-side (one-click create).
+CODING_CHALLENGE_PROBLEM_TEMPLATE = """## Background
+
+_One or two sentences on the real-world scenario this problem is based on._
+
+## Task
+
+_What exactly should the candidate build? Be specific and imperative._
+
+## Requirements
+
+- Requirement 1
+- Requirement 2
+
+## Constraints & Scale
+
+- Input size: up to N records/requests
+- Time limit: must complete within X seconds for the scale above
+- (if relevant) Throughput, latency, or concurrency targets — e.g. "handle 1,000 writes/sec with p99 < 200ms"
+
+## Examples
+
+**Input:**
+```
+...
+```
+
+**Output:**
+```
+...
+```
+"""
 
 
 class QuizBuilderServiceAsync:
@@ -570,7 +606,77 @@ class QuizBuilderServiceAsync:
         await db.refresh(quiz)
 
         return self._to_quiz_response(quiz)
-    
+
+    async def create_default_coding_challenge(
+        self,
+        db: AsyncSession,
+        current_user: CurrentUser
+    ) -> QuizResponse:
+        """
+        One-click coding-challenge creation: skips the generic quiz-settings
+        form entirely and lands the host directly in the full edit studio.
+        Title is auto-numbered "Default N" per-host (not per-tenant, so two
+        hosts creating challenges at the same time never see each other's
+        numbering jump around).
+        """
+        result = await db.execute(
+            select(Quiz.title)
+            .join(Event, Quiz.event_id == Event.id)
+            .filter(
+                Quiz.tenant_id == current_user.tenant_id,
+                Quiz.quiz_type == QuizType.CODING_CHALLENGE,
+                Event.creator_id == current_user.user_id,
+                Quiz.title.like("Default %"),
+            )
+        )
+        next_n = 1
+        for (existing_title,) in result.all():
+            m = re.match(r"^Default (\d+)$", existing_title or "")
+            if m:
+                next_n = max(next_n, int(m.group(1)) + 1)
+        title = f"Default {next_n}"
+
+        event = Event(
+            tenant_id=current_user.tenant_id,
+            creator_id=current_user.user_id,
+            title=f"Quiz Session - {title}",
+            description=None,
+            join_code=None,
+        )
+        db.add(event)
+        await db.flush()
+
+        quiz = Quiz(
+            tenant_id=current_user.tenant_id,
+            event_id=event.id,
+            title=title,
+            description=None,
+            quiz_type=QuizType.CODING_CHALLENGE,
+            status=QuizStatus.DRAFT,
+        )
+        db.add(quiz)
+        await db.flush()
+
+        question = Question(
+            quiz_id=quiz.id,
+            question_type=QuestionType.CODING_CHALLENGE,
+            text=CODING_CHALLENGE_PROBLEM_TEMPLATE,
+            order=1,
+            time_budget_seconds=120 * 60,  # Setup tab's "Time Limit" field is in minutes; column is seconds
+        )
+        db.add(question)
+
+        await db.commit()
+
+        result = await db.execute(
+            select(Quiz)
+            .filter(Quiz.id == quiz.id)
+            .options(selectinload(Quiz.questions), selectinload(Quiz.folder))
+        )
+        quiz = result.scalar_one()
+
+        return self._to_quiz_response(quiz)
+
     async def get_quiz(
         self,
         db: AsyncSession,
@@ -1381,6 +1487,13 @@ class QuizBuilderServiceAsync:
                     negative_points=getattr(q, 'negative_points', 0) or 0,
                     answer_explanation=q.answer_explanation,
                     grading_rubric=q.grading_rubric,
+                    git_repo_url=getattr(q, 'git_repo_url', None),
+                    test_command=getattr(q, 'test_command', None),
+                    hidden_test_content=getattr(q, 'hidden_test_content', None),
+                    hidden_test_filename=getattr(q, 'hidden_test_filename', None),
+                    time_budget_seconds=getattr(q, 'time_budget_seconds', None),
+                    grading_weights=getattr(q, 'grading_weights', None),
+                    result_visibility=getattr(q, 'result_visibility', None),
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],

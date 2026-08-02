@@ -3,7 +3,7 @@ Quiz feature domain models
 """
 from sqlalchemy import Column, Integer, BigInteger, Float, String, Boolean, Enum as SQLEnum, ForeignKey, Text, JSON, DateTime, UniqueConstraint
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME
+from sqlalchemy.dialects.mysql import DATETIME as MYSQL_DATETIME, LONGTEXT as MYSQL_LONGTEXT
 from sqlalchemy.orm import relationship
 import enum
 
@@ -24,6 +24,7 @@ class QuizType(str, enum.Enum):
     POLL = "poll"
     OFFLINE_POLL = "offline_poll"
     EXAM = "exam"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 class QuizSessionStatus(str, enum.Enum):
@@ -50,6 +51,7 @@ class QuestionType(str, enum.Enum):
     ONE_WORD = "one_word"
     CODE = "code"
     MCQ_MULTI = "mcq_multi"
+    CODING_CHALLENGE = "coding_challenge"
 
 
 class TemplateScope(str, enum.Enum):
@@ -165,6 +167,15 @@ class FolderShare(Base):
     folder = relationship("QuizFolder", back_populates="shares")
 
 
+class CodingResultVisibility(str, enum.Enum):
+    """How much of a graded coding-challenge result the candidate sees. Always
+    gated on submission status == GRADED regardless of this value — see
+    /coding-challenge/{token}/status."""
+    HIDDEN = "hidden"
+    STATUS_ONLY = "status_only"
+    FULL = "full"
+
+
 class Question(Base, TimestampMixin):
     """
     Question definition - part of a quiz
@@ -190,9 +201,143 @@ class Question(Base, TimestampMixin):
     answer_explanation = Column(Text, nullable=True)
     grading_rubric = Column(Text, nullable=True)
 
+    # CODING_CHALLENGE fields
+    git_repo_url = Column(String(500), nullable=True)
+    test_command = Column(String(255), nullable=True, default="pytest -q", server_default="pytest -q")
+    hidden_test_content = Column(Text, nullable=True)
+    hidden_test_filename = Column(String(255), nullable=True)
+    time_budget_seconds = Column(Integer, nullable=True)
+    # Host-overridden grading criteria weights (percentages, must sum to 100).
+    # Null = use the platform default weights (grading_service_async._WEIGHTS).
+    grading_weights = Column(JSON, nullable=True)
+    result_visibility = Column(
+        SQLEnum(CodingResultVisibility, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False, default=CodingResultVisibility.HIDDEN, server_default="hidden",
+    )
+
     # Relationships
     quiz = relationship("Quiz", back_populates="questions")
     answers = relationship("Answer", back_populates="question")
+
+
+class CodeWorkspaceStatus(str, enum.Enum):
+    """Coding-challenge Coder workspace lifecycle status"""
+    PROVISIONING = "provisioning"
+    ACTIVE = "active"
+    SUBMITTED = "submitted"
+    ABANDONED = "abandoned"
+    DESTROYED = "destroyed"
+
+
+class CodeWorkspace(Base, TimestampMixin, TenantMixin):
+    """
+    A candidate's per-workspace Coder sandbox for a CODING_CHALLENGE question.
+    """
+    __tablename__ = "code_workspaces"
+    __table_args__ = (
+        # One row per attempt, not per candidate — attempt_number lets a host grant a
+        # re-invite after a terminal attempt without colliding with the prior one.
+        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', 'attempt_number',
+                          name='uq_code_workspace_quiz_question_email_attempt'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
+    candidate_email = Column(String(255), nullable=False, index=True)
+    attempt_number = Column(Integer, nullable=False, default=1, server_default="1")
+    ide_type = Column(String(20), nullable=False)  # code_server | intellij
+    coder_workspace_name = Column(String(255), nullable=False, unique=True)
+    coder_token_name = Column(String(255), nullable=True)
+    status = Column(
+        SQLEnum(CodeWorkspaceStatus, values_callable=lambda obj: [e.value for e in obj]),
+        default=CodeWorkspaceStatus.PROVISIONING,
+        nullable=False,
+        server_default=CodeWorkspaceStatus.PROVISIONING.value,
+    )
+    workspace_url = Column(String(1000), nullable=True)
+    submitted_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    destroyed_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
+    # Relationships
+    quiz = relationship("Quiz")
+    question = relationship("Question")
+    submission = relationship("CodeSubmission", back_populates="workspace", uselist=False)
+
+
+class CodingChallengeInvite(Base, TimestampMixin, TenantMixin):
+    """
+    Tracks that a candidate was invited to a CODING_CHALLENGE question. The
+    invite link itself is a stateless signed JWT — this table is the only
+    record of "who was invited" that exists before (or absent) the candidate
+    ever starting, since CodeWorkspace isn't created until they do.
+    created_at = first invited, updated_at = most recently re-invited (used
+    to derive Pending/Expired status against the JWT's fixed validity window,
+    rather than storing a status that could drift out of sync).
+    """
+    __tablename__ = "coding_challenge_invites"
+    __table_args__ = (
+        UniqueConstraint('quiz_id', 'question_id', 'candidate_email', name='uq_cc_invite_quiz_question_email'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
+    candidate_email = Column(String(255), nullable=False, index=True)
+    invited_by_user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    email_sent = Column(Boolean, nullable=False, default=True, server_default="1")
+    # Which attempt the most recent invite email targets — lets the review screen
+    # show "re-invited, awaiting attempt 2" even though no CodeWorkspace row exists
+    # yet for that attempt (one isn't created until the candidate actually starts).
+    latest_invited_attempt_number = Column(Integer, nullable=False, default=1, server_default="1")
+
+    # Relationships
+    quiz = relationship("Quiz")
+    question = relationship("Question")
+
+
+class CodeSubmissionStatus(str, enum.Enum):
+    """Coding-challenge grading pipeline status"""
+    QUEUED = "queued"
+    GRADING = "grading"
+    GRADED = "graded"
+    FAILED = "failed"
+    PARTIAL_FAILED = "partial_failed"
+
+
+class CodeSubmission(Base, TimestampMixin):
+    """
+    A candidate's submitted coding-challenge solution and its (possibly async, possibly
+    partial) grading outcome. Inserted at /submit time, not at /start.
+    """
+    __tablename__ = "code_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey('code_workspaces.id'), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey('questions.id'), nullable=False, index=True)
+    test_output = Column(MYSQL_LONGTEXT, nullable=True)
+    passed_count = Column(Integer, nullable=True)
+    total_count = Column(Integer, nullable=True)
+    ai_transcript_raw = Column(MYSQL_LONGTEXT, nullable=True)
+    code_timeline = Column(MYSQL_LONGTEXT, nullable=True)
+    ai_token_usage = Column(JSON, nullable=True)
+    score_breakdown = Column(JSON, nullable=True)
+    ai_score = Column(Integer, nullable=True)
+    ai_verdict = Column(String(50), nullable=True)
+    ai_rationale = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
+    status = Column(
+        SQLEnum(CodeSubmissionStatus, values_callable=lambda obj: [e.value for e in obj]),
+        default=CodeSubmissionStatus.QUEUED,
+        nullable=False,
+        server_default=CodeSubmissionStatus.QUEUED.value,
+    )
+    submitted_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+    graded_at = Column(MYSQL_DATETIME(fsp=6), nullable=True)
+
+    # Relationships
+    workspace = relationship("CodeWorkspace", back_populates="submission")
+    question = relationship("Question")
 
 
 class QuizSession(Base, TimestampMixin, TenantMixin):

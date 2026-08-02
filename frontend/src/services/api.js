@@ -58,6 +58,7 @@ export const quizAPI = {
   list: (eventId, search, includeArchived) => api.get('/quizzes/', { params: { event_id: eventId, search, include_archived: includeArchived || undefined } }),
   get: (id) => api.get(`/quizzes/${id}`),
   create: (data) => api.post('/quizzes/', data),
+  createCodingChallengeDefault: () => api.post('/quizzes/coding-challenges/default'),
   update: (id, data) => api.put(`/quizzes/${id}`, data),
   assignFolder: (id, folderId) => api.put(`/quizzes/${id}/folder`, { folder_id: folderId }),
   delete: (id) => api.delete(`/quizzes/${id}`),
@@ -241,6 +242,21 @@ export const offlinePollAPI = {
 // Quiz Publish Offline
 export const publishOfflinePoll = (id) => api.post(`/quizzes/${id}/publish-offline`)
 
+// Coding Challenge API
+export const codingChallengeAPI = {
+  getInfo: (token) => api.get(`/coding-challenge/${token}`),
+  requestOtp: (token) => api.post(`/coding-challenge/${token}/request-otp`),
+  start: (token, ideType, otp) => api.post(`/coding-challenge/${token}/start`, { ide_type: ideType, otp }),
+  submit: (token) => api.post(`/coding-challenge/${token}/submit`),
+  getStatus: (token) => api.get(`/coding-challenge/${token}/status`),
+  invite: (quizId, candidateEmails) =>
+    api.post(`/quizzes/${quizId}/coding-challenge/invite`, { candidate_emails: candidateEmails }),
+  listInvites: (quizId) => api.get(`/quizzes/${quizId}/coding-challenge/invites`),
+  getReview: (questionId) => api.get(`/quiz-builder/questions/${questionId}/coding-challenge-review`),
+  regrade: (questionId, submissionId) =>
+    api.post(`/quiz-builder/questions/${questionId}/coding-challenge-review/submissions/${submissionId}/regrade`),
+}
+
 // Exam API
 export const examAPI = {
   getInfo: (slug) => api.get(`/e/${slug}`),
@@ -273,6 +289,7 @@ export const aiAPI = {
   generateDistractors: (data) => api.post('/ai/generate/options', data, { timeout: LONG_TIMEOUT }),
   generatePollPrompt: (data) => api.post('/ai/generate/poll-prompt', data, { timeout: LONG_TIMEOUT }),
   rewrite: (data) => api.post('/ai/rewrite', data, { timeout: LONG_TIMEOUT }),
+  generateCodingChallengeProblem: (data) => api.post('/ai/generate-coding-challenge-problem', data, { timeout: LONG_TIMEOUT }),
   listModels: () => api.get('/ai/models'),
   extractText: (file, url) => {
     const form = new FormData()
