@@ -1,18 +1,21 @@
 """
 Coding-challenge /start concurrency smoke check.
 
-/start blocks each candidate for up to WORKSPACE_START_TIMEOUT (120s by default,
-see coder_client.wait_for_app_ready) while polling `coder ssh` as a subprocess
-every ~2s. Nothing in this repo had ever load-tested whether firing a few of
-these concurrently starves the rest of the app (other quiz/poll/exam traffic,
-also served by the same uvicorn workers). This fires N (default 2 — deliberately
-well under MAX_CONCURRENT_WORKSPACES so it doesn't compete with real candidate
-traffic on a shared Coder sandbox) *real* concurrent /start calls, using the
-actual invite -> OTP -> start flow (OTP is read directly out of Redis rather
-than needing real email delivery, since this only ever targets our own test
-infra), while a separate thread hammers an unrelated light endpoint every 2s
-to prove the app stays responsive throughout. Cleans up every quiz + Coder
-workspace it creates, even on failure.
+/start used to block each candidate for up to ~150s+ doing the real Coder
+provisioning inline (create_workspace + wait_for_app_ready + mint_session_url),
+which is exactly what let nginx's proxy_read_timeout race a slow-but-successful
+provision under concurrency and hand a candidate a false failure. /start now
+acks fast and does the real work in a background job (provision_workspace_job),
+so this script fires N (default 2 — deliberately well under
+MAX_CONCURRENT_WORKSPACES so it doesn't compete with real candidate traffic on a
+shared Coder sandbox) *real* concurrent /start calls via the actual invite -> OTP
+-> start flow (OTP read directly out of Redis, since this only ever targets our
+own test infra), then polls /status the same way the real frontend does — THAT
+poll result is the actual acceptance test (a candidate must eventually reach a
+real workspace_url or an honest provision_failed, never hang or get a false
+failure while a workspace silently succeeds server-side). A separate thread
+hammers an unrelated light endpoint throughout to prove the app stays
+responsive. Cleans up every quiz + Coder workspace it creates, even on failure.
 
 TEST ONLY by design — never point SWAYA_API_BASE at www.swaya.me for this one;
 it provisions real Coder workspaces on the shared sandbox, unlike api_sweep.py.
@@ -151,11 +154,14 @@ def poll_light_endpoint(stop_event, results):
 
 
 def do_start(c, results, idx):
+    """Fires /start and records its (now fast, sub-second) ack. /start no longer
+    does the actual Coder provisioning inline — see wait_for_ready below for the
+    real pass/fail signal."""
     anon = requests.Session()
     t0 = time.time()
     try:
         r = anon.post(f"{BASE}/coding-challenge/{c['token']}/start",
-                       json={"ide_type": "code_server", "otp": c["otp"]}, timeout=150)
+                       json={"ide_type": "code_server", "otp": c["otp"]}, timeout=30)
         elapsed = time.time() - t0
         results[idx] = (elapsed, r.status_code, r.text[:300])
         if r.status_code == 200:
@@ -163,6 +169,34 @@ def do_start(c, results, idx):
                 __import__("hashlib").sha256(f"{c['email'].lower()}:1".encode()).hexdigest()[:8]
     except Exception as e:
         results[idx] = (time.time() - t0, "EXC", str(e))
+
+
+READY_TIMEOUT_S = 180  # generous margin over the old 150s nginx timeout this replaces
+
+
+def wait_for_ready(c, ready_results, idx):
+    """/start now just acks fast and kicks off provisioning in the background —
+    this polls /status the same way the real frontend does, and IS the actual
+    acceptance test for the fix: a candidate must eventually reach a real
+    workspace_url (or an honest provision_failed), never hang forever or get a
+    false failure while a workspace silently succeeds server-side."""
+    anon = requests.Session()
+    t0 = time.time()
+    while time.time() - t0 < READY_TIMEOUT_S:
+        try:
+            r = anon.get(f"{BASE}/coding-challenge/{c['token']}/status", timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                if data.get("status") == "provision_failed":
+                    ready_results[idx] = ("provision_failed", time.time() - t0, data)
+                    return
+                if data.get("workspace_url"):
+                    ready_results[idx] = ("ready", time.time() - t0, data)
+                    return
+        except Exception:
+            pass  # transient poll failure — keep trying until the timeout, matching the frontend
+        time.sleep(2)
+    ready_results[idx] = ("timeout", time.time() - t0, None)
 
 
 def main():
@@ -182,6 +216,7 @@ def main():
     print("Setup OK for all candidates.\n")
 
     all_started_ok = False
+    all_ready_ok = False
     slow = []
     poll_results = []
     try:
@@ -199,12 +234,10 @@ def main():
             th.start()
         for th in threads:
             th.join()
-        t_total = time.time() - t_begin
+        t_ack = time.time() - t_begin
 
-        stop_event.set()
-        poll_thread.join(timeout=5)
-
-        print(f"\n/start calls finished in {t_total:.1f}s total (concurrent, not summed):")
+        print(f"\n/start acks finished in {t_ack:.1f}s total (concurrent, not summed) — "
+              f"expected to be fast now, real provisioning happens in the background:")
         all_started_ok = True
         for i, res in enumerate(start_results):
             elapsed, status, body = res
@@ -212,7 +245,33 @@ def main():
             all_started_ok = all_started_ok and ok
             print(f"  [{'PASS' if ok else 'FAIL'}] candidate {i}: {elapsed:.1f}s status={status} {body if not ok else ''}")
 
-        print(f"\nLight-endpoint responsiveness during the {t_total:.1f}s window "
+        print(f"\nPolling /status for real readiness (up to {READY_TIMEOUT_S}s each) — "
+              f"this is the actual acceptance test, not the fast ack above...")
+        ready_results = [None] * N
+        ready_threads = []
+        for i, c in enumerate(candidates):
+            if start_results[i][1] != 200:
+                ready_results[i] = ("skipped", 0, None)
+                continue
+            th = threading.Thread(target=wait_for_ready, args=(c, ready_results, i))
+            ready_threads.append(th)
+            th.start()
+        for th in ready_threads:
+            th.join()
+        t_total = time.time() - t_begin
+
+        stop_event.set()
+        poll_thread.join(timeout=5)
+
+        all_ready_ok = True
+        for i, res in enumerate(ready_results):
+            outcome, elapsed, data = res
+            ok = outcome == "ready"
+            all_ready_ok = all_ready_ok and ok
+            detail = f"status={data.get('status')}" if data else ""
+            print(f"  [{'PASS' if ok else 'FAIL'}] candidate {i}: {outcome} after {elapsed:.1f}s {detail}")
+
+        print(f"\nLight-endpoint responsiveness during the full {t_total:.1f}s window "
               f"({len(poll_results)} polls of GET /auth/tier-plans):")
         slow = [p for p in poll_results if isinstance(p[1], str) or p[0] > 3.0]
         for elapsed, status in poll_results:
@@ -227,10 +286,11 @@ def main():
         cleanup(s, candidates)
 
     print("\n==== SUMMARY ====")
-    print(f"All {N} /start calls succeeded: {all_started_ok}")
+    print(f"All {N} /start calls acked: {all_started_ok}")
+    print(f"All {N} workspaces actually became ready: {all_ready_ok}")
     print(f"Light-endpoint polls that were slow (>3s) or errored: {len(slow)} / {len(poll_results)}")
 
-    if not all_started_ok or slow:
+    if not all_started_ok or not all_ready_ok or slow:
         sys.exit(1)
 
 
