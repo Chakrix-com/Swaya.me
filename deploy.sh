@@ -788,14 +788,40 @@ cmd_preflight() {
     info "Dev ready to deploy : $dev_branch [$dev_sha]"
     [[ -n "$live_ver" ]] && info "Currently on live   : $live_ver"
 
-    # Commits since last deploy
-    local last_sha; last_sha=$(echo "$live_ver" | grep -oP '[a-f0-9]{7,8}' | head -1 || true)
+    # Commits since last deploy. .deployed_version looks like:
+    #   release/20260728_134811 (aa2ab8a8) on main — Tue Jul 28 13:48:16 UTC 2026
+    # A bare `grep -oP '[a-f0-9]{7,8}'` matches the FIRST hex-looking substring
+    # left to right — which is "20260728" (part of the release timestamp, since
+    # digits are valid hex characters too), not the actual SHA "aa2ab8a8" that
+    # comes later. That fed `git log 20260728..HEAD` an invalid revision, which
+    # failed silently (stderr to /dev/null) and — combined with `set -o
+    # pipefail` making the whole pipe non-zero — produced a garbled "0" (from
+    # `wc -l` on git log's empty output) immediately followed by a stray "?" on
+    # its own line (from the `|| echo "?"` fallback also firing), always
+    # reporting "0 commits" no matter how far behind live actually was.
+    # Confirmed this was hiding the real ~50-commit gap in this exact repo.
+    # Fixed by anchoring to the parens the SHA is actually printed inside.
+    local last_sha; last_sha=$(echo "$live_ver" | grep -oP '\(\K[a-f0-9]{7,8}(?=\))' | head -1 || true)
     if [[ -n "$last_sha" ]]; then
-        local commit_count
-        commit_count=$(git -C "$DEV_ROOT" log --oneline "${last_sha}..HEAD" 2>/dev/null | wc -l || echo "?")
+        local log_output commit_count
+        if log_output=$(git -C "$DEV_ROOT" log --oneline "${last_sha}..HEAD" 2>/dev/null); then
+            # Check emptiness directly rather than piping to wc/grep -c and
+            # relying on ||-fallback for the zero-matches case — grep -c on
+            # empty input prints "0" but exits 1, which would trigger an ||
+            # fallback to ALSO print, reproducing the exact double-output bug
+            # (a stray extra line) this whole fix exists to get rid of.
+            if [[ -z "$log_output" ]]; then
+                commit_count=0
+            else
+                commit_count=$(echo "$log_output" | wc -l)
+            fi
+        else
+            commit_count="?"
+            log_output=""
+        fi
         info "Commits since last deploy: $commit_count"
         if [[ "$commit_count" =~ ^[0-9]+$ && "$commit_count" -gt 0 ]]; then
-            git -C "$DEV_ROOT" log --oneline "${last_sha}..HEAD" 2>/dev/null | while IFS= read -r line; do
+            echo "$log_output" | while IFS= read -r line; do
                 echo -e "     ${CYAN}│${RESET} $line"
             done
         fi
