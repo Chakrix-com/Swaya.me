@@ -1,7 +1,16 @@
 """
 Unit tests for POST /coding-challenge/{token}/start (6.4): OTP guard, concurrency
-guard, idempotency guard, lifetime-cap job scheduling. Route handler called
-directly with mocked db/redis, matching this repo's test convention.
+guard, idempotency guard. Route handler called directly with mocked db/redis,
+matching this repo's test convention.
+
+/start no longer does the actual Coder provisioning inline (that moved to
+provision_workspace_job, a background job — see test_coding_challenge_provision_job.py)
+because it was a fully-synchronous 70-150s+ chain under concurrency that raced
+nginx's proxy_read_timeout, giving a candidate a false failure for a workspace
+that actually succeeded moments later. /start now just persists a PROVISIONING
+row and schedules the background job — these tests reflect that fast-ack contract.
+The only case that still mints synchronously here is reconnecting to an already-
+ACTIVE workspace, since that doesn't need provisioning at all.
 """
 import asyncio
 from datetime import datetime
@@ -79,15 +88,19 @@ def test_start_rejects_when_at_capacity():
     redis = AsyncMock()
 
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
-         patch.object(router_mod.coder_client, "create_workspace", AsyncMock()) as mock_create:
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
         with pytest.raises(HTTPException) as exc_info:
             asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
     assert exc_info.value.status_code == 429
-    mock_create.assert_not_called()
+    mock_schedule.assert_not_called()
 
 
 def test_start_allows_when_under_capacity():
+    """A genuinely new candidate under capacity: /start persists a PROVISIONING
+    row and schedules the background job — it must NOT call create_workspace/
+    mint_session_url itself (those moved to provision_workspace_job) and must NOT
+    return a workspace_url yet, since none has been minted."""
     token = _make_token()
     body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
@@ -97,16 +110,18 @@ def test_start_allows_when_under_capacity():
 
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
          patch.object(router_mod.coder_client, "create_workspace", AsyncMock()) as mock_create, \
-         patch.object(router_mod.coder_client, "mint_session_url",
-                       AsyncMock(return_value=("https://sandbox/url", "tok-name"))), \
-         patch.object(router_mod.svc, "schedule_lifetime_cap_job") as mock_schedule:
+         patch.object(router_mod.coder_client, "mint_session_url", AsyncMock()) as mock_mint, \
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
-    mock_create.assert_called_once()
-    assert result["workspace_url"] == "https://sandbox/url"
+    mock_create.assert_not_called()  # provisioning itself happens in the background job, not here
+    mock_mint.assert_not_called()
+    assert result["status"] == "provisioning"
+    assert "workspace_url" not in result
     assert result["effective_time_budget_seconds"] == router_mod.settings.coder.workspace_max_lifetime_seconds
     assert result["workspace_created_at"].endswith("Z")
-    mock_schedule.assert_called_once()
+    mock_schedule.assert_called_once_with(1)  # fake_refresh sets id=1
+    db.commit.assert_called_once()
 
 
 # ── Idempotency guard ────────────────────────────────────────────────────────
@@ -133,6 +148,7 @@ def test_start_reconnects_to_existing_active_workspace_without_reprovisioning():
         "cc-1-10-abcd1234", "code_server", router_mod.settings.coder.url,
         router_mod.settings.coder.service_account_username,
     )
+    assert result["status"] == "active"
     assert result["workspace_url"] == "https://sandbox/reconnect-url"
     assert result["workspace_created_at"].endswith("Z")
     assert result["effective_time_budget_seconds"] == router_mod.settings.coder.workspace_max_lifetime_seconds
@@ -192,19 +208,48 @@ def test_start_tolerates_revoke_failure_before_remint():
     assert result["workspace_url"] == "https://sandbox/reconnect-url"
 
 
+def test_start_reconnects_to_existing_provisioning_workspace_without_reprovisioning():
+    """A provisioning job is already in flight for this attempt (candidate called
+    /start, then reloaded before it finished) — /start must not fire a second
+    create_workspace/schedule_provision_job, just ack so the frontend polls."""
+    token = _make_token()
+    body = router_mod.StartRequest(ide_type="code_server", otp="123456")
+    existing = CodeWorkspace(
+        id=1, tenant_id=1, quiz_id=1, question_id=10, candidate_email="candidate@example.com",
+        ide_type="code_server", coder_workspace_name="cc-1-10-abcd1234",
+        status=CodeWorkspaceStatus.PROVISIONING, created_at=datetime.utcnow(),
+    )
+    db = _mock_db(existing_workspace=existing)
+    redis = AsyncMock()
+
+    with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
+         patch.object(router_mod.coder_client, "create_workspace", AsyncMock()) as mock_create, \
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
+        result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
+
+    mock_create.assert_not_called()
+    mock_schedule.assert_not_called()  # the already-running job isn't re-scheduled
+    assert result["status"] == "provisioning"
+    assert "workspace_url" not in result
+    db.commit.assert_not_called()  # nothing to persist, purely a read
+
+
 def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
-    """An idempotency-check hit on a long-abandoned/destroyed row must not block a
-    genuinely fresh provision — and must reuse that row rather than INSERT a new
-    one, since both coder_workspace_name and (quiz_id, question_id,
-    candidate_email, attempt_number) are uniquely constrained on this table, so a
-    fresh INSERT for the same attempt always collides against the real DB (a bug
-    this test didn't catch until it asserted db.add was never called — the mock
-    alone doesn't enforce uniqueness). Must also revoke the stale row's old
-    session token before minting a new one — delete_workspace is just
-    `coder delete`, which doesn't revoke API tokens, and the token name is
-    deterministic (derived from workspace_name), so re-minting without revoking
-    first collides too (confirmed live: this exact sequence — reprovision after
-    abandonment — hit both collisions back to back on test.swaya.me)."""
+    """An idempotency-check hit on a long-abandoned/destroyed/provision_failed row
+    must not block a genuinely fresh provision — and must reuse that row rather
+    than INSERT a new one, since both coder_workspace_name and (quiz_id,
+    question_id, candidate_email, attempt_number) are uniquely constrained on this
+    table, so a fresh INSERT for the same attempt always collides against the real
+    DB (a bug this test didn't catch until it asserted db.add was never called —
+    the mock alone doesn't enforce uniqueness). Must also revoke the stale row's
+    old session token — delete_workspace is just `coder delete`, which doesn't
+    revoke API tokens, and the token name is deterministic (derived from
+    workspace_name), so a later re-mint (inside provision_workspace_job) without
+    revoking first would collide (confirmed live: this exact sequence —
+    reprovision after abandonment — hit both collisions back to back on
+    test.swaya.me). Provisioning itself (create_workspace/mint_session_url) now
+    happens in the background job, not inline here — see
+    test_coding_challenge_provision_job.py for that half."""
     token = _make_token()
     body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     stale = CodeWorkspace(
@@ -221,19 +266,20 @@ def test_start_ignores_stale_destroyed_workspace_and_reprovisions():
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
          patch.object(router_mod.coder_client, "create_workspace", AsyncMock()) as mock_create, \
          patch.object(router_mod.coder_client, "revoke_token", AsyncMock()) as mock_revoke, \
-         patch.object(router_mod.coder_client, "mint_session_url",
-                       AsyncMock(return_value=("https://sandbox/new-url", "tok-new"))), \
-         patch.object(router_mod.svc, "schedule_lifetime_cap_job"):
+         patch.object(router_mod.coder_client, "mint_session_url", AsyncMock()) as mock_mint, \
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
-    mock_create.assert_called_once()  # DOES re-provision since the old one is gone
-    mock_revoke.assert_called_once_with("cc-1-10-abcd1234-session")  # old token revoked before re-mint
+    mock_create.assert_not_called()  # provisioning happens in the background job, not here
+    mock_mint.assert_not_called()
+    mock_revoke.assert_called_once_with("cc-1-10-abcd1234-session")  # old token revoked up front
     db.add.assert_not_called()  # reuses the existing row in place, never a fresh INSERT
-    assert stale.status == CodeWorkspaceStatus.ACTIVE
-    assert stale.workspace_url == "https://sandbox/new-url"
-    assert stale.coder_token_name == "tok-new"
+    assert stale.status == CodeWorkspaceStatus.PROVISIONING
+    assert stale.workspace_url is None
+    assert stale.coder_token_name is None
     assert stale.destroyed_at is None
-    assert result["workspace_url"] == "https://sandbox/new-url"
+    assert result["status"] == "provisioning"
+    mock_schedule.assert_called_once_with(1)
 
 
 def test_start_reprovision_tolerates_revoke_failure_before_remint():
@@ -253,21 +299,22 @@ def test_start_reprovision_tolerates_revoke_failure_before_remint():
     redis = AsyncMock()
 
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
-         patch.object(router_mod.coder_client, "create_workspace", AsyncMock()), \
          patch.object(router_mod.coder_client, "revoke_token",
                        AsyncMock(side_effect=Exception("token already gone"))), \
-         patch.object(router_mod.coder_client, "mint_session_url",
-                       AsyncMock(return_value=("https://sandbox/new-url", "tok-new"))) as mock_mint, \
-         patch.object(router_mod.svc, "schedule_lifetime_cap_job"):
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
         result = asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
-    mock_mint.assert_called_once()
-    assert result["workspace_url"] == "https://sandbox/new-url"
+    mock_schedule.assert_called_once()
+    assert result["status"] == "provisioning"
+    assert stale.status == CodeWorkspaceStatus.PROVISIONING
 
 
-# ── Lifetime-cap job scheduling ─────────────────────────────────────────────
-
-def test_start_schedules_lifetime_cap_job_with_correct_deadline():
+def test_start_schedules_provision_job_with_new_workspace_id():
+    """/start's job is just to persist the row and hand off — the lifetime-cap
+    scheduling that used to happen here now happens inside provision_workspace_job
+    once provisioning actually succeeds (see test_coding_challenge_provision_job.py),
+    anchored to when the workspace became usable, not to when this row was
+    inserted."""
     token = _make_token()
     body = router_mod.StartRequest(ide_type="code_server", otp="123456")
     question = Question(id=10, quiz_id=1, git_repo_url="https://github.com/x/y")
@@ -281,19 +328,10 @@ def test_start_schedules_lifetime_cap_job_with_correct_deadline():
     db.refresh = AsyncMock(side_effect=fake_refresh)
 
     with patch.object(router_mod.svc, "verify_coding_challenge_otp", AsyncMock(return_value=True)), \
-         patch.object(router_mod.coder_client, "create_workspace", AsyncMock()), \
-         patch.object(router_mod.coder_client, "mint_session_url",
-                       AsyncMock(return_value=("https://sandbox/url", "tok"))), \
-         patch.object(router_mod.svc, "schedule_lifetime_cap_job") as mock_schedule:
+         patch.object(router_mod.svc, "schedule_provision_job") as mock_schedule:
         asyncio.run(router_mod.start_coding_challenge(token, body, db, redis))
 
-    workspace_id, workspace_name, fire_at = mock_schedule.call_args[0]
-    assert workspace_id == 42
-    assert workspace_name == "cc-1-10-" + router_mod._derive_workspace_name(1, 10, "candidate@example.com").split("-")[-1]
-    expected_deadline = datetime(2026, 1, 1, 0, 0, 0) + router_mod.timedelta(
-        seconds=router_mod.settings.coder.workspace_max_lifetime_seconds
-    )
-    assert fire_at == expected_deadline
+    mock_schedule.assert_called_once_with(42)
 
 
 def test_derive_workspace_name_deterministic_and_scoped():

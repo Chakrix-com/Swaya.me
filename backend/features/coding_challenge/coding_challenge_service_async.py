@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config.settings import settings
 from core.security.jwt import create_access_token, decode_access_token
 from persistence.models.quiz import (
-    CodeWorkspace, CodeWorkspaceStatus, CodeSubmission, CodeSubmissionStatus,
+    CodeWorkspace, CodeWorkspaceStatus, CodeSubmission, CodeSubmissionStatus, Question,
 )
 from shared.exceptions.auth import InvalidTokenError, ExpiredTokenError
 from features.coding_challenge import coder_client
@@ -210,6 +210,105 @@ def cancel_lifetime_cap_job(coder_workspace_name: str) -> None:
         pass  # already fired/removed — nothing to do
 
 
+# ── Async workspace provisioning (scheduled by /start, mirrors run_grading_job) ──
+
+def provision_job_id(workspace_id: int) -> str:
+    """Deterministic job ID, same convention as lifetime_cap_job_id/grading's job id."""
+    return f"coding-challenge-provision:{workspace_id}"
+
+
+async def provision_workspace_job(workspace_id: int) -> None:
+    """
+    Scheduled job callback (fired via DateTrigger(run_date=utcnow()) immediately
+    after /start returns its fast ack): does the actual `coder create` +
+    wait_for_app_ready + mint_session_url work that /start used to do inline,
+    which is what let nginx's proxy_read_timeout race a slow-but-successful
+    provision under concurrency. Runs in its own DB session since it executes
+    well after the request that scheduled it has already returned.
+    """
+    from persistence.database_async import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+        workspace = await db.get(CodeWorkspace, workspace_id)
+        if not workspace or workspace.status != CodeWorkspaceStatus.PROVISIONING:
+            # Already handled (e.g. reconcile_on_startup already marked this
+            # provision_failed after a restart) or a stale duplicate fire — nothing to do.
+            logger.warning(
+                "provision_workspace_job: workspace %s missing or not PROVISIONING, skipping",
+                workspace_id,
+            )
+            return
+
+        # ide_type is already validated against the (currently code_server-only)
+        # supported set by /start before this row is ever created — see
+        # _IDE_TEMPLATE_MAP_SETTING in broker/api/coding_challenge.py.
+        template_name = settings.coder.code_server_template_name
+        question = await db.get(Question, workspace.question_id)
+
+        try:
+            await coder_client.create_workspace(
+                workspace.coder_workspace_name, template_name,
+                question.git_repo_url or "" if question else "",
+            )
+            # coder create only confirms the agent connected, not that code-server
+            # itself has finished starting inside the container — without this
+            # wait, candidates hit a real "connection refused" 502 on first open
+            # (confirmed live, same reasoning as the old inline /start flow).
+            ready = await coder_client.wait_for_app_ready(workspace.coder_workspace_name)
+            if not ready:
+                logger.warning(
+                    "provision_workspace_job: workspace %s not confirmed ready before "
+                    "timeout, proceeding anyway", workspace.coder_workspace_name,
+                )
+            workspace_url, token_name = await coder_client.mint_session_url(
+                workspace.coder_workspace_name, workspace.ide_type,
+                settings.coder.url, settings.coder.service_account_username,
+            )
+        except Exception as e:
+            logger.error(
+                "provision_workspace_job: provisioning failed for workspace %s (%s): %s",
+                workspace_id, workspace.coder_workspace_name, e,
+            )
+            workspace.status = CodeWorkspaceStatus.PROVISION_FAILED
+            await db.commit()
+            return
+
+        workspace.status = CodeWorkspaceStatus.ACTIVE
+        workspace.workspace_url = workspace_url
+        workspace.coder_token_name = token_name
+        # The candidate's time budget must anchor to when the workspace actually
+        # became usable, not to when this row was first inserted (at /start time,
+        # before provisioning even began) — otherwise slow/contended provisioning
+        # would silently eat into their coding time. Mirrors the existing
+        # reuse-terminal-row convention in /start (coding_challenge.py) that
+        # already resets created_at when reprovisioning an abandoned/destroyed row.
+        workspace.created_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(workspace)
+
+        lifetime_deadline = workspace.created_at + timedelta(
+            seconds=settings.coder.workspace_max_lifetime_seconds
+        )
+        schedule_lifetime_cap_job(workspace.id, workspace.coder_workspace_name, lifetime_deadline)
+
+
+def schedule_provision_job(workspace_id: int) -> None:
+    """Schedules the async-provisioning job to fire effectively immediately."""
+    from apscheduler.triggers.date import DateTrigger
+    from core.stats import scheduler as stats_scheduler
+
+    if not stats_scheduler.scheduler:
+        logger.warning("schedule_provision_job: scheduler not running, workspace %s stuck", workspace_id)
+        return
+    stats_scheduler.scheduler.add_job(
+        provision_workspace_job,
+        trigger=DateTrigger(run_date=datetime.utcnow()),
+        args=[workspace_id],
+        id=provision_job_id(workspace_id),
+        replace_existing=True,
+    )
+
+
 # ── Startup reconciliation (survives a backend restart between scheduling and firing) ──
 
 async def reconcile_on_startup(db: AsyncSession) -> dict:
@@ -217,6 +316,11 @@ async def reconcile_on_startup(db: AsyncSession) -> dict:
     Run once during lifespan startup, after the scheduler itself has started:
     - Any code_workspace still `active` whose lifetime deadline has passed (or is
       close) gets its reap job re-scheduled (fired immediately if already overdue).
+    - Any code_workspace still `provisioning` had its background provision_workspace_job
+      killed along with the old process (APScheduler jobs don't survive a restart any
+      more than the grading ones do) — marked `provision_failed` so it's never
+      permanently stuck with nothing to poll toward; a retried /start cleanly reuses
+      the row via the existing terminal-row-reuse path.
     - Any code_submission stuck at `queued`/`grading` is marked `failed` with a
       clear "interrupted by a backend restart" message — never silently re-run,
       since the underlying workspace may already be mid-teardown or partially
@@ -238,6 +342,15 @@ async def reconcile_on_startup(db: AsyncSession) -> dict:
         rescheduled += 1
 
     result = await db.execute(
+        select(CodeWorkspace).where(CodeWorkspace.status == CodeWorkspaceStatus.PROVISIONING)
+    )
+    stuck_workspaces = result.scalars().all()
+    for workspace in stuck_workspaces:
+        workspace.status = CodeWorkspaceStatus.PROVISION_FAILED
+    if stuck_workspaces:
+        await db.commit()
+
+    result = await db.execute(
         select(CodeSubmission).where(
             CodeSubmission.status.in_([CodeSubmissionStatus.QUEUED, CodeSubmissionStatus.GRADING])
         )
@@ -251,6 +364,7 @@ async def reconcile_on_startup(db: AsyncSession) -> dict:
 
     summary = {
         "lifetime_cap_jobs_rescheduled": rescheduled,
+        "stuck_provisions_marked_failed": len(stuck_workspaces),
         "stuck_submissions_marked_failed": len(stuck_submissions),
     }
     logger.info("coding_challenge reconcile_on_startup: %s", summary)

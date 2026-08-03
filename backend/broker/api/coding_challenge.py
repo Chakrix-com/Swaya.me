@@ -467,7 +467,7 @@ async def start_coding_challenge(
         # destroyed-but-recorded workspace, so a second create collides and 500s.
         # There's nothing left for them to do here regardless.
         raise HTTPException(status_code=409, detail="You've already submitted this challenge.")
-    if existing and existing.status in (CodeWorkspaceStatus.PROVISIONING, CodeWorkspaceStatus.ACTIVE):
+    if existing and existing.status == CodeWorkspaceStatus.ACTIVE:
         # mint_session_url derives a deterministic token name from the workspace name
         # (see Workspace isolation), so re-minting for a returning candidate without
         # revoking the still-live token from their first /start collides with
@@ -488,7 +488,20 @@ async def start_coding_challenge(
         await db.commit()
         question = await db.get(Question, question_id)
         return {
+            "status": "active",
             "workspace_url": workspace_url,
+            "workspace_created_at": _utc_iso(existing.created_at),
+            "effective_time_budget_seconds": _effective_time_budget(question),
+        }
+
+    if existing and existing.status == CodeWorkspaceStatus.PROVISIONING:
+        # A provisioning job is already in flight for this attempt (or, if the
+        # backend restarted mid-job, reconcile_on_startup will already have flipped
+        # this to PROVISION_FAILED before we'd ever see PROVISIONING here again) —
+        # nothing to (re)start, just tell the frontend to poll /status.
+        question = await db.get(Question, question_id)
+        return {
+            "status": "provisioning",
             "workspace_created_at": _utc_iso(existing.created_at),
             "effective_time_budget_seconds": _effective_time_budget(question),
         }
@@ -509,41 +522,37 @@ async def start_coding_challenge(
         raise HTTPException(status_code=404, detail="Coding challenge not found")
 
     workspace_name = _derive_workspace_name(quiz_id, question_id, candidate_email, attempt_number)
-    template_name = getattr(settings.coder, _IDE_TEMPLATE_MAP_SETTING[body.ide_type])
 
-    await coder_client.create_workspace(workspace_name, template_name, question.git_repo_url or "")
-    # coder create only confirms the agent connected, not that code-server itself
-    # has finished starting inside the container — without this wait, candidates
-    # hit a real "connection refused" 502 on their very first open (confirmed live).
-    ready = await coder_client.wait_for_app_ready(workspace_name)
-    if not ready:
-        logger.warning("start: workspace %s not confirmed ready before timeout, proceeding anyway", workspace_name)
     if existing and existing.coder_token_name:
-        # Reprovisioning a terminal (abandoned/destroyed) attempt: delete_workspace
-        # is just `coder delete`, which does not revoke the workspace's API token —
-        # the token name is deterministic (derived from workspace_name), so minting
-        # a fresh one below collides with the still-existing one from the original
-        # session. Same "revoke before re-mint" rule as the reconnect branch above.
+        # Reprovisioning a terminal (abandoned/destroyed/provision_failed) attempt:
+        # delete_workspace is just `coder delete`, which does not revoke the
+        # workspace's API token — the token name is deterministic (derived from
+        # workspace_name), so a fresh mint later (inside the background job) would
+        # collide with the still-existing one from the prior attempt. Same
+        # "revoke before re-mint" rule as the reconnect branch above.
         try:
             await coder_client.revoke_token(existing.coder_token_name)
         except Exception as e:
             logger.warning("start: revoke_token(%s) failed before reprovision re-mint: %s",
                             existing.coder_token_name, e)
-    workspace_url, token_name = await coder_client.mint_session_url(
-        workspace_name, body.ide_type, settings.coder.url, settings.coder.service_account_username,
-    )
 
+    # Provisioning itself (coder create + wait_for_app_ready + mint_session_url) no
+    # longer happens inline here — it's a fully-synchronous, 70-150s+ chain under
+    # concurrency that used to race nginx's proxy_read_timeout, giving a candidate a
+    # false failure for a workspace that actually succeeded moments later (confirmed
+    # via coding_challenge_concurrency_check.py). Instead: persist a PROVISIONING
+    # row and return immediately; provision_workspace_job does the real work in the
+    # background, and the frontend polls /status for readiness.
     if existing:
-        # `existing` here is a terminal-but-not-SUBMITTED row (abandoned/destroyed) —
-        # both coder_workspace_name and (quiz_id, question_id, candidate_email,
-        # attempt_number) are uniquely constrained, so a fresh INSERT for the same
-        # attempt always collides. Reuse the row in place instead of creating a new
-        # one; created_at resets so the candidate gets a full fresh time budget.
+        # `existing` here is a terminal-but-not-SUBMITTED row (abandoned/destroyed/
+        # provision_failed) — both coder_workspace_name and (quiz_id, question_id,
+        # candidate_email, attempt_number) are uniquely constrained, so a fresh
+        # INSERT for the same attempt always collides. Reuse the row in place.
         workspace = existing
         workspace.ide_type = body.ide_type
-        workspace.coder_token_name = token_name
-        workspace.status = CodeWorkspaceStatus.ACTIVE
-        workspace.workspace_url = workspace_url
+        workspace.coder_token_name = None
+        workspace.status = CodeWorkspaceStatus.PROVISIONING
+        workspace.workspace_url = None
         workspace.created_at = datetime.utcnow()
         workspace.destroyed_at = None
     else:
@@ -555,19 +564,16 @@ async def start_coding_challenge(
             attempt_number=attempt_number,
             ide_type=body.ide_type,
             coder_workspace_name=workspace_name,
-            coder_token_name=token_name,
-            status=CodeWorkspaceStatus.ACTIVE,
-            workspace_url=workspace_url,
+            status=CodeWorkspaceStatus.PROVISIONING,
         )
         db.add(workspace)
     await db.commit()
     await db.refresh(workspace)
 
-    lifetime_deadline = workspace.created_at + timedelta(seconds=settings.coder.workspace_max_lifetime_seconds)
-    svc.schedule_lifetime_cap_job(workspace.id, workspace_name, lifetime_deadline)
+    svc.schedule_provision_job(workspace.id)
 
     return {
-        "workspace_url": workspace_url,
+        "status": "provisioning",
         "workspace_created_at": _utc_iso(workspace.created_at),
         "effective_time_budget_seconds": _effective_time_budget(question),
     }
@@ -661,6 +667,15 @@ async def get_coding_challenge_status(token: str, db: AsyncSession = Depends(get
     workspace = result.scalar_one_or_none()
     if not workspace:
         raise HTTPException(status_code=404, detail="No workspace found — call /start first")
+
+    if workspace.status == CodeWorkspaceStatus.PROVISION_FAILED:
+        # Distinct from "not_submitted" so the frontend stops polling and shows a
+        # real error + retry action, instead of waiting forever for a workspace_url
+        # that will never arrive.
+        return {
+            "status": "provision_failed",
+            "detail": "Workspace provisioning failed — please try starting again.",
+        }
 
     result = await db.execute(
         select(CodeSubmission).filter(CodeSubmission.workspace_id == workspace.id)

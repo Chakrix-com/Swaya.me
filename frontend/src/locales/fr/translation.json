@@ -2817,7 +2817,10 @@
     "reinviteSuccess": "{{email}} a été réinvité",
     "attemptBadge": "Tentative {{number}}",
     "attemptHistoryHeading": "Historique des tentatives",
-    "startingHint": "Configuration de votre espace de travail — cela peut prendre 4 à 5 minutes. Veuillez rester sur cette page."
+    "startingHint": "Configuration de votre espace de travail — cela peut prendre 4 à 5 minutes. Veuillez rester sur cette page.",
+    "provisioningTitle": "Préparation de votre espace de travail",
+    "actionSettingUp": "Préparation",
+    "provisionFailedError": "Échec de la préparation de l'espace de travail. Veuillez demander un nouveau code de vérification et réessayer."
   },
   "errors": {
     "backToDashboard": "Retour au tableau de bord",

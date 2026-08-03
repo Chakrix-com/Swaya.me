@@ -2815,7 +2815,10 @@
     "reinviteSuccess": "{{email}} wurde erneut eingeladen",
     "attemptBadge": "Versuch {{number}}",
     "attemptHistoryHeading": "Versuchsverlauf",
-    "startingHint": "Dein Programmier-Arbeitsbereich wird eingerichtet – das kann 4-5 Minuten dauern. Bitte bleib auf dieser Seite."
+    "startingHint": "Dein Programmier-Arbeitsbereich wird eingerichtet – das kann 4-5 Minuten dauern. Bitte bleib auf dieser Seite.",
+    "provisioningTitle": "Dein Arbeitsbereich wird eingerichtet",
+    "actionSettingUp": "Wird eingerichtet",
+    "provisionFailedError": "Einrichtung des Arbeitsbereichs fehlgeschlagen. Bitte fordere einen neuen Bestätigungscode an und versuche es erneut."
   },
   "errors": {
     "backToDashboard": "Zurück zum Dashboard",

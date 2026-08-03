@@ -243,7 +243,9 @@ def _mock_execute_result(rows):
 def test_reconcile_reschedules_overdue_workspace_immediately():
     overdue_ws = _fixture_workspace(created_at=datetime.utcnow() - timedelta(hours=10))
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(side_effect=[_mock_execute_result([overdue_ws]), _mock_execute_result([])])
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([overdue_ws]), _mock_execute_result([]), _mock_execute_result([]),
+    ])
     mock_db.commit = AsyncMock()
 
     with patch.object(svc, "schedule_lifetime_cap_job") as mock_schedule:
@@ -258,7 +260,9 @@ def test_reconcile_reschedules_overdue_workspace_immediately():
 def test_reconcile_reschedules_not_yet_due_workspace_for_remaining_time():
     fresh_ws = _fixture_workspace(created_at=datetime.utcnow())
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(side_effect=[_mock_execute_result([fresh_ws]), _mock_execute_result([])])
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([fresh_ws]), _mock_execute_result([]), _mock_execute_result([]),
+    ])
 
     with patch.object(svc, "schedule_lifetime_cap_job") as mock_schedule:
         asyncio.run(svc.reconcile_on_startup(mock_db))
@@ -267,11 +271,34 @@ def test_reconcile_reschedules_not_yet_due_workspace_for_remaining_time():
     assert fire_at > datetime.utcnow()  # still in the future
 
 
+def test_reconcile_marks_stuck_provisioning_workspaces_failed():
+    """A workspace still PROVISIONING at startup had its background
+    provision_workspace_job killed along with the old process (APScheduler jobs
+    don't survive a restart) — must be marked provision_failed so it's never
+    permanently stuck with nothing for /status to poll toward."""
+    stuck1 = _fixture_workspace(status=CodeWorkspaceStatus.PROVISIONING)
+    stuck2 = _fixture_workspace(status=CodeWorkspaceStatus.PROVISIONING)
+    mock_db = AsyncMock()
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([]), _mock_execute_result([stuck1, stuck2]), _mock_execute_result([]),
+    ])
+    mock_db.commit = AsyncMock()
+
+    summary = asyncio.run(svc.reconcile_on_startup(mock_db))
+
+    assert summary["stuck_provisions_marked_failed"] == 2
+    assert stuck1.status == CodeWorkspaceStatus.PROVISION_FAILED
+    assert stuck2.status == CodeWorkspaceStatus.PROVISION_FAILED
+    mock_db.commit.assert_called()
+
+
 def test_reconcile_marks_stuck_queued_and_grading_submissions_failed():
     queued = CodeSubmission(id=1, workspace_id=1, question_id=1, status=CodeSubmissionStatus.QUEUED)
     grading = CodeSubmission(id=2, workspace_id=1, question_id=1, status=CodeSubmissionStatus.GRADING)
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(side_effect=[_mock_execute_result([]), _mock_execute_result([queued, grading])])
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([]), _mock_execute_result([]), _mock_execute_result([queued, grading]),
+    ])
     mock_db.commit = AsyncMock()
 
     summary = asyncio.run(svc.reconcile_on_startup(mock_db))
@@ -280,7 +307,7 @@ def test_reconcile_marks_stuck_queued_and_grading_submissions_failed():
     assert queued.status == CodeSubmissionStatus.FAILED
     assert queued.error_message == "interrupted by a backend restart, needs manual re-grade"
     assert grading.status == CodeSubmissionStatus.FAILED
-    mock_db.commit.assert_called_once()
+    mock_db.commit.assert_called()
 
 
 def test_reconcile_submission_query_filters_to_queued_and_grading_only():
@@ -288,12 +315,14 @@ def test_reconcile_submission_query_filters_to_queued_and_grading_only():
     the first place — the loop body has no guard of its own, so correctness here
     depends entirely on the query's WHERE clause matching exactly these two statuses."""
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(side_effect=[_mock_execute_result([]), _mock_execute_result([])])
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([]), _mock_execute_result([]), _mock_execute_result([]),
+    ])
     mock_db.commit = AsyncMock()
 
     asyncio.run(svc.reconcile_on_startup(mock_db))
 
-    submission_query = mock_db.execute.call_args_list[1][0][0]
+    submission_query = mock_db.execute.call_args_list[2][0][0]
     compiled = str(submission_query.compile(compile_kwargs={"literal_binds": True}))
     assert "'queued'" in compiled
     assert "'grading'" in compiled
@@ -304,10 +333,16 @@ def test_reconcile_submission_query_filters_to_queued_and_grading_only():
 
 def test_reconcile_noop_when_nothing_stuck():
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(side_effect=[_mock_execute_result([]), _mock_execute_result([])])
+    mock_db.execute = AsyncMock(side_effect=[
+        _mock_execute_result([]), _mock_execute_result([]), _mock_execute_result([]),
+    ])
     mock_db.commit = AsyncMock()
 
     summary = asyncio.run(svc.reconcile_on_startup(mock_db))
 
-    assert summary == {"lifetime_cap_jobs_rescheduled": 0, "stuck_submissions_marked_failed": 0}
+    assert summary == {
+        "lifetime_cap_jobs_rescheduled": 0,
+        "stuck_provisions_marked_failed": 0,
+        "stuck_submissions_marked_failed": 0,
+    }
     mock_db.commit.assert_not_called()

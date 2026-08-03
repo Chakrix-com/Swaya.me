@@ -10,7 +10,7 @@ from fastapi import HTTPException
 
 from broker.api import coding_challenge as router_mod
 from persistence.models.quiz import (
-    CodeWorkspace, CodeSubmission, CodeSubmissionStatus, Question, CodingResultVisibility,
+    CodeWorkspace, CodeWorkspaceStatus, CodeSubmission, CodeSubmissionStatus, Question, CodingResultVisibility,
 )
 
 
@@ -34,6 +34,20 @@ def test_status_404_when_no_workspace():
     with pytest.raises(HTTPException) as exc_info:
         asyncio.run(router_mod.get_coding_challenge_status(_make_token(), db))
     assert exc_info.value.status_code == 404
+
+
+def test_status_provision_failed():
+    """Distinct from 'not_submitted' so the frontend stops polling and shows a
+    real error + retry action, instead of waiting forever for a workspace_url
+    that will never arrive."""
+    workspace = CodeWorkspace(id=1, tenant_id=1, quiz_id=1, question_id=10,
+                               candidate_email="candidate@example.com", ide_type="code_server",
+                               coder_workspace_name="ws-1", status=CodeWorkspaceStatus.PROVISION_FAILED,
+                               created_at=datetime.utcnow())
+    db = _mock_db(workspace=workspace, submission=None)
+    result = asyncio.run(router_mod.get_coding_challenge_status(_make_token(), db))
+    assert result["status"] == "provision_failed"
+    assert "workspace_url" not in result
 
 
 def test_status_not_submitted_when_no_submission_yet():

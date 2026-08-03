@@ -227,6 +227,7 @@ class CodeWorkspaceStatus(str, enum.Enum):
     SUBMITTED = "submitted"
     ABANDONED = "abandoned"
     DESTROYED = "destroyed"
+    PROVISION_FAILED = "provision_failed"
 
 
 class CodeWorkspace(Base, TimestampMixin, TenantMixin):

@@ -241,7 +241,7 @@ function FullGuidelines({ info, t }) {
   )
 }
 
-function StartStep({ info, onStarted, startError, onClearStartError }) {
+function StartStep({ info, onStarted, onProvisioning, startError, onClearStartError }) {
   const { t } = useTranslation()
   const [otpStep, setOtpStep] = useState('form') // 'form' | 'otp'
   const [ideType, setIdeType] = useState('code_server')
@@ -298,7 +298,15 @@ function StartStep({ info, onStarted, startError, onClearStartError }) {
     onClearStartError?.()
     try {
       const res = await codingChallengeAPI.start(info.token, ideType, values.otp.trim())
-      onStarted(res.data)
+      // /start now returns fast — either "active" (a returning candidate reconnecting
+      // to an already-ready workspace, workspace_url present) or "provisioning" (the
+      // normal new-candidate path: a background job is doing the real work, poll
+      // /status for readiness instead of waiting on this call).
+      if (res.data.status === 'active' && res.data.workspace_url) {
+        onStarted(res.data)
+      } else {
+        onProvisioning(res.data)
+      }
     } catch (err) {
       setOtpError(err.response?.data?.detail || t('common.error'))
     } finally {
@@ -357,18 +365,25 @@ function StartStep({ info, onStarted, startError, onClearStartError }) {
             {t('codingChallenge.startButton')}
           </Button>
         </Form.Item>
-        {starting && (
-          <Alert
-            type="info"
-            showIcon
-            message={t('codingChallenge.startingHint', 'Setting up your coding workspace — this can take 4-5 minutes. Please stay on this page.')}
-          />
-        )}
       </Form>
       <Button type="link" disabled={resendCooldown > 0} loading={sendingOtp} onClick={handleResend} style={{ padding: 0 }}>
         {resendCooldown > 0 ? t('codingChallenge.resendIn', { seconds: resendCooldown }) : t('codingChallenge.resendCode')}
       </Button>
     </Space>
+  )
+}
+
+function ProvisioningStep({ t }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '32px 0' }}>
+      <Spin size="large" />
+      <Title level={4} style={{ marginTop: 16 }}>
+        {t('codingChallenge.provisioningTitle', 'Setting up your workspace')}
+      </Title>
+      <Text type="secondary">
+        {t('codingChallenge.startingHint', 'Setting up your coding workspace — this can take 4-5 minutes. Please stay on this page.')}
+      </Text>
+    </div>
   )
 }
 
@@ -483,10 +498,11 @@ function ResultStep({ statusData, timedOut, resultVisibility, t }) {
 }
 
 function ActionColumn({
-  phase, info, statusData, pollTimedOut, startError, onClearStartError, onStarted,
+  phase, info, statusData, pollTimedOut, startError, onClearStartError, onStarted, onProvisioning,
   workspaceUrl, onSubmit, submitting, countdown, t,
 }) {
   let heading = t('codingChallenge.actionGettingStarted', 'Getting Started')
+  if (phase === 'provisioning') heading = t('codingChallenge.actionSettingUp', 'Setting Up')
   if (phase === 'started') heading = t('codingChallenge.actionYourWorkspace', 'Your Workspace')
   if (phase === 'grading') heading = t('codingChallenge.actionResult', 'Result')
 
@@ -497,9 +513,16 @@ function ActionColumn({
         {phase === 'start' && (
           <>
             <FullGuidelines info={info} t={t} />
-            <StartStep info={info} onStarted={onStarted} startError={startError} onClearStartError={onClearStartError} />
+            <StartStep
+              info={info}
+              onStarted={onStarted}
+              onProvisioning={onProvisioning}
+              startError={startError}
+              onClearStartError={onClearStartError}
+            />
           </>
         )}
+        {phase === 'provisioning' && <ProvisioningStep t={t} />}
         {phase === 'started' && (
           <WorkspaceStep workspaceUrl={workspaceUrl} onSubmit={onSubmit} submitting={submitting} countdown={countdown} t={t} />
         )}
@@ -538,7 +561,8 @@ export default function CodingChallengeSession() {
   // the same calm "submitted" card the instant we reach the grading phase, so the
   // journey should jump straight to the final step too, not linger on "Grading".
   const isTerminalStatus = statusData && ['graded', 'partial_failed', 'failed'].includes(statusData.status)
-  const journeyStepIndex = phase === 'started' ? 2
+  const journeyStepIndex = phase === 'provisioning' ? 1
+    : phase === 'started' ? 2
     : phase === 'grading' ? ((info?.result_visibility === 'hidden' || isTerminalStatus || pollTimedOut) ? 4 : 3)
     : 0
 
@@ -567,6 +591,38 @@ export default function CodingChallengeSession() {
     }
   }
 
+  // Reuses the same timer/start refs as pollStatus — the two never run
+  // concurrently, since 'provisioning' and 'grading' are mutually exclusive
+  // phases, so sharing the refs is safe and avoids duplicating the timer
+  // bookkeeping. On failure or a timeout, both are treated as "please retry" —
+  // sends the candidate back to the OTP form rather than a distinct timeout
+  // screen, since a fresh OTP is required for /start to succeed again anyway.
+  const failProvisioning = () => {
+    clearInterval(pollTimerRef.current)
+    setStartError(t('codingChallenge.provisionFailedError', 'Workspace setup failed. Please request a new verification code and try again.'))
+    setPhase('start')
+  }
+
+  const pollProvisioning = async () => {
+    try {
+      const res = await codingChallengeAPI.getStatus(token)
+      if (res.data.status === 'provision_failed') {
+        failProvisioning()
+        return
+      }
+      if (res.data.workspace_url) {
+        clearInterval(pollTimerRef.current)
+        handleStarted(res.data)
+        return
+      }
+    } catch {
+      // transient poll failure — keep trying until the max-duration cap
+    }
+    if (Date.now() - pollStartRef.current > MAX_POLL_MS) {
+      failProvisioning()
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -581,6 +637,14 @@ export default function CodingChallengeSession() {
         // that's already gone.
         try {
           const statusRes = await codingChallengeAPI.getStatus(token)
+          if (statusRes.data.status === 'provision_failed') {
+            // A prior /start's background provisioning never succeeded — send them
+            // back to the OTP form (a fresh OTP is required for /start to work
+            // again) instead of silently landing on a blank 'start' phase.
+            setStartError(t('codingChallenge.provisionFailedError', 'Workspace setup failed. Please request a new verification code and try again.'))
+            setPhase('start')
+            return
+          }
           if (statusRes.data.status !== 'not_submitted') {
             setStatusData(statusRes.data)
             setPhase('grading')
@@ -600,6 +664,16 @@ export default function CodingChallengeSession() {
             setPhase('started')
             return
           }
+          // status is 'not_submitted' but no workspace_url yet: a provisioning job
+          // is already in flight for this candidate (they called /start, then
+          // reloaded/reopened the tab) — resume straight into polling instead of
+          // showing the OTP form again.
+          setWorkspaceCreatedAt(statusRes.data.workspace_created_at || null)
+          setEffectiveTimeBudgetSeconds(statusRes.data.effective_time_budget_seconds || null)
+          setPhase('provisioning')
+          pollStartRef.current = Date.now()
+          pollTimerRef.current = setInterval(pollProvisioning, POLL_INTERVAL_MS)
+          return
         } catch {
           // 404 = no workspace yet, a genuinely fresh candidate — fall through to 'start'
         }
@@ -621,6 +695,14 @@ export default function CodingChallengeSession() {
     setEffectiveTimeBudgetSeconds(data.effective_time_budget_seconds || null)
     setPhase('started')
     window.open(data.workspace_url, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleProvisioning = (data) => {
+    setWorkspaceCreatedAt(data.workspace_created_at || null)
+    setEffectiveTimeBudgetSeconds(data.effective_time_budget_seconds || null)
+    setPhase('provisioning')
+    pollStartRef.current = Date.now()
+    pollTimerRef.current = setInterval(pollProvisioning, POLL_INTERVAL_MS)
   }
 
   const handleSubmit = async () => {
@@ -692,6 +774,7 @@ export default function CodingChallengeSession() {
                 startError={startError}
                 onClearStartError={() => setStartError(null)}
                 onStarted={handleStarted}
+                onProvisioning={handleProvisioning}
                 workspaceUrl={workspaceUrl}
                 onSubmit={handleSubmit}
                 submitting={submitting}

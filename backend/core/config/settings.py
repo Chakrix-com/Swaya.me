@@ -199,6 +199,12 @@ class CoderSettings(BaseSettings):
     url: str = Field(default="https://sandbox.swaya.me", alias="CODER_URL")
     cli_path: str = Field(default="coder", alias="CODER_CLI_PATH")
     max_concurrent_workspaces: int = Field(default=5, alias="MAX_CONCURRENT_WORKSPACES")
+    # Separate from max_concurrent_workspaces (a hard admission-reject cap): this
+    # limits how many `coder create` subprocesses run at once. Concurrent Terraform
+    # applies against the same Coder sandbox measurably contend with each other
+    # (confirmed: 70s solo vs >150s at 2 concurrent, see coding_challenge_concurrency_check.py) —
+    # this queues them instead of letting all admitted requests fire simultaneously.
+    max_parallel_provisions: int = Field(default=2, alias="CODER_MAX_PARALLEL_PROVISIONS")
     workspace_max_lifetime_seconds: int = Field(default=5400, alias="WORKSPACE_MAX_LIFETIME_SECONDS")
     code_server_template_name: str = Field(default="code-server-multi", alias="CODE_SERVER_TEMPLATE_NAME")
     service_account_username: str = Field(default="swaya-backend-svc", alias="CODER_SERVICE_ACCOUNT_USERNAME")

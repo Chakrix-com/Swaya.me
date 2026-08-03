@@ -20,6 +20,20 @@ logger = logging.getLogger(__name__)
 DEFAULT_CLI_PATH = "coder"
 DEFAULT_WORKING_DIR = "~/project"
 
+_provision_semaphore: Optional[asyncio.Semaphore] = None
+
+
+def _get_provision_semaphore() -> asyncio.Semaphore:
+    """Lazily-constructed module-level semaphore limiting concurrent `coder create`
+    subprocesses (separate from MAX_CONCURRENT_WORKSPACES, which only rejects above
+    a count — this actually queues). Built lazily, not at import time, since
+    asyncio.Semaphore should be created inside a running event loop context."""
+    global _provision_semaphore
+    if _provision_semaphore is None:
+        from core.config.settings import settings
+        _provision_semaphore = asyncio.Semaphore(settings.coder.max_parallel_provisions)
+    return _provision_semaphore
+
 
 class CoderClientError(Exception):
     """Raised when a coder CLI subprocess call fails unexpectedly. Folds returncode/
@@ -65,12 +79,18 @@ async def create_workspace(workspace_name: str, template_name: str, git_repo_url
     `coder create <name> -t <template> --parameter git_repo_url=<url> -y`.
     Naming policy (deterministic from quiz_id/question_id/candidate_email) lives in the
     orchestration service, not here — this just takes an already-computed name.
+
+    Gated by a semaphore (CODER_MAX_PARALLEL_PROVISIONS) so concurrent provisioning
+    requests queue rather than all firing `coder create` subprocesses against the
+    same Coder/Terraform backend simultaneously — that contention is what caused
+    provisioning time to vary so much under concurrency in the first place.
     """
-    _, stderr, rc = await _run(
-        "create", workspace_name, "-t", template_name,
-        "--parameter", f"git_repo_url={git_repo_url}", "-y",
-        cli_path=cli_path,
-    )
+    async with _get_provision_semaphore():
+        _, stderr, rc = await _run(
+            "create", workspace_name, "-t", template_name,
+            "--parameter", f"git_repo_url={git_repo_url}", "-y",
+            cli_path=cli_path,
+        )
     if rc != 0:
         raise CoderClientError(f"create_workspace({workspace_name}) failed", rc, stderr)
 

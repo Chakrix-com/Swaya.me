@@ -2815,7 +2815,10 @@
     "reinviteSuccess": "Se reinvitó a {{email}}",
     "attemptBadge": "Intento {{number}}",
     "attemptHistoryHeading": "Historial de intentos",
-    "startingHint": "Preparando tu entorno de programación — esto puede tardar de 4 a 5 minutos. Por favor, permanece en esta página."
+    "startingHint": "Preparando tu entorno de programación — esto puede tardar de 4 a 5 minutos. Por favor, permanece en esta página.",
+    "provisioningTitle": "Preparando tu espacio de trabajo",
+    "actionSettingUp": "Preparando",
+    "provisionFailedError": "No se pudo preparar el espacio de trabajo. Solicita un nuevo código de verificación e inténtalo de nuevo."
   },
   "errors": {
     "backToDashboard": "Volver al panel",
