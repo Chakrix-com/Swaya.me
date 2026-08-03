@@ -4,11 +4,16 @@ Admin User Management (incl. tier_override field), /plans page, public Home page
 NotFound page, and a language-switch check that newly-added translations actually
 render (not just exist in JSON).
 
-Run:
+Run (test.swaya.me, default):
     sudo docker cp scripts/selenium_comprehensive_sweep.py selenium-arm:/scripts/
     sudo docker cp scripts/selenium_utils.py selenium-arm:/scripts/
     TOKEN=$(cd backend && source .venv/bin/activate && python /home/vinay/Swaya.me/scripts/generate_selenium_token.py meetnishant@gmail.com)
     sudo docker exec -e SWAYA_TOKEN="$TOKEN" selenium-arm python3 /scripts/selenium_comprehensive_sweep.py
+
+Run against live (www.swaya.me) post-deploy — read-only, never clicks Save/submit:
+    TOKEN=$(cd backend && source .venv/bin/activate && python /home/vinay/Swaya.me/scripts/generate_selenium_token.py meetnishant@gmail.com --env /www/wwwroot/swaya-live/backend/.env)
+    sudo docker exec -e SWAYA_TOKEN="$TOKEN" -e SWAYA_TARGET_BASE=https://www.swaya.me -e SWAYA_COOKIE_DOMAIN=www.swaya.me \\
+        selenium-arm python3 /scripts/selenium_comprehensive_sweep.py
 
 Watch live at: http://www.swaya.me:7900 (noVNC — no password)
 """
@@ -26,8 +31,8 @@ sys.path.insert(0, '/scripts')
 from selenium_utils import inject_error_collectors, collect_js_errors  # noqa: E402
 
 WEBDRIVER_URL = 'http://localhost:4444'
-TARGET_BASE = 'https://test.swaya.me'
-COOKIE_DOMAIN = 'test.swaya.me'
+TARGET_BASE = os.environ.get('SWAYA_TARGET_BASE', 'https://test.swaya.me')
+COOKIE_DOMAIN = os.environ.get('SWAYA_COOKIE_DOMAIN', 'test.swaya.me')
 
 PASS = '\033[92m PASS\033[0m'
 FAIL = '\033[91m FAIL\033[0m'

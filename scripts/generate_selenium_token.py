@@ -1,19 +1,28 @@
 """
-Generate a valid JWT access token for Selenium testing.
+Generate a valid JWT access token for Selenium/API testing.
 Queries the DB for the host user, builds a token using the same secret + payload
 as the login endpoint. No password needed — we own the server and the JWT secret.
 
 Usage:
-    python scripts/generate_selenium_token.py [email]
+    python scripts/generate_selenium_token.py [email] [--env <path-to-.env>]
     # default email: meetnishant@gmail.com
+    # default env:   /home/vinay/Swaya.me/backend/.env  (test)
+    # for live:       --env /www/wwwroot/swaya-live/backend/.env
 """
 import asyncio
 import sys
 
 sys.path.insert(0, '/home/vinay/Swaya.me/backend')
 
+args = [a for a in sys.argv[1:]]
+env_path = '/home/vinay/Swaya.me/backend/.env'
+if '--env' in args:
+    idx = args.index('--env')
+    env_path = args[idx + 1]
+    del args[idx:idx + 2]
+
 from dotenv import load_dotenv
-load_dotenv('/home/vinay/Swaya.me/backend/.env')
+load_dotenv(env_path, override=True)
 
 from core.config.settings import settings  # noqa: E402
 from core.security.jwt import create_access_token  # noqa: E402
@@ -23,7 +32,7 @@ from persistence.models.core import User, Tenant  # noqa: E402
 
 
 async def main():
-    email = sys.argv[1] if len(sys.argv) > 1 else 'meetnishant@gmail.com'
+    email = args[0] if args else 'meetnishant@gmail.com'
     async with AsyncSessionLocal() as db:
         user = (await db.execute(select(User).where(User.email == email))).scalar_one()
         tenant = (await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))).scalar_one()
