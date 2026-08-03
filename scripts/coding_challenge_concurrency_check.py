@@ -63,14 +63,21 @@ def decode_jwt_payload(token):
 
 
 def setup_candidate(s):
-    """Create a quiz+question+invite, request OTP, read it from Redis. Returns a
-    dict with everything needed to call /start, or None on any failure."""
+    """Create a quiz+question+invite, request OTP, read it from Redis. Always
+    returns a dict — "ok": False on any failure, but with quiz_id populated
+    as soon as it's known, not just on full success. A quiz created here and
+    then orphaned by a LATER step failing (question/invite/OTP) used to be
+    silently untracked and never cleaned up, since the old version returned
+    a bare None on any failure, losing the quiz_id it had already created."""
+    result = {"ok": False, "quiz_id": None, "question_id": None, "email": None,
+              "token": None, "otp": None, "workspace_name": None}
+
     title = f"concurrency-check-{rid()}"
     r = s.post(f"{BASE}/quizzes/", json={"title": title, "quiz_type": "coding_challenge"})
     if r.status_code not in (200, 201):
         print(f"  setup FAILED (create quiz): {r.status_code} {r.text[:200]}")
-        return None
-    quiz_id = r.json()["id"]
+        return result
+    result["quiz_id"] = quiz_id = r.json()["id"]
 
     r = s.post(f"{BASE}/quizzes/{quiz_id}/questions", json={
         "question_type": "coding_challenge",
@@ -80,14 +87,14 @@ def setup_candidate(s):
     })
     if r.status_code not in (200, 201):
         print(f"  setup FAILED (create question): {r.status_code} {r.text[:200]}")
-        return None
-    question_id = r.json()["id"]
+        return result
+    result["question_id"] = question_id = r.json()["id"]
 
     email = f"concurrency-check-{rid()}@example.com"
     r = s.post(f"{BASE}/quizzes/{quiz_id}/coding-challenge/invite", json={"candidate_emails": [email]})
     if r.status_code != 200:
         print(f"  setup FAILED (invite): {r.status_code} {r.text[:200]}")
-        return None
+        return result
     invite_url = r.json()[0]["invite_url"]
     token = invite_url.rsplit("/", 1)[-1]
     payload = decode_jwt_payload(token)
@@ -97,24 +104,22 @@ def setup_candidate(s):
     r = anon.post(f"{BASE}/coding-challenge/{token}/request-otp")
     if r.status_code != 200:
         print(f"  setup FAILED (request-otp): {r.status_code} {r.text[:200]}")
-        return None
+        return result
 
     otp_key = f"coding_challenge_otp:{jti}:{email.lower()}"
     raw = r_client.get(otp_key)
     if not raw:
         print(f"  setup FAILED: OTP not found in Redis at {otp_key}")
-        return None
+        return result
     otp = json.loads(raw)["otp"]
 
-    return {
-        "quiz_id": quiz_id, "question_id": question_id, "email": email,
-        "token": token, "otp": otp, "workspace_name": None,
-    }
+    result.update({"ok": True, "email": email, "token": token, "otp": otp})
+    return result
 
 
 def cleanup(s, candidates):
     for c in candidates:
-        if not c:
+        if not c or not c.get("quiz_id"):
             continue
         try:
             r = s.delete(f"{BASE}/quizzes/{c['quiz_id']}")
@@ -168,53 +173,62 @@ def main():
 
     print(f"Setting up {N} candidates (quiz + question + invite + OTP)...")
     candidates = [setup_candidate(s) for _ in range(N)]
-    if any(c is None for c in candidates):
+    if any(not c["ok"] for c in candidates):
         print("\nFATAL: setup failed for at least one candidate — aborting before firing /start.")
+        print("Cleaning up whatever WAS created (quiz/question/invite may exist even for a")
+        print("candidate whose setup ultimately failed at a later step)...")
         cleanup(s, candidates)
         sys.exit(1)
     print("Setup OK for all candidates.\n")
 
-    stop_event = threading.Event()
+    all_started_ok = False
+    slow = []
     poll_results = []
-    poll_thread = threading.Thread(target=poll_light_endpoint, args=(stop_event, poll_results), daemon=True)
-    poll_thread.start()
+    try:
+        stop_event = threading.Event()
+        poll_thread = threading.Thread(target=poll_light_endpoint, args=(stop_event, poll_results), daemon=True)
+        poll_thread.start()
 
-    start_results = [None] * N
-    threads = []
-    t_begin = time.time()
-    print(f"Firing {N} concurrent /start calls...")
-    for i, c in enumerate(candidates):
-        th = threading.Thread(target=do_start, args=(c, start_results, i))
-        threads.append(th)
-        th.start()
-    for th in threads:
-        th.join()
-    t_total = time.time() - t_begin
+        start_results = [None] * N
+        threads = []
+        t_begin = time.time()
+        print(f"Firing {N} concurrent /start calls...")
+        for i, c in enumerate(candidates):
+            th = threading.Thread(target=do_start, args=(c, start_results, i))
+            threads.append(th)
+            th.start()
+        for th in threads:
+            th.join()
+        t_total = time.time() - t_begin
 
-    stop_event.set()
-    poll_thread.join(timeout=5)
+        stop_event.set()
+        poll_thread.join(timeout=5)
 
-    print(f"\n/start calls finished in {t_total:.1f}s total (concurrent, not summed):")
-    all_started_ok = True
-    for i, res in enumerate(start_results):
-        elapsed, status, body = res
-        ok = status == 200
-        all_started_ok = all_started_ok and ok
-        print(f"  [{'PASS' if ok else 'FAIL'}] candidate {i}: {elapsed:.1f}s status={status} {body if not ok else ''}")
+        print(f"\n/start calls finished in {t_total:.1f}s total (concurrent, not summed):")
+        all_started_ok = True
+        for i, res in enumerate(start_results):
+            elapsed, status, body = res
+            ok = status == 200
+            all_started_ok = all_started_ok and ok
+            print(f"  [{'PASS' if ok else 'FAIL'}] candidate {i}: {elapsed:.1f}s status={status} {body if not ok else ''}")
 
-    print(f"\nLight-endpoint responsiveness during the {t_total:.1f}s window "
-          f"({len(poll_results)} polls of GET /auth/tier-plans):")
-    slow = [p for p in poll_results if isinstance(p[1], str) or p[0] > 3.0]
-    for elapsed, status in poll_results:
-        flag = "SLOW" if (isinstance(status, str) or elapsed > 3.0) else "ok"
-        print(f"  [{flag}] {elapsed:.2f}s status={status}")
+        print(f"\nLight-endpoint responsiveness during the {t_total:.1f}s window "
+              f"({len(poll_results)} polls of GET /auth/tier-plans):")
+        slow = [p for p in poll_results if isinstance(p[1], str) or p[0] > 3.0]
+        for elapsed, status in poll_results:
+            flag = "SLOW" if (isinstance(status, str) or elapsed > 3.0) else "ok"
+            print(f"  [{flag}] {elapsed:.2f}s status={status}")
+    except Exception as e:
+        print(f"\nFATAL: uncaught exception during firing/polling: {type(e).__name__}: {e}")
+    finally:
+        # Runs even on an uncaught exception above — every workspace this
+        # script provisions must be torn down regardless of how the run ends.
+        print("\nCleaning up...")
+        cleanup(s, candidates)
 
     print("\n==== SUMMARY ====")
     print(f"All {N} /start calls succeeded: {all_started_ok}")
     print(f"Light-endpoint polls that were slow (>3s) or errored: {len(slow)} / {len(poll_results)}")
-
-    print("\nCleaning up...")
-    cleanup(s, candidates)
 
     if not all_started_ok or slow:
         sys.exit(1)

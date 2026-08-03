@@ -506,11 +506,12 @@ cmd_promote_live() {
     # "$BACKUP_DIR/frontend_$tag" with tag="release/<ts>" nests it one level,
     # not a flat "frontend_release_<ts>" name). Confirmed live 2026-08-03: ~180
     # never-pruned subdirectories under each, dating back to March, 11G total
-    # for what should be a handful. Also ran once already, earlier in this same
-    # function before check_disk_space — running it again here re-trims back
-    # to 3 total including the backup just taken above (the earlier run can
-    # only prune down to 3 *old* ones, so immediately after adding a new one
-    # there'd otherwise be 4 until the next release).
+    # for what should be a handful. Also ran once already, right after the
+    # "Proceed?" confirmation above (before the git tag / new backups
+    # existed) — running it again here re-trims back down to 3 total
+    # *including* the backup just taken above (that earlier run could only
+    # prune down to 3 *old* ones, since this release's own backup didn't
+    # exist yet — without this second call there'd be 4 until next release).
     prune_old_dir_backups "frontend"
     prune_old_dir_backups "backend"
 
