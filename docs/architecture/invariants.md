@@ -19,6 +19,9 @@ Provable rules from source code only. Each rule cites exact file + function/mode
 | `tier_configurations` | `tier` | `persistence/models/core.py:TierConfiguration.tier` |
 | `platform_proctoring_rules` | `rule_id` | `persistence/models/proctoring.py:PlatformProctoringRule.rule_id` |
 | `quiz_folders` | `(tenant_id, parent_id, name)` | `persistence/models/quiz.py:QuizFolder.__table_args__` |
+| `code_workspaces` | `coder_workspace_name` | `persistence/models/quiz.py:CodeWorkspace.coder_workspace_name` |
+| `code_workspaces` | `(quiz_id, question_id, candidate_email, attempt_number)` | `persistence/models/quiz.py:CodeWorkspace.__table_args__` |
+| `coding_challenge_invites` | `(quiz_id, question_id, candidate_email)` | `persistence/models/quiz.py:CodingChallengeInvite.__table_args__` |
 
 ### NOT NULL Constraints (Selected Critical Fields)
 | Table | Field | Source |
@@ -88,6 +91,20 @@ Routes using `Depends(require_super_admin)` require:
 - `current_user.user.role == UserRole.super_admin`
 - Otherwise → HTTP 403. Source: `core/auth/dependencies.py:require_super_admin()`
 
+### Coding-Challenge Creation Gate
+
+`can_host_coding_challenge(current_user)` (`core/auth/dependencies.py:30`) must return `True`
+before a `coding_challenge` quiz/question can be created:
+```python
+current_user.user.role == UserRole.super_admin
+or current_user.effective_tier == TierEnum.CODING_CHALLENGE_PRO
+```
+`effective_tier` (`_resolve_effective_tier()`, same file, line 21) resolves as: `super_admin`
+always gets `ENTERPRISE`; otherwise a per-user `User.tier_override` wins over the tenant's own
+`tier`, falling back to the tenant's tier if no override is set. This means tier is not simply
+"the tenant's tier" for this one gate — an individual user can be granted (or excluded from)
+coding-challenge access independent of what their tenant is subscribed to.
+
 ---
 
 ## Tenant Isolation Rules
@@ -140,6 +157,39 @@ ACTIVE  → ENDED    (on end_session())
 - Each `advance_question()` increments index; each `back_question()` decrements
 - `QuestionStatus`: PENDING → OPEN (on advance) → CLOSED (on next advance or end)
 - Source: `features/quiz/session_service_async.py`
+
+---
+
+## Coding-Challenge Workspace Status Machine
+
+Transitions from `broker/api/coding_challenge.py` and
+`features/coding_challenge/coding_challenge_service_async.py`:
+
+```
+provisioning → active            (provision_workspace_job succeeds)
+provisioning → provision_failed   (provision_workspace_job's create_workspace call raises,
+                                    OR reconcile_on_startup finds it still provisioning after
+                                    a restart — its background job died with the old process)
+active       → submitted          (on /submit)
+active       → abandoned          (reap_abandoned_workspace — hit the hard lifetime cap
+                                    without submitting)
+```
+
+- **`/start` never provisions inline** — it inserts the `provisioning` row and returns
+  immediately; the actual `coder create` / readiness-wait / session-token-mint sequence runs as
+  a scheduled background job. This is a hard invariant of the current design, not an
+  optimization detail: nginx (or any reverse proxy) timing out the request while the row is
+  still `provisioning` has no effect on the job itself, which keeps running server-side.
+- **A `provisioning` or `provision_failed` row is always reused in place on retry, never
+  re-inserted** — `coder_workspace_name` and `(quiz_id, question_id, candidate_email,
+  attempt_number)` are both uniquely constrained (see above), so a fresh `INSERT` for the same
+  attempt always collides.
+- **`created_at` is reset when a `provisioning` row becomes `active`** — the candidate's time
+  budget is anchored to when the workspace actually became usable, not to when the row was first
+  inserted at `/start` time (before provisioning even began).
+- Source: `broker/api/coding_challenge.py:start_coding_challenge()`,
+  `features/coding_challenge/coding_challenge_service_async.py:provision_workspace_job()`,
+  `:reconcile_on_startup()`
 
 ---
 

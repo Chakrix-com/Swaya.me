@@ -57,6 +57,7 @@
 | Nginx | VERIFIED | `main.py`: uploads mounted at `/api/uploads`; production config references `/frontend/dist` |
 | Selenium + Chromium | VERIFIED | `test_*_selenium.py` files in repo |
 | Docker | VERIFIED | Selenium container usage via `sudo docker` in test scripts |
+| Coder CLI (subprocess) | VERIFIED | `backend/features/coding_challenge/coder_client.py`: every Coder interaction is a `coder` CLI subprocess call (`asyncio.create_subprocess_exec`), never raw HTTP — no REST "exec" endpoint exists for running commands in a workspace |
 
 ### Technologies in Code NOT Listed in TechnologiesUsed.md
 
@@ -109,7 +110,7 @@ Health check: `/health` (root level)
 ### Quiz Management (`broker/api/quiz.py`, `features/quiz/`)
 - CRUD for quizzes: create/update/delete/duplicate/publish (status: DRAFT → READY)
 - Question management: add/update/delete/reorder within draft quizzes
-- Quiz types: QUIZ, POLL, OFFLINE_POLL, EXAM
+- Quiz types: QUIZ, POLL, OFFLINE_POLL, EXAM, CODING_CHALLENGE
 - Folder system: nested folders scoped per tenant
 - Template system: global or tenant-scoped quiz templates
 - Excel import/export: `features/quiz/import_service.py`, `export_service.py`
@@ -139,6 +140,28 @@ Health check: `/health` (root level)
 - Lock escalation: immediate lock on specific events (MULTI_TAB, honeypot hits); threshold-based for others
 - Webcam monitoring: frontend-only via MediaPipe BlazeFace (not server-side video analysis)
 - Snapshots: uploaded to `/uploads/proctoring/{quiz_id}/{participant_id}/`
+
+### Coding Challenge (`broker/api/coding_challenge.py`, `features/coding_challenge/`)
+- Host authors a `coding_challenge` question: starter GitHub repo URL, test command, optional
+  grading-weight overrides, result-visibility setting
+- Candidates invited individually by email; invite link is a stateless signed JWT (7-day
+  validity) — `coding_challenge_invites` table only tracks "who was invited"
+- Candidate verifies via a 6-digit email OTP (Redis, 10-min TTL) before `/start` is accepted
+- `/start` does **not** provision inline — it persists a `CodeWorkspace` row as `provisioning`
+  and returns immediately; a scheduled background job (`provision_workspace_job`, same
+  APScheduler `DateTrigger` pattern as the stats snapshots) does the real `coder create` /
+  readiness-wait / session-token-mint work, gated by a `CODER_MAX_PARALLEL_PROVISIONS`
+  semaphore. This exists specifically so a slow/contended provision on the shared Coder
+  sandbox can never time out the candidate's request — confirmed live: the old fully-
+  synchronous version could take 70-150s+ under concurrency
+- Candidate polls `GET /status` (DB-only, never calls Coder) for readiness and later for
+  grading outcome
+- Submit revokes IDE access synchronously, then queues grading as a background job
+  (`run_grading_job`): runs the test command, harvests `git log -p` + AI chat transcript,
+  and a separate AI pass scores code quality/approach against configurable weights
+- Host reviews all candidates on one screen, merging invite/workspace/submission state; a
+  `partial_failed` submission (AI-assessment step failed, test harvest succeeded) can be
+  regraded from already-persisted data with no workspace needed
 
 ### AI Generation (`broker/api/ai.py`, `core/ai/ollama_service.py`)
 - Local Ollama daemon at `127.0.0.1:11434`

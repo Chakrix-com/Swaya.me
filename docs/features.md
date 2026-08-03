@@ -2,7 +2,7 @@
 
 ## Activity Types
 
-Swaya.me supports four distinct activity types, each designed for a different engagement scenario.
+Swaya.me supports five distinct activity types, each designed for a different engagement scenario.
 
 ---
 
@@ -84,6 +84,25 @@ A self-paced, proctored exam with OTP email verification.
 
 ---
 
+### Coding Challenge
+
+A host-authored coding problem, solved by an invited candidate in a real browser IDE.
+
+**Flow:**
+1. Host creates a coding-challenge question: problem statement (README of a public starter GitHub repo), test command, optional grading-weight overrides, and a result-visibility setting (full score/verdict, status-only signal, or hidden).
+2. Host invites candidates individually by email (batch invite supported).
+3. Candidate opens their invite link (`/c/:token`), verifies via a 6-digit email OTP, and calls Start.
+4. Start hands back immediately — provisioning a real Coder-managed browser IDE (VS Code / code-server, with the Claude Code AI assistant available) happens as a background job, not on the request, so a slow or busy sandbox never times out the candidate's request. The candidate's page polls for readiness and opens the workspace automatically once it's up.
+5. Candidate works in the real IDE against the cloned starter repo, with a visible time budget (a short grace period before the countdown starts, then a hard lifetime cap that force-ends the session).
+6. Candidate clicks Submit — this immediately revokes further IDE access, then queues grading as a background job.
+7. Grading runs the configured test command against the final code, and a separate AI pass assesses code quality/approach; both feed a weighted score.
+8. Host reviews all candidates from a review screen: test results, AI score/verdict, full code-change timeline (`git log -p`), and the candidate's AI chat transcript (for transparency into how much AI assistance was used).
+9. Host can re-invite a candidate for another attempt if needed.
+
+**Concurrency:** a configurable cap limits how many workspaces can be provisioning/active on the shared Coder sandbox at once; a separate, smaller limit serializes how many real provisioning operations run at the same instant, since a shared sandbox's provisioning time varies more under heavy concurrency.
+
+---
+
 ## Home Dashboard
 
 The home page works as a live briefing for the host:
@@ -99,7 +118,7 @@ The home page works as a live briefing for the host:
 
 A dedicated full-library view for all activities a host has created:
 
-- Filter by activity type (Quiz, Poll, Exam, Survey) and status (Ready, Draft, Archived).
+- Filter by activity type (Quiz, Poll, Exam, Survey, Coding Challenge) and status (Ready, Draft, Archived).
 - **Needs Attention** filter surfaces drafts with zero questions instantly.
 - **Archive instead of delete** — archived activities retain all historical results; toggle to show/hide them.
 - **Bulk actions** — select multiple activities and archive or delete in one operation.

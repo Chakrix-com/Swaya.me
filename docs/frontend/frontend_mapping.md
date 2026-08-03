@@ -47,6 +47,7 @@
 | `/present/:sessionId` | `features/quiz/QuizPresent` | Session state polling |
 | `/poll/:slug` | `features/offline-poll/OfflinePollSession` | `offlinePollAPI.*` |
 | `/e/:slug` | `features/exam/ExamSession` | `examAPI.*` + `proctoringAPI.*` |
+| `/c/:token` | `features/coding-challenge/CodingChallengeSession` | `codingChallengeAPI.*` |
 | `/privacy-policy` | `features/home/PrivacyPolicy` | None |
 | `/terms-of-service` | `features/home/TermsOfService` | None |
 | `/about` | `features/home/About` | None |
@@ -64,6 +65,7 @@
 | `/quiz/:id/history` | `features/quiz/QuizHistory` | `sessionAPI.listSessions()`, `sessionAPI.getResults()` |
 | `/quiz/:id/offline-results` | `features/offline-poll/OfflinePollResults` | `offlinePollAPI.getResults()` |
 | `/quiz/:id/exam-results` | `features/exam/ExamResults` | `examAPI.getResults()` |
+| `/quiz/coding-challenge-review/:questionId` | `features/coding-challenge/CodingChallengeReview` | `codingChallengeAPI.getReview()`, `.regrade()` |
 | `/admin/statistics` | `features/admin/Statistics` | `statsAPI.get()`, `statsAPI.getHistory()` |
 | `/admin/users` | `features/admin/components/UserManagement` | User management API |
 | `/admin/organizations` | `features/admin/OrganizationManagement` | `organizationAPI.*` |
@@ -135,6 +137,27 @@
 | `proctoringAPI.getConfig(quizId)` | GET `/proctoring/config/{quizId}` | Before exam starts |
 | `proctoringAPI.initSession(body, token)` | POST `/proctoring/session/init` | After config loads |
 | `api.post('/proctoring/event', ...)` | POST `/proctoring/event` | Violations |
+
+### `features/coding-challenge/CodingChallengeSession`
+| API Call | Endpoint | When |
+|---|---|---|
+| `codingChallengeAPI.getInfo(token)` | GET `/coding-challenge/{token}` | Page load |
+| `codingChallengeAPI.requestOtp(token)` | POST `/coding-challenge/{token}/request-otp` | "Send code" |
+| `codingChallengeAPI.start(token, ideType, otp)` | POST `/coding-challenge/{token}/start` | OTP submit |
+| `codingChallengeAPI.getStatus(token)` | GET `/coding-challenge/{token}/status` | Polling — both while a workspace is provisioning and while a submission is grading |
+| `codingChallengeAPI.submit(token)` | POST `/coding-challenge/{token}/submit` | Submit button |
+
+**Phase state machine**: `loading` → `start` (OTP entry) → `provisioning` (workspace being
+created in the background, poll `/status` until `workspace_url` appears or `status ==
+"provision_failed"`) → `started` (workspace open, timer running) → `grading` (poll `/status`
+until a terminal submission status). A `provision_failed` result sends the candidate back to
+`start` with an error, since a fresh OTP is required for `/start` to succeed again. `/start`
+itself now acks in well under a second — the actual Coder provisioning happens server-side as a
+background job, so this component never blocks on it directly, only polls for the outcome.
+
+### `features/coding-challenge/CodingChallengeReview`
+- Host-only. `codingChallengeAPI.getReview(questionId)` → GET `/quiz-builder/questions/{id}/coding-challenge-review` — one row per candidate, merging invite/workspace/submission state into a single pipeline status, plus test results, AI score/verdict, code timeline (`git log -p`), and AI chat transcript.
+- `codingChallengeAPI.regrade(questionId, submissionId)` → POST `.../submissions/{id}/regrade` — only enabled for `partial_failed` submissions.
 
 **Proctoring integration** (`features/proctoring/ProctoringProvider.jsx`):
 1. Fetches config via `GET /proctoring/config/{quizId}` with `X-Session-Token` header

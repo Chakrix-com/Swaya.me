@@ -125,7 +125,13 @@ After=network.target mysql.service redis.service
 Type=simple
 User=www-data
 WorkingDirectory=/opt/swaya/backend
-Environment="PATH=/opt/swaya/backend/.venv/bin"
+# Include the system PATH, not just the venv — a venv-only PATH means any
+# subprocess the app shells out to (e.g. the `coder` CLI for the
+# coding_challenge quiz type, normally at /usr/bin/coder) can't be found,
+# even though the app itself starts fine and looks healthy. Confirmed live:
+# this exact venv-only PATH broke coding-challenge workspace provisioning
+# with a FileNotFoundError until /usr/bin was added back.
+Environment="PATH=/opt/swaya/backend/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 ExecStart=/opt/swaya/backend/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --workers 2
 Restart=on-failure
 RestartSec=5

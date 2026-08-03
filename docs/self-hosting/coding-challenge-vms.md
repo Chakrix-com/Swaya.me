@@ -170,11 +170,25 @@ CODER_CLI_PATH=coder                      # or an absolute path if not on PATH
 CODER_SERVICE_ACCOUNT_USERNAME=swaya-backend-svc
 CODE_SERVER_TEMPLATE_NAME=code-server-multi
 MAX_CONCURRENT_WORKSPACES=5                # cap on simultaneously active candidate workspaces
+CODER_MAX_PARALLEL_PROVISIONS=2            # separate, smaller cap: how many `coder create` calls
+                                            # run at once (not just how many are admitted) — real
+                                            # provisioning time varies more under heavier
+                                            # concurrency against a shared sandbox, so this queues
+                                            # rather than letting every admitted request fire at once
 WORKSPACE_MAX_LIFETIME_SECONDS=5400        # hard timeout per workspace (90 min default)
 ```
 
 Restart the backend after changing these — `CoderSettings`
 (`backend/core/config/settings.py`) is read once at process start.
+
+**If `CODER_CLI_PATH=coder` (the bare command, not an absolute path)**: this only resolves if the
+backend process's own `PATH` actually includes wherever `coder` is installed (typically
+`/usr/bin`) — this env var alone does not fix a broken `PATH`. Confirmed live: a systemd unit
+whose `Environment="PATH=..."` line only listed the venv's `bin/` directory (no `/usr/bin`) made
+every workspace provisioning attempt fail instantly with `FileNotFoundError`, even though the app
+itself started and looked healthy. Double-check the real service's `PATH` includes `/usr/bin` (or
+wherever `coder` lives) — see the systemd example in
+[docs/deployment.md](../deployment.md#systemd-service).
 
 ## 6. Verify end-to-end
 

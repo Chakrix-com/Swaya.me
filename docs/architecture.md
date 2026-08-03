@@ -38,6 +38,12 @@ Swaya is a multi-tenant, real-time audience engagement platform. A single deploy
                     └──────────────────┘    └─────────────────────┘
 ```
 
+**Coding-challenge quiz type (optional subsystem, not shown above)**: the backend shells out to
+the `coder` CLI (subprocess, never a shell) against a separate Coder OSS sandbox VM to provision a
+real per-candidate browser IDE. Provisioning runs as a background job (APScheduler `DateTrigger`),
+never inline on a request — see [Flow 6 in critical_flows.md](flows/critical_flows.md) and
+[docs/self-hosting/coding-challenge-vms.md](self-hosting/coding-challenge-vms.md).
+
 ---
 
 ## Request Lifecycle
@@ -119,11 +125,13 @@ Swaya.me/
 │   │   └── storage/image_service.py   # Upload handling + S3-compatible path logic
 │   ├── features/
 │   │   ├── quiz/                      # Quiz, session, exam, poll, import, word cloud
-│   │   ├── app_feedback/              # In-app feedback collection
-│   │   └── platform_metrics/          # PlatformEvent beacon storage
+│   │   ├── coding_challenge/          # Coder CLI wrapper, invite/OTP/orchestration, AI grading
+│   │   ├── proctoring/                # Exam webcam/violation proctoring
+│   │   └── app_feedback/              # In-app feedback collection
 │   ├── persistence/
 │   │   ├── models/core.py             # Tenant, User, Event, TierConfig
-│   │   ├── models/quiz.py             # Quiz, Question, Session, Participant, Answer, Feedback
+│   │   ├── models/quiz.py             # Quiz, Question, Session, Participant, Answer, Feedback,
+│   │   │                              #   CodeWorkspace, CodeSubmission, CodingChallengeInvite
 │   │   └── migrations/                # Alembic — naming: YYYYMMDD_HHMM_description.py
 │   └── shared/
 │       └── utils/                     # Redis client, rate limiter, HTML sanitizer, email
@@ -147,6 +155,8 @@ Tenant ──< User
 Tenant ──< Quiz ──< Question ──< QuestionOption
                 Quiz ──< QuizSession ──< Participant ──< Answer
                                     QuizSession ──< ProctoringSnapshot
+                Quiz ──< Question (coding_challenge) ──< CodeWorkspace ──< CodeSubmission
+                                                     ──< CodingChallengeInvite
 TierConfig (per tenant)
 PlatformEvent (analytics beacon)
 ```

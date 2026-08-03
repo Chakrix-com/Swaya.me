@@ -166,7 +166,7 @@ All models use SQLAlchemy ORM. Base class: `persistence/models/base.py`.
 | `proctoring_policy` | JSON | NULLABLE |
 | `created_at` / `updated_at` | DateTime | (TimestampMixin) |
 
-**Quiz types**: `quiz`, `poll`, `offline_poll`, `exam`
+**Quiz types**: `quiz`, `poll`, `offline_poll`, `exam`, `coding_challenge`
 **Quiz statuses**: `draft`, `ready`, `archived`
 
 **Relationships**:
@@ -212,9 +212,17 @@ All models use SQLAlchemy ORM. Base class: `persistence/models/base.py`.
 | `max_time_seconds` | Integer | NULLABLE |
 | `negative_points` | Integer | NOT NULL, default 0 |
 | `is_required` | Boolean | NOT NULL, default False |
+| `answer_explanation` | Text | NULLABLE |
+| `grading_rubric` | Text | NULLABLE (AI-graded free-text questions) |
+| `git_repo_url` | String(500) | NULLABLE — `coding_challenge` only: public starter repo |
+| `test_command` | String(255) | NULLABLE, default `"pytest -q"` — `coding_challenge` only |
+| `hidden_test_content` / `hidden_test_filename` | Text / String(255) | NULLABLE — `coding_challenge` only, a test file the candidate never sees, written into the workspace at grading time |
+| `time_budget_seconds` | Integer | NULLABLE — `coding_challenge` only, candidate's time budget |
+| `grading_weights` | JSON | NULLABLE — `coding_challenge` only; host-overridden criteria weights (must sum to 100), null = platform default |
+| `result_visibility` | Enum(`CodingResultVisibility`) | NOT NULL, default `hidden` — `coding_challenge` only: `hidden` \| `status_only` \| `full` |
 | `created_at` / `updated_at` | DateTime | (TimestampMixin) |
 
-**Question types**: `mcq`, `word_cloud`, `single_line`, `scale`, `paragraph`, `one_word`
+**Question types**: `mcq`, `mcq_multi`, `word_cloud`, `single_line`, `scale`, `paragraph`, `one_word`, `code`, `coding_challenge`
 
 ---
 
@@ -303,6 +311,79 @@ All models use SQLAlchemy ORM. Base class: `persistence/models/base.py`.
 | `rating` | Integer | NULLABLE |
 | `feedback_text` | Text | NOT NULL |
 | `created_at` / `updated_at` | DateTime | (TimestampMixin) |
+
+---
+
+### `CodeWorkspace` (table: `code_workspaces`)
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | PK |
+| `tenant_id` | Integer | FK → `tenants.id`, NOT NULL, indexed (TenantMixin) |
+| `quiz_id` | Integer | FK → `quizzes.id`, NOT NULL, indexed |
+| `question_id` | Integer | FK → `questions.id`, NOT NULL, indexed |
+| `candidate_email` | String(255) | NOT NULL, indexed |
+| `attempt_number` | Integer | NOT NULL, default 1 |
+| `ide_type` | String(20) | NOT NULL (`code_server`; `intellij` was descoped) |
+| `coder_workspace_name` | String(255) | UNIQUE, NOT NULL — deterministic, derived from `(quiz_id, question_id, candidate_email, attempt_number)` |
+| `coder_token_name` | String(255) | NULLABLE — the currently-minted Coder API session token's name, so it can be revoked before re-minting |
+| `status` | Enum(`CodeWorkspaceStatus`) | NOT NULL, default `provisioning` |
+| `workspace_url` | String(1000) | NULLABLE — only set once `status=active`; null while still `provisioning` |
+| `submitted_at` | DATETIME(fsp=6) | NULLABLE |
+| `destroyed_at` | DATETIME(fsp=6) | NULLABLE |
+| `created_at` / `updated_at` | DateTime | (TimestampMixin) |
+
+**Unique constraint**: `(quiz_id, question_id, candidate_email, attempt_number)` — one row per attempt, not per candidate; `attempt_number` lets a host grant a re-invite after a terminal attempt without colliding with the prior one.
+
+**Statuses**: `provisioning` → `active` → `submitted` (terminal). `abandoned` (terminal, hit the hard lifetime cap without submitting) and `provision_failed` (terminal, the background provisioning job errored — e.g. `coder create` failed, or the job was killed by a backend restart mid-flight) are also reachable from `provisioning`/`active`.
+
+**Note**: `/start` no longer provisions inline — it inserts this row as `provisioning` and returns immediately; the real `coder create` / readiness-wait / session-token-mint work runs as a background job (`provision_workspace_job`), and `GET /coding-challenge/{token}/status` is polled for readiness. This exists specifically so a slow or concurrently-contended provision (against the shared Coder sandbox) can never time out the candidate's request.
+
+**Used in**: `broker/api/coding_challenge.py`, `features/coding_challenge/coding_challenge_service_async.py`, `features/coding_challenge/coder_client.py`
+
+---
+
+### `CodeSubmission` (table: `code_submissions`)
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | PK |
+| `workspace_id` | Integer | FK → `code_workspaces.id`, NOT NULL, indexed |
+| `question_id` | Integer | FK → `questions.id`, NOT NULL, indexed |
+| `test_output` | LONGTEXT | NULLABLE |
+| `passed_count` / `total_count` | Integer | NULLABLE |
+| `ai_transcript_raw` | LONGTEXT | NULLABLE — the candidate's raw AI chat transcript, shown to the host for transparency |
+| `code_timeline` | LONGTEXT | NULLABLE — `git log -p` of the workspace at submission time |
+| `ai_token_usage` | JSON | NULLABLE |
+| `score_breakdown` | JSON | NULLABLE — per-criterion weighted scores |
+| `ai_score` | Integer | NULLABLE |
+| `ai_verdict` | String(50) | NULLABLE |
+| `ai_rationale` | Text | NULLABLE |
+| `error_message` | Text | NULLABLE — system-side grading failure detail; never shown to the candidate, only the host |
+| `status` | Enum(`CodeSubmissionStatus`) | NOT NULL, default `queued` |
+| `submitted_at` / `graded_at` | DATETIME(fsp=6) | NULLABLE |
+
+**Statuses**: `queued` → `grading` → `graded` (or `failed` / `partial_failed` on a system-side error — never the candidate's fault, and never shown to them as a failure).
+
+**Note**: Inserted at `/submit` time, not at `/start` — a candidate has no `CodeSubmission` row until they actually submit.
+
+**Used in**: `broker/api/coding_challenge.py`, `features/coding_challenge/grading_service_async.py`
+
+---
+
+### `CodingChallengeInvite` (table: `coding_challenge_invites`)
+| Field | Type | Constraints |
+|---|---|---|
+| `id` | Integer | PK |
+| `tenant_id` | Integer | FK → `tenants.id`, NOT NULL (TenantMixin) |
+| `quiz_id` | Integer | FK → `quizzes.id` ondelete=CASCADE, NOT NULL, indexed |
+| `question_id` | Integer | FK → `questions.id` ondelete=CASCADE, NOT NULL, indexed |
+| `candidate_email` | String(255) | NOT NULL, indexed |
+| `invited_by_user_id` | Integer | FK → `users.id`, NULLABLE |
+| `email_sent` | Boolean | NOT NULL, default True |
+| `latest_invited_attempt_number` | Integer | NOT NULL, default 1 |
+
+**Unique constraint**: `(quiz_id, question_id, candidate_email)`
+
+**Note**: The invite link itself is a stateless signed JWT (payload: `quiz_id`, `question_id`, `candidate_email`, `attempt_number`, `jti`) — this table is only a record of "who was invited," since no `CodeWorkspace` row exists until the candidate actually calls `/start`.
 
 ---
 

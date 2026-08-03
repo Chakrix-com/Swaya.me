@@ -25,6 +25,16 @@ Set-Cookie: access_token=<jwt>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=
 
 API clients (scripts, integrations) can authenticate with `Authorization: Bearer <token>` instead of cookies. The token is the same JWT; the backend accepts either.
 
+### Coding-Challenge Candidate Access (no login)
+
+Coding-challenge candidates never become system users — access to `/coding-challenge/{token}/*`
+is gated entirely by a self-contained, stateless signed JWT minted at invite time (`quiz_id`,
+`question_id`, `candidate_email`, `attempt_number`, `jti`; 7-day validity), plus a 6-digit email
+OTP that must be verified before `/start` is accepted. There is no session cookie and no
+`CurrentUser` context anywhere on this path — every handler decodes the token fresh
+(`svc.decode_invite_token()`) and scopes all queries to the exact `(quiz_id, question_id,
+candidate_email, attempt_number)` tuple it contains.
+
 ---
 
 ## JWT Token Revocation
@@ -65,11 +75,13 @@ SlowAPI rate limiting (via `slowapi`, a FastAPI wrapper around `limits`) is appl
 |---|---|
 | Auth endpoints (login, register) | 10/minute |
 | Exam OTP request + start | 10/minute |
+| Coding-challenge invite | 5/minute (per authenticated host, not per IP) |
+| Coding-challenge OTP request | 10/minute (per IP) + 3 per (invite, email) per 10 minutes (Redis-tracked, independent of the IP limit) |
 | AI generation endpoints | 20/minute |
 | Quiz join/submit | 60/minute |
 | Analytics beacon | 120/minute |
 
-Limits are applied per IP address. A 429 response is returned when the limit is exceeded.
+Limits are applied per IP address unless noted otherwise. A 429 response is returned when the limit is exceeded.
 
 ---
 

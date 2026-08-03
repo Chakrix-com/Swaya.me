@@ -58,7 +58,7 @@ All routes are under prefix `/api/v1`. Documented from source code only.
 ### GET /auth/tier-plans
 - **Function**: `get_tier_plans()`
 - **Auth**: Required
-- **Output**: Array of tier configs for all 4 tiers
+- **Output**: Array of tier configs for all 5 tiers (`FREE`, `BASIC`, `PRO`, `ENTERPRISE`, `CODING_CHALLENGE_PRO`)
 
 ### GET /auth/google/login
 - **Function**: `google_login()`
@@ -381,6 +381,65 @@ All routes are under prefix `/api/v1`. Documented from source code only.
 ### POST /offline-poll/{slug}/complete
 ### GET /offline-poll/{slug}/results
 - **Auth**: Required (host only)
+
+---
+
+## Coding Challenge Routes (`broker/api/coding_challenge.py`)
+
+Host-side routes require auth; the candidate-facing `/coding-challenge/{token}/*` routes are
+public — access control is the signed invite JWT itself (`decode_invite_token()`), not a session.
+
+### POST /quizzes/{quiz_id}/coding-challenge/invite
+- **Function**: `invite_candidates()`
+- **Auth**: Required (host)
+- **Input**: `InviteRequest` — `{candidate_emails: [str] (1-50)}`
+- **Output**: `list[InviteResult]` — `{email, invite_url?, sent, error?}` per candidate
+- **Execution trace**: Mints a signed invite JWT per email (`svc.create_invite_token`, 7-day validity), upserts a `CodingChallengeInvite` row, emails the link (best-effort — a failed email still returns the link so the host can share it manually)
+
+### GET /quizzes/{quiz_id}/coding-challenge/invites
+- **Function**: `list_pending_invites()`
+- **Auth**: Required (host)
+- **Output**: `list[InviteListItem]` — `{candidate_email, invited_at, email_sent, status: pending|expired|started}`
+
+### GET /coding-challenge/{token}
+- **Function**: `get_coding_challenge_info()`
+- **Auth**: Public (invite JWT)
+- **Output**: `{quiz_title, tenant_name, problem_statement, candidate_email, ide_choices, time_budget_seconds, git_repo_url, result_visibility}`
+- **Execution trace**: Decodes the invite, fetches the starter repo's README as the problem statement (`svc.fetch_readme()`, tries `main` then `master`)
+
+### POST /coding-challenge/{token}/request-otp
+- **Function**: `request_coding_challenge_otp()`
+- **Auth**: Public (invite JWT); rate-limited 10/minute
+- **Execution trace**: `svc.request_coding_challenge_otp()` — 6-digit OTP, 3 requests per (invite, email) per 10 minutes, stored in Redis with a 10-minute TTL
+
+### POST /coding-challenge/{token}/start
+- **Function**: `start_coding_challenge()`
+- **Auth**: Public (invite JWT)
+- **Input**: `StartRequest` — `{ide_type, otp}`
+- **Output**: `{status: "provisioning"|"active", workspace_url?, workspace_created_at, effective_time_budget_seconds}`
+- **Execution trace**: Verifies OTP (single-use) → idempotency check (an `active` workspace reconnects synchronously; a `provisioning` one just acks — a job is already in flight) → concurrency-cap check (`MAX_CONCURRENT_WORKSPACES`) → inserts/reuses a `CodeWorkspace` row as `provisioning` and returns immediately. **Does not provision inline** — `svc.schedule_provision_job()` schedules `provision_workspace_job` (APScheduler `DateTrigger`, fires ~immediately) to do the real `coder create` / readiness-wait / session-token-mint work in the background, gated by a `CODER_MAX_PARALLEL_PROVISIONS` semaphore. The candidate's page polls `/status` for readiness.
+
+### GET /coding-challenge/{token}/status
+- **Function**: `get_coding_challenge_status()`
+- **Auth**: Public (invite JWT)
+- **Output**: before submission — `{status: "not_submitted"|"provision_failed", workspace_url?, workspace_created_at, effective_time_budget_seconds}`; after submission — `{status: submission.status}` plus `ai_score`/`ai_verdict` or `result_signal` depending on the question's `result_visibility`
+- **Note**: Purely DB-driven (never calls out to Coder) — this is what the frontend polls both while a workspace is provisioning and while a submission is grading
+
+### POST /coding-challenge/{token}/submit
+- **Function**: `submit_coding_challenge()`
+- **Auth**: Public (invite JWT)
+- **Output**: `{status: "queued"}`
+- **Execution trace**: The one synchronous, load-bearing step is `revoke_token()` (immediately cuts off further IDE access) — test execution, transcript harvest, and AI scoring all happen in `run_grading_job`, scheduled the same way as provisioning
+
+### GET /quiz-builder/questions/{question_id}/coding-challenge-review
+- **Function**: `get_coding_challenge_review()`
+- **Auth**: Required (host, tenant-scoped)
+- **Execution trace**: Merges `CodingChallengeInvite` + `CodeWorkspace` + `CodeSubmission` (three independent records per candidate) into one unified pipeline status per candidate email
+
+### POST /quiz-builder/questions/{question_id}/coding-challenge-review/submissions/{submission_id}/regrade
+- **Function**: `regrade_coding_challenge_submission()`
+- **Auth**: Required (host, tenant-scoped)
+- **Note**: Only `PARTIAL_FAILED` submissions are regradable (harvest succeeded, only the AI-assessment call failed) — reuses the already-persisted `code_timeline`/`ai_transcript_raw`, no workspace needed
 
 ---
 

@@ -20,6 +20,7 @@ backend/
 │   ├── storage/                — Image upload/temp cleanup
 │   └── user_management/        — User CRUD service
 ├── features/
+│   ├── coding_challenge/       — Coder CLI wrapper, invite/OTP orchestration, AI grading
 │   ├── proctoring/             — Proctoring session, violation, rule services
 │   └── quiz/                   — All quiz business logic
 ├── persistence/
@@ -53,6 +54,7 @@ Each file defines a single `router` (APIRouter) imported into `broker/api/routes
 | `auth.py` | `/auth` | Mixed (most endpoints public or auth-optional) |
 | `quiz.py` | `/quizzes` | Most require auth; join/submit are anonymous |
 | `exam.py` | none | Public for `/e/{slug}`; auth for host management |
+| `coding_challenge.py` | mixed | `/coding-challenge/{token}/*` public (invite JWT); invite/review/regrade require auth (host) |
 | `offline_poll.py` | `/offline-poll` | Public for participation; auth for results |
 | `proctoring.py` | `/proctoring` | Mixed; most participant endpoints use session token header |
 | `ai.py` | `/ai` | `require_admin` for generate; any auth for rewrite |
@@ -228,6 +230,55 @@ Each file defines a single `router` (APIRouter) imported into `broker/api/routes
 
 #### `watermark_service.py`
 - **Responsibility**: Participant-specific watermark generation for displayed content
+
+---
+
+### `features/coding_challenge/`
+
+#### `coding_challenge_service_async.py`
+- **Responsibility**: JWT invite mint/verify, email-OTP verification, workspace lifetime-cap
+  scheduling, async-provisioning job scheduling, startup reconciliation
+- **Key functions**: `create_invite_token()`, `decode_invite_token()`, `fetch_readme()`,
+  `request_coding_challenge_otp()`, `verify_coding_challenge_otp()`, `schedule_lifetime_cap_job()`,
+  `reap_abandoned_workspace()`, `provision_workspace_job()`, `schedule_provision_job()`,
+  `reconcile_on_startup()`
+- **Scheduling**: all background jobs (`provision_workspace_job`, `reap_abandoned_workspace`) use
+  the same shared `core/stats/scheduler.py` `AsyncIOScheduler` instance via
+  `apscheduler.triggers.date.DateTrigger` — no separate scheduler for this feature
+- **`provision_workspace_job(workspace_id)`**: does the actual `coder create` / readiness-wait /
+  session-token-mint work that `/start` used to do inline. On success, resets `created_at` to
+  "now" (so the candidate's time budget anchors to when the workspace actually became usable,
+  not to when the row was inserted at `/start` time) and schedules the lifetime-cap job. On
+  failure, marks the workspace `provision_failed`
+- **`reconcile_on_startup()`**: runs once at lifespan startup — re-schedules lifetime-cap jobs for
+  `active` workspaces (APScheduler jobs don't survive a restart), marks any workspace still
+  `provisioning` as `provision_failed` (its background job died with the old process), and marks
+  stuck `queued`/`grading` submissions as `failed`
+
+#### `coder_client.py`
+- **Responsibility**: All Coder sandbox interaction — every call is a `coder` CLI subprocess
+  (`asyncio.create_subprocess_exec`, never a shell, never raw HTTP)
+- **Key functions**: `create_workspace()`, `delete_workspace()`, `stop_workspace()`,
+  `start_workspace()`, `get_workspace_id()`, `mint_session_url()`, `revoke_token()`,
+  `wait_for_app_ready()`, `exec_in_workspace()`, `write_file_to_workspace()`
+- **Concurrency**: `create_workspace()` is gated by a module-level `asyncio.Semaphore`, sized from
+  `CODER_MAX_PARALLEL_PROVISIONS` (default 2) — separate from `MAX_CONCURRENT_WORKSPACES`, which
+  is only a hard admission-reject cap in `broker/api/coding_challenge.py`, not a queue. This
+  serializes concurrent `coder create` calls, since contention against the shared sandbox is what
+  caused real provisioning-time variance under concurrency
+- **Errors**: `CoderClientError` — folds `returncode`/`stderr` into the exception message itself,
+  not just attributes, so every catch site's `str(e)` logging actually shows why a call failed
+
+#### `grading_service_async.py`
+- **Responsibility**: Post-submit grading pipeline
+- **Key functions**: `run_grading_job(submission_id)`, `regrade_submission(submission_id)`
+- **`run_grading_job()`**: runs the question's `test_command` inside the workspace, harvests
+  `test_output`/`passed_count`/`total_count`, `git log -p` as `code_timeline`, and the AI chat
+  transcript; a separate AI pass (`_run_ai_scoring()`) assesses code quality/approach against
+  configurable `grading_weights`; tears down the Coder workspace on completion
+- **`regrade_submission()`**: only valid for `partial_failed` submissions (test harvest
+  succeeded, only the AI-assessment call failed) — re-runs just the AI pass against
+  already-persisted `code_timeline`/`ai_transcript_raw`, no workspace needed
 
 ---
 

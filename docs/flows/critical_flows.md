@@ -252,3 +252,62 @@ Hooks activated after gate passes:
 **4.** DB: Load all answers for participant → score each MCQ answer
 **5.** DB: `UPDATE participants SET completed_at=now()`
 **6.** Returns `ExamSubmitResponse` — `{score, total, correct_count, per_question_breakdown}`
+
+---
+
+## Flow 6: Coding Challenge — Invite through Grading
+
+### Step 6a: Host Invites a Candidate
+
+**1.** Host adds a `coding_challenge`-type question (starter repo URL, test command) to a `coding_challenge` quiz, publishes it.
+**2.** Host invites candidates: `codingChallengeAPI.invite(quizId, {candidate_emails})` → `POST /api/v1/quizzes/{quizId}/coding-challenge/invite`
+**3.** Handler: `invite_candidates()` in `broker/api/coding_challenge.py`
+**4.** Per email: `svc.create_invite_token(quiz_id, question_id, email)` — a signed JWT (7-day validity, embeds `quiz_id`, `question_id`, `candidate_email`, `attempt_number`, `jti`), no server-side session created for it
+**5.** DB: upsert `coding_challenge_invites` row (tracks "who was invited," since no `CodeWorkspace` exists until `/start`)
+**6.** Emails the invite link (best-effort — a failed send still returns the link so the host can share it manually)
+
+### Step 6b: Candidate Verifies and Starts
+
+**1.** Candidate opens `/c/{token}` → `CodingChallengeSession`
+**2.** `codingChallengeAPI.getInfo(token)` → `GET /coding-challenge/{token}` — decodes the JWT, fetches the starter repo's README as the problem statement
+**3.** Candidate clicks "Send code" → `POST /coding-challenge/{token}/request-otp` — 6-digit OTP stored in Redis (10-min TTL, max 3 requests/10min)
+**4.** Candidate enters OTP → `codingChallengeAPI.start(token, ideType, otp)` → `POST /coding-challenge/{token}/start`
+**5.** Handler: `start_coding_challenge()` in `broker/api/coding_challenge.py`. Verifies OTP (single-use, deleted from Redis on success), checks the concurrency cap (`MAX_CONCURRENT_WORKSPACES`), inserts a `CodeWorkspace` row as `status=provisioning`
+**6.** **Does not provision inline.** `svc.schedule_provision_job(workspace.id)` schedules `provision_workspace_job` (APScheduler `DateTrigger`, fires almost immediately) and the endpoint returns `{status: "provisioning", ...}` right away — this is what lets a slow/contended provision on the shared Coder sandbox never time out the candidate's request (the old synchronous version could take 70-150s+ under concurrency, which used to race nginx's `proxy_read_timeout`)
+
+### Step 6c: Background Provisioning
+
+**1.** `provision_workspace_job(workspace_id)` in `features/coding_challenge/coding_challenge_service_async.py` runs in its own DB session
+**2.** `coder_client.create_workspace()` — `coder create <name> -t code-server-multi --parameter git_repo_url=<url> -y`, gated by a `CODER_MAX_PARALLEL_PROVISIONS` semaphore (serializes concurrent `coder create` calls against the shared sandbox, since that contention is what caused provisioning-time variance under concurrency)
+**3.** `coder_client.wait_for_app_ready()` — polls `coder ssh <ws> -- curl localhost:13337` until code-server responds (or times out — logged as a warning, not fatal)
+**4.** `coder_client.mint_session_url()` — mints an API token scoped to just this workspace
+**5.** On success: `status=active`, `workspace_url` set, `created_at` reset to now (the candidate's time budget anchors to when the workspace actually became usable, not to when the row was inserted) — schedules the hard-lifetime-cap reaper job (`schedule_lifetime_cap_job`)
+**6.** On a `create_workspace` failure: `status=provision_failed` — no cleanup needed, a retried `/start` reuses this row in place
+
+### Step 6d: Candidate Polls for Readiness, Opens Workspace
+
+**1.** `CodingChallengeSession` polls `codingChallengeAPI.getStatus(token)` → `GET /coding-challenge/{token}/status` every few seconds
+**2.** Handler reads the `CodeWorkspace` row only — never calls out to Coder itself
+**3.** `workspace_url` present → frontend opens it in a new tab, starts the countdown timer, phase → `started`
+**4.** `status: "provision_failed"` → frontend shows an error, sends the candidate back to the OTP step (a fresh OTP is required for `/start` to succeed again)
+
+### Step 6e: Candidate Submits
+
+**1.** Candidate clicks Submit → `codingChallengeAPI.submit(token)` → `POST /coding-challenge/{token}/submit`
+**2.** Handler: the one synchronous, load-bearing step is `revoke_token()` — immediately cuts off further IDE access
+**3.** DB: `status=submitted` on the workspace, `INSERT code_submissions (status=queued)`
+**4.** Schedules `run_grading_job(submission_id)` (same `DateTrigger`-fires-immediately pattern as provisioning) and returns `{status: "queued"}`
+
+### Step 6f: Background Grading
+
+**1.** `run_grading_job()` in `features/coding_challenge/grading_service_async.py`: runs the question's `test_command` inside the workspace, harvests `test_output`/`passed_count`/`total_count`, `git log -p` as `code_timeline`, and the AI chat transcript
+**2.** `_run_ai_scoring()` — a separate AI pass assesses code quality/approach against the (possibly host-overridden) `grading_weights`; combined into `score_breakdown`/`ai_score`/`ai_verdict`
+**3.** Tears down the Coder workspace (`_cleanup()`)
+**4.** `status=graded` (or `partial_failed` if only the AI-assessment step failed, `failed` if the harvest itself failed — never the candidate's fault, never shown as a failure to them)
+**5.** Candidate's `/status` poll now returns the terminal status — response detail (`ai_score`/`ai_verdict` vs. just a positive/negative signal vs. nothing) is gated by the question's `result_visibility` setting
+
+### Step 6g: Host Reviews
+
+**1.** Host opens the review screen → `codingChallengeAPI.getReview(questionId)` → `GET /quiz-builder/questions/{id}/coding-challenge-review`
+**2.** Merges `coding_challenge_invites` + `code_workspaces` + `code_submissions` (three independent records per candidate) into one row per candidate email
+**3.** A `partial_failed` submission can be regraded from already-persisted data: `POST .../submissions/{id}/regrade` — re-runs only the AI-assessment step, no workspace needed

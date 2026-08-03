@@ -12,11 +12,12 @@
      → Note: Join Code & Session ID
 
   2. Run Load Test
-     → cd /home/vinay/Swaya.me
+     → cd /home/vinay/Swaya.me/scripts/load-tests
      → ./run_load_test.sh
 
   3. Monitor Server (optional)
      → Open new terminal
+     → cd /home/vinay/Swaya.me/scripts
      → ./monitor_server.sh
 
 
@@ -25,22 +26,27 @@
 └─────────────────────────────────────────────────────────────────────────┘
 
   Interactive Test:
+    cd /home/vinay/Swaya.me/scripts/load-tests
     ./run_load_test.sh
 
   Monitor Resources:
-    ./monitor_server.sh
+    /home/vinay/Swaya.me/scripts/monitor_server.sh
 
   Manual Test (Web UI):
-    cd backend
+    cd /home/vinay/Swaya.me/backend
     source .venv/bin/activate
-    locust -f ../load_test.py --host=https://www.swaya.me
+    locust -f ../scripts/load-tests/load_test.py --host=https://www.swaya.me
     # Open: http://localhost:8089
 
   Manual Test (CLI):
-    cd backend
+    cd /home/vinay/Swaya.me/backend
     source .venv/bin/activate
-    locust -f ../load_test.py --host=https://www.swaya.me \
+    locust -f ../scripts/load-tests/load_test.py --host=https://www.swaya.me \
            --users 100 --spawn-rate 10 --run-time 3m --headless
+
+  Other runners in this directory (not covered step-by-step above):
+    run_high_load_test.sh, run_incremental_load_test.sh, run_proctoring_load_test.sh
+    locustfile.py, locustfile_multi_host.py, locustfile_proctoring.py, locustfile_realistic.py
 
 
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -123,14 +129,11 @@
 │ FILES                                                                    │
 └─────────────────────────────────────────────────────────────────────────┘
 
-  load_test.py             - Locust test script
-  run_load_test.sh         - Interactive runner ⭐
-  monitor_server.sh        - Resource monitor
-  LOAD_TEST_README.md      - Quick start guide
-  LOAD_TEST_GUIDE.md       - Full documentation
-  LOAD_TEST_SUMMARY.md     - Complete reference
-  EXAMPLE_WORKFLOW.sh      - Visual example
-  load_test_report.html    - Generated after test
+  load_test.py             - Locust test script (this directory)
+  run_load_test.sh         - Interactive runner ⭐ (this directory)
+  ../monitor_server.sh     - Resource monitor (one level up, in scripts/)
+  README.md                - This file
+  load_test_report.html    - Generated after test (written to repo root)
 
 
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -138,12 +141,12 @@
 └─────────────────────────────────────────────────────────────────────────┘
 
   Terminal 1:
-    cd /home/vinay/Swaya.me
+    cd /home/vinay/Swaya.me/scripts
     ./monitor_server.sh
     # Watch: CPU, Memory, Connections
 
   Terminal 2:
-    cd /home/vinay/Swaya.me
+    cd /home/vinay/Swaya.me/scripts/load-tests
     ./run_load_test.sh
     # Enter: Quiz ID, Session ID, Join Code
     # Select: Test profile
@@ -191,6 +194,6 @@
 ╔════════════════════════════════════════════════════════════════════════╗
 ║ READY TO TEST!                                                          ║
 ║                                                                          ║
-║ Quick start: ./run_load_test.sh                                         ║
-║ Full guide:  cat LOAD_TEST_README.md                                    ║
+║ Quick start: cd scripts/load-tests && ./run_load_test.sh                ║
+║ Full guide:  cat scripts/load-tests/README.md (this file)               ║
 ╚════════════════════════════════════════════════════════════════════════╝

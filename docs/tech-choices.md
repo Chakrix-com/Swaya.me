@@ -107,6 +107,38 @@ Transactional email (OTP delivery, exam results) is sent via any standard SMTP p
 
 ---
 
+## Coding Challenge: Coder OSS + CLI subprocess (not a custom orchestrator)
+
+**Why Coder instead of building our own container orchestration?**
+
+The `coding_challenge` quiz type needs a real, isolated, per-candidate browser IDE. Rather than
+building a custom Docker-Engine orchestrator with our own sandboxing (gVisor/nsjail), a hand-rolled
+warm-pool of pre-started containers, and a self-hosted browser IDE, this integrates with
+[Coder](https://coder.com) (the open-source workspace-provisioning tool) running on a separate
+sandbox VM. Coder owns the Terraform/Docker lifecycle, template management, and the code-server
+(VS Code in the browser) app itself — Swaya's backend only ever shells out to the `coder` CLI as
+a subprocess (`coder create`, `coder ssh`, `coder tokens create`, etc.), never talking to Docker
+or a container runtime directly. This trades some control (we're bound to whatever the `coder`
+CLI exposes — there's no REST "exec" endpoint, so `coder ssh <ws> -- <cmd>` is the one exec
+mechanism, and it's what `coder_client.py` builds everything on) for a much smaller surface area
+to build and secure ourselves.
+
+**Why provisioning is a background job, not inline on the request**
+
+`coder create` doing a real Terraform apply against a shared sandbox has genuinely variable
+timing under concurrency — confirmed via load testing (`scripts/coding_challenge_concurrency_check.py`):
+as low as 70s for one candidate alone, 150s+ with just two provisioning at once. The original
+design had `/start` block on the whole create → wait-for-ready → mint-token sequence inline,
+which meant nginx's own request timeout could kill the connection out from under a workspace that
+was actually about to succeed — a false failure for the candidate. `/start` now persists a
+`provisioning` row and returns immediately; the real work runs as a scheduled background job
+(the same APScheduler pattern already used for stats snapshots and grading), and the candidate's
+page polls for readiness. A separate, smaller concurrency limit (`CODER_MAX_PARALLEL_PROVISIONS`)
+serializes concurrent `coder create` calls, since that contention is the actual source of the
+timing variance — not just something to paper over with a longer timeout.
+
+---
+
 ## Deployment: Nginx + systemd (not Docker in production)
 
 The production server is a single OCI VM managed with aaPanel. Docker adds complexity (networking, volume mounts, image management) that is unnecessary on a single-host deployment. `systemd` service units (`swayame-backend.service`) provide process supervision, auto-restart, and log management via `journald` without Docker overhead.
