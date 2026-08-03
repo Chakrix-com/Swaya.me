@@ -299,17 +299,23 @@ git_check_clean() {
     # never `git add`ed left `git diff --quiet` reporting clean (exit 0) even
     # though the tree genuinely wasn't.
     #
-    # Deliberately scoped to backend/ only, not the whole repo — the backend
-    # sync in cmd_promote_live is a raw `rsync "$DEV_BACKEND/" ...`, a direct
-    # disk copy with no git involved at all, so uncommitted/untracked files
-    # *inside* backend/ are exactly what will silently reach production
-    # regardless of what the git tag says. Files elsewhere in the repo
-    # (scripts/, docs/, stray root-level scratch files — this repo has
-    # plenty, confirmed not backend-related) never get anywhere near live
-    # through this path; checking the whole repo here would make this warn
-    # on every single run regardless of anything that actually matters,
-    # which teaches operators to click through it unread.
-    [[ -z "$(git -C "$DEV_ROOT" status --porcelain -- backend/)" ]]
+    # Deliberately scoped to backend/ + frontend/ only, not the whole repo —
+    # the backend sync in cmd_promote_live is a raw `rsync "$DEV_BACKEND/" ...`
+    # (a direct disk copy, no git involved), and the frontend step always
+    # rebuilds dist/ from whatever's currently in frontend/src (see that
+    # step's own comment — this used to skip rebuilding if dist/ already
+    # existed, which had the identical gap for the identical reason, fixed
+    # separately). Uncommitted/untracked files inside either directory are
+    # exactly what will silently reach production regardless of what the git
+    # tag says. Files elsewhere in the repo (scripts/, docs/, stray
+    # root-level scratch files — this repo has plenty, confirmed unrelated to
+    # what's deployed) never get anywhere near live through either path;
+    # checking the whole repo here would make this warn on every single run
+    # regardless of anything that actually matters, which teaches operators
+    # to click through it unread. frontend/dist and frontend/node_modules are
+    # both gitignored, so they never show up in this check even though
+    # they're inside frontend/ — confirmed via `git check-ignore`.
+    [[ -z "$(git -C "$DEV_ROOT" status --porcelain -- backend/ frontend/)" ]]
 }
 
 git_current_sha() {
@@ -449,9 +455,10 @@ cmd_promote_live() {
     info "Branch: $branch  SHA: $short"
 
     if ! git_check_clean; then
-        warn "backend/ has uncommitted and/or untracked changes (this is what actually gets"
-        warn "deployed — see git_check_clean's comment for why the scope is backend/ only):"
-        git -C "$DEV_ROOT" status --porcelain -- backend/ | sed 's/^/     /'
+        warn "backend/ and/or frontend/ have uncommitted and/or untracked changes (this is"
+        warn "what actually gets deployed — see git_check_clean's comment for why the scope"
+        warn "is these two directories only, not the whole repo):"
+        git -C "$DEV_ROOT" status --porcelain -- backend/ frontend/ | sed 's/^/     /'
         # This used to say "will NOT be included in the release tag" and
         # stop there — true, but dangerously incomplete: it reads as "these
         # changes won't affect live," and that's false. The actual backend
@@ -616,11 +623,20 @@ cmd_promote_live() {
     fi
     success "Live DB migrations applied."
 
-    # 7. Deploy frontend (build must already be done via deploy-test, or build now)
-    if [[ ! -d "$DEV_FRONTEND/dist" ]]; then
-        info "No dist found — building frontend first..."
-        npm --prefix "$DEV_FRONTEND" run build
-    fi
+    # 7. Deploy frontend — ALWAYS rebuild here, never reuse a pre-existing
+    # dist/. This used to only build "if no dist found," silently deploying
+    # whatever was already sitting in dist/ otherwise — with zero check that
+    # it was actually built from the commit being tagged right now, not from
+    # an hours-old build, or from frontend source that's since changed
+    # (uncommitted or not). That's the exact same class of gap round 8 found
+    # and fixed on the backend side (deployed content silently diverging from
+    # what the release tag claims to represent) — the fix there was to warn;
+    # here it's cheaper to just remove the risk outright, since a full
+    # frontend build only costs ~25s and guarantees dist/ always reflects
+    # what's genuinely on disk right now, consistent with how the backend
+    # rsync already works (real current state, not a cached assumption).
+    info "Building frontend (always rebuilt here — see comment above)..."
+    npm --prefix "$DEV_FRONTEND" run build
     info "Deploying frontend → $LIVE_FRONTEND ..."
     sudo rsync -av --delete "$DEV_FRONTEND/dist/" "$LIVE_FRONTEND/"
     success "Frontend deployed."
