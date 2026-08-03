@@ -173,13 +173,26 @@ check_migration_drift() {
     live_current_output=$(cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" \
         "$LIVE_VENV/bin/alembic" current 2>&1) || true
 
+    # NOTE on what this specific check does and doesn't tell you: `alembic
+    # current` runs against $LIVE_BACKEND's OWN (currently still-unsynced)
+    # copy of the migration files, not dev's. So "(head)" here only means
+    # "live's DB matches the head of whatever migration chain live's OWN
+    # code currently knows about" — it says NOTHING about how far behind
+    # live is from dev's migrations, which is what step 2 below actually
+    # answers. Read both together, not this one in isolation: it's normal
+    # and NOT contradictory to see "(head)" here immediately followed by
+    # "N new migration files" below — that's exactly what "live hasn't been
+    # synced with dev's newer migrations yet" looks like from this angle.
     if echo "$live_current_output" | grep -q "(head)"; then
-        success "Live DB is already at migration head — no pending migrations."
+        success "Live DB is at the head of live's OWN (currently-synced) migration chain."
+        info "(This does not mean live matches dev — see the file-level diff below for that.)"
     else
         local live_rev
         live_rev=$(echo "$live_current_output" | grep -oP '[a-f0-9]{12}' | head -1 || true)
         if [[ -n "$live_rev" ]]; then
-            warn "⚠  Live DB is at revision ${live_rev} — NOT at head."
+            warn "⚠  Live DB is at revision ${live_rev} — not even at the head of live's OWN"
+            warn "   migration chain. This is a different, more urgent problem than 'behind dev'"
+            warn "   (see file-level diff below) — investigate this before anything else."
         else
             warn "⚠  Could not read live DB migration state. Output:"
             echo "     $live_current_output"
