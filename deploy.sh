@@ -64,6 +64,25 @@ timestamp() { date +"%Y%m%d_%H%M%S"; }
 DISK_ABORT_GB=5   # hard stop below this much free space
 DISK_WARN_GB=10   # confirm-to-continue below this much free space
 check_disk_space() {
+    # Pass "prune" as $1 to let this check free space itself (old
+    # frontend_release/*/backend_release/* backups) before measuring —
+    # otherwise a genuinely large backlog (confirmed: ~180 old backups, 11G,
+    # accumulated since March because nothing pruned them before today) would
+    # trip the abort threshold below and exit the whole run before ever
+    # reaching the later, steady-state prune call that would have freed the
+    # space. Deliberately opt-in, NOT the default: cmd_preflight calls this
+    # without "prune" (it's documented and expected to be read-only/side-
+    # effect-free — deleting real backup data is not something a "check"
+    # command should do silently), cmd_promote_live passes "prune" since it's
+    # already an explicitly-confirmed, state-changing operation. Safe to
+    # prune twice per promote-live run (idempotent — the later steady-state
+    # call just finds nothing left beyond whatever this run adds).
+    if [[ "${1:-}" == "prune" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        prune_old_dir_backups "frontend"
+        prune_old_dir_backups "backend"
+    fi
+
     local avail_kb avail_gb
     avail_kb=$(df --output=avail -k "$BACKUP_DIR" 2>/dev/null | tail -1 || df --output=avail -k "$DEV_ROOT" | tail -1)
     avail_gb=$(( avail_kb / 1024 / 1024 ))
@@ -72,9 +91,16 @@ check_disk_space() {
 
     if (( avail_gb < DISK_ABORT_GB )); then
         error "⛔  Only ${avail_gb}G free — below the ${DISK_ABORT_GB}G floor. Refusing to proceed."
-        error "Free up space first (old release backups in \$BACKUP_DIR are the usual culprit —"
-        error "'releases' shows what's there; frontend_*/backend_* dirs are now auto-pruned to the"
-        error "3 most recent going forward, but existing older ones may still need a manual clean)."
+        if [[ "${1:-}" == "prune" ]]; then
+            error "Old backup dirs were already pruned to the 3 most recent as part of this check —"
+            error "if space is still this tight, it's not stale release backups. Check 'du -sh"
+            error "$BACKUP_DIR/*' and the DB dumps, or free space elsewhere on this host."
+        else
+            error "Old release backups in \$BACKUP_DIR haven't been pruned yet (this is the"
+            error "read-only preflight check — it doesn't delete anything). Run"
+            error "'./deploy.sh promote-live' when you're actually ready and it will prune them"
+            error "automatically as its first step, or check 'du -sh $BACKUP_DIR/*' now."
+        fi
         return 1
     elif (( avail_gb < DISK_WARN_GB )); then
         warn "⚠  Only ${avail_gb}G free — below the ${DISK_WARN_GB}G comfort margin."
@@ -299,6 +325,25 @@ backend_backup=$BACKUP_DIR/backend_$tag
 EOF
 }
 
+# Prune old frontend_release/*/backend_release/* backup dirs, keeping the 3
+# most recent — mirrors the DB dump pruning below. Top-level (not defined
+# inline inside cmd_promote_live) specifically so check_disk_space's caller
+# can run it BEFORE the disk-space check too, not just after — see the
+# comment at that call site for why the ordering matters.
+prune_old_dir_backups() {
+    local prefix="$1"
+    local parent="$BACKUP_DIR/${prefix}_release"
+    [[ -d "$parent" ]] || return 0
+    local old_dirs
+    old_dirs=$(ls -1dt "$parent"/*/ 2>/dev/null | tail -n +4)
+    if [[ -n "$old_dirs" ]]; then
+        local count; count=$(echo "$old_dirs" | wc -l)
+        info "Pruning $count old ${prefix} backup dir(s) under $parent ..."
+        echo "$old_dirs" | xargs rm -rf
+        success "Old ${prefix} backups removed."
+    fi
+}
+
 list_releases() {
     # Lists release/* tags sorted by date descending
     git -C "$DEV_ROOT" tag -l "release/*" --sort=-creatordate
@@ -391,7 +436,7 @@ cmd_promote_live() {
     check_no_live_sessions || return 1
 
     # Disk space — before any backup/deploy step starts, not discovered partway through
-    check_disk_space || return 1
+    check_disk_space prune || return 1
 
     # Show migration drift before committing to the deploy
     echo ""
@@ -452,21 +497,11 @@ cmd_promote_live() {
     # "$BACKUP_DIR/frontend_$tag" with tag="release/<ts>" nests it one level,
     # not a flat "frontend_release_<ts>" name). Confirmed live 2026-08-03: ~180
     # never-pruned subdirectories under each, dating back to March, 11G total
-    # for what should be a handful. Keep the 3 most recent, same retention as
-    # the DB dumps.
-    prune_old_dir_backups() {
-        local prefix="$1"
-        local parent="$BACKUP_DIR/${prefix}_release"
-        [[ -d "$parent" ]] || return 0
-        local old_dirs
-        old_dirs=$(ls -1dt "$parent"/*/ 2>/dev/null | tail -n +4)
-        if [[ -n "$old_dirs" ]]; then
-            local count; count=$(echo "$old_dirs" | wc -l)
-            info "Pruning $count old ${prefix} backup dir(s) under $parent ..."
-            echo "$old_dirs" | xargs rm -rf
-            success "Old ${prefix} backups removed."
-        fi
-    }
+    # for what should be a handful. Also ran once already, earlier in this same
+    # function before check_disk_space — running it again here re-trims back
+    # to 3 total including the backup just taken above (the earlier run can
+    # only prune down to 3 *old* ones, so immediately after adding a new one
+    # there'd otherwise be 4 until the next release).
     prune_old_dir_backups "frontend"
     prune_old_dir_backups "backend"
 
