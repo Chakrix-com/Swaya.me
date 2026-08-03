@@ -64,25 +64,23 @@ timestamp() { date +"%Y%m%d_%H%M%S"; }
 DISK_ABORT_GB=5   # hard stop below this much free space
 DISK_WARN_GB=10   # confirm-to-continue below this much free space
 check_disk_space() {
-    # Pass "prune" as $1 to let this check free space itself (old
-    # frontend_release/*/backend_release/* backups) before measuring —
-    # otherwise a genuinely large backlog (confirmed: ~180 old backups, 11G,
-    # accumulated since March because nothing pruned them before today) would
-    # trip the abort threshold below and exit the whole run before ever
-    # reaching the later, steady-state prune call that would have freed the
-    # space. Deliberately opt-in, NOT the default: cmd_preflight calls this
-    # without "prune" (it's documented and expected to be read-only/side-
-    # effect-free — deleting real backup data is not something a "check"
-    # command should do silently), cmd_promote_live passes "prune" since it's
-    # already an explicitly-confirmed, state-changing operation. Safe to
-    # prune twice per promote-live run (idempotent — the later steady-state
-    # call just finds nothing left beyond whatever this run adds).
-    if [[ "${1:-}" == "prune" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        prune_old_dir_backups "frontend"
-        prune_old_dir_backups "backend"
-    fi
-
+    # Deliberately read-only, no arguments, same behavior for both
+    # cmd_preflight and cmd_promote_live — "check" and "prune" are kept as
+    # two separate, explicit steps (prune_old_dir_backups is called
+    # separately by cmd_promote_live, only *after* its own "Proceed?"
+    # confirmation) rather than one silently doing the other's job.
+    #
+    # This used to prune inline when called with a "prune" argument, on the
+    # theory that a large backlog (confirmed: ~180 old backups, 11G,
+    # accumulated since March) would otherwise trip the abort threshold below
+    # before ever reaching the later prune call that would fix it. True, but
+    # that had it backwards: cmd_promote_live called it *before* its own
+    # "Proceed?" prompt, so a real (destructive, if old-and-unwanted)
+    # deletion of ~155 backup directories would happen even if the operator
+    # then answered "no" and aborted the whole promotion — a supposedly
+    # still-reversible pre-flight phase silently doing something irreversible.
+    # Fixed by moving the actual prune to after that confirmation instead
+    # (see cmd_promote_live) — this function only ever reports now.
     local avail_kb avail_gb
     avail_kb=$(df --output=avail -k "$BACKUP_DIR" 2>/dev/null | tail -1 || df --output=avail -k "$DEV_ROOT" | tail -1)
     avail_gb=$(( avail_kb / 1024 / 1024 ))
@@ -91,16 +89,11 @@ check_disk_space() {
 
     if (( avail_gb < DISK_ABORT_GB )); then
         error "⛔  Only ${avail_gb}G free — below the ${DISK_ABORT_GB}G floor. Refusing to proceed."
-        if [[ "${1:-}" == "prune" ]]; then
-            error "Old backup dirs were already pruned to the 3 most recent as part of this check —"
-            error "if space is still this tight, it's not stale release backups. Check 'du -sh"
-            error "$BACKUP_DIR/*' and the DB dumps, or free space elsewhere on this host."
-        else
-            error "Old release backups in \$BACKUP_DIR haven't been pruned yet (this is the"
-            error "read-only preflight check — it doesn't delete anything). Run"
-            error "'./deploy.sh promote-live' when you're actually ready and it will prune them"
-            error "automatically as its first step, or check 'du -sh $BACKUP_DIR/*' now."
-        fi
+        error "If \$BACKUP_DIR has old frontend_release/*/backend_release/* backups beyond the 3"
+        error "most recent, promote-live will prune those automatically once you confirm — but"
+        error "this check runs before that confirmation, so it can't rely on that yet. Check"
+        error "'du -sh $BACKUP_DIR/*' yourself now if you want to know whether pruning would help"
+        error "before deciding."
         return 1
     elif (( avail_gb < DISK_WARN_GB )); then
         warn "⚠  Only ${avail_gb}G free — below the ${DISK_WARN_GB}G comfort margin."
@@ -437,8 +430,10 @@ cmd_promote_live() {
     # Soft warning if anyone is mid-quiz (not exam)
     check_no_live_sessions || return 1
 
-    # Disk space — before any backup/deploy step starts, not discovered partway through
-    check_disk_space prune || return 1
+    # Disk space — report-only here (before the operator has committed to
+    # anything). Actual pruning happens after "Proceed?" below, not here —
+    # see check_disk_space's own comment for why that ordering matters.
+    check_disk_space || return 1
 
     # Show migration drift before committing to the deploy
     echo ""
@@ -447,6 +442,18 @@ cmd_promote_live() {
 
     warn "This will update PRODUCTION (www.swaya.me)."
     confirm "Proceed?" || { info "Aborted."; return; }
+
+    # Free space now that the operator has actually committed — before the
+    # git tag or any new backup exists, so there's nothing yet to lose by
+    # deleting old ones. Kept separate from the disk-space report above on
+    # purpose: nothing destructive should happen before "Proceed?" is
+    # answered, even if that means this run's own backup could still fail on
+    # a still-too-tight disk afterward — see the mysqldump/rsync steps below,
+    # which aren't re-guarded after this point (matches every other step in
+    # this function; failures there already print their own errors).
+    mkdir -p "$BACKUP_DIR"
+    prune_old_dir_backups "frontend"
+    prune_old_dir_backups "backend"
 
     local ts; ts=$(timestamp)
     local tag="release/$ts"
