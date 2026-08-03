@@ -2816,7 +2816,8 @@
     "reinviteDisabledReason": "Disponible une fois la tentative en cours soumise ou expirée.",
     "reinviteSuccess": "{{email}} a été réinvité",
     "attemptBadge": "Tentative {{number}}",
-    "attemptHistoryHeading": "Historique des tentatives"
+    "attemptHistoryHeading": "Historique des tentatives",
+    "startingHint": "Configuration de votre espace de travail — cela peut prendre 4 à 5 minutes. Veuillez rester sur cette page."
   },
   "errors": {
     "backToDashboard": "Retour au tableau de bord",

@@ -2816,7 +2816,8 @@
     "reinviteDisabledReason": "Будет доступно после отправки текущей попытки или истечения срока её действия.",
     "reinviteSuccess": "{{email}} приглашён повторно",
     "attemptBadge": "Попытка {{number}}",
-    "attemptHistoryHeading": "История попыток"
+    "attemptHistoryHeading": "История попыток",
+    "startingHint": "Настройка рабочей среды — это может занять 4-5 минут. Пожалуйста, оставайтесь на этой странице."
   },
   "errors": {
     "backToDashboard": "Вернуться на панель управления",

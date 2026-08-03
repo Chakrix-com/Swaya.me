@@ -204,12 +204,19 @@ async def exec_in_workspace(workspace_name: str, command: str, timeout: Optional
     return await _exec_bash_lc(workspace_name, script, cli_path=cli_path, timeout=timeout)
 
 
-async def wait_for_app_ready(workspace_name: str, port: int = 13337, timeout: float = 40.0,
+async def wait_for_app_ready(workspace_name: str, port: int = 13337, timeout: float = 120.0,
                               cli_path: str = DEFAULT_CLI_PATH) -> bool:
     """`coder create` only waits for the agent to connect, not for the code-server
     registry module's own startup script to finish installing/launching code-server
     inside the container — handing the candidate a session URL before that's done
-    causes a real "connection refused" 502 on their very first open (confirmed live).
+    causes a real "connection refused" 502 on their very first open (confirmed live,
+    twice: once during initial design, and again live on 2026-08-02 against a real
+    candidate — the previous 40s timeout was far short of the ~145-150s code-server
+    startup can actually take in practice, measured separately while widening the
+    Claude Code extension install poll window in the workspace template). 120s
+    matches the frontend's own LONG_TIMEOUT for this call (services/api.js) — no
+    point waiting longer backend-side than the client is still listening — and
+    stays under this route's 150s nginx proxy_read_timeout with margin.
     Polls from inside the workspace until the port is actually accepting connections.
     Returns False (not True) on timeout — caller proceeds anyway rather than blocking
     /start indefinitely; this just makes the common case reliable, not a guarantee."""

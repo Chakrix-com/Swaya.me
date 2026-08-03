@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "વર્તમાન પ્રયાસ સબમિટ થયા પછી અથવા સમય પૂરો થયા પછી ઉપલબ્ધ થશે.",
     "reinviteSuccess": "{{email}} ને ફરીથી આમંત્રિત કરાયા",
     "attemptBadge": "પ્રયાસ {{number}}",
-    "attemptHistoryHeading": "પ્રયાસ ઇતિહાસ"
+    "attemptHistoryHeading": "પ્રયાસ ઇતિહાસ",
+    "startingHint": "તમારું કોડિંગ વર્કસ્પેસ સેટઅપ થઈ રહ્યું છે — આમાં 4-5 મિનિટ લાગી શકે છે. કૃપા કરીને આ પેજ પર જ રહો."
   },
   "errors": {
     "backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",

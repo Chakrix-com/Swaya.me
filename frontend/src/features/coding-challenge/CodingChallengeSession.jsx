@@ -339,6 +339,13 @@ function StartStep({ info, onStarted, startError, onClearStartError }) {
             {t('codingChallenge.startButton')}
           </Button>
         </Form.Item>
+        {starting && (
+          <Alert
+            type="info"
+            showIcon
+            message={t('codingChallenge.startingHint', 'Setting up your coding workspace — this can take 4-5 minutes. Please stay on this page.')}
+          />
+        )}
       </Form>
       <Button type="link" disabled={resendCooldown > 0} loading={sendingOtp} onClick={handleResend} style={{ padding: 0 }}>
         {resendCooldown > 0 ? t('codingChallenge.resendIn', { seconds: resendCooldown }) : t('codingChallenge.resendCode')}

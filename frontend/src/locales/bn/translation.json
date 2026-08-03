@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "বর্তমান প্রচেষ্টা জমা দেওয়ার পরে বা মেয়াদ শেষ হওয়ার পরে উপলব্ধ হবে।",
     "reinviteSuccess": "{{email}} কে পুনরায় আমন্ত্রণ জানানো হয়েছে",
     "attemptBadge": "প্রচেষ্টা {{number}}",
-    "attemptHistoryHeading": "প্রচেষ্টার ইতিহাস"
+    "attemptHistoryHeading": "প্রচেষ্টার ইতিহাস",
+    "startingHint": "আপনার কোডিং ওয়ার্কস্পেস সেট আপ করা হচ্ছে — এতে ৪-৫ মিনিট সময় লাগতে পারে। অনুগ্রহ করে এই পেজেই থাকুন।"
   },
   "errors": {
     "backToDashboard": "ড্যাশবোর্ডে ফিরে যান",

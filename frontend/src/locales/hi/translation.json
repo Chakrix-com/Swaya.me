@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "यह तभी उपलब्ध होगा जब मौजूदा प्रयास सबमिट हो जाए या समाप्त हो जाए।",
     "reinviteSuccess": "{{email}} को फिर से आमंत्रित किया गया",
     "attemptBadge": "प्रयास {{number}}",
-    "attemptHistoryHeading": "प्रयास इतिहास"
+    "attemptHistoryHeading": "प्रयास इतिहास",
+    "startingHint": "आपका कोडिंग वर्कस्पेस तैयार किया जा रहा है — इसमें 4-5 मिनट लग सकते हैं। कृपया इस पेज पर बने रहें।"
   },
   "errors": {
     "backToDashboard": "डैशबोर्ड पर वापस जाएं",

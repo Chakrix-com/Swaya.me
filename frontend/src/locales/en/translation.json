@@ -2615,6 +2615,7 @@
     "otpLength": "The code must be exactly 6 digits",
     "otpPlaceholder": "000000",
     "startButton": "Start Coding Challenge",
+    "startingHint": "Setting up your coding workspace — this can take 4-5 minutes. Please stay on this page.",
     "resendIn": "Resend in {{seconds}}s",
     "resendCode": "Resend code",
     "workspaceReadyTitle": "Your workspace is ready",

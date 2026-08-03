@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "Verfügbar, sobald der aktuelle Versuch eingereicht wurde oder abgelaufen ist.",
     "reinviteSuccess": "{{email}} wurde erneut eingeladen",
     "attemptBadge": "Versuch {{number}}",
-    "attemptHistoryHeading": "Versuchsverlauf"
+    "attemptHistoryHeading": "Versuchsverlauf",
+    "startingHint": "Dein Programmier-Arbeitsbereich wird eingerichtet – das kann 4-5 Minuten dauern. Bitte bleib auf dieser Seite."
   },
   "errors": {
     "backToDashboard": "Zurück zum Dashboard",

@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "Estará disponible una vez que el intento actual se envíe o caduque.",
     "reinviteSuccess": "Se reinvitó a {{email}}",
     "attemptBadge": "Intento {{number}}",
-    "attemptHistoryHeading": "Historial de intentos"
+    "attemptHistoryHeading": "Historial de intentos",
+    "startingHint": "Preparando tu entorno de programación — esto puede tardar de 4 a 5 minutos. Por favor, permanece en esta página."
   },
   "errors": {
     "backToDashboard": "Volver al panel",

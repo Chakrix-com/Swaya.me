@@ -2814,7 +2814,8 @@
     "reinviteDisabledReason": "ಪ್ರಸ್ತುತ ಪ್ರಯತ್ನ ಸಲ್ಲಿಸಿದ ನಂತರ ಅಥವಾ ಅವಧಿ ಮುಗಿದ ನಂತರ ಲಭ್ಯವಿರುತ್ತದೆ.",
     "reinviteSuccess": "{{email}} ಅನ್ನು ಮತ್ತೆ ಆಹ್ವಾನಿಸಲಾಗಿದೆ",
     "attemptBadge": "ಪ್ರಯತ್ನ {{number}}",
-    "attemptHistoryHeading": "ಪ್ರಯತ್ನ ಇತಿಹಾಸ"
+    "attemptHistoryHeading": "ಪ್ರಯತ್ನ ಇತಿಹಾಸ",
+    "startingHint": "ನಿಮ್ಮ ಕೋಡಿಂಗ್ ವರ್ಕ್‌ಸ್ಪೇಸ್ ಅನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ — ಇದಕ್ಕೆ 4-5 ನಿಮಿಷಗಳು ಬೇಕಾಗಬಹುದು. ದಯವಿಟ್ಟು ಈ ಪುಟದಲ್ಲೇ ಇರಿ."
   },
   "errors": {
     "backToDashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
