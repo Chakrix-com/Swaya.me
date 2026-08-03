@@ -17,6 +17,7 @@ Swaya is an open-source, multi-tenant platform for running live quizzes, polls, 
 |---|---|---|---|---|
 | Self-hosted | Yes | No | No | No |
 | Proctored exams | Yes | No | No | No |
+| Coding challenges (real browser IDE + AI pair-programming) | Yes | No | No | No |
 | OTP email verification | Yes | No | No | No |
 | AI question generation | Yes | No | No | No |
 | Word cloud responses | Yes | No | Yes | No |
@@ -34,6 +35,7 @@ Swaya is an open-source, multi-tenant platform for running live quizzes, polls, 
 - **Word Cloud** — Crowd-sourced responses rendered as a live word cloud with automatic profanity filtering
 - **Offline Poll** — QR-code-based polling for physical spaces without an active host
 - **Exam Mode** — Self-paced, timed exams with webcam proctoring, OTP email verification, and PDF reports
+- **Coding Challenge** — Candidates get a real browser IDE (Coder-provisioned VS Code / code-server) with AI pair-programming, invited by email with OTP verification; auto-graded on test results plus an AI-assessed review of code quality and approach
 - **AI Question Generation** — Generate localized MCQ quizzes from a single prompt (Gemini 2.0 Flash)
 - **AI Result Analysis** — Post-exam AI summary of class performance
 - **11 languages** — UI in English, Hindi, Tamil, Telugu, Kannada, Bengali, Gujarati, Spanish, French, German, Russian
@@ -56,18 +58,25 @@ Browser Clients (Host + Audience)
     │         FastAPI (Python 3.10)           │
     │  20 API routers · async service layer  │
     │  JWT auth · SSE real-time · Tier limits│
-    └──────┬──────────────────┬──────────────┘
-           │                  │
-    ┌──────▼──────┐   ┌───────▼───────┐
-    │   MySQL 8   │   │    Redis 7    │
-    │ (all data,  │   │ (pub-sub, JWT │
-    │ tenant-     │   │  blocklist,   │
-    │ scoped)     │   │  tier cache,  │
-    │             │   │  OTPs)        │
-    └─────────────┘   └───────────────┘
+    └──────┬──────────────────┬──────────┬────┘
+           │                  │          │ coder CLI subprocess
+    ┌──────▼──────┐   ┌───────▼───────┐  │  (background job, not inline)
+    │   MySQL 8   │   │    Redis 7    │  │
+    │ (all data,  │   │ (pub-sub, JWT │  ▼
+    │ tenant-     │   │  blocklist,   │ ┌─────────────────────────┐
+    │ scoped)     │   │  tier cache,  │ │  Coder sandbox VM       │
+    │             │   │  OTPs)        │ │  (optional) — real      │
+    └─────────────┘   └───────────────┘ │  browser IDE + AI       │
+                                         │  pair-programming for   │
+                                         │  coding_challenge       │
+                                         └─────────────────────────┘
 ```
 
 Real-time updates use **Server-Sent Events** (SSE), not WebSockets — see [docs/architecture.md](docs/architecture.md).
+The Coder sandbox is only needed for the `coding_challenge` quiz type — everything else runs
+without it. Provisioning happens as a background job (not inline on the request), so a slow or
+concurrent provision never blocks or times out the API — see
+[docs/self-hosting/coding-challenge-vms.md](docs/self-hosting/coding-challenge-vms.md).
 
 ---
 
@@ -83,6 +92,7 @@ Real-time updates use **Server-Sent Events** (SSE), not WebSockets — see [docs
 | Auth | JWT (HttpOnly cookie) + Google OAuth 2.0 |
 | Real-time | Server-Sent Events (SSE) |
 | Email | SMTP (configurable — any provider) |
+| Coding challenges (optional) | Coder OSS sandbox VM, code-server, Claude Code AI assistant |
 
 ---
 
@@ -172,7 +182,8 @@ Swaya.me/
 │   │   ├── ai/                    # Gemini + Ollama integrations
 │   │   └── security/              # JWT, OAuth, password hashing
 │   ├── features/
-│   │   └── quiz/                  # Quiz, session, exam, poll services
+│   │   ├── quiz/                  # Quiz, session, exam, poll services
+│   │   └── coding_challenge/      # Coder CLI wrapper, orchestration, AI grading
 │   ├── persistence/
 │   │   ├── models/                # SQLAlchemy models
 │   │   └── migrations/            # Alembic migrations
@@ -227,6 +238,7 @@ Copy `backend/.env.example` and fill in the values. Key variables:
 | `SMTP_FROM_EMAIL` / `SMTP_FROM_NAME` | For email | Sender identity |
 | `FRONTEND_URL` | For email links | Your deployed frontend URL |
 | `OLLAMA_BASE_URL` | Optional | Local Ollama for offline AI |
+| `CODER_URL` / `CODER_CLI_PATH` / `MAX_CONCURRENT_WORKSPACES` | For coding challenges | Coder sandbox VM — see [docs/self-hosting/coding-challenge-vms.md](docs/self-hosting/coding-challenge-vms.md) |
 
 ---
 
