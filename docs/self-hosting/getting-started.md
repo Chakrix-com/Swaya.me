@@ -104,7 +104,7 @@ uvicorn main:app --reload --port 8000
 ```
 
 API docs (Swagger UI): http://localhost:8000/api/docs
-Health check: http://localhost:8000/api/health
+Health check: http://localhost:8000/health (root-level, not under /api/v1 — see `backend/main.py`)
 
 ## 7. Run the frontend
 
