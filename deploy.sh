@@ -127,8 +127,9 @@ check_no_live_exams() {
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
 
-    local result rc
-    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
+    local result rc errfile
+    errfile=$(mktemp)
+    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>"$errfile" <<'SQL'
 SELECT CONCAT(p.display_name, ' <', p.email, '> — ', q.title,
               ' (', TIMESTAMPDIFF(MINUTE, p.started_at, NOW()), ' min in, ',
               ROUND(q.exam_time_limit_seconds/60 - TIMESTAMPDIFF(MINUTE, p.started_at, NOW())),
@@ -147,13 +148,13 @@ SQL
     rc=$?
     if [[ $rc -ne 0 ]]; then
         error "⛔  Could not check for active exam participants — the safety query itself FAILED (exit $rc):"
-        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$" >&2
-        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        sed 's/^/     /' "$errfile" >&2
+        rm -f "$errfile"
         error "This is NOT the same as 'no active exams' — refusing to proceed without a real answer."
         error "Fix the DB connection (check credentials/connectivity) and re-run."
         return 1
     fi
-    rm -f "/tmp/deploy_sh_mysql_err.$$"
+    rm -f "$errfile"
 
     if [[ -n "$result" ]]; then
         error "⛔  Cannot deploy — participants are actively taking exams:"
@@ -224,8 +225,9 @@ check_no_live_sessions() {
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
 
-    local result rc
-    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
+    local result rc errfile
+    errfile=$(mktemp)
+    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>"$errfile" <<'SQL'
 SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' active participant(s)')
 FROM quiz_sessions qs
 JOIN quizzes q ON qs.quiz_id = q.id
@@ -240,12 +242,12 @@ SQL
     rc=$?
     if [[ $rc -ne 0 ]]; then
         error "⛔  Could not check for active live quiz sessions — the query itself FAILED (exit $rc):"
-        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$" >&2
-        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        sed 's/^/     /' "$errfile" >&2
+        rm -f "$errfile"
         confirm "Continue anyway WITHOUT knowing if there are active sessions?" || { info "Aborted."; return 1; }
         return 0
     fi
-    rm -f "/tmp/deploy_sh_mysql_err.$$"
+    rm -f "$errfile"
 
     if [[ -n "$result" ]]; then
         warn "⚠  Active live quiz sessions detected (participants will disconnect ~5s on restart):"
@@ -801,8 +803,9 @@ cmd_preflight() {
     local db_user="swayame_user"
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
-    local sessions sessions_rc
-    sessions=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
+    local sessions sessions_rc errfile
+    errfile=$(mktemp)
+    sessions=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>"$errfile" <<'SQL'
 SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' participant(s) active')
 FROM quiz_sessions qs
 JOIN quizzes q ON qs.quiz_id = q.id
@@ -817,16 +820,16 @@ SQL
     sessions_rc=$?
     if [[ $sessions_rc -ne 0 ]]; then
         warn "Could not check for active live quiz sessions — query failed, NOT the same as 'none active':"
-        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$"
-        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        sed 's/^/     /' "$errfile"
+        rm -f "$errfile"
     elif [[ -n "$sessions" ]]; then
-        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        rm -f "$errfile"
         warn "Active live quiz sessions (participants will briefly disconnect on restart):"
         while IFS= read -r line; do
             echo -e "     ${YELLOW}•${RESET} $line"
         done <<< "$sessions"
     else
-        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        rm -f "$errfile"
         success "No active live quiz sessions."
     fi
 
