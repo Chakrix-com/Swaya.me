@@ -103,17 +103,18 @@ echo "--------------------------------------"
 echo ""
 
 # Update the load test file with configuration
+LOAD_TEST_PY=/home/vinay/Swaya.me/scripts/load-tests/load_test.py
 echo "📝 Updating test configuration..."
-sed -i "s/QUIZ_ID = [0-9]*/QUIZ_ID = $QUIZ_ID/" /home/vinay/Swaya.me/load_test.py
-sed -i "s/SESSION_ID = None/SESSION_ID = $SESSION_ID/" /home/vinay/Swaya.me/load_test.py
-sed -i "s/JOIN_CODE = None/JOIN_CODE = \"$JOIN_CODE\"/" /home/vinay/Swaya.me/load_test.py
+sed -i "s/QUIZ_ID = [0-9]*/QUIZ_ID = $QUIZ_ID/" "$LOAD_TEST_PY"
+sed -i "s/SESSION_ID = .*/SESSION_ID = $SESSION_ID/" "$LOAD_TEST_PY"
+sed -i "s/JOIN_CODE = .*/JOIN_CODE = \"$JOIN_CODE\"/" "$LOAD_TEST_PY"
 
 echo "✅ Configuration updated in load_test.py"
 echo ""
 
 # Offer to start monitoring
 echo "💡 TIP: Open another terminal and run:"
-echo "   ./monitor_server.sh"
+echo "   /home/vinay/Swaya.me/scripts/monitor_server.sh"
 echo ""
 read -p "Press Enter to start load test..."
 
@@ -127,16 +128,16 @@ if [ "$WEB_UI" = true ]; then
     echo "Opening Web UI at http://localhost:8089"
     echo "Configure your test parameters in the browser."
     echo ""
-    locust -f /home/vinay/Swaya.me/load_test.py --host=https://www.swaya.me
+    locust -f "$LOAD_TEST_PY" --host=https://www.swaya.me
 else
-    locust -f /home/vinay/Swaya.me/load_test.py \
+    locust -f "$LOAD_TEST_PY" \
            --host=https://www.swaya.me \
            --users $USERS \
            --spawn-rate $SPAWN_RATE \
            --run-time $RUN_TIME \
            --headless \
            --html=/home/vinay/Swaya.me/load_test_report.html
-    
+
     echo ""
     echo "======================================"
     echo "✅ Load Test Complete!"
