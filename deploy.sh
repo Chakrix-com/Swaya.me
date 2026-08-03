@@ -291,8 +291,25 @@ health_check() {
 
 # ─── Git helpers ─────────────────────────────────────────────────────────────
 git_check_clean() {
-    # Returns 0 if working tree is clean
-    git -C "$DEV_ROOT" diff --quiet && git -C "$DEV_ROOT" diff --cached --quiet
+    # Returns 0 if working tree is clean. Deliberately `git status --porcelain`
+    # (not `git diff --quiet && git diff --cached --quiet`, which was the
+    # original check here) — `git diff` only ever reports *tracked* files,
+    # both modified and staged; it says nothing about untracked ones.
+    # Confirmed empirically: a brand new file dropped into backend/ that was
+    # never `git add`ed left `git diff --quiet` reporting clean (exit 0) even
+    # though the tree genuinely wasn't.
+    #
+    # Deliberately scoped to backend/ only, not the whole repo — the backend
+    # sync in cmd_promote_live is a raw `rsync "$DEV_BACKEND/" ...`, a direct
+    # disk copy with no git involved at all, so uncommitted/untracked files
+    # *inside* backend/ are exactly what will silently reach production
+    # regardless of what the git tag says. Files elsewhere in the repo
+    # (scripts/, docs/, stray root-level scratch files — this repo has
+    # plenty, confirmed not backend-related) never get anywhere near live
+    # through this path; checking the whole repo here would make this warn
+    # on every single run regardless of anything that actually matters,
+    # which teaches operators to click through it unread.
+    [[ -z "$(git -C "$DEV_ROOT" status --porcelain -- backend/)" ]]
 }
 
 git_current_sha() {
@@ -432,9 +449,21 @@ cmd_promote_live() {
     info "Branch: $branch  SHA: $short"
 
     if ! git_check_clean; then
-        warn "Working tree has uncommitted changes."
-        warn "These changes will NOT be included in the release tag."
-        confirm "Continue anyway (promote last committed state)?" || { info "Aborted. Commit your changes first."; return 1; }
+        warn "backend/ has uncommitted and/or untracked changes (this is what actually gets"
+        warn "deployed — see git_check_clean's comment for why the scope is backend/ only):"
+        git -C "$DEV_ROOT" status --porcelain -- backend/ | sed 's/^/     /'
+        # This used to say "will NOT be included in the release tag" and
+        # stop there — true, but dangerously incomplete: it reads as "these
+        # changes won't affect live," and that's false. The actual backend
+        # sync a few steps below is `rsync ... "$DEV_BACKEND/" "$LIVE_BACKEND/"`
+        # — a raw filesystem copy of whatever is really sitting on disk right
+        # now, not a git-archive export of the tag. Anything listed above
+        # WILL be deployed to production; it just won't be reflected in the
+        # git history/tag that's supposed to be this project's audit trail
+        # for what's running there. Confirmed live 2026-08-03.
+        warn "These changes will NOT be part of the git tag/history — but they WILL still be"
+        warn "deployed to live (the backend sync below copies the real filesystem, not the tag)."
+        confirm "Continue anyway (deploy working tree as-is, untracked by git)?" || { info "Aborted. Commit your changes first."; return 1; }
     fi
 
     # Safety: abort if anyone is mid-exam on live
