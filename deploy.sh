@@ -289,6 +289,37 @@ health_check() {
     fi
 }
 
+# Retries health_check instead of a single shot right after a restart.
+# Confirmed first-hand earlier in this same session: restarting a backend and
+# curling /health immediately (even after a couple of seconds' sleep) can
+# return 502/empty simply because the process hasn't finished binding yet --
+# not a real failure. The two call sites that use this (promote-live's
+# auto-rollback gate, and rollback-live's own re-check) both treat a failed
+# health check as "something is genuinely broken, act on it" (trigger a
+# rollback, or report rollback itself failed) -- a false negative there has
+# real consequences (an unwanted automatic rollback of an otherwise-good
+# deploy), unlike cmd_health's own plain single-shot use, which is just a
+# status report and stays as-is. Live also runs multiple uvicorn workers
+# (unlike test's single instance, see cmd_status's worker-count check) with
+# more to initialize on startup, so a fixed short sleep is even less
+# guaranteed to be enough there than it was for the test-env case this was
+# confirmed against.
+health_check_retrying() {
+    local label="$1" port="$2" host="$3"
+    local attempts=6 delay=5
+    for ((i = 1; i <= attempts; i++)); do
+        if health_check "$label" "$port" "$host"; then
+            return 0
+        fi
+        if (( i < attempts )); then
+            warn "Retrying health check ($i/$attempts, waiting ${delay}s)..."
+            sleep "$delay"
+        fi
+    done
+    error "$label health check failed after $attempts attempts."
+    return 1
+}
+
 # ─── Git helpers ─────────────────────────────────────────────────────────────
 git_check_clean() {
     # Returns 0 if working tree is clean. Deliberately `git status --porcelain`
@@ -652,7 +683,7 @@ cmd_promote_live() {
     sleep 8
 
     # 10. Health check — auto-rollback on failure
-    if ! health_check "www.swaya.me" 8000 "www.swaya.me"; then
+    if ! health_check_retrying "www.swaya.me" 8000 "www.swaya.me"; then
         error "Live health check FAILED. Initiating automatic rollback..."
         _restore_release "$tag"
         return 1
@@ -728,7 +759,7 @@ _restore_release() {
     nginx_reload
     sleep 8
 
-    if health_check "www.swaya.me" 8000 "www.swaya.me"; then
+    if health_check_retrying "www.swaya.me" 8000 "www.swaya.me"; then
         success "Rollback to $tag complete."
     else
         error "Health check still failing after rollback. Manual intervention required."
