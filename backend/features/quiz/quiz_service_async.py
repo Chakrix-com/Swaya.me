@@ -25,6 +25,8 @@ from persistence.models.quiz import (
     Answer,
     QuizFeedback,
     SessionQuestionTiming,
+    CodeWorkspace,
+    CodeSubmission,
 )
 from persistence.models.core import Event, UserRole
 from features.quiz.schemas import (
@@ -1118,6 +1120,26 @@ class QuizBuilderServiceAsync:
                 QuizFeedback.session_id.is_(None)
             )
         )
+
+        # Coding-challenge workspaces/submissions — Quiz.questions' ORM cascade
+        # (cascade="all, delete-orphan") only knows about relationships declared
+        # on Question itself, not CodeWorkspace/CodeSubmission, and neither of
+        # those FKs has ondelete=CASCADE at the DB level (unlike
+        # CodingChallengeInvite, which does). Without this, deleting a
+        # coding-challenge quiz that any candidate ever started a workspace for
+        # 500s on a FK constraint violation when the ORM tries to delete the
+        # underlying Question row — confirmed live via a real concurrency test
+        # against two just-started workspaces (2026-08-03).
+        workspace_id_rows = (await db.execute(
+            select(CodeWorkspace.id).filter(CodeWorkspace.quiz_id == quiz_id)
+        )).scalars().all()
+        if workspace_id_rows:
+            await db.execute(
+                delete(CodeSubmission).where(CodeSubmission.workspace_id.in_(workspace_id_rows))
+            )
+            await db.execute(
+                delete(CodeWorkspace).where(CodeWorkspace.quiz_id == quiz_id)
+            )
 
         await db.delete(quiz)
         await db.commit()

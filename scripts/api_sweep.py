@@ -43,10 +43,27 @@ def rid(n=6):
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
 
 
-def main():
-    s = requests.Session()
-    s.headers.update(H)
+def cleanup(s, created):
+    """Always run, even if the sweep above raised — an uncaught exception (a real
+    network error, not just a failed check()) must never leave sweep-* quizzes
+    orphaned and visible on a real account, live in particular."""
+    for qtype, qid in created["quiz_ids"].items():
+        if not qid:
+            continue
+        try:
+            r = s.delete(f"{BASE}/quizzes/{qid}")
+            check(f"DELETE /quizzes/{{id}} ({qtype}) cleanup", r.status_code in (200, 204), f"status={r.status_code}")
+        except Exception as e:
+            check(f"DELETE /quizzes/{{id}} ({qtype}) cleanup", False, f"exception: {e}")
+    if created["folder_id"]:
+        try:
+            r = s.delete(f"{BASE}/quizzes/folders/{created['folder_id']}")
+            check("DELETE /quizzes/folders/{id} cleanup", r.status_code in (200, 204), f"status={r.status_code}")
+        except Exception as e:
+            check("DELETE /quizzes/folders/{id} cleanup", False, f"exception: {e}")
 
+
+def run_sweep(s, created):
     print(f"Target: {BASE}\n")
 
     r = s.get(f"{BASE}/auth/me")
@@ -56,7 +73,9 @@ def main():
     r = s.get(f"{BASE}/auth/tier-plans")
     check("GET /auth/tier-plans", r.status_code == 200, f"status={r.status_code}")
 
-    quiz_ids = {}
+    # Written into created["quiz_ids"] directly (same dict object) so cleanup()
+    # sees every quiz created so far even if a later step raises.
+    quiz_ids = created["quiz_ids"]
     for qtype in ["quiz", "poll", "offline_poll", "exam", "coding_challenge"]:
         payload = {"title": f"sweep-{qtype}-{rid()}", "quiz_type": qtype}
         r = s.post(f"{BASE}/quizzes/", json=payload)
@@ -96,6 +115,7 @@ def main():
     folder_ok = r.status_code in (200, 201)
     check("POST /quizzes/folders", folder_ok, f"status={r.status_code} body={r.text[:300]}")
     folder_id = r.json().get("id") if folder_ok else None
+    created["folder_id"] = folder_id
     if folder_id and lq_id:
         r = s.put(f"{BASE}/quizzes/{lq_id}/folder", json={"folder_id": folder_id})
         check("PUT /quizzes/{id}/folder", r.status_code == 200, f"status={r.status_code} body={r.text[:300]}")
@@ -173,15 +193,20 @@ def main():
     r = requests.get(f"{BASE}/users")
     check("unauthenticated GET /users -> 401", r.status_code == 401, f"status={r.status_code}")
 
-    # Cleanup
-    for qtype, qid in quiz_ids.items():
-        if not qid:
-            continue
-        r = s.delete(f"{BASE}/quizzes/{qid}")
-        check(f"DELETE /quizzes/{{id}} ({qtype}) cleanup", r.status_code in (200, 204), f"status={r.status_code}")
-    if folder_id:
-        r = s.delete(f"{BASE}/quizzes/folders/{folder_id}")
-        check("DELETE /quizzes/folders/{id} cleanup", r.status_code in (200, 204), f"status={r.status_code}")
+
+def main():
+    s = requests.Session()
+    s.headers.update(H)
+    created = {"quiz_ids": {}, "folder_id": None}
+
+    try:
+        run_sweep(s, created)
+    except Exception as e:
+        check("run_sweep (uncaught exception)", False, f"{type(e).__name__}: {e}")
+    finally:
+        # Runs even if run_sweep raised — no orphaned sweep-* data left behind,
+        # live in particular.
+        cleanup(s, created)
 
     print("\n==== SUMMARY ====")
     print(f"Target: {BASE}")

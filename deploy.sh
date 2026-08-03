@@ -56,16 +56,53 @@ confirm() {
 
 timestamp() { date +"%Y%m%d_%H%M%S"; }
 
+# ─── Disk space check ─────────────────────────────────────────────────────────
+# promote-live writes a full frontend backup + backend backup + gzipped DB dump
+# on every run, on top of the new deploy itself. Running out of disk mid-rsync
+# or mid-mysqldump leaves a worse mess than not deploying at all — checked
+# BEFORE any backup/deploy step starts, not discovered partway through.
+DISK_ABORT_GB=5   # hard stop below this much free space
+DISK_WARN_GB=10   # confirm-to-continue below this much free space
+check_disk_space() {
+    local avail_kb avail_gb
+    avail_kb=$(df --output=avail -k "$BACKUP_DIR" 2>/dev/null | tail -1 || df --output=avail -k "$DEV_ROOT" | tail -1)
+    avail_gb=$(( avail_kb / 1024 / 1024 ))
+
+    info "Disk space available: ${avail_gb}G (backup dir: $(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1 || echo '0'))"
+
+    if (( avail_gb < DISK_ABORT_GB )); then
+        error "⛔  Only ${avail_gb}G free — below the ${DISK_ABORT_GB}G floor. Refusing to proceed."
+        error "Free up space first (old release backups in \$BACKUP_DIR are the usual culprit —"
+        error "'releases' shows what's there; frontend_*/backend_* dirs are now auto-pruned to the"
+        error "3 most recent going forward, but existing older ones may still need a manual clean)."
+        return 1
+    elif (( avail_gb < DISK_WARN_GB )); then
+        warn "⚠  Only ${avail_gb}G free — below the ${DISK_WARN_GB}G comfort margin."
+        confirm "Continue anyway?" || { info "Aborted."; return 1; }
+    else
+        success "Disk space OK (${avail_gb}G free)."
+    fi
+    return 0
+}
+
 # ─── Live exam safety check ──────────────────────────────────────────────────
 # Exits non-zero (and prints who is in the exam) if anyone is actively taking
 # an exam on the LIVE database (last activity within 30 minutes, not completed).
+#
+# IMPORTANT: this must distinguish "query ran and found nobody" from "query
+# itself failed" (bad creds, DB down, network blip) — the two used to look
+# identical (mysql's stderr went to /dev/null, so a failed connection produced
+# the same empty $result as a genuinely-empty result set, and the caller
+# reported "safe to deploy" either way). Since this is the one check whose
+# entire job is "don't disrupt someone mid-exam," a silent false-negative here
+# is worse than the check not existing — confirmed exploitable 2026-08-03.
 check_no_live_exams() {
     local db_user="swayame_user"
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
 
-    local result
-    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/dev/null <<'SQL'
+    local result rc
+    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
 SELECT CONCAT(p.display_name, ' <', p.email, '> — ', q.title,
               ' (', TIMESTAMPDIFF(MINUTE, p.started_at, NOW()), ' min in, ',
               ROUND(q.exam_time_limit_seconds/60 - TIMESTAMPDIFF(MINUTE, p.started_at, NOW())),
@@ -81,6 +118,16 @@ WHERE p.completed_at  IS NULL
   AND TIMESTAMPDIFF(MINUTE, p.last_activity_at, NOW()) < 30;
 SQL
 )
+    rc=$?
+    if [[ $rc -ne 0 ]]; then
+        error "⛔  Could not check for active exam participants — the safety query itself FAILED (exit $rc):"
+        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$" >&2
+        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        error "This is NOT the same as 'no active exams' — refusing to proceed without a real answer."
+        error "Fix the DB connection (check credentials/connectivity) and re-run."
+        return 1
+    fi
+    rm -f "/tmp/deploy_sh_mysql_err.$$"
 
     if [[ -n "$result" ]]; then
         error "⛔  Cannot deploy — participants are actively taking exams:"
@@ -121,8 +168,13 @@ check_migration_drift() {
 
     # Step 2: file-level diff — show migration files in dev not yet on live
     local dev_files live_files new_migrations
-    dev_files=$(ls "$DEV_BACKEND/alembic/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
-    live_files=$(ls "$LIVE_BACKEND/alembic/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
+    # Real migrations path per alembic.ini's script_location — was previously
+    # "alembic/versions" here, a directory that doesn't exist in this repo, so
+    # this comparison always silently saw two empty lists and reported "up to
+    # date" no matter how far live actually was behind. Confirmed 2026-08-03
+    # against a real 7-migration gap that this never flagged.
+    dev_files=$(ls "$DEV_BACKEND/persistence/migrations/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
+    live_files=$(ls "$LIVE_BACKEND/persistence/migrations/versions/"*.py 2>/dev/null | xargs -n1 basename | sort || true)
     new_migrations=$(comm -23 <(echo "$dev_files") <(echo "$live_files") || true)
 
     if [[ -z "$new_migrations" ]]; then
@@ -140,13 +192,14 @@ check_migration_drift() {
 # ─── Active live quiz session check ──────────────────────────────────────────
 # Warns (with confirmation prompt) if participants are mid-quiz on live.
 # Unlike exam check, this is a soft warning — quiz participants can simply rejoin.
+# Same query-failure-vs-empty-result distinction as check_no_live_exams above.
 check_no_live_sessions() {
     local db_user="swayame_user"
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
 
-    local result
-    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/dev/null <<'SQL'
+    local result rc
+    result=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
 SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' active participant(s)')
 FROM quiz_sessions qs
 JOIN quizzes q ON qs.quiz_id = q.id
@@ -158,6 +211,15 @@ GROUP BY qs.id, q.title
 HAVING COUNT(DISTINCT p.id) > 0;
 SQL
 )
+    rc=$?
+    if [[ $rc -ne 0 ]]; then
+        error "⛔  Could not check for active live quiz sessions — the query itself FAILED (exit $rc):"
+        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$" >&2
+        rm -f "/tmp/deploy_sh_mysql_err.$$"
+        confirm "Continue anyway WITHOUT knowing if there are active sessions?" || { info "Aborted."; return 1; }
+        return 0
+    fi
+    rm -f "/tmp/deploy_sh_mysql_err.$$"
 
     if [[ -n "$result" ]]; then
         warn "⚠  Active live quiz sessions detected (participants will disconnect ~5s on restart):"
@@ -328,6 +390,9 @@ cmd_promote_live() {
     # Soft warning if anyone is mid-quiz (not exam)
     check_no_live_sessions || return 1
 
+    # Disk space — before any backup/deploy step starts, not discovered partway through
+    check_disk_space || return 1
+
     # Show migration drift before committing to the deploy
     echo ""
     check_migration_drift
@@ -381,6 +446,30 @@ cmd_promote_live() {
         success "Old DB dumps removed."
     fi
 
+    # Prune old frontend_release/*/backend_release/* release backups too —
+    # unlike the DB dumps above, these were never pruned before. Each release's
+    # rsync copy lands at $BACKUP_DIR/<prefix>_release/<timestamp> (mkdir -p
+    # "$BACKUP_DIR/frontend_$tag" with tag="release/<ts>" nests it one level,
+    # not a flat "frontend_release_<ts>" name). Confirmed live 2026-08-03: ~180
+    # never-pruned subdirectories under each, dating back to March, 11G total
+    # for what should be a handful. Keep the 3 most recent, same retention as
+    # the DB dumps.
+    prune_old_dir_backups() {
+        local prefix="$1"
+        local parent="$BACKUP_DIR/${prefix}_release"
+        [[ -d "$parent" ]] || return 0
+        local old_dirs
+        old_dirs=$(ls -1dt "$parent"/*/ 2>/dev/null | tail -n +4)
+        if [[ -n "$old_dirs" ]]; then
+            local count; count=$(echo "$old_dirs" | wc -l)
+            info "Pruning $count old ${prefix} backup dir(s) under $parent ..."
+            echo "$old_dirs" | xargs rm -rf
+            success "Old ${prefix} backups removed."
+        fi
+    }
+    prune_old_dir_backups "frontend"
+    prune_old_dir_backups "backend"
+
     # Save metadata (tag, sha, branch, dates, backup paths)
     write_backup_meta "$tag" "$sha"
 
@@ -405,8 +494,39 @@ cmd_promote_live() {
     fi
 
     # 6. Run DB migrations on live
+    #
+    # IMPORTANT: this is the one step in this whole flow the automatic rollback
+    # at the end of this function does NOT cover — that rollback only triggers
+    # on the final health-check failure, several steps after this one. If
+    # `alembic upgrade head` itself fails, `set -euo pipefail` would otherwise
+    # kill this script right here, silently, with a bare Python traceback and
+    # no guidance — leaving backend code already synced to the NEW version on
+    # disk, the OLD process still running (untouched — restart is step 9, not
+    # reached yet), and the DB possibly partially migrated (MySQL DDL
+    # auto-commits per statement, it is not transactional across an entire
+    # migration script). The `if ! (...)` below exists purely to print
+    # explicit next-step guidance before exiting, instead of just dying.
     info "Running alembic migrations on live DB..."
-    (cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" "$LIVE_VENV/bin/alembic" upgrade head)
+    if ! (cd "$LIVE_BACKEND" && PYTHONPATH="$LIVE_BACKEND" "$LIVE_VENV/bin/alembic" upgrade head); then
+        error "⛔  Live DB migration FAILED."
+        error "The live process has NOT been restarted (still running its old, pre-deploy code —"
+        error "site is not immediately broken), but files on disk are now the NEW version and the"
+        error "DB may be left PARTIALLY migrated (MySQL DDL is not transactional across statements)."
+        error ""
+        error "DO NOT manually restart $LIVE_SERVICE right now — new code against a"
+        error "partially-migrated schema will crash on the very next request that touches whatever"
+        error "the failed migration was changing."
+        error ""
+        error "Next steps:"
+        error "  1. Check what state the DB migration is actually in:"
+        error "       cd $LIVE_BACKEND && PYTHONPATH=$LIVE_BACKEND $LIVE_VENV/bin/alembic current"
+        error "  2. Restore backend code from this run's backup (leaves the DB as migration left it):"
+        error "       ./deploy.sh rollback-live   # pick tag: $tag"
+        error "  3. If the DB itself needs restoring too, the pre-migration dump is at:"
+        error "       $db_dump"
+        error "  4. Full recovery detail: _private/prod-deployment-runbook.md, Gate 5."
+        return 1
+    fi
     success "Live DB migrations applied."
 
     # 7. Deploy frontend (build must already be done via deploy-test, or build now)
@@ -646,8 +766,8 @@ cmd_preflight() {
     local db_user="swayame_user"
     local db_pass="Sw4y4m3_S3cur3_P4ssw0rd!2026"
     local db_name="swayame"
-    local sessions
-    sessions=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/dev/null <<'SQL'
+    local sessions sessions_rc
+    sessions=$(mysql -u"$db_user" -p"$db_pass" -h 127.0.0.1 "$db_name" --silent --skip-column-names 2>/tmp/deploy_sh_mysql_err.$$ <<'SQL'
 SELECT CONCAT(q.title, ' — ', COUNT(DISTINCT p.id), ' participant(s) active')
 FROM quiz_sessions qs
 JOIN quizzes q ON qs.quiz_id = q.id
@@ -659,18 +779,29 @@ GROUP BY qs.id, q.title
 HAVING COUNT(DISTINCT p.id) > 0;
 SQL
 )
-    if [[ -n "$sessions" ]]; then
+    sessions_rc=$?
+    if [[ $sessions_rc -ne 0 ]]; then
+        warn "Could not check for active live quiz sessions — query failed, NOT the same as 'none active':"
+        sed 's/^/     /' "/tmp/deploy_sh_mysql_err.$$"
+        rm -f "/tmp/deploy_sh_mysql_err.$$"
+    elif [[ -n "$sessions" ]]; then
+        rm -f "/tmp/deploy_sh_mysql_err.$$"
         warn "Active live quiz sessions (participants will briefly disconnect on restart):"
         while IFS= read -r line; do
             echo -e "     ${YELLOW}•${RESET} $line"
         done <<< "$sessions"
     else
+        rm -f "/tmp/deploy_sh_mysql_err.$$"
         success "No active live quiz sessions."
     fi
 
     echo ""
     info "── Database migrations ──────────────────────────────────────────────"
     check_migration_drift
+
+    echo ""
+    info "── Disk space ────────────────────────────────────────────────────────"
+    check_disk_space || true
 
     echo ""
     success "Pre-flight check complete."
