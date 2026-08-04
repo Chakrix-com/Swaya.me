@@ -107,6 +107,7 @@ class BaseAIProvider(ABC):
         grading_rubric: str,
         code_timeline: str,
         ai_transcript: str,
+        weights: dict = None,
     ) -> dict:
         """
         Judge the 5 LLM-scored coding-challenge criteria (AI-usage efficiency, prompt
@@ -115,6 +116,15 @@ class BaseAIProvider(ABC):
         correctness — that's computed deterministically from test results, kept out of
         the LLM's hands so grading integrity doesn't depend on the model resisting a
         prompt-injection attempt embedded in candidate-authored content.
+
+        `weights` is the (already-resolved, host-override-or-platform-default) weight
+        dict for all 8 scoring criteria — only the 5 this method judges are meaningful
+        to include in a provider's prompt; the rest (functional_correctness, time_taken,
+        proctoring) are computed elsewhere and shouldn't be shown as if they were this
+        call's concern. Passing the same resolved weights the caller will actually use
+        to combine scores (rather than recomputing/guessing at defaults here) keeps what
+        the model is told in sync with what's actually applied.
+
         Returns: {"ai_usage_efficiency": int, "prompt_quality": int,
                   "validation_discipline": int, "code_quality": int,
                   "architecture": int, "rationale": str} — each score 0-100.

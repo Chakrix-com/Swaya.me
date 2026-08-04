@@ -437,6 +437,80 @@ def test_grading_job_success_path_persists_graded_with_full_breakdown():
     assert submission.graded_at is not None
 
 
+def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override():
+    submission = _fixture_submission()
+    workspace = _fixture_workspace()
+    question = _fixture_question()  # no grading_weights set -> None
+    session_cls, db = _mock_session(submission, workspace, question)
+
+    async def fake_exec(workspace_name, command):
+        if "--json-report" in command:
+            return "", None, 0
+        if command.startswith("cat /tmp"):
+            return json.dumps({"summary": {"passed": 5, "total": 5}}), None, 0
+        return "output", None, 0
+
+    captured = {}
+
+    async def fake_assess(problem_statement, rubric, timeline, transcript, weights=None):
+        captured["weights"] = weights
+        return {"ai_usage_efficiency": 90, "prompt_quality": 90, "validation_discipline": 90,
+                "code_quality": 90, "architecture": 90, "rationale": "excellent"}
+
+    with patch("persistence.database_async.AsyncSessionLocal", session_cls), \
+         patch.object(gsvc.coder_client, "stop_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
+         patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
+         patch("core.ai.router.assess_coding_challenge", fake_assess), \
+         patch.object(gsvc, "_cleanup", AsyncMock()):
+        asyncio.run(gsvc.run_grading_job(1))
+
+    assert captured["weights"] == gsvc._WEIGHTS
+
+
+def test_grading_job_passes_host_override_weights_to_ai_when_set():
+    """The exact weights the AI is told about must be the exact weights actually
+    used to combine its scores into the final ai_score — never a mismatch between
+    what the model was calibrated against and what's really applied."""
+    submission = _fixture_submission()
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_weights = {
+        "functional_correctness": 10, "ai_usage_efficiency": 10, "prompt_quality": 40,
+        "validation_discipline": 10, "code_quality": 10, "architecture": 10,
+        "time_taken": 5, "proctoring": 5,
+    }
+    session_cls, db = _mock_session(submission, workspace, question)
+
+    async def fake_exec(workspace_name, command):
+        if "--json-report" in command:
+            return "", None, 0
+        if command.startswith("cat /tmp"):
+            return json.dumps({"summary": {"passed": 5, "total": 5}}), None, 0
+        return "output", None, 0
+
+    captured = {}
+
+    async def fake_assess(problem_statement, rubric, timeline, transcript, weights=None):
+        captured["weights"] = weights
+        return {"ai_usage_efficiency": 90, "prompt_quality": 90, "validation_discipline": 90,
+                "code_quality": 90, "architecture": 90, "rationale": "excellent"}
+
+    with patch("persistence.database_async.AsyncSessionLocal", session_cls), \
+         patch.object(gsvc.coder_client, "stop_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
+         patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
+         patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
+         patch("core.ai.router.assess_coding_challenge", fake_assess), \
+         patch.object(gsvc, "_cleanup", AsyncMock()):
+        asyncio.run(gsvc.run_grading_job(1))
+
+    assert captured["weights"] == question.grading_weights
+    # and the score_breakdown actually reflects those same weights, not the platform default
+    assert submission.score_breakdown["prompt_quality"]["weight"] == 40
+
+
 def test_grading_job_final_commit_failure_falls_back_to_partial_failed():
     """Regression for the bug found live in Phase 11: a real, non-quiet `mvn test`
     run's output was too large for the (since-widened) test_output column, and the

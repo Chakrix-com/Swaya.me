@@ -261,6 +261,11 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
     touch the Coder workspace itself; caller decides whether cleanup is needed."""
     from core.ai.router import assess_coding_challenge
 
+    # Resolved once and reused for both the AI call and the score combination below,
+    # so what the model is told its weights are can never drift from what's actually
+    # applied to compute the final score.
+    weights = question.grading_weights or _WEIGHTS
+
     ai_result = None
     last_error: Optional[Exception] = None
     for _attempt in range(2):  # one retry
@@ -268,6 +273,7 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
             ai_result = await assess_coding_challenge(
                 question.text, question.grading_rubric or "",
                 submission.code_timeline or "", submission.ai_transcript_raw or "",
+                weights,
             )
             break
         except Exception as e:
@@ -286,7 +292,7 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
         submission.error_message = str(last_error)
     else:
         score_breakdown, ai_score = _build_score_breakdown(
-            ai_result, functional_correctness, time_taken, weights=question.grading_weights
+            ai_result, functional_correctness, time_taken, weights=weights
         )
         submission.score_breakdown = score_breakdown
         submission.ai_score = ai_score

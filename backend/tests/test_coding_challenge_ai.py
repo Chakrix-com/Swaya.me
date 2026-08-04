@@ -89,6 +89,59 @@ def test_gemini_prompt_does_not_ask_for_functional_correctness():
     assert "test_output" not in system_text
 
 
+def test_gemini_prompt_includes_host_weights_when_provided():
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
+                                 '"validation_discipline": 50, "code_quality": 50, '
+                                 '"architecture": 50, "rationale": ""}')
+
+    weights = {
+        "functional_correctness": 25, "ai_usage_efficiency": 20, "prompt_quality": 15,
+        "validation_discipline": 15, "code_quality": 10, "architecture": 5,
+        "time_taken": 5, "proctoring": 5,
+    }
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a", weights))
+
+    system_text = captured["payload"]["system_instruction"]["parts"][0]["text"]
+    # All 5 AI-judged criteria's weights show up...
+    assert "ai_usage_efficiency: 20 points" in system_text
+    assert "prompt_quality: 15 points" in system_text
+    assert "validation_discipline: 15 points" in system_text
+    assert "code_quality: 10 points" in system_text
+    assert "architecture: 5 points" in system_text
+    # ...but the 3 criteria this call doesn't judge are never shown as if they were its concern
+    assert "functional_correctness: 25" not in system_text
+    assert "time_taken: 5 points" not in system_text
+    assert "proctoring: 5 points" not in system_text
+    # anti-anchoring instruction must be present, not just the raw numbers
+    assert "do not let" in system_text.lower() or "not let a criterion" in system_text.lower()
+
+
+def test_gemini_prompt_omits_weights_section_when_none_provided():
+    """No weights passed (e.g. an older caller) — prompt must still be valid and
+    must not claim to have weight info it doesn't have."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
+                                 '"validation_discipline": 50, "code_quality": 50, '
+                                 '"architecture": 50, "rationale": ""}')
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a", weights=None))
+
+    system_text = captured["payload"]["system_instruction"]["parts"][0]["text"]
+    assert "weighted these 5 criteria" not in system_text
+    assert ": 20 points" not in system_text  # no stray weight-line syntax with nothing to fill it
+
+
 def test_gemini_uses_json_mode_and_zero_temperature():
     provider = _provider_with_key()
     captured = {}
@@ -185,12 +238,26 @@ def test_router_assess_coding_challenge_delegates_to_primary_provider():
 
     mock_provider = AsyncMock()
     mock_provider.assess_coding_challenge = AsyncMock(return_value={"rationale": "ok"})
+    weights = {"prompt_quality": 15}
 
     with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
-        result = asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a"))
+        result = asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a", weights))
 
-    mock_provider.assess_coding_challenge.assert_called_once_with("p", "r", "t", "a")
+    mock_provider.assess_coding_challenge.assert_called_once_with("p", "r", "t", "a", weights)
     assert result == {"rationale": "ok"}
+
+
+def test_router_assess_coding_challenge_weights_default_to_none():
+    """Callers that don't pass weights (e.g. existing/older call sites) must not break."""
+    from core.ai import router as ai_router
+
+    mock_provider = AsyncMock()
+    mock_provider.assess_coding_challenge = AsyncMock(return_value={"rationale": "ok"})
+
+    with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
+        asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a"))
+
+    mock_provider.assess_coding_challenge.assert_called_once_with("p", "r", "t", "a", None)
 
 
 def test_router_assess_coding_challenge_propagates_provider_exception():
