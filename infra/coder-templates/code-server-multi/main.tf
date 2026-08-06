@@ -214,6 +214,20 @@ module "code-server" {
   # change ships, as routine hygiene given the reduced defense-in-depth.
   settings = {
     "security.workspace.trust.enabled" = false
+
+    # This VS Code build ships a built-in Chat/"Copilot" panel natively (not an
+    # installed extension - confirmed via `code-server --list-extensions`, only
+    # anthropic.claude-code is actually installed; "Models, sign in to use Copilot"
+    # is core product UI, unrelated to our own setup). It defaults to open in the
+    # secondary side bar, prompting every candidate to sign into a Copilot account
+    # they don't have and aren't meant to use, alongside Claude Code (the actual
+    # intended tool). No single flag disables the underlying feature (it's driven
+    # by an internal, non-configurable context key, `chatIsEnabled` - confirmed by
+    # grepping the workbench bundle) - `defaultVisibility: hidden` is the
+    # documented, real setting for suppressing the panel it lives in by default.
+    # Candidates can still manually reopen the secondary side bar if they want to;
+    # this only changes what's visible on first load.
+    "workbench.secondarySideBar.defaultVisibility" = "hidden"
   }
 }
 
