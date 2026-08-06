@@ -190,6 +190,31 @@ module "code-server" {
   agent_id = coder_agent.main.id
   order    = 1
   folder   = "/home/coder/project"
+
+  # Workspace Trust ("Restricted Mode") makes the Claude Code extension invisible by
+  # default — it explicitly refuses to activate in an untrusted workspace ("untrusted
+  # workspaces are not supported", confirmed via its own extension page) — and every
+  # candidate's cloned starter repo counts as untrusted until they manually click
+  # Manage -> Trust, which nothing in the UI points them toward. Confirmed live: this
+  # is why candidates report never seeing Claude Code at all, not an extension-install
+  # failure. The module writes `settings` to code-server's User settings.json only if
+  # that file doesn't already exist yet (see registry.coder.com/modules/coder/code-server
+  # run.sh) — the settings variable is the only mechanism this module exposes for this,
+  # there's no CLI-flag passthrough.
+  #
+  # Tradeoff accepted knowingly, not overlooked: Workspace Trust is what stops a
+  # malicious/compromised starter repo's auto-run tasks (.vscode/tasks.json etc.) from
+  # executing the instant the folder opens, and every workspace carries a genuinely
+  # valuable shared secret as a plain env var (CLAUDE_CODE_OAUTH_TOKEN, the same Claude
+  # subscription credential for every candidate) that such a task could exfiltrate.
+  # Accepted because starter repos are host-chosen, not attacker-chosen, and the worst
+  # realistic outcome is a leaked shared token (rotatable) rather than a cross-candidate
+  # breach — the container boundary, not this in-editor prompt, is the real isolation
+  # boundary between candidates. CLAUDE_CODE_OAUTH_TOKEN should be rotated after this
+  # change ships, as routine hygiene given the reduced defense-in-depth.
+  settings = {
+    "security.workspace.trust.enabled" = false
+  }
 }
 
 resource "docker_image" "code_server_multi" {
