@@ -162,16 +162,8 @@ async def invite_candidate(
             expires_delta=INVITE_VALIDITY,
         )
         invite_url = f"{frontend_url}/c/{token}"
-
-        time_chip = f"""
-            <tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;">
-              <table cellpadding="0" cellspacing="0" border="0"><tr>
-                <td style="width:28px;font-size:16px;vertical-align:middle;">&#9200;</td>
-                <td style="font-size:13px;color:#334155;vertical-align:middle;">
-                  <strong style="color:#0f172a;">{minutes} minutes</strong> to complete, starting once the workspace opens
-                </td>
-              </tr></table>
-            </td></tr>""" if minutes else ""
+        frontend_domain = frontend_url.split("://", 1)[-1]
+        time_sentence = f"You'll have {minutes} minutes to complete it, " if minutes else ""
 
         html_body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -185,8 +177,8 @@ async def invite_candidate(
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;padding:40px 16px 48px;">
 <tr><td align="center">
 
-<table width="560" cellpadding="0" cellspacing="0" border="0"
-       style="max-width:560px;width:100%;border-radius:20px;overflow:hidden;
+<table width="600" cellpadding="0" cellspacing="0" border="0"
+       style="max-width:600px;width:100%;border-radius:20px;overflow:hidden;
               box-shadow:0 4px 24px rgba(15,23,42,0.12);">
 
   <!-- ═══ HEADER ═══ -->
@@ -210,21 +202,145 @@ async def invite_candidate(
     <p style="font-size:14px;margin:0 0 24px;color:#475569;line-height:1.6;">
       <strong style="color:#0f172a;">{safe_tenant}</strong> has invited you to complete
       <strong style="color:#0f172a;">&ldquo;{safe_title}&rdquo;</strong> as part of their evaluation process.
+      Please <strong style="color:#0f172a;">read the steps below carefully before you begin</strong> —
+      it takes about 2 minutes and will save you time once you start. The button to actually
+      start the challenge is at the bottom, once you've read through.
     </p>
 
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
-      {time_chip}
-      <tr><td style="padding:10px 0;">
-        <table cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="width:28px;font-size:16px;vertical-align:middle;">&#128274;</td>
-          <td style="font-size:13px;color:#334155;vertical-align:middle;">
-            You'll verify your email with a one-time code before you start
-          </td>
-        </tr></table>
+    <!-- ═══ WHAT TO EXPECT — NUMBERED WALKTHROUGH ═══ -->
+    <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 14px;text-transform:uppercase;letter-spacing:0.6px;">
+      What to expect, step by step
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+
+      <!-- Step 1: Before you start — popup blocker -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#fef3c7;color:#92400e;font-size:13px;font-weight:800;text-align:center;line-height:26px;">1</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f1f5f9;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">Before you click Start: check your pop-up blocker</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            Once your workspace is ready, it opens automatically in a <strong>new browser tab</strong>.
+            Most browsers block automatic new-tab pop-ups by default. Please <strong>allow pop-ups for
+            {frontend_domain}</strong> before you begin (usually a one-click "Always allow" option in
+            your address bar when a pop-up is blocked). If you miss this step, don't worry — there's
+            always a manual <em>"Open workspace again"</em> button on the same page as a backup.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Step 2: OTP verification -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:13px;font-weight:800;text-align:center;line-height:26px;">2</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f1f5f9;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">Verify your email with a one-time code</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            On the challenge page, click <strong>"Send verification code"</strong> — a 6-digit code
+            will arrive at this same email address within a few seconds. Enter it on the page to
+            continue. The code is single-use and expires after 10 minutes; if it expires, just
+            request a new one from the same page.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Step 3: Workspace provisioning + optional GitHub prompt -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:13px;font-weight:800;text-align:center;line-height:26px;">3</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f1f5f9;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">Your workspace is being created — give it a moment</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            After you click <strong>"Start Coding Challenge"</strong>, your personal coding workspace
+            is created — this takes a little while, so please stay on the page. You may occasionally
+            see a prompt to <strong>sign in with GitHub</strong> as the workspace loads — it's safe to
+            go ahead and authorize it if it appears. Either way, <strong>Claude Code itself is
+            already signed in and ready to use</strong> — there's no separate account to create for
+            that.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Step 4: Claude Code already installed -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#ede9fe;color:#6d28d9;font-size:13px;font-weight:800;text-align:center;line-height:26px;">4</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f1f5f9;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">Claude Code is already installed — use it</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            Your workspace is a full browser-based code editor with the <strong>Claude Code</strong>
+            AI assistant pre-installed as an extension (look for its icon in the sidebar, or open it
+            from the Extensions panel). You're expected and encouraged to use it as your AI
+            pair-programmer while you work — that's part of what's being evaluated, not something to
+            avoid. Your chat history with it (and your commit history) will be reviewed as part of
+            grading, alongside your final solution.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Step 5: Work in the workspace -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#15803d;font-size:13px;font-weight:800;text-align:center;line-height:26px;">5</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #f1f5f9;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">Read the problem statement and solve it in the workspace</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            The full problem statement is on the challenge page (in the tab you started from, not
+            the workspace tab) — keep that tab open for reference. {time_sentence}A countdown timer
+            on that page shows how much time you have left; it starts once your workspace opens, so
+            there's no rush during setup.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Step 6: Come back and submit -->
+      <tr>
+        <td style="width:36px;vertical-align:top;padding:10px 0;">
+          <div style="width:26px;height:26px;border-radius:50%;background:#fee2e2;color:#b91c1c;font-size:13px;font-weight:800;text-align:center;line-height:26px;">6</div>
+        </td>
+        <td style="padding:10px 0 10px 12px;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">When you're done, go back to the challenge tab and click Submit</p>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+            Your work is saved automatically as you go — there's nothing to manually save or push.
+            When you're finished (or time is running low), switch back to the original challenge
+            page tab (not the workspace tab) and click <strong>"Submit Solution"</strong>.
+            <strong>This immediately ends your access to the workspace</strong>, so make sure you're
+            actually done before clicking it. After submitting, the page will show you what happens
+            next.
+          </p>
+        </td>
+      </tr>
+
+    </table>
+
+    <!-- ═══ QUICK-REFERENCE SUMMARY BOX ═══ -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+      <tr><td style="padding:16px 18px;">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;">Quick recap</p>
+        <p style="margin:0;font-size:12.5px;color:#475569;line-height:1.9;">
+          1&#41; Allow pop-ups &nbsp;&middot;&nbsp;
+          2&#41; Verify email with OTP &nbsp;&middot;&nbsp;
+          3&#41; Authorize GitHub if asked &nbsp;&middot;&nbsp;
+          4&#41; Use Claude Code in the workspace &nbsp;&middot;&nbsp;
+          5&#41; Solve the problem &nbsp;&middot;&nbsp;
+          6&#41; Come back and click Submit
+        </p>
       </td></tr>
     </table>
 
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+    <!-- ═══ START BUTTON (at the end — read first, then start) ═══ -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+      <tr><td align="center">
+        <p style="font-size:13px;margin:0 0 14px;color:#475569;line-height:1.6;">
+          Read through everything above? You're ready — click below to begin.
+        </p>
+      </td></tr>
       <tr><td align="center">
         <a href="{invite_url}"
            style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#ffffff;
@@ -233,13 +349,15 @@ async def invite_candidate(
           Start Coding Challenge &#8594;
         </a>
       </td></tr>
+      <tr><td align="center" style="padding-top:10px;">
+        <p style="font-size:11px;color:#94a3b8;margin:0;line-height:1.6;">
+          This link expires on {expiry_text}. It's tied to your email — please don't forward it.
+        </p>
+      </td></tr>
     </table>
 
-    <p style="font-size:12px;color:#94a3b8;text-align:center;margin:0 0 4px;line-height:1.6;">
-      This link expires on {expiry_text}.
-    </p>
-    <p style="font-size:11px;color:#cbd5e1;text-align:center;margin:0;line-height:1.6;word-break:break-all;">
-      Trouble with the button? Paste this into your browser:<br/>{invite_url}
+    <p style="font-size:11px;color:#cbd5e1;text-align:center;margin:24px 0 0;line-height:1.6;word-break:break-all;">
+      Trouble with the button above? Paste this link directly into your browser:<br/>{invite_url}
     </p>
 
   </td></tr>
