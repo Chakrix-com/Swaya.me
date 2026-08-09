@@ -2,7 +2,7 @@
   "name": "swaya-submit-timer",
   "displayName": "Swaya Submit Timer",
   "description": "Countdown timer + Submit Solution button for Swaya coding-challenge candidate workspaces",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "swaya",
   "private": true,
   "engines": {

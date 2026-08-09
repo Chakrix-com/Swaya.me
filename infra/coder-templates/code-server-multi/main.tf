@@ -151,7 +151,7 @@ resource "coder_agent" "main" {
     # _write_session_file in coding_challenge_service_async.py), landing at
     # /home/coder/.swaya/session.json before this extension ever activates.
     cat > /tmp/swaya-submit-timer.vsix.b64 <<'VSIXEOF'
-    ${filebase64("${path.module}/swaya-extension/swaya-submit-timer-0.1.0.vsix")}
+    ${filebase64("${path.module}/swaya-extension/swaya-submit-timer-0.1.1.vsix")}
     VSIXEOF
     base64 -d /tmp/swaya-submit-timer.vsix.b64 > /tmp/swaya-submit-timer.vsix
     (

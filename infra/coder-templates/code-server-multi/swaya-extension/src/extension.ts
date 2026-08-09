@@ -15,6 +15,12 @@
  *   - Auto-submit at zero, with retry/backoff, falling back to a live manual
  *     button if all retries fail.
  *   - Manual submit always requires a modal confirmation.
+ *   - (2026-08-09, follow-up) Submit gets a permanent "prominent" status bar
+ *     color instead of blending in as plain text, both items' tooltips carry
+ *     "Swaya.me" branding, and a one-time toast on first activation points
+ *     candidates at both items by name — real usage showed the plain
+ *     StatusBarItem was easy to miss, exactly the risk flagged when this
+ *     approach was chosen over a docked panel in the first place.
  */
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -37,6 +43,12 @@ const NORMAL_INTERVAL_MS = 60_000;
 const FAST_INTERVAL_MS = 1_000;
 
 const AUTO_SUBMIT_RETRY_DELAYS_MS = [2_000, 5_000, 10_000];
+
+// Shown once per workspace (persisted in context.workspaceState, which lives
+// on the candidate's own persistent home volume — see docker_volume.home_volume
+// in main.tf — so it survives a page reload but a genuinely new candidate
+// workspace gets it fresh).
+const ONBOARDING_SHOWN_KEY = 'swayaOnboardingShown';
 
 interface SessionData {
   apiBase: string;
@@ -145,11 +157,34 @@ function postSubmit(session: SessionData): Promise<{ ok: boolean; status?: numbe
   });
 }
 
+// Corrected 2026-08-09: `statusBarItem.prominentBackground` (tried first)
+// is NOT actually one of the colors StatusBarItem.backgroundColor supports —
+// confirmed straight from vscode.d.ts's own doc comment: only
+// `statusBarItem.errorBackground` and `statusBarItem.warningBackground` are
+// guaranteed-supported ("More background colors may be supported in the
+// future" — prominent isn't there yet). Using the unsupported value didn't
+// error, it just silently rendered as a washed-out, low-contrast mismatch —
+// confirmed live via screenshot, the opposite of the goal. warningBackground
+// is the only semantically-reasonable, actually-supported option left, and
+// it's already proven to render with good contrast in this exact
+// environment (used for the countdown's own low-time state). Not setting
+// `color` alongside it — the docs note VS Code overrides that anyway when a
+// background is set, to guarantee readability.
+function setSubmitIdleStyle(): void {
+  submitItem.text = '$(cloud-upload) Submit Solution';
+  submitItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+}
+
 function setSubmittedUi(): void {
   submitState = 'submitted';
   submitItem.text = '$(check) Submitted';
   submitItem.command = undefined;
-  submitItem.tooltip = 'Your solution has been submitted';
+  submitItem.tooltip = 'Swaya.me — your solution has been submitted';
+  // Settles back to the default look once the action is done — the
+  // prominent color's job was to draw the eye to an action still waiting to
+  // be taken, not to keep shouting after it's complete.
+  submitItem.backgroundColor = undefined;
+  submitItem.color = undefined;
   timerItem.text = `$(check) Submitted · ${new Date().toLocaleTimeString()}`;
   timerItem.backgroundColor = undefined;
 }
@@ -171,10 +206,10 @@ async function doManualSubmit(session: SessionData): Promise<void> {
     log(`manual submit succeeded (status ${result.status})`, session);
   } else {
     submitState = 'idle';
-    submitItem.text = '$(cloud-upload) Submit Solution';
+    setSubmitIdleStyle();
     log(`manual submit FAILED (status ${result.status}, body ${result.body})`, session);
     vscode.window.showErrorMessage(
-      'Submit failed — check your connection and try the button again, or use the original browser tab.',
+      'Swaya.me: submit failed — check your connection and try the button again, or use the original browser tab.',
     );
   }
 }
@@ -192,7 +227,7 @@ async function attemptAutoSubmit(session: SessionData): Promise<void> {
       setSubmittedUi();
       log(`auto-submit succeeded on attempt ${attempt + 1} (status ${result.status})`, session);
       vscode.window.showInformationMessage(
-        'Time’s up — your solution was submitted automatically.',
+        'Swaya.me: time’s up — your solution was submitted automatically.',
       );
       return;
     }
@@ -207,11 +242,11 @@ async function attemptAutoSubmit(session: SessionData): Promise<void> {
   // auto-submit-at-zero was decided over the plan's original "don't
   // auto-submit" recommendation (see plan's "Shared logic" section).
   submitState = 'idle';
-  submitItem.text = '$(cloud-upload) Submit Solution';
+  setSubmitIdleStyle();
   timerItem.text = '$(alert) Time’s up — click Submit';
   log('auto-submit exhausted all retries — falling back to manual button', session);
   vscode.window.showWarningMessage(
-    'Time’s up, but automatic submission failed. Click "Submit Solution" in the status bar, or use the original browser tab.',
+    'Swaya.me: time’s up, but automatic submission failed. Click "Submit Solution" in the status bar, or use the original browser tab.',
   );
 }
 
@@ -275,9 +310,9 @@ export function activate(context: vscode.ExtensionContext): void {
     return;
   }
 
-  timerItem.tooltip = 'Time remaining for this coding challenge';
-  submitItem.tooltip = 'Submit your solution now';
-  submitItem.text = '$(cloud-upload) Submit Solution';
+  timerItem.tooltip = 'Swaya.me — time remaining for this coding challenge';
+  submitItem.tooltip = 'Swaya.me — submit your solution now';
+  setSubmitIdleStyle();
   submitItem.command = 'swayaSubmitTimer.submit';
   submitItem.show();
 
@@ -285,6 +320,17 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('swayaSubmitTimer.submit', () => doManualSubmit(session)),
   );
   context.subscriptions.push({ dispose: () => tickHandle && clearTimeout(tickHandle) });
+
+  // One-time onboarding nudge — the status bar alone turned out to be easy
+  // to miss on first real use. Fire-and-forget: doesn't block activation or
+  // the countdown starting on whether/how the candidate dismisses it.
+  if (!context.workspaceState.get(ONBOARDING_SHOWN_KEY)) {
+    void context.workspaceState.update(ONBOARDING_SHOWN_KEY, true);
+    void vscode.window.showInformationMessage(
+      '⏱️ Swaya.me — your countdown and Submit Solution button are in the status bar (bottom right).',
+      'Got it',
+    );
+  }
 
   log('activated', session);
   scheduleTick(session);
