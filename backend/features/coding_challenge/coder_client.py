@@ -224,22 +224,34 @@ async def exec_in_workspace(workspace_name: str, command: str, timeout: Optional
     return await _exec_bash_lc(workspace_name, script, cli_path=cli_path, timeout=timeout)
 
 
-async def wait_for_app_ready(workspace_name: str, port: int = 13337, timeout: float = 120.0,
+async def wait_for_app_ready(workspace_name: str, port: int = 13337, timeout: float = 210.0,
                               cli_path: str = DEFAULT_CLI_PATH) -> bool:
     """`coder create` only waits for the agent to connect, not for the code-server
     registry module's own startup script to finish installing/launching code-server
     inside the container — handing the candidate a session URL before that's done
-    causes a real "connection refused" 502 on their very first open (confirmed live,
-    twice: once during initial design, and again live on 2026-08-02 against a real
-    candidate — the previous 40s timeout was far short of the ~145-150s code-server
-    startup can actually take in practice, measured separately while widening the
-    Claude Code extension install poll window in the workspace template). 120s
-    matches the frontend's own LONG_TIMEOUT for this call (services/api.js) — no
-    point waiting longer backend-side than the client is still listening — and
-    stays under this route's 150s nginx proxy_read_timeout with margin.
+    causes a real "connection refused" 502 on their very first open (confirmed live
+    at least three times now: during initial design, again on 2026-08-02, and again
+    on 2026-08-09 against a real candidate — code-server startup measured taking
+    ~145-150s in practice, sometimes more).
+
+    Timeout raised from 120s to 210s on 2026-08-09 — the original 120s figure was
+    sized against a constraint that no longer exists: this used to be called
+    synchronously from within the `/start` HTTP request itself, so it had to stay
+    under the frontend's LONG_TIMEOUT and this route's nginx proxy_read_timeout or
+    the request would fail out from under it regardless of what this function did.
+    Since the async-provisioning refactor (commit 3adbc49, "/start" now acks fast
+    and does this work in provision_workspace_job, a background APScheduler job),
+    nothing is blocked on this call anymore — the frontend just polls /status
+    separately. There's no reason left to cut this off at 120s when the real
+    startup time observed in practice runs right up against it; 210s gives ~60s of
+    margin over the worst case actually measured, at the cost of the (rare) truly-
+    stuck case waiting longer before falling through to the "proceed anyway" path
+    below — an acceptable tradeoff now that nothing else times out because of it.
+
     Polls from inside the workspace until the port is actually accepting connections.
     Returns False (not True) on timeout — caller proceeds anyway rather than blocking
-    /start indefinitely; this just makes the common case reliable, not a guarantee."""
+    provisioning indefinitely; this just makes the common case reliable, not a
+    guarantee."""
     loop = asyncio.get_event_loop()
     deadline = loop.time() + timeout
     while loop.time() < deadline:
