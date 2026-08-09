@@ -58,6 +58,13 @@ htmlcov/
 
 # Docker
 .dockerignore
+# Exception: this one is real and load-bearing (excludes swaya-extension/'s
+# dev tooling from docker_image.code_server_multi's build context, same
+# node_modules-bloat class of problem that broke `coder templates push`
+# — see project_coder_submit_extension.md) — the blanket rule above is
+# unused boilerplate from the initial project scaffold, not protecting
+# against any other real .dockerignore in this repo.
+!infra/coder-templates/code-server-multi/.dockerignore
 
 # Frontend
 frontend/node_modules/

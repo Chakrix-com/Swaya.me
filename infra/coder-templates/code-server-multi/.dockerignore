@@ -1,0 +1,5 @@
+# docker_image.code_server_multi's build context is this whole directory
+# (build { context = "." } in main.tf) - the Dockerfile never COPYs
+# anything from swaya-extension/, so none of it belongs in the build
+# context. Keeps `docker build` fast and out of node_modules entirely.
+swaya-extension/
