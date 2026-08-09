@@ -2,6 +2,12 @@
 Unit tests for assess_coding_challenge: prompt construction (GeminiProvider) and
 response parsing, plus router-level delegation. No real HTTP calls — the provider's
 _post is mocked throughout.
+
+Revised 2026-08-09 (deterministic-first grading redesign): signature changed from
+(problem_statement, grading_rubric, code_timeline, ai_transcript, weights) to
+(problem_statement, grading_rubric, final_code_snapshot, candidate_prompts,
+usage_summary, weights) — validation_discipline moved out entirely (now computed
+deterministically in grading_service_async, see test_coding_challenge_grading.py).
 """
 import asyncio
 from unittest.mock import AsyncMock, patch
@@ -10,6 +16,13 @@ import pytest
 
 from core.ai.base import BaseAIProvider
 from core.ai.providers.gemini import GeminiProvider
+
+_FAKE_USAGE_SUMMARY = {
+    "total_human_prompts": 4,
+    "total_ai_driven_commits": 3,
+    "total_manual_snapshot_commits": 1,
+    "total_test_runs_via_ai_chat": 2,
+}
 
 
 def _provider_with_key() -> GeminiProvider:
@@ -23,6 +36,11 @@ def _gemini_response(json_text: str) -> dict:
     return {"candidates": [{"content": {"parts": [{"text": json_text}]}}]}
 
 
+def _ok_response():
+    return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
+                             '"code_quality": 90, "architecture": 85, "rationale": "solid work"}')
+
+
 # ── BaseAIProvider default fallback ─────────────────────────────────────────
 
 def test_base_provider_default_is_neutral_fallback():
@@ -32,97 +50,95 @@ def test_base_provider_default_is_neutral_fallback():
         async def generate_poll_prompt(self, *a, **kw): return ""
         async def rewrite_text(self, *a, **kw): return ""
 
-    result = asyncio.run(MinimalProvider().assess_coding_challenge("p", "r", "t", "a"))
+    result = asyncio.run(MinimalProvider().assess_coding_challenge("p", "r", "code", "prompts", {}))
     assert result["ai_usage_efficiency"] == 50
     assert result["prompt_quality"] == 50
-    assert result["validation_discipline"] == 50
     assert result["code_quality"] == 50
     assert result["architecture"] == 50
+    assert "validation_discipline" not in result  # deterministic now, not this call's concern
     assert "rationale" in result
 
 
 # ── GeminiProvider: prompt construction ─────────────────────────────────────
 
-def test_gemini_prompt_includes_all_four_inputs():
+def test_gemini_prompt_includes_curated_inputs():
     provider = _provider_with_key()
     captured = {}
 
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
-        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
-                                 '"validation_discipline": 60, "code_quality": 90, '
-                                 '"architecture": 85, "rationale": "solid work"}')
+        return _ok_response()
 
     with patch.object(provider, "_post", fake_post):
         asyncio.run(provider.assess_coding_challenge(
             problem_statement="Implement FizzBuzz",
             grading_rubric="Must handle edge cases",
-            code_timeline="commit abc: ai-edit ...",
-            ai_transcript='{"role": "user", "content": "help me"}',
+            final_code_snapshot="=== FILE: fizzbuzz.py ===\ndef fizzbuzz(n): ...",
+            candidate_prompts="write fizzbuzz with tests",
+            usage_summary=_FAKE_USAGE_SUMMARY,
         ))
 
     user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
     assert "Implement FizzBuzz" in user_text
     assert "Must handle edge cases" in user_text
-    assert "commit abc: ai-edit" in user_text
-    assert "help me" in user_text
+    assert "fizzbuzz.py" in user_text
+    assert "write fizzbuzz with tests" in user_text
+    assert "Total prompts the candidate typed: 4" in user_text
+    assert "Commits from AI-driven edits: 3" in user_text
 
 
-def test_gemini_truncates_oversized_code_timeline():
-    """Real incident 2026-08-09: a long session's `git log -p` reached 13.6MB,
-    Gemini rejected the request outright (HTTP 400, input token count exceeds
-    1,048,576). code_timeline must be capped before it reaches the prompt —
-    truncated from the tail (git log -p is newest-commit-first, so this keeps
-    the most recent commits and drops the oldest)."""
-    from core.ai.providers.gemini import CODING_CHALLENGE_TIMELINE_MAX_CHARS
+def test_gemini_truncates_oversized_final_code_snapshot():
+    """Real incident 2026-08-09 that prompted this redesign: the OLD unbounded
+    code_timeline input reached 13.6MB. final_code_snapshot is bounded by repo
+    size already (harvest-time head -c cap), but this is the provider-side
+    safety net on top of that — truncates the tail, keeping whatever was
+    listed first."""
+    from core.ai.providers.gemini import CODING_CHALLENGE_CODE_SNAPSHOT_MAX_CHARS
 
     provider = _provider_with_key()
     captured = {}
-    huge_timeline = "commit newest-first\n" + ("x" * (CODING_CHALLENGE_TIMELINE_MAX_CHARS + 500_000))
+    huge_snapshot = "=== FILE: first.py ===\n" + ("x" * (CODING_CHALLENGE_CODE_SNAPSHOT_MAX_CHARS + 500_000))
 
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
-        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
-                                 '"validation_discipline": 60, "code_quality": 90, '
-                                 '"architecture": 85, "rationale": "solid work"}')
+        return _ok_response()
 
     with patch.object(provider, "_post", fake_post):
         asyncio.run(provider.assess_coding_challenge(
             problem_statement="p", grading_rubric="r",
-            code_timeline=huge_timeline, ai_transcript="short transcript",
+            final_code_snapshot=huge_snapshot, candidate_prompts="short prompts",
+            usage_summary=_FAKE_USAGE_SUMMARY,
         ))
 
     user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
-    assert "commit newest-first" in user_text  # head kept
-    assert len(user_text) < len(huge_timeline)  # actually shrunk
+    assert "first.py" in user_text  # head kept
+    assert len(user_text) < len(huge_snapshot)
     assert "truncated" in user_text
 
 
-def test_gemini_truncates_oversized_transcript_keeping_most_recent():
-    """AI transcript JSONL is append-only chronological (oldest first) —
-    truncation must drop the HEAD (earliest turns) and keep the TAIL (activity
-    closest to submission), the opposite end from code_timeline."""
-    from core.ai.providers.gemini import CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS
+def test_gemini_truncates_oversized_candidate_prompts_keeping_most_recent():
+    """Prompts are chronological (oldest first) — truncation drops the HEAD
+    (earliest prompts) and keeps the TAIL (prompts closest to submission)."""
+    from core.ai.providers.gemini import CODING_CHALLENGE_PROMPTS_MAX_CHARS
 
     provider = _provider_with_key()
     captured = {}
-    huge_transcript = ("x" * (CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS + 500_000)) + "\nfinal-turn-marker"
+    huge_prompts = ("x" * (CODING_CHALLENGE_PROMPTS_MAX_CHARS + 50_000)) + "\nfinal-prompt-marker"
 
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
-        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
-                                 '"validation_discipline": 60, "code_quality": 90, '
-                                 '"architecture": 85, "rationale": "solid work"}')
+        return _ok_response()
 
     with patch.object(provider, "_post", fake_post):
         asyncio.run(provider.assess_coding_challenge(
             problem_statement="p", grading_rubric="r",
-            code_timeline="short timeline", ai_transcript=huge_transcript,
+            final_code_snapshot="short code", candidate_prompts=huge_prompts,
+            usage_summary=_FAKE_USAGE_SUMMARY,
         ))
 
     user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
-    assert "final-turn-marker" in user_text  # tail kept
-    assert len(user_text) < len(huge_transcript)
+    assert "final-prompt-marker" in user_text  # tail kept
+    assert len(user_text) < len(huge_prompts)
     assert "truncated" in user_text
 
 
@@ -133,42 +149,39 @@ def test_gemini_does_not_truncate_normal_sized_inputs():
 
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
-        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
-                                 '"validation_discipline": 60, "code_quality": 90, '
-                                 '"architecture": 85, "rationale": "solid work"}')
+        return _ok_response()
 
     with patch.object(provider, "_post", fake_post):
         asyncio.run(provider.assess_coding_challenge(
             problem_statement="p", grading_rubric="r",
-            code_timeline="commit abc: a normal-sized diff",
-            ai_transcript='{"role": "user", "content": "a normal turn"}',
+            final_code_snapshot="=== FILE: a.py ===\nprint('hi')",
+            candidate_prompts="a normal prompt",
+            usage_summary=_FAKE_USAGE_SUMMARY,
         ))
 
     user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
-    assert "commit abc: a normal-sized diff" in user_text
-    assert '"content": "a normal turn"' in user_text
+    assert "a.py" in user_text
+    assert "a normal prompt" in user_text
     assert "truncated" not in user_text
 
 
-def test_gemini_prompt_does_not_ask_for_functional_correctness():
-    """Functional correctness must stay a deterministic backend calculation, never
-    delegated to the LLM (design's anti-prompt-injection stance)."""
+def test_gemini_prompt_does_not_ask_for_functional_correctness_or_validation_discipline():
+    """Functional correctness and validation_discipline must stay deterministic
+    backend calculations, never delegated to the LLM."""
     provider = _provider_with_key()
     captured = {}
 
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
         return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
-                                 '"validation_discipline": 50, "code_quality": 50, '
-                                 '"architecture": 50, "rationale": ""}')
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
 
     with patch.object(provider, "_post", fake_post):
-        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     system_text = captured["payload"]["system_instruction"]["parts"][0]["text"]
-    assert "functional" not in system_text.lower() or "not your concern" in system_text.lower() \
-        or "deterministically" in system_text.lower()
-    assert "test_output" not in system_text
+    assert "not your concern" in system_text.lower() or "deterministically" in system_text.lower()
+    assert '"validation_discipline"' not in system_text
 
 
 def test_gemini_prompt_includes_host_weights_when_provided():
@@ -178,28 +191,25 @@ def test_gemini_prompt_includes_host_weights_when_provided():
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
         return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
-                                 '"validation_discipline": 50, "code_quality": 50, '
-                                 '"architecture": 50, "rationale": ""}')
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
 
     weights = {
-        "functional_correctness": 25, "ai_usage_efficiency": 20, "prompt_quality": 15,
-        "validation_discipline": 15, "code_quality": 10, "architecture": 5,
-        "time_taken": 5, "proctoring": 5,
+        "functional_correctness": 30, "ai_usage_efficiency": 20, "prompt_quality": 15,
+        "validation_discipline": 15, "code_quality": 10, "architecture": 5, "time_taken": 5,
     }
     with patch.object(provider, "_post", fake_post):
-        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a", weights))
+        asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}, weights))
 
     system_text = captured["payload"]["system_instruction"]["parts"][0]["text"]
-    # All 5 AI-judged criteria's weights show up...
+    # All 4 AI-judged criteria's weights show up...
     assert "ai_usage_efficiency: 20 points" in system_text
     assert "prompt_quality: 15 points" in system_text
-    assert "validation_discipline: 15 points" in system_text
     assert "code_quality: 10 points" in system_text
     assert "architecture: 5 points" in system_text
-    # ...but the 3 criteria this call doesn't judge are never shown as if they were its concern
-    assert "functional_correctness: 25" not in system_text
+    # ...but the criteria this call doesn't judge are never shown as if they were its concern
+    assert "functional_correctness: 30" not in system_text
     assert "time_taken: 5 points" not in system_text
-    assert "proctoring: 5 points" not in system_text
+    assert "validation_discipline: 15 points" not in system_text
     # anti-anchoring instruction must be present, not just the raw numbers
     assert "do not let" in system_text.lower() or "not let a criterion" in system_text.lower()
 
@@ -213,15 +223,33 @@ def test_gemini_prompt_omits_weights_section_when_none_provided():
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
         return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
-                                 '"validation_discipline": 50, "code_quality": 50, '
-                                 '"architecture": 50, "rationale": ""}')
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
 
     with patch.object(provider, "_post", fake_post):
-        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a", weights=None))
+        asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}, weights=None))
 
     system_text = captured["payload"]["system_instruction"]["parts"][0]["text"]
-    assert "weighted these 5 criteria" not in system_text
+    assert "weighted these 4 criteria" not in system_text
     assert ": 20 points" not in system_text  # no stray weight-line syntax with nothing to fill it
+
+
+def test_gemini_prompt_has_calibration_guidance():
+    """The whole point of this redesign — prompt must actually instruct the model
+    not to inflate scores, not just ask it to score nicely as before."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
+
+    system_text = captured["payload"]["system_instruction"]["parts"][0]["text"].lower()
+    assert "40-75" in system_text or "calibration" in system_text
+    assert "85" in system_text  # the "reserve 85+ for exceptional work" anchor
 
 
 def test_gemini_uses_json_mode_and_zero_temperature():
@@ -231,11 +259,10 @@ def test_gemini_uses_json_mode_and_zero_temperature():
     async def fake_post(payload, model, timeout=None):
         captured["payload"] = payload
         return _gemini_response('{"ai_usage_efficiency": 50, "prompt_quality": 50, '
-                                 '"validation_discipline": 50, "code_quality": 50, '
-                                 '"architecture": 50, "rationale": ""}')
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
 
     with patch.object(provider, "_post", fake_post):
-        asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     assert captured["payload"]["generationConfig"]["responseMimeType"] == "application/json"
     assert captured["payload"]["generationConfig"]["temperature"] == 0.0
@@ -243,21 +270,20 @@ def test_gemini_uses_json_mode_and_zero_temperature():
 
 # ── GeminiProvider: response parsing ────────────────────────────────────────
 
-def test_gemini_parses_all_five_scores_and_rationale():
+def test_gemini_parses_all_four_scores_and_rationale():
     provider = _provider_with_key()
 
     async def fake_post(payload, model, timeout=None):
         return _gemini_response('{"ai_usage_efficiency": 72, "prompt_quality": 88, '
-                                 '"validation_discipline": 45, "code_quality": 91, '
-                                 '"architecture": 60, "rationale": "Good iteration pattern"}')
+                                 '"code_quality": 91, "architecture": 60, '
+                                 '"rationale": "Good iteration pattern"}')
 
     with patch.object(provider, "_post", fake_post):
-        result = asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        result = asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     assert result == {
         "ai_usage_efficiency": 72,
         "prompt_quality": 88,
-        "validation_discipline": 45,
         "code_quality": 91,
         "architecture": 60,
         "rationale": "Good iteration pattern",
@@ -269,11 +295,10 @@ def test_gemini_clamps_out_of_range_scores():
 
     async def fake_post(payload, model, timeout=None):
         return _gemini_response('{"ai_usage_efficiency": 150, "prompt_quality": -20, '
-                                 '"validation_discipline": 50, "code_quality": 50, '
-                                 '"architecture": 50, "rationale": ""}')
+                                 '"code_quality": 50, "architecture": 50, "rationale": ""}')
 
     with patch.object(provider, "_post", fake_post):
-        result = asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        result = asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     assert result["ai_usage_efficiency"] == 100
     assert result["prompt_quality"] == 0
@@ -286,7 +311,7 @@ def test_gemini_defaults_missing_score_fields_to_50():
         return _gemini_response('{"rationale": "incomplete response"}')
 
     with patch.object(provider, "_post", fake_post):
-        result = asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        result = asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     assert result["ai_usage_efficiency"] == 50
     assert result["code_quality"] == 50
@@ -296,7 +321,7 @@ def test_gemini_no_key_returns_fallback_without_calling_api():
     provider = GeminiProvider()
     provider._key = ""
     with patch.object(provider, "_post", AsyncMock(side_effect=AssertionError("should not be called"))):
-        result = asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+        result = asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
     assert result["rationale"] == "AI assessment unavailable"
 
 
@@ -310,7 +335,7 @@ def test_gemini_propagates_exception_on_api_failure():
 
     with patch.object(provider, "_post", failing_post):
         with pytest.raises(RuntimeError, match="Gemini API unreachable"):
-            asyncio.run(provider.assess_coding_challenge("p", "r", "t", "a"))
+            asyncio.run(provider.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
 
 # ── Router-level delegation ─────────────────────────────────────────────────
@@ -323,9 +348,13 @@ def test_router_assess_coding_challenge_delegates_to_primary_provider():
     weights = {"prompt_quality": 15}
 
     with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
-        result = asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a", weights))
+        result = asyncio.run(
+            ai_router.assess_coding_challenge("p", "r", "code", "prompts", {}, weights)
+        )
 
-    mock_provider.assess_coding_challenge.assert_called_once_with("p", "r", "t", "a", weights)
+    mock_provider.assess_coding_challenge.assert_called_once_with(
+        "p", "r", "code", "prompts", {}, weights
+    )
     assert result == {"rationale": "ok"}
 
 
@@ -337,9 +366,11 @@ def test_router_assess_coding_challenge_weights_default_to_none():
     mock_provider.assess_coding_challenge = AsyncMock(return_value={"rationale": "ok"})
 
     with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
-        asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a"))
+        asyncio.run(ai_router.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
-    mock_provider.assess_coding_challenge.assert_called_once_with("p", "r", "t", "a", None)
+    mock_provider.assess_coding_challenge.assert_called_once_with(
+        "p", "r", "code", "prompts", {}, None
+    )
 
 
 def test_router_assess_coding_challenge_propagates_provider_exception():
@@ -350,4 +381,4 @@ def test_router_assess_coding_challenge_propagates_provider_exception():
 
     with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
         with pytest.raises(RuntimeError, match="boom"):
-            asyncio.run(ai_router.assess_coding_challenge("p", "r", "t", "a"))
+            asyncio.run(ai_router.assess_coding_challenge("p", "r", "code", "prompts", {}))

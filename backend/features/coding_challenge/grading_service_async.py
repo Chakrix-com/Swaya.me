@@ -19,17 +19,54 @@ from features.coding_challenge import coder_client
 
 logger = logging.getLogger(__name__)
 
-# Scoring & Weightage Model (adapted from SRS §17.2) — sums to 100
+# Scoring & Weightage Model — sums to 100.
+#
+# Revised 2026-08-09 (deterministic-first grading redesign, see
+# _private/coding_challenge_grading_redesign_20260809.md): a fully AI-judged
+# 65/100 with no calibration was producing near-100% scores regardless of
+# actual outcome — confirmed live, a submission with functional_correctness=0
+# (zero tests passing) still scored ai_usage_efficiency=100, architecture=100,
+# code_quality=95, validation_discipline=95 from the same single ungrounded
+# Gemini call. Two changes here:
+#   - "proctoring" removed entirely — it was a pure stub always scored 100,
+#     handing out 5 free points with zero signal behind them (DECIDED by user,
+#     2026-08-09: redistribute its weight to functional_correctness rather
+#     than leave it or spread it across the AI-judged criteria).
+#   - "validation_discipline" moved from AI-judged to fully deterministic
+#     (see _compute_validation_discipline below) — it's exactly the kind of
+#     pattern-match (was an AI-authored commit followed by a test run before
+#     the next one?) that doesn't need or benefit from LLM judgment, and
+#     removing it cuts what has to go through the AI call at all.
 _WEIGHTS = {
-    "functional_correctness": 25,
+    "functional_correctness": 30,
     "ai_usage_efficiency": 20,
     "prompt_quality": 15,
     "validation_discipline": 15,
     "code_quality": 10,
     "architecture": 5,
     "time_taken": 5,
-    "proctoring": 5,
 }
+
+# DECIDED (user, 2026-08-09): a submission that fails almost all functional
+# tests gets its overall score hard-capped, no matter how well the AI-judged
+# "process" criteria score — directly fixes the exact case that prompted this
+# redesign (0% tests passing, 70% overall score). This is a transparent,
+# auditable rule, not another AI judgment call.
+_FUNCTIONAL_FAILURE_THRESHOLD = 20   # functional_correctness score (0-100) below this...
+_FUNCTIONAL_FAILURE_SCORE_CAP = 40   # ...caps the overall total at this, regardless of everything else
+
+_TEST_COMMAND_RE = re.compile(
+    r"\b(pytest|py\.test|mvn\s+(?:-\S+\s+)*test|gradle\s+test|npm\s+(?:run\s+)?test|"
+    r"yarn\s+test|go\s+test|jest|rspec|dotnet\s+test|ctest)\b",
+    re.IGNORECASE,
+)
+_GIT_COMMIT_HEADER_RE = re.compile(r"^commit ([0-9a-f]{7,40})")
+_GIT_AUTHOR_EMAIL_RE = re.compile(r"^Author:.*<([^>]+)>")
+_GIT_DATE_RE = re.compile(r"^Date:\s+(.+)$")
+# AI-edit and manual-snapshot commit authors, matching main.tf's coder_agent
+# startup_script exactly (the PostToolUse hook and swaya-snapshot-loop).
+_AI_COMMIT_AUTHOR_EMAIL = "ai@swaya.local"
+_CANDIDATE_COMMIT_AUTHOR_EMAIL = "candidate@swaya.local"
 
 _SUREFIRE_SUMMARY_RE = re.compile(
     r"^Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)\s*$"
@@ -140,29 +177,207 @@ def _compute_time_taken(created_at: datetime, submitted_at: datetime,
     return max(0, round(100 * (1 - (duration - time_budget_seconds) / time_budget_seconds)))
 
 
+# ── Deterministic parsing of harvested data — added 2026-08-09 so
+# validation_discipline no longer needs an LLM to eyeball it, and so the AI
+# call for the criteria that DO stay AI-judged gets curated, bounded input
+# instead of raw multi-megabyte dumps. All pure functions, no I/O, easily
+# unit-testable against realistic fixture strings. ──────────────────────────
+
+def _parse_git_date(date_str: str) -> Optional[datetime]:
+    """`git log -p`'s default Date: line format, e.g. 'Sun Aug 9 04:40:12 2026 +0000'."""
+    try:
+        return datetime.strptime(date_str.strip(), "%a %b %d %H:%M:%S %Y %z")
+    except ValueError:
+        return None
+
+
+def _parse_iso_timestamp(ts: str) -> Optional[datetime]:
+    """Claude Code transcript timestamps are ISO 8601 with a trailing 'Z'
+    (e.g. '2026-08-09T04:36:05.152Z') — Python's fromisoformat wants '+00:00'."""
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _parse_git_commits(code_timeline: str) -> list[dict]:
+    """Parses `git log -p` output into [{hash, author_email, date}], oldest-first
+    (git log -p itself lists newest-first; this reverses so callers can walk
+    forward through time). Tolerant of a missing Author:/Date: line on any
+    given commit (author_email/date come back None) rather than raising —
+    real `git log -p` output is what it is, not a format this owns."""
+    commits = []
+    current: Optional[dict] = None
+    for line in (code_timeline or "").splitlines():
+        m = _GIT_COMMIT_HEADER_RE.match(line)
+        if m:
+            if current:
+                commits.append(current)
+            current = {"hash": m.group(1), "author_email": None, "date": None}
+            continue
+        if current is None:
+            continue
+        m2 = _GIT_AUTHOR_EMAIL_RE.match(line)
+        if m2:
+            current["author_email"] = m2.group(1)
+            continue
+        m3 = _GIT_DATE_RE.match(line)
+        if m3:
+            current["date"] = _parse_git_date(m3.group(1))
+            continue
+    if current:
+        commits.append(current)
+    commits.reverse()  # oldest-first
+    return commits
+
+
+def _iter_transcript_entries(ai_transcript_raw: str):
+    """Yields parsed JSON objects, one per real line — malformed lines skipped
+    silently (the transcript format isn't a stable, documented API, matches
+    the tolerance already established in _sum_token_usage)."""
+    for line in (ai_transcript_raw or "").split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            yield json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+
+def _extract_test_run_timestamps(ai_transcript_raw: str) -> list[datetime]:
+    """Timestamps of Bash tool_use calls whose command looks like a test run.
+    Only test runs triggered through the AI chat are visible here — direct
+    terminal use outside the chat leaves no trace in this transcript, an
+    inherent limitation carried over from the original AI-judged prompt's own
+    caveat, not new to this deterministic version."""
+    timestamps = []
+    for entry in _iter_transcript_entries(ai_transcript_raw):
+        if entry.get("type") != "assistant":
+            continue
+        content = (entry.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            if block.get("name") != "Bash":
+                continue
+            command = (block.get("input") or {}).get("command", "")
+            if _TEST_COMMAND_RE.search(command):
+                ts = _parse_iso_timestamp(entry.get("timestamp", ""))
+                if ts:
+                    timestamps.append(ts)
+    return sorted(timestamps)
+
+
+def _extract_candidate_prompts(ai_transcript_raw: str) -> str:
+    """Real human-typed prompts only — excludes tool_result 'user' entries
+    (Claude Code logs a Bash tool's output as a 'user' message too, per the
+    Anthropic Messages API convention; `origin.kind == "human"` is what
+    actually distinguishes a real candidate keystroke from that) and all
+    AI/tool output. This is what prompt_quality gets AI-judged against now,
+    not the full raw transcript — smaller, and the LLM isn't being asked to
+    pick the candidate's own words out of a haystack of tool noise itself."""
+    prompts = []
+    for entry in _iter_transcript_entries(ai_transcript_raw):
+        if entry.get("type") != "user":
+            continue
+        if (entry.get("origin") or {}).get("kind") != "human":
+            continue
+        content = (entry.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                text = block.get("text", "").strip()
+                if text:
+                    prompts.append(text)
+    return "\n---\n".join(prompts)
+
+
+def _compute_usage_summary(code_timeline: str, ai_transcript_raw: str) -> dict:
+    """Structured session stats — what ai_usage_efficiency gets AI-judged
+    against now, instead of the raw transcript. Deliberately pre-digests the
+    signals a human grader would actually look for (iteration pace, whether
+    the candidate tested their own work) so the LLM is judging a compact
+    summary, not doing the counting itself from scratch each time — cheaper,
+    smaller, and more consistent across submissions."""
+    commits = _parse_git_commits(code_timeline)
+    ai_commits = [c for c in commits if c["author_email"] == _AI_COMMIT_AUTHOR_EMAIL]
+    candidate_commits = [c for c in commits if c["author_email"] == _CANDIDATE_COMMIT_AUTHOR_EMAIL]
+    test_runs = _extract_test_run_timestamps(ai_transcript_raw)
+    human_prompts = [
+        e for e in _iter_transcript_entries(ai_transcript_raw)
+        if e.get("type") == "user" and (e.get("origin") or {}).get("kind") == "human"
+    ]
+    return {
+        "total_human_prompts": len(human_prompts),
+        "total_ai_driven_commits": len(ai_commits),
+        "total_manual_snapshot_commits": len(candidate_commits),
+        "total_test_runs_via_ai_chat": len(test_runs),
+    }
+
+
+def _compute_validation_discipline(code_timeline: str, ai_transcript_raw: str) -> int:
+    """Fully deterministic (no LLM call) — moved off the AI-judged path
+    2026-08-09. For each AI-authored commit, checks whether a test-run tool
+    call happened in the window between that commit and the next one (or
+    before submission, for the last commit): was the AI's work validated
+    before being built on further? 100 when every AI-authored commit was
+    followed by a validation run; scales down linearly from there.
+
+    No AI-driven commits at all (candidate wrote everything by hand, or
+    barely touched the AI) falls back to checking whether the candidate
+    tested their own work at all — weaker signal, but not zero-information;
+    scores 100/50 rather than a misleading 0."""
+    commits = _parse_git_commits(code_timeline)
+    test_runs = _extract_test_run_timestamps(ai_transcript_raw)
+
+    ai_commits = [c for c in commits if c["author_email"] == _AI_COMMIT_AUTHOR_EMAIL and c["date"]]
+    if not ai_commits:
+        return 100 if test_runs else 50
+
+    validated = 0
+    for i, commit in enumerate(ai_commits):
+        window_start = commit["date"]
+        window_end = ai_commits[i + 1]["date"] if i + 1 < len(ai_commits) else None
+        if any(
+            ts >= window_start and (window_end is None or ts <= window_end)
+            for ts in test_runs
+        ):
+            validated += 1
+    return round(100 * validated / len(ai_commits))
+
+
 def _build_score_breakdown(
     ai_scores: dict, functional_correctness: int, time_taken: int,
+    validation_discipline: int,
     weights: Optional[dict] = None,
 ) -> tuple[dict, int]:
     """Backend computes the final weighted score itself — never trusts the LLM
     to do the arithmetic. Returns (score_breakdown, ai_score).
 
     `weights` is the host's per-question override (Question.grading_weights),
-    falling back to the platform default _WEIGHTS when not set. A host-provided
-    override intentionally has no "proctoring" key (see schemas.py's
-    GRADING_WEIGHT_CRITERIA) — proctoring is simply excluded from that
-    question's score rather than defaulted, since it's stubbed full-credit
-    and never meant to be host-configurable."""
+    falling back to the platform default _WEIGHTS when not set — see
+    schemas.py's GRADING_WEIGHT_CRITERIA, which mirrors _WEIGHTS' keys exactly.
+
+    Applies the functional-failure score cap (DECIDED, user, 2026-08-09):
+    a submission whose functional_correctness is below
+    _FUNCTIONAL_FAILURE_THRESHOLD gets its overall total capped at
+    _FUNCTIONAL_FAILURE_SCORE_CAP regardless of how well the AI-judged
+    criteria scored — a transparent, auditable rule, not another AI call."""
     weights = weights or _WEIGHTS
     all_scores = {
         "functional_correctness": functional_correctness,
         "ai_usage_efficiency": ai_scores.get("ai_usage_efficiency", 0),
         "prompt_quality": ai_scores.get("prompt_quality", 0),
-        "validation_discipline": ai_scores.get("validation_discipline", 0),
+        "validation_discipline": validation_discipline,
         "code_quality": ai_scores.get("code_quality", 0),
         "architecture": ai_scores.get("architecture", 0),
         "time_taken": time_taken,
-        "proctoring": 100,  # stubbed at full credit — no proctoring integration in this MVP
     }
     breakdown = {}
     total = 0.0
@@ -171,7 +386,10 @@ def _build_score_breakdown(
         contribution = score * weight / 100
         breakdown[criterion] = {"weight": weight, "score": score, "contribution": round(contribution, 2)}
         total += contribution
-    return breakdown, round(total)
+    final = round(total)
+    if functional_correctness < _FUNCTIONAL_FAILURE_THRESHOLD:
+        final = min(final, _FUNCTIONAL_FAILURE_SCORE_CAP)
+    return breakdown, final
 
 
 async def _cleanup(db, workspace: CodeWorkspace) -> None:
@@ -233,12 +451,30 @@ async def run_grading_job(submission_id: int) -> None:
                 workspace_name, "cat ~/.claude/projects/*/*.jsonl 2>/dev/null || true"
             )
             code_timeline, _, _ = await coder_client.exec_in_workspace(workspace_name, "git log -p")
+            # Final code as submitted — what code_quality/architecture are AI-judged
+            # against now (2026-08-09 deterministic-first grading redesign), not a
+            # reconstruction from code_timeline's diff history. `git ls-files`
+            # respects the repo's own .gitignore (so a well-configured starter repo
+            # naturally excludes node_modules/build output); `grep -Iq .` is the
+            # portable binary-file skip (relies only on grep, not an external `file`
+            # binary that may not be installed) — a binary sneaking through would risk
+            # breaking the JSON request to Gemini with invalid UTF-8, not just wasting
+            # space. `head -c` is a hard byte cap regardless, defense in depth on top
+            # of the provider-side truncation in gemini.py.
+            final_code_snapshot, _, _ = await coder_client.exec_in_workspace(
+                workspace_name,
+                "git ls-files | while IFS= read -r f; do "
+                "if [ -f \"$f\" ] && grep -Iq . \"$f\" 2>/dev/null; then "
+                "echo \"=== FILE: $f ===\"; cat \"$f\"; echo; "
+                "fi; done | head -c 400000"
+            )
 
             submission.test_output = test_output
             submission.passed_count = passed_count
             submission.total_count = total_count
             submission.ai_transcript_raw = transcript_raw
             submission.code_timeline = code_timeline
+            submission.final_code_snapshot = final_code_snapshot
             submission.ai_token_usage = _sum_token_usage(transcript_raw)
         except Exception as e:
             logger.error("run_grading_job: harvest failed for submission %s: %s", submission_id, e)
@@ -257,8 +493,15 @@ async def run_grading_job(submission_id: int) -> None:
 async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspace, question: Question) -> None:
     """Shared by the fresh-grading pipeline and the host-triggered regrade path
     (regrade_submission below) — scores an already-harvested submission (code_timeline
-    + ai_transcript_raw already persisted) and commits a terminal status. Does NOT
-    touch the Coder workspace itself; caller decides whether cleanup is needed."""
+    + ai_transcript_raw + final_code_snapshot already persisted) and commits a
+    terminal status. Does NOT touch the Coder workspace itself; caller decides
+    whether cleanup is needed.
+
+    Revised 2026-08-09 (deterministic-first grading redesign): validation_discipline
+    is now computed here directly from the harvested data (_compute_validation_discipline),
+    not asked of the LLM — it's always available even if the AI call itself fails,
+    so a PARTIAL_FAILED submission still has a real validation_discipline score
+    once regraded, not just the 4 AI-judged criteria."""
     from core.ai.router import assess_coding_challenge
 
     # Resolved once and reused for both the AI call and the score combination below,
@@ -266,13 +509,24 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
     # applied to compute the final score.
     weights = question.grading_weights or _WEIGHTS
 
+    code_timeline = submission.code_timeline or ""
+    ai_transcript = submission.ai_transcript_raw or ""
+    # Legacy fallback: submissions harvested before final_code_snapshot existed
+    # (this migration, 2026-08-09) don't have one — fall back to the diff
+    # history rather than showing the grader nothing at all. Only affects
+    # already-harvested rows; every new submission gets a real snapshot.
+    final_code_snapshot = submission.final_code_snapshot or code_timeline
+    candidate_prompts = _extract_candidate_prompts(ai_transcript)
+    usage_summary = _compute_usage_summary(code_timeline, ai_transcript)
+    validation_discipline = _compute_validation_discipline(code_timeline, ai_transcript)
+
     ai_result = None
     last_error: Optional[Exception] = None
     for _attempt in range(2):  # one retry
         try:
             ai_result = await assess_coding_challenge(
                 question.text, question.grading_rubric or "",
-                submission.code_timeline or "", submission.ai_transcript_raw or "",
+                final_code_snapshot, candidate_prompts, usage_summary,
                 weights,
             )
             break
@@ -292,7 +546,7 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
         submission.error_message = str(last_error)
     else:
         score_breakdown, ai_score = _build_score_breakdown(
-            ai_result, functional_correctness, time_taken, weights=weights
+            ai_result, functional_correctness, time_taken, validation_discipline, weights=weights
         )
         submission.score_breakdown = score_breakdown
         submission.ai_score = ai_score

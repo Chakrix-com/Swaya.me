@@ -128,22 +128,26 @@ async def evaluate_code(
 async def assess_coding_challenge(
     problem_statement: str,
     grading_rubric: str,
-    code_timeline: str,
-    ai_transcript: str,
+    final_code_snapshot: str,
+    candidate_prompts: str,
+    usage_summary: dict,
     weights: dict = None,
 ) -> dict:
     """
-    Returns the 5 LLM-judged coding-challenge sub-scores + rationale. Does not take
+    Returns the 4 LLM-judged coding-challenge sub-scores + rationale (revised
+    2026-08-09 — validation_discipline moved to deterministic, see
+    grading_service_async._compute_validation_discipline). Does not take
     test_output — functional correctness is computed deterministically by the caller,
     never by the LLM. Exceptions propagate (unlike evaluate_code's swallow-and-fallback
     behavior) so the caller's retry-then-partial_failed logic can detect a real failure.
 
     `weights` (the resolved, host-override-or-default weight dict) is passed straight
-    through to the provider so it can tell the model how much each of the 5 criteria
+    through to the provider so it can tell the model how much each of the 4 criteria
     it's judging actually counts toward the final score.
     """
     return await get_primary_provider().assess_coding_challenge(
-        problem_statement, grading_rubric, code_timeline, ai_transcript, weights
+        problem_statement, grading_rubric, final_code_snapshot, candidate_prompts,
+        usage_summary, weights,
     )
 
 

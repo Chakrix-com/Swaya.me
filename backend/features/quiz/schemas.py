@@ -7,12 +7,13 @@ from datetime import datetime
 from enum import Enum
 
 # Host-editable grading criteria for a coding_challenge question. Mirrors
-# grading_service_async._WEIGHTS minus "proctoring" — proctoring is excluded
-# from the editable set because it's currently stubbed to always score full
-# credit (no proctoring integration exists yet for coding challenges), so
-# exposing a weight control for it would be misleading. When grading_weights
-# is set on a question, run_grading_job uses exactly these keys instead of
-# the platform default — see _build_score_breakdown's weights parameter.
+# grading_service_async._WEIGHTS exactly (7 criteria, sums to 100 by default).
+# "proctoring" used to be a stubbed always-100 8th criterion excluded from
+# this editable set — removed entirely 2026-08-09 (deterministic-first
+# grading redesign) since it had zero real signal behind it, handing out 5
+# free points on every submission. When grading_weights is set on a question,
+# run_grading_job uses exactly these keys instead of the platform default —
+# see _build_score_breakdown's weights parameter.
 GRADING_WEIGHT_CRITERIA = {
     "functional_correctness", "ai_usage_efficiency", "prompt_quality",
     "validation_discipline", "code_quality", "architecture", "time_taken",

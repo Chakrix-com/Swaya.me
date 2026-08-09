@@ -321,6 +321,11 @@ class CodeSubmission(Base, TimestampMixin):
     total_count = Column(Integer, nullable=True)
     ai_transcript_raw = Column(MYSQL_LONGTEXT, nullable=True)
     code_timeline = Column(MYSQL_LONGTEXT, nullable=True)
+    # Final code state at submission time — what code_quality/architecture are
+    # actually AI-judged against now (2026-08-09 deterministic-first grading
+    # redesign), not the full commit history in code_timeline. Nullable:
+    # submissions harvested before this column existed won't have one.
+    final_code_snapshot = Column(MYSQL_LONGTEXT, nullable=True)
     ai_token_usage = Column(JSON, nullable=True)
     score_breakdown = Column(JSON, nullable=True)
     ai_score = Column(Integer, nullable=True)

@@ -207,17 +207,243 @@ def test_build_score_breakdown_weights_sum_to_100():
     assert sum(gsvc._WEIGHTS.values()) == 100
 
 
+def test_build_score_breakdown_no_proctoring_stub():
+    """Removed 2026-08-09 (deterministic-first grading redesign, DECIDED by
+    user) — it was a pure stub always scoring 100 with zero real signal,
+    handing out 5 free points on every submission. Its weight moved to
+    functional_correctness instead."""
+    assert "proctoring" not in gsvc._WEIGHTS
+    assert gsvc._WEIGHTS["functional_correctness"] == 30
+
+
 def test_build_score_breakdown_computes_correct_weighted_total():
     ai_scores = {
-        "ai_usage_efficiency": 80, "prompt_quality": 80, "validation_discipline": 80,
-        "code_quality": 80, "architecture": 80,
+        "ai_usage_efficiency": 80, "prompt_quality": 80, "code_quality": 80, "architecture": 80,
     }
-    breakdown, ai_score = gsvc._build_score_breakdown(ai_scores, functional_correctness=100, time_taken=100)
-    # 100*.25 + 80*.20 + 80*.15 + 80*.15 + 80*.10 + 80*.05 + 100*.05 + 100*.05
-    expected = 100 * .25 + 80 * .20 + 80 * .15 + 80 * .15 + 80 * .10 + 80 * .05 + 100 * .05 + 100 * .05
+    breakdown, ai_score = gsvc._build_score_breakdown(
+        ai_scores, functional_correctness=100, time_taken=100, validation_discipline=80,
+    )
+    # 100*.30 + 80*.20 + 80*.15 + 80*.15 + 80*.10 + 80*.05 + 100*.05
+    expected = 100 * .30 + 80 * .20 + 80 * .15 + 80 * .15 + 80 * .10 + 80 * .05 + 100 * .05
     assert ai_score == round(expected)
-    assert breakdown["proctoring"]["score"] == 100  # stubbed at full credit
-    assert breakdown["functional_correctness"]["weight"] == 25
+    assert breakdown["validation_discipline"]["score"] == 80
+    assert breakdown["functional_correctness"]["weight"] == 30
+    assert "proctoring" not in breakdown
+
+
+def test_build_score_breakdown_caps_score_when_functional_correctness_very_low():
+    """DECIDED (user, 2026-08-09): fixes the exact real case that prompted this
+    redesign — a submission with 0% tests passing still scored ~70 overall
+    because the AI-judged criteria were all near-100. Below the threshold, the
+    total is hard-capped regardless of how well everything else scored."""
+    ai_scores = {
+        "ai_usage_efficiency": 100, "prompt_quality": 100, "code_quality": 100, "architecture": 100,
+    }
+    breakdown, ai_score = gsvc._build_score_breakdown(
+        ai_scores, functional_correctness=0, time_taken=100, validation_discipline=100,
+    )
+    assert ai_score == gsvc._FUNCTIONAL_FAILURE_SCORE_CAP
+    # The breakdown itself still shows the real (uncapped) per-criterion contributions —
+    # only the final total is capped, so the breakdown stays honest/auditable.
+    assert breakdown["ai_usage_efficiency"]["score"] == 100
+
+
+def test_build_score_breakdown_no_cap_when_functional_correctness_at_threshold():
+    """Right at the threshold (not below it) — no cap applied."""
+    ai_scores = {
+        "ai_usage_efficiency": 100, "prompt_quality": 100, "code_quality": 100, "architecture": 100,
+    }
+    breakdown, ai_score = gsvc._build_score_breakdown(
+        ai_scores, functional_correctness=gsvc._FUNCTIONAL_FAILURE_THRESHOLD, time_taken=100,
+        validation_discipline=100,
+    )
+    assert ai_score > gsvc._FUNCTIONAL_FAILURE_SCORE_CAP
+
+
+# ── Deterministic parsing: git commits ──────────────────────────────────────
+
+_SAMPLE_GIT_LOG = """commit bbb2222
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:40:00 2026 +0000
+
+    ai-edit: 2026-08-09T04:40:00
+
+diff --git a/bank.py b/bank.py
++added a line
+
+commit aaa1111
+Author: Candidate <candidate@swaya.local>
+Date:   Sun Aug 9 04:36:10 2026 +0000
+
+    starter
+
+diff --git a/bank.py b/bank.py
++initial content
+"""
+
+
+def test_parse_git_commits_oldest_first():
+    commits = gsvc._parse_git_commits(_SAMPLE_GIT_LOG)
+    assert [c["hash"] for c in commits] == ["aaa1111", "bbb2222"]  # reversed from git log -p's newest-first
+
+
+def test_parse_git_commits_extracts_author_email_and_date():
+    commits = gsvc._parse_git_commits(_SAMPLE_GIT_LOG)
+    ai_commit = commits[1]
+    assert ai_commit["author_email"] == "ai@swaya.local"
+    assert ai_commit["date"] is not None
+    assert ai_commit["date"].year == 2026 and ai_commit["date"].hour == 4 and ai_commit["date"].minute == 40
+
+
+def test_parse_git_commits_empty_input():
+    assert gsvc._parse_git_commits("") == []
+    assert gsvc._parse_git_commits(None) == []
+
+
+# ── Deterministic parsing: transcript (test-run detection + candidate prompts) ──
+
+def _transcript_line(entry: dict) -> str:
+    return json.dumps(entry)
+
+
+def _human_prompt_entry(text: str, ts: str) -> dict:
+    return {
+        "type": "user", "timestamp": ts, "origin": {"kind": "human"},
+        "message": {"role": "user", "content": [{"type": "text", "text": text}]},
+    }
+
+
+def _tool_result_entry(ts: str) -> dict:
+    """Mimics Claude Code logging a Bash tool's stdout as a 'user' message —
+    must NOT be picked up as a candidate-typed prompt."""
+    return {
+        "type": "user", "timestamp": ts,
+        "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": "some output"}
+        ]},
+    }
+
+
+def _bash_tool_use_entry(command: str, ts: str) -> dict:
+    return {
+        "type": "assistant", "timestamp": ts,
+        "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "name": "Bash", "input": {"command": command}}
+        ]},
+    }
+
+
+def test_extract_candidate_prompts_excludes_tool_results():
+    transcript = "\n".join([
+        _transcript_line(_human_prompt_entry("implement fizzbuzz", "2026-08-09T04:00:00.000Z")),
+        _transcript_line(_tool_result_entry("2026-08-09T04:00:05.000Z")),
+        _transcript_line(_human_prompt_entry("now add tests", "2026-08-09T04:05:00.000Z")),
+    ])
+    prompts = gsvc._extract_candidate_prompts(transcript)
+    assert "implement fizzbuzz" in prompts
+    assert "now add tests" in prompts
+    assert "some output" not in prompts
+
+
+def test_extract_test_run_timestamps_detects_pytest():
+    transcript = "\n".join([
+        _transcript_line(_bash_tool_use_entry("ls -la", "2026-08-09T04:00:00.000Z")),
+        _transcript_line(_bash_tool_use_entry("pytest -q", "2026-08-09T04:05:00.000Z")),
+    ])
+    timestamps = gsvc._extract_test_run_timestamps(transcript)
+    assert len(timestamps) == 1
+    assert timestamps[0].minute == 5
+
+
+def test_extract_test_run_timestamps_ignores_non_test_commands():
+    transcript = _transcript_line(_bash_tool_use_entry("cat README.md", "2026-08-09T04:00:00.000Z"))
+    assert gsvc._extract_test_run_timestamps(transcript) == []
+
+
+# ── Deterministic scoring: validation_discipline ────────────────────────────
+
+def test_validation_discipline_full_credit_when_every_ai_commit_validated():
+    code_timeline = """commit ccc3333
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:40:00 2026 +0000
+
+    ai-edit
+"""
+    transcript = _transcript_line(_bash_tool_use_entry("pytest -q", "2026-08-09T04:41:00.000Z"))
+    assert gsvc._compute_validation_discipline(code_timeline, transcript) == 100
+
+
+def test_validation_discipline_zero_when_ai_commit_never_validated():
+    code_timeline = """commit ccc3333
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:40:00 2026 +0000
+
+    ai-edit
+"""
+    assert gsvc._compute_validation_discipline(code_timeline, "") == 0
+
+
+def test_validation_discipline_partial_credit():
+    code_timeline = """commit aaa1111
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:00:00 2026 +0000
+
+    ai-edit 1
+
+commit bbb2222
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:10:00 2026 +0000
+
+    ai-edit 2
+"""
+    # Only the first AI commit gets a test run before the second one
+    transcript = _transcript_line(_bash_tool_use_entry("pytest -q", "2026-08-09T04:05:00.000Z"))
+    assert gsvc._compute_validation_discipline(code_timeline, transcript) == 50
+
+
+def test_validation_discipline_no_ai_commits_but_candidate_tested():
+    code_timeline = """commit aaa1111
+Author: Candidate <candidate@swaya.local>
+Date:   Sun Aug 9 04:00:00 2026 +0000
+
+    manual-snapshot
+"""
+    transcript = _transcript_line(_bash_tool_use_entry("pytest -q", "2026-08-09T04:05:00.000Z"))
+    assert gsvc._compute_validation_discipline(code_timeline, transcript) == 100
+
+
+def test_validation_discipline_no_ai_commits_and_no_testing_at_all():
+    code_timeline = """commit aaa1111
+Author: Candidate <candidate@swaya.local>
+Date:   Sun Aug 9 04:00:00 2026 +0000
+
+    manual-snapshot
+"""
+    assert gsvc._compute_validation_discipline(code_timeline, "") == 50
+
+
+def test_compute_usage_summary_counts_correctly():
+    code_timeline = """commit aaa1111
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 04:00:00 2026 +0000
+
+    ai-edit
+
+commit bbb2222
+Author: Candidate <candidate@swaya.local>
+Date:   Sun Aug 9 04:10:00 2026 +0000
+
+    manual-snapshot
+"""
+    transcript = "\n".join([
+        _transcript_line(_human_prompt_entry("do the thing", "2026-08-09T04:00:00.000Z")),
+        _transcript_line(_bash_tool_use_entry("pytest -q", "2026-08-09T04:05:00.000Z")),
+    ])
+    summary = gsvc._compute_usage_summary(code_timeline, transcript)
+    assert summary["total_human_prompts"] == 1
+    assert summary["total_ai_driven_commits"] == 1
+    assert summary["total_manual_snapshot_commits"] == 1
+    assert summary["total_test_runs_via_ai_chat"] == 1
 
 
 # ── Full pipeline: fixtures/mocks ───────────────────────────────────────────
@@ -452,9 +678,10 @@ def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override
 
     captured = {}
 
-    async def fake_assess(problem_statement, rubric, timeline, transcript, weights=None):
+    async def fake_assess(problem_statement, rubric, final_code_snapshot, candidate_prompts,
+                           usage_summary, weights=None):
         captured["weights"] = weights
-        return {"ai_usage_efficiency": 90, "prompt_quality": 90, "validation_discipline": 90,
+        return {"ai_usage_efficiency": 90, "prompt_quality": 90,
                 "code_quality": 90, "architecture": 90, "rationale": "excellent"}
 
     with patch("persistence.database_async.AsyncSessionLocal", session_cls), \
@@ -479,7 +706,7 @@ def test_grading_job_passes_host_override_weights_to_ai_when_set():
     question.grading_weights = {
         "functional_correctness": 10, "ai_usage_efficiency": 10, "prompt_quality": 40,
         "validation_discipline": 10, "code_quality": 10, "architecture": 10,
-        "time_taken": 5, "proctoring": 5,
+        "time_taken": 10,
     }
     session_cls, db = _mock_session(submission, workspace, question)
 
@@ -492,9 +719,10 @@ def test_grading_job_passes_host_override_weights_to_ai_when_set():
 
     captured = {}
 
-    async def fake_assess(problem_statement, rubric, timeline, transcript, weights=None):
+    async def fake_assess(problem_statement, rubric, final_code_snapshot, candidate_prompts,
+                           usage_summary, weights=None):
         captured["weights"] = weights
-        return {"ai_usage_efficiency": 90, "prompt_quality": 90, "validation_discipline": 90,
+        return {"ai_usage_efficiency": 90, "prompt_quality": 90,
                 "code_quality": 90, "architecture": 90, "rationale": "excellent"}
 
     with patch("persistence.database_async.AsyncSessionLocal", session_cls), \

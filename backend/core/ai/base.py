@@ -105,37 +105,54 @@ class BaseAIProvider(ABC):
         self,
         problem_statement: str,
         grading_rubric: str,
-        code_timeline: str,
-        ai_transcript: str,
+        final_code_snapshot: str,
+        candidate_prompts: str,
+        usage_summary: dict,
         weights: dict = None,
     ) -> dict:
         """
-        Judge the 5 LLM-scored coding-challenge criteria (AI-usage efficiency, prompt
-        quality, validation discipline, code quality, architecture) from the candidate's
-        commit timeline and Claude Code transcript. Does NOT judge functional
-        correctness — that's computed deterministically from test results, kept out of
-        the LLM's hands so grading integrity doesn't depend on the model resisting a
-        prompt-injection attempt embedded in candidate-authored content.
+        Judge the 4 LLM-scored coding-challenge criteria (AI-usage efficiency, prompt
+        quality, code quality, architecture) from curated, pre-digested inputs — NOT
+        the raw commit timeline / full transcript dump. Does NOT judge functional
+        correctness (deterministic from test results, kept out of the LLM's hands so
+        grading integrity doesn't depend on the model resisting a prompt-injection
+        attempt embedded in candidate-authored content) or validation_discipline
+        (moved to a fully deterministic pattern-match 2026-08-09 — see
+        grading_service_async._compute_validation_discipline — it doesn't need or
+        benefit from LLM judgment, and removing it shrinks what has to go through
+        this call at all).
+
+        Revised 2026-08-09 (deterministic-first grading redesign — a fully AI-judged,
+        uncalibrated call was producing near-100% scores regardless of actual outcome,
+        and the old code_timeline/ai_transcript inputs were unbounded — one real
+        session's git log alone reached 13.6MB, over Gemini's own input limit):
+          - final_code_snapshot: the code AS SUBMITTED, not a reconstruction from
+            diff history — this is what code_quality/architecture should be judged
+            against anyway, and it's naturally bounded by repo size rather than
+            session length.
+          - candidate_prompts: only the candidate's own typed prompts (extracted from
+            the transcript), not the full JSONL including every tool call/response.
+          - usage_summary: pre-computed session stats (prompt count, commit counts,
+            test-run count) instead of asking the model to do that counting itself.
 
         `weights` is the (already-resolved, host-override-or-platform-default) weight
-        dict for all 8 scoring criteria — only the 5 this method judges are meaningful
+        dict for all 7 scoring criteria — only the 4 this method judges are meaningful
         to include in a provider's prompt; the rest (functional_correctness, time_taken,
-        proctoring) are computed elsewhere and shouldn't be shown as if they were this
-        call's concern. Passing the same resolved weights the caller will actually use
-        to combine scores (rather than recomputing/guessing at defaults here) keeps what
-        the model is told in sync with what's actually applied.
+        validation_discipline) are computed elsewhere and shouldn't be shown as if they
+        were this call's concern. Passing the same resolved weights the caller will
+        actually use to combine scores (rather than recomputing/guessing at defaults
+        here) keeps what the model is told in sync with what's actually applied.
 
         Returns: {"ai_usage_efficiency": int, "prompt_quality": int,
-                  "validation_discipline": int, "code_quality": int,
-                  "architecture": int, "rationale": str} — each score 0-100.
-        rationale is newline-delimited short bullet points (providers should ask
-        the model for an array and join with "\n"), not one long paragraph.
-        Default: neutral mid-score fallback when no AI provider is configured.
+                  "code_quality": int, "architecture": int, "rationale": str} —
+        each score 0-100. rationale is newline-delimited short bullet points
+        (providers should ask the model for an array and join with "\n"), not one
+        long paragraph. Default: neutral mid-score fallback when no AI provider is
+        configured.
         """
         return {
             "ai_usage_efficiency": 50,
             "prompt_quality": 50,
-            "validation_discipline": 50,
             "code_quality": 50,
             "architecture": 50,
             "rationale": "AI assessment unavailable",

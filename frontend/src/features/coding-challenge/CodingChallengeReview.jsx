@@ -83,7 +83,10 @@ const CRITERION_LABELS = {
   code_quality: 'codingChallenge.critCodeQuality',
   architecture: 'codingChallenge.critArchitecture',
   time_taken: 'codingChallenge.critTimeTaken',
-  proctoring: 'codingChallenge.critProctoring',
+  // "proctoring" removed 2026-08-09 (deterministic-first grading redesign) —
+  // it was a pure stub always scored 100 with no real signal, and no longer
+  // appears in score_breakdown at all. Label kept out rather than left as a
+  // dead entry.
 }
 
 function scoreBand(score) {
@@ -113,14 +116,16 @@ function TestsCell({ passed, total }) {
   return <Tag color={color}>{passed}/{total}</Tag>
 }
 
-// Functional Correctness/Time Taken/Proctoring are computed straight from
-// test results — no AI narrative exists for them. The other 5 are what
-// assess_coding_challenge actually judges and writes a rationale about. The
-// old UI listed all 8 in one table with one rationale paragraph trailing
-// underneath — which, sitting directly below "Functional Correctness" (the
-// table's first row), read as if it were explaining that row instead of the
-// AI-assessed ones it's actually about.
-const DETERMINISTIC_CRITERIA = ['functional_correctness', 'time_taken', 'proctoring']
+// Functional Correctness/Time Taken/Validation Discipline are computed
+// deterministically (no LLM call at all — see grading_service_async.py's
+// _compute_validation_discipline as of 2026-08-09) — no AI narrative exists
+// for them. The other 4 (ai_usage_efficiency/prompt_quality/code_quality/
+// architecture) are what assess_coding_challenge actually judges and writes
+// a rationale about. The old UI listed everything in one table with one
+// rationale paragraph trailing underneath — which, sitting directly below
+// "Functional Correctness" (the table's first row), read as if it were
+// explaining that row instead of the AI-assessed ones it's actually about.
+const DETERMINISTIC_CRITERIA = ['functional_correctness', 'time_taken', 'validation_discipline']
 
 function breakdownColumns(t) {
   return [
