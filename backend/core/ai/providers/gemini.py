@@ -29,6 +29,19 @@ logger = logging.getLogger(__name__)
 
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
+# Gemini's hard input-token ceiling is 1,048,576. Confirmed hit live 2026-08-09
+# (submission 11: `code_timeline` alone was 13,659,121 characters — a `git log -p`
+# dump of every AI-edit + every ~2-minute manual-snapshot commit over a long
+# session, each with a full diff — HTTP 400 "input token count exceeds the
+# maximum"). Workspace lifetime was raised to 7 days the same day, making long
+# sessions (and correspondingly huge commit histories) routine rather than
+# exceptional. These caps are enforced only at the point of building this
+# specific prompt — code_timeline/ai_transcript are stored in full in the DB
+# regardless (submission.code_timeline / .ai_transcript_raw), this doesn't lose
+# any harvested data, just what gets shown to the grader in one call.
+CODING_CHALLENGE_TIMELINE_MAX_CHARS = 800_000
+CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS = 400_000
+
 _MODEL_ALIASES = {
     "gemini-3.1-pro": "gemini-2.5-pro",
     "gemini-3.1-pro-preview": "gemini-2.5-pro",
@@ -371,6 +384,12 @@ class GeminiProvider(BaseAIProvider):
             "\"validation_discipline\": int, \"code_quality\": int, \"architecture\": int, "
             "\"rationale\": [\"...\", \"...\"]}"
         )
+        code_timeline = self._truncate_head(
+            code_timeline, CODING_CHALLENGE_TIMELINE_MAX_CHARS, "commit timeline"
+        )
+        ai_transcript = self._truncate_tail(
+            ai_transcript, CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS, "AI chat transcript"
+        )
         user = (
             f"Problem statement:\n{problem_statement}\n\n"
             f"Host's grading rubric:\n{grading_rubric}\n\n"
@@ -406,6 +425,34 @@ class GeminiProvider(BaseAIProvider):
         except Exception as e:
             logger.warning("Gemini assess_coding_challenge failed: %s", e)
             raise
+
+    @staticmethod
+    def _truncate_head(text: str, max_chars: int, label: str) -> str:
+        """Keeps the first max_chars, dropping the tail. Used for `git log -p`
+        output, which lists newest-commit-first — truncating the tail drops the
+        OLDEST commits, keeping the most recent work intact."""
+        if not text or len(text) <= max_chars:
+            return text
+        return (
+            text[:max_chars]
+            + f"\n\n[... {label} truncated: {len(text) - max_chars:,} more characters "
+              f"omitted to stay under Gemini's input limit, oldest entries dropped first ...]"
+        )
+
+    @staticmethod
+    def _truncate_tail(text: str, max_chars: int, label: str) -> str:
+        """Keeps the last max_chars, dropping the head. Used for the AI chat
+        transcript JSONL, which is append-only chronological (oldest first) —
+        truncating the head drops the EARLIEST turns, keeping the activity
+        closest to submission intact (most relevant for judging validation
+        discipline right before submit)."""
+        if not text or len(text) <= max_chars:
+            return text
+        return (
+            f"[... {label} truncated: {len(text) - max_chars:,} earlier characters "
+            f"omitted to stay under Gemini's input limit, most recent activity kept ...]\n\n"
+            + text[-max_chars:]
+        )
 
     @staticmethod
     def _strip_html(text: str) -> str:

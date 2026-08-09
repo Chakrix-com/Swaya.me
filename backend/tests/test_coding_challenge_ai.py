@@ -68,6 +68,88 @@ def test_gemini_prompt_includes_all_four_inputs():
     assert "help me" in user_text
 
 
+def test_gemini_truncates_oversized_code_timeline():
+    """Real incident 2026-08-09: a long session's `git log -p` reached 13.6MB,
+    Gemini rejected the request outright (HTTP 400, input token count exceeds
+    1,048,576). code_timeline must be capped before it reaches the prompt —
+    truncated from the tail (git log -p is newest-commit-first, so this keeps
+    the most recent commits and drops the oldest)."""
+    from core.ai.providers.gemini import CODING_CHALLENGE_TIMELINE_MAX_CHARS
+
+    provider = _provider_with_key()
+    captured = {}
+    huge_timeline = "commit newest-first\n" + ("x" * (CODING_CHALLENGE_TIMELINE_MAX_CHARS + 500_000))
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
+                                 '"validation_discipline": 60, "code_quality": 90, '
+                                 '"architecture": 85, "rationale": "solid work"}')
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            problem_statement="p", grading_rubric="r",
+            code_timeline=huge_timeline, ai_transcript="short transcript",
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "commit newest-first" in user_text  # head kept
+    assert len(user_text) < len(huge_timeline)  # actually shrunk
+    assert "truncated" in user_text
+
+
+def test_gemini_truncates_oversized_transcript_keeping_most_recent():
+    """AI transcript JSONL is append-only chronological (oldest first) —
+    truncation must drop the HEAD (earliest turns) and keep the TAIL (activity
+    closest to submission), the opposite end from code_timeline."""
+    from core.ai.providers.gemini import CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS
+
+    provider = _provider_with_key()
+    captured = {}
+    huge_transcript = ("x" * (CODING_CHALLENGE_TRANSCRIPT_MAX_CHARS + 500_000)) + "\nfinal-turn-marker"
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
+                                 '"validation_discipline": 60, "code_quality": 90, '
+                                 '"architecture": 85, "rationale": "solid work"}')
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            problem_statement="p", grading_rubric="r",
+            code_timeline="short timeline", ai_transcript=huge_transcript,
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "final-turn-marker" in user_text  # tail kept
+    assert len(user_text) < len(huge_transcript)
+    assert "truncated" in user_text
+
+
+def test_gemini_does_not_truncate_normal_sized_inputs():
+    """Guards against an overly aggressive cap silently mangling the common case."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _gemini_response('{"ai_usage_efficiency": 80, "prompt_quality": 70, '
+                                 '"validation_discipline": 60, "code_quality": 90, '
+                                 '"architecture": 85, "rationale": "solid work"}')
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            problem_statement="p", grading_rubric="r",
+            code_timeline="commit abc: a normal-sized diff",
+            ai_transcript='{"role": "user", "content": "a normal turn"}',
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "commit abc: a normal-sized diff" in user_text
+    assert '"content": "a normal turn"' in user_text
+    assert "truncated" not in user_text
+
+
 def test_gemini_prompt_does_not_ask_for_functional_correctness():
     """Functional correctness must stay a deterministic backend calculation, never
     delegated to the LLM (design's anti-prompt-injection stance)."""

@@ -241,7 +241,11 @@ def _mock_execute_result(rows):
 
 
 def test_reconcile_reschedules_overdue_workspace_immediately():
-    overdue_ws = _fixture_workspace(created_at=datetime.utcnow() - timedelta(hours=10))
+    # 10 hours was "overdue" under the old 90-minute WORKSPACE_MAX_LIFETIME_SECONDS
+    # cap; raised to 7 days on 2026-08-09 (multi-day hackathon support), so this
+    # fixture needs to be safely past THAT cap now, not the old one — caught by
+    # actually running the full suite, this test was silently stale until then.
+    overdue_ws = _fixture_workspace(created_at=datetime.utcnow() - timedelta(days=8))
     mock_db = AsyncMock()
     mock_db.execute = AsyncMock(side_effect=[
         _mock_execute_result([overdue_ws]), _mock_execute_result([]), _mock_execute_result([]),
