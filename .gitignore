@@ -66,6 +66,18 @@ frontend/build/
 frontend/.vite/
 frontend/.turbo
 
+# swaya-submit-timer VS Code extension (infra/coder-templates/code-server-multi) —
+# node_modules is dev-only tooling (typescript/@types), never needed at
+# `coder templates push` time and must NOT be present then (blows past the
+# Coder server's 1MB template-archive limit, see
+# project_coder_submit_extension.md). out/ is reproducible from src/ via
+# `npx tsc` — the committed .vsix (built via `npx vsce package`) is the one
+# build artifact that actually needs to be tracked, since main.tf's
+# filebase64() reads it directly and nothing in the deploy pipeline rebuilds
+# it automatically.
+infra/coder-templates/code-server-multi/swaya-extension/node_modules/
+infra/coder-templates/code-server-multi/swaya-extension/out/
+
 # Local deploy script (contains server-specific paths — use deploy_template.sh)
 deploy.sh
 

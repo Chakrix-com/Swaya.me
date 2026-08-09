@@ -3,7 +3,9 @@ Coding-challenge orchestration service — JWT invite mint/verify, email-OTP
 verification (mirrors the existing exam OTP pattern), and startup reconciliation
 for scheduled jobs that don't survive a backend restart on their own.
 """
+import json
 import logging
+import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -217,6 +219,60 @@ def provision_job_id(workspace_id: int) -> str:
     return f"coding-challenge-provision:{workspace_id}"
 
 
+# ── swaya-submit-timer VS Code extension: session.json ─────────────────────
+
+_SESSION_FILE_PATH = "/home/coder/.swaya/session.json"
+# Absolute, not `~/.swaya/...` — write_file_to_workspace()'s relative-path branch
+# resolves against ~/project (see its own docstring), which the PostToolUse hook
+# auto-commits; a relative path here would put the invite token straight into
+# the candidate's git history. /home/coder is confirmed as the real home dir
+# from docker_container.workspace's own volume mount (container_path =
+# "/home/coder" in main.tf), not assumed.
+
+
+async def _write_session_file(workspace: CodeWorkspace, question: Optional[Question]) -> None:
+    """
+    Writes the swaya-submit-timer extension's session.json into the just-created
+    workspace and chmod 600's it. Best-effort: a failure here logs a warning and
+    returns rather than raising — the candidate's actual workspace access (the
+    original browser tab) doesn't depend on this file existing, only the
+    in-editor extension's convenience does.
+
+    The invite token minted here doesn't need to be byte-identical to the
+    candidate's original browser-tab link — confirmed /submit only reads
+    quiz_id/question_id/candidate_email/attempt_number from the decoded
+    payload, never compares jti (that's only used earlier, for OTP-flow Redis
+    keys) — so a freshly-minted token with the same claims works identically
+    for the extension's own /submit call.
+    """
+    try:
+        invite_token = create_invite_token(
+            workspace.quiz_id, workspace.question_id, workspace.candidate_email,
+            workspace.attempt_number,
+        )
+        # Matches the exact pattern grading_service_async.py / coding_challenge.py
+        # already use for building candidate-facing URLs from FRONTEND_URL.
+        frontend_url = os.getenv("FRONTEND_URL", "https://www.swaya.me")
+        session_data = {
+            "apiBase": f"{frontend_url}/api/v1",
+            "inviteToken": invite_token,
+            "timeBudgetSeconds": question.time_budget_seconds if question else None,
+            "createdAt": workspace.created_at.replace(tzinfo=timezone.utc).isoformat(),
+        }
+        await coder_client.write_file_to_workspace(
+            workspace.coder_workspace_name, _SESSION_FILE_PATH, json.dumps(session_data),
+        )
+        await coder_client.exec_in_workspace(
+            workspace.coder_workspace_name, f"chmod 600 {_SESSION_FILE_PATH}",
+        )
+    except Exception as e:
+        logger.warning(
+            "_write_session_file: failed for workspace %s: %s — extension will have "
+            "no countdown/submit data, candidate's original tab is unaffected",
+            workspace.coder_workspace_name, e,
+        )
+
+
 async def provision_workspace_job(workspace_id: int) -> None:
     """
     Scheduled job callback (fired via DateTrigger(run_date=utcnow()) immediately
@@ -285,6 +341,12 @@ async def provision_workspace_job(workspace_id: int) -> None:
         workspace.created_at = datetime.utcnow()
         await db.commit()
         await db.refresh(workspace)
+
+        # Written with the just-committed created_at so the extension's countdown
+        # deadline (createdAt + timeBudgetSeconds) matches exactly what the
+        # original tab's own useCountdown computes — best-effort, doesn't block
+        # or fail provisioning if it errors (see _write_session_file's docstring).
+        await _write_session_file(workspace, question)
 
         lifetime_deadline = workspace.created_at + timedelta(
             seconds=settings.coder.workspace_max_lifetime_seconds

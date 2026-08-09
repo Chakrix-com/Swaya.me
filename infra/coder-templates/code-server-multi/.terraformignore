@@ -1,0 +1,11 @@
+# Not needed server-side for `coder templates push` — only the built .vsix
+# (referenced via filebase64() in main.tf) matters at provision time. Keeps
+# the uploaded template bundle small and avoids bundling dev tooling that
+# has no business being inside a candidate's container.
+swaya-extension/node_modules
+swaya-extension/src
+swaya-extension/out
+swaya-extension/tsconfig.json
+swaya-extension/package.json
+swaya-extension/package-lock.json
+swaya-extension/.vscodeignore

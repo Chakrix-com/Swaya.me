@@ -131,6 +131,45 @@ resource "coder_agent" "main" {
       fi
     ) >/tmp/claude-extension-install.log 2>&1 &
 
+    # --- swaya-submit-timer VS Code extension (countdown + Submit button,
+    #     added 2026-08-09; plan: _private/coder_submit_extension_plan.md) ---
+    # Base64-embedded straight into this startup script via filebase64()
+    # below instead of a Dockerfile COPY or a separately-copied file -
+    # decided over both originally-considered options (see the plan's
+    # "Packaging & installing" section): no Docker image rebuild, ever, and
+    # unlike an image-bake (whose rebuild trigger is keyed only off
+    # Dockerfile's own hash, see docker_image.code_server_multi below),
+    # Terraform correctly notices a new template version is needed whenever
+    # the .vsix's bytes change, since that changes this interpolated string
+    # directly. Same poll-for-code-server / explicit-log-not-silent-failure
+    # pattern as the Claude Code extension install above - independent
+    # background job, doesn't wait on or block that one.
+    #
+    # Per-candidate session data (invite token, time budget, apiBase,
+    # created_at) is NOT plumbed through here - it's written straight into
+    # the container by the backend after workspace creation (see
+    # _write_session_file in coding_challenge_service_async.py), landing at
+    # /home/coder/.swaya/session.json before this extension ever activates.
+    cat > /tmp/swaya-submit-timer.vsix.b64 <<'VSIXEOF'
+    ${filebase64("${path.module}/swaya-extension/swaya-submit-timer-0.1.0.vsix")}
+    VSIXEOF
+    base64 -d /tmp/swaya-submit-timer.vsix.b64 > /tmp/swaya-submit-timer.vsix
+    (
+      for i in $(seq 1 90); do
+        command -v code-server >/dev/null 2>&1 && break
+        sleep 2
+      done
+      if command -v code-server >/dev/null 2>&1; then
+        if code-server --install-extension /tmp/swaya-submit-timer.vsix; then
+          echo "swaya-submit-timer extension installed"
+        else
+          echo "swaya-submit-timer extension install FAILED"
+        fi
+      else
+        echo "swaya-submit-timer extension install skipped: code-server binary never appeared within poll window"
+      fi
+    ) >/tmp/swaya-submit-timer-install.log 2>&1 &
+
     # --- swaya-snapshot-loop: manual-edit safety net, every ~2 minutes ---
     # No systemd in this container (Coder agent runs directly as PID 1), so this is a
     # plain backgrounded shell loop instead of a systemd timer unit. It dies along with
