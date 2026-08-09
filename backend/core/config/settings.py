@@ -205,7 +205,11 @@ class CoderSettings(BaseSettings):
     # (confirmed: 70s solo vs >150s at 2 concurrent, see coding_challenge_concurrency_check.py) —
     # this queues them instead of letting all admitted requests fire simultaneously.
     max_parallel_provisions: int = Field(default=2, alias="CODER_MAX_PARALLEL_PROVISIONS")
-    workspace_max_lifetime_seconds: int = Field(default=5400, alias="WORKSPACE_MAX_LIFETIME_SECONDS")
+    # 7 days — raised from the original 90-minute default (2026-08-09) so
+    # hackathon-style coding challenges (SetupPanel's Days/Hours/Minutes time
+    # limit picker) aren't silently truncated by _effective_time_budget() in
+    # coding_challenge.py regardless of what the host configures per-question.
+    workspace_max_lifetime_seconds: int = Field(default=604800, alias="WORKSPACE_MAX_LIFETIME_SECONDS")
     code_server_template_name: str = Field(default="code-server-multi", alias="CODE_SERVER_TEMPLATE_NAME")
     service_account_username: str = Field(default="swaya-backend-svc", alias="CODER_SERVICE_ACCOUNT_USERNAME")
 

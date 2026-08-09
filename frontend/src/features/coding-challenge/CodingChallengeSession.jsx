@@ -24,9 +24,22 @@ const POLL_INTERVAL_MS = 5000
 const MAX_POLL_MS = 5 * 60 * 1000 // 5 minutes, per the design's capped-poll-duration requirement
 const GRACE_SECONDS = 60 // buffer before the countdown starts, so opening the tab doesn't eat into it
 
-function formatMinutes(seconds) {
+// Hackathon-style coding challenges can run for days, so "127 minutes" or even
+// "1440 minutes" stops being a readable number fast. Reuses the same
+// day/hour/minute short labels (quiz.days/hours/minutes) as the host-facing
+// Setup panel's DurationDHM picker, so the unit vocabulary matches on both
+// sides of the same field.
+function formatDurationShort(seconds, t) {
   if (!seconds) return null
-  return Math.round(seconds / 60)
+  const totalMinutes = Math.round(seconds / 60)
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
+  const minutes = totalMinutes % 60
+  const parts = []
+  if (days) parts.push(`${days}${t('quiz.days', 'd')}`)
+  if (hours) parts.push(`${hours}${t('quiz.hours', 'h')}`)
+  if (minutes || parts.length === 0) parts.push(`${minutes}${t('quiz.minutes', 'min')}`)
+  return parts.join(' ')
 }
 
 // Pulls the challenge's own name (e.g. "Palindrome Checker") out of the host's
@@ -66,11 +79,17 @@ function splitProblemStatement(markdown) {
 
 function formatCountdown(totalSeconds) {
   const clamped = Math.max(0, totalSeconds)
-  const h = Math.floor(clamped / 3600)
+  const d = Math.floor(clamped / 86400)
+  const h = Math.floor((clamped % 86400) / 3600)
   const m = Math.floor((clamped % 3600) / 60)
   const s = clamped % 60
+  const hh = String(h).padStart(2, '0')
   const mm = String(m).padStart(2, '0')
   const ss = String(s).padStart(2, '0')
+  // Multi-day budgets get a "Nd HH:MM:SS" prefix instead of hour counts running
+  // past 24 (e.g. "168:00:00") — short challenges (<24h) are unaffected, same
+  // "H:MM:SS" / "MM:SS" format as before.
+  if (d > 0) return `${d}d ${hh}:${mm}:${ss}`
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
@@ -211,15 +230,15 @@ function ProblemColumn({ info, t }) {
 // ── Column 3 content — guidelines / actions / timer / result, phase-driven ──
 
 function FullGuidelines({ info, t }) {
-  const minutes = formatMinutes(info.time_budget_seconds)
+  const duration = formatDurationShort(info.time_budget_seconds, t)
   return (
     <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: 16 }}>
-      {minutes && (
+      {duration && (
         <div className="cc-guideline-item">
           <ClockCircleOutlined className="cc-guideline-icon cc-guideline-icon--time" />
           <div>
             <Text strong style={{ display: 'block' }}>{t('codingChallenge.timeBudgetLabel', 'Time budget')}</Text>
-            <Text type="secondary">{t('codingChallenge.timeBudgetValue', 'You will have {{minutes}} minutes to complete this challenge, starting once your workspace opens.', { minutes })}</Text>
+            <Text type="secondary">{t('codingChallenge.timeBudgetValue', 'You will have {{duration}} to complete this challenge, starting once your workspace opens.', { duration })}</Text>
           </div>
         </div>
       )}

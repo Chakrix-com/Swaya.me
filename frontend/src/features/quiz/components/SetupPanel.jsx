@@ -109,6 +109,67 @@ function SkinCard({ value, onChange, disabled }) {
   );
 }
 
+// Coding-challenge time limit as separate Days / Hours / Minutes fields instead
+// of one raw-minutes box — hackathon-style challenges can run for days, and
+// nobody should have to compute "4320" in their head for "3 days". The Form.Item
+// this wraps still stores a single total-minutes number (unchanged contract —
+// QuizBuilder.jsx converts it to seconds with `* 60` on submit in several
+// places), this component just splits/joins that number into three fields.
+// Mirrors the ReactionStylePicker/SkinCard controlled-component pattern above:
+// Form.Item injects value/onChange automatically.
+const TIME_BUDGET_MAX_DAYS = 7; // mirrors the backend's WORKSPACE_MAX_LIFETIME_SECONDS
+// hard cap (coding_challenge.py _effective_time_budget) — a host can still type
+// past this, the emit() clamp below is what actually enforces it, this is just
+// the per-field ceiling so scrolling/typing doesn't run away.
+const TIME_BUDGET_MAX_MINUTES = TIME_BUDGET_MAX_DAYS * 24 * 60;
+
+function DurationDHM({ value, onChange, disabled, t }) {
+  const totalMinutes = value || 0;
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  const emit = (nextDays, nextHours, nextMinutes) => {
+    const total = Math.min(
+      TIME_BUDGET_MAX_MINUTES,
+      Math.max(0, (nextDays || 0) * 1440 + (nextHours || 0) * 60 + (nextMinutes || 0)),
+    );
+    onChange(total || undefined); // 0/0/0 clears the field — "no time limit"
+  };
+
+  return (
+    <div className="sp-duration-dhm">
+      <InputNumber
+        min={0}
+        max={TIME_BUDGET_MAX_DAYS}
+        value={days}
+        disabled={disabled}
+        onChange={(v) => emit(v, hours, minutes)}
+        addonAfter={t('quiz.days', 'd')}
+        style={{ width: 88 }}
+      />
+      <InputNumber
+        min={0}
+        max={23}
+        value={hours}
+        disabled={disabled}
+        onChange={(v) => emit(days, v, minutes)}
+        addonAfter={t('quiz.hours', 'h')}
+        style={{ width: 88 }}
+      />
+      <InputNumber
+        min={0}
+        max={59}
+        value={minutes}
+        disabled={disabled}
+        onChange={(v) => emit(days, hours, v)}
+        addonAfter={t('quiz.minutes', 'min')}
+        style={{ width: 92 }}
+      />
+    </div>
+  );
+}
+
 export function SetupPanel({
   quiz,
   form,
@@ -322,13 +383,13 @@ export function SetupPanel({
         {isCodingChallenge && (
           <div className="sp-section sp-section--inline">
             <span className="sp-section-label--inline">
-              {t('codingChallenge.timeBudget', 'Time Limit (minutes)')}
+              {t('codingChallenge.timeBudget', 'Time limit')}
               <Tooltip title={t('codingChallenge.timeBudgetHelp')}>
                 <InfoCircleOutlined style={{ marginLeft: 6, color: 'var(--sw-text3, #999)', cursor: 'help' }} />
               </Tooltip>
             </span>
             <Form.Item name="time_budget_seconds" noStyle initialValue={120}>
-              <InputNumber min={1} style={{ width: 95 }} />
+              <DurationDHM t={t} />
             </Form.Item>
           </div>
         )}
