@@ -115,13 +115,27 @@ resource "coder_agent" "main" {
     # silent. Output is also now redirected - an unredirected backgrounded subshell here
     # was separately triggering Coder's own "output pipes were not closed" warning,
     # which flags the whole startup script as errored even when everything succeeds.
+    #
+    # REVISED 2026-08-09 (found while verifying the code-server pre-bake fix): polling
+    # via `command -v code-server` never actually succeeds in this environment -
+    # $CODER_SCRIPT_BIN_DIR (where the module would normally symlink it onto PATH) is
+    # empty here, so the symlink step it depends on never runs, and both extension
+    # installs silently no-op every single time regardless of whether code-server is
+    # baked into the image or freshly downloaded - a real, currently-live bug, not
+    # something this session's Dockerfile change introduced (the PATH/symlink logic is
+    # untouched; this was already broken). Fixed by polling the known, stable absolute
+    # path instead of relying on PATH resolution at all - both the registry module's
+    # own install script and this Dockerfile's pre-bake step use the identical
+    # `--prefix=/tmp/code-server` convention, so this path is not a private
+    # implementation detail of one or the other, it is the contract between them.
     (
+      CODE_SERVER_BIN=/tmp/code-server/bin/code-server
       for i in $(seq 1 90); do
-        command -v code-server >/dev/null 2>&1 && break
+        [ -x "$CODE_SERVER_BIN" ] && break
         sleep 2
       done
-      if command -v code-server >/dev/null 2>&1; then
-        if code-server --install-extension anthropic.claude-code; then
+      if [ -x "$CODE_SERVER_BIN" ]; then
+        if "$CODE_SERVER_BIN" --install-extension anthropic.claude-code; then
           echo "claude-code extension installed"
         else
           echo "claude-code extension install FAILED"
@@ -154,13 +168,17 @@ resource "coder_agent" "main" {
     ${filebase64("${path.module}/swaya-extension/swaya-submit-timer-0.1.1.vsix")}
     VSIXEOF
     base64 -d /tmp/swaya-submit-timer.vsix.b64 > /tmp/swaya-submit-timer.vsix
+    # Same fix as the Claude Code extension install above (2026-08-09) - poll
+    # the known absolute path, not PATH resolution via `command -v`, which
+    # never succeeds in this environment ($CODER_SCRIPT_BIN_DIR is empty).
     (
+      CODE_SERVER_BIN=/tmp/code-server/bin/code-server
       for i in $(seq 1 90); do
-        command -v code-server >/dev/null 2>&1 && break
+        [ -x "$CODE_SERVER_BIN" ] && break
         sleep 2
       done
-      if command -v code-server >/dev/null 2>&1; then
-        if code-server --install-extension /tmp/swaya-submit-timer.vsix; then
+      if [ -x "$CODE_SERVER_BIN" ]; then
+        if "$CODE_SERVER_BIN" --install-extension /tmp/swaya-submit-timer.vsix; then
           echo "swaya-submit-timer extension installed"
         else
           echo "swaya-submit-timer extension install FAILED"
