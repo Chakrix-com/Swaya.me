@@ -127,6 +127,33 @@ function TestsCell({ passed, total }) {
 // explaining that row instead of the AI-assessed ones it's actually about.
 const DETERMINISTIC_CRITERIA = ['functional_correctness', 'time_taken', 'validation_discipline']
 
+// Grading-mode badge (2026-08-09 grading-mode selector). grading_mode_used is
+// NULL on every submission scored before this feature shipped — shown as its
+// own distinct "Legacy" label rather than a blank badge or a misleading
+// default, since a null value doesn't mean any of the 3 real modes (4th-pass
+// review finding, see the plan doc).
+const GRADING_MODE_CONFIG = {
+  hybrid: { color: 'blue', labelKey: 'codingChallenge.gradingModeHybrid', tooltipKey: 'codingChallenge.reviewModeHybridHint' },
+  ai_judged: { color: 'purple', labelKey: 'codingChallenge.gradingModeAiJudged', tooltipKey: 'codingChallenge.reviewModeAiJudgedHint' },
+  deterministic: { color: 'green', labelKey: 'codingChallenge.gradingModeDeterministic', tooltipKey: 'codingChallenge.reviewModeDeterministicHint' },
+}
+
+function GradingModeBadge({ gradingModeUsed, t }) {
+  const cfg = GRADING_MODE_CONFIG[gradingModeUsed]
+  if (!cfg) {
+    return (
+      <Tooltip title={t('codingChallenge.reviewModeLegacyHint', 'This submission was scored before the grading-mode selector existed.')}>
+        <Tag color="default" style={{ cursor: 'help' }}>{t('codingChallenge.reviewModeLegacy', 'Legacy')}</Tag>
+      </Tooltip>
+    )
+  }
+  return (
+    <Tooltip title={t(cfg.tooltipKey)}>
+      <Tag color={cfg.color} style={{ cursor: 'help' }}>{t(cfg.labelKey)}</Tag>
+    </Tooltip>
+  )
+}
+
 function breakdownColumns(t) {
   return [
     { title: t('codingChallenge.criterion', 'Criterion'), dataIndex: 'criterion' },
@@ -366,6 +393,7 @@ function CandidateDetail({ entry, hasCustomWeights, t, questionId, onRegraded, o
                 {hasCustomWeights ? t('codingChallenge.customWeights', 'Custom weights') : t('codingChallenge.platformDefault', 'Platform default')}
               </Tag>
             </Tooltip>
+            <GradingModeBadge gradingModeUsed={submission.grading_mode_used} t={t} />
           </div>
           <ScoreBreakdownTable breakdown={submission.score_breakdown} rationale={submission.ai_rationale} t={t} />
         </div>

@@ -132,6 +132,7 @@ async def assess_coding_challenge(
     candidate_prompts: str,
     usage_summary: dict,
     weights: dict = None,
+    static_analysis_summary: dict = None,
 ) -> dict:
     """
     Returns the 4 LLM-judged coding-challenge sub-scores + rationale (revised
@@ -147,7 +148,29 @@ async def assess_coding_challenge(
     """
     return await get_primary_provider().assess_coding_challenge(
         problem_statement, grading_rubric, final_code_snapshot, candidate_prompts,
-        usage_summary, weights,
+        usage_summary, weights, static_analysis_summary,
+    )
+
+
+async def assess_coding_challenge_consistent(
+    problem_statement: str,
+    grading_rubric: str,
+    final_code_snapshot: str,
+    candidate_prompts: str,
+    usage_summary: dict,
+    weights: dict = None,
+    static_analysis_summary: dict = None,
+    samples: int = 3,
+) -> dict:
+    """Self-consistency passthrough (2026-08-09 grading-mode selector) —
+    same contract as assess_coding_challenge, but runs `samples` calls and
+    takes the per-criterion median instead of trusting a single sample. Used
+    by ai_judged/hybrid grading modes only; deterministic mode never calls
+    this. See BaseAIProvider.assess_coding_challenge_consistent for the
+    real-variance verification this is grounded in."""
+    return await get_primary_provider().assess_coding_challenge_consistent(
+        problem_statement, grading_rubric, final_code_snapshot, candidate_prompts,
+        usage_summary, weights, static_analysis_summary, samples=samples,
     )
 
 

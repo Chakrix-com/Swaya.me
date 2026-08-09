@@ -131,6 +131,21 @@
   line-height: 1.5;
 }
 
+/* Per-criterion "scored by AI / static analysis / rules / heuristic" hint —
+   changes with the selected grading_mode radio above, so picking
+   Deterministic mode has a visible cue that 3 criteria stopped being
+   AI-judged (2026-08-09 grading-mode selector). */
+.gp-scoring-hint {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sw-primary, #6366f1);
+  background: color-mix(in srgb, var(--sw-primary, #6366f1) 12%, transparent);
+  padding: 1px 7px;
+  border-radius: 10px;
+  width: fit-content;
+  letter-spacing: 0.1px;
+}
+
 .gp-reset-link {
   background: none;
   border: none;

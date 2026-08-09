@@ -10,6 +10,7 @@ usage_summary, weights) — validation_discipline moved out entirely (now comput
 deterministically in grading_service_async, see test_coding_challenge_grading.py).
 """
 import asyncio
+import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -85,6 +86,91 @@ def test_gemini_prompt_includes_curated_inputs():
     assert "write fizzbuzz with tests" in user_text
     assert "Total prompts the candidate typed: 4" in user_text
     assert "Commits from AI-driven edits: 3" in user_text
+
+
+def test_gemini_prompt_omits_static_analysis_block_when_none_provided():
+    """ai_judged mode — today's original behavior, unchanged."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _ok_response()
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            "p", "r", "code", "prompts", _FAKE_USAGE_SUMMARY,
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "Static analysis" not in user_text
+
+
+def test_gemini_prompt_includes_static_analysis_evidence_block():
+    """Hybrid grading mode (2026-08-09 grading-mode selector)."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _ok_response()
+
+    analysis = {
+        "failed": False, "avg_complexity": 4.5, "max_complexity": 12,
+        "avg_function_length": 22.0, "longest_function": 55, "lint_violation_count": 2,
+    }
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            "p", "r", "code", "prompts", _FAKE_USAGE_SUMMARY,
+            static_analysis_summary=analysis,
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    system_text = captured["payload"]["systemInstruction"]["parts"][0]["text"] \
+        if "systemInstruction" in captured["payload"] else captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "Static analysis" in user_text
+    assert "4.5" in user_text  # avg_complexity
+    assert "Lint violations found: 2" in user_text
+
+
+def test_gemini_prompt_states_static_analysis_is_untrusted_content():
+    """8th/4th-pass review finding: a lint tool can quote back candidate source,
+    so the evidence block must sit under the same injection guard as the code/
+    prompts, not be presented as trusted platform data."""
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _ok_response()
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            "p", "r", "code", "prompts", _FAKE_USAGE_SUMMARY,
+            static_analysis_summary={"failed": False, "avg_complexity": 1},
+        ))
+
+    full_prompt = json.dumps(captured["payload"])
+    assert "static-analysis output" in full_prompt.lower() or "static analysis" in full_prompt.lower()
+    assert "untrusted" in full_prompt.lower()
+
+
+def test_gemini_prompt_handles_failed_static_analysis_gracefully():
+    provider = _provider_with_key()
+    captured = {}
+
+    async def fake_post(payload, model, timeout=None):
+        captured["payload"] = payload
+        return _ok_response()
+
+    with patch.object(provider, "_post", fake_post):
+        asyncio.run(provider.assess_coding_challenge(
+            "p", "r", "code", "prompts", _FAKE_USAGE_SUMMARY,
+            static_analysis_summary={"failed": True, "reason": "lizard timed out"},
+        ))
+
+    user_text = captured["payload"]["contents"][0]["parts"][0]["text"]
+    assert "lizard timed out" in user_text
 
 
 def test_gemini_truncates_oversized_final_code_snapshot():
@@ -353,7 +439,7 @@ def test_router_assess_coding_challenge_delegates_to_primary_provider():
         )
 
     mock_provider.assess_coding_challenge.assert_called_once_with(
-        "p", "r", "code", "prompts", {}, weights
+        "p", "r", "code", "prompts", {}, weights, None
     )
     assert result == {"rationale": "ok"}
 
@@ -369,8 +455,43 @@ def test_router_assess_coding_challenge_weights_default_to_none():
         asyncio.run(ai_router.assess_coding_challenge("p", "r", "code", "prompts", {}))
 
     mock_provider.assess_coding_challenge.assert_called_once_with(
-        "p", "r", "code", "prompts", {}, None
+        "p", "r", "code", "prompts", {}, None, None
     )
+
+
+def test_router_assess_coding_challenge_passes_static_analysis_summary():
+    """Hybrid grading mode's evidence block (2026-08-09 grading-mode selector)."""
+    from core.ai import router as ai_router
+
+    mock_provider = AsyncMock()
+    mock_provider.assess_coding_challenge = AsyncMock(return_value={"rationale": "ok"})
+    analysis = {"avg_complexity": 5, "failed": False}
+
+    with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
+        asyncio.run(ai_router.assess_coding_challenge(
+            "p", "r", "code", "prompts", {}, None, analysis,
+        ))
+
+    mock_provider.assess_coding_challenge.assert_called_once_with(
+        "p", "r", "code", "prompts", {}, None, analysis
+    )
+
+
+def test_router_assess_coding_challenge_consistent_delegates_with_samples():
+    from core.ai import router as ai_router
+
+    mock_provider = AsyncMock()
+    mock_provider.assess_coding_challenge_consistent = AsyncMock(return_value={"rationale": "ok"})
+
+    with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
+        result = asyncio.run(ai_router.assess_coding_challenge_consistent(
+            "p", "r", "code", "prompts", {}, samples=5,
+        ))
+
+    mock_provider.assess_coding_challenge_consistent.assert_called_once_with(
+        "p", "r", "code", "prompts", {}, None, None, samples=5
+    )
+    assert result == {"rationale": "ok"}
 
 
 def test_router_assess_coding_challenge_propagates_provider_exception():
@@ -382,3 +503,87 @@ def test_router_assess_coding_challenge_propagates_provider_exception():
     with patch("core.ai.router.get_primary_provider", return_value=mock_provider):
         with pytest.raises(RuntimeError, match="boom"):
             asyncio.run(ai_router.assess_coding_challenge("p", "r", "code", "prompts", {}))
+
+
+# ── BaseAIProvider.assess_coding_challenge_consistent — self-consistency ────
+# (2026-08-09 grading-mode selector). Provider-agnostic, implemented once on
+# the base class — see its docstring for the real-Gemini-call variance check
+# this is grounded in (one real submission: code_quality [95, 35, 90, 90, 90],
+# a 60-point spread with one clear outlier).
+
+class _ScriptedProvider(BaseAIProvider):
+    """Returns each dict in `responses` in order across successive calls —
+    lets tests script exactly what each of the `samples` concurrent calls
+    returns, including exceptions."""
+    def __init__(self, responses):
+        self._responses = list(responses)
+        self._i = 0
+
+    async def generate_questions(self, *a, **kw): return {}
+    async def generate_distractors(self, *a, **kw): return []
+    async def generate_poll_prompt(self, *a, **kw): return ""
+    async def rewrite_text(self, *a, **kw): return ""
+
+    async def assess_coding_challenge(self, *a, **kw):
+        r = self._responses[self._i]
+        self._i += 1
+        if isinstance(r, Exception):
+            raise r
+        return r
+
+
+def _score_set(**overrides):
+    base = {"ai_usage_efficiency": 50, "prompt_quality": 50, "code_quality": 50, "architecture": 50}
+    base.update(overrides)
+    base["rationale"] = overrides.get("rationale", "r")
+    return base
+
+
+def test_self_consistency_takes_per_criterion_median_not_average():
+    # Mirrors the real outlier pattern found live: 4 tight + 1 far outlier.
+    responses = [
+        _score_set(code_quality=95), _score_set(code_quality=35),
+        _score_set(code_quality=90), _score_set(code_quality=90), _score_set(code_quality=90),
+    ]
+    provider = _ScriptedProvider(responses)
+    result = asyncio.run(provider.assess_coding_challenge_consistent("p", "r", "c", "pr", {}, samples=5))
+    assert result["code_quality"] == 90  # median rejects the 35 outlier
+    assert result["code_quality"] != sum(r["code_quality"] for r in responses) / 5  # not the average (72)
+
+
+def test_self_consistency_rationale_comes_from_run_closest_to_medians():
+    responses = [
+        _score_set(code_quality=95, rationale="far-high"),
+        _score_set(code_quality=35, rationale="far-low"),
+        _score_set(code_quality=90, rationale="closest"),
+    ]
+    provider = _ScriptedProvider(responses)
+    result = asyncio.run(provider.assess_coding_challenge_consistent("p", "r", "c", "pr", {}, samples=3))
+    assert result["rationale"] == "closest"
+
+
+def test_self_consistency_tolerates_one_failed_sample():
+    responses = [_score_set(code_quality=80), RuntimeError("transient 429"), _score_set(code_quality=84)]
+    provider = _ScriptedProvider(responses)
+    result = asyncio.run(provider.assess_coding_challenge_consistent("p", "r", "c", "pr", {}, samples=3))
+    assert result["code_quality"] == 82  # median of the 2 successes (average, per docstring)
+
+
+def test_self_consistency_reraises_when_fewer_than_two_succeed():
+    responses = [RuntimeError("boom 1"), RuntimeError("boom 2"), _score_set()]
+    provider = _ScriptedProvider(responses)
+    with pytest.raises(RuntimeError):
+        asyncio.run(provider.assess_coding_challenge_consistent("p", "r", "c", "pr", {}, samples=3))
+
+
+def test_self_consistency_default_samples_is_three():
+    calls = {"n": 0}
+
+    class CountingProvider(_ScriptedProvider):
+        async def assess_coding_challenge(self, *a, **kw):
+            calls["n"] += 1
+            return _score_set()
+
+    provider = CountingProvider([])
+    asyncio.run(provider.assess_coding_challenge_consistent("p", "r", "c", "pr", {}))
+    assert calls["n"] == 3

@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from broker.api import coding_challenge as router_mod
 from persistence.models.quiz import (
     Quiz, Question, CodeWorkspace, CodeWorkspaceStatus, CodeSubmission, CodeSubmissionStatus,
-    CodingChallengeInvite,
+    CodingChallengeInvite, GradingMode,
 )
 
 
@@ -92,6 +92,49 @@ def test_review_returns_one_entry_per_candidate():
     assert alice["submission"]["ai_score"] == 90
     assert bob["submission"] is None
     assert bob["workspace_status"] == "active"
+
+
+# ── grading_mode_used (2026-08-09 grading-mode selector) ────────────────────
+# Regression for a real gap found during the feature's T34 real end-to-end
+# check: _submission_dict didn't include this field at all, so the frontend's
+# GradingModeBadge always rendered "Legacy" regardless of the real DB value.
+
+def test_review_includes_grading_mode_used_when_set():
+    question = Question(id=10, quiz_id=1, question_type="coding_challenge", text="x", order=0)
+    quiz = Quiz(id=1, tenant_id=5, event_id=1, title="Q")
+    ws1 = CodeWorkspace(id=1, tenant_id=5, quiz_id=1, question_id=10, candidate_email="alice@x.com",
+                         ide_type="code_server", coder_workspace_name="ws-1",
+                         status=CodeWorkspaceStatus.SUBMITTED)
+    sub1 = CodeSubmission(
+        id=1, workspace_id=1, question_id=10, status=CodeSubmissionStatus.GRADED,
+        ai_score=90, ai_verdict="pass", grading_mode_used=GradingMode.DETERMINISTIC,
+    )
+    db = _mock_db(question, quiz, [ws1], {1: sub1})
+    current_user = MagicMock(tenant_id=5)
+
+    result = asyncio.run(router_mod.get_coding_challenge_review(10, db, current_user))
+
+    alice = next(c for c in result["candidates"] if c["candidate_email"] == "alice@x.com")
+    assert alice["submission"]["grading_mode_used"] == "deterministic"
+
+
+def test_review_grading_mode_used_null_for_legacy_submission():
+    question = Question(id=10, quiz_id=1, question_type="coding_challenge", text="x", order=0)
+    quiz = Quiz(id=1, tenant_id=5, event_id=1, title="Q")
+    ws1 = CodeWorkspace(id=1, tenant_id=5, quiz_id=1, question_id=10, candidate_email="alice@x.com",
+                         ide_type="code_server", coder_workspace_name="ws-1",
+                         status=CodeWorkspaceStatus.SUBMITTED)
+    sub1 = CodeSubmission(
+        id=1, workspace_id=1, question_id=10, status=CodeSubmissionStatus.GRADED,
+        ai_score=90, ai_verdict="pass",  # grading_mode_used left unset, as on any pre-feature row
+    )
+    db = _mock_db(question, quiz, [ws1], {1: sub1})
+    current_user = MagicMock(tenant_id=5)
+
+    result = asyncio.run(router_mod.get_coding_challenge_review(10, db, current_user))
+
+    alice = next(c for c in result["candidates"] if c["candidate_email"] == "alice@x.com")
+    assert alice["submission"]["grading_mode_used"] is None
 
 
 def test_review_includes_partial_failed_state_with_error_message():

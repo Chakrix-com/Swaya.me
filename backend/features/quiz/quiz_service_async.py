@@ -1296,6 +1296,21 @@ class QuizBuilderServiceAsync:
                         question_image_url=question.question_image_url,
                         question_video_url=question.question_video_url,
                         option_images=dict(question.option_images) if question.option_images else None,
+                        # Coding-challenge fields — previously missing entirely from this
+                        # copy list (this constructor is separate from
+                        # question_service_async.duplicate_question's, which already had
+                        # them), so duplicating a whole quiz silently dropped every
+                        # coding-challenge question's config. Found + fixed 2026-08-09
+                        # while adding grading_mode (see grading-mode-selector plan).
+                        grading_rubric=question.grading_rubric,
+                        git_repo_url=question.git_repo_url,
+                        test_command=question.test_command,
+                        hidden_test_content=question.hidden_test_content,
+                        hidden_test_filename=question.hidden_test_filename,
+                        time_budget_seconds=question.time_budget_seconds,
+                        grading_weights=question.grading_weights,
+                        result_visibility=getattr(question, 'result_visibility', None),
+                        grading_mode=getattr(question, 'grading_mode', None),
                     )
                 )
 
@@ -1523,6 +1538,7 @@ class QuizBuilderServiceAsync:
                     time_budget_seconds=getattr(q, 'time_budget_seconds', None),
                     grading_weights=getattr(q, 'grading_weights', None),
                     result_visibility=getattr(q, 'result_visibility', None),
+                    grading_mode=getattr(q, 'grading_mode', None),
                 )
                 for q in sorted(loaded_questions, key=lambda x: x.order)
             ],

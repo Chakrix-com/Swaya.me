@@ -143,6 +143,7 @@ class QuestionServiceAsync:
             time_budget_seconds=request.time_budget_seconds,
             grading_weights=request.grading_weights,
             result_visibility=request.result_visibility,
+            grading_mode=request.grading_mode,
             order=next_order
         )
         
@@ -230,6 +231,8 @@ class QuestionServiceAsync:
             question.grading_weights = request.grading_weights
         if "result_visibility" in request.model_fields_set:
             question.result_visibility = request.result_visibility
+        if "grading_mode" in request.model_fields_set:
+            question.grading_mode = request.grading_mode
 
         await db.commit()
         await db.refresh(question)
@@ -401,6 +404,7 @@ class QuestionServiceAsync:
             time_budget_seconds=question.time_budget_seconds,
             grading_weights=question.grading_weights,
             result_visibility=getattr(question, 'result_visibility', None),
+            grading_mode=getattr(question, 'grading_mode', None),
         )
         db.add(copy)
         await db.commit()
@@ -434,4 +438,5 @@ class QuestionServiceAsync:
             time_budget_seconds=question.time_budget_seconds,
             grading_weights=question.grading_weights,
             result_visibility=getattr(question, 'result_visibility', None),
+            grading_mode=getattr(question, 'grading_mode', None),
         )

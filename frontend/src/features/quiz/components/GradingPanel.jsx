@@ -9,6 +9,42 @@ const RESULT_VISIBILITY_OPTIONS = [
   { value: 'full', labelKey: 'codingChallenge.resultVisibilityFull', descKey: 'codingChallenge.resultVisibilityFullDesc' },
 ]
 
+// Grading-mode selector (2026-08-09) — how ai_usage_efficiency/prompt_quality/
+// code_quality/architecture get scored. functional_correctness/
+// validation_discipline/time_taken are always deterministic regardless of
+// mode, so they're left out of GRADING_MODE_OPTIONS/CRITERION_SCORING_HINT_KEYS
+// entirely rather than showing a redundant "always deterministic" badge.
+// Radio.Group (not antd Select/Dropdown) matches result_visibility's own
+// pattern right above — both are plain inline radio buttons, not the
+// trigger-based overlay components confirmed broken on the user's VDI (see
+// frontend/CLAUDE.md).
+const GRADING_MODE_OPTIONS = [
+  { value: 'hybrid', labelKey: 'codingChallenge.gradingModeHybrid', descKey: 'codingChallenge.gradingModeHybridDesc' },
+  { value: 'ai_judged', labelKey: 'codingChallenge.gradingModeAiJudged', descKey: 'codingChallenge.gradingModeAiJudgedDesc' },
+  { value: 'deterministic', labelKey: 'codingChallenge.gradingModeDeterministic', descKey: 'codingChallenge.gradingModeDeterministicDesc' },
+];
+
+const CRITERION_SCORING_HINT_KEYS = {
+  hybrid: {
+    ai_usage_efficiency: 'codingChallenge.scoredByAi',
+    prompt_quality: 'codingChallenge.scoredByAi',
+    code_quality: 'codingChallenge.scoredByAiGrounded',
+    architecture: 'codingChallenge.scoredByAiGrounded',
+  },
+  ai_judged: {
+    ai_usage_efficiency: 'codingChallenge.scoredByAi',
+    prompt_quality: 'codingChallenge.scoredByAi',
+    code_quality: 'codingChallenge.scoredByAi',
+    architecture: 'codingChallenge.scoredByAi',
+  },
+  deterministic: {
+    ai_usage_efficiency: 'codingChallenge.scoredByRules',
+    prompt_quality: 'codingChallenge.scoredByHeuristic',
+    code_quality: 'codingChallenge.scoredByStaticAnalysis',
+    architecture: 'codingChallenge.scoredByStaticAnalysis',
+  },
+};
+
 const { TextArea } = Input;
 
 const CRITERION_LABEL_KEYS = {
@@ -46,6 +82,7 @@ export function GradingPanel({
       hidden_test_content: question.hidden_test_content || '',
       grading_rubric: question.grading_rubric || '',
       result_visibility: question.result_visibility || 'hidden',
+      grading_mode: question.grading_mode || 'hybrid',
       ...weightFields,
     });
     setHiddenTestOpen(!!(question.hidden_test_filename || question.hidden_test_content));
@@ -146,6 +183,26 @@ export function GradingPanel({
           </p>
         </div>
 
+        {/* ── Grading Mode — how ai_usage_efficiency/prompt_quality/code_quality/
+             architecture get scored. functional_correctness/validation_discipline/
+             time_taken are always deterministic no matter what's picked here. ── */}
+        <div className="gp-section gp-section--accent-primary">
+          <div className="gp-section-title">🧠 {t('codingChallenge.gradingModeTitle', 'Grading Mode')}</div>
+          <p className="gp-weights-hint">
+            {t('codingChallenge.gradingModeHint', 'Functional correctness, validation discipline, and time taken are always scored by rule, regardless of this setting — this only affects the other 4 criteria below.')}
+          </p>
+          <Form.Item name="grading_mode" noStyle>
+            <Radio.Group optionType="button" buttonStyle="solid">
+              {GRADING_MODE_OPTIONS.map((opt) => (
+                <Radio.Button key={opt.value} value={opt.value}>{t(opt.labelKey)}</Radio.Button>
+              ))}
+            </Radio.Group>
+          </Form.Item>
+          <p className="gp-weights-hint" style={{ marginTop: 8, marginBottom: 0 }}>
+            {t(GRADING_MODE_OPTIONS.find((o) => o.value === (watched.grading_mode || 'hybrid'))?.descKey || GRADING_MODE_OPTIONS[0].descKey)}
+          </p>
+        </div>
+
         {/* ── Scoring Weights ── */}
         <div className="gp-section gp-section--accent-primary">
           <div className="gp-section-header">
@@ -155,16 +212,22 @@ export function GradingPanel({
             </span>
           </div>
           <p className="gp-weights-hint">
-            {t('codingChallenge.weightsHint', 'These become the active grading weights once saved. Until then, this challenge uses the platform defaults (which include a fixed 5% for Proctoring Compliance).')}
+            {t('codingChallenge.weightsHint', 'These become the active grading weights once saved. Until then, this challenge uses the platform defaults.')}
           </p>
-          {criteria.map((c) => (
-            <div className="gp-row gp-row--weight" key={c}>
-              <label className="gp-row-label">{t(CRITERION_LABEL_KEYS[c])}</label>
-              <Form.Item name={`weight_${c}`} noStyle>
-                <InputNumber className="gp-row-value gp-weight-input" min={0} max={100} precision={0} addonAfter="%" />
-              </Form.Item>
-            </div>
-          ))}
+          {criteria.map((c) => {
+            const hintKey = CRITERION_SCORING_HINT_KEYS[watched.grading_mode || 'hybrid']?.[c];
+            return (
+              <div className="gp-row gp-row--weight" key={c}>
+                <label className="gp-row-label">
+                  {t(CRITERION_LABEL_KEYS[c])}
+                  {hintKey && <span className="gp-scoring-hint">{t(hintKey)}</span>}
+                </label>
+                <Form.Item name={`weight_${c}`} noStyle>
+                  <InputNumber className="gp-row-value gp-weight-input" min={0} max={100} precision={0} addonAfter="%" />
+                </Form.Item>
+              </div>
+            );
+          })}
           <button type="button" className="gp-reset-link" onClick={resetWeights}>
             {t('codingChallenge.resetWeights', 'Reset to defaults')}
           </button>

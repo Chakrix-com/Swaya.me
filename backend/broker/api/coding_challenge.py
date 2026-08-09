@@ -917,6 +917,16 @@ async def get_coding_challenge_review(
             "ai_score": submission.ai_score,
             "ai_verdict": submission.ai_verdict,
             "ai_rationale": submission.ai_rationale,
+            # grading_mode_used (2026-08-09 grading-mode selector): the mode
+            # actually applied when this submission was scored, NULL for
+            # anything scored before this feature shipped. Frontend's
+            # GradingModeBadge (CodingChallengeReview.jsx) reads this to show
+            # the real per-submission mode, not question.grading_mode (which
+            # a host can edit later) — found missing here during the T34
+            # real end-to-end check, where every submission was rendering as
+            # "Legacy" regardless of its actual DB value because this field
+            # was never being sent to the frontend at all.
+            "grading_mode_used": submission.grading_mode_used.value if submission.grading_mode_used else None,
             "ai_token_usage": submission.ai_token_usage,
             "code_timeline": submission.code_timeline,
             "ai_transcript_raw": submission.ai_transcript_raw,

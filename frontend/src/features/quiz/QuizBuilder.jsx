@@ -2909,6 +2909,7 @@ export default function QuizBuilder() {
         grading_rubric: values.grading_rubric || null,
         grading_weights,
         result_visibility: values.result_visibility || 'hidden',
+        grading_mode: values.grading_mode || 'hybrid',
       }
       await questionAPI.update(ccQuestion.id, payload)
       setQuestions(qs => qs.map(q => q.id === ccQuestion.id ? { ...q, ...payload } : q))

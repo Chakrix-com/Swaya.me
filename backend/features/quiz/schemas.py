@@ -99,6 +99,16 @@ class TemplateScopeEnum(str, Enum):
     GLOBAL = "global"
 
 
+class GradingModeEnum(str, Enum):
+    """How a coding-challenge question's AI-judgeable criteria get scored.
+    functional_correctness/validation_discipline/time_taken are always
+    deterministic regardless of this setting — see GradingMode in
+    persistence/models/quiz.py, which this mirrors exactly."""
+    AI_JUDGED = "ai_judged"      # single AI call per criterion, self-consistency (3-sample median)
+    HYBRID = "hybrid"            # default: AI-judged but grounded in static analysis + usage signals
+    DETERMINISTIC = "deterministic"  # zero AI calls; static analysis + rule-based + heuristic proxy
+
+
 # Question Schemas
 class QuestionOptionCreate(BaseModel):
     """Question option"""
@@ -130,6 +140,7 @@ class QuestionCreate(BaseModel):
     time_budget_seconds: Optional[int] = Field(None, ge=1)
     grading_weights: Optional[dict] = None
     result_visibility: CodingResultVisibilityEnum = Field(default=CodingResultVisibilityEnum.HIDDEN)
+    grading_mode: GradingModeEnum = Field(default=GradingModeEnum.HYBRID)
 
     @validator('grading_weights')
     def validate_grading_weights(cls, v):
@@ -244,6 +255,7 @@ class QuestionUpdate(BaseModel):
     time_budget_seconds: Optional[int] = Field(None, ge=1)
     grading_weights: Optional[dict] = None
     result_visibility: Optional[CodingResultVisibilityEnum] = None
+    grading_mode: Optional[GradingModeEnum] = None
 
     @validator('grading_weights')
     def validate_grading_weights(cls, v):
@@ -277,6 +289,7 @@ class QuestionResponse(BaseModel):
     time_budget_seconds: Optional[int] = None
     grading_weights: Optional[dict] = None
     result_visibility: Optional[CodingResultVisibilityEnum] = None
+    grading_mode: Optional[GradingModeEnum] = None
 
     class Config:
         from_attributes = True

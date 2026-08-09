@@ -3,6 +3,7 @@ Coding-challenge grading job — the scheduled (not request-handler) pipeline th
 runs after /submit: stop/start power-cycle, hidden-test injection, test execution,
 transcript/timeline harvest, AI-judged scoring, and cleanup.
 """
+import difflib
 import json
 import logging
 import re
@@ -13,9 +14,10 @@ from sqlalchemy import update
 
 from persistence.models.quiz import (
     CodeWorkspace, CodeSubmission, CodeSubmissionStatus, CodeWorkspaceStatus, Question,
-    Quiz, CodingResultVisibility,
+    Quiz, CodingResultVisibility, GradingMode,
 )
 from features.coding_challenge import coder_client
+from features.coding_challenge import static_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +75,23 @@ _SUREFIRE_SUMMARY_RE = re.compile(
 )
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 _MAVEN_LOG_PREFIX_RE = re.compile(r"^\[(?:INFO|WARNING|ERROR)\]\s?")
+
+# ── Deterministic-mode-only scoring (2026-08-09 grading-mode selector) ──────
+# ai_usage_efficiency and prompt_quality's fully rule-based versions, used
+# only when Question.grading_mode == DETERMINISTIC (Hybrid/AI-judged modes
+# keep both AI-judged — see the plan's per-criterion table). Thresholds are
+# a first-pass calibration, not yet validated against a broad set of real
+# Deterministic-mode submissions (none exist yet, since the mode itself is
+# new) — flagged explicitly in the plan as a "don't guess the direction, not
+# just the magnitude" risk; retune once real data exists.
+_NEAR_DUPLICATE_SIMILARITY_THRESHOLD = 0.82
+_MIN_SUBSTANTIAL_AI_COMMITS = 2
+_MIN_SUBSTANTIVE_PROMPT_WORDS = 6
+_SPECIFICITY_MARKER_RE = re.compile(
+    r"(`[^`]+`|\"[^\"]+\"|'[^']+'|\berror\b|\bexception\b|\bfunction\b|\bclass\b|"
+    r"\btest\b|\bshould\b|\bmust\b|\bexpected\b|\bfails?\b|[A-Za-z_]+\(\)|\.[a-z_]+\()",
+    re.IGNORECASE,
+)
 
 
 def _clean_maven_line(line: str) -> str:
@@ -352,6 +371,120 @@ def _compute_validation_discipline(code_timeline: str, ai_transcript_raw: str) -
     return round(100 * validated / len(ai_commits))
 
 
+def _count_near_duplicate_prompt_pairs(prompts: list[str]) -> int:
+    """Consecutive-pair near-duplicate detection via stdlib difflib — a
+    candidate re-asking essentially the same thing back-to-back is a real
+    flailing signal (the AI didn't understand or fix it the first time).
+    Deliberately NOT all-pairs (O(n^2)): two similar prompts far apart in a
+    long session are a much weaker, noisier signal than the same thing
+    twice in a row, and all-pairs would be needlessly expensive besides."""
+    count = 0
+    for a, b in zip(prompts, prompts[1:]):
+        if difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio() >= _NEAR_DUPLICATE_SIMILARITY_THRESHOLD:
+            count += 1
+    return count
+
+
+def _compute_ai_usage_efficiency(code_timeline: str, ai_transcript_raw: str) -> tuple[int, str]:
+    """Fully deterministic ai_usage_efficiency — Deterministic grading mode
+    only (Hybrid keeps this criterion AI-judged, with these same signals as
+    evidence rather than the score itself; see the grading-mode plan's
+    per-criterion table).
+
+    REVISED after checking real data (2026-08-09) — the first version of this
+    function penalized a HIGH prompts-per-commit ratio, on the assumption
+    that many prompts producing few commits meant flailing. Running it
+    against real submissions showed that assumption was backwards: a real
+    Claude-Code-driven session's normal pattern is a FEW prompts producing
+    MANY autonomous commits (one real submission: 4 prompts -> 31 AI
+    commits, scored 100 by the old AI-judged system) — the ratio this
+    function checked essentially never occurs in practice, so it scored
+    every real submission 100 regardless of input, zero discrimination. Real
+    data also showed the old AI-judged system scored total non-engagement
+    (0 prompts, 0 AI commits) as 0, not as a neutral N/A — this is presumably
+    an assessment of AI-assisted coding skill specifically, so not using the
+    assistant at all is a real 0, not something to spare.
+
+    Current signals: total non-engagement -> 0; very few AI-authored commits
+    (< _MIN_SUBSTANTIAL_AI_COMMITS) -> a real but weaker "minimal engagement"
+    penalty (matches the one real low-commit submission checked: 1 AI
+    commit, old score 70); consecutive near-duplicate prompts -> flailing
+    penalty (sound on its own logic; no real submission checked exercised
+    this path, so it remains unconfirmed against real data, unlike the
+    other two signals above)."""
+    commits = _parse_git_commits(code_timeline)
+    ai_commits = [c for c in commits if c["author_email"] == _AI_COMMIT_AUTHOR_EMAIL]
+    prompts_text = _extract_candidate_prompts(ai_transcript_raw)
+    prompts = [p for p in prompts_text.split("\n---\n") if p.strip()]
+
+    if not prompts and not ai_commits:
+        return 0, "No AI engagement found — the assistant was not used at all."
+
+    score = 100
+    notes = []
+
+    if len(ai_commits) < _MIN_SUBSTANTIAL_AI_COMMITS:
+        score -= 25
+        notes.append(f"only {len(ai_commits)} AI-authored commit(s) — minimal engagement")
+
+    dup_pairs = _count_near_duplicate_prompt_pairs(prompts)
+    if dup_pairs > 0:
+        score -= min(30, dup_pairs * 10)
+        notes.append(f"{dup_pairs} consecutive near-duplicate prompt(s) (re-asking without new information)")
+
+    score = max(0, min(100, score))
+    rationale = "Deterministic: " + (
+        "; ".join(notes) if notes else "substantial AI-driven progress, no repeated prompts"
+    ) + "."
+    return score, rationale
+
+
+def _compute_prompt_quality_heuristic(candidate_prompts: str) -> tuple[int, str]:
+    """Best-effort heuristic proxy for Deterministic grading mode — NOT a
+    real substitute for judging whether a prompt was actually clear, which
+    genuinely requires understanding meaning and is exactly what no
+    rule-based system can do fairly. DECIDED (user, 2026-08-09 "weigh in"
+    round): score it anyway with surface signals rather than drop or
+    redistribute the criterion, so all 7 criteria stay present in every
+    mode — but this is deliberately the weakest, most gameable signal in the
+    whole system, and the rationale text says so on every submission, not
+    just in code comments."""
+    prompts = [p for p in (candidate_prompts or "").split("\n---\n") if p.strip()]
+    if not prompts:
+        return 0, (
+            "Heuristic proxy — approximates but does not replace human judgment of "
+            "prompt clarity. No candidate prompts found."
+        )
+
+    word_counts = [len(p.split()) for p in prompts]
+    avg_words = sum(word_counts) / len(word_counts)
+    specific = sum(1 for p in prompts if _SPECIFICITY_MARKER_RE.search(p))
+    specificity_rate = specific / len(prompts)
+
+    score = 100
+    notes = []
+    if avg_words < _MIN_SUBSTANTIVE_PROMPT_WORDS:
+        score -= 35
+        notes.append(f"prompts average only {avg_words:.1f} words")
+    elif avg_words < _MIN_SUBSTANTIVE_PROMPT_WORDS * 2:
+        score -= 15
+        notes.append(f"prompts average {avg_words:.1f} words — fairly terse")
+
+    if specificity_rate < 0.3:
+        score -= 30
+        notes.append(f"only {specific}/{len(prompts)} prompts contain concrete specifics")
+    elif specificity_rate < 0.6:
+        score -= 10
+        notes.append(f"{specific}/{len(prompts)} prompts contain concrete specifics")
+
+    score = max(0, min(100, score))
+    rationale = (
+        "Heuristic proxy — approximates but does not replace human judgment of prompt "
+        "clarity. " + ("; ".join(notes) if notes else "prompts are reasonably detailed and specific") + "."
+    )
+    return score, rationale
+
+
 def _build_score_breakdown(
     ai_scores: dict, functional_correctness: int, time_taken: int,
     validation_discipline: int,
@@ -469,12 +602,24 @@ async def run_grading_job(submission_id: int) -> None:
                 "fi; done | head -c 400000"
             )
 
+            # Static analysis (2026-08-09 grading-mode selector) — harvested here,
+            # while the workspace is still alive, regardless of the question's
+            # grading_mode: cheap enough to always compute, and regrade_submission
+            # has NO live workspace (its own docstring says so explicitly), so this
+            # is the only place hybrid/deterministic mode's code_quality/architecture
+            # input can ever come from. _run_ai_scoring must always read
+            # submission.static_analysis_result, never call run_static_analysis
+            # itself.
+            language = _detect_language(test_command)
+            static_analysis_result = await static_analysis.run_static_analysis(workspace_name, language)
+
             submission.test_output = test_output
             submission.passed_count = passed_count
             submission.total_count = total_count
             submission.ai_transcript_raw = transcript_raw
             submission.code_timeline = code_timeline
             submission.final_code_snapshot = final_code_snapshot
+            submission.static_analysis_result = static_analysis_result
             submission.ai_token_usage = _sum_token_usage(transcript_raw)
         except Exception as e:
             logger.error("run_grading_job: harvest failed for submission %s: %s", submission_id, e)
@@ -484,8 +629,16 @@ async def run_grading_job(submission_id: int) -> None:
             await _cleanup(db, workspace)
             return
 
-        # ── Everything above is now harvested and safe — a failure from here on is
-        # recoverable (partial_failed), not a total loss ────────────────────────
+        # ── Everything above is now harvested and safe — committed here, not left
+        # as in-memory ORM attributes, so it survives even if _run_ai_scoring's own
+        # commit later fails and falls back to its minimal raw UPDATE (which
+        # deliberately excludes these fields — see that function's comment). Closes
+        # a latent gap that predates this change: without this commit, a failure in
+        # _run_ai_scoring's final commit would have silently discarded all harvested
+        # data too, not just the AI scores, despite this comment already claiming
+        # it was "safe". A failure from here on is genuinely recoverable
+        # (partial_failed), not a total loss. ──────────────────────────────────
+        await db.commit()
         await _run_ai_scoring(db, submission, workspace, question)
         await _cleanup(db, workspace)
 
@@ -501,13 +654,35 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
     is now computed here directly from the harvested data (_compute_validation_discipline),
     not asked of the LLM — it's always available even if the AI call itself fails,
     so a PARTIAL_FAILED submission still has a real validation_discipline score
-    once regraded, not just the 4 AI-judged criteria."""
-    from core.ai.router import assess_coding_challenge
+    once regraded, not just the 4 AI-judged criteria.
+
+    Further revised 2026-08-09 (grading-mode selector — see
+    _private/coding_challenge_grading_mode_plan_20260809.md): dispatches
+    code_quality/architecture/ai_usage_efficiency/prompt_quality per
+    Question.grading_mode instead of always asking Gemini for all 4.
+    Deterministic mode never calls the LLM at all; hybrid grounds the LLM
+    call in the harvested static_analysis_result as evidence; ai_judged is
+    today's original behavior, now with self-consistency (3-sample median)
+    instead of a single call."""
+    from core.ai.router import assess_coding_challenge_consistent
 
     # Resolved once and reused for both the AI call and the score combination below,
     # so what the model is told its weights are can never drift from what's actually
     # applied to compute the final score.
     weights = question.grading_weights or _WEIGHTS
+
+    # Mode resolution — regrade reuses whatever was resolved on the original
+    # attempt (grading_mode_used already set) so a host editing the question's
+    # mode after candidates are graded doesn't silently change an in-flight
+    # regrade's behavior; a genuine first pass falls through to the question's
+    # current mode. Committed immediately, in its OWN transaction, separate
+    # from the fragile final commit below (which has a documented real
+    # failure history — see its own comment — and deliberately discards
+    # everything except status/error_message/graded_at on failure) so this
+    # resolution survives even if the rest of this function's work doesn't.
+    resolved_mode = submission.grading_mode_used or question.grading_mode or GradingMode.HYBRID
+    submission.grading_mode_used = resolved_mode
+    await db.commit()
 
     code_timeline = submission.code_timeline or ""
     ai_transcript = submission.ai_transcript_raw or ""
@@ -519,20 +694,52 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
     candidate_prompts = _extract_candidate_prompts(ai_transcript)
     usage_summary = _compute_usage_summary(code_timeline, ai_transcript)
     validation_discipline = _compute_validation_discipline(code_timeline, ai_transcript)
+    # Read-only here, never (re-)computed — see run_grading_job's harvest
+    # step and this function's docstring for why.
+    static_analysis_result = submission.static_analysis_result
 
     ai_result = None
     last_error: Optional[Exception] = None
-    for _attempt in range(2):  # one retry
-        try:
-            ai_result = await assess_coding_challenge(
-                question.text, question.grading_rubric or "",
-                final_code_snapshot, candidate_prompts, usage_summary,
-                weights,
-            )
-            break
-        except Exception as e:
-            last_error = e
-            logger.warning("_run_ai_scoring: assess_coding_challenge attempt failed: %s", e)
+
+    if resolved_mode == GradingMode.DETERMINISTIC:
+        # Zero LLM calls — fully rule-based, fully reproducible. Each
+        # deterministic function already handles its own failure/fallback
+        # internally (never raises), so this branch never lands in the
+        # PARTIAL_FAILED path below the way the AI-judged branch can.
+        _missing_analysis = {"failed": True, "reason": "no static analysis result available"}
+        code_quality, code_quality_note = static_analysis._score_code_quality(
+            static_analysis_result or _missing_analysis
+        )
+        architecture, architecture_note = static_analysis._score_architecture(
+            static_analysis_result or _missing_analysis
+        )
+        ai_usage_efficiency, ai_usage_note = _compute_ai_usage_efficiency(code_timeline, ai_transcript)
+        prompt_quality, prompt_quality_note = _compute_prompt_quality_heuristic(candidate_prompts)
+        ai_result = {
+            "code_quality": code_quality,
+            "architecture": architecture,
+            "ai_usage_efficiency": ai_usage_efficiency,
+            "prompt_quality": prompt_quality,
+            "rationale": "\n".join([code_quality_note, architecture_note, ai_usage_note, prompt_quality_note]),
+        }
+    else:
+        # ai_judged / hybrid — both go through Gemini with self-consistency;
+        # hybrid additionally grounds code_quality/architecture in the
+        # harvested static analysis result as evidence (plan §2/§4/§7).
+        static_analysis_evidence = static_analysis_result if resolved_mode == GradingMode.HYBRID else None
+        for _attempt in range(2):  # one retry
+            try:
+                ai_result = await assess_coding_challenge_consistent(
+                    question.text, question.grading_rubric or "",
+                    final_code_snapshot, candidate_prompts, usage_summary,
+                    weights, static_analysis_evidence,
+                )
+                break
+            except Exception as e:
+                last_error = e
+                logger.warning(
+                    "_run_ai_scoring: assess_coding_challenge_consistent attempt failed: %s", e
+                )
 
     functional_correctness = _compute_functional_correctness(
         submission.passed_count, submission.total_count
@@ -578,6 +785,11 @@ async def _run_ai_scoring(db, submission: CodeSubmission, workspace: CodeWorkspa
                 status=CodeSubmissionStatus.PARTIAL_FAILED,
                 error_message=f"grading computed but could not be persisted: {e}"[:2000],
                 graded_at=datetime.utcnow(),
+                # Belt-and-suspenders (grading_mode_used is already durably
+                # committed earlier in this function, in its own transaction,
+                # specifically so it survives this exact failure path — this
+                # is redundant, not load-bearing, but cheap and harmless).
+                grading_mode_used=submission.grading_mode_used,
             )
         )
         await db.commit()

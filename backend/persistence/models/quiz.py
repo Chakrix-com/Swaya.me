@@ -176,6 +176,18 @@ class CodingResultVisibility(str, enum.Enum):
     FULL = "full"
 
 
+class GradingMode(str, enum.Enum):
+    """How a coding-challenge question's AI-judgeable criteria
+    (ai_usage_efficiency, prompt_quality, code_quality, architecture) get
+    scored — functional_correctness/validation_discipline/time_taken are
+    always deterministic regardless of this setting. See
+    _private/coding_challenge_grading_mode_plan_20260809.md for the full
+    per-criterion breakdown of what each mode does."""
+    AI_JUDGED = "ai_judged"
+    HYBRID = "hybrid"
+    DETERMINISTIC = "deterministic"
+
+
 class Question(Base, TimestampMixin):
     """
     Question definition - part of a quiz
@@ -213,6 +225,14 @@ class Question(Base, TimestampMixin):
     result_visibility = Column(
         SQLEnum(CodingResultVisibility, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False, default=CodingResultVisibility.HIDDEN, server_default="hidden",
+    )
+    # How code_quality/architecture/ai_usage_efficiency/prompt_quality get scored.
+    # Default HYBRID: AI-judged but grounded in static analysis + expanded usage
+    # signals, plus self-consistency (see grading_service_async.py). See
+    # GradingMode's own docstring and the grading-mode-selector plan doc.
+    grading_mode = Column(
+        SQLEnum(GradingMode, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False, default=GradingMode.HYBRID, server_default="hybrid",
     )
 
     # Relationships
@@ -326,6 +346,26 @@ class CodeSubmission(Base, TimestampMixin):
     # redesign), not the full commit history in code_timeline. Nullable:
     # submissions harvested before this column existed won't have one.
     final_code_snapshot = Column(MYSQL_LONGTEXT, nullable=True)
+    # Harvested once, right after final_code_snapshot, while the workspace is
+    # still alive (2026-08-09 grading-mode redesign). regrade_submission has
+    # NO live workspace (see its own docstring), so this is the only place
+    # code_quality/architecture's static-analysis input can ever come from —
+    # _run_ai_scoring must always read this column, never re-exec. Shape:
+    # {avg_complexity, max_complexity, avg_function_length, longest_function,
+    # lint_violation_count, failed: bool, reason: str|None} — "failed" is set
+    # when lizard/ruff timed out, errored, or the workspace predates them
+    # being installed; scoring must treat that as a punitive-neutral result,
+    # not a reassuring average one (a flat "average" default is gameable —
+    # see the plan's 8th review pass).
+    static_analysis_result = Column(JSON, nullable=True)
+    # The GradingMode actually applied when this submission was scored —
+    # captured independently of Question.grading_mode, which a host can edit
+    # after candidates are already graded. NULL means this submission predates
+    # the grading-mode feature entirely (graded before this column existed).
+    grading_mode_used = Column(
+        SQLEnum(GradingMode, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=True,
+    )
     ai_token_usage = Column(JSON, nullable=True)
     score_breakdown = Column(JSON, nullable=True)
     ai_score = Column(Integer, nullable=True)

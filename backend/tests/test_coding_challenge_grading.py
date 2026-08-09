@@ -568,7 +568,7 @@ def test_grading_job_retries_once_then_partial_failed_with_data_intact():
     question = _fixture_question()
     session_cls, db = _mock_session(submission, workspace, question)
 
-    async def fake_exec(workspace_name, command):
+    async def fake_exec(workspace_name, command, timeout=None):
         if "--json-report" in command:
             return "test output here", None, 0
         if command.startswith("cat /tmp"):
@@ -588,7 +588,7 @@ def test_grading_job_retries_once_then_partial_failed_with_data_intact():
          patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
          patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
          patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
-         patch("core.ai.router.assess_coding_challenge", failing_assess), \
+         patch("core.ai.router.assess_coding_challenge_consistent", failing_assess), \
          patch.object(gsvc, "_cleanup", AsyncMock()) as mock_cleanup:
         asyncio.run(gsvc.run_grading_job(1))
 
@@ -637,7 +637,7 @@ def test_grading_job_success_path_persists_graded_with_full_breakdown():
     question = _fixture_question()
     session_cls, db = _mock_session(submission, workspace, question)
 
-    async def fake_exec(workspace_name, command):
+    async def fake_exec(workspace_name, command, timeout=None):
         if "--json-report" in command:
             return "", None, 0
         if command.startswith("cat /tmp"):
@@ -649,7 +649,7 @@ def test_grading_job_success_path_persists_graded_with_full_breakdown():
          patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
          patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
          patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
-         patch("core.ai.router.assess_coding_challenge",
+         patch("core.ai.router.assess_coding_challenge_consistent",
                AsyncMock(return_value={"ai_usage_efficiency": 90, "prompt_quality": 90,
                                         "validation_discipline": 90, "code_quality": 90,
                                         "architecture": 90, "rationale": "excellent"})), \
@@ -661,6 +661,7 @@ def test_grading_job_success_path_persists_graded_with_full_breakdown():
     assert submission.ai_verdict == "pass"
     assert submission.score_breakdown is not None
     assert submission.graded_at is not None
+    assert submission.grading_mode_used == gsvc.GradingMode.HYBRID  # question fixture has no explicit mode set
 
 
 def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override():
@@ -669,7 +670,7 @@ def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override
     question = _fixture_question()  # no grading_weights set -> None
     session_cls, db = _mock_session(submission, workspace, question)
 
-    async def fake_exec(workspace_name, command):
+    async def fake_exec(workspace_name, command, timeout=None):
         if "--json-report" in command:
             return "", None, 0
         if command.startswith("cat /tmp"):
@@ -679,7 +680,7 @@ def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override
     captured = {}
 
     async def fake_assess(problem_statement, rubric, final_code_snapshot, candidate_prompts,
-                           usage_summary, weights=None):
+                           usage_summary, weights=None, static_analysis_summary=None):
         captured["weights"] = weights
         return {"ai_usage_efficiency": 90, "prompt_quality": 90,
                 "code_quality": 90, "architecture": 90, "rationale": "excellent"}
@@ -689,7 +690,7 @@ def test_grading_job_passes_platform_default_weights_to_ai_when_no_host_override
          patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
          patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
          patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
-         patch("core.ai.router.assess_coding_challenge", fake_assess), \
+         patch("core.ai.router.assess_coding_challenge_consistent", fake_assess), \
          patch.object(gsvc, "_cleanup", AsyncMock()):
         asyncio.run(gsvc.run_grading_job(1))
 
@@ -710,7 +711,7 @@ def test_grading_job_passes_host_override_weights_to_ai_when_set():
     }
     session_cls, db = _mock_session(submission, workspace, question)
 
-    async def fake_exec(workspace_name, command):
+    async def fake_exec(workspace_name, command, timeout=None):
         if "--json-report" in command:
             return "", None, 0
         if command.startswith("cat /tmp"):
@@ -720,7 +721,7 @@ def test_grading_job_passes_host_override_weights_to_ai_when_set():
     captured = {}
 
     async def fake_assess(problem_statement, rubric, final_code_snapshot, candidate_prompts,
-                           usage_summary, weights=None):
+                           usage_summary, weights=None, static_analysis_summary=None):
         captured["weights"] = weights
         return {"ai_usage_efficiency": 90, "prompt_quality": 90,
                 "code_quality": 90, "architecture": 90, "rationale": "excellent"}
@@ -730,7 +731,7 @@ def test_grading_job_passes_host_override_weights_to_ai_when_set():
          patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
          patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
          patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
-         patch("core.ai.router.assess_coding_challenge", fake_assess), \
+         patch("core.ai.router.assess_coding_challenge_consistent", fake_assess), \
          patch.object(gsvc, "_cleanup", AsyncMock()):
         asyncio.run(gsvc.run_grading_job(1))
 
@@ -749,9 +750,13 @@ def test_grading_job_final_commit_failure_falls_back_to_partial_failed():
     workspace = _fixture_workspace()
     question = _fixture_question()
     session_cls, db = _mock_session(submission, workspace, question)
-    db.commit = AsyncMock(side_effect=[None, Exception("Data too long for column"), None])
+    # Commit sequence as of the grading-mode selector (2026-08-09): (1) status
+    # -> GRADING, (2) harvest data incl. static_analysis_result, (3)
+    # grading_mode_used resolution, (4) the final AI-scoring commit — THIS is
+    # the one that must fail here — (5) the fallback raw UPDATE's own commit.
+    db.commit = AsyncMock(side_effect=[None, None, None, Exception("Data too long for column"), None])
 
-    async def fake_exec(workspace_name, command):
+    async def fake_exec(workspace_name, command, timeout=None):
         if "--json-report" in command:
             return "", None, 0
         if command.startswith("cat /tmp"):
@@ -763,7 +768,7 @@ def test_grading_job_final_commit_failure_falls_back_to_partial_failed():
          patch.object(gsvc.coder_client, "start_workspace", AsyncMock()), \
          patch.object(gsvc.coder_client, "exec_in_workspace", fake_exec), \
          patch.object(gsvc.coder_client, "delete_workspace", AsyncMock()), \
-         patch("core.ai.router.assess_coding_challenge",
+         patch("core.ai.router.assess_coding_challenge_consistent",
                AsyncMock(return_value={"ai_usage_efficiency": 90, "prompt_quality": 90,
                                         "validation_discipline": 90, "code_quality": 90,
                                         "architecture": 90, "rationale": "excellent"})), \
@@ -777,3 +782,225 @@ def test_grading_job_final_commit_failure_falls_back_to_partial_failed():
     assert compiled_values["status"] == CodeSubmissionStatus.PARTIAL_FAILED
     assert "could not be persisted" in compiled_values["error_message"]
     mock_cleanup.assert_called_once()  # still cleans up rather than leaking the workspace
+
+
+# ── Mode dispatch in _run_ai_scoring (2026-08-09 grading-mode selector) ─────
+# Tests _run_ai_scoring directly (not the full run_grading_job pipeline) —
+# simpler to isolate dispatch behavior without mocking every exec_in_workspace
+# call. static_analysis.run_static_analysis is never mocked/called here on
+# purpose: _run_ai_scoring must only ever READ submission.static_analysis_result
+# (set by the harvest step), never compute it itself — that's the whole point
+# of the regrade-without-a-workspace constraint (plan §2).
+
+def _fixture_submission_for_dispatch(grading_mode_used=None, static_analysis_result=None):
+    s = _fixture_submission()
+    s.code_timeline = ""
+    s.ai_transcript_raw = ""
+    s.final_code_snapshot = "print('hi')"
+    s.passed_count, s.total_count = 5, 5
+    s.grading_mode_used = grading_mode_used
+    s.static_analysis_result = static_analysis_result
+    return s
+
+
+def _ok_ai_result(**overrides):
+    base = {"ai_usage_efficiency": 80, "prompt_quality": 80, "code_quality": 80,
+            "architecture": 80, "rationale": "solid"}
+    base.update(overrides)
+    return base
+
+
+def test_dispatch_ai_judged_mode_no_static_analysis_evidence():
+    submission = _fixture_submission_for_dispatch()
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_mode = gsvc.GradingMode.AI_JUDGED
+    db = AsyncMock()
+    captured = {}
+
+    async def fake_assess(*args, **kwargs):
+        captured["args"] = args
+        return _ok_ai_result()
+
+    with patch("core.ai.router.assess_coding_challenge_consistent", fake_assess):
+        asyncio.run(gsvc._run_ai_scoring(db, submission, workspace, question))
+
+    assert submission.grading_mode_used == gsvc.GradingMode.AI_JUDGED
+    assert submission.status == CodeSubmissionStatus.GRADED
+    assert captured["args"][-1] is None  # static_analysis_evidence positional arg
+
+
+def test_dispatch_hybrid_mode_passes_static_analysis_as_evidence():
+    analysis = {"failed": False, "avg_complexity": 3}
+    submission = _fixture_submission_for_dispatch(static_analysis_result=analysis)
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_mode = gsvc.GradingMode.HYBRID
+    db = AsyncMock()
+    captured = {}
+
+    async def fake_assess(*args, **kwargs):
+        captured["args"] = args
+        return _ok_ai_result()
+
+    with patch("core.ai.router.assess_coding_challenge_consistent", fake_assess):
+        asyncio.run(gsvc._run_ai_scoring(db, submission, workspace, question))
+
+    assert submission.grading_mode_used == gsvc.GradingMode.HYBRID
+    assert captured["args"][-1] == analysis  # the harvested result, passed through as-is
+
+
+def test_dispatch_deterministic_mode_never_calls_gemini():
+    analysis = {"failed": False, "avg_complexity": 3, "max_complexity": 5,
+                "avg_function_length": 10, "longest_function": 15, "lint_violation_count": 0,
+                "function_count": 2}
+    submission = _fixture_submission_for_dispatch(static_analysis_result=analysis)
+    submission.code_timeline = _ai_commit(1) + _ai_commit(2)
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_mode = gsvc.GradingMode.DETERMINISTIC
+    db = AsyncMock()
+
+    with patch("core.ai.router.assess_coding_challenge_consistent", AsyncMock()) as mock_assess:
+        asyncio.run(gsvc._run_ai_scoring(db, submission, workspace, question))
+
+    mock_assess.assert_not_called()
+    assert submission.grading_mode_used == gsvc.GradingMode.DETERMINISTIC
+    assert submission.status == CodeSubmissionStatus.GRADED  # deterministic path never partial-fails
+    assert submission.score_breakdown["code_quality"]["score"] == 100  # clean analysis fixture
+
+
+def test_dispatch_deterministic_mode_handles_missing_static_analysis_gracefully():
+    """No workspace-harvested analysis at all (e.g. an old submission regraded
+    into deterministic mode) must not crash — falls to the punitive-neutral
+    static-analysis fallback, not an exception."""
+    submission = _fixture_submission_for_dispatch(static_analysis_result=None)
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_mode = gsvc.GradingMode.DETERMINISTIC
+    db = AsyncMock()
+
+    asyncio.run(gsvc._run_ai_scoring(db, submission, workspace, question))
+
+    assert submission.status == CodeSubmissionStatus.GRADED
+    assert submission.score_breakdown["code_quality"]["score"] == gsvc.static_analysis._FALLBACK_SCORE
+
+
+def test_dispatch_regrade_reuses_grading_mode_used_not_question_mode():
+    """Regression for the transaction-boundary/consistency finding (plan §2/§5):
+    a submission already scored once under DETERMINISTIC must stay DETERMINISTIC
+    on regrade even if the host has since changed the question to HYBRID —
+    and must not need static_analysis.run_static_analysis at all (no live
+    workspace on regrade)."""
+    analysis = {"failed": False, "avg_complexity": 3, "max_complexity": 5,
+                "avg_function_length": 10, "longest_function": 15, "lint_violation_count": 0,
+                "function_count": 2}
+    submission = _fixture_submission_for_dispatch(
+        grading_mode_used=gsvc.GradingMode.DETERMINISTIC, static_analysis_result=analysis,
+    )
+    workspace = _fixture_workspace()
+    question = _fixture_question()
+    question.grading_mode = gsvc.GradingMode.HYBRID  # host changed it since the original attempt
+    db = AsyncMock()
+
+    with patch("core.ai.router.assess_coding_challenge_consistent", AsyncMock()) as mock_assess, \
+         patch.object(gsvc.static_analysis, "run_static_analysis", AsyncMock()) as mock_run_analysis:
+        asyncio.run(gsvc._run_ai_scoring(db, submission, workspace, question))
+
+    mock_assess.assert_not_called()
+    mock_run_analysis.assert_not_called()
+    assert submission.grading_mode_used == gsvc.GradingMode.DETERMINISTIC  # unchanged by the question edit
+
+
+# ── Deterministic scoring: ai_usage_efficiency / prompt_quality (Deterministic
+# grading mode only — 2026-08-09 grading-mode selector). Direction/thresholds
+# were checked against 9 real submissions before landing (see the plan's
+# implementation notes) — these fixture-based tests pin the resulting
+# behavior, not re-derive it. ───────────────────────────────────────────────
+
+def _ai_commit(hour: int) -> str:
+    # Hash must be valid hex (_GIT_COMMIT_HEADER_RE requires [0-9a-f]{7,40}) —
+    # "aaa" prefix keeps it hex-safe, unlike an "ai"-prefixed hash which isn't.
+    return f"""commit aaa{hour:04d}
+Author: Claude Code <ai@swaya.local>
+Date:   Sun Aug 9 {hour:02d}:00:00 2026 +0000
+
+    ai-edit
+"""
+
+
+def test_ai_usage_efficiency_zero_when_no_engagement_at_all():
+    # Real-data-verified: the old AI-judged system scored total non-engagement
+    # 0, not a neutral N/A — this must match, not spare the candidate.
+    score, rationale = gsvc._compute_ai_usage_efficiency("", "")
+    assert score == 0
+    assert "not used at all" in rationale
+
+
+def test_ai_usage_efficiency_full_credit_for_substantial_engagement():
+    code_timeline = _ai_commit(1) + _ai_commit(2) + _ai_commit(3)
+    transcript = _transcript_line(_human_prompt_entry("implement the feature", "2026-08-09T00:00:00.000Z"))
+    score, _ = gsvc._compute_ai_usage_efficiency(code_timeline, transcript)
+    assert score == 100
+
+
+def test_ai_usage_efficiency_penalizes_minimal_engagement():
+    # Real-data-verified: exactly 1 AI commit (below _MIN_SUBSTANTIAL_AI_COMMITS)
+    # scored 70 under the old AI-judged system — this lands at 75, close.
+    code_timeline = _ai_commit(1)
+    transcript = _transcript_line(_human_prompt_entry("do it", "2026-08-09T00:00:00.000Z"))
+    score, rationale = gsvc._compute_ai_usage_efficiency(code_timeline, transcript)
+    assert score == 75
+    assert "minimal engagement" in rationale
+
+
+def test_ai_usage_efficiency_penalizes_consecutive_near_duplicate_prompts():
+    code_timeline = _ai_commit(1) + _ai_commit(2)
+    transcript = "\n".join([
+        _transcript_line(_human_prompt_entry("please fix the login bug", "2026-08-09T00:00:00.000Z")),
+        _transcript_line(_human_prompt_entry("please fix the login bug!!", "2026-08-09T00:01:00.000Z")),
+    ])
+    score, rationale = gsvc._compute_ai_usage_efficiency(code_timeline, transcript)
+    assert score < 100
+    assert "near-duplicate" in rationale
+
+
+def test_ai_usage_efficiency_does_not_penalize_distinct_consecutive_prompts():
+    code_timeline = _ai_commit(1) + _ai_commit(2)
+    transcript = "\n".join([
+        _transcript_line(_human_prompt_entry("implement the login endpoint", "2026-08-09T00:00:00.000Z")),
+        _transcript_line(_human_prompt_entry("now add rate limiting to it", "2026-08-09T00:01:00.000Z")),
+    ])
+    score, _ = gsvc._compute_ai_usage_efficiency(code_timeline, transcript)
+    assert score == 100
+
+
+def test_prompt_quality_heuristic_zero_for_no_prompts():
+    score, rationale = gsvc._compute_prompt_quality_heuristic("")
+    assert score == 0
+    assert "No candidate prompts found" in rationale
+
+
+def test_prompt_quality_heuristic_penalizes_terse_vague_prompts():
+    prompts = "fix it\n---\nmake it work"
+    score, rationale = gsvc._compute_prompt_quality_heuristic(prompts)
+    assert score < 50
+    assert "Heuristic proxy" in rationale  # always disclosed, never presented as real judgment
+
+
+def test_prompt_quality_heuristic_rewards_detailed_specific_prompts():
+    prompts = (
+        "Implement a `login` function in `auth.py` that returns a 401 error "
+        "when the password does not match, and add a test that expects this exception\n"
+        "---\n"
+        "The `test_login_invalid_password` test should assert the response status is 401"
+    )
+    score, _ = gsvc._compute_prompt_quality_heuristic(prompts)
+    assert score >= 70
+
+
+def test_count_near_duplicate_prompt_pairs_ignores_non_adjacent_repeats():
+    # Same text repeated with a distinct prompt in between — not adjacent,
+    # so must not count (deliberate design choice, see the function's docstring).
+    prompts = ["fix the bug in login", "add a new test for logout", "fix the bug in login"]
+    assert gsvc._count_near_duplicate_prompt_pairs(prompts) == 0

@@ -6,6 +6,8 @@ raise NotImplementedError — the router falls back to the other tier's provider
 validate_quiz_prompt and grade_text_answer have safe no-op defaults so callers
 never crash if a lightweight provider skips them.
 """
+import asyncio
+import statistics
 from abc import ABC, abstractmethod
 
 
@@ -109,6 +111,7 @@ class BaseAIProvider(ABC):
         candidate_prompts: str,
         usage_summary: dict,
         weights: dict = None,
+        static_analysis_summary: dict = None,
     ) -> dict:
         """
         Judge the 4 LLM-scored coding-challenge criteria (AI-usage efficiency, prompt
@@ -143,6 +146,16 @@ class BaseAIProvider(ABC):
         actually use to combine scores (rather than recomputing/guessing at defaults
         here) keeps what the model is told in sync with what's actually applied.
 
+        `static_analysis_summary` (Hybrid grading mode only, 2026-08-09 grading-mode
+        selector — None in ai_judged mode, and this method is never called at all in
+        deterministic mode): the dict returned by
+        features.coding_challenge.static_analysis.run_static_analysis, grounding
+        code_quality/architecture in objective complexity/lint numbers instead of
+        just reading the code and guessing. Must be presented to the model under the
+        same "candidate-authored, untrusted" framing as the code/prompts — a lint
+        tool's output can quote back a line from the candidate's own code, so it's a
+        real prompt-injection surface too, not just inert platform-generated data.
+
         Returns: {"ai_usage_efficiency": int, "prompt_quality": int,
                   "code_quality": int, "architecture": int, "rationale": str} —
         each score 0-100. rationale is newline-delimited short bullet points
@@ -157,6 +170,63 @@ class BaseAIProvider(ABC):
             "architecture": 50,
             "rationale": "AI assessment unavailable",
         }
+
+    async def assess_coding_challenge_consistent(self, *args, samples: int = 3, **kwargs) -> dict:
+        """Self-consistency wrapper (2026-08-09 grading-mode selector) — runs
+        assess_coding_challenge `samples` times concurrently on identical
+        inputs and takes the per-criterion median, instead of trusting a
+        single `temperature=0.0` sample. Provider-agnostic (implemented once
+        here, not per-provider) since it only depends on
+        assess_coding_challenge's already-defined contract. Used by
+        ai_judged/hybrid grading modes; deterministic mode never calls this.
+
+        Real-variance check (2026-08-09, against 2 real submissions'
+        harvested data, 5 samples each, temperature=0.0, gemini-2.5-flash):
+        NOT near-zero as the "maybe temp=0 is already deterministic enough"
+        risk in the grading-mode plan worried it might be — but also not
+        uniform. One submission's 5 samples were byte-identical on all 4
+        criteria (spread=0) — temp=0 genuinely is deterministic for some
+        inputs. The other's were not: code_quality came back
+        [95, 35, 90, 90, 90] — one clear 35-point outlier against a tight
+        90-95 cluster, a 60-point spread — architecture spread 32 points,
+        prompt_quality spread 10. A candidate scored by that single 35
+        sample instead of the ~90 consensus would be a real, severe, and
+        entirely arbitrary unfairness — exactly what self-consistency's
+        median exists to catch (median of [95, 35, 90, 90, 90] = 90,
+        correctly rejecting the outlier). Confirmed end-to-end: calling this
+        method against the exact same real input returned code_quality=90.
+
+        `return_exceptions=True` so one transient failure among `samples`
+        doesn't discard the others — median is taken over however many
+        succeeded, as long as at least 2 did (median of 2 is their average).
+        If 0-1 succeeded, re-raises the first real error so the existing
+        2-attempt retry in _run_ai_scoring still applies at the outer level,
+        matching today's single-call failure behavior rather than inventing
+        a new one."""
+        results = await asyncio.gather(
+            *(self.assess_coding_challenge(*args, **kwargs) for _ in range(samples)),
+            return_exceptions=True,
+        )
+        successes = [r for r in results if isinstance(r, dict)]
+        if len(successes) < 2:
+            failures = [r for r in results if isinstance(r, BaseException)]
+            raise failures[0] if failures else RuntimeError(
+                "assess_coding_challenge_consistent: no successful samples"
+            )
+
+        criteria = ("ai_usage_efficiency", "prompt_quality", "code_quality", "architecture")
+        medians = {c: round(statistics.median(r.get(c, 50) for r in successes)) for c in criteria}
+
+        # Rationale from whichever sample's scores land closest to the
+        # medians (lowest sum of absolute per-criterion differences; ties
+        # broken by earliest index via min()'s own stable behavior) — so the
+        # explanation shown to a host actually matches the scores it sits
+        # next to, rather than being an arbitrary pick.
+        def _distance(r: dict) -> int:
+            return sum(abs(r.get(c, 50) - medians[c]) for c in criteria)
+
+        closest = min(successes, key=_distance)
+        return {**medians, "rationale": closest.get("rationale", "")}
 
     async def list_available_models(self) -> list[str]:
         """Return model IDs available via this provider. Empty list if not applicable."""
