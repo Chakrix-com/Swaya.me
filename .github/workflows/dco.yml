@@ -1,0 +1,54 @@
+name: DCO
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dco:
+    name: Check DCO sign-off
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify all commits are signed off
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -e
+          echo "Checking commits $BASE_SHA..$HEAD_SHA"
+
+          missing=0
+          for commit in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            message=$(git log -1 --format=%B "$commit")
+            if echo "$message" | grep -qiE '^Signed-off-by: .+ <.+>$'; then
+              echo "✓ $commit — signed off"
+            else
+              echo "::error::Commit $commit is missing a 'Signed-off-by' trailer."
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -eq 1 ]; then
+            echo ""
+            echo "One or more commits in this PR are missing a Developer Certificate of"
+            echo "Origin (DCO) sign-off. Every commit must include a trailer of the form:"
+            echo ""
+            echo "  Signed-off-by: Your Name <your@email.com>"
+            echo ""
+            echo "Fix it by:"
+            echo "  - New commits: git commit -s ...  (the -s flag adds the trailer)"
+            echo "  - Existing commits: git rebase --signoff <base-branch>  to sign off"
+            echo "    every commit in the PR, then force-push"
+            echo ""
+            echo "Signing off certifies you agree to the Developer Certificate of Origin"
+            echo "(https://developercertificate.org/) for this contribution -- that you"
+            echo "wrote it, or otherwise have the right to submit it under the project's"
+            echo "license."
+            exit 1
+          fi
+
+          echo "All commits signed off."
