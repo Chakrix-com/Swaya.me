@@ -185,6 +185,15 @@ async def answer_timing(
     redis: RedisClient = Depends(get_redis)
 ):
     """Public — validate that participant spent enough time on answer."""
+    from persistence.models.quiz import Participant
+    part_result = await db.execute(
+        select(Participant).where(Participant.session_token == body.session_token)
+    )
+    participant = part_result.scalar_one_or_none()
+    if not participant:
+        # Unknown session token — nothing to validate against, reject rather than fail open.
+        raise HTTPException(status_code=403, detail="Invalid session token")
+
     redis_data = None
     try:
         raw = await redis.get(f"proctor:session:{body.session_token}")
@@ -194,26 +203,21 @@ async def answer_timing(
         pass
 
     if not redis_data:
+        # Real participant, but no active proctoring session/rules for them — nothing to enforce.
         return AnswerTimingResponse(accepted=True)
 
     # Find answer_timing_enforce rule config
     rule_set_data = None
     try:
-        from persistence.models.quiz import Participant
-        part_result = await db.execute(
-            select(Participant).where(Participant.session_token == body.session_token)
+        from persistence.models.proctoring import ProctoringSession
+        sess_result = await db.execute(
+            select(ProctoringSession).where(
+                ProctoringSession.participant_id == participant.id
+            ).order_by(ProctoringSession.id.desc())
         )
-        participant = part_result.scalar_one_or_none()
-        if participant:
-            from persistence.models.proctoring import ProctoringSession
-            sess_result = await db.execute(
-                select(ProctoringSession).where(
-                    ProctoringSession.participant_id == participant.id
-                ).order_by(ProctoringSession.id.desc())
-            )
-            sess = sess_result.scalar_one_or_none()
-            if sess:
-                rule_set_data = sess.active_rule_set
+        sess = sess_result.scalar_one_or_none()
+        if sess:
+            rule_set_data = sess.active_rule_set
     except Exception:
         pass
 

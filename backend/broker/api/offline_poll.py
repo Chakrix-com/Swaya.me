@@ -1,7 +1,7 @@
 """
 Offline Poll API — public and authenticated endpoints for offline poll participation.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import Optional
@@ -16,6 +16,7 @@ from features.quiz.schemas import (
 )
 from features.quiz import offline_poll_service_async as svc
 from shared.exceptions.quiz import QuizNotFoundError, QuizValidationError
+from shared.utils.rate_limiter import limiter
 from core.auth.dependencies import get_current_user, CurrentUser
 
 router = APIRouter(prefix="/offline-poll", tags=["offline-poll"])
@@ -36,7 +37,8 @@ async def get_poll_info(slug: str, db: AsyncSession = Depends(get_async_db)):
 
 
 @router.post("/{slug}/join", response_model=OfflinePollJoinResponse)
-async def join_poll(slug: str, body: JoinRequest, db: AsyncSession = Depends(get_async_db)):
+@limiter.limit("300/minute")
+async def join_poll(request: Request, slug: str, body: JoinRequest, db: AsyncSession = Depends(get_async_db)):
     """Create or resume a participation session for an offline poll."""
     try:
         return await svc.join_or_resume(db, slug, body.display_name, body.session_token)
@@ -45,7 +47,8 @@ async def join_poll(slug: str, body: JoinRequest, db: AsyncSession = Depends(get
 
 
 @router.post("/{slug}/answer")
-async def save_answer(slug: str, body: OfflineAnswerRequest, db: AsyncSession = Depends(get_async_db)):
+@limiter.limit("300/minute")
+async def save_answer(request: Request, slug: str, body: OfflineAnswerRequest, db: AsyncSession = Depends(get_async_db)):
     """Save (upsert) a single answer for an offline poll."""
     try:
         return await svc.save_answer(
@@ -58,7 +61,8 @@ async def save_answer(slug: str, body: OfflineAnswerRequest, db: AsyncSession = 
 
 
 @router.post("/{slug}/complete")
-async def complete_poll(slug: str, body: OfflineCompleteRequest, db: AsyncSession = Depends(get_async_db)):
+@limiter.limit("100/minute")
+async def complete_poll(request: Request, slug: str, body: OfflineCompleteRequest, db: AsyncSession = Depends(get_async_db)):
     """Mark a participant's poll submission as completed."""
     try:
         return await svc.complete_poll(db, slug, body.session_token)

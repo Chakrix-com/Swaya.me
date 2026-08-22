@@ -760,7 +760,7 @@ export default function QuizControl() {
                     <Alert
                       message={`${t('quiz.correctAnswer')}: ${currentQuestion.correct_answer}`}
                       description={currentQuestion.question_type === 'mcq'
-                        ? <span dangerouslySetInnerHTML={{ __html: currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || '' }} />
+                        ? <span>{currentQuestion[`option_${currentQuestion.correct_answer.toLowerCase()}`] || ''}</span>
                         : ''}
                       type="success"
                       showIcon

@@ -2,9 +2,12 @@
 Configuration management for Swaya.me
 Loads and validates environment variables using Pydantic Settings
 """
-from pydantic import Field
+import logging
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseSettings(BaseSettings):
@@ -81,9 +84,25 @@ class AppSettings(BaseSettings):
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     uploads_base_dir: str = Field(default="./uploads", alias="UPLOADS_BASE_DIR")
     allowed_origins: List[str] = Field(
-        default=["http://localhost:3000"], 
+        default=["http://localhost:3000"],
         alias="ALLOWED_ORIGINS"
     )
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def strip_localhost_in_production(cls, v, info):
+        # allow_credentials=True + a stray localhost entry in ALLOWED_ORIGINS is a real
+        # CORS exposure in production, regardless of how it got into the env file — drop it.
+        if info.data.get("environment") == "production":
+            filtered = [o for o in v if "localhost" not in o and "127.0.0.1" not in o]
+            if filtered != v:
+                logger.warning(
+                    "Stripped localhost/127.0.0.1 origin(s) from ALLOWED_ORIGINS in production: %s",
+                    sorted(set(v) - set(filtered)),
+                )
+            if filtered:
+                return filtered
+        return v
 
     model_config = SettingsConfigDict(
         env_file=".env",
