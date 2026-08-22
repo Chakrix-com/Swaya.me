@@ -30,7 +30,7 @@ import {
   EyeOutlined,
   DownloadOutlined
 } from '@ant-design/icons';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import MoreActionsMenu from '../../../components/MoreActionsMenu';
 import '../../dashboard/Dashboard.css';
 import {
@@ -131,7 +131,7 @@ const UserManagement = () => {
     setEditingUser(null);
   };
 
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     try {
       // Prepare data for export
       const exportData = users.map(user => ({
@@ -145,38 +145,45 @@ const UserManagement = () => {
         }[user.role] || user.role,
         [t('admin.users.status')]: user.is_active ? t('admin.users.active') : t('admin.users.inactive'),
         [t('admin.users.loginCount')]: user.login_count || 0,
-        [t('admin.users.lastLogin')]: user.last_login_at 
-          ? new Date(user.last_login_at).toLocaleString() 
+        [t('admin.users.lastLogin')]: user.last_login_at
+          ? new Date(user.last_login_at).toLocaleString()
           : t('admin.users.never', { defaultValue: 'Never' }),
         [t('admin.users.createdAt', { defaultValue: 'Created At' })]: new Date(user.created_at).toLocaleString(),
         [t('admin.users.tenant', { defaultValue: 'Tenant' })]: user.tenant_name || '',
       }));
 
       // Create workbook and worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Users');
 
-      // Auto-size columns
       const maxWidth = 50;
-      const colWidths = Object.keys(exportData[0] || {}).map(key => ({
-        wch: Math.min(
+      const columnKeys = Object.keys(exportData[0] || {});
+      worksheet.columns = columnKeys.map(key => ({
+        header: key,
+        key,
+        width: Math.min(
           maxWidth,
-          Math.max(
-            key.length,
-            ...exportData.map(row => String(row[key] || '').length)
-          )
-        )
+          Math.max(key.length, ...exportData.map(row => String(row[key] || '').length))
+        ),
       }));
-      worksheet['!cols'] = colWidths;
+      worksheet.addRows(exportData);
 
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `users_export_${timestamp}.xlsx`;
 
       // Download file
-      XLSX.writeFile(workbook, filename);
-      
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
       message.success(t('admin.users.exportedUsers', { count: users.length, filename }));
     } catch (error) {
       console.error('Export error:', error);

@@ -1,3 +1,6 @@
+# Local scratch / notes (never part of the codebase)
+finos-readiness.html
+
 # Python
 __pycache__/
 *.py[cod]

@@ -212,13 +212,8 @@ async def login_user(db: AsyncSession, request: UserLoginRequest) -> TokenRespon
         
     # Check if email is verified
     if hasattr(user, 'is_email_verified') and not getattr(user, 'is_email_verified', True):
-        # Bypass for demo user who is super admin
-        logger.info(f"Checking email verification for {user.email}. is_email_verified: {user.is_email_verified}")
-        if user.email != "demo@swaya.me":
-            logger.warning(f"Verification required for {user.email}")
-            raise EmailNotVerifiedError("Please verify your email address to log in.")
-        else:
-            logger.info(f"Bypassing email verification for {user.email}")
+        logger.warning(f"Verification required for {user.email}")
+        raise EmailNotVerifiedError("Please verify your email address to log in.")
     
     # Check if user is active - specific error for user feedback
     if not user.is_active:
