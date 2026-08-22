@@ -10,6 +10,7 @@ Thank you for taking the time to contribute.
 - [Database Migrations](#database-migrations)
 - [Running Tests](#running-tests)
 - [Commit Format](#commit-format)
+- [Developer Certificate of Origin (DCO)](#developer-certificate-of-origin-dco)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Reporting Bugs](#reporting-bugs)
 
@@ -160,14 +161,47 @@ test: add regression test for OTP expiry
 
 ---
 
+## Developer Certificate of Origin (DCO)
+
+Every commit must be signed off, certifying you agree to the
+[Developer Certificate of Origin](https://developercertificate.org/) — in short, that you
+wrote the contribution or otherwise have the right to submit it under this project's license.
+A CI check enforces this on every PR (`.github/workflows/dco.yml`); PRs with unsigned commits
+will fail the check until fixed.
+
+**Sign off as you go:**
+
+```bash
+git commit -s -m "feat: add team mode to live quiz"
+```
+
+The `-s` flag appends a `Signed-off-by: Your Name <your@email.com>` trailer using your git
+`user.name`/`user.email` config. To avoid forgetting it, make it the default for this repo:
+
+```bash
+git config format.signoff true
+```
+
+**Fixing a PR that failed the DCO check** (commits already made without `-s`):
+
+```bash
+git rebase --signoff main   # re-signs every commit in your branch onto main
+git push --force-with-lease
+```
+
+Merge commits are exempt — only the commits actually contributing changes need to be signed.
+
+---
+
 ## Submitting a Pull Request
 
 1. Fork the repo and create your branch from `main`.
 2. Make your changes, including tests.
 3. Ensure `pytest` passes locally.
 4. Run `npm run build` in `frontend/` and fix any TypeScript/lint errors.
-5. Open a PR with a clear title and description explaining the **why**, not just the what.
-6. Link to any relevant issues.
+5. Sign off every commit (`git commit -s`) — see [DCO](#developer-certificate-of-origin-dco).
+6. Open a PR with a clear title and description explaining the **why**, not just the what.
+7. Link to any relevant issues.
 
 PR titles follow the same prefix convention as commits: `feat: ...`, `fix: ...`, etc.
 
