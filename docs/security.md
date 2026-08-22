@@ -145,8 +145,15 @@ Every service function filters by `tenant_id`. A user from tenant A cannot acces
 
 - `python-jose` (which had active CVEs CVE-2024-33664 and CVE-2024-33663) was removed and replaced with `PyJWT` + `cryptography`.
 - `cryptography` is pinned to a recent version without known vulnerabilities.
-- Run `pip audit` periodically to check for new vulnerabilities in Python dependencies.
-- Run `npm audit` for frontend dependencies.
+- As of 2026-08-22, CVE and license scanning run automatically on every PR to `main`
+  via `.github/workflows/dependency-scanning.yml` — `safety` + `pip-licenses` for the
+  backend, `npm audit` + `license-checker` for the frontend. Manually running
+  `pip audit`/`npm audit` is no longer the only line of defense, though still fine to
+  do ad hoc.
+- Known, currently-deferred findings (not silently ignored — each has a documented
+  reason and, for the backend CVE backlog, an expiry) are tracked in
+  [`docs/investigations/2026-08-22-dependency-license-scan-findings.md`](investigations/2026-08-22-dependency-license-scan-findings.md).
+  The backend ignore-list itself lives in `backend/safety-policy.yml`.
 
 ---
 
