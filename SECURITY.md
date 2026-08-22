@@ -11,8 +11,8 @@ Swaya.me is a continuously-deployed web application, not a versioned release tra
 `main` branch and the live deployment at [www.swaya.me](https://www.swaya.me) are always
 the only supported target — there are no older versions to report against.
 
-Self-hosted deployments (see [`docs/self-hosting/`](docs/self-hosting/)) should track `main`
-and apply security fixes promptly once released.
+Self-hosted deployments (see [`docs/self-hosting/getting-started.md`](docs/self-hosting/getting-started.md))
+should track `main` and apply security fixes promptly once released.
 
 ## Reporting a Vulnerability
 
@@ -25,7 +25,8 @@ Email **meetnishant@gmail.com** with:
   examples, or a short screen recording all help)
 - The affected component (backend endpoint, frontend page, self-hosting config, etc.) and,
   if known, the relevant file/line
-- Whether you've tested against `www.swaya.me` directly or a local/self-hosted instance
+- Whether you tested against our hosted infrastructure (`www.swaya.me` / `test.swaya.me`) or
+  a local/self-hosted instance
 
 ### What to expect
 
