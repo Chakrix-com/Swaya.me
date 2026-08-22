@@ -1,0 +1,239 @@
+# Safety Security Configuration — Swaya.me backend
+#
+# Used by .github/workflows/dependency-scanning.yml (`safety check --policy-file`).
+#
+# The ignore list below captures the CVE backlog that existed when this scanner was
+# first wired up (2026-08-22, 65 findings across 22 packages via `safety check` against
+# backend/requirements.txt) — a real, substantive finding, not scanner noise. It is
+# recorded here so CI stays green for new work while the backlog is triaged separately,
+# NOT as a decision that these are acceptable to ignore forever — every entry has a
+# 90-day expiry, after which `safety check` will start failing on it again until it's
+# re-triaged (fixed, or the expiry deliberately extended with a real reason).
+#
+# Any vulnerability NOT in this list — i.e. anything newly introduced by a future
+# dependency bump — will fail the build immediately. That is the actual point of this
+# file: it does not weaken the scanner, it scopes it to catch new problems while a
+# known, pre-existing backlog gets worked through on its own timeline.
+security:
+    ignore-unpinned-requirements: True
+    ignore-cvss-severity-below: 0
+    ignore-cvss-unknown-severity: False
+    ignore-vulnerabilities:
+        # aiosmtplib (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260707-05271:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # anyio (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        71199:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # black (2 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        66742:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        89047:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # cryptography (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260615-96125:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # ecdsa (3 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        64396:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        64459:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        90743:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # idna (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        98479:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # lxml (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260421-23679:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # mako (3 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        93670:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        98067:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260416-21500:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # msgpack (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260619-78753:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pillow (18 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        93093:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        95893:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        95895:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        95896:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260504-37305:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-06182:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-08003:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-08025:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-08227:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-09763:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-14393:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-28112:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-40232:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-42709:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-77502:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-78690:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-79633:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260720-81593:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pyasn1 (3 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        89623:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260721-32890:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260721-87910:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pygments (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260322-35073:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pyjwt (5 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        89028:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-02573:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-71642:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-82927:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-85895:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pymysql (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        71083:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # pytest (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260122-20373:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # python-dotenv (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        94066:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # python-engineio (2 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260626-39072:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260626-60054:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # python-multipart (10 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        66706:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        74427:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        85155:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20240212-48116:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260415-68235:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260506-35099:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-09692:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-29344:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-38625:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-86547:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # python-socketio (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        SFTY-20260626-04169:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # requests (1 finding) — deferred pending dependency-upgrade pass, see docs/security.md
+        90553:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # starlette (5 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        99546:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-22503:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-32787:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-83407:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260615-86827:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        # urllib3 (2 findings) — deferred pending dependency-upgrade pass, see docs/security.md
+        96886:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+        SFTY-20260511-47957:
+            reason: pre-existing at scanner-introduction (2026-08-22); tracked, not yet triaged
+            expires: '2026-11-22'
+    continue-on-vulnerability-error: False

@@ -1,0 +1,122 @@
+name: Dependency & License Scanning
+
+# Pattern follows FINOS's own reference tooling (github.com/finos/code-scanning):
+# safety + pip-licenses for Python, npm audit + license-checker for Node.
+# Runs on every push/PR to main, plus a twice-weekly schedule so newly
+# disclosed CVEs against pinned versions surface even without a code change.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/requirements.txt"
+      - "backend/safety-policy.yml"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - ".github/workflows/dependency-scanning.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/requirements.txt"
+      - "backend/safety-policy.yml"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - ".github/workflows/dependency-scanning.yml"
+  schedule:
+    - cron: "0 6 * * 1,4" # Monday & Thursday 06:00 UTC
+
+jobs:
+  backend-cve-scan:
+    name: Backend — CVE scan (safety)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install safety
+        run: pip install safety==3.8.1
+      - name: Scan backend/requirements.txt for known CVEs
+        working-directory: backend
+        run: safety check -r requirements.txt --full-report --policy-file safety-policy.yml
+
+  backend-license-scan:
+    name: Backend — license scan (pip-licenses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install backend dependencies + pip-licenses
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          pip install pip-licenses
+      - name: Verify all dependency licenses are FINOS Category A/B compatible
+        working-directory: backend
+        # Allow-list is every license actually in use today, verified 2026-08-22 —
+        # see the comment in this repo's dependency-scanning PR for the full audit.
+        # --ignore-packages: cssutils/encutils (LGPL-3.0), mysql-connector-python (GPL,
+        # though Oracle ships it under the Universal FOSS Exception — needs a legal
+        # read, not an automated tool's say-so), text-unidecode (GPL-family among its
+        # declared licenses), qrcode (classifier noise: "Other/Proprietary License"
+        # alongside its real BSD license — almost certainly benign, still flagged for
+        # a human to actually look at once rather than silently trusted).
+        # None of these five are resolved by this scan passing — they're excluded
+        # from it on purpose, pending an explicit license-compatibility decision.
+        run: |
+          pip-licenses \
+            --allow-only="3-Clause BSD License;Apache Software License;Apache Software License; BSD License;Apache Software License; MIT License;Apache-2.0;Apache-2.0 AND CNRI-Python;Apache-2.0 OR BSD-3-Clause;BSD;BSD 3-Clause OR Apache-2.0;BSD License;BSD-2-Clause;BSD-3-Clause;ISC License (ISCL);MIT;MIT AND Python-2.0;MIT License;MIT OR Apache-2.0;MIT-CMU;MPL-2.0;MPL-2.0 AND MIT;Mozilla Public License 2.0 (MPL 2.0);PSF-2.0;Python Software Foundation License;The Unlicense (Unlicense);ZPL-2.1" \
+            --ignore-packages cssutils encutils mysql-connector-python text-unidecode qrcode
+
+  frontend-cve-scan:
+    name: Frontend — CVE scan (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      # Non-blocking for now: 10 remaining findings (as of 2026-08-22) all require
+      # a breaking-change upgrade (react-router-dom major bump, exceljs downgrade,
+      # the vite/esbuild chain) that need their own dedicated, tested PR rather than
+      # silently happening as a side effect of a CI job. Safe non-breaking fixes
+      # were already applied the same day this job was added. Flip continue-on-error
+      # off once that upgrade pass lands — this is meant to be temporary.
+      - name: Audit for known CVEs (report-only until the breaking-change backlog is cleared)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  frontend-license-scan:
+    name: Frontend — license scan (license-checker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Verify all dependency licenses are FINOS Category A/B compatible
+        working-directory: frontend
+        # --excludePackages: buffers@0.1.1 declares a bare link to a license file
+        # instead of a recognized identifier — almost certainly fine (it's a tiny,
+        # long-stable transitive dependency), but "almost certainly" isn't the same
+        # as verified, so it's excluded rather than silently allow-listed.
+        # swaya-frontend itself is excluded because license-checker reports any
+        # "private": true package as UNLICENSED regardless of its actual license
+        # field — this repo's own license is already governed by the root LICENSE
+        # file, not something this dependency check needs to re-verify.
+        run: |
+          npx --yes license-checker \
+            --onlyAllow "MIT;ISC;Apache-2.0;BSD;BSD-2-Clause;BSD-3-Clause;0BSD;BlueOak-1.0.0;Unlicense;CC0-1.0;CC-BY-4.0;Python-2.0;MPL-2.0;Zlib" \
+            --excludePackages "buffers@0.1.1;swaya-frontend@0.1.0"
