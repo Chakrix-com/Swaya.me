@@ -181,7 +181,7 @@ Use the [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) issue template. Inclu
 - Browser / OS / Python version if relevant
 - Any error output from the console or API logs
 
-For security vulnerabilities, do **not** open a public issue — see [docs/security.md](docs/security.md#reporting-vulnerabilities).
+For security vulnerabilities, do **not** open a public issue — see [SECURITY.md](SECURITY.md).
 
 ---
 
