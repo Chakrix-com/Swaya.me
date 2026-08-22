@@ -175,4 +175,6 @@ Adjust the CSP `connect-src` if you use a third-party analytics or error trackin
 
 ## Reporting Vulnerabilities
 
-If you discover a security vulnerability, please do **not** open a public GitHub issue. Email the maintainer directly at the address in the GitHub profile. Include a description of the vulnerability, reproduction steps, and the potential impact.
+See [`SECURITY.md`](../SECURITY.md) at the repo root for the disclosure process, scope, and
+response-time commitment. Short version: do **not** open a public GitHub issue — email
+**meetnishant@gmail.com** with a description, reproduction steps, and impact.
