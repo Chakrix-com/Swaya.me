@@ -439,10 +439,15 @@ async def execute_password_reset(db: AsyncSession, token: str, new_password: str
         
     # Valid token, update password
     user.hashed_password = hash_password(new_password)
-    
+
+    # Invalidate any other already-issued JWTs (e.g. a previously stolen/
+    # leaked token) — core.auth.dependencies._resolve_token rejects tokens
+    # whose `iat` predates this timestamp.
+    user.password_changed_at = datetime.now(timezone.utc)
+
     # Clear the reset token
     user.reset_password_token = None
     user.reset_password_expires_at = None
-    
+
     await db.commit()
     return True

@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
+from datetime import timezone
 
 from persistence.database_async import get_async_db
 from persistence.models.core import User, Tenant, UserRole, TierEnum
@@ -65,6 +66,18 @@ async def _resolve_token(token: str, db: AsyncSession, redis: RedisClient) -> "C
     user = result.scalar_one_or_none()
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+
+    # Reject tokens issued before the user's last password reset — closes the
+    # gap where a stolen/leaked token kept authenticating after the
+    # legitimate user reset their password in response to a suspected
+    # compromise (see users.password_changed_at).
+    if user.password_changed_at is not None:
+        iat = payload.get("iat")
+        changed_at = user.password_changed_at
+        if changed_at.tzinfo is None:
+            changed_at = changed_at.replace(tzinfo=timezone.utc)
+        if iat is None or iat < changed_at.timestamp():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
 
     result = await db.execute(select(Tenant).filter(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()

@@ -133,10 +133,15 @@ async def get_language_stats(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid end_date format")
         
+        # Tenant-level admins only ever see their own tenant's stats;
+        # only super_admin gets platform-wide totals (None = no tenant filter).
+        scope_tenant_id = None if current_user.user.role == UserRole.super_admin else current_user.tenant_id
+
         # Get comprehensive stats (ignore date filters for now, use trend_days)
         stats = await service.get_language_stats_summary(
             include_trends=True,
-            trend_days=30
+            trend_days=30,
+            tenant_id=scope_tenant_id
         )
         
         # Transform to frontend-expected format
@@ -202,8 +207,12 @@ async def export_language_stats(
         start = datetime.fromisoformat(start_date.replace('Z', '+00:00')) if start_date else None
         end = datetime.fromisoformat(end_date.replace('Z', '+00:00')) if end_date else None
         
+        # Tenant-level admins only ever see their own tenant's stats;
+        # only super_admin gets platform-wide totals (None = no tenant filter).
+        scope_tenant_id = None if current_user.user.role == UserRole.super_admin else current_user.tenant_id
+
         # Get trends data
-        trends = await service.get_language_trends(start_date=start, end_date=end)
+        trends = await service.get_language_trends(start_date=start, end_date=end, tenant_id=scope_tenant_id)
         
         # Create CSV in memory
         output = io.StringIO()

@@ -166,11 +166,15 @@ class LanguageTrackingServiceAsync:
             logger.error(f"Error getting language distribution: {e}")
             return []
     
-    async def get_language_event_stats(self) -> List[LanguageDistribution]:
+    async def get_language_event_stats(self, tenant_id: Optional[int] = None) -> List[LanguageDistribution]:
         """
         Get language statistics from events table
         Includes unique users, unique sessions, and total events per language
-        
+
+        Args:
+            tenant_id: If provided, scope results to this tenant only (used for
+                tenant-level admins; super_admin passes None for platform-wide totals)
+
         Returns:
             List of LanguageDistribution objects with detailed event stats
         """
@@ -181,7 +185,10 @@ class LanguageTrackingServiceAsync:
                 func.count(func.distinct(LanguageUsageEvent.user_id)).label('user_count'),
                 func.count(func.distinct(LanguageUsageEvent.session_id)).label('session_count'),
                 func.count(LanguageUsageEvent.id).label('event_count')
-            ).group_by(
+            )
+            if tenant_id is not None:
+                stmt = stmt.filter(LanguageUsageEvent.tenant_id == tenant_id)
+            stmt = stmt.group_by(
                 LanguageUsageEvent.language
             )
             
@@ -211,16 +218,19 @@ class LanguageTrackingServiceAsync:
     async def get_language_trends(
         self,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
+        tenant_id: Optional[int] = None
     ) -> List[LanguageTrendPoint]:
         """
         Get language usage trends over time
         Groups events by date and language
-        
+
         Args:
             start_date: Start of date range (defaults to 30 days ago)
             end_date: End of date range (defaults to today)
-            
+            tenant_id: If provided, scope results to this tenant only (used for
+                tenant-level admins; super_admin passes None for platform-wide totals)
+
         Returns:
             List of LanguageTrendPoint objects with daily event counts
         """
@@ -231,17 +241,20 @@ class LanguageTrackingServiceAsync:
             if start_date is None:
                 from datetime import timedelta
                 start_date = end_date - timedelta(days=30)
-            
+
             # Query events grouped by date and language
+            date_filter = and_(
+                LanguageUsageEvent.created_at >= start_date,
+                LanguageUsageEvent.created_at <= end_date
+            )
+            if tenant_id is not None:
+                date_filter = and_(date_filter, LanguageUsageEvent.tenant_id == tenant_id)
             stmt = select(
                 func.date(LanguageUsageEvent.created_at).label('event_date'),
                 LanguageUsageEvent.language,
                 func.count(LanguageUsageEvent.id).label('event_count')
             ).filter(
-                and_(
-                    LanguageUsageEvent.created_at >= start_date,
-                    LanguageUsageEvent.created_at <= end_date
-                )
+                date_filter
             ).group_by(
                 func.date(LanguageUsageEvent.created_at),
                 LanguageUsageEvent.language
@@ -269,15 +282,20 @@ class LanguageTrackingServiceAsync:
     async def get_language_stats_summary(
         self,
         include_trends: bool = False,
-        trend_days: int = 30
+        trend_days: int = 30,
+        tenant_id: Optional[int] = None
     ) -> LanguageStatsResponse:
         """
         Get comprehensive language usage statistics for admin dashboard
-        
+
         Args:
             include_trends: Whether to include trend data
             trend_days: Number of days of trend data to include
-            
+            tenant_id: If provided, scope all results to this tenant only.
+                Pass None only for platform-wide (super_admin) callers —
+                a tenant-scoped admin must always pass their own tenant_id
+                here to avoid leaking cross-tenant aggregate data.
+
         Returns:
             LanguageStatsResponse with complete statistics
         """
@@ -288,26 +306,28 @@ class LanguageTrackingServiceAsync:
                 func.count(func.distinct(LanguageUsageEvent.user_id)).label('unique_users'),
                 func.count(func.distinct(LanguageUsageEvent.session_id)).label('unique_sessions')
             )
-            
+            if tenant_id is not None:
+                stmt = stmt.filter(LanguageUsageEvent.tenant_id == tenant_id)
+
             result = await self.db.execute(stmt)
             total_stats = result.first()
-            
+
             # Get language distribution from events
-            distributions = await self.get_language_event_stats()
-            
+            distributions = await self.get_language_event_stats(tenant_id=tenant_id)
+
             # Determine most popular language
             most_popular = distributions[0].language if distributions else 'en'
-            
+
             # Get list of all languages seen
             supported_languages = [dist.language for dist in distributions]
-            
+
             # Optionally get trend data
             trends = None
             if include_trends:
                 from datetime import timedelta
                 end_date = datetime.utcnow()
                 start_date = end_date - timedelta(days=trend_days)
-                trends = await self.get_language_trends(start_date, end_date)
+                trends = await self.get_language_trends(start_date, end_date, tenant_id=tenant_id)
             
             return LanguageStatsResponse(
                 total_events=total_stats.total_events or 0,

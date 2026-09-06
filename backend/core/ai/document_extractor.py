@@ -7,9 +7,12 @@ Returns plain text truncated to MAX_CHARS for safe use as an LLM prompt.
 from __future__ import annotations
 
 import io
+import ipaddress
 import re
+import socket
 import logging
 from typing import Optional
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 from fastapi import UploadFile, HTTPException
@@ -28,6 +31,7 @@ _SUPPORTED_MIME_TYPES = {
 
 _URL_FETCH_TIMEOUT = 15.0
 _MAX_URL_BYTES = 5 * 1024 * 1024  # 5 MB for URL content
+_MAX_REDIRECTS = 5  # cap manual redirect-following (SSRF guard, see below)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -123,6 +127,69 @@ def _extract_txt(data: bytes) -> str:
     return text
 
 
+# ── SSRF guard ─────────────────────────────────────────────────────────────────
+#
+# `extract_from_url` fetches an arbitrary, user-supplied URL server-side. Without
+# validation this is a classic SSRF: an attacker can point it at cloud instance
+# metadata (169.254.169.254), loopback-only internal services, or other hosts on
+# the VM's private network and have the response returned straight back to them.
+# We resolve the hostname ourselves (not just pattern-match the literal string,
+# so a public-looking hostname that resolves to an internal IP is also caught)
+# and reject if any resolved address is private/loopback/link-local/reserved/
+# multicast. Because a single check up front can be bypassed by a redirect
+# (an initially-public, validated URL responding with a 302 to an internal
+# target — including DNS-rebinding-style setups), redirects are followed
+# manually below with the same validation re-applied on every hop, capped at
+# `_MAX_REDIRECTS` hops.
+
+def _is_ip_disallowed(ip_str: str) -> bool:
+    """True if `ip_str` is not a legitimate public-internet address."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return True  # unparseable -> fail closed
+
+    # Unwrap IPv4-mapped IPv6 addresses (::ffff:127.0.0.1) so mapped
+    # loopback/private addresses are caught by the same IPv4 checks.
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+        ip = ip.ipv4_mapped
+
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _validate_url_for_ssrf(url: str) -> None:
+    """Resolve `url`'s host via DNS and reject if any resolved IP is internal.
+
+    Checks every returned A/AAAA record, not just the first: a hostname can
+    have multiple addresses and an attacker only needs one of them to land
+    inside the network for SSRF to succeed.
+    """
+    parsed = urlsplit(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(status_code=400, detail="Invalid URL.")
+
+    try:
+        addrinfo = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        raise HTTPException(status_code=400, detail="Could not resolve the provided URL's host.")
+
+    if not addrinfo or any(_is_ip_disallowed(info[4][0]) for info in addrinfo):
+        # Deliberately generic message — do not reveal *why* it was
+        # rejected (which internal range/service), so this can't be used
+        # to fingerprint internal network topology.
+        raise HTTPException(status_code=400, detail="This URL cannot be fetched.")
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 async def extract_from_file(file: UploadFile) -> tuple[str, str]:
@@ -174,17 +241,40 @@ async def extract_from_url(url: str) -> tuple[str, str]:
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
+    # follow_redirects is deliberately OFF here — see the SSRF guard comment
+    # above. Each hop is validated (resolved + IP-checked) before it is
+    # fetched, and we bail out after _MAX_REDIRECTS hops.
+    current_url = url
+    resp = None
     try:
         async with httpx.AsyncClient(
-            follow_redirects=True,
+            follow_redirects=False,
             timeout=_URL_FETCH_TIMEOUT,
             headers={"User-Agent": "Swaya.me/1.0 (content-extractor)"},
         ) as client:
-            resp = await client.get(url)
+            for _ in range(_MAX_REDIRECTS + 1):
+                _validate_url_for_ssrf(current_url)
+                resp = await client.get(current_url)
+                if resp.status_code not in (301, 302, 303, 307, 308):
+                    break
+                location = resp.headers.get("location")
+                if not location:
+                    break
+                current_url = urljoin(current_url, location)
+                if not current_url.startswith(("http://", "https://")):
+                    raise HTTPException(status_code=400, detail="This URL cannot be fetched.")
+            else:
+                raise HTTPException(status_code=400, detail="Too many redirects while fetching this URL.")
     except httpx.TimeoutException:
         raise HTTPException(status_code=408, detail="URL request timed out. Check the URL and try again.")
     except httpx.RequestError as e:
-        raise HTTPException(status_code=400, detail=f"Could not reach URL: {e}")
+        # Do not leak the raw exception text to the client: besides being
+        # an internal-detail leak, subtly different messages/timings across
+        # connect-refused/timeout/DNS-failure outcomes are themselves a
+        # blind-SSRF port-scanning primitive when combined with the URL
+        # fetch above. Log the real detail server-side only.
+        logger.exception("Failed to fetch URL for text extraction (url=%s)", current_url)
+        raise HTTPException(status_code=400, detail="Unable to fetch the provided URL.")
 
     if resp.status_code == 403:
         raise HTTPException(status_code=400, detail="Could not access URL (403 Forbidden). The page may require a login.")

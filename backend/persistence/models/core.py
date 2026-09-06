@@ -75,6 +75,14 @@ class User(Base, TimestampMixin):
     # Password Reset
     reset_password_token = Column(String(255), unique=True, nullable=True)
     reset_password_expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Set whenever the password is changed (currently only via password-reset
+    # completion). Used as a JWT-invalidation anchor: any token whose `iat`
+    # predates this timestamp is rejected in core.auth.dependencies._resolve_token,
+    # so resetting your password revokes any other already-issued session/token.
+    # NULL means "password never reset since this column existed" — no tokens
+    # are rejected on that basis alone.
+    password_changed_at = Column(DateTime(timezone=True), nullable=True)
     
     # Activity tracking
     last_login_at = Column(DateTime(timezone=True), nullable=True)

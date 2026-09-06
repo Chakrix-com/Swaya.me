@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 from pathlib import Path
-import shutil, os, json
+import os, json, io as _io
+from PIL import Image
 
 from core.config.settings import settings
 from persistence.database_async import get_async_db
@@ -29,6 +30,60 @@ from features.proctoring.context_resolver import ProctoringContext
 from features.proctoring.honeypot_service import honeypot_service
 
 router = APIRouter(prefix="/proctoring", tags=["proctoring"])
+
+# Webcam-snapshot upload validation — mirrors ImageService.validate_image()'s
+# pattern (content-type allowlist + extension allowlist + size cap + real
+# magic-byte verification via Pillow, not just the client-supplied
+# Content-Type header) but with a size cap appropriate for a webcam JPEG
+# rather than the smaller question/option-image limit.
+_SNAPSHOT_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+_SNAPSHOT_ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+_SNAPSHOT_ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+
+
+def _validate_snapshot_file(file: UploadFile) -> bytes:
+    """Validate a proctoring webcam-snapshot upload before writing to disk.
+
+    Raises HTTPException on any validation failure; returns the file's
+    validated bytes on success (so callers don't need to re-read the stream).
+    """
+    if (file.content_type or "").lower() not in _SNAPSHOT_ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(sorted(_SNAPSHOT_ALLOWED_MIME_TYPES))}"
+        )
+
+    filename = file.filename or ""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext not in _SNAPSHOT_ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file extension. Allowed: {', '.join(sorted(_SNAPSHOT_ALLOWED_EXTENSIONS))}"
+        )
+
+    file.file.seek(0, 2)
+    size = file.file.tell()
+    file.file.seek(0)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if size > _SNAPSHOT_MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {_SNAPSHOT_MAX_FILE_SIZE // (1024 * 1024)}MB"
+        )
+
+    contents = file.file.read()
+    file.file.seek(0)
+
+    # Verify actual file signature/content, not just the client-supplied
+    # Content-Type header and extension (both trivially spoofable).
+    try:
+        img = Image.open(_io.BytesIO(contents))
+        img.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid image.")
+
+    return contents
 
 
 async def _resolve_context(quiz: Quiz, tenant: Tenant) -> ProctoringContext:
@@ -260,6 +315,11 @@ async def upload_snapshot(
     redis: RedisClient = Depends(get_redis)
 ):
     """Public — participant webcam snapshot upload (session token via header)."""
+    # Validate file type/size/signature before doing any other work — see
+    # _validate_snapshot_file for rationale (LOW-1: previously unbounded
+    # disk-usage/content-hygiene risk).
+    file_contents = _validate_snapshot_file(file)
+
     session_token = request.headers.get("X-Session-Token", "")
     redis_data = None
     if session_token:
@@ -315,7 +375,7 @@ async def upload_snapshot(
 
     try:
         with open(dest, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+            f.write(file_contents)
         # Increment server-side receipt counter
         if session_token:
             await svc.record_snapshot_receipt(session_token, redis)

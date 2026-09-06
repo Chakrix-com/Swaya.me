@@ -279,7 +279,7 @@ class ExcelImportService:
                 question_type=q_type,
                 text=sanitize_html(q["text"]),
                 order=idx,
-                options=[str(o).strip() for o in db_options],
+                options=[sanitize_plain(str(o).strip()) for o in db_options],
                 correct_answer_index=correct_index,
                 correct_answer_indices=correct_indices,
                 points=float(q["points"] or 1),

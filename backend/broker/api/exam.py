@@ -77,8 +77,17 @@ async def start_exam(
 
 
 @router.post("/e/{slug}/answer")
-async def save_answer(slug: str, body: ExamAnswerRequest, db: AsyncSession = Depends(get_async_db)):
-    """Public — upsert a single answer; updates last_activity_at."""
+@limiter.limit("30/minute")
+async def save_answer(request: Request, slug: str, body: ExamAnswerRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — upsert a single answer; updates last_activity_at.
+
+    Rate-limited per-IP (not per-participant): session_token lives in the
+    JSON body here rather than a query param, and slowapi's key_func is
+    called synchronously before the body is parsed, so the existing
+    get_session_token_key (query-param-based) pattern used elsewhere can't
+    reach it. 30/minute comfortably covers a real participant answering
+    every question in a fast quiz while still bounding scripted floods.
+    """
     try:
         return await svc.save_answer(
             db, slug, body.session_token, body.question_id, body.selected_option_index,
@@ -140,13 +149,15 @@ async def run_code(request: Request, slug: str, body: RunCodeRequest, db: AsyncS
 
 
 @router.post("/e/{slug}/submit", response_model=ExamSubmitResponse)
+@limiter.limit("10/minute")
 async def submit_exam(
+    request: Request,
     slug: str,
     body: ExamSubmitRequest,
     db: AsyncSession = Depends(get_async_db),
     redis: RedisClient = Depends(get_redis)
 ):
-    """Public — submit exam; score and return full result."""
+    """Public — submit exam; score and return full result. Rate-limited per-IP (see save_answer for why not per-token)."""
     try:
         return await svc.submit_exam(db, slug, body.session_token, redis=redis)
     except QuizNotFoundError as e:
@@ -156,8 +167,9 @@ async def submit_exam(
 
 
 @router.post("/e/{slug}/result", response_model=ExamSubmitResponse)
-async def get_my_result(slug: str, body: ExamSubmitRequest, db: AsyncSession = Depends(get_async_db)):
-    """Public — retrieve participant's own score/breakdown after submission."""
+@limiter.limit("20/minute")
+async def get_my_result(request: Request, slug: str, body: ExamSubmitRequest, db: AsyncSession = Depends(get_async_db)):
+    """Public — retrieve participant's own score/breakdown after submission. Rate-limited per-IP (see save_answer for why not per-token)."""
     try:
         return await svc.get_my_result(db, slug, body.session_token)
     except QuizNotFoundError as e:
