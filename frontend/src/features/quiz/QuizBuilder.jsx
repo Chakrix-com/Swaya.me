@@ -2932,6 +2932,7 @@ export default function QuizBuilder() {
     try {
       await questionAPI.delete(questionId)
       message.success(t('quiz.deleteQuestionSuccess'))
+      if (editingQuestion === questionId) setEditingQuestion(null)
       loadQuiz()
     } catch (error) {
       const errorMsg = error.response?.data?.detail || t('quiz.deleteQuestionError')
@@ -4021,6 +4022,18 @@ export default function QuizBuilder() {
                                 </div>
                               )}
                             </div>
+                            {isDraftQuiz && question.question_type !== 'coding_challenge' && (
+                              <button
+                                type="button"
+                                className="qb-q-delete-btn"
+                                title={t('quiz.deleteQuestion', 'Delete Question')}
+                                aria-label={t('quiz.deleteQuestion', 'Delete Question')}
+                                disabled={loading}
+                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteQuestionId(question.id) }}
+                              >
+                                <DeleteOutlined />
+                              </button>
+                            )}
                           </div>
                         )}
                       </SortableItem>
@@ -4816,7 +4829,7 @@ export default function QuizBuilder() {
       <SafeConfirm
         open={!!confirmDeleteQuestionId}
         title={t('quiz.deleteQuestionConfirm')}
-        okText={t('common.submit')}
+        okText={t('common.delete')}
         cancelText={t('common.cancel')}
         onConfirm={() => { handleDeleteQuestion(confirmDeleteQuestionId); setConfirmDeleteQuestionId(null) }}
         onCancel={() => setConfirmDeleteQuestionId(null)}
