@@ -2069,6 +2069,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "மீதமுள்ள நேரம்",
     "questionTimeRemaining": "கேள்வி நேரம்",
+    "questionTimeUp": "இந்தக் கேள்விக்கான நேரம் முடிந்தது — உங்கள் பதில் பூட்டப்பட்டது",
     "submitExam": "டெஸ்ட்டை சமர்ப்பி",
     "submitConfirm": "நீங்கள் டெஸ்ட்டை சமர்ப்பிக்க விரும்புகிறீர்களா?",
     "submitting": "சமர்ப்பிக்கிறது...",

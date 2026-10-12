@@ -41,6 +41,17 @@ _BIOMETRIC_EVENT_TYPES = frozenset({
 })
 
 
+# Webcam face-detection events — logged, shown to the candidate as a warning and
+# deducted from integrity_score, but (like FAST_FIRST_ANSWER) they do NOT
+# increment violation_count and can never lock the session. Client-side face
+# detection has real false positives (poor lighting, leaning out of frame, a
+# face on a poster behind the candidate), so the host reviews these against the
+# snapshots instead of the candidate being auto-locked/auto-submitted by them.
+_WARN_ONLY_EVENT_TYPES = frozenset({
+    "FACE_NOT_DETECTED", "MULTIPLE_FACES_DETECTED",
+})
+
+
 def _session_key(token: str) -> str:
     return f"proctor:session:{token}"
 
@@ -236,6 +247,22 @@ async def _check_escalation(
     # Deduct from integrity score — capped at 0, never below
     deduction = _VIOLATION_SCORE_DEDUCTIONS.get(event_type, 5)
     new_integrity = max(0, redis_data.get("integrity_score", 100) - deduction)
+
+    if event_type in _WARN_ONLY_EVENT_TYPES:
+        redis_data["integrity_score"] = new_integrity
+        await _set_redis_session(redis, session_token, redis_data)
+        result = await db.execute(
+            select(ProctoringSession).where(
+                ProctoringSession.participant_id == redis_data["participant_id"],
+                ProctoringSession.quiz_id == redis_data["quiz_id"],
+            )
+        )
+        sess = result.scalar_one_or_none()
+        if sess:
+            sess.integrity_score = new_integrity
+        # violations_remaining=None: nothing was used up, so the candidate's
+        # warning must not claim they are any closer to a lock.
+        return ViolationEventResponse(logged=True, is_locked=False, violations_remaining=None, silent=False)
 
     lock_threshold = redis_data.get("lock_threshold", 3)
     new_count = redis_data.get("violation_count", 0) + 1

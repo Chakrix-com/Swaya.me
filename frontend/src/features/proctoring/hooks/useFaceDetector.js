@@ -1,70 +1,103 @@
 import { useEffect, useRef } from 'react';
 
-export function useFaceDetector({ videoRef, config, reportViolation, enabled }) {
-  const detectorRef = useRef(null);
-  const faceAbsentSince = useRef(null);
-  const gazeAwaySince = useRef(null);
-  const animFrameRef = useRef(null);
+const DETECT_INTERVAL_MS = 500;
+const MULTI_FACE_WARN_SEC = 3;
+// Minimum gap between two reports of the same condition, so a condition that
+// persists escalates steadily instead of burning through every warning at once.
+const REPEAT_COOLDOWN_MS = 15 * 1000;
+
+async function createDetector() {
+  // Lazy-load mediapipe only when webcam is actually required
+  const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
+  const vision = await FilesetResolver.forVisionTasks('/mediapipe/wasm');
+  const options = (delegate) => ({
+    baseOptions: { modelAssetPath: '/mediapipe/models/blaze_face_short_range.tflite', delegate },
+    runningMode: 'VIDEO',
+    minDetectionConfidence: 0.5,
+  });
+  try {
+    return await FaceDetector.createFromOptions(vision, options('GPU'));
+  } catch (_) {
+    // No usable WebGL (VDI / remote desktop / software rendering) — run on CPU
+    return await FaceDetector.createFromOptions(vision, options('CPU'));
+  }
+}
+
+// videoEl is the mounted <video> element itself (useWebcamMonitor exposes it as
+// state) — NOT a ref object. Its ref is a callback ref with no `.current`, which
+// is what silently kept this detector from ever starting before.
+export function useFaceDetector({ videoEl, config, reportViolation, enabled }) {
+  // Latest config/reporter without re-creating the detector when they change identity
+  const configRef = useRef(config);
+  const reportRef = useRef(reportViolation);
+  useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => { reportRef.current = reportViolation; }, [reportViolation]);
 
   useEffect(() => {
-    if (!enabled || !videoRef?.current) return;
+    if (!enabled || !videoEl) return;
 
     let cancelled = false;
+    let detector = null;
+    let intervalId = null;
+    let lastTimestamp = 0;
+    let detectFailed = false;
+    const since = { absent: null, multi: null };
+    const lastReported = { absent: 0, multi: 0 };
 
-    async function init() {
-      try {
-        // Lazy-load mediapipe only when webcam is actually required
-        const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
-        const vision = await FilesetResolver.forVisionTasks(
-          '/mediapipe/wasm'
-        );
-        detectorRef.current = await FaceDetector.createFromOptions(vision, {
-          baseOptions: { 
-            modelAssetPath: '/mediapipe/models/blaze_face_short_range.tflite', 
-            delegate: 'GPU' 
-          },
-          runningMode: 'VIDEO',
-          minDetectionConfidence: 0.5,
-        });
-        if (!cancelled) detect();
-      } catch (_) {
-        // Face detection unavailable — fail silently
-      }
+    // Reports once the condition has held for thresholdMs, then at most once
+    // per cooldown for as long as it keeps holding.
+    function track(key, active, thresholdMs, eventType, metadata) {
+      const now = Date.now();
+      if (!active) { since[key] = null; return; }
+      if (since[key] == null) since[key] = now;
+      if (now - since[key] < thresholdMs) return;
+      if (now - lastReported[key] < Math.max(thresholdMs, REPEAT_COOLDOWN_MS)) return;
+      lastReported[key] = now;
+      reportRef.current?.('webcam_monitoring', eventType, metadata);
     }
 
     function detect() {
-      if (cancelled || !detectorRef.current || !videoRef.current) return;
+      if (cancelled || !detector) return;
+      // No decoded frame yet (stream still starting) — nothing to judge
+      if (videoEl.readyState < 2 || !videoEl.videoWidth) return;
 
+      let faces;
       try {
-        const result = detectorRef.current.detectForVideo(videoRef.current, Date.now());
-        const faceAbsentWarn = (config?.face_absent_warn_sec || 10) * 1000;
-        const gazeAwayWarn = (config?.gaze_away_warn_sec || 5) * 1000;
-
-        if (result.detections.length === 0) {
-          if (!faceAbsentSince.current) faceAbsentSince.current = Date.now();
-          else if (Date.now() - faceAbsentSince.current > faceAbsentWarn) {
-            reportViolation('webcam_monitoring', 'FACE_NOT_DETECTED', {});
-            faceAbsentSince.current = null;
-          }
-        } else {
-          faceAbsentSince.current = null;
+        // detectForVideo requires strictly increasing timestamps
+        const ts = Math.max(performance.now(), lastTimestamp + 1);
+        lastTimestamp = ts;
+        faces = detector.detectForVideo(videoEl, ts).detections.length;
+      } catch (err) {
+        // Typically: no WebGL at all (mediapipe needs it to read video frames
+        // even on the CPU delegate). Log once — not a candidate violation.
+        if (!detectFailed) {
+          detectFailed = true;
+          console.warn('[proctoring] face detection cannot read camera frames:', err?.message || err);
         }
+        return;
+      }
 
-        if (result.detections.length > 1) {
-          reportViolation('webcam_monitoring', 'MULTIPLE_FACES_DETECTED', {
-            count: result.detections.length,
-          });
-        }
-      } catch (_) {}
-
-      animFrameRef.current = requestAnimationFrame(detect);
+      const cfg = configRef.current || {};
+      // A covered/blocked camera yields no face, so it is reported here too
+      track('absent', faces === 0, (cfg.face_absent_warn_sec || 10) * 1000, 'FACE_NOT_DETECTED', {});
+      track('multi', faces > 1, (cfg.multi_face_warn_sec || MULTI_FACE_WARN_SEC) * 1000, 'MULTIPLE_FACES_DETECTED', { count: faces });
     }
 
-    init();
+    createDetector()
+      .then((d) => {
+        if (cancelled) { d.close?.(); return; }
+        detector = d;
+        intervalId = setInterval(detect, DETECT_INTERVAL_MS);
+      })
+      .catch((err) => {
+        // Face detection unavailable — exam must still be takeable
+        console.warn('[proctoring] face detection unavailable:', err?.message || err);
+      });
 
     return () => {
       cancelled = true;
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (intervalId) clearInterval(intervalId);
+      try { detector?.close?.(); } catch (_) {}
     };
-  }, [enabled, videoRef, config, reportViolation]);
+  }, [enabled, videoEl]);
 }

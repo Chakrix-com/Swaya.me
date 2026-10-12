@@ -442,7 +442,7 @@ function StartScreen({ info, proctoringConfig, onStart, loading, startError = nu
 
 const hasAnswerValue = (val) => Array.isArray(val) ? val.length > 0 : val != null
 
-function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, collapsed, onToggle }) {
+function QuestionPalette({ questions, answers, flagged, expired, currentIdx, onNavigate, collapsed, onToggle }) {
   const { t } = useTranslation()
   const answered = questions.filter((q) => hasAnswerValue(answers[q.id])).length
   const flaggedCount = flagged.size
@@ -473,6 +473,7 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
             const isAnswered = hasAnswerValue(answers[q.id])
             const isFlagged = flagged.has(q.id)
             const isCurrent = i === currentIdx
+            const isExpired = !!expired?.has(q.id)
             let btnStyle = { minWidth: 36, fontWeight: isCurrent ? 700 : 400 }
             let btnType = 'default'
             if (isCurrent) { btnType = 'primary' }
@@ -484,6 +485,7 @@ function QuestionPalette({ questions, answers, flagged, currentIdx, onNavigate, 
                 size="small"
                 type={btnType}
                 style={btnStyle}
+                disabled={isExpired && !isCurrent}
                 onClick={() => onNavigate(i)}
                 aria-label={`${t('quiz.question')} ${i + 1}${isCurrent ? ` (${t('exam.current', 'current')})` : ''}${isAnswered ? ` (${t('exam.answered', 'answered')})` : ''}${isFlagged ? ` (${t('exam.flagged', 'flagged')})` : ''}`}
                 aria-current={isCurrent ? 'true' : undefined}
@@ -512,6 +514,7 @@ function QuestionScreen({
   globalSecondsLeft,
   questionSecondsLeft,
   hasPerQuestionTimers,
+  questionExpired,
   saving,
   isFlagged,
   onToggleFlag,
@@ -572,6 +575,14 @@ function QuestionScreen({
             style={{ fontSize: 13, padding: '3px 10px' }}
           >
             {t('exam.questionTimeRemaining')}: {formatSeconds(questionSecondsLeft)}
+          </Tag>
+        </div>
+      )}
+
+      {questionExpired && (
+        <div style={{ marginBottom: 8 }}>
+          <Tag icon={<ClockCircleOutlined />} color="red" style={{ fontSize: 13, padding: '3px 10px' }}>
+            {t('exam.questionTimeUp')}
           </Tag>
         </div>
       )}
@@ -964,6 +975,12 @@ export default function ExamSession() {
   const [questionSecondsLeft, setQuestionSecondsLeft] = useState(null)
   const globalTimerRef = useRef(null)
   const questionTimerRef = useRef(null)
+  // Per-question time budget left (ms), keyed by question id — survives navigating
+  // away and back, so switching questions pauses that question's clock instead of
+  // handing back the full max_time_seconds.
+  const questionRemainingMsRef = useRef({})
+  const activeQuestionTimerRef = useRef(null) // { questionId, baseMs, startedMs }
+  const expiredQuestionsRef = useRef(expiredQuestions)
   // Ref so the timer interval always calls the latest handleAutoSubmit (avoids stale closure)
   const handleAutoSubmitRef = useRef(null)
 
@@ -1052,26 +1069,47 @@ export default function ExamSession() {
       clearInterval(questionTimerRef.current)
       questionTimerRef.current = null
     }
+    // Bank whatever is left on the question being paused (ms precision, so
+    // rapidly flipping between questions can't shave time off the clock).
+    const active = activeQuestionTimerRef.current
+    if (active) {
+      questionRemainingMsRef.current[active.questionId] =
+        Math.max(0, active.baseMs - (Date.now() - active.startedMs))
+      activeQuestionTimerRef.current = null
+    }
     setQuestionSecondsLeft(null)
   }, [])
 
+  const expireQuestion = useCallback((questionId) => {
+    const nextExpired = new Set([...expiredQuestionsRef.current, questionId])
+    expiredQuestionsRef.current = nextExpired
+    setExpiredQuestions(nextExpired)
+    // Auto-advance to the next question that still has time; stay put if none
+    setCurrentIdx(ci => {
+      const next = questions.findIndex((q, i) => i > ci && !nextExpired.has(q.id))
+      return next !== -1 ? next : ci
+    })
+  }, [questions])
+
   const startQuestionTimer = useCallback((maxSeconds, questionId) => {
     stopQuestionTimer()
-    setQuestionSecondsLeft(maxSeconds)
+    const baseMs = questionRemainingMsRef.current[questionId] ?? maxSeconds * 1000
+    const startedMs = Date.now()
+    activeQuestionTimerRef.current = { questionId, baseMs, startedMs }
+    setQuestionSecondsLeft(Math.ceil(baseMs / 1000))
 
+    // Wall-clock based so a throttled background tab can't slow the countdown
     questionTimerRef.current = setInterval(() => {
-      setQuestionSecondsLeft(prev => {
-        if (prev <= 1) {
-          stopQuestionTimer()
-          // Mark question as expired and auto-advance
-          setExpiredQuestions(old => new Set([...old, questionId]))
-          setCurrentIdx(ci => ci + 1 < questions.length ? ci + 1 : ci)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-  }, [stopQuestionTimer, questions.length])
+      const leftMs = baseMs - (Date.now() - startedMs)
+      if (leftMs <= 0) {
+        stopQuestionTimer()
+        questionRemainingMsRef.current[questionId] = 0
+        expireQuestion(questionId)
+        return
+      }
+      setQuestionSecondsLeft(Math.ceil(leftMs / 1000))
+    }, 250)
+  }, [stopQuestionTimer, expireQuestion])
 
   // Restart question timer when question changes
   useEffect(() => {
@@ -1170,6 +1208,7 @@ export default function ExamSession() {
 
   const handleAnswerSelect = (optionIndex) => {
     const q = questions[currentIdx]
+    if (expiredQuestions.has(q.id)) return // time's up — answer is locked
     setAnswers(prev => ({ ...prev, [q.id]: optionIndex }))
     // Fire-and-forget save
     examAPI.saveAnswer(slug, buildAnswerPayload(q, optionIndex)).catch(() => {})
@@ -1183,7 +1222,10 @@ export default function ExamSession() {
       const q = questions[currentIdx]
       const optIdx = answers[q.id] ?? null
       await examAPI.saveAnswer(slug, buildAnswerPayload(q, optIdx))
-      setCurrentIdx(ci => Math.min(ci + 1, questions.length - 1))
+      setCurrentIdx(ci => {
+        const next = questions.findIndex((nq, i) => i > ci && !expiredQuestions.has(nq.id))
+        return next !== -1 ? next : Math.min(ci + 1, questions.length - 1)
+      })
     } catch {
       // ignore
     } finally {
@@ -1206,7 +1248,10 @@ export default function ExamSession() {
     })
   }
 
-  const handleNavigatePalette = (idx) => { setCurrentIdx(idx) }
+  const handleNavigatePalette = (idx) => {
+    if (expiredQuestions.has(questions[idx]?.id)) return // can't go back to expired questions
+    setCurrentIdx(idx)
+  }
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
@@ -1323,6 +1368,7 @@ export default function ExamSession() {
               questions={questions}
               answers={answers}
               flagged={flagged}
+              expired={expiredQuestions}
               currentIdx={currentIdx}
               onNavigate={handleNavigatePalette}
               collapsed={paletteCollapsed}
@@ -1343,6 +1389,7 @@ export default function ExamSession() {
                   globalSecondsLeft={globalSecondsLeft}
                   questionSecondsLeft={questionSecondsLeft}
                   hasPerQuestionTimers={hasPerQuestionTimers}
+                  questionExpired={expiredQuestions.has(questions[currentIdx]?.id)}
                   saving={saving}
                   isFlagged={flagged.has(questions[currentIdx]?.id)}
                   onToggleFlag={handleToggleFlag}

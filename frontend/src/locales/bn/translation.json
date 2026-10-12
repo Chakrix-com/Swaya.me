@@ -2069,6 +2069,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "বাকি সময়",
     "questionTimeRemaining": "প্রশ্নের সময়",
+    "questionTimeUp": "এই প্রশ্নের সময় শেষ — আপনার উত্তর লক করা হয়েছে",
     "submitExam": "টেস্ট জমা দিন",
     "submitConfirm": "আপনি কি টেস্ট জমা দিতে চান?",
     "submitting": "জমা দেওয়া হচ্ছে...",

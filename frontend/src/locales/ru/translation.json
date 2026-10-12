@@ -2071,6 +2071,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "Осталось времени",
     "questionTimeRemaining": "Время вопроса",
+    "questionTimeUp": "Время на этот вопрос истекло — ваш ответ заблокирован",
     "submitExam": "Сдать тест",
     "submitConfirm": "Вы уверены, что хотите сдать тест?",
     "submitting": "Отправка...",

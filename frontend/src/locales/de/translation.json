@@ -2069,6 +2069,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "Verbleibende Zeit",
     "questionTimeRemaining": "Fragezeit",
+    "questionTimeUp": "Die Zeit für diese Frage ist abgelaufen – Ihre Antwort ist gesperrt",
     "submitExam": "Test einreichen",
     "submitConfirm": "Möchten Sie die Test einreichen?",
     "submitting": "Wird eingereicht...",

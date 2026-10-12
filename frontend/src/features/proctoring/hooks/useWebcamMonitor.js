@@ -85,5 +85,7 @@ export function useWebcamMonitor({ stream, config, reportViolation, enabled, ses
     };
   }, [enabled, stream, videoEl, config, reportViolation, examDurationSeconds, captureNow]);
 
-  return videoRef;
+  // videoEl is exposed so consumers that need the element itself (face
+  // detection) re-run when it mounts — the callback ref has no `.current`.
+  return { videoRef, videoEl };
 }

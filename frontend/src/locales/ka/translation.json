@@ -2069,6 +2069,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "ಉಳಿದ ಸಮಯ",
     "questionTimeRemaining": "ಪ್ರಶ್ನೆ ಸಮಯ",
+    "questionTimeUp": "ಈ ಪ್ರಶ್ನೆಯ ಸಮಯ ಮುಗಿದಿದೆ — ನಿಮ್ಮ ಉತ್ತರವನ್ನು ಲಾಕ್ ಮಾಡಲಾಗಿದೆ",
     "submitExam": "ಟೆಸ್ಟ್ ಸಲ್ಲಿಸಿ",
     "submitConfirm": "ನೀವು ಟೆಸ್ಟ್ ಸಲ್ಲಿಸಲು ಬಯಸುವಿರಾ?",
     "submitting": "ಸಲ್ಲಿಸಲಾಗುತ್ತಿದೆ...",

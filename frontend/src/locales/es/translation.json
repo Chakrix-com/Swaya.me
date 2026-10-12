@@ -2069,6 +2069,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "Tiempo restante",
     "questionTimeRemaining": "Tiempo de pregunta",
+    "questionTimeUp": "Se acabó el tiempo para esta pregunta: tu respuesta está bloqueada",
     "submitExam": "Enviar prueba",
     "submitConfirm": "¿Está seguro de enviar la prueba?",
     "submitting": "Enviando...",

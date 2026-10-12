@@ -2111,6 +2111,7 @@
     "questionOf": "Question {{current}} of {{total}}",
     "timeRemaining": "Time Remaining",
     "questionTimeRemaining": "Question Time",
+    "questionTimeUp": "Time's up for this question — your answer is locked",
     "submitExam": "Submit Test",
     "submitConfirm": "Are you sure you want to submit your test?",
     "submitting": "Submitting…",

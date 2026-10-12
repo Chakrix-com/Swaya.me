@@ -322,7 +322,7 @@ export function ProctoringGate({ children, initialWarned = false, examDurationSe
     },
   });
 
-  const videoRef = useWebcamMonitor({
+  const { videoRef, videoEl } = useWebcamMonitor({
     stream,
     config: webcamRule?.config,
     reportViolation,
@@ -333,7 +333,7 @@ export function ProctoringGate({ children, initialWarned = false, examDurationSe
   });
 
   useFaceDetector({
-    videoRef,
+    videoEl,
     config: webcamRule?.config,
     reportViolation,
     enabled: !!stream && webcamRequired,

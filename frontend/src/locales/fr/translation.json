@@ -2071,6 +2071,7 @@
     "questionOf": "{{current}} / {{total}}",
     "timeRemaining": "Temps restant",
     "questionTimeRemaining": "Temps de la question",
+    "questionTimeUp": "Le temps est écoulé pour cette question — votre réponse est verrouillée",
     "submitExam": "Soumettre le test",
     "submitConfirm": "Voulez-vous soumettre le test ?",
     "submitting": "Envoi en cours...",
