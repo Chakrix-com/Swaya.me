@@ -120,6 +120,14 @@ function FullscreenGate({ children, reportViolation }) {
   );
 }
 
+// Mounts only once every gate (warning, webcam, identity, fullscreen) has been
+// passed and the questions are actually on screen.
+function GateReadySignal({ onReady }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onReady?.(); }, []);
+  return null;
+}
+
 const RULE_KEYS = [
   'tab_switch_detect', 'copy_paste_block', 'right_click_block',
   'fullscreen_enforce', 'multi_tab_detect', 'devtools_detect',
@@ -295,7 +303,7 @@ function WebcamPip({ stream }) {
   );
 }
 
-export function ProctoringGate({ children, initialWarned = false, examDurationSeconds, captureRef }) {
+export function ProctoringGate({ children, initialWarned = false, examDurationSeconds, captureRef, onReady }) {
   const { t } = useTranslation();
   const { resolvedRules, webcamRequired, reportViolation, sessionToken, ruleSet } = useProctoringContext();
   const [warned, setWarned] = useState(initialWarned);
@@ -380,6 +388,7 @@ export function ProctoringGate({ children, initialWarned = false, examDurationSe
   const examContent = (
     <>
       <ProctoringModuleActivator />
+      <GateReadySignal onReady={onReady} />
       {webcamRequired && <WebcamPip stream={stream} />}
       {children}
     </>

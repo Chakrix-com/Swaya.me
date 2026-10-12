@@ -6,13 +6,15 @@ const MULTI_FACE_WARN_SEC = 3;
 // persists escalates steadily instead of burning through every warning at once.
 const REPEAT_COOLDOWN_MS = 15 * 1000;
 
-async function createDetector() {
+// runningMode 'VIDEO' for the continuous in-exam monitor, 'IMAGE' for one-off
+// still checks (identity capture).
+export async function createFaceDetector(runningMode = 'VIDEO') {
   // Lazy-load mediapipe only when webcam is actually required
   const { FaceDetector, FilesetResolver } = await import('@mediapipe/tasks-vision');
   const vision = await FilesetResolver.forVisionTasks('/mediapipe/wasm');
   const options = (delegate) => ({
     baseOptions: { modelAssetPath: '/mediapipe/models/blaze_face_short_range.tflite', delegate },
-    runningMode: 'VIDEO',
+    runningMode,
     minDetectionConfidence: 0.5,
   });
   try {
@@ -83,7 +85,7 @@ export function useFaceDetector({ videoEl, config, reportViolation, enabled }) {
       track('multi', faces > 1, (cfg.multi_face_warn_sec || MULTI_FACE_WARN_SEC) * 1000, 'MULTIPLE_FACES_DETECTED', { count: faces });
     }
 
-    createDetector()
+    createFaceDetector()
       .then((d) => {
         if (cancelled) { d.close?.(); return; }
         detector = d;

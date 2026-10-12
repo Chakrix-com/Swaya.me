@@ -47,6 +47,17 @@ _BIOMETRIC_EVENT_TYPES = frozenset({
 # detection has real false positives (poor lighting, leaning out of frame, a
 # face on a poster behind the candidate), so the host reviews these against the
 # snapshots instead of the candidate being auto-locked/auto-submitted by them.
+def _utc_iso(dt):
+    """ISO string with an explicit UTC offset. MySQL hands DATETIMEs back naive,
+    and a bare ISO string is read by browsers as *local* time — which showed
+    event times in UTC next to snapshot times in the host's local timezone."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
 _WARN_ONLY_EVENT_TYPES = frozenset({
     "FACE_NOT_DETECTED", "MULTIPLE_FACES_DETECTED",
 })
@@ -485,12 +496,12 @@ async def get_violation_report(quiz_id: int, tenant_id: int, db: AsyncSession) -
             "lock_reason": sess.lock_reason if sess else None,
             "webcam_required": sess.webcam_required if sess else webcam_required,
             "webcam_granted": sess.webcam_granted if sess else _has_snapshots(quiz_id, pid),
-            "session_started_at": sess.session_started_at.isoformat() if sess and sess.session_started_at else None,
+            "session_started_at": _utc_iso(sess.session_started_at) if sess else None,
             "events": [
                 {
                     "event_type": e.event_type,
                     "rule_id": e.rule_id,
-                    "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
+                    "occurred_at": _utc_iso(e.occurred_at),
                     "metadata": e.event_metadata,
                 }
                 for e in events

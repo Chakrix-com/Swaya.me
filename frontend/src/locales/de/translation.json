@@ -2427,7 +2427,10 @@
       "instruction": "Platzieren Sie Ihr Gesicht deutlich im Rahmen und klicken Sie dann auf Aufnehmen.",
       "captureButton": "Foto aufnehmen",
       "verified": "Identität bestätigt. Sie können beginnen.",
-      "startExam": "Prüfung starten"
+      "startExam": "Prüfung starten",
+      "cameraBlocked": "Das Kamerabild scheint verdeckt oder zu dunkel zu sein. Decken Sie die Kamera auf, prüfen Sie die Beleuchtung und versuchen Sie es erneut.",
+      "noFace": "Kein Gesicht erkannt. Positionieren Sie Ihr Gesicht deutlich im Bild und versuchen Sie es erneut.",
+      "multipleFaces": "Mehr als ein Gesicht erkannt. Nur Sie dürfen im Bild sein."
     },
     "integrityClean": "Sauber",
     "integritySuspicious": "Verdächtig",

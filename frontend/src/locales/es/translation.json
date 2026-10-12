@@ -2427,7 +2427,10 @@
       "instruction": "Coloque su rostro claramente en el marco y luego haga clic en Capturar.",
       "captureButton": "Capturar foto",
       "verified": "Identidad verificada. Estás listo para comenzar.",
-      "startExam": "Iniciar examen"
+      "startExam": "Iniciar examen",
+      "cameraBlocked": "La vista de la cámara parece estar bloqueada o demasiado oscura. Destapa la cámara, revisa la iluminación e inténtalo de nuevo.",
+      "noFace": "No se detectó ningún rostro. Coloca tu rostro claramente en el encuadre e inténtalo de nuevo.",
+      "multipleFaces": "Se detectó más de un rostro. Solo tú debes aparecer en el encuadre."
     },
     "integrityClean": "Limpio",
     "integritySuspicious": "Sospechoso",

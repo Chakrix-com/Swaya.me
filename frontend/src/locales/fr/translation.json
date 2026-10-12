@@ -2429,7 +2429,10 @@
       "instruction": "Positionnez clairement votre visage dans le cadre, puis cliquez sur Capturer.",
       "captureButton": "Capturer la photo",
       "verified": "Identité vérifiée. Vous êtes prêt à commencer.",
-      "startExam": "Démarrer l'examen"
+      "startExam": "Démarrer l'examen",
+      "cameraBlocked": "La vue de la caméra semble obstruée ou trop sombre. Découvrez la caméra, vérifiez l'éclairage et réessayez.",
+      "noFace": "Aucun visage détecté. Placez votre visage bien dans le cadre et réessayez.",
+      "multipleFaces": "Plusieurs visages détectés. Vous seul devez être dans le cadre."
     },
     "integrityClean": "Propre",
     "integritySuspicious": "Suspect",

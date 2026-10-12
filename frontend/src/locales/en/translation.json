@@ -2460,7 +2460,10 @@
       "instruction": "Position your face clearly in the frame, then click Capture.",
       "captureButton": "Capture Photo",
       "verified": "Identity verified. You're ready to begin.",
-      "startExam": "Start Exam"
+      "startExam": "Start Exam",
+      "cameraBlocked": "Your camera view appears to be blocked or too dark. Uncover the camera, check the lighting and try again.",
+      "noFace": "No face detected. Position your face clearly in the frame and try again.",
+      "multipleFaces": "More than one face detected. Only you should be in the frame."
     },
     "integrityClean": "Clean",
     "integritySuspicious": "Suspicious",

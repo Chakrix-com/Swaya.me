@@ -947,6 +947,9 @@ export default function ExamSession() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
+  // True once ProctoringGate has let the candidate through to the questions
+  const [examReady, setExamReady] = useState(false)
+  const handleExamReady = useCallback(() => setExamReady(true), [])
   const [phase, setPhase] = useState('loading') // loading | status | start | taking | submitting | score | timesup | error
   const [examInfo, setExamInfo] = useState(null)
   const [examResult, setExamResult] = useState(null)
@@ -1113,7 +1116,9 @@ export default function ExamSession() {
 
   // Restart question timer when question changes
   useEffect(() => {
-    if (phase !== 'taking') return
+    // examReady: don't burn question time while the candidate is still on the
+    // proctoring warning / webcam / identity / fullscreen screens
+    if (phase !== 'taking' || !examReady) return
     const q = questions[currentIdx]
     if (!q) return
     if (q.max_time_seconds && !expiredQuestions.has(q.id)) {
@@ -1122,7 +1127,7 @@ export default function ExamSession() {
       stopQuestionTimer()
     }
     return () => stopQuestionTimer()
-  }, [currentIdx, phase, questions, expiredQuestions, startQuestionTimer, stopQuestionTimer])
+  }, [currentIdx, phase, examReady, questions, expiredQuestions, startQuestionTimer, stopQuestionTimer])
 
   useEffect(() => {
     return () => {
@@ -1168,6 +1173,7 @@ export default function ExamSession() {
       setStartedAt(data.started_at)
       setQuestions(data.questions)
       setCurrentIdx(0)
+      setExamReady(false)
 
       if (data.time_limit_seconds) {
         startGlobalTimer(data.time_limit_seconds, data.started_at)
@@ -1364,7 +1370,7 @@ export default function ExamSession() {
 
         {phase === 'taking' && questions.length > 0 && (
           <>
-            <QuestionPalette
+            {examReady && <QuestionPalette
               questions={questions}
               answers={answers}
               flagged={flagged}
@@ -1373,9 +1379,9 @@ export default function ExamSession() {
               onNavigate={handleNavigatePalette}
               collapsed={paletteCollapsed}
               onToggle={() => setPaletteCollapsed(c => !c)}
-            />
+            />}
             <ProctoringProvider quizId={examInfo?.quiz_id} sessionToken={sessionToken} onAutoSubmit={handleAutoSubmit}>
-              <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef}>
+              <ProctoringGate initialWarned={!!proctoringConfig} examDurationSeconds={examInfo?.exam_time_limit_seconds} captureRef={captureSnapshotRef} onReady={handleExamReady}>
                 <QuestionScreen
                   key={questions[currentIdx]?.id}
                   question={questions[currentIdx]}
