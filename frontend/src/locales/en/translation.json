@@ -2293,7 +2293,14 @@
     "placeholder": "Tell us what worked well, what can improve, or report a bug...",
     "submitButton": "Submit Feedback",
     "successMessage": "Thank you for your feedback!",
-    "errorMessage": "Failed to submit feedback. Please try again."
+    "errorMessage": "Failed to submit feedback. Please try again.",
+    "attachButton": "Attach screenshot",
+    "attachHint": "PNG/JPG, up to {{count}} images, 5 MB each — or paste with Ctrl+V",
+    "attachTooLarge": "Each image must be 5 MB or smaller",
+    "attachLimit": "You can attach up to {{count}} images",
+    "removeAttachment": "Remove image",
+    "screenshot": "Screenshot",
+    "screenshots": "Screenshots"
   },
   "tooltip": {
     "themeToggle": "Switch between light and dark mode",

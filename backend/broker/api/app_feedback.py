@@ -1,9 +1,13 @@
 """
 Global app feedback API endpoints
 """
-from fastapi import APIRouter, Depends, Query, Request
+import json
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 from persistence.database_async import get_async_db
@@ -14,6 +18,9 @@ from features.app_feedback.schemas import (
     AppFeedbackListResponse,
 )
 from features.app_feedback.service_async import AppFeedbackServiceAsync
+from features.app_feedback import attachments as feedback_attachments
+from persistence.models.app_feedback import AppFeedback
+from shared.utils.rate_limiter import limiter
 
 # Public endpoint (no auth prefix)
 router = APIRouter(prefix="/feedback", tags=["feedback"])
@@ -37,6 +44,46 @@ async def submit_app_feedback(
     service = AppFeedbackServiceAsync()
     feedback = await service.submit(db, body, current_user, user_agent)
     return AppFeedbackResponse.from_orm(feedback)
+
+
+@router.post("/app/with-attachments", response_model=AppFeedbackResponse, status_code=201)
+@limiter.limit("10/hour")
+async def submit_app_feedback_with_attachments(
+    request: Request,
+    payload: str = Form(..., description="AppFeedbackSubmitRequest as JSON"),
+    files: List[UploadFile] = File(...),
+    current_user: Optional[CurrentUser] = Depends(get_optional_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Feedback with up to 3 screenshots (multipart). Same rules as /app for the text."""
+    try:
+        body = AppFeedbackSubmitRequest.model_validate(json.loads(payload))
+    except (ValueError, ValidationError):
+        raise HTTPException(status_code=422, detail="Invalid feedback payload")
+    # Validate images before the feedback row exists, so a bad upload stores nothing
+    images = await feedback_attachments.read_and_validate(files)
+
+    service = AppFeedbackServiceAsync()
+    feedback = await service.submit(db, body, current_user, request.headers.get("user-agent"))
+    if images:
+        feedback.attachments = feedback_attachments.save(feedback.id, images)
+        await db.commit()
+        await db.refresh(feedback)
+    return AppFeedbackResponse.from_orm(feedback)
+
+
+@admin_router.get("/app-feedback/{feedback_id}/attachments/{name}")
+async def get_app_feedback_attachment(
+    feedback_id: int,
+    name: str,
+    _: object = Depends(require_super_admin),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Serve one feedback screenshot. Super admin only."""
+    feedback = await db.get(AppFeedback, feedback_id)
+    if not feedback or name not in (feedback.attachments or []):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    return FileResponse(path=str(feedback_attachments.resolve(feedback_id, name)), media_type="image/png")
 
 
 @admin_router.get("/app-feedback", response_model=AppFeedbackListResponse)

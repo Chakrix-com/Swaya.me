@@ -3,7 +3,7 @@ Schemas for global app feedback
 """
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, validator, Field, computed_field
 from shared.utils.html_sanitizer import sanitize_plain
 
 
@@ -30,6 +30,13 @@ class AppFeedbackResponse(BaseModel):
     display_name: Optional[str]
     user_email: Optional[str]
     created_at: datetime
+    attachments: Optional[List[str]] = None
+
+    @computed_field
+    @property
+    def attachment_urls(self) -> List[str]:
+        # Served by the super-admin-only route in broker/api/app_feedback.py
+        return [f"/api/v1/admin/app-feedback/{self.id}/attachments/{name}" for name in (self.attachments or [])]
 
     class Config:
         from_attributes = True

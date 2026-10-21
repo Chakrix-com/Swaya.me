@@ -344,6 +344,15 @@ export const aiAPI = {
 
 export const appFeedbackAPI = {
   submit: (data) => api.post('/feedback/app', data),
+  submitWithAttachments: (data, files) => {
+    const form = new FormData()
+    form.append('payload', JSON.stringify(data))
+    files.forEach((f) => form.append('files', f, f.name || 'screenshot.png'))
+    return api.post('/feedback/app/with-attachments', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: LONG_TIMEOUT,
+    })
+  },
   listAppFeedback: (params) => api.get('/admin/app-feedback', { params }),
 }
 

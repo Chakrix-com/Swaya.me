@@ -2262,7 +2262,14 @@
     "placeholder": "Dites-nous ce qui a bien fonctionné, ce qui peut s'améliorer, ou signalez un bug...",
     "submitButton": "Envoyer le retour",
     "successMessage": "Merci pour vos commentaires !",
-    "errorMessage": "Échec de l'envoi du retour. Veuillez réessayer."
+    "errorMessage": "Échec de l'envoi du retour. Veuillez réessayer.",
+    "attachButton": "Joindre une capture",
+    "attachHint": "PNG/JPG, jusqu'à {{count}} images de 5 Mo chacune — ou collez avec Ctrl+V",
+    "attachTooLarge": "Chaque image doit faire 5 Mo maximum",
+    "attachLimit": "Vous pouvez joindre jusqu'à {{count}} images",
+    "removeAttachment": "Retirer l'image",
+    "screenshot": "Capture d'écran",
+    "screenshots": "Captures d'écran"
   },
   "tooltip": {
     "themeToggle": "Basculer entre le mode clair et sombre",

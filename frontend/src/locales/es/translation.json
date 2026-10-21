@@ -2260,7 +2260,14 @@
     "placeholder": "Cuéntanos qué funcionó bien, qué puede mejorar, o reporta un error...",
     "submitButton": "Enviar comentarios",
     "successMessage": "¡Gracias por tus comentarios!",
-    "errorMessage": "No se pudo enviar el comentario. Por favor, inténtalo de nuevo."
+    "errorMessage": "No se pudo enviar el comentario. Por favor, inténtalo de nuevo.",
+    "attachButton": "Adjuntar captura",
+    "attachHint": "PNG/JPG, hasta {{count}} imágenes de 5 MB cada una — o pégala con Ctrl+V",
+    "attachTooLarge": "Cada imagen debe pesar 5 MB o menos",
+    "attachLimit": "Puedes adjuntar hasta {{count}} imágenes",
+    "removeAttachment": "Quitar imagen",
+    "screenshot": "Captura de pantalla",
+    "screenshots": "Capturas de pantalla"
   },
   "tooltip": {
     "themeToggle": "Cambiar entre modo claro y oscuro",

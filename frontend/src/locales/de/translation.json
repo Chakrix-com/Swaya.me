@@ -2260,7 +2260,14 @@
     "placeholder": "Sagen Sie uns, was gut war, was verbessert werden kann, oder melden Sie einen Fehler...",
     "submitButton": "Feedback senden",
     "successMessage": "Danke für Ihr Feedback!",
-    "errorMessage": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen."
+    "errorMessage": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "attachButton": "Screenshot anhängen",
+    "attachHint": "PNG/JPG, bis zu {{count}} Bilder à 5 MB — oder mit Strg+V einfügen",
+    "attachTooLarge": "Jedes Bild darf höchstens 5 MB groß sein",
+    "attachLimit": "Sie können bis zu {{count}} Bilder anhängen",
+    "removeAttachment": "Bild entfernen",
+    "screenshot": "Screenshot",
+    "screenshots": "Screenshots"
   },
   "tooltip": {
     "themeToggle": "Zwischen hellem und dunklem Modus wechseln",

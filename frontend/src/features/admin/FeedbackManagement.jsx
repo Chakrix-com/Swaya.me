@@ -149,6 +149,22 @@ function AppFeedbackTab() {
       key: 'feedback_text',
       render: (v, r) => <div style={{ maxHeight: 120, overflow: 'hidden', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{v || (r.reaction ? `Reaction: ${r.reaction}` : '—')}</div>,
     },
+    {
+      title: t('appFeedback.screenshots'),
+      dataIndex: 'attachment_urls',
+      key: 'attachment_urls',
+      width: 200,
+      render: (urls) => (urls && urls.length ? (
+        <div className="app-feedback-admin-thumbs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {urls.map((u, i) => (
+            // Plain link: opens full size in a new tab (same-origin, so the session cookie authorises it)
+            <a key={u} href={u} target="_blank" rel="noopener noreferrer" title={`${t('appFeedback.screenshot')} ${i + 1}`}>
+              <img src={u} alt={`${t('appFeedback.screenshot')} ${i + 1}`} style={{ width: 56, height: 42, objectFit: 'cover', borderRadius: 4, border: '1px solid #d9d9d9' }} />
+            </a>
+          ))}
+        </div>
+      ) : <Text type="secondary">—</Text>),
+    },
   ]
 
   const onApply = () => { setPagination((p) => ({ ...p, current: 1 })); fetchFeedback(1, pagination.pageSize, filters) }

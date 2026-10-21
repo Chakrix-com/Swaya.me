@@ -1,7 +1,7 @@
 """
 App-level feedback model (not quiz-scoped)
 """
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, JSON
 
 from persistence.database import Base
 from persistence.models.base import TimestampMixin
@@ -22,3 +22,5 @@ class AppFeedback(Base, TimestampMixin):
     display_name = Column(String(100), nullable=True)
     user_email = Column(String(255), nullable=True)
     user_agent = Column(String(500), nullable=True)
+    # Stored screenshot filenames under <uploads>/feedback/<id>/ (private, super-admin only)
+    attachments = Column(JSON, nullable=True)
