@@ -8,12 +8,11 @@ import {
   Select,
   Tag,
   Space,
-  message,
   Card,
   Row,
   Col,
   Tooltip,
-  Statistic
+  Statistic,
 } from 'antd';
 import {
   PlusOutlined,
@@ -40,6 +39,7 @@ import {
 } from '../../../store/slices/userManagementSlice';
 import UserForm from './UserForm';
 import '../Admin.css';
+import { message } from '../../../components/safeMessage';
 
 const { Search } = Input;
 const { Option } = Select;

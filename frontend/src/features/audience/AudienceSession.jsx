@@ -6,7 +6,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import {
-  App,
   Input,
   Rate,
 } from 'antd'
@@ -22,11 +21,11 @@ import { VisitorThemeContext } from '../../App'
 import { applySkin } from '../../themes/skins'
 import useWakeLock from '../../hooks/useWakeLock'
 import './AudienceSession.css'
+import { message } from '../../components/safeMessage'
 
 const { TextArea } = Input
 
 export default function AudienceSession() {
-  const { message } = App.useApp()
   const location = useLocation()
   const navigate = useNavigate()
   const { sessionId: sessionIdParam } = useParams()

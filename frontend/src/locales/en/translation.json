@@ -482,7 +482,10 @@
     "unpublishToEditBannerTitleExam": "✏️ Unpublish to edit settings",
     "unpublishToEditBannerTitleQuiz": "✏️ Unpublish → Edit → Republish",
     "unpublishToEditBannerDescExam": "This test is live. Unpublish it to make changes, then republish when ready.",
-    "unpublishToEditBannerDescQuiz": "This activity is published and live. Unpublish it to edit settings, then republish when ready."
+    "unpublishToEditBannerDescQuiz": "This activity is published and live. Unpublish it to edit settings, then republish when ready.",
+    "endAfterStart": "End must be after the start date and time",
+    "requireParticipantName": "Ask for real names",
+    "requireParticipantNameHint": "Participants must type their own name — no random name suggestions or anonymous joining"
   },
   "audience": {
     "joinQuiz": "Join Session",
@@ -572,7 +575,9 @@
     "quizEndedByHostTitle": "Quiz ended by host",
     "quizEndedEarlyNote": "The host ended this session early. Your score reflects questions answered so far.",
     "responses": "responses",
-    "wrong": "Wrong"
+    "wrong": "Wrong",
+    "displayNameRequired": "Enter your name",
+    "nameRequired": "Please enter your name to join"
   },
   "dashboard": {
     "readyToLaunch": "Ready to Launch",
@@ -2276,7 +2281,9 @@
     "violationEvents": "violation event(s)",
     "violationTimeline": "Violation Timeline",
     "webcamDenied": "Webcam was denied by the candidate",
-    "webcamSnapshots": "Webcam Snapshots"
+    "webcamSnapshots": "Webcam Snapshots",
+    "startedAtCol": "Started",
+    "submittedAtCol": "Submitted"
   },
   "appFeedback": {
     "floatButtonTooltip": "Share Feedback",

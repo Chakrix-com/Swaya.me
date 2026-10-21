@@ -478,7 +478,10 @@
     "unpublishToEditBannerTitleExam": "✏️ Dépublier pour modifier les paramètres",
     "unpublishToEditBannerTitleQuiz": "✏️ Dépublier → Modifier → Republier",
     "unpublishToEditBannerDescExam": "Cet examen est en ligne. Dépubliez-le pour effectuer des modifications, puis republiez-le une fois prêt.",
-    "unpublishToEditBannerDescQuiz": "Cette activité est publiée et en ligne. Dépubliez-la pour modifier les paramètres, puis republiez-la une fois prête."
+    "unpublishToEditBannerDescQuiz": "Cette activité est publiée et en ligne. Dépubliez-la pour modifier les paramètres, puis republiez-la une fois prête.",
+    "endAfterStart": "La fin doit être postérieure à la date et à l'heure de début",
+    "requireParticipantName": "Demander les vrais noms",
+    "requireParticipantNameHint": "Les participants doivent saisir leur propre nom — pas de nom aléatoire suggéré ni de participation anonyme"
   },
   "audience": {
     "joinQuiz": "Rejoindre la session",
@@ -568,7 +571,9 @@
     "quizEndedByHostTitle": "Quiz terminé par l'hôte",
     "quizEndedEarlyNote": "L'hôte a terminé cette session prématurément. Votre score reflète les questions répondues jusqu'à présent.",
     "responses": "réponses",
-    "wrong": "Faux"
+    "wrong": "Faux",
+    "displayNameRequired": "Saisissez votre nom",
+    "nameRequired": "Veuillez saisir votre nom pour rejoindre"
   },
   "dashboard": {
     "readyToLaunch": "Prêt à lancer",
@@ -2245,7 +2250,9 @@
     "violationEvents": "événement(s) de violation",
     "violationTimeline": "Chronologie des violations",
     "webcamDenied": "L'accès à la webcam a été refusé par le candidat",
-    "webcamSnapshots": "Captures de webcam"
+    "webcamSnapshots": "Captures de webcam",
+    "startedAtCol": "Début",
+    "submittedAtCol": "Soumis"
   },
   "appFeedback": {
     "floatButtonTooltip": "Partager vos retours",

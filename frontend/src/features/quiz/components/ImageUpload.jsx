@@ -1,8 +1,9 @@
-import { Upload, Button, message, Tag } from 'antd'
+import { Upload, Button, Tag } from 'antd'
 import { UploadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { questionAPI } from '../../../services/api'
+import { message } from '../../../components/safeMessage'
 
 /**
  * ImageUpload component for uploading question/option images

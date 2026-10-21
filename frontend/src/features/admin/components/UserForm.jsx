@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Form, Input, Switch, message, theme } from 'antd';
+import { Form, Input, Switch, theme } from 'antd';
 import { createUser, updateUser } from '../../../store/slices/userManagementSlice';
 import SafeModal from '../../../components/SafeModal';
+import { message } from '../../../components/safeMessage';
 
 const UserForm = ({ visible, user, onSuccess, onCancel }) => {
   const { t } = useTranslation();

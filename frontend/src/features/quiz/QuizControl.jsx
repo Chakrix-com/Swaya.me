@@ -11,7 +11,6 @@ import {
   Statistic,
   Progress,
   Rate,
-  message,
   Alert,
   Input,
   Table,
@@ -40,6 +39,7 @@ import ReactWordcloud from 'react-wordcloud'
 import { sessionAPI, quizAPI, questionAPI, feedbackAPI } from '../../services/api'
 import CodeEditor from './components/CodeEditor'
 import './QuizControl.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 const { TextArea } = Input

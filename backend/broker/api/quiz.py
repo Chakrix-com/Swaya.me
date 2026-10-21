@@ -760,7 +760,7 @@ async def join_session(
         return await service.join_session(db, body)
     except SessionNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except TierLimitExceededError as e:
+    except (TierLimitExceededError, QuizValidationError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.post("/sessions/leave", response_model=SessionLeaveResponse)

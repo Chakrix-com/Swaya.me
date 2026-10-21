@@ -86,6 +86,7 @@ import SidebarFolderTree from './components/SidebarFolderTree'
 import SidebarLiveSessions from './components/SidebarLiveSessions'
 import logo from './assets/logo.png'
 import './App.css'
+import { SafeMessageHost } from './components/safeMessage'
 
 // Map i18n language codes to Ant Design locales
 const localeMap = {
@@ -599,6 +600,7 @@ function App() {
           </Suspense>
           <GlobalOverlay />
         </Router>
+        <SafeMessageHost />
       </AntApp>
     </ConfigProvider>
   )

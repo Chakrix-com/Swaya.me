@@ -3,8 +3,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Button, Tag, Space, Tooltip, message,
-  Input, Table, Typography, Badge, Select, Alert, Grid,
+  Button,
+  Tag,
+  Space,
+  Tooltip,
+  Input,
+  Table,
+  Typography,
+  Badge,
+  Select,
+  Alert,
+  Grid,
 } from 'antd'
 import SafeConfirm from '../../components/SafeConfirm'
 
@@ -21,6 +30,7 @@ import { quizAPI, sessionAPI } from '../../services/api'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import InviteCandidatesModal from '../quiz/components/InviteCandidatesModal'
 import '../dashboard/Dashboard.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

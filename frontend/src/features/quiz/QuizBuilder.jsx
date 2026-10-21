@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { ProCard } from '@ant-design/pro-components'
 import {
-  App,
   Card,
   Form,
   Input,
@@ -54,7 +53,6 @@ import {
   Alert,
   Tooltip,
   Popover,
-  DatePicker,
   Switch,
   message as antMessage,
 } from 'antd'
@@ -73,9 +71,11 @@ import { VisitorThemeContext } from '../../App'
 import './QuizBuilder.css'
 import { ProctoringSettings } from './components/ProctoringSettings'
 import { SetupPanel } from './components/SetupPanel'
+import { SafeDateTimeInput } from '../../components/SafeDateTimeInput'
 import { GradingPanel } from './components/GradingPanel'
 import InviteCandidatesModal from './components/InviteCandidatesModal'
 import { skins } from '../../themes/skins'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -203,7 +203,6 @@ const QuestionForm = forwardRef(({
   isAdmin,
   t
 }, ref) => {
-  const { message } = App.useApp()
   const [questionForm] = Form.useForm()
   useImperativeHandle(ref, () => ({ submit: () => questionForm.submit() }), [questionForm])
   const [questionType, setQuestionType] = useState('mcq')
@@ -1392,7 +1391,6 @@ const MemoizedQuestionForm = memo(QuestionForm)
 
 export default function QuizBuilder() {
   const { token } = theme.useToken()
-  const { message } = App.useApp()
   const { id } = useParams()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
@@ -1785,6 +1783,7 @@ export default function QuizBuilder() {
         skin: response.data.skin || null,
         reaction_style: response.data.reaction_style || null,
         shuffle_questions: response.data.shuffle_questions || false,
+        require_participant_name: response.data.require_participant_name || false,
         shuffle_options: response.data.shuffle_options || false,
         default_question_time_seconds: response.data.default_question_time_seconds || undefined,
         ...(response.data.quiz_type === 'coding_challenge' ? (() => {
@@ -1898,45 +1897,21 @@ export default function QuizBuilder() {
             label={t('offlinePoll.startDate', 'Start Date & Time')}
             rules={[{ required: isOfflinePoll, message: t('quiz.startDateRequired') }]}
           >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
-              disabledTime={(d) => {
-                if (!d || !d.isSame(dayjs(), 'day')) return {}
-                const now = dayjs()
-                return {
-                  disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
-                  disabledMinutes: (h) => h === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : [],
-                }
-              }}
-            />
+            <SafeDateTimeInput style={{ width: '100%' }} min={dayjs()} />
           </Form.Item>
           <Form.Item
             name="offline_end_at"
             label={t('offlinePoll.endDate', 'End Date & Time')}
-            rules={[{ required: isOfflinePoll, message: t('quiz.endDateRequired') }]}
+            dependencies={['offline_start_at']}
+            rules={[{ required: isOfflinePoll, message: t('quiz.endDateRequired') }, ({ getFieldValue }) => ({
+                validator(_, v) {
+                  const start = getFieldValue('offline_start_at')
+                  if (!v || !start || dayjs(v).isAfter(dayjs(start))) return Promise.resolve()
+                  return Promise.reject(new Error(t('quiz.endAfterStart')))
+                },
+              })]}
           >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              disabledDate={(d) => {
-                if (!d) return false
-                const start = form.getFieldValue('offline_start_at')
-                const floor = start ? start.startOf('day') : dayjs().startOf('day')
-                return d.isBefore(floor)
-              }}
-              disabledTime={(d) => {
-                if (!d) return {}
-                const start = form.getFieldValue('offline_start_at')
-                const ref = start && d.isSame(start, 'day') ? start : (d.isSame(dayjs(), 'day') ? dayjs() : null)
-                if (!ref) return {}
-                return {
-                  disabledHours: () => Array.from({ length: ref.hour() }, (_, i) => i),
-                  disabledMinutes: (h) => h === ref.hour() ? Array.from({ length: ref.minute() + 1 }, (_, i) => i) : [],
-                }
-              }}
-            />
+            <SafeDateTimeInput style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item
             name="offline_results_email"
@@ -1955,45 +1930,21 @@ export default function QuizBuilder() {
             label={t('exam.startAt')}
             rules={[{ required: isExam, message: t('exam.startAtRequired') }]}
           >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
-              disabledTime={(d) => {
-                if (!d || !d.isSame(dayjs(), 'day')) return {}
-                const now = dayjs()
-                return {
-                  disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
-                  disabledMinutes: (h) => h === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : [],
-                }
-              }}
-            />
+            <SafeDateTimeInput style={{ width: '100%' }} min={dayjs()} />
           </Form.Item>
           <Form.Item
             name="exam_end_at"
             label={t('exam.endAt')}
-            rules={[{ required: isExam, message: t('exam.endAtRequired') }]}
+            dependencies={['exam_start_at']}
+            rules={[{ required: isExam, message: t('exam.endAtRequired') }, ({ getFieldValue }) => ({
+                validator(_, v) {
+                  const start = getFieldValue('exam_start_at')
+                  if (!v || !start || dayjs(v).isAfter(dayjs(start))) return Promise.resolve()
+                  return Promise.reject(new Error(t('quiz.endAfterStart')))
+                },
+              })]}
           >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              disabledDate={(d) => {
-                if (!d) return false
-                const start = form.getFieldValue('exam_start_at')
-                const floor = start ? start.startOf('day') : dayjs().startOf('day')
-                return d.isBefore(floor)
-              }}
-              disabledTime={(d) => {
-                if (!d) return {}
-                const start = form.getFieldValue('exam_start_at')
-                const ref = start && d.isSame(start, 'day') ? start : (d.isSame(dayjs(), 'day') ? dayjs() : null)
-                if (!ref) return {}
-                return {
-                  disabledHours: () => Array.from({ length: ref.hour() }, (_, i) => i),
-                  disabledMinutes: (h) => h === ref.hour() ? Array.from({ length: ref.minute() + 1 }, (_, i) => i) : [],
-                }
-              }}
-            />
+            <SafeDateTimeInput style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item
             name="exam_time_limit_minutes"

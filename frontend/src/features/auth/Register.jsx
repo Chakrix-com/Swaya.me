@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
+import { Form, Input, Button, Card, Typography, Space } from 'antd'
 import { UserOutlined, LockOutlined, UserAddOutlined, HomeOutlined } from '@ant-design/icons'
 
 const GOOGLE_LOGIN_URL = `${import.meta.env.VITE_API_URL || '/api/v1'}/auth/google/login`
@@ -9,6 +9,7 @@ import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
 import logo from '../../assets/logo.png'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

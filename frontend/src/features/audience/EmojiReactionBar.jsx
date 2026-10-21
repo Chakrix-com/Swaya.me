@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { App, Rate } from 'antd'
+import { Rate } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { feedbackAPI } from '../../services/api'
 import './EmojiReactionBar.css'
+import { message } from '../../components/safeMessage'
 
 const REACTION_SETS = {
   thumbs: [
@@ -25,7 +26,6 @@ const REACTION_SETS = {
 
 export default function EmojiReactionBar({ reactionStyle, sessionToken }) {
   const { t } = useTranslation()
-  const { message } = App.useApp()
   const [submitted, setSubmitted] = useState(false)
   const [selectedKey, setSelectedKey] = useState(null)
   const [loading, setLoading] = useState(false)

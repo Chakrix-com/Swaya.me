@@ -121,6 +121,8 @@ class Quiz(Base, TimestampMixin, TenantMixin):
     shuffle_questions = Column(Boolean, default=False, nullable=False, server_default="0")
     shuffle_options = Column(Boolean, default=False, nullable=False, server_default="0")
     default_question_time_seconds = Column(Integer, nullable=True)
+    # Live quiz/poll join screen: no random-name suggestion, a typed name is required
+    require_participant_name = Column(Boolean, default=False, nullable=False, server_default="0")
 
     # Template gallery metadata
     template_category = Column(String(64), nullable=True)

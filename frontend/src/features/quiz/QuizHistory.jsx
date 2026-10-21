@@ -16,7 +16,6 @@ import {
   Empty,
   Spin,
   Alert,
-  message,
 } from 'antd'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import '../dashboard/Dashboard.css'
@@ -34,6 +33,7 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons'
 import { sessionAPI, quizAPI } from '../../services/api'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 const { Panel } = Collapse

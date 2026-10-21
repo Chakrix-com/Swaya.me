@@ -2,8 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Tree, Spin, Button, Tooltip, Form, Input,
-  message, Switch, List, Avatar, Space, Tag,
+  Tree,
+  Spin,
+  Button,
+  Tooltip,
+  Form,
+  Input,
+  Switch,
+  List,
+  Avatar,
+  Space,
+  Tag,
 } from 'antd'
 import {
   FolderFilled, FolderOpenFilled, FolderAddOutlined, MoreOutlined,
@@ -18,6 +27,7 @@ import SafeMultiSelect from './SafeMultiSelect'
 import SafeTreeSelect from './SafeTreeSelect'
 import SafeModal from './SafeModal'
 import './SidebarFolderTree.css'
+import { message } from './safeMessage'
 
 const ROOT_KEY = 'swayame-root'
 

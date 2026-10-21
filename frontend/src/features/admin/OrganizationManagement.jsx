@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react'
 import {
-  Table, Button, Form, Input, Select, message, Space, Tag, Progress, Card, Statistic, Row, Col
+  Table,
+  Button,
+  Form,
+  Input,
+  Select,
+  Space,
+  Tag,
+  Progress,
+  Card,
+  Statistic,
+  Row,
+  Col,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, TeamOutlined, UserOutlined, SettingOutlined
@@ -9,6 +20,7 @@ import { useTranslation } from 'react-i18next'
 import { organizationAPI } from '../../services/api'
 import SafeModal from '../../components/SafeModal'
 import './Admin.css'
+import { message } from '../../components/safeMessage'
 
 const { Option } = Select
 

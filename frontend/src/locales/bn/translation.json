@@ -476,7 +476,10 @@
     "unpublishToEditBannerTitleExam": "✏️ সেটিংস পরিবর্তন করতে আনপাবলিশ করুন",
     "unpublishToEditBannerTitleQuiz": "✏️ আনপাবলিশ → এডিট → রিপাবলিশ",
     "unpublishToEditBannerDescExam": "এই পরীক্ষাটি বর্তমানে লাইভ আছে। পরিবর্তন করতে এটি আনপাবলিশ করুন এবং প্রস্তুত হলে পুনরায় পাবলিশ করুন।",
-    "unpublishToEditBannerDescQuiz": "এই অ্যাক্টিভিটিটি পাবলিশ করা হয়েছে এবং লাইভ আছে। সেটিংস পরিবর্তন করতে এটি আনপাবলিশ করুন এবং প্রস্তুত হলে পুনরায় পাবলিশ করুন।"
+    "unpublishToEditBannerDescQuiz": "এই অ্যাক্টিভিটিটি পাবলিশ করা হয়েছে এবং লাইভ আছে। সেটিংস পরিবর্তন করতে এটি আনপাবলিশ করুন এবং প্রস্তুত হলে পুনরায় পাবলিশ করুন।",
+    "endAfterStart": "শেষের সময় অবশ্যই শুরুর তারিখ ও সময়ের পরে হতে হবে",
+    "requireParticipantName": "আসল নাম জিজ্ঞাসা করুন",
+    "requireParticipantNameHint": "অংশগ্রহণকারীদের নিজের নাম লিখতে হবে — কোনো এলোমেলো নামের পরামর্শ বা বেনামে যোগদান নয়"
   },
   "audience": {
     "joinQuiz": "সেশনে যোগ দিন",
@@ -566,7 +569,9 @@
     "quizEndedByHostTitle": "হোস্ট কর্তৃক কুইজ সমাপ্ত",
     "quizEndedEarlyNote": "হোস্ট এই সেশনটি আগেই শেষ করেছেন। আপনার স্কোর এখন পর্যন্ত দেওয়া উত্তরের ভিত্তিতে নির্ধারিত হয়েছে।",
     "responses": "প্রতিক্রিয়া",
-    "wrong": "ভুল"
+    "wrong": "ভুল",
+    "displayNameRequired": "আপনার নাম লিখুন",
+    "nameRequired": "যোগ দিতে অনুগ্রহ করে আপনার নাম লিখুন"
   },
   "navigation": {
     "home": "হোম",
@@ -2243,7 +2248,9 @@
     "violationEvents": "লঙ্ঘন ইভেন্ট(গুলি)",
     "violationTimeline": "লঙ্ঘনের সময়রেখা",
     "webcamDenied": "প্রার্থী ওয়েবক্যাম ব্যবহারের অনুমতি দেননি",
-    "webcamSnapshots": "ওয়েবক্যাম স্ন্যাপশট"
+    "webcamSnapshots": "ওয়েবক্যাম স্ন্যাপশট",
+    "startedAtCol": "শুরু",
+    "submittedAtCol": "জমা"
   },
   "appFeedback": {
     "floatButtonTooltip": "মতামত শেয়ার করুন",

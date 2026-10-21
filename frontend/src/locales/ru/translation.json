@@ -478,7 +478,10 @@
     "unpublishToEditBannerTitleExam": "✏️ Снимите с публикации для изменения настроек",
     "unpublishToEditBannerTitleQuiz": "✏️ Снять с публикации → Изменить → Опубликовать снова",
     "unpublishToEditBannerDescExam": "Этот тест активен. Снимите его с публикации, чтобы внести изменения, а затем опубликуйте снова.",
-    "unpublishToEditBannerDescQuiz": "Это действие опубликовано и активно. Снимите его с публикации, чтобы изменить настройки, а затем опубликуйте снова."
+    "unpublishToEditBannerDescQuiz": "Это действие опубликовано и активно. Снимите его с публикации, чтобы изменить настройки, а затем опубликуйте снова.",
+    "endAfterStart": "Окончание должно быть позже даты и времени начала",
+    "requireParticipantName": "Запрашивать настоящие имена",
+    "requireParticipantNameHint": "Участники должны ввести своё имя — без случайных имён и анонимного входа"
   },
   "audience": {
     "joinQuiz": "Присоединиться к сессии",
@@ -568,7 +571,9 @@
     "quizEndedByHostTitle": "Викторина завершена ведущим",
     "quizEndedEarlyNote": "Ведущий досрочно завершил сессию. Ваш результат отражает ответы, данные на данный момент.",
     "responses": "ответы",
-    "wrong": "Неверно"
+    "wrong": "Неверно",
+    "displayNameRequired": "Введите своё имя",
+    "nameRequired": "Введите своё имя, чтобы присоединиться"
   },
   "dashboard": {
     "readyToLaunch": "Готово к запуску",
@@ -2245,7 +2250,9 @@
     "violationEvents": "событие(-я) нарушения",
     "violationTimeline": "Хронология нарушений",
     "webcamDenied": "Кандидат запретил доступ к веб-камере",
-    "webcamSnapshots": "Снимки с веб-камеры"
+    "webcamSnapshots": "Снимки с веб-камеры",
+    "startedAtCol": "Начато",
+    "submittedAtCol": "Сдано"
   },
   "appFeedback": {
     "floatButtonTooltip": "Поделиться отзывом",

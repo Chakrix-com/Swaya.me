@@ -1057,6 +1057,8 @@ class QuizBuilderServiceAsync:
         # Quiz behaviour
         if 'shuffle_questions' in request.model_fields_set:
             quiz.shuffle_questions = request.shuffle_questions or False
+        if 'require_participant_name' in request.model_fields_set:
+            quiz.require_participant_name = request.require_participant_name or False
         if 'shuffle_options' in request.model_fields_set:
             quiz.shuffle_options = request.shuffle_options or False
         if 'default_question_time_seconds' in request.model_fields_set:
@@ -1569,6 +1571,7 @@ class QuizBuilderServiceAsync:
             skin=getattr(quiz, 'skin', None),
             reaction_style=getattr(quiz, 'reaction_style', None),
             shuffle_questions=bool(getattr(quiz, 'shuffle_questions', False)),
+            require_participant_name=bool(getattr(quiz, 'require_participant_name', False)),
             shuffle_options=bool(getattr(quiz, 'shuffle_options', False)),
             default_question_time_seconds=getattr(quiz, 'default_question_time_seconds', None),
         )

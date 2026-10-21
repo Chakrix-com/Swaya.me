@@ -1,9 +1,9 @@
 """
 Pydantic schemas for Quiz feature
 """
-from pydantic import BaseModel, Field, EmailStr, validator, model_validator
-from typing import List, Optional
-from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr, validator, model_validator, PlainSerializer
+from typing import Annotated, List, Optional
+from datetime import datetime, timezone
 from enum import Enum
 
 # Host-editable grading criteria for a coding_challenge question. Mirrors
@@ -36,6 +36,19 @@ def _validate_grading_weights(v):
         raise ValueError(f'Grading weights must sum to 100 (got {total})')
     return v
 
+
+
+def _serialize_utc(dt: datetime) -> str:
+    # MySQL hands DATETIMEs back naive; they are stored in UTC. Without an
+    # explicit offset browsers read them as *local* time, so an IST host saw
+    # the schedule shifted by 5h30 — and saving it back shifted it again.
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
+# Datetime that is always emitted with a UTC offset in JSON responses
+UtcDatetime = Annotated[datetime, PlainSerializer(_serialize_utc, return_type=str, when_used='json')]
 
 class QuizStatusEnum(str, Enum):
     """Quiz status"""
@@ -358,6 +371,7 @@ class QuizUpdate(BaseModel):
     reaction_style: Optional[str] = Field(None, max_length=32)
     # Quiz behaviour
     shuffle_questions: Optional[bool] = None
+    require_participant_name: Optional[bool] = None
     shuffle_options: Optional[bool] = None
     default_question_time_seconds: Optional[int] = Field(None, ge=5, le=3600)
 
@@ -381,14 +395,14 @@ class QuizResponse(BaseModel):
     # Offline poll fields
     poll_slug: Optional[str] = None
     poll_url: Optional[str] = None
-    offline_start_at: Optional[datetime] = None
-    offline_end_at: Optional[datetime] = None
+    offline_start_at: Optional[UtcDatetime] = None
+    offline_end_at: Optional[UtcDatetime] = None
     offline_results_email: Optional[str] = None
     # Exam fields
     exam_slug: Optional[str] = None
     exam_url: Optional[str] = None
-    exam_start_at: Optional[datetime] = None
-    exam_end_at: Optional[datetime] = None
+    exam_start_at: Optional[UtcDatetime] = None
+    exam_end_at: Optional[UtcDatetime] = None
     exam_time_limit_seconds: Optional[int] = None
     exam_results_email: Optional[str] = None
     exam_require_email: bool = False
@@ -402,6 +416,7 @@ class QuizResponse(BaseModel):
     reaction_style: Optional[str] = None
     # Quiz behaviour
     shuffle_questions: bool = False
+    require_participant_name: bool = False
     shuffle_options: bool = False
     default_question_time_seconds: Optional[int] = None
 
@@ -428,13 +443,13 @@ class QuizListResponse(BaseModel):
     # Offline poll fields
     poll_slug: Optional[str] = None
     poll_url: Optional[str] = None
-    offline_start_at: Optional[datetime] = None
-    offline_end_at: Optional[datetime] = None
+    offline_start_at: Optional[UtcDatetime] = None
+    offline_end_at: Optional[UtcDatetime] = None
     # Exam fields
     exam_slug: Optional[str] = None
     exam_url: Optional[str] = None
-    exam_start_at: Optional[datetime] = None
-    exam_end_at: Optional[datetime] = None
+    exam_start_at: Optional[UtcDatetime] = None
+    exam_end_at: Optional[UtcDatetime] = None
     # Archive
     archived_at: Optional[datetime] = None
 
@@ -522,6 +537,7 @@ class SessionLookupResponse(BaseModel):
     quiz_type: QuizTypeEnum
     participant_count: int
     skin: Optional[str] = None
+    require_participant_name: bool = False
 
 
 class LastSessionSummary(BaseModel):
@@ -816,8 +832,8 @@ class OfflinePollInfoResponse(BaseModel):
     title: str
     description: Optional[str] = None
     status: str  # "not_started" | "active" | "closed"
-    starts_at: Optional[datetime] = None
-    ends_at: Optional[datetime] = None
+    starts_at: Optional[UtcDatetime] = None
+    ends_at: Optional[UtcDatetime] = None
     question_count: int = 0
 
 
@@ -828,7 +844,7 @@ class OfflinePollJoinResponse(BaseModel):
     quiz_title: str
     questions: List[QuestionResponse] = []
     saved_answers: List[dict] = []  # [{question_id, selected_option_index, text_answer}]
-    ends_at: Optional[datetime] = None
+    ends_at: Optional[UtcDatetime] = None
 
 
 class OfflineAnswerRequest(BaseModel):
@@ -861,8 +877,8 @@ class OfflineResultsResponse(BaseModel):
     quiz_id: int
     quiz_title: str
     slug: Optional[str] = None
-    offline_start_at: Optional[datetime] = None
-    offline_end_at: Optional[datetime] = None
+    offline_start_at: Optional[UtcDatetime] = None
+    offline_end_at: Optional[UtcDatetime] = None
     is_open: bool
     total_participants: int
     completed_participants: int
@@ -891,8 +907,8 @@ class ExamInfoResponse(BaseModel):
     title: str
     description: Optional[str] = None
     status: str  # "upcoming" | "open" | "closed"
-    starts_at: Optional[datetime] = None
-    ends_at: Optional[datetime] = None
+    starts_at: Optional[UtcDatetime] = None
+    ends_at: Optional[UtcDatetime] = None
     question_count: int = 0
     time_limit_seconds: Optional[int] = None
     has_per_question_timers: bool = False
@@ -942,7 +958,7 @@ class ExamStartResponse(BaseModel):
     questions: List[ExamQuestionResponse] = []
     started_at: datetime
     time_limit_seconds: Optional[int] = None
-    ends_at: Optional[datetime] = None
+    ends_at: Optional[UtcDatetime] = None
 
 
 class ExamAnswerRequest(BaseModel):
@@ -1004,6 +1020,7 @@ class ExamLeaderboardEntry(BaseModel):
     percentage: float
     correct_count: int
     time_taken_seconds: Optional[float] = None
+    started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     is_abandoned: bool = False
     is_completed: bool = False
@@ -1059,8 +1076,8 @@ class ExamResultsResponse(BaseModel):
     quiz_id: int
     quiz_title: str
     slug: Optional[str] = None
-    exam_start_at: Optional[datetime] = None
-    exam_end_at: Optional[datetime] = None
+    exam_start_at: Optional[UtcDatetime] = None
+    exam_end_at: Optional[UtcDatetime] = None
     is_open: bool
     total_started: int
     total_completed: int

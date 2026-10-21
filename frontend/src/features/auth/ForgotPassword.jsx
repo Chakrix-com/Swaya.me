@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Form, Input, Button, Card, message, Typography, Space } from 'antd'
+import { Form, Input, Button, Card, Typography, Space } from 'antd'
 import { UserOutlined, MailOutlined, HomeOutlined } from '@ant-design/icons'
 import { authAPI } from '../../services/api'
 import PublicPageLayout from '../../components/PublicPageLayout'
 import logo from '../../assets/logo.png'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

@@ -1,10 +1,11 @@
 import { useState, useEffect, useContext } from 'react'
-import { Rate, Button, Space, Typography, App as AntApp } from 'antd'
+import { Rate, Button, Space, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import RichTextEditor from '../features/quiz/components/RichTextEditor'
 import { appFeedbackAPI } from '../services/api'
 import { VisitorThemeContext } from '../App'
 import SafeModal from './SafeModal'
+import { message } from './safeMessage'
 
 const { Text } = Typography
 
@@ -12,7 +13,6 @@ const isEmpty = (html) => !html || html.replace(/<[^>]*>/g, '').trim() === ''
 
 export default function AppFeedbackModal({ open, onClose }) {
   const { t } = useTranslation()
-  const { message } = AntApp.useApp()
   const { theme } = useContext(VisitorThemeContext)
   const isDark = theme === 'dark'
 

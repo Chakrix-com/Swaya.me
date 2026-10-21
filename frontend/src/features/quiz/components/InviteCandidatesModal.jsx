@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Typography, Tag, Tooltip, theme } from 'antd'
+import { Button, Typography, Tag, Tooltip, theme } from 'antd'
 import { CopyOutlined, ReloadOutlined, CheckCircleOutlined, ClockCircleOutlined, HistoryOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import SafeModal from '../../../components/SafeModal'
 import EmailChipInput, { isValidEmail } from '../../../components/EmailChipInput'
 import { codingChallengeAPI } from '../../../services/api'
+import { message } from '../../../components/safeMessage'
 
 const { Text } = Typography
 const MAX_BATCH = 50
@@ -21,7 +22,6 @@ function StatusTag({ status, t }) {
 
 export default function InviteCandidatesModal({ open, quizId, onClose, t }) {
   const { token: designToken } = theme.useToken()
-  const { message } = App.useApp()
   const [emails, setEmails] = useState([])
   const [sending, setSending] = useState(false)
   const [results, setResults] = useState(null)

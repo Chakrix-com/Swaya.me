@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, Spin, Alert, Button, Typography, Divider, DatePicker, Select, Space, message } from 'antd'
+import { Card, Row, Col, Statistic, Spin, Alert, Button, Typography, Divider, DatePicker, Select, Space } from 'antd'
 import {
   UserOutlined,
   FileTextOutlined,
@@ -16,6 +16,7 @@ import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { statsAPI, languageTrackingAPI } from '../../services/api'
 import './Admin.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker

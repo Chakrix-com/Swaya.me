@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { Collapse, Badge, Button, Space, message } from 'antd'
+import { Collapse, Badge, Button, Space } from 'antd'
 import { WifiOutlined, StopOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { setQuizzes } from '../store/quizSlice'
 import { sessionAPI } from '../services/api'
 import SafeConfirm from './SafeConfirm'
 import './SidebarLiveSessions.css'
+import { message } from './safeMessage'
 
 function SidebarLiveSessions() {
   const navigate = useNavigate()

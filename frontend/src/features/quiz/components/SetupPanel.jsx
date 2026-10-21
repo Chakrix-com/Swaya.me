@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Tooltip, Alert, Space, theme } from 'antd';
+import { Form, Input, InputNumber, Switch, Button, Tooltip, Alert, Space, theme } from 'antd';
 import {
   SaveOutlined, ThunderboltOutlined, LoadingOutlined,
   WarningOutlined, CheckOutlined, InfoCircleOutlined,
 } from '@ant-design/icons';
 import { skins } from '../../../themes/skins';
+import { SafeDateTimeInput } from '../../../components/SafeDateTimeInput';
 import './SetupPanel.css';
 import './GradingPanel.css'; // reuses .gp-row / .gp-section--accent-info for the Environment section
 
@@ -446,6 +447,15 @@ export function SetupPanel({
                   <Switch disabled={isLiveMode} />
                 </Form.Item>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{t('quiz.requireParticipantName')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--sw-text3)' }}>{t('quiz.requireParticipantNameHint')}</div>
+                </div>
+                <Form.Item name="require_participant_name" valuePropName="checked" noStyle>
+                  <Switch disabled={isLiveMode} />
+                </Form.Item>
+              </div>
               <Form.Item
                 name="default_question_time_seconds"
                 label={t('quiz.defaultQuestionTime', 'Default time per question (seconds)')}
@@ -476,31 +486,22 @@ export function SetupPanel({
                 rules={[{ required: true, message: isOfflinePoll ? t('quiz.startDateRequired') : t('exam.startAtRequired') }]}
                 style={{ marginBottom: 0, flex: '0 0 auto' }}
               >
-                <DatePicker
-                  showTime={{ format: 'HH:mm' }}
-                  format="YYYY-MM-DD HH:mm"
-                  style={{ width: 178 }}
-                  disabledDate={(d) => d && d.isBefore(dayjs().startOf('day'))}
-                />
+                <SafeDateTimeInput style={{ width: 200 }} min={dayjs()} />
               </Form.Item>
               <Form.Item
                 name={isOfflinePoll ? 'offline_end_at' : 'exam_end_at'}
                 label={isOfflinePoll ? t('offlinePoll.endDate', 'End Date & Time') : t('exam.endAt')}
-                rules={[{ required: true, message: isOfflinePoll ? t('quiz.endDateRequired') : t('exam.endAtRequired') }]}
+                dependencies={[isOfflinePoll ? 'offline_start_at' : 'exam_start_at']}
+                rules={[{ required: true, message: isOfflinePoll ? t('quiz.endDateRequired') : t('exam.endAtRequired') }, ({ getFieldValue }) => ({
+                validator(_, v) {
+                  const start = getFieldValue(isOfflinePoll ? 'offline_start_at' : 'exam_start_at')
+                  if (!v || !start || dayjs(v).isAfter(dayjs(start))) return Promise.resolve()
+                  return Promise.reject(new Error(t('quiz.endAfterStart')))
+                },
+              })]}
                 style={{ marginBottom: 0, flex: '0 0 auto' }}
               >
-                <DatePicker
-                  showTime={{ format: 'HH:mm' }}
-                  format="YYYY-MM-DD HH:mm"
-                  style={{ width: 178 }}
-                  disabledDate={(d) => {
-                    if (!d) return false;
-                    const startKey = isOfflinePoll ? 'offline_start_at' : 'exam_start_at';
-                    const start = form.getFieldValue(startKey);
-                    const floor = start ? start.startOf('day') : dayjs().startOf('day');
-                    return d.isBefore(floor);
-                  }}
-                />
+                <SafeDateTimeInput style={{ width: 200 }} />
               </Form.Item>
               {isExam && (
                 <Form.Item

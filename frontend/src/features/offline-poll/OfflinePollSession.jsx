@@ -1,8 +1,20 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  Card, Button, Typography, Space, Progress, Radio, Input, Spin,
-  Alert, Tag, Divider, Row, Col, message, Checkbox
+  Card,
+  Button,
+  Typography,
+  Space,
+  Progress,
+  Radio,
+  Input,
+  Spin,
+  Alert,
+  Tag,
+  Divider,
+  Row,
+  Col,
+  Checkbox,
 } from 'antd'
 import { CheckCircleOutlined, ClockCircleOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +25,7 @@ import RichTextRenderer from '../quiz/components/RichTextRenderer'
 import VideoEmbed from '../quiz/components/VideoEmbed'
 import PromoCard from '../../components/PromoCard'
 import { VisitorThemeContext } from '../../App'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input

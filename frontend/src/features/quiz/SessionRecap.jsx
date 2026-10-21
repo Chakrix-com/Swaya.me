@@ -2,14 +2,24 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Card, Button, Space, Typography, Tag, Statistic, Progress,
-  Alert, Table, Divider, Tooltip, message
+  Card,
+  Button,
+  Space,
+  Typography,
+  Tag,
+  Statistic,
+  Progress,
+  Alert,
+  Table,
+  Divider,
+  Tooltip,
 } from 'antd'
 import {
   LeftOutlined, TrophyOutlined, DownloadOutlined, TeamOutlined,
   CheckCircleOutlined, ThunderboltOutlined, BarChartOutlined
 } from '@ant-design/icons'
 import { sessionAPI } from '../../services/api'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

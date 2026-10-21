@@ -1,8 +1,9 @@
 import { useContext } from 'react'
-import { Button, Card, Space, Typography, message } from 'antd'
+import { Button, Card, Space, Typography } from 'antd'
 import { GlobalOutlined, StarOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { VisitorThemeContext } from '../App'
+import { message } from './safeMessage'
 
 const { Text } = Typography
 

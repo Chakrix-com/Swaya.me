@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Typography, Table, Tag, Alert, Spin, Result, Button, Space, Empty, Progress, Tooltip, App,
+  Typography, Table, Tag, Alert, Spin, Result, Button, Space, Empty, Progress, Tooltip,
 } from 'antd'
 import {
   ArrowLeftOutlined, ClockCircleOutlined, SyncOutlined, StopOutlined,
@@ -27,6 +27,7 @@ import LogModal from './LogModal'
 import TranscriptModal from './TranscriptModal'
 import MoreActionsMenu from '../../components/MoreActionsMenu'
 import SafeConfirm from '../../components/SafeConfirm'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -284,7 +285,6 @@ function CandidateDetail({ entry, hasCustomWeights, t, questionId, onRegraded, o
   const submission = selected.submission
   const [regrading, setRegrading] = useState(false)
   const [confirmReinvite, setConfirmReinvite] = useState(false)
-  const { message } = App.useApp()
 
   const handleRegrade = async () => {
     setRegrading(true)
@@ -415,7 +415,6 @@ export default function CodingChallengeReview() {
   const [logModal, setLogModal] = useState(null) // { title, content, variant } | null
   const [transcriptModal, setTranscriptModal] = useState(null) // { rawTranscript, tokenUsage } | null
   const pollRef = useRef(null)
-  const { message } = App.useApp()
 
   const handleReinvite = async (email) => {
     try {

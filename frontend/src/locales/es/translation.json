@@ -476,7 +476,10 @@
     "unpublishToEditBannerTitleExam": "✏️ Despublicar para editar ajustes",
     "unpublishToEditBannerTitleQuiz": "✏️ Despublicar → Editar → Volver a publicar",
     "unpublishToEditBannerDescExam": "Este examen está activo. Despublícalo para realizar cambios y vuelve a publicarlo cuando estés listo.",
-    "unpublishToEditBannerDescQuiz": "Esta actividad está publicada y activa. Despublícala para editar los ajustes y vuelve a publicarla cuando estés listo."
+    "unpublishToEditBannerDescQuiz": "Esta actividad está publicada y activa. Despublícala para editar los ajustes y vuelve a publicarla cuando estés listo.",
+    "endAfterStart": "El final debe ser posterior a la fecha y hora de inicio",
+    "requireParticipantName": "Pedir nombres reales",
+    "requireParticipantNameHint": "Los participantes deben escribir su propio nombre: sin nombres aleatorios sugeridos ni acceso anónimo"
   },
   "audience": {
     "joinQuiz": "Unirse a la sesión",
@@ -566,7 +569,9 @@
     "quizEndedByHostTitle": "Cuestionario finalizado por el anfitrión",
     "quizEndedEarlyNote": "El anfitrión finalizó esta sesión antes de tiempo. Tu puntuación refleja las preguntas respondidas hasta ahora.",
     "responses": "respuestas",
-    "wrong": "Incorrecto"
+    "wrong": "Incorrecto",
+    "displayNameRequired": "Escribe tu nombre",
+    "nameRequired": "Escribe tu nombre para unirte"
   },
   "dashboard": {
     "readyToLaunch": "Listo para lanzar",
@@ -2243,7 +2248,9 @@
     "violationEvents": "evento(s) de infracción",
     "violationTimeline": "Cronología de infracciones",
     "webcamDenied": "El candidato denegó el acceso a la cámara web",
-    "webcamSnapshots": "Instantáneas de cámara web"
+    "webcamSnapshots": "Instantáneas de cámara web",
+    "startedAtCol": "Inicio",
+    "submittedAtCol": "Envío"
   },
   "appFeedback": {
     "floatButtonTooltip": "Compartir comentarios",

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, Form, Input, InputNumber, Space, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Space, Table, Tag, Typography } from 'antd'
 import SafeModal from '../../components/SafeModal'
 import { EditOutlined } from '@ant-design/icons'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { tierConfigAPI } from '../../services/api'
 import './Admin.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

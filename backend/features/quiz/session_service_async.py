@@ -24,7 +24,8 @@ from features.quiz.schemas import (
 )
 from shared.exceptions.quiz import (
     QuizNotFoundError, SessionNotFoundError, ParticipantNotFoundError,
-    InvalidQuizStatusError, InvalidSessionStatusError, TierLimitExceededError
+    InvalidQuizStatusError, InvalidSessionStatusError, TierLimitExceededError,
+    QuizValidationError,
 )
 from shared.utils.redis_client import RedisClient
 from core.config.tier_service import TierService
@@ -739,6 +740,7 @@ class SessionServiceAsync:
             quiz_type=session.quiz.quiz_type,
             participant_count=pcount or 0,
             skin=getattr(session.quiz, 'skin', None),
+            require_participant_name=bool(getattr(session.quiz, 'require_participant_name', False)),
         )
 
     async def get_home_stats(self, db: AsyncSession, tenant_id: int) -> HomeStatsResponse:
@@ -869,6 +871,10 @@ class SessionServiceAsync:
             if not session:
                 raise SessionNotFoundError("No active session found")
             
+            # Host asked for real names: no anonymous / blank joins
+            if getattr(session.quiz, 'require_participant_name', False) and not (request.display_name or '').strip():
+                raise QuizValidationError("Please enter your name to join")
+
             # Get tenant to check tier
             result = await db.execute(select(Tenant).filter(Tenant.id == session.tenant_id))
             tenant = result.scalar_one_or_none()
@@ -923,7 +929,7 @@ class SessionServiceAsync:
             
             return response
             
-        except (SessionNotFoundError, TierLimitExceededError):
+        except (SessionNotFoundError, TierLimitExceededError, QuizValidationError):
             raise
         except Exception as e:
             raise

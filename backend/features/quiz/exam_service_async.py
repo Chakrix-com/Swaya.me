@@ -43,6 +43,15 @@ _BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 _GRACE_PERIOD_SECONDS = 600  # 10 minutes
 
 
+
+
+def _as_utc(dt):
+    """MySQL returns DATETIMEs naive (stored as UTC). Mark them UTC so the
+    browser shows them in the viewer's own timezone instead of as-is."""
+    if dt is not None and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -779,7 +788,8 @@ async def get_exam_results(
             "score": score,
             "correct": correct,
             "time_taken": time_taken,
-            "completed_at": p.completed_at,
+            "started_at": _as_utc(p.started_at),
+            "completed_at": _as_utc(p.completed_at),
             "is_abandoned": p.is_abandoned,
             "is_completed": p.completed_at is not None,
         }
@@ -804,6 +814,7 @@ async def get_exam_results(
             percentage=round((entry["score"] / max_score * 100) if max_score > 0 else 0.0, 2),
             correct_count=entry["correct"],
             time_taken_seconds=entry["time_taken"],
+            started_at=entry["started_at"],
             completed_at=entry["completed_at"],
             is_abandoned=entry["is_abandoned"],
             is_completed=True,
@@ -819,6 +830,7 @@ async def get_exam_results(
             percentage=0.0,
             correct_count=0,
             time_taken_seconds=None,
+            started_at=entry["started_at"],
             completed_at=None,
             is_abandoned=entry["is_abandoned"],
             is_completed=False,

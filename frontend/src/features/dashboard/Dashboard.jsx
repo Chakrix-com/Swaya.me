@@ -3,8 +3,21 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  Button, Tag, Space, Tooltip, message, Select, Spin,
-  Row, Col, Card, Input, Progress, Table, Typography, Badge, Form,
+  Button,
+  Tag,
+  Space,
+  Tooltip,
+  Select,
+  Spin,
+  Row,
+  Col,
+  Card,
+  Input,
+  Progress,
+  Table,
+  Typography,
+  Badge,
+  Form,
 } from 'antd'
 import SafeModal from '../../components/SafeModal'
 import SafeTreeSelect from '../../components/SafeTreeSelect'
@@ -38,6 +51,7 @@ import { setQuizzes, setFolders } from '../../store/quizSlice'
 import { quizAPI, sessionAPI, authAPI } from '../../services/api'
 import CreateChooser from './CreateChooser'
 import './Dashboard.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

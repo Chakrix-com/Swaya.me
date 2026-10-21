@@ -6,9 +6,24 @@ import { useState, useEffect, useCallback, useRef, useContext } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Card, Typography, Button, Form, Input, Progress, Space,
-  Alert, Spin, Row, Col, Tag, Statistic, Divider, Radio, Result,
-  Badge, message, Checkbox
+  Card,
+  Typography,
+  Button,
+  Form,
+  Input,
+  Progress,
+  Space,
+  Alert,
+  Spin,
+  Row,
+  Col,
+  Tag,
+  Statistic,
+  Divider,
+  Radio,
+  Result,
+  Badge,
+  Checkbox,
 } from 'antd'
 import SafeConfirm from '../../components/SafeConfirm'
 import {
@@ -29,6 +44,7 @@ import { ProctoringProvider, ProctoringGate } from '../proctoring'
 import useWakeLock from '../../hooks/useWakeLock'
 import dayjs from 'dayjs'
 import VideoEmbed from '../quiz/components/VideoEmbed'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text, Paragraph } = Typography
 

@@ -476,7 +476,10 @@
     "unpublishToEditBannerTitleExam": "✏️ संपादित करने के लिए अनपब्लिश करें",
     "unpublishToEditBannerTitleQuiz": "✏️ अनपब्लिश → संपादित करें → पुनः प्रकाशित करें",
     "unpublishToEditBannerDescExam": "यह परीक्षा लाइव है। बदलाव करने के लिए इसे अनपब्लिश करें, फिर तैयार होने पर पुनः प्रकाशित करें।",
-    "unpublishToEditBannerDescQuiz": "यह गतिविधि प्रकाशित और लाइव है। सेटिंग्स संपादित करने के लिए इसे अनपब्लिश करें, फिर तैयार होने पर पुनः प्रकाशित करें।"
+    "unpublishToEditBannerDescQuiz": "यह गतिविधि प्रकाशित और लाइव है। सेटिंग्स संपादित करने के लिए इसे अनपब्लिश करें, फिर तैयार होने पर पुनः प्रकाशित करें।",
+    "endAfterStart": "समाप्ति, प्रारंभ तिथि और समय के बाद होनी चाहिए",
+    "requireParticipantName": "असली नाम पूछें",
+    "requireParticipantNameHint": "प्रतिभागियों को अपना नाम लिखना होगा — कोई रैंडम नाम सुझाव या गुमनाम रूप से जुड़ना नहीं"
   },
   "audience": {
     "joinQuiz": "सत्र में शामिल हों",
@@ -566,7 +569,9 @@
     "quizEndedByHostTitle": "होस्ट द्वारा क्विज़ समाप्त",
     "quizEndedEarlyNote": "होस्ट ने यह सत्र समय से पहले समाप्त कर दिया है। आपका स्कोर अब तक दिए गए उत्तरों पर आधारित है।",
     "responses": "प्रतिक्रियाएं",
-    "wrong": "गलत"
+    "wrong": "गलत",
+    "displayNameRequired": "अपना नाम दर्ज करें",
+    "nameRequired": "जुड़ने के लिए कृपया अपना नाम दर्ज करें"
   },
   "navigation": {
     "home": "होम",
@@ -2243,7 +2248,9 @@
     "violationEvents": "उल्लंघन घटना(एं)",
     "violationTimeline": "उल्लंघन समयरेखा",
     "webcamDenied": "उम्मीदवार द्वारा वेबकैम की अनुमति नहीं दी गई",
-    "webcamSnapshots": "वेबकैम स्नैपशॉट"
+    "webcamSnapshots": "वेबकैम स्नैपशॉट",
+    "startedAtCol": "शुरू किया",
+    "submittedAtCol": "जमा किया"
   },
   "appFeedback": {
     "floatButtonTooltip": "प्रतिक्रिया साझा करें",

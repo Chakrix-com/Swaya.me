@@ -476,7 +476,10 @@
     "unpublishToEditBannerTitleExam": "✏️ Veröffentlichung aufheben zum Bearbeiten der Einstellungen",
     "unpublishToEditBannerTitleQuiz": "✏️ Veröffentlichung aufheben → Bearbeiten → Neu veröffentlichen",
     "unpublishToEditBannerDescExam": "Dieser Test ist live. Heben Sie die Veröffentlichung auf, um Änderungen vorzunehmen, und veröffentlichen Sie ihn erneut, wenn Sie bereit sind.",
-    "unpublishToEditBannerDescQuiz": "Diese Aktivität ist veröffentlicht und live. Heben Sie die Veröffentlichung auf, um Einstellungen zu bearbeiten, und veröffentlichen Sie sie erneut, wenn Sie bereit sind."
+    "unpublishToEditBannerDescQuiz": "Diese Aktivität ist veröffentlicht und live. Heben Sie die Veröffentlichung auf, um Einstellungen zu bearbeiten, und veröffentlichen Sie sie erneut, wenn Sie bereit sind.",
+    "endAfterStart": "Das Ende muss nach Startdatum und -uhrzeit liegen",
+    "requireParticipantName": "Echte Namen verlangen",
+    "requireParticipantNameHint": "Teilnehmende müssen ihren eigenen Namen eingeben – keine zufälligen Namensvorschläge und keine anonyme Teilnahme"
   },
   "audience": {
     "joinQuiz": "Sitzung beitreten",
@@ -566,7 +569,9 @@
     "quizEndedByHostTitle": "Quiz vom Gastgeber beendet",
     "quizEndedEarlyNote": "Der Gastgeber hat diese Sitzung vorzeitig beendet. Ihr Ergebnis spiegelt die bisher beantworteten Fragen wider.",
     "responses": "Antworten",
-    "wrong": "Falsch"
+    "wrong": "Falsch",
+    "displayNameRequired": "Gib deinen Namen ein",
+    "nameRequired": "Bitte gib deinen Namen ein, um beizutreten"
   },
   "dashboard": {
     "readyToLaunch": "Startbereit",
@@ -2243,7 +2248,9 @@
     "violationEvents": "Verstoßereignis(se)",
     "violationTimeline": "Verstoß-Zeitstrahl",
     "webcamDenied": "Webcam wurde vom Kandidaten verweigert",
-    "webcamSnapshots": "Webcam-Schnappschüsse"
+    "webcamSnapshots": "Webcam-Schnappschüsse",
+    "startedAtCol": "Begonnen",
+    "submittedAtCol": "Abgegeben"
   },
   "appFeedback": {
     "floatButtonTooltip": "Feedback teilen",

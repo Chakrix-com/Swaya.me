@@ -6,9 +6,25 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Card, Typography, Button, Table, Space, Tag, Statistic,
-  Row, Col, Progress, Alert, Spin, Divider, Tooltip, Input, message, List,
-  Badge, Timeline, Image
+  Card,
+  Typography,
+  Button,
+  Table,
+  Space,
+  Tag,
+  Statistic,
+  Row,
+  Col,
+  Progress,
+  Alert,
+  Spin,
+  Divider,
+  Tooltip,
+  Input,
+  List,
+  Badge,
+  Timeline,
+  Image,
 } from 'antd'
 const { TextArea } = Input
 import {
@@ -27,6 +43,7 @@ import ReactMarkdown from 'react-markdown'
 import SafeModal from '../../components/SafeModal'
 import SafeConfirm from '../../components/SafeConfirm'
 import './ExamResults.css'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 const stripHtml = (h) => (h || '').replace(/<[^>]*>/g, '').trim()
@@ -483,6 +500,22 @@ export default function ExamResults() {
         const s = Math.round(secs % 60)
         return <Text><ClockCircleOutlined style={{ marginRight: 4 }} />{m}m {s}s</Text>
       }
+    },
+    {
+      title: t('exam.startedAtCol'),
+      dataIndex: 'started_at',
+      width: 150,
+      sorter: (a, b) => dayjs(a.started_at || 0).valueOf() - dayjs(b.started_at || 0).valueOf(),
+      render: (v) => v ? <Text style={{ fontSize: 12 }}>{dayjs(v).format('DD MMM YYYY, HH:mm:ss')}</Text> : '—',
+    },
+    {
+      title: t('exam.submittedAtCol'),
+      dataIndex: 'completed_at',
+      width: 150,
+      sorter: (a, b) => dayjs(a.completed_at || 0).valueOf() - dayjs(b.completed_at || 0).valueOf(),
+      render: (v, row) => v
+        ? <Text style={{ fontSize: 12 }}>{dayjs(v).format('DD MMM YYYY, HH:mm:ss')}</Text>
+        : <Text type="secondary" style={{ fontSize: 12 }}>{row.is_abandoned ? t('exam.abandoned', 'Abandoned') : t('exam.inProgress', 'In progress')}</Text>,
     },
   ]
 

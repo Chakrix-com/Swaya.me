@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Row, Col, Button, Input, Tabs, Tag, Typography, Space, Spin, message, Empty, Tooltip, Grid } from 'antd'
+import { Card, Row, Col, Button, Input, Tabs, Tag, Typography, Space, Spin, Empty, Tooltip, Grid } from 'antd'
 
 const { useBreakpoint } = Grid
 import {
@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { quizAPI } from '../../services/api'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text } = Typography
 

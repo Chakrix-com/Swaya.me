@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { App } from 'antd'
 import { sessionAPI } from '../../services/api'
 import { useDispatch } from 'react-redux'
 import { setSession } from '../../store/sessionSlice'
 import PublicBrandHeader from '../../components/PublicBrandHeader'
 import './AudienceJoin.css'
+import { message } from '../../components/safeMessage'
 
 const ADJECTIVES = ['Swift', 'Clever', 'Brave', 'Calm', 'Bold', 'Keen', 'Quick', 'Wise', 'Bright', 'Sharp', 'Cool', 'Epic', 'Jazzy', 'Nifty', 'Plucky', 'Snappy', 'Zesty']
 const NOUNS = ['Falcon', 'Panda', 'Comet', 'Quasar', 'Ember', 'Titan', 'Rocket', 'Nebula', 'Pixel', 'Nova', 'Lynx', 'Phoenix', 'Vortex', 'Prism', 'Cipher', 'Axiom']
@@ -32,7 +32,6 @@ const MODE_EMOJI = {
 
 function AudienceJoin() {
   const { t } = useTranslation()
-  const { message } = App.useApp()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { joinCode: paramCode } = useParams()
@@ -71,7 +70,8 @@ function AudienceJoin() {
       const res = await sessionAPI.lookup(clean)
       setActivityInfo(res.data)
       setResolvedCode(clean)
-      setDisplayName(randomName())
+      // Host can switch off the random-name suggestion and require a typed name
+      setDisplayName(res.data?.require_participant_name ? '' : randomName())
       setStep('name')
       setTimeout(() => nameInputRef.current?.focus(), 100)
     } catch {
@@ -82,6 +82,11 @@ function AudienceJoin() {
   }
 
   const handleJoin = async () => {
+    if (nameRequired && !displayName.trim()) {
+      message.error(t('audience.nameRequired'))
+      nameInputRef.current?.focus()
+      return
+    }
     setJoining(true)
     try {
       const response = await sessionAPI.join({
@@ -156,6 +161,7 @@ function AudienceJoin() {
   }
 
   const quizType = activityInfo?.quiz_type
+  const nameRequired = !!activityInfo?.require_participant_name
 
   return (
     <div className={`aj-page${quizType ? ` aj-page--${quizType}` : ''}`}>
@@ -222,24 +228,27 @@ function AudienceJoin() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   onKeyDown={handleNameKeyDown}
-                  placeholder={t('audience.displayNameOptional', { defaultValue: 'Your name (anonymous if blank)' })}
+                  placeholder={nameRequired
+                    ? t('audience.displayNameRequired')
+                    : t('audience.displayNameOptional', { defaultValue: 'Your name (anonymous if blank)' })}
+                  required={nameRequired}
                   maxLength={40}
                 />
-                <button
+                {!nameRequired && <button
                   className="aj-btn aj-btn--reroll"
                   onClick={() => setDisplayName(randomName())}
                   title={t('audience.rerollName', { defaultValue: 'Suggest a random name' })}
                   type="button"
                 >
                   🎲
-                </button>
+                </button>}
               </div>
             </div>
 
             <button
               className="aj-btn aj-btn--primary aj-btn--join"
               onClick={handleJoin}
-              disabled={joining}
+              disabled={joining || (nameRequired && !displayName.trim())}
             >
               {joining ? <span className="aj-spinner" /> : t('audience.join')}
             </button>

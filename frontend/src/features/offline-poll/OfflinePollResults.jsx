@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  Card, Typography, Space, Tag, Spin, Alert, Statistic, Row, Col,
-  Divider, Button, message, Progress
+  Card,
+  Typography,
+  Space,
+  Tag,
+  Spin,
+  Alert,
+  Statistic,
+  Row,
+  Col,
+  Divider,
+  Button,
+  Progress,
 } from 'antd'
 import { ArrowLeftOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { offlinePollAPI, quizAPI } from '../../services/api'
+import { message } from '../../components/safeMessage'
 
 const { Title, Text, Paragraph } = Typography
 
