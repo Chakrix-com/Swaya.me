@@ -41,11 +41,17 @@ function open(type, args, durationArg, onCloseArg) {
   const cfg = args && typeof args === 'object' && 'content' in args
     ? args
     : { content: args, duration: durationArg, onClose: onCloseArg };
-  const key = cfg.key ?? `sw-msg-${++seq}`;
+  const toastType = cfg.type || type;
+  // The same text already on screen (e.g. Save clicked 3 times) reuses that
+  // toast and restarts its timer instead of stacking identical copies.
+  const duplicate = cfg.key == null && typeof cfg.content === 'string'
+    ? toasts.find((x) => x.type === toastType && x.content === cfg.content)
+    : null;
+  const key = cfg.key ?? duplicate?.key ?? `sw-msg-${++seq}`;
   const duration = cfg.duration ?? DEFAULT_DURATION;
 
   clearTimeout(timers.get(key));
-  const toast = { key, type: cfg.type || type, content: cfg.content };
+  const toast = { key, type: toastType, content: cfg.content };
   const existing = toasts.findIndex((x) => x.key === key);
   toasts = existing >= 0
     ? toasts.map((x, i) => (i === existing ? toast : x))
