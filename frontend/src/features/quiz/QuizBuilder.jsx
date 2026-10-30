@@ -4185,6 +4185,13 @@ export default function QuizBuilder() {
           >
             {pollLinkModal.url}
           </Text>
+          {pollLinkModal.url && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+              <div style={{ background: '#fff', padding: 12, borderRadius: 8, border: `1px solid ${token.colorBorderSecondary}` }}>
+                <QRCodeCanvas value={pollLinkModal.url} size={160} level="H" includeMargin={false} />
+              </div>
+            </div>
+          )}
         </Space>
       </SafeModal>
 

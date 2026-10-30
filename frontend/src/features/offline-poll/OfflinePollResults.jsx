@@ -14,11 +14,13 @@ import {
   Button,
   Progress,
 } from 'antd'
-import { ArrowLeftOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, UserOutlined, CheckCircleOutlined, FullscreenOutlined } from '@ant-design/icons'
+import { QRCodeCanvas } from 'qrcode.react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { offlinePollAPI, quizAPI } from '../../services/api'
 import { message } from '../../components/safeMessage'
+import SafeModal from '../../components/SafeModal'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -32,6 +34,7 @@ export default function OfflinePollResults() {
   const [loading, setLoading] = useState(true)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
+  const [qrModalOpen, setQrModalOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -58,6 +61,8 @@ export default function OfflinePollResults() {
   if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
   if (error) return <Alert type="error" message={error} style={{ margin: 24 }} />
   if (!results) return null
+
+  const pollUrl = results.slug ? `${window.location.origin}/poll/${results.slug}` : ''
 
   const completionRate = results.total_participants > 0
     ? Math.round((results.completed_participants / results.total_participants) * 100)
@@ -86,10 +91,22 @@ export default function OfflinePollResults() {
             </Text>
           )}
 
-          {results.slug && (
-            <Space>
-              <Text type="secondary" copyable={{ text: `${window.location.origin}/poll/${results.slug}` }}>
-                {`/poll/${results.slug}`}
+          {pollUrl && (
+            <Space align="center" size="large" wrap>
+              <div
+                onClick={() => setQrModalOpen(true)}
+                title={t('quizPresent.expandQr', { defaultValue: 'Click to enlarge QR code' })}
+                style={{ background: '#fff', padding: 8, borderRadius: 8, border: '1px solid #f0f0f0', cursor: 'pointer', lineHeight: 0, position: 'relative' }}
+              >
+                <QRCodeCanvas value={pollUrl} size={120} level="H" includeMargin={false} />
+                <FullscreenOutlined style={{ position: 'absolute', right: 4, bottom: 4, fontSize: 12, color: '#999' }} />
+              </div>
+              <Text
+                strong
+                copyable={{ text: pollUrl, tooltips: [t('offlinePoll.copyLink', 'Copy Link'), t('offlinePoll.linkCopied', 'Link copied!')] }}
+                style={{ wordBreak: 'break-all' }}
+              >
+                {pollUrl}
               </Text>
             </Space>
           )}
@@ -184,6 +201,20 @@ export default function OfflinePollResults() {
           )}
         </Card>
       ))}
+
+      {/* QR enlarge modal — for projecting or printing the survey link */}
+      <SafeModal
+        open={qrModalOpen}
+        onCancel={() => setQrModalOpen(false)}
+        footer={null}
+        title={results.quiz_title}
+        width={480}
+      >
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <QRCodeCanvas value={pollUrl} size={380} level="H" includeMargin />
+          <div style={{ marginTop: 12, fontSize: 14, color: '#666', wordBreak: 'break-all' }}>{pollUrl}</div>
+        </div>
+      </SafeModal>
     </div>
   )
 }
