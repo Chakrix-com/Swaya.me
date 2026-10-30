@@ -127,6 +127,12 @@ export default function QuizControl() {
   const loadQuiz = async () => {
     try {
       const response = await quizAPI.get(id)
+      // Surveys have no live control room (no join code) — the console would show
+      // a code-less /join link, so send the host to the survey's results page.
+      if (response.data?.quiz_type === 'offline_poll') {
+        navigate(`/quiz/${id}/offline-results`, { replace: true })
+        return
+      }
       setQuiz(response.data)
     } catch (error) {
       message.error(t('quiz.failedToLoadQuiz'))

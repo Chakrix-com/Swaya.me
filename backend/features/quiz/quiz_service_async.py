@@ -1190,7 +1190,9 @@ class QuizBuilderServiceAsync:
         if quiz.status not in (QuizStatus.DRAFT, QuizStatus.READY):
             raise InvalidQuizStatusError("Offline poll is already active or archived")
 
-        if quiz.poll_slug:
+        # Unpublish only reverts status to DRAFT and keeps the slug, so a slug on a
+        # DRAFT poll means "republish": reuse the same link and responses.
+        if quiz.poll_slug and quiz.status == QuizStatus.READY:
             raise InvalidQuizStatusError("Offline poll is already published")
 
         # Validate
@@ -1205,8 +1207,8 @@ class QuizBuilderServiceAsync:
             raise QuizValidationError("Offline poll must have at least one question")
 
         # Generate unique slug (retry up to 3 times)
-        slug = None
-        for _ in range(3):
+        slug = quiz.poll_slug
+        for _ in range(0 if slug else 3):
             candidate = secrets.token_urlsafe(8)
             existing = await db.execute(
                 select(Quiz).filter(Quiz.poll_slug == candidate)
@@ -1218,15 +1220,20 @@ class QuizBuilderServiceAsync:
         if not slug:
             raise QuizValidationError("Failed to generate unique poll slug, please try again")
 
-        # Create the permanent session in ACTIVE state
-        session = QuizSession(
-            quiz_id=quiz.id,
-            tenant_id=quiz.tenant_id,
-            status=QuizSessionStatus.ACTIVE,
-            current_question_index=-1,
-        )
-        db.add(session)
-        await db.flush()
+        # Reuse the existing permanent session on republish (reactivating it if it
+        # was ended); otherwise create it in ACTIVE state
+        session = await db.get(QuizSession, quiz.offline_session_id) if quiz.offline_session_id else None
+        if session:
+            session.status = QuizSessionStatus.ACTIVE
+        else:
+            session = QuizSession(
+                quiz_id=quiz.id,
+                tenant_id=quiz.tenant_id,
+                status=QuizSessionStatus.ACTIVE,
+                current_question_index=-1,
+            )
+            db.add(session)
+            await db.flush()
 
         quiz.poll_slug = slug
         quiz.offline_session_id = session.id

@@ -131,7 +131,9 @@ export default function ResultsHub() {
       key: 'actions',
       width: 130,
       render: (_, row) => (
-        row.status === 'ended' ? (
+        // Surveys have no live control room — their session stays "active" for
+        // the whole response window, so always link to results.
+        row.status === 'ended' || row.quiz_type === 'offline_poll' ? (
           <Button
             size="small"
             icon={<TrophyOutlined />}

@@ -86,10 +86,10 @@ export default function OfflinePollResults() {
             </Text>
           )}
 
-          {results.poll_slug && (
+          {results.slug && (
             <Space>
-              <Text type="secondary" copyable={{ text: `${window.location.origin}/poll/${results.poll_slug}` }}>
-                {`/poll/${results.poll_slug}`}
+              <Text type="secondary" copyable={{ text: `${window.location.origin}/poll/${results.slug}` }}>
+                {`/poll/${results.slug}`}
               </Text>
             </Space>
           )}
