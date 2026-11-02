@@ -1305,6 +1305,15 @@ class QuizBuilderServiceAsync:
                         question_image_url=question.question_image_url,
                         question_video_url=question.question_video_url,
                         option_images=dict(question.option_images) if question.option_images else None,
+                        # Scoring/survey fields — also missing from this copy list until
+                        # 2026-11-02 (duplicate_question already copied them), so a
+                        # duplicated survey lost every "required" flag and a duplicated
+                        # quiz lost its points/timers.
+                        points=question.points,
+                        max_time_seconds=question.max_time_seconds,
+                        negative_points=getattr(question, 'negative_points', 0) or 0,
+                        is_required=getattr(question, 'is_required', False) or False,
+                        answer_explanation=question.answer_explanation,
                         # Coding-challenge fields — previously missing entirely from this
                         # copy list (this constructor is separate from
                         # question_service_async.duplicate_question's, which already had
@@ -1538,6 +1547,7 @@ class QuizBuilderServiceAsync:
                     points=q.points,
                     max_time_seconds=q.max_time_seconds,
                     negative_points=getattr(q, 'negative_points', 0) or 0,
+                    is_required=getattr(q, 'is_required', False) or False,
                     answer_explanation=q.answer_explanation,
                     grading_rubric=q.grading_rubric,
                     git_repo_url=getattr(q, 'git_repo_url', None),
