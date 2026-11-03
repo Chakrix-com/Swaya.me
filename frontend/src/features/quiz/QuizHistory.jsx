@@ -261,6 +261,11 @@ export default function QuizHistory() {
     }
   }
 
+  // A survey's session stays "active" for its whole response window (nothing
+  // ends it when the window closes), so surveys can export responses so far
+  // at any time; live quizzes/polls export once the session has ended.
+  const canExport = (session) => session.status === 'ended' || quizType === 'offline_poll'
+
   const exportMenuItems = (sessionId) => [
     { key: 'pdf',  label: t('quiz.exportPdf'),  icon: <FilePdfOutlined />,  onClick: () => handleExport(sessionId, 'pdf') },
     { key: 'docx', label: t('quiz.exportDocx'), icon: <FileWordOutlined />,  onClick: () => handleExport(sessionId, 'docx') },
@@ -344,14 +349,14 @@ export default function QuizHistory() {
                   )}
                   <MoreActionsMenu
                     items={exportMenuItems(session.id)}
-                    disabled={session.status !== 'ended'}
+                    disabled={!canExport(session)}
                     width={210}
                     trigger={
                       <Button
                         size="small"
                         icon={<DownloadOutlined />}
                         loading={exportingSessionId === session.id}
-                        disabled={session.status !== 'ended'}
+                        disabled={!canExport(session)}
                       >
                         {t('quiz.export')}
                       </Button>

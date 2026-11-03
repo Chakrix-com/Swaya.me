@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from persistence.models.quiz import (
-    Quiz, QuizSession, QuizType, Question, QuestionType, Answer
+    Quiz, QuizSession, QuizType, Question, QuestionType, Answer, Participant
 )
 from features.quiz.answer_service_async import AnswerServiceAsync
 
@@ -115,6 +115,9 @@ class ExportData:
     generated_at: datetime
     questions: List[QuestionExport] = field(default_factory=list)
     leaderboard: List[LeaderboardEntryExport] = field(default_factory=list)
+    # Surveys only: one row per respondent (xlsx "Responses" sheet)
+    response_headers: List[str] = field(default_factory=list)
+    response_rows: List[List[Any]] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +130,12 @@ _PALETTE_HEX = [
 ]
 _CORRECT_HEX = "#52c41a"
 _WRONG_HEX   = "#1890ff"
+
+
+def _plain(text: Optional[str]) -> str:
+    """Rich-text question/option HTML -> plain text for spreadsheet cells."""
+    import html, re
+    return html.unescape(re.sub(r"<[^>]+>", " ", text or "")).replace("\xa0", " ").strip()
 
 
 def _hex2rgb(h: str) -> Tuple[int, int, int]:
@@ -1402,6 +1411,23 @@ def _build_xlsx(data: ExportData) -> bytes:
             ws_s.add_chart(pc, "D4")
 
     # ---- Questions sheet ----
+    # ---- Responses sheet (surveys): one row per respondent, one column per question ----
+    if data.response_headers:
+        ws_r = wb.create_sheet("Responses")
+        _set_sheet_header_footer(ws_r)
+        for col, h in enumerate(data.response_headers, 1):
+            cell = ws_r.cell(row=1, column=col, value=h)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(wrap_text=True, vertical="top")
+        for r_idx, row in enumerate(data.response_rows, 2):
+            for c_idx, val in enumerate(row, 1):
+                ws_r.cell(r_idx, c_idx, val)
+        if data.response_rows:
+            _apply_alt_rows(ws_r, 2, len(data.response_rows) + 1, len(data.response_headers))
+        _set_col_widths(ws_r, [5, 24, 28, 11, 18] + [30] * (len(data.response_headers) - 5))
+        ws_r.freeze_panes = "C2"
+
     ws_q = wb.create_sheet("Questions")
     _set_sheet_header_footer(ws_q)
     q_headers = ["Q#", "Text", "Type", "Opt A", "Opt B", "Opt C", "Opt D",
@@ -1771,6 +1797,11 @@ class ExportService:
                 option_image_paths=opt_imgs if opt_imgs else None,
             ))
 
+        response_headers: List[str] = []
+        response_rows: List[List[Any]] = []
+        if quiz.quiz_type == QuizType.OFFLINE_POLL:
+            response_headers, response_rows = await self._gather_survey_responses(db, session_id, questions)
+
         return ExportData(
             session_id=session_id,
             quiz_title=quiz.title,
@@ -1780,4 +1811,50 @@ class ExportService:
             generated_at=datetime.utcnow(),
             questions=q_exports,
             leaderboard=leaderboard,
+            response_headers=response_headers,
+            response_rows=response_rows,
         )
+
+    async def _gather_survey_responses(
+        self,
+        db: AsyncSession,
+        session_id: int,
+        questions: List[Question],
+    ) -> Tuple[List[str], List[List[Any]]]:
+        """Per-respondent answers for a survey: the aggregate sheets only carry
+        counts (free text appears only as lower-cased word frequencies), so a
+        survey collecting names/emails/departments had no way to export who
+        answered what."""
+        participants = (await db.execute(
+            select(Participant)
+            .filter(Participant.session_id == session_id)
+            .order_by(Participant.created_at, Participant.id)
+        )).scalars().all()
+        answers = (await db.execute(
+            select(Answer).filter(Answer.session_id == session_id)
+        )).scalars().all()
+        by_pq = {(a.participant_id, a.question_id): a for a in answers}
+
+        def fmt(q: Question, a: Optional[Answer]) -> Optional[str]:
+            if a is None:
+                return None
+            opts = q.options or []
+            if a.selected_option_indices:
+                return "; ".join(_plain(opts[i]) if 0 <= i < len(opts) else str(i) for i in a.selected_option_indices)
+            if a.selected_option_index is not None:
+                i = a.selected_option_index
+                return _plain(opts[i]) if 0 <= i < len(opts) else str(i)
+            return a.text_answer
+
+        def ts(dt) -> Optional[str]:
+            return dt.strftime("%Y-%m-%d %H:%M UTC") if dt else None
+
+        headers = ["#", "Respondent", "Email", "Completed", "Submitted at"] + [
+            f"Q{i + 1}. {_plain(q.text)}" for i, q in enumerate(questions)
+        ]
+        rows = [
+            [n, p.display_name, p.email, "Yes" if p.completed_at else "No", ts(p.completed_at)]
+            + [fmt(q, by_pq.get((p.id, q.id))) for q in questions]
+            for n, p in enumerate(participants, 1)
+        ]
+        return headers, rows
