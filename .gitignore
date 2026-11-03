@@ -135,3 +135,6 @@ vulnerabilities2.md
 
 # Private planning docs, reviews, specs — kept locally, not for public repo
 _private/
+
+# Brainstorming-tool session state (not project files)
+.superpowers/
