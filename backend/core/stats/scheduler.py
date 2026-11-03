@@ -199,6 +199,17 @@ async def send_nightly_exam_emails():
         logger.error(f"Could not send failure report email: {e}", exc_info=True)
 
 
+async def close_finished_permanent_sessions_job():
+    """End survey/exam sessions whose response window has closed."""
+    try:
+        from features.quiz.session_service_async import close_finished_permanent_sessions
+        closed = await close_finished_permanent_sessions()
+        if closed:
+            logger.info(f"Ended {closed} survey/exam session(s) whose response window closed")
+    except Exception as e:
+        logger.error(f"close_finished_permanent_sessions failed: {e}", exc_info=True)
+
+
 def start_scheduler():
     """Start the background scheduler"""
     global scheduler
@@ -235,6 +246,15 @@ def start_scheduler():
         trigger=CronTrigger(hour=0, minute=0),
         id='nightly_exam_emails',
         name='Send exam participant results emails (nightly batch)',
+        replace_existing=True
+    )
+
+    # End survey/exam sessions once their response window has closed
+    scheduler.add_job(
+        close_finished_permanent_sessions_job,
+        trigger=CronTrigger(minute='*/15'),
+        id='close_finished_permanent_sessions',
+        name='End survey/exam sessions whose response window closed',
         replace_existing=True
     )
 

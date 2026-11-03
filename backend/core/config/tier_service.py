@@ -137,17 +137,22 @@ class TierService:
         tier: TierEnum
     ) -> bool:
         """Check if tenant can create more concurrent events"""
-        from persistence.models.quiz import QuizSession, QuizSessionStatus
+        from persistence.models.quiz import Quiz, QuizSession, QuizSessionStatus, QuizType
         
         config = await self._resolve_limits(db, tier)
         max_concurrent = config["max_concurrent_events"]
         
         # Count only currently open sessions.
         # Using session status is more reliable than Event.join_code, which may linger.
+        # Surveys and exams hold one session open for their whole response window
+        # (days/weeks); they are not live events and don't use up this limit.
         result = await db.execute(
-            select(func.count(QuizSession.id)).filter(
+            select(func.count(QuizSession.id))
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .filter(
                 QuizSession.tenant_id == tenant_id,
-                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE])
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE]),
+                Quiz.quiz_type.notin_([QuizType.OFFLINE_POLL, QuizType.EXAM]),
             )
         )
         active_count = result.scalar()

@@ -34,6 +34,51 @@ from core.stats import scheduler as stats_scheduler
 from persistence.database_async import AsyncSessionLocal
 
 
+# Surveys (offline polls) and exams keep ONE session ACTIVE for their whole
+# response window (days/weeks) — they are not "live" sessions. They must not be
+# ended by the 4-hour stale sweep while the window is open, and should be ended
+# once it closes. Exams get their time limit (someone can start just before the
+# end) plus a grace buffer.
+PERMANENT_SESSION_QUIZ_TYPES = (QuizType.OFFLINE_POLL, QuizType.EXAM)
+PERMANENT_SESSION_END_GRACE = timedelta(minutes=15)
+
+
+def response_window_closes_at(quiz_type, offline_end_at, exam_end_at, exam_time_limit_seconds) -> Optional[datetime]:
+    """When a survey/exam stops taking responses; None = no end (stays open)."""
+    if quiz_type == QuizType.OFFLINE_POLL:
+        return offline_end_at
+    if quiz_type == QuizType.EXAM and exam_end_at:
+        return exam_end_at + timedelta(seconds=exam_time_limit_seconds or 0) + PERMANENT_SESSION_END_GRACE
+    return None
+
+
+async def close_finished_permanent_sessions() -> int:
+    """Scheduled job: end survey/exam sessions whose response window has closed."""
+    now = datetime.utcnow()
+    async with AsyncSessionLocal() as db:
+        rows = (await db.execute(
+            select(QuizSession.id, Quiz.quiz_type, Quiz.offline_end_at, Quiz.exam_end_at, Quiz.exam_time_limit_seconds)
+            .join(Quiz, Quiz.id == QuizSession.quiz_id)
+            .filter(
+                QuizSession.status.in_([QuizSessionStatus.CREATED, QuizSessionStatus.ACTIVE]),
+                Quiz.quiz_type.in_(PERMANENT_SESSION_QUIZ_TYPES),
+            )
+        )).all()
+        done = []
+        for r in rows:
+            closes_at = response_window_closes_at(r.quiz_type, r.offline_end_at, r.exam_end_at, r.exam_time_limit_seconds)
+            if closes_at and closes_at < now:
+                done.append(r.id)
+        if done:
+            await db.execute(
+                update(QuizSession)
+                .where(QuizSession.id.in_(done))
+                .values(status=QuizSessionStatus.ENDED, current_question_status=None)
+            )
+            await db.commit()
+        return len(done)
+
+
 class SessionServiceAsync:
     """Async service for quiz session management"""
     STALE_SESSION_TIMEOUT_HOURS = 4
@@ -494,9 +539,12 @@ class SessionServiceAsync:
     ) -> int:
         """Auto-end stale created/active sessions and deactivate their participants."""
         cutoff = datetime.utcnow() - timedelta(hours=self.STALE_SESSION_TIMEOUT_HOURS)
-        stale_rows = (
+        candidate_rows = (
             await db.execute(
-                select(QuizSession.id, Quiz.event_id)
+                select(
+                    QuizSession.id, Quiz.event_id, Quiz.quiz_type,
+                    Quiz.offline_end_at, Quiz.exam_end_at, Quiz.exam_time_limit_seconds,
+                )
                 .join(Quiz, Quiz.id == QuizSession.quiz_id)
                 .filter(
                     QuizSession.tenant_id == tenant_id,
@@ -505,6 +553,17 @@ class SessionServiceAsync:
                 )
             )
         ).all()
+        now = datetime.utcnow()
+
+        def _window_still_open(row) -> bool:
+            if row.quiz_type not in PERMANENT_SESSION_QUIZ_TYPES:
+                return False
+            closes_at = response_window_closes_at(
+                row.quiz_type, row.offline_end_at, row.exam_end_at, row.exam_time_limit_seconds
+            )
+            return closes_at is None or closes_at > now
+
+        stale_rows = [row for row in candidate_rows if not _window_still_open(row)]
         if not stale_rows:
             return 0
 
